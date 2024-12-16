@@ -3,6 +3,10 @@ version: '3.8'
 services:
   emqx-broker:
     image: emqx/emqx:latest
+    volumes:
+      - emqx_data:/opt/emqx/data
+      - emqx_log:/opt/emqx/log
+      - emqx_etc:/opt/emqx/etc
     container_name: emqx-broker
     ports:
       - "1883:1883"
