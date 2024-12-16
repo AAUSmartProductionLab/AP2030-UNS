@@ -1,98 +1,42 @@
-import asyncio
-import logging
-from pathlib import Path
+from opcua import Server
+import random
+import time
 
-from asyncua import Server, ua, uamethod
+# Create an instance of the OPC-UA server
+server = Server()
 
+# Set the endpoint for the server
+server.set_endpoint("opc.tcp://localhost:4840/freeopcua/server/") # opc.tcp://192.168.0.108:4840/freeopcua/server/RandomValue1
 
-@uamethod
-def say_hello_xml(parent, happy):
-    print("Calling say_hello_xml")
-    if happy:
-        result = "I'm happy"
-    else:
-        result = "I'm not happy"
-    print(result)
-    return result
+# Register a new namespace
+uri = "http://examples.freeopcua.github.io"
+idx = server.register_namespace(uri)
 
+# Get the Objects node
+objects = server.get_objects_node()
 
-@uamethod
-def say_hello(parent, happy):
-    if happy:
-        result = "I'm happy"
-    else:
-        result = "I'm not happy"
-    print(result)
-    return result
+# Add a new object to the address space
+myobj = objects.add_object(idx, "MyObject")
 
+# Add two variables to the object with random values
+var1 = myobj.add_variable(idx, "RandomValue1", 0)
+var2 = myobj.add_variable(idx, "RandomValue2", 0)
 
-@uamethod
-def say_hello_array(parent, happy):
-    if happy:
-        result = "I'm happy"
-    else:
-        result = "I'm not happy"
-    print(result)
-    return [result, "Actually I am"]
+# Set the variables to be writable by clients
+var1.set_writable()
+var2.set_writable()
 
+# Start the server
+server.start()
+print("Server started at opc.tcp://localhost:4840/freeopcua/server/")
 
-class HelloServer:
-    def __init__(self, endpoint, name, model_filepath):
-        self.server = Server()
-        self.model_filepath = model_filepath
-        self.server.set_server_name(name)
-        self.server.set_endpoint(endpoint)
-
-    async def init(self):
-        await self.server.init()
-
-        #  This need to be imported at the start or else it will overwrite the data
-        await self.server.import_xml(self.model_filepath)
-
-        objects = self.server.nodes.objects
-
-        freeopcua_namespace = await self.server.get_namespace_index("urn:freeopcua:python:server")
-        hellower = await objects.get_child("0:Hellower")
-        hellower_say_hello = await hellower.get_child("0:SayHello")
-
-        self.server.link_method(hellower_say_hello, say_hello_xml)
-
-        await hellower.add_method(
-            freeopcua_namespace,
-            "SayHello2",
-            say_hello,
-            [ua.VariantType.Boolean],
-            [ua.VariantType.String],
-        )
-
-        await hellower.add_method(
-            freeopcua_namespace,
-            "SayHelloArray",
-            say_hello_array,
-            [ua.VariantType.Boolean],
-            [ua.VariantType.String],
-        )
-
-    async def __aenter__(self):
-        await self.init()
-        await self.server.start()
-        return self.server
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        await self.server.stop()
-
-
-async def main():
-    script_dir = Path(__file__).parent
-    async with HelloServer(
-        "opc.tcp://0.0.0.0:4840/freeopcua/server/",
-        "FreeOpcUa Example Server",
-        script_dir / "test_saying.xml",
-    ) as server:
-        while True:
-            await asyncio.sleep(1)
-
-
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-    asyncio.run(main())
+try:
+    while True:
+        # Update the variables with random values
+        var1.set_value(random.randint(0, 100))
+        var2.set_value(random.randint(0, 100))
+        time.sleep(1)
+except KeyboardInterrupt:
+    # Stop the server when interrupted
+    server.stop()
+    print("Server stopped")
