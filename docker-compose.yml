@@ -12,11 +12,12 @@ services:
     networks:
       - emqx-network
 
-  emqx-neuron:
-    image: emqx/neuron:latest
-    container_name: emqx-neuron
+  emqx-neuronex:
+    image: emqx/neuronex:latest
+    privileged: true
+    container_name: emqx-neuronex
     ports:
-      - "7000:7000"
+      - "8085:8085"
     networks:
       - emqx-network
 
