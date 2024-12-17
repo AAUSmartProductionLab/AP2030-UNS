@@ -11,7 +11,7 @@ server.set_endpoint("opc.tcp://0.0.0.0:4840/freeopcua/server/") # opc.tcp://192.
 # Register a new namespace
 uri = "http://examples.freeopcua.github.io"
 idx = server.register_namespace(uri)
-
+print(idx)
 # Get the Objects node
 objects = server.get_objects_node()
 
