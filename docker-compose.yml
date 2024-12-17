@@ -1,6 +1,19 @@
 version: '3.8'
 
 services:
+
+  hivemq-broker:
+    image: hivemq/hivemq4:latest
+    container_name: hivemq-broker
+    ports:
+      - "1883:1883"
+      - "8080:8080"
+      - "8883:8883"
+      - "8884:8884"
+      - "8081:8081"
+    networks:
+      - hivemq-network
+      
   hivemq-edge:
     image: hivemq/hivemq-edge:latest
     privileged: true
