@@ -1,42 +1,46 @@
 from opcua import Server
+from datetime import datetime
 import random
 import time
 
-# Create an instance of the OPC-UA server
+# Configure OPC-UA Server
 server = Server()
+server.set_endpoint("opc.tcp://0.0.0.0:4840/freeopcua/server/")  # Set endpoint URL
+server.set_server_name("Python OPC-UA Test Server")
 
-# Set the endpoint for the server
-server.set_endpoint("opc.tcp://0.0.0.0:4840/freeopcua/server/") # opc.tcp://192.168.0.108:4840/freeopcua/server/Objects/MyObject/RandomValue1
-
-# Register a new namespace
-uri = "http://examples.freeopcua.github.io"
+# Set namespaces
+uri = "http://example.org/opcua"
 idx = server.register_namespace(uri)
-print(idx)
-# Get the Objects node
-objects = server.get_objects_node()
 
-# Add a new object to the address space
-myobj = objects.add_object(idx, "MyObject")
+# Create objects folder and add variables
+objects = server.nodes.objects
 
-# Add two variables to the object with random values
-var1 = myobj.add_variable(idx, "RandomValue1", 0)
-var2 = myobj.add_variable(idx, "RandomValue2", 0)
+# Temperature variable
+temperature = objects.add_variable(idx, "Temperature", 25.0)
+temperature.set_writable()  # Allow writes from clients
 
-# Set the variables to be writable by clients
-var1.set_writable()
-var2.set_writable()
+# Pressure variable
+pressure = objects.add_variable(idx, "Pressure", 1.0)
+pressure.set_writable()  # Allow writes from clients
+
+# A method for simulation
+def randomize_variables(parent):
+    temperature.set_value(random.uniform(20.0, 30.0))
+    pressure.set_value(random.uniform(0.5, 2.0))
+
+objects.add_method(idx, "RandomizeVariables", randomize_variables, [], [])
 
 # Start the server
-server.start()
-print("Server started at opc.tcp://0.0.0.0:4840/freeopcua/server/")
-
-try:
-    while True:
-        # Update the variables with random values
-        var1.set_value(random.randint(0, 100))
-        var2.set_value(random.randint(0, 100))
-        time.sleep(5)
-except KeyboardInterrupt:
-    # Stop the server when interrupted
-    server.stop()
-    print("Server stopped")
+if __name__ == "__main__":
+    # Initialize the server
+    server.start()
+    print("OPC-UA Server started at opc.tcp://0.0.0.0:4840/freeopcua/server/")
+    try:
+        while True:
+            # Update the variable values
+            temperature.set_value(temperature.get_value() + random.uniform(-0.1, 0.1))
+            pressure.set_value(pressure.get_value() + random.uniform(-0.05, 0.05))
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print("\nShutting down OPC-UA Server...")
+        server.stop()
