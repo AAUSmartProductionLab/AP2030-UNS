@@ -1,66 +1,26 @@
 <hivemq>
-    <protocol-adapters>
+   <protocol-adapters>
         <protocol-adapter>
             <adapterId>simulation-server-2</adapterId>
             <protocolId>opcua</protocolId>
             <config>
                 <uri>opc.tcp://192.168.0.108:4840/freeopcua/server</uri>
-                <overrideUri>true</overrideUri>
-                <auth>
-                    <basic>
-                        <username>edge</username>
-                        <password>password</password>
-                    </basic>
-                    <x509>
-                        <enabled>false</enabled>
-                    </x509>
-                </auth>
-                <tls>
-                    <enabled>false</enabled>
-                    <keystore>
-                        <path>path/to/keystore</path>
-                        <password>keystore-password</password>
-                        <privateKeyPassword>private-key-password</privateKeyPassword>
-                    </keystore>
-                    <truststore>
-                        <path>path/to/truststore</path>
-                        <password>truststore-password</password>
-                    </truststore>
-                </tls>
-                <security>
-                    <policy>BASIC128RSA15</policy>
-                </security>
                 <opcuaToMqtt>
-                    <publishingInterval>12</publishingInterval>
-                    <serverQueueSize>13</serverQueueSize>
                 </opcuaToMqtt>
             </config>
+            <northboundMappings>
+                <northboundMapping>
+                    <tagName>temperature/for/machine_1</tagName>
+                    <topic>machine/1/temperature</topic>
+                </northboundMapping>
             </northboundMappings>
-            <southboundMappings>
-                <southboundMapping>
-                    <tagName>ns=1;i=1</tagName>
-                    <topicFilter>data/area1/#</topicFilter>
-                    <fromNorthSchema>{}</fromNorthSchema>
-                </southboundMapping>
-                <southboundMapping>
-                    <tagName>ns=2;i=1</tagName>
-                    <topicFilter>data/area2/#</topicFilter>
-                    <fromNorthSchema>{}</fromNorthSchema>
-                </southboundMapping>
             </southboundMappings>
             <tags>
                 <tag>
-                    <name>ns=2;i=1</name>
-                    <description>description1</description>
+                    <name>temperature/for/machine_1</name>
+                    <description>This tag is about sensor data</description>
                     <definition>
                         <node>ns=2;i=1</node>
-                    </definition>
-                </tag>
-                <tag>
-                    <name>ns=2;i=2</name>
-                    <description>description2</description>
-                    <definition>
-                        <node>ns=2;i=2</node>
                     </definition>
                 </tag>
             </tags>
