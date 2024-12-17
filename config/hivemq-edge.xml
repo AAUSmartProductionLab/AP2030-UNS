@@ -42,8 +42,6 @@
                 </northboundMapping>
             </northboundMappings>
 
-            </southboundMappings>
-
             <tags>
                 <tag>
                     <name>temperature/for/machine_1</name>
@@ -53,7 +51,7 @@
                     </definition>
                 </tag>
             </tags>
-            
+
         </protocol-adapter>
     </protocol-adapters>
 </hivemq>
