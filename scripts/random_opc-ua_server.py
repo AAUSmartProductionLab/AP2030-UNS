@@ -6,7 +6,7 @@ import time
 server = Server()
 
 # Set the endpoint for the server
-server.set_endpoint("opc.tcp://0.0.0.0:4840/freeopcua/server/") # opc.tcp://192.168.0.108:4840/freeopcua/server/RandomValue1
+server.set_endpoint("opc.tcp://0.0.0.0:4840/freeopcua/server/") # opc.tcp://192.168.0.108:4840/freeopcua/server/Objects/MyObject/RandomValue1
 
 # Register a new namespace
 uri = "http://examples.freeopcua.github.io"
@@ -35,7 +35,7 @@ try:
         # Update the variables with random values
         var1.set_value(random.randint(0, 100))
         var2.set_value(random.randint(0, 100))
-        time.sleep(1)
+        time.sleep(5)
 except KeyboardInterrupt:
     # Stop the server when interrupted
     server.stop()
