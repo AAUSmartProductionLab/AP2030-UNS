@@ -1,0 +1,13 @@
+<opc-ua-adapter>
+    <server>
+        <endpoint-url>opc.tcp://localhost:4840</endpoint-url>
+        <security-policy>None</security-policy>
+        <message-mode>None</message-mode>
+    </server>
+    <subscriptions>
+        <subscription>
+            <node-id>ns=2;s=Demo.Static.Scalar.Double</node-id>
+            <sampling-interval>1000</sampling-interval>
+        </subscription>
+    </subscriptions>
+</opc-ua-adapter>

@@ -1,0 +1,10 @@
+<hivemq-edge>
+    <!-- ...existing configuration... -->
+    <adapters>
+        <!-- ...existing adapters... -->
+        <opc-ua-adapter>
+            <config-file>/opt/hivemq-edge/conf/opcua-adapter-config.xml</config-file>
+        </opc-ua-adapter>
+    </adapters>
+    <!-- ...existing configuration... -->
+</hivemq-edge>

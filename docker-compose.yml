@@ -13,11 +13,14 @@ services:
       - "8081:8081"
     networks:
       - hivemq-network
-      
+
   hivemq-edge:
     image: hivemq/hivemq-edge:latest
     privileged: true
     container_name: hivemq-edge
+    volumes:
+      - ./config/hivemq-edge.xml:/opt/hivemq-edge/conf/hivemq-edge.xml
+      - ./config/opcua-adapter-config.xml:/opt/hivemq-edge/conf/opcua-adapter-config.xml
     ports:
       - "8085:8080"
     networks:
