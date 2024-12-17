@@ -18,7 +18,7 @@ services:
     privileged: true
     container_name: hivemq-edge
     ports:
-      - "8080:8085"
+      - "8085:8080"
     networks:
       - hivemq-network
 
