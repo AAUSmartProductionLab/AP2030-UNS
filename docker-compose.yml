@@ -20,7 +20,7 @@ services:
     container_name: hivemq-edge
     volumes:
       - ./config/hivemq-edge.xml:/opt/hivemq-edge/conf/hivemq-edge.xml
-      - ./config/opcua-adapter-config.xml:/opt/hivemq-edge/conf/opcua-adapter-config.xml
+      #- ./config/opcua-adapter-config.xml:/opt/hivemq-edge/conf/opcua-adapter-config.xml
     ports:
       - "8085:8080"
     networks:
