@@ -1,26 +1,26 @@
 version: '3.8'
 
 services:
-  emqx-broker:
-    image: emqx/emqx:latest
-    container_name: emqx-broker
+  hivemq-broker:
+    image: hivemq/hivemq4:latest
+    container_name: hivemq-broker
     ports:
       - "1883:1883"
-      - "8083:8083"
-      - "8084:8084"
       - "8080:8080"
-      - "18083:18083"
+      - "8883:8883"
+      - "8884:8884"
+      - "8081:8081"
     networks:
-      - emqx-network
+      - hivemq-network
 
-  emqx-neuronex:
-    image: emqx/neuronex:latest
+  hivemq-edge:
+    image: hivemq/hivemq-edge:latest
     privileged: true
-    container_name: emqx-neuronex
+    container_name: hivemq-edge
     ports:
       - "8085:8085"
     networks:
-      - emqx-network
+      - hivemq-network
 
   node-red:
     image: nodered/node-red:latest
@@ -28,7 +28,7 @@ services:
     ports:
       - "1880:1880"
     networks:
-      - emqx-network
+      - hivemq-network
 
   portainer:
     image: portainer/portainer-ce:latest
@@ -39,7 +39,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - portainer_data:/data
     networks:
-      - emqx-network
+      - hivemq-network
 
   timescaledb:
     image: timescale/timescaledb:latest-pg12
@@ -51,10 +51,10 @@ services:
     ports:
       - "5432:5432"
     networks:
-      - emqx-network
+      - hivemq-network
 
 networks:
-  emqx-network:
+  hivemq-network:
     driver: bridge
 
 volumes:
