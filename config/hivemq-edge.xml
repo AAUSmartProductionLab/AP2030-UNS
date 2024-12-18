@@ -119,7 +119,18 @@
                 </authentication>
             </remote-broker>
             <remote-subscriptions/>
-            <forwarded-topics/>
+            <forwarded-topics>
+                <forwarded-topic>
+                    <filters>
+                        <mqtt-topic-filter>machine/1/temperature</mqtt-topic-filter>
+                    </filters>
+                    <max-qos>0</max-qos>
+                    <preserve-retain>false</preserve-retain>
+                    <destination>{#}</destination>
+                    <custom-user-properties/>
+                    <excludes/>
+                </forwarded-topic>
+            </forwarded-topics>
             <loop-prevention>
                 <enabled>false</enabled>
                 <hop-count-limit>1</hop-count-limit>
@@ -146,8 +157,13 @@
     </admin-api>
     <uns>
         <isa95>
-            <enabled>false</enabled>
-            <prefix-all-topics>false</prefix-all-topics>
+            <enabled>true</enabled>
+            <prefix-all-topics>true</prefix-all-topics>
+            <enterprise></enterprise>
+            <site></site>
+            <area></area>
+            <production-line></production-line>
+            <work-cell></work-cell>
         </isa95>
     </uns>
     <dynamic-configuration>
@@ -162,18 +178,18 @@
             <adapterId>simulation-server-2</adapterId>
             <protocolId>opcua</protocolId>
             <config>
+                <uri>opc.tcp://192.168.0.108:53530/OPCUA/SimulationServer</uri>
+                <overrideUri>true</overrideUri>
+                <tls>
+                    <enabled>false</enabled>
+                </tls>
                 <opcuaToMqtt>
-                    <serverQueueSize>1</serverQueueSize>
                     <publishingInterval>1000</publishingInterval>
+                    <serverQueueSize>1</serverQueueSize>
                 </opcuaToMqtt>
                 <security>
                     <policy>NONE</policy>
                 </security>
-                <tls>
-                    <enabled>false</enabled>
-                </tls>
-                <uri>opc.tcp://192.168.0.108:53530/OPCUA/SimulationServer</uri>
-                <overrideUri>true</overrideUri>
             </config>
             <tags>
                 <tag>
@@ -202,18 +218,35 @@
             <adapterId>Sensor-01</adapterId>
             <protocolId>simulation</protocolId>
             <config>
-                <minDelay>0</minDelay>
-                <maxDelay>0</maxDelay>
                 <minValue>0</minValue>
                 <maxValue>1000</maxValue>
                 <simulationToMqtt>
                     <pollingIntervalMillis>1000</pollingIntervalMillis>
                     <maxPollingErrorsBeforeRemoval>10</maxPollingErrorsBeforeRemoval>
                 </simulationToMqtt>
+                <minDelay>0</minDelay>
+                <maxDelay>0</maxDelay>
             </config>
-            <tags/>
+            <tags>
+                <tag>
+                    <name>RandomValue1</name>
+                    <description>A random value</description>
+                    <definition/>
+                </tag>
+            </tags>
             <southboundMappings/>
-            <northboundMappings/>
+            <northboundMappings>
+                <northboundMapping>
+                    <topic>test</topic>
+                    <tagName>RandomValue1</tagName>
+                    <maxQos>0</maxQos>
+                    <messageHandlingOptions>MQTTMessagePerTag</messageHandlingOptions>
+                    <includeTagNames>true</includeTagNames>
+                    <includeTimestamp>true</includeTimestamp>
+                    <mqttUserProperties/>
+                    <messageExpiryInterval>9223372036854775807</messageExpiryInterval>
+                </northboundMapping>
+            </northboundMappings>
         </protocol-adapter>
     </protocol-adapters>
     <modules/>
