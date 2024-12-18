@@ -13,3 +13,6 @@ services:
       - "8081:8081"
     networks:
       - hivemq-network
+networks:
+  hivemq-network:
+    driver: bridge
