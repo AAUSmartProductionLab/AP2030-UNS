@@ -135,7 +135,7 @@
             <adapterId>simulation-server-2</adapterId>
             <protocolId>opcua</protocolId>
             <config>
-                <uri>opc.tcp://192.168.87.147:53530/OPCUA/SimulationServer</uri>
+                <uri>opc.tcp://192.168.0.108:53530/OPCUA/SimulationServer</uri>
                 <overrideUri>true</overrideUri>
                 <tls>
                     <enabled>false</enabled>
