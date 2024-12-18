@@ -122,7 +122,7 @@
             <forwarded-topics>
                 <forwarded-topic>
                     <filters>
-                        <mqtt-topic-filter>machine/1/temperature</mqtt-topic-filter>
+                        <mqtt-topic-filter>#</mqtt-topic-filter>
                     </filters>
                     <max-qos>0</max-qos>
                     <preserve-retain>false</preserve-retain>
@@ -159,11 +159,11 @@
         <isa95>
             <enabled>true</enabled>
             <prefix-all-topics>true</prefix-all-topics>
-            <enterprise></enterprise>
-            <site></site>
-            <area></area>
-            <production-line></production-line>
-            <work-cell></work-cell>
+            <enterprise>AAU</enterprise>
+            <site>Fib14</site>
+            <area>Smartlab</area>
+            <production-line>FestoLine</production-line>
+            <work-cell>STPLC_08</work-cell>
         </isa95>
     </uns>
     <dynamic-configuration>
@@ -174,6 +174,40 @@
         <enabled>true</enabled>
     </usage-tracking>
     <protocol-adapters>
+        <protocol-adapter>
+            <adapterId>Sensor-01</adapterId>
+            <protocolId>simulation</protocolId>
+            <config>
+                <minValue>0</minValue>
+                <maxValue>1000</maxValue>
+                <simulationToMqtt>
+                    <pollingIntervalMillis>1000</pollingIntervalMillis>
+                    <maxPollingErrorsBeforeRemoval>10</maxPollingErrorsBeforeRemoval>
+                </simulationToMqtt>
+                <minDelay>0</minDelay>
+                <maxDelay>0</maxDelay>
+            </config>
+            <tags>
+                <tag>
+                    <name>RandomValue1</name>
+                    <description>A random value</description>
+                    <definition/>
+                </tag>
+            </tags>
+            <southboundMappings/>
+            <northboundMappings>
+                <northboundMapping>
+                    <topic>machine/2/temperature</topic>
+                    <tagName>RandomValue1</tagName>
+                    <maxQos>0</maxQos>
+                    <messageHandlingOptions>MQTTMessagePerTag</messageHandlingOptions>
+                    <includeTagNames>false</includeTagNames>
+                    <includeTimestamp>true</includeTimestamp>
+                    <mqttUserProperties/>
+                    <messageExpiryInterval>9223372036854775807</messageExpiryInterval>
+                </northboundMapping>
+            </northboundMappings>
+        </protocol-adapter>
         <protocol-adapter>
             <adapterId>simulation-server-2</adapterId>
             <protocolId>opcua</protocolId>
@@ -208,40 +242,6 @@
                     <maxQos>1</maxQos>
                     <messageHandlingOptions>MQTTMessagePerTag</messageHandlingOptions>
                     <includeTagNames>false</includeTagNames>
-                    <includeTimestamp>true</includeTimestamp>
-                    <mqttUserProperties/>
-                    <messageExpiryInterval>9223372036854775807</messageExpiryInterval>
-                </northboundMapping>
-            </northboundMappings>
-        </protocol-adapter>
-        <protocol-adapter>
-            <adapterId>Sensor-01</adapterId>
-            <protocolId>simulation</protocolId>
-            <config>
-                <minValue>0</minValue>
-                <maxValue>1000</maxValue>
-                <simulationToMqtt>
-                    <pollingIntervalMillis>1000</pollingIntervalMillis>
-                    <maxPollingErrorsBeforeRemoval>10</maxPollingErrorsBeforeRemoval>
-                </simulationToMqtt>
-                <minDelay>0</minDelay>
-                <maxDelay>0</maxDelay>
-            </config>
-            <tags>
-                <tag>
-                    <name>RandomValue1</name>
-                    <description>A random value</description>
-                    <definition/>
-                </tag>
-            </tags>
-            <southboundMappings/>
-            <northboundMappings>
-                <northboundMapping>
-                    <topic>test</topic>
-                    <tagName>RandomValue1</tagName>
-                    <maxQos>0</maxQos>
-                    <messageHandlingOptions>MQTTMessagePerTag</messageHandlingOptions>
-                    <includeTagNames>true</includeTagNames>
                     <includeTimestamp>true</includeTimestamp>
                     <mqttUserProperties/>
                     <messageExpiryInterval>9223372036854775807</messageExpiryInterval>
