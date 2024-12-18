@@ -248,6 +248,46 @@
                 </northboundMapping>
             </northboundMappings>
         </protocol-adapter>
+        <protocol-adapter>
+            <adapterId>simulation-server-3</adapterId>
+            <protocolId>opcua</protocolId>
+            <config>
+                <uri>opc.tcp://192.168.0.108:53530/OPCUA/SimulationServer</uri>
+                <overrideUri>true</overrideUri>
+                <tls>
+                    <enabled>false</enabled>
+                </tls>
+                <opcuaToMqtt>
+                    <publishingInterval>1000</publishingInterval>
+                    <serverQueueSize>1</serverQueueSize>
+                </opcuaToMqtt>
+                <security>
+                    <policy>NONE</policy>
+                </security>
+            </config>
+            <tags>
+                <tag>
+                    <name>temperature/for/machine_2</name>
+                    <description>This tag is about sensor data</description>
+                    <definition>
+                        <node>ns=3;i=1002</node>
+                    </definition>
+                </tag>
+            </tags>
+            <southboundMappings/>
+            <northboundMappings>
+                <northboundMapping>
+                    <topic>machine/2/temperature</topic>
+                    <tagName>temperature/for/machine_2</tagName>
+                    <maxQos>1</maxQos>
+                    <messageHandlingOptions>MQTTMessagePerTag</messageHandlingOptions>
+                    <includeTagNames>false</includeTagNames>
+                    <includeTimestamp>true</includeTimestamp>
+                    <mqttUserProperties/>
+                    <messageExpiryInterval>9223372036854775807</messageExpiryInterval>
+                </northboundMapping>
+            </northboundMappings>
+        </protocol-adapter>
     </protocol-adapters>
     <modules/>
     <internal/>
