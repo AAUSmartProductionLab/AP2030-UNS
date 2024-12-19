@@ -203,7 +203,7 @@
                     <name>STPLC14/CarrierID</name>
                     <description>This tag is about carrier ID</description>
                     <definition>
-                        <node>ns=2;s=|var|CECC-LK.Application.FBs.stpStopper1.stpStopper.sInstancePath</node>
+                        <node>ns=2;s=|var|CECC-LK.Application.FBs.stpStopper1.stpStopper.stRfidData.uiCarrierID</node>
                     </definition>
                 </tag>
             </tags>
@@ -261,7 +261,7 @@
                     <name>STPLC11/CarrierID</name>
                     <description>This tag is about carrier ID</description>
                     <definition>
-                        <node>ns=2;s=|var|CECC-LK.Application.FBs.stpStopper1.stpStopper.sInstancePath</node>
+                        <node>ns=2;s=|var|CECC-LK.Application.FBs.stpStopper1.stpStopper.stRfidData.uiCarrierID</node>
                     </definition>
                 </tag>
             </tags>
@@ -319,7 +319,7 @@
                     <name>STPLC10/CarrierID</name>
                     <description>This tag is about carrier ID</description>
                     <definition>
-                        <node>ns=2;s=|var|CECC-LK.Application.FBs.stpStopper1.stpStopper.sInstancePath</node>
+                        <node>ns=2;s=|var|CECC-LK.Application.FBs.stpStopper1.stpStopper.stRfidData.uiCarrierID</node>
                     </definition>
                 </tag>
             </tags>
@@ -377,7 +377,7 @@
                     <name>STPLC12/CarrierID</name>
                     <description>This tag is about carrier ID</description>
                     <definition>
-                        <node>ns=2;s=|var|CECC-LK.Application.FBs.stpStopper1.stpStopper.sInstancePath</node>
+                        <node>ns=2;s=|var|CECC-LK.Application.FBs.stpStopper1.stpStopper.stRfidData.uiCarrierID</node>
                     </definition>
                 </tag>
             </tags>
