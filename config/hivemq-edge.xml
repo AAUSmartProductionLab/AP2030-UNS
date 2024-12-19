@@ -184,7 +184,7 @@
                     <enabled>false</enabled>
                 </tls>
                 <opcuaToMqtt>
-                    <publishingInterval>1000</publishingInterval>
+                    <publishingInterval>100</publishingInterval>
                     <serverQueueSize>1</serverQueueSize>
                 </opcuaToMqtt>
                 <security>
@@ -239,12 +239,29 @@
                         <node>ns=2;s=|var|CECC-LK.Application.FBs.stpStopper1.stpStopper.cpfssStopper.xCarrierAvailable</node>
                     </definition>
                 </tag>
+                <tag>
+                    <name>STPLC13/CarrierID</name>
+                    <description>This tag is about carrier ID</description>
+                    <definition>
+                        <node>ns=2;s=|var|CECC-LK.Application.FBs.stpStopper1.stpStopper.sInstancePath</node>
+                    </definition>
+                </tag>
             </tags>
             <southboundMappings/>
             <northboundMappings>
                 <northboundMapping>
                     <topic>STPLC13/CarrierAvailable</topic>
                     <tagName>STPLC13/CarrierAvailable</tagName>
+                    <maxQos>1</maxQos>
+                    <messageHandlingOptions>MQTTMessagePerTag</messageHandlingOptions>
+                    <includeTagNames>false</includeTagNames>
+                    <includeTimestamp>true</includeTimestamp>
+                    <mqttUserProperties/>
+                    <messageExpiryInterval>9223372036854775807</messageExpiryInterval>
+                </northboundMapping>
+                <northboundMapping>
+                    <topic>STPLC13/CarrierID</topic>
+                    <tagName>STPLC13/CarrierID</tagName>
                     <maxQos>1</maxQos>
                     <messageHandlingOptions>MQTTMessagePerTag</messageHandlingOptions>
                     <includeTagNames>false</includeTagNames>
