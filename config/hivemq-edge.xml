@@ -160,10 +160,10 @@
             <enabled>true</enabled>
             <prefix-all-topics>true</prefix-all-topics>
             <enterprise>AAU</enterprise>
-            <site>Fib14</site>
-            <area>Smartlab</area>
-            <production-line>FestoLine</production-line>
-            <work-cell>STPLC_08</work-cell>
+            <site>MP</site>
+            <area>Fib14</area>
+            <production-line>Smartlab</production-line>
+            <work-cell>FestoLine</work-cell>
         </isa95>
     </uns>
     <dynamic-configuration>
@@ -175,44 +175,10 @@
     </usage-tracking>
     <protocol-adapters>
         <protocol-adapter>
-            <adapterId>Sensor-01</adapterId>
-            <protocolId>simulation</protocolId>
-            <config>
-                <minValue>0</minValue>
-                <maxValue>1000</maxValue>
-                <simulationToMqtt>
-                    <pollingIntervalMillis>1000</pollingIntervalMillis>
-                    <maxPollingErrorsBeforeRemoval>10</maxPollingErrorsBeforeRemoval>
-                </simulationToMqtt>
-                <minDelay>0</minDelay>
-                <maxDelay>0</maxDelay>
-            </config>
-            <tags>
-                <tag>
-                    <name>RandomValue1</name>
-                    <description>A random value</description>
-                    <definition/>
-                </tag>
-            </tags>
-            <southboundMappings/>
-            <northboundMappings>
-                <northboundMapping>
-                    <topic>machine/2/temperature</topic>
-                    <tagName>RandomValue1</tagName>
-                    <maxQos>0</maxQos>
-                    <messageHandlingOptions>MQTTMessagePerTag</messageHandlingOptions>
-                    <includeTagNames>false</includeTagNames>
-                    <includeTimestamp>true</includeTimestamp>
-                    <mqttUserProperties/>
-                    <messageExpiryInterval>9223372036854775807</messageExpiryInterval>
-                </northboundMapping>
-            </northboundMappings>
-        </protocol-adapter>
-        <protocol-adapter>
-            <adapterId>simulation-server-2</adapterId>
+            <adapterId>STPLC14</adapterId>
             <protocolId>opcua</protocolId>
             <config>
-                <uri>opc.tcp://192.168.0.108:53530/OPCUA/SimulationServer</uri>
+                <uri>opc.tcp://172.20.4.1:4840/</uri>
                 <overrideUri>true</overrideUri>
                 <tls>
                     <enabled>false</enabled>
@@ -227,18 +193,18 @@
             </config>
             <tags>
                 <tag>
-                    <name>temperature/for/machine_1</name>
+                    <name>STPLC14/CarrierAvailable</name>
                     <description>This tag is about sensor data</description>
                     <definition>
-                        <node>ns=3;i=1001</node>
+                        <node>ns=2;s=|var|CECC-LK.Application.FBs.stpStopper1.stpStopper.cpfssStopper.xCarrierAvailable</node>
                     </definition>
                 </tag>
             </tags>
             <southboundMappings/>
             <northboundMappings>
                 <northboundMapping>
-                    <topic>machine/1/temperature</topic>
-                    <tagName>temperature/for/machine_1</tagName>
+                    <topic>STPLC14/CarrierAvailable</topic>
+                    <tagName>STPLC14/CarrierAvailable</tagName>
                     <maxQos>1</maxQos>
                     <messageHandlingOptions>MQTTMessagePerTag</messageHandlingOptions>
                     <includeTagNames>false</includeTagNames>
@@ -249,10 +215,10 @@
             </northboundMappings>
         </protocol-adapter>
         <protocol-adapter>
-            <adapterId>simulation-server-3</adapterId>
+            <adapterId>STPLC13</adapterId>
             <protocolId>opcua</protocolId>
             <config>
-                <uri>opc.tcp://192.168.0.108:53530/OPCUA/SimulationServer</uri>
+                <uri>opc.tcp://172.20.5.1:4840/</uri>
                 <overrideUri>true</overrideUri>
                 <tls>
                     <enabled>false</enabled>
@@ -267,18 +233,138 @@
             </config>
             <tags>
                 <tag>
-                    <name>temperature/for/machine_2</name>
+                    <name>STPLC13/CarrierAvailable</name>
                     <description>This tag is about sensor data</description>
                     <definition>
-                        <node>ns=3;i=1002</node>
+                        <node>ns=2;s=|var|CECC-LK.Application.FBs.stpStopper1.stpStopper.cpfssStopper.xCarrierAvailable</node>
                     </definition>
                 </tag>
             </tags>
             <southboundMappings/>
             <northboundMappings>
                 <northboundMapping>
-                    <topic>machine/2/temperature</topic>
-                    <tagName>temperature/for/machine_2</tagName>
+                    <topic>STPLC13/CarrierAvailable</topic>
+                    <tagName>STPLC13/CarrierAvailable</tagName>
+                    <maxQos>1</maxQos>
+                    <messageHandlingOptions>MQTTMessagePerTag</messageHandlingOptions>
+                    <includeTagNames>false</includeTagNames>
+                    <includeTimestamp>true</includeTimestamp>
+                    <mqttUserProperties/>
+                    <messageExpiryInterval>9223372036854775807</messageExpiryInterval>
+                </northboundMapping>
+            </northboundMappings>
+        </protocol-adapter>
+        <protocol-adapter>
+            <adapterId>STPLC12</adapterId>
+            <protocolId>opcua</protocolId>
+            <config>
+                <uri>opc.tcp://172.20.16.1:4840/</uri>
+                <overrideUri>true</overrideUri>
+                <tls>
+                    <enabled>false</enabled>
+                </tls>
+                <opcuaToMqtt>
+                    <publishingInterval>1000</publishingInterval>
+                    <serverQueueSize>1</serverQueueSize>
+                </opcuaToMqtt>
+                <security>
+                    <policy>NONE</policy>
+                </security>
+            </config>
+            <tags>
+                <tag>
+                    <name>STPLC12/CarrierAvailable</name>
+                    <description>This tag is about sensor data</description>
+                    <definition>
+                        <node>ns=2;s=|var|CECC-LK.Application.FBs.stpStopper1.stpStopper.cpfssStopper.xCarrierAvailable</node>
+                    </definition>
+                </tag>
+            </tags>
+            <southboundMappings/>
+            <northboundMappings>
+                <northboundMapping>
+                    <topic>STPLC12/CarrierAvailable</topic>
+                    <tagName>STPLC12/CarrierAvailable</tagName>
+                    <maxQos>1</maxQos>
+                    <messageHandlingOptions>MQTTMessagePerTag</messageHandlingOptions>
+                    <includeTagNames>false</includeTagNames>
+                    <includeTimestamp>true</includeTimestamp>
+                    <mqttUserProperties/>
+                    <messageExpiryInterval>9223372036854775807</messageExpiryInterval>
+                </northboundMapping>
+            </northboundMappings>
+        </protocol-adapter>
+        <protocol-adapter>
+            <adapterId>STPLC11</adapterId>
+            <protocolId>opcua</protocolId>
+            <config>
+                <uri>opc.tcp://172.20.11.1:4840/</uri>
+                <overrideUri>true</overrideUri>
+                <tls>
+                    <enabled>false</enabled>
+                </tls>
+                <opcuaToMqtt>
+                    <publishingInterval>1000</publishingInterval>
+                    <serverQueueSize>1</serverQueueSize>
+                </opcuaToMqtt>
+                <security>
+                    <policy>NONE</policy>
+                </security>
+            </config>
+            <tags>
+                <tag>
+                    <name>STPLC11/CarrierAvailable</name>
+                    <description>This tag is about sensor data</description>
+                    <definition>
+                        <node>ns=2;s=|var|CECC-LK.Application.FBs.stpStopper1.stpStopper.cpfssStopper.xCarrierAvailable</node>
+                    </definition>
+                </tag>
+            </tags>
+            <southboundMappings/>
+            <northboundMappings>
+                <northboundMapping>
+                    <topic>STPLC11/CarrierAvailable</topic>
+                    <tagName>STPLC11/CarrierAvailable</tagName>
+                    <maxQos>1</maxQos>
+                    <messageHandlingOptions>MQTTMessagePerTag</messageHandlingOptions>
+                    <includeTagNames>false</includeTagNames>
+                    <includeTimestamp>true</includeTimestamp>
+                    <mqttUserProperties/>
+                    <messageExpiryInterval>9223372036854775807</messageExpiryInterval>
+                </northboundMapping>
+            </northboundMappings>
+        </protocol-adapter>
+        <protocol-adapter>
+            <adapterId>STPLC10</adapterId>
+            <protocolId>opcua</protocolId>
+            <config>
+                <uri>opc.tcp://172.20.3.1:4840/</uri>
+                <overrideUri>true</overrideUri>
+                <tls>
+                    <enabled>false</enabled>
+                </tls>
+                <opcuaToMqtt>
+                    <publishingInterval>1000</publishingInterval>
+                    <serverQueueSize>1</serverQueueSize>
+                </opcuaToMqtt>
+                <security>
+                    <policy>NONE</policy>
+                </security>
+            </config>
+            <tags>
+                <tag>
+                    <name>STPLC10/CarrierAvailable</name>
+                    <description>This tag is about sensor data</description>
+                    <definition>
+                        <node>ns=2;s=|var|CECC-LK.Application.FBs.stpStopper1.stpStopper.cpfssStopper.xCarrierAvailable</node>
+                    </definition>
+                </tag>
+            </tags>
+            <southboundMappings/>
+            <northboundMappings>
+                <northboundMapping>
+                    <topic>STPLC10/CarrierAvailable</topic>
+                    <tagName>STPLC10/CarrierAvailable</tagName>
                     <maxQos>1</maxQos>
                     <messageHandlingOptions>MQTTMessagePerTag</messageHandlingOptions>
                     <includeTagNames>false</includeTagNames>

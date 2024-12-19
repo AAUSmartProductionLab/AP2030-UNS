@@ -6,7 +6,7 @@ import time
 
 # Configure OPC-UA Server
 server = Server()
-server.set_endpoint("opc.tcp://192.168.0.108:4840/freeopcua/server/")  # Set endpoint URL
+server.set_endpoint("opc.tcp://172.20.66.217:4840/freeopcua/server/")  # Set endpoint URL
 server.set_server_name("Python OPC-UA Test Server")
 
 # Set namespaces

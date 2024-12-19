@@ -11,6 +11,9 @@ services:
       - "8883:8883"
       - "8884:8884"
       - "8081:8081"
+ #   volumes:
+ #     - ./hivemq_extensions/hivemq-allow-all-hivemq_extension:
+ #     - 
     networks:
       - hivemq-network
 
@@ -37,9 +40,9 @@ services:
     image: timescale/timescaledb:latest-pg12
     container_name: timescaledb
     environment:
-      POSTGRES_PASSWORD: yourpassword
-      POSTGRES_USER: youruser
-      POSTGRES_DB: yourdb
+      POSTGRES_PASSWORD: root
+      POSTGRES_USER: root
+      POSTGRES_DB: testdb
     ports:
       - "5432:5432"
     networks:

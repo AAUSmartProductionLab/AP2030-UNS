@@ -2,12 +2,12 @@
                              xsi:noNamespaceSchemaLocation="config.xsd">
     <postgresqls>
         <postgresql>
-            <id>my-postgresql-id</id>
-            <host>my.host.com</host>
+            <id>postgresql-id-01</id>
+            <host>timescaledb</host>
             <port>5432</port>
-            <database>my-database</database>
-            <username>my-user</username>
-            <password>my-password</password>
+            <database>testdb</database>
+            <username>root</username>
+            <password>root</password>
         </postgresql>
     </postgresqls>
 
@@ -16,7 +16,7 @@
         <!-- insert every message using the INSERT STATEMENT processor -->
         <mqtt-to-postgresql-route>
             <id>my-mqtt-to-postgresql-route-insert</id>
-            <postgresql-id>my-postgresql-id</postgresql-id>
+            <postgresql-id>postgresql-id-01</postgresql-id>
             <mqtt-topic-filters>
                 <mqtt-topic-filter>#</mqtt-topic-filter>
             </mqtt-topic-filters>
