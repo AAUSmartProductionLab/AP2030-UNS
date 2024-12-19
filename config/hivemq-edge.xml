@@ -352,7 +352,7 @@
             <adapterId>STPLC12</adapterId>
             <protocolId>opcua</protocolId>
             <config>
-                <uri>opc.tcp://:4840/</uri>
+                <uri>opc.tcp://172.20.16.1:4840/</uri>
                 <overrideUri>true</overrideUri>
                 <tls>
                     <enabled>false</enabled>
