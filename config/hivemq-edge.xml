@@ -104,7 +104,7 @@
             <id>UNS-Broker</id>
             <remote-broker>
                 <port>1883</port>
-                <host>192.168.0.100</host>
+                <host>172.20.66.205</host>
                 <mqtt>
                     <client-id></client-id>
                     <clean-start>true</clean-start>
