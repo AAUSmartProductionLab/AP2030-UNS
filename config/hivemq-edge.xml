@@ -224,7 +224,7 @@
                     <enabled>false</enabled>
                 </tls>
                 <opcuaToMqtt>
-                    <publishingInterval>1000</publishingInterval>
+                    <publishingInterval>100</publishingInterval>
                     <serverQueueSize>1</serverQueueSize>
                 </opcuaToMqtt>
                 <security>
@@ -281,7 +281,7 @@
                     <enabled>false</enabled>
                 </tls>
                 <opcuaToMqtt>
-                    <publishingInterval>1000</publishingInterval>
+                    <publishingInterval>100</publishingInterval>
                     <serverQueueSize>1</serverQueueSize>
                 </opcuaToMqtt>
                 <security>
@@ -321,7 +321,7 @@
                     <enabled>false</enabled>
                 </tls>
                 <opcuaToMqtt>
-                    <publishingInterval>1000</publishingInterval>
+                    <publishingInterval>100</publishingInterval>
                     <serverQueueSize>1</serverQueueSize>
                 </opcuaToMqtt>
                 <security>
@@ -361,7 +361,7 @@
                     <enabled>false</enabled>
                 </tls>
                 <opcuaToMqtt>
-                    <publishingInterval>1000</publishingInterval>
+                    <publishingInterval>100</publishingInterval>
                     <serverQueueSize>1</serverQueueSize>
                 </opcuaToMqtt>
                 <security>
