@@ -1,0 +1,23 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Connection request",
+    "subtopic": "/request",
+    "responsesubtopic": "/response",
+    "type": "object",
+    "properties": {
+        "address": {
+            "type": "string",
+            "format": "ipv4"
+        },
+        "target_state": {
+            "type": "string",
+            "enum": ["connected", "disconnected"]
+        },
+        "xbot_no": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 64
+        }
+    },
+    "required": ["address", "target_state"]
+}

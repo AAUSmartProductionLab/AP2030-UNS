@@ -1,0 +1,13 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Response state",
+    "description": "JSON Schema for a response as requested by the structure of behavior trees. The topic to respond on should be defined in the schema of the request.",
+    "type": "object",
+    "properties": {
+        "state": {
+            "type": "string",
+            "enum": ["running", "successful", "failure"]
+        }
+    },
+    "required": ["state"]
+}
