@@ -8,7 +8,7 @@ from jsonschema import validate
 BASE_TOPIC = "IMATile/PMC"
 
 MQTT_TOPICS = [(BASE_TOPIC + "/connect/response", 0),
-               (BASE_TOPIC + "/moveToFilling/response", 0)]
+               (BASE_TOPIC + "/moveToPosition/response", 0)]
 
 # A MQTT client that requests things from the PMC proxy. To be replaced with behavior trees down the line
 
@@ -30,7 +30,7 @@ class PMCProxy(mqtt.Client):
         self.message_callback_add(
             BASE_TOPIC + "/connect/response", self.on_connect_response_callback)
         self.message_callback_add(
-            BASE_TOPIC + "/moveToFilling/response", self.on_move_to_filling_response_callback)
+            BASE_TOPIC + "/moveToPosition/response", self.on_move_to_filling_response_callback)
         self.subscribe(MQTT_TOPICS)
         print("Connected with result code " + str(rc))
         self.request_connection()
@@ -63,7 +63,7 @@ class PMCProxy(mqtt.Client):
         self.move_to_filling()
 
     def move_to_filling(self):
-        base_topic = BASE_TOPIC + "/moveToFilling"
+        base_topic = BASE_TOPIC + "/moveToPosition"
         schema = load_schema("moveToPosition.schema.json")
 
         request = {}
@@ -76,6 +76,8 @@ class PMCProxy(mqtt.Client):
         self.publish(base_topic, json.dumps(request),
                      0, properties=publish_properties)
         print("Published fill request")
+        self.move_to_unloading()
+        self.move_to_loading()
 
     def on_move_to_filling_response_callback(self, client, userdata, message):
         msg = json.loads(message.payload.decode("utf-8"))
@@ -83,7 +85,37 @@ class PMCProxy(mqtt.Client):
             "response_state.schema.json"))
         print("Received response to fill request: " + msg["state"])
         print("CorrelationData:", message.properties.CorrelationData)
-        exit()
+        # exit()
+
+    def move_to_loading(self):
+        base_topic = BASE_TOPIC + "/moveToPosition"
+        schema = load_schema("moveToPosition.schema.json")
+
+        request = {}
+        request["target_pos"] = "loading"
+        request["xbot_id"] = 1
+        publish_properties = Properties(PacketTypes.PUBLISH)
+        publish_properties.ResponseTopic = base_topic + \
+            schema["responsesubtopic"]
+        publish_properties.CorrelationData = str(randint(1000, 9999)).encode()
+        self.publish(base_topic, json.dumps(request),
+                     0, properties=publish_properties)
+        print("Published fill request")
+
+    def move_to_unloading(self):
+        base_topic = BASE_TOPIC + "/moveToPosition"
+        schema = load_schema("moveToPosition.schema.json")
+
+        request = {}
+        request["target_pos"] = "unloading"
+        request["xbot_id"] = 1
+        publish_properties = Properties(PacketTypes.PUBLISH)
+        publish_properties.ResponseTopic = base_topic + \
+            schema["responsesubtopic"]
+        publish_properties.CorrelationData = str(randint(1000, 9999)).encode()
+        self.publish(base_topic, json.dumps(request),
+                     0, properties=publish_properties)
+        print("Published fill request")
 
 
 def load_schema(schema_file):

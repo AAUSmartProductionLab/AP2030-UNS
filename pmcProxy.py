@@ -15,11 +15,11 @@ from jsonschema import validate
 
 BASE_TOPIC = "IMATile/PMC"
 MQTT_TOPICS = [(BASE_TOPIC + "/connect", 0),
-               (BASE_TOPIC + "/moveToFilling", 0)]
+               (BASE_TOPIC + "/moveToPosition", 0)]
 
 
 FILL_POS = (0.480, 0.660)
-LOADING_POS = (0.60, 0.120)
+LOADING_POS = (0.060, 0.120)
 UNLOADING_POS = (0.900, 0.120)
 
 
@@ -45,7 +45,7 @@ class PlanarMotorProxy(mqtt.Client):
         self.message_callback_add(
             BASE_TOPIC + "/connect", self.on_connect_request_callback)
         self.message_callback_add(
-            BASE_TOPIC + "/moveToFilling", self.on_moveToPosition_callback)
+            BASE_TOPIC + "/moveToPosition", self.on_moveToPosition_callback)
         self.subscribe(MQTT_TOPICS)
         print("Connected with result code "+str(rc))
 
@@ -96,7 +96,8 @@ class PlanarMotorProxy(mqtt.Client):
             elif msg["target_pos"] == "loading":
                 move_to_pos(msg["xbot_id"], LOADING_POS)
             elif msg["target_pos"] == "unloading":
-                move_to_pos(msg["xbot_id"], UNLOADING_POS)
+                move_to_pos(msg["xbot_id"], UNLOADING_POS,
+                            linearPathType=pmc_types.LINEARPATHTYPE.XTHENY)
             else:
                 pass
             wait_untiL_xbots_idle([msg["xbot_id"]])
