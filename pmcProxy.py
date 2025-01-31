@@ -1,18 +1,26 @@
-from pmclib import system_commands as _sys   # PMC System related commands
-from pmclib import xbot_commands as bot     # PMC Mover related commands
-from pmclib import pmc_types                # PMC API Types
-
 import paho.mqtt.client as mqtt
 from paho.mqtt.enums import MQTTProtocolVersion
 from paho.mqtt.properties import Properties, PacketTypes
 
+from pmclib import system_commands as _sys   # PMC System related commands
+from pmclib import xbot_commands as bot     # PMC Mover related commands
+from pmclib import pmc_types                # PMC API Types
+
+import time
+from typing import List, Tuple
+from random import randint
 import json
 from jsonschema import validate
 
-import time
-import threading
 
-MQTT_TOPICS = [("IMATile/PMC/connect", 0)]
+BASE_TOPIC = "IMATile/PMC"
+MQTT_TOPICS = [(BASE_TOPIC + "/connect", 0),
+               (BASE_TOPIC + "/moveToFilling", 0)]
+
+
+FILL_POS = (0.480, 0.660)
+LOADING_POS = (0.60, 0.120)
+UNLOADING_POS = (0.900, 0.120)
 
 
 class PlanarMotorProxy(mqtt.Client):
@@ -34,9 +42,10 @@ class PlanarMotorProxy(mqtt.Client):
         self.loop_forever()
 
     def on_connect_callback(self, client, userdata, flags, rc, properties):
-
         self.message_callback_add(
-            "IMATile/PMC/connect", self.on_connect_request_callback)
+            BASE_TOPIC + "/connect", self.on_connect_request_callback)
+        self.message_callback_add(
+            BASE_TOPIC + "/moveToFilling", self.on_moveToPosition_callback)
         self.subscribe(MQTT_TOPICS)
         print("Connected with result code "+str(rc))
 
@@ -59,26 +68,46 @@ class PlanarMotorProxy(mqtt.Client):
     #     client.disconnect()
 
     def on_connect_request_callback(self, client, userdata, message):
-        retval = False
+        response = {}
         try:
             msg = json.loads(message.payload.decode("utf-8"))
             validate(instance=msg, schema=load_schema(
                 "connection.schema.json"))
             if msg["target_state"] == "connected":
-                retval = pmc_startup(msg["address"], msg.get("xbot_count", 0))
+                pmc_startup(msg["address"], msg.get("xbot_no", 0))
             else:
                 pass
+            response["state"] = "successful"
+        except Exception as e:
+            print(e)
+            response["state"] = "failure"
+
+        self.publish(message.properties.ResponseTopic, json.dumps(response),
+                     properties=message.properties)
+
+    def on_moveToPosition_callback(self, client, userdata, message):
+        response = {}
+        try:
+            msg = json.loads(message.payload.decode("utf-8"))
+            validate(instance=msg, schema=load_schema(
+                "moveToPosition.schema.json"))
+            if msg["target_pos"] == "filling":
+                move_to_pos(msg["xbot_id"], FILL_POS)
+            elif msg["target_pos"] == "loading":
+                move_to_pos(msg["xbot_id"], LOADING_POS)
+            elif msg["target_pos"] == "unloading":
+                move_to_pos(msg["xbot_id"], UNLOADING_POS)
+            else:
+                pass
+            wait_untiL_xbots_idle([msg["xbot_id"]])
+            # TODO check if the xbot is in the correct position
+
+            response["state"] = "successful"
 
         except Exception as e:
             print(e)
-            retval = False
+            response["state"] = "failure"
 
-        response = {}
-        response["state"] = "successful" if retval == True else "failure"
-        if retval == True:
-            # If the pmc is connected start publishing the information of the xBots
-            threading.Timer(5.0, publish_xbot_positions, [
-                            client, userdata, message]).start()
         self.publish(message.properties.ResponseTopic, json.dumps(response),
                      properties=message.properties)
 
@@ -89,144 +118,116 @@ def load_schema(schema_file):
 
 
 def pmc_startup(ip: str = "127.0.0.1", expected_xbot_count: int = 0):
-    try:
-        # Connect to the PMC
-        if not _sys.connect_to_specific_pmc(ip):
-            raise Exception("Could not connect to PMC")
-        # Gain mastership
-        if not _sys.is_master():
-            _sys.gain_mastership()
-        # Get PMC status
-        pmc_status = _sys.get_pmc_status()
-        if pmc_status != pmc_types.PMCSTATUS.PMC_FULLCTRL and pmc_status != pmc_types.PMCSTATUS.PMC_INTELLIGENTCTRL:
-            isPMCInOperation = False
-            attemtedActivation = False
-            while isPMCInOperation == False:
-                pmc_status = _sys.get_pmc_status()
-                # PMC is in transition state
-                if pmc_status == pmc_types.PMCSTATUS.PMC_ACTIVATING or pmc_status == pmc_types.PMCSTATUS.PMC_BOOTING or pmc_status == pmc_types.PMCSTATUS.PMC_DEACTIVATING or pmc_status == pmc_types.PMCSTATUS.PMC_ERRORHANDLING:
-                    isPMCInOperation = False
-                    time.sleep(10)
-                # PMC is in stable state but not operational
-                elif pmc_status == pmc_types.PMCSTATUS.PMC_ERROR or pmc_status == pmc_types.PMCSTATUS.PMC_INACTIVE:
-                    isPMCInOperation = False
-                    if attemtedActivation == False:
-                        attemtedActivation = True
-                        # no need to catch the possible exception as we want to quit anyway in that case so we catch it with the big try catch block
-                        bot.activate_xbots()
-                    else:
-                        raise Exception(
-                            "Attempted to activate xbots but failed")
-                # PMC is now operational
-                elif pmc_status == pmc_types.PMCSTATUS.PMC_FULLCTRL or pmc_status == pmc_types.PMCSTATUS.PMC_INTELLIGENTCTRL:
-                    isPMCInOperation = True
-                else:
-                    raise Exception("Unexpected PMC status")
-        # Check configuration
-        # TODO
-        # Check xbot ammount
-        # will throw an exception if PmcRtn is not ALLOK
-        xbotIDs: pmc_types.XBotIDs = bot.get_xbot_ids()
-        if expected_xbot_count > 0:
-            if len(xbotIDs.xbot_ids) != expected_xbot_count:
-                raise Exception("Incorrect amount of xBots")
-        # stop motions
-        bot.stop_motion(0)
-        # check xbot state and levitate
-        areXbotsLevitated = False
-        attemptedLevitation = False
-        areXbotsinTransitionState = False
-        while areXbotsLevitated == False:
-            areXbotsLevitated = True
-            areXbotsinTransitionState = False
-            for xbotID in xbotIDs.xbot_ids_array:
-                xbot = bot.get_xbot_status(xbotID)
-                if xbot.xbot_state == pmc_types.XBOTSTATE.XBOT_LANDED:
-                    areXbotsLevitated = False
-                elif xbot.xbot_state == pmc_types.XBOTSTATE.XBOT_STOPPING or xbot.xbot_state == pmc_types.XBOTSTATE.XBOT_DISCOVERING or xbot.xbot_state == pmc_types.XBOTSTATE.XBOT_MOTION:
-                    areXbotsLevitated = False
-                    areXbotsinTransitionState = True
-                elif xbot.xbot_state == pmc_types.XBOTSTATE.XBOT_IDLE or xbot.xbot_state == pmc_types.XBOTSTATE.XBOT_STOPPED:
-                    pass
-                elif xbot.xbot_state == pmc_types.XBOTSTATE.XBOT_WAIT or xbot.xbot_state == pmc_types.XBOTSTATE.XBOT_OBSTACLE_DETECTED or xbot.xbot_state == pmc_types.XBOTSTATE.XBOT_HOLDPOSITION:
-                    raise Exception(
-                        "Failed to stop motion, current state is " + xbot.xbot_state)
-                elif xbot.xbot_state == pmc_types.XBOTSTATE.XBOT_DISABLED:
-                    raise Exception(
-                        "Error cannor levelate xbot, current state is " + xbot.xbot_state)
-                else:
-                    raise Exception(
-                        "Error unexpected xbot state, current state is " + xbot.xbot_state)
-            if areXbotsinTransitionState == False and areXbotsinTransitionState == False:
-                if attemptedLevitation == False:
-                    bot.levitation_command(
-                        0, pmc_types.LEVITATEOPTIONS.LEVITATE)
-                    attemptedLevitation = True
-                else:
-                    raise Exception("Attempted to levitate xBots but failed")
-        return True
-    except Exception as e:
-        print(e)
-        return False
-
-
-def gain_mastership():
+    # Connect to the PMC
+    if not _sys.connect_to_specific_pmc(ip):
+        raise Exception("Could not connect to PMC")
+    # Gain mastership
     if not _sys.is_master():
-        rtn = _sys.gain_mastership()
-        print(pmc_types.PMCRTN.ALLOK)
-        if rtn != pmc_types.PMCRTN.ALLOK:
-            raise Exception("Could not gain mastership")
+        _sys.gain_mastership()
+    # Get PMC status
+    pmc_status = _sys.get_pmc_status()
+    if pmc_status != pmc_types.PMCSTATUS.PMC_FULLCTRL and pmc_status != pmc_types.PMCSTATUS.PMC_INTELLIGENTCTRL:
+        isPMCInOperation = False
+        attemtedActivation = False
+        while isPMCInOperation == False:
+            pmc_status = _sys.get_pmc_status()
+            # PMC is in transition state
+            if pmc_status == pmc_types.PMCSTATUS.PMC_ACTIVATING or pmc_status == pmc_types.PMCSTATUS.PMC_BOOTING or pmc_status == pmc_types.PMCSTATUS.PMC_DEACTIVATING or pmc_status == pmc_types.PMCSTATUS.PMC_ERRORHANDLING:
+                isPMCInOperation = False
+                time.sleep(1)
+            # PMC is in stable state but not operational
+            elif pmc_status == pmc_types.PMCSTATUS.PMC_ERROR or pmc_status == pmc_types.PMCSTATUS.PMC_INACTIVE:
+                isPMCInOperation = False
+                if attemtedActivation == False:
+                    attemtedActivation = True
+                    # no need to catch the possible exception as we want to quit anyway in that case so we catch it with the big try catch block
+                    bot.activate_xbots()
+                else:
+                    raise Exception(
+                        "Attempted to activate xbots but failed")
+            # PMC is now operational
+            elif pmc_status == pmc_types.PMCSTATUS.PMC_FULLCTRL or pmc_status == pmc_types.PMCSTATUS.PMC_INTELLIGENTCTRL:
+                isPMCInOperation = True
+            else:
+                raise Exception("Unexpected PMC status")
+    # Check configuration
+    # TODO
+    # Check xbot ammount
+    # will throw an exception if PmcRtn is not ALLOK
+    xbotIDs: pmc_types.XBotIDs = bot.get_xbot_ids()
+    if expected_xbot_count > 0:
+        if len(xbotIDs.xbot_ids_array) != expected_xbot_count:
+            raise Exception("Incorrect amount of xBots")
+    # stop motions
+    bot.stop_motion(0)
+    # check xbot state and levitate
+    areXbotsLevitated = False
+    attemptedLevitation = False
+    areXbotsinTransitionState = False
+    while areXbotsLevitated == False:
+        areXbotsLevitated = True
+        areXbotsinTransitionState = False
+        for xbotID in xbotIDs.xbot_ids_array:
+            xbot = bot.get_xbot_status(xbotID)
+            if xbot.xbot_state == pmc_types.XBOTSTATE.XBOT_LANDED:
+                areXbotsLevitated = False
+            elif xbot.xbot_state == pmc_types.XBOTSTATE.XBOT_STOPPING or xbot.xbot_state == pmc_types.XBOTSTATE.XBOT_DISCOVERING or xbot.xbot_state == pmc_types.XBOTSTATE.XBOT_MOTION:
+                areXbotsLevitated = False
+                areXbotsinTransitionState = True
+            elif xbot.xbot_state == pmc_types.XBOTSTATE.XBOT_IDLE or xbot.xbot_state == pmc_types.XBOTSTATE.XBOT_STOPPED:
+                pass
+            elif xbot.xbot_state == pmc_types.XBOTSTATE.XBOT_WAIT or xbot.xbot_state == pmc_types.XBOTSTATE.XBOT_OBSTACLE_DETECTED or xbot.xbot_state == pmc_types.XBOTSTATE.XBOT_HOLDPOSITION:
+                raise Exception(
+                    "Failed to stop motion, current state is " + xbot.xbot_state)
+            elif xbot.xbot_state == pmc_types.XBOTSTATE.XBOT_DISABLED:
+                raise Exception(
+                    "Error cannor levelate xbot, current state is " + xbot.xbot_state)
+            else:
+                raise Exception(
+                    "Error unexpected xbot state, current state is " + xbot.xbot_state)
+        if areXbotsLevitated == False and areXbotsinTransitionState == False:
+            if attemptedLevitation == False:
+                bot.levitation_command(
+                    0, pmc_types.LEVITATEOPTIONS.LEVITATE)
+                attemptedLevitation = True
+            else:
+                raise Exception("Attempted to levitate xBots but failed")
 
 
-def wait_for_full_control(timeout=60):
-    max_time = time.time() + timeout
-    while _sys.get_pmc_status() != pmc_types.PMCSTATUS.PMC_FULLCTRL:
-        time.sleep(0.5)
-        if time.time() > max_time:
-            raise TimeoutError("PMC Activation timeout")
+def wait_untiL_xbots_idle(xBotIDs: List[int]):
+    areXbotsIdle = False
+    if _sys.get_pmc_status() == pmc_types.PMCSTATUS.PMC_FULLCTRL:
+        while True:
+            areXbotsIdle = True
+            for xbotID in xBotIDs:
+                xbotState: pmc_types.XBOTSTATE = bot.get_xbot_status(
+                    xbotID).xbot_state
+                if xbotState == pmc_types.XBOTSTATE.XBOT_IDLE:
+                    pass  # Continue with the next xbot
+                elif xbotState == pmc_types.XBOTSTATE.XBOT_STOPPING or xbotState == pmc_types.XBOTSTATE.XBOT_MOTION or xbotState == pmc_types.XBOTSTATE.XBOT_WAIT or xbotState == pmc_types.XBOTSTATE.XBOT_HOLDPOSITION or xbotState == pmc_types.XBOTSTATE.XBOT_OBSTACLE_DETECTED:
+                    areXbotsIdle = False
+                else:
+                    raise Exception("Unexpected xbot state" + str(xbotState))
+                if areXbotsIdle == False:
+                    time.sleep(0.5)
+            if areXbotsIdle == True:
+                break
+    else:
+        raise Exception("PMC is not in full control")
 
 
-class xBot:
-    def __init__(self, xBotInfo: pmc_types.XBotInfo):
-        self.xbot_id: int = xBotInfo.xbot_id
-        self.x_pos: float = xBotInfo.x_pos
-        self.y_pos: float = xBotInfo.y_pos
-        self.z_pos: float = xBotInfo.z_pos
-        self.rx_pos: float = xBotInfo.rx_pos
-        self.ry_pos: float = xBotInfo.ry_pos
-        self.rz_pos: float = xBotInfo.rz_pos
-        self.xbot_state: pmc_types.XBOTSTATE = xBotInfo.xbot_state
-        self.xbot_type: pmc_types.XBOTTYPE = xBotInfo.xbot_type
-
-    def linear_motion_si(self,
-                         x: float,
-                         y: float,
-                         final_speed: float,
-                         max_speed: float,
-                         max_accel: float,
-                         cmd_label: int = 1,
-                         position_mode: pmc_types.POSITIONMODE = pmc_types.POSITIONMODE.ABSOLUTE,
-                         path_type: pmc_types.LINEARPATHTYPE = pmc_types.LINEARPATHTYPE.DIRECT):
-        bot.linear_motion_si(
-            cmd_label,
-            self.xbot_id,
-            position_mode,
-            path_type,
-            x,
-            y,
-            final_speed,
-            max_speed,
-            max_accel
-        )
-
-    def get_xbot_status(self, feedback_type: pmc_types.FEEDBACKOPTION = None):
-        return bot.get_xbot_status(self.xbot_id, feedback_type)
+def move_to_pos(xbotID: int,  pos: Tuple[float, float], positionMode=pmc_types.POSITIONMODE.ABSOLUTE, linearPathType=pmc_types.LINEARPATHTYPE.DIRECT, final_vel=0.0, max_vel=10.0, max_acc=2.0):
+    wait_untiL_xbots_idle([xbotID])
+    cmd_label = randint(1, 65535)
+    bot.linear_motion_si(cmd_label, xbotID, positionMode,
+                         linearPathType, pos[0], pos[1], final_vel, max_vel, max_acc)
+    return cmd_label
 
 
-def get_xbot_positions():
-    xbot_list = bot.get_all_xbot_info(
-        pmc_types.ALLXBOTSFEEDBACKOPTION.POSITION)
-    return [xBot(xBotInfo) for xBotInfo in xbot_list]
+# def get_xbot_positions():
+#     xbot_list = bot.get_all_xbot_info(
+#         pmc_types.ALLXBOTSFEEDBACKOPTION.POSITION)
+#     return [xBot(xBotInfo) for xBotInfo in xbot_list]
 
 
 def main():
@@ -248,5 +249,4 @@ def main():
 
 
 if __name__ == "__main__":
-    # perhaps ap2030@192.169.0.104
     main()
