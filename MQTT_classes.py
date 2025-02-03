@@ -47,8 +47,7 @@ class TopicPubSub:
         msg = json.loads(message.payload.decode("utf-8"))
         validate(instance=msg, schema=self.sub_schema)
         if self.callback_method is not None:
-            self.callback_method(self, client, msg, self.pubtopic,
-                                 self.subtopic, message.properties)
+            self.callback_method(self, client, msg, message.properties)
         print("Received message: " + str(msg))
 
 

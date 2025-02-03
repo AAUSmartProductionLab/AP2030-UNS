@@ -11,10 +11,10 @@ BASE_TOPIC = "IMATile/PMC"
 def main():
     pmcProxy = PMCProxy(BROKER_ADDRESS, BROKER_PORT,
                         "MQTTPythonClient", [
-                            TopicPubSub(BASE_TOPIC + "/connect", 0,
-                                        "connection.schema.json", "response_state.schema.json"),
-                            TopicPubSub(BASE_TOPIC + "/moveToPosition",
-                                        0, "moveToPosition.schema.json", "response_state.schema.json")
+                            TopicPubSub(BASE_TOPIC, 0,
+                                        "schemas/connection.schema.json", "schemas/response_state.schema.json"),
+                            TopicPubSub(BASE_TOPIC,
+                                        0, "schemas/moveToPosition.schema.json", "schemas/response_state.schema.json")
                         ]
                         )
     run = True
@@ -32,30 +32,37 @@ def connect_to_simulated_PMC(client):
     request["target_state"] = "connected"
     request["xbot_no"] = 3
     client.pubsubs[0].publish(request, client)
-    move_to_loading(client)
-    move_to_filling(client)
-    move_to_unloading(client)
-    move_to_loading(client)
+    move_to_loading(client, 1)
+    move_to_filling(client, 2)
+    move_to_unloading(client, 3)
+
+    move_to_filling(client, 1)
+    move_to_unloading(client, 2)
+    move_to_loading(client, 3)
+
+    move_to_unloading(client, 1)
+    move_to_loading(client, 2)
+    move_to_filling(client, 3)
 
 
-def move_to_filling(client):
+def move_to_filling(client, id):
     request = {}
     request["target_pos"] = "filling"
-    request["xbot_id"] = 1
+    request["xbot_id"] = id
     client.pubsubs[1].publish(request, client)
 
 
-def move_to_loading(client):
+def move_to_loading(client, id):
     request = {}
     request["target_pos"] = "loading"
-    request["xbot_id"] = 1
+    request["xbot_id"] = id
     client.pubsubs[1].publish(request, client)
 
 
-def move_to_unloading(client):
+def move_to_unloading(client, id):
     request = {}
     request["target_pos"] = "unloading"
-    request["xbot_id"] = 1
+    request["xbot_id"] = id
     client.pubsubs[1].publish(request, client)
 
 

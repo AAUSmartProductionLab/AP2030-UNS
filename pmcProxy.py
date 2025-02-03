@@ -26,8 +26,8 @@ def connection_callback(self, client, message, properties):
             pass
         response["state"] = "successful"
     except Exception as e:
-        print(e)
         response["state"] = "failure"
+        response["error_code"] = str(e)
 
     # answer on the same main topic and the configured pubtopic
     self.publish(response, client, properties)
@@ -51,8 +51,8 @@ def move_to_position_callback(self, client, message, properties):
         response["state"] = "successful"
 
     except Exception as e:
-        print(e)
         response["state"] = "failure"
+        response["error_code"] = str(e)
 
     # answer on the same main topic and the configured pubtopic
     self.publish(response, client, properties)
@@ -160,11 +160,11 @@ def wait_untiL_xbots_idle(xBotIDs: List[int]):
 def pmc_move_to_pos(xbotID: int,  pos: Tuple[float, float], positionMode=pmc_types.POSITIONMODE.ABSOLUTE, linearPathType=pmc_types.LINEARPATHTYPE.DIRECT, final_vel=0.0, max_vel=10.0, max_acc=2.0):
     wait_untiL_xbots_idle([xbotID])
     cmd_label = randint(1, 65535)
-    bot.linear_motion_si(cmd_label, xbotID, positionMode,
-                         linearPathType, pos[0], pos[1], final_vel, max_vel, max_acc)
+    # bot.linear_motion_si(cmd_label, xbotID, positionMode,
+    #                      linearPathType, pos[0], pos[1], final_vel, max_vel, max_acc)
 
-    # bot.auto_driving_motion_si(1, pmc_types.ASYNCOPTIONS.MOVEALL, [
-    #                            xbotID], [pos[0]], [pos[1]])
+    bot.auto_driving_motion_si(1, pmc_types.ASYNCOPTIONS.MOVEALL, [
+                               xbotID], [pos[0]], [pos[1]])
     return cmd_label
 
 
@@ -172,10 +172,10 @@ def main():
     # runs the proxy in a blocking way forever
     pmcProxy = PMCProxy(BROKER_ADDRESS, BROKER_PORT,
                         "PlanarMotorProxy", [
-                            TopicPubSub(BASE_TOPIC + "/connect", 0, "response_state.schema.json",
-                                        "connection.schema.json",  connection_callback),
-                            TopicPubSub(BASE_TOPIC + "/moveToPosition",
-                                        0, "response_state.schema.json", "moveToPosition.schema.json",  move_to_position_callback)
+                            TopicPubSub(BASE_TOPIC, 0, "schemas/response_state.schema.json",
+                                        "schemas/connection.schema.json",  connection_callback),
+                            TopicPubSub(BASE_TOPIC, 0, "schemas/response_state.schema.json",
+                                        "schemas/moveToPosition.schema.json",  move_to_position_callback)
                         ]
                         )
     pmcProxy.loop_forever()
