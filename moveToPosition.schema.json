@@ -1,8 +1,7 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "title": "Move to Position Request",
-    "subtopic": "/request",
-    "responsesubtopic": "/response",
+    "subtopic": "/moveToPosition",
     "type": "object",
     "properties": {
         "xbot_id": {

@@ -1,7 +1,4 @@
-import paho.mqtt.client as mqtt
-from paho.mqtt.enums import MQTTProtocolVersion
-from paho.mqtt.properties import Properties, PacketTypes
-
+from MQTT_classes import PMCProxy, TopicPubSub
 from pmclib import system_commands as _sys   # PMC System related commands
 from pmclib import xbot_commands as bot     # PMC Mover related commands
 from pmclib import pmc_types                # PMC API Types
@@ -10,112 +7,56 @@ import time
 from typing import List, Tuple
 from random import randint
 import json
-from jsonschema import validate
 
-
+BROKER_ADDRESS = "192.168.0.104"
+BROKER_PORT = 1883
 BASE_TOPIC = "IMATile/PMC"
-MQTT_TOPICS = [(BASE_TOPIC + "/connect", 0),
-               (BASE_TOPIC + "/moveToPosition", 0)]
-
 
 FILL_POS = (0.480, 0.660)
 LOADING_POS = (0.060, 0.120)
 UNLOADING_POS = (0.900, 0.120)
 
 
-class PlanarMotorProxy(mqtt.Client):
-    def __init__(self, address: str, port: int, id: str):
-        super().__init__(
-            callback_api_version=mqtt.CallbackAPIVersion.VERSION2,
-            client_id=id,
-            protocol=MQTTProtocolVersion.MQTTv5
-        )
-        self.address = address
-        self.port = port
-        self.on_connect = self.on_connect_callback
-        # self.on_message = self.on_message_callback
-        # self.on_subscribe = self.on_subscribe_callback
-        # self.on_publish = self.on_publish_callback
-        # self.on_unsubscribe = self.on_unsubscribe_callback
-        self.connect(self.address, self.port)
+def connection_callback(client, message, pubtopic, subtopic, properties):
+    response = {}
+    print("received request")
+    try:
+        if message["target_state"] == "connected":
+            pmc_startup(message["address"], message.get("xbot_no", 0))
+        else:
+            pass
+        response["state"] = "successful"
+    except Exception as e:
+        print(e)
+        response["state"] = "failure"
 
-        self.loop_forever()
+    client.publish(pubtopic, json.dumps(response),
+                   properties=properties)
 
-    def on_connect_callback(self, client, userdata, flags, rc, properties):
-        self.message_callback_add(
-            BASE_TOPIC + "/connect", self.on_connect_request_callback)
-        self.message_callback_add(
-            BASE_TOPIC + "/moveToPosition", self.on_moveToPosition_callback)
-        self.subscribe(MQTT_TOPICS)
-        print("Connected with result code "+str(rc))
 
-    # def on_subscribe_callback(self, client, userdata, mid, reason_code_list, properties):
-    #     # Since we subscribed only for a single channel, reason_code_list contains
-    #     # a single entry
-    #     if reason_code_list[0].is_failure:
-    #         print(f"Broker rejected you subscription: {reason_code_list[0]}")
-    #     else:
-    #         print(
-    #             f"Broker granted the following QoS: {reason_code_list[0].value}")
-
-    # def on_unsubscribe_callback(self, client, userdata, mid, reason_code_list, properties):
-    #     # Be careful, the reason_code_list is only present in MQTTv5.
-    #     # In MQTTv3 it will always be empty
-    #     if len(reason_code_list) == 0 or not reason_code_list[0].is_failure:
-    #         print("unsubscribe succeeded (if SUBACK is received in MQTTv3 it success)")
-    #     else:
-    #         print(f"Broker replied with failure: {reason_code_list[0]}")
-    #     client.disconnect()
-
-    def on_connect_request_callback(self, client, userdata, message):
-        response = {}
-        try:
-            msg = json.loads(message.payload.decode("utf-8"))
-            validate(instance=msg, schema=load_schema(
-                "connection.schema.json"))
-            if msg["target_state"] == "connected":
-                pmc_startup(msg["address"], msg.get("xbot_no", 0))
-            else:
-                pass
-            response["state"] = "successful"
-        except Exception as e:
-            print(e)
-            response["state"] = "failure"
-
-        self.publish(message.properties.ResponseTopic, json.dumps(response),
-                     properties=message.properties)
-
-    def on_moveToPosition_callback(self, client, userdata, message):
-        response = {}
-        try:
-            msg = json.loads(message.payload.decode("utf-8"))
-            validate(instance=msg, schema=load_schema(
-                "moveToPosition.schema.json"))
-            if msg["target_pos"] == "filling":
-                move_to_pos(msg["xbot_id"], FILL_POS)
-            elif msg["target_pos"] == "loading":
-                move_to_pos(msg["xbot_id"], LOADING_POS)
-            elif msg["target_pos"] == "unloading":
-                move_to_pos(msg["xbot_id"], UNLOADING_POS,
+def move_to_position_callback(client, message, pubtopic, subtopic, properties):
+    response = {}
+    try:
+        if message["target_pos"] == "filling":
+            pmc_move_to_pos(message["xbot_id"], FILL_POS)
+        elif message["target_pos"] == "loading":
+            pmc_move_to_pos(message["xbot_id"], LOADING_POS)
+        elif message["target_pos"] == "unloading":
+            pmc_move_to_pos(message["xbot_id"], UNLOADING_POS,
                             linearPathType=pmc_types.LINEARPATHTYPE.XTHENY)
-            else:
-                pass
-            wait_untiL_xbots_idle([msg["xbot_id"]])
-            # TODO check if the xbot is in the correct position
+        else:
+            pass
+        wait_untiL_xbots_idle([message["xbot_id"]])
+        # TODO check if the xbot is in the correct position
 
-            response["state"] = "successful"
+        response["state"] = "successful"
 
-        except Exception as e:
-            print(e)
-            response["state"] = "failure"
+    except Exception as e:
+        print(e)
+        response["state"] = "failure"
 
-        self.publish(message.properties.ResponseTopic, json.dumps(response),
-                     properties=message.properties)
-
-
-def load_schema(schema_file):
-    with open(schema_file, 'r') as file:
-        return json.load(file)
+    client.publish(pubtopic, json.dumps(response),
+                   properties=properties)
 
 
 def pmc_startup(ip: str = "127.0.0.1", expected_xbot_count: int = 0):
@@ -217,36 +158,28 @@ def wait_untiL_xbots_idle(xBotIDs: List[int]):
         raise Exception("PMC is not in full control")
 
 
-def move_to_pos(xbotID: int,  pos: Tuple[float, float], positionMode=pmc_types.POSITIONMODE.ABSOLUTE, linearPathType=pmc_types.LINEARPATHTYPE.DIRECT, final_vel=0.0, max_vel=10.0, max_acc=2.0):
+def pmc_move_to_pos(xbotID: int,  pos: Tuple[float, float], positionMode=pmc_types.POSITIONMODE.ABSOLUTE, linearPathType=pmc_types.LINEARPATHTYPE.DIRECT, final_vel=0.0, max_vel=10.0, max_acc=2.0):
     wait_untiL_xbots_idle([xbotID])
     cmd_label = randint(1, 65535)
     bot.linear_motion_si(cmd_label, xbotID, positionMode,
                          linearPathType, pos[0], pos[1], final_vel, max_vel, max_acc)
+
+    # bot.auto_driving_motion_si(1, pmc_types.ASYNCOPTIONS.MOVEALL, [
+    #                            xbotID], [pos[0]], [pos[1]])
     return cmd_label
-
-
-# def get_xbot_positions():
-#     xbot_list = bot.get_all_xbot_info(
-#         pmc_types.ALLXBOTSFEEDBACKOPTION.POSITION)
-#     return [xBot(xBotInfo) for xBotInfo in xbot_list]
 
 
 def main():
     # runs the proxy in a blocking way forever
-    pmProxy = PlanarMotorProxy("192.168.0.104", 1883, "PlanarMotorProxy")
-
-    # connect_to_pmc(ip="127.0.0.1")
-    # gain_mastership()
-    # bot.activate_xbots()
-    # wait_for_full_control()
-    # xbots: list[xBot] = get_xbot_positions()
-    # xbots[0].linear_motion_si(0.1, 0.1, 0.0, 10.0, 2.0)
-    # xbots[0].linear_motion_si(0.15, 0.15, 0.0, 10.0, 2.0)
-    # print(xbots[0].get_xbot_status(pmc_types.FEEDBACKOPTION.FORCE))
-    # xbots = get_xbot_positions()
-    # print(xbots[0].x_pos)
-    # time.sleep(60)
-    # _sys.release_mastership()
+    pmcProxy = PMCProxy(BROKER_ADDRESS, BROKER_PORT,
+                        "PlanarMotorProxy", [
+                            TopicPubSub(BASE_TOPIC + "/connect", 0, "response_state.schema.json",
+                                        "connection.schema.json",  connection_callback),
+                            TopicPubSub(BASE_TOPIC + "/moveToPosition",
+                                        0, "response_state.schema.json", "moveToPosition.schema.json",  move_to_position_callback)
+                        ]
+                        )
+    pmcProxy.loop_forever()
 
 
 if __name__ == "__main__":
