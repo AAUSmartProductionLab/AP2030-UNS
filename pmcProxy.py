@@ -1,4 +1,5 @@
 from MQTT_classes import PMCProxy, TopicPubSub
+
 from pmclib import system_commands as _sys   # PMC System related commands
 from pmclib import xbot_commands as bot     # PMC Mover related commands
 from pmclib import pmc_types                # PMC API Types
@@ -6,7 +7,6 @@ from pmclib import pmc_types                # PMC API Types
 import time
 from typing import List, Tuple
 from random import randint
-import json
 
 BROKER_ADDRESS = "192.168.0.104"
 BROKER_PORT = 1883
@@ -17,9 +17,8 @@ LOADING_POS = (0.060, 0.120)
 UNLOADING_POS = (0.900, 0.120)
 
 
-def connection_callback(client, message, pubtopic, subtopic, properties):
+def connection_callback(self, client, message, properties):
     response = {}
-    print("received request")
     try:
         if message["target_state"] == "connected":
             pmc_startup(message["address"], message.get("xbot_no", 0))
@@ -30,11 +29,11 @@ def connection_callback(client, message, pubtopic, subtopic, properties):
         print(e)
         response["state"] = "failure"
 
-    client.publish(pubtopic, json.dumps(response),
-                   properties=properties)
+    # answer on the same main topic and the configured pubtopic
+    self.publish(response, client, properties)
 
 
-def move_to_position_callback(client, message, pubtopic, subtopic, properties):
+def move_to_position_callback(self, client, message, properties):
     response = {}
     try:
         if message["target_pos"] == "filling":
@@ -55,8 +54,8 @@ def move_to_position_callback(client, message, pubtopic, subtopic, properties):
         print(e)
         response["state"] = "failure"
 
-    client.publish(pubtopic, json.dumps(response),
-                   properties=properties)
+    # answer on the same main topic and the configured pubtopic
+    self.publish(response, client, properties)
 
 
 def pmc_startup(ip: str = "127.0.0.1", expected_xbot_count: int = 0):
