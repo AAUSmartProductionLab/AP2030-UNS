@@ -1,4 +1,4 @@
-from MQTT_classes import PMCProxy, TopicResponse
+from MQTT_classes import Proxy, Response
 
 from pmclib import system_commands as _sys   # PMC System related commands
 from pmclib import xbot_commands as bot     # PMC Mover related commands
@@ -179,14 +179,14 @@ def pmc_move_to_pos(xbotID: int,  pos: Tuple[float, float], positionMode=pmc_typ
 
 def main():
     # runs the proxy in a blocking way forever
-    pmcProxy = PMCProxy(BROKER_ADDRESS, BROKER_PORT,
-                        "PlanarMotorProxy", [
-                            TopicResponse(BASE_TOPIC, "schemas/connection.schema.json",
-                                          "schemas/response_state.schema.json", 2,  connection_callback),
-                            TopicResponse(BASE_TOPIC, "schemas/moveToPosition.schema.json",
-                                          "schemas/response_state.schema.json", 2,  move_to_position_callback)
-                        ]
-                        )
+    pmcProxy = Proxy(BROKER_ADDRESS, BROKER_PORT,
+                     "PlanarMotorProxy", [
+                         Response(BASE_TOPIC, "schemas/response_state.schema.json", "schemas/connection.schema.json",
+                                  2,  connection_callback),
+                         Response(BASE_TOPIC, "schemas/response_state.schema.json", "schemas/moveToPosition.schema.json",
+                                  2,  move_to_position_callback)
+                     ]
+                     )
     pmcProxy.loop_forever()
 
 

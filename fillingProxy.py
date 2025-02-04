@@ -1,4 +1,4 @@
-from MQTT_classes import PMCProxy, TopicResponse
+from MQTT_classes import Proxy, Response
 
 import time
 
@@ -11,18 +11,17 @@ BASE_TOPIC = "IMATile/Fill"
 
 
 def main():
-    fillProxy = PMCProxy(BROKER_ADDRESS, BROKER_PORT,
-                         "FillProxy", [
-                             TopicResponse(
-                                 BASE_TOPIC, "schemas/dispense.schema.json", "schemas/response_state.schema.json", 2,  dispense_callback),
-                             TopicResponse(
-                                 BASE_TOPIC, "schemas/weigh.schema.json", "schemas/response_state.schema.json", 2,  weigh_callback)
-                         ]
-                         )
+    fillProxy = Proxy(BROKER_ADDRESS, BROKER_PORT,
+                      "FillProxy", [
+                          Response(
+                              BASE_TOPIC,  "schemas/response_state.schema.json", "schemas/dispense.schema.json", 2,  dispense_callback),
+                          Response(
+                              BASE_TOPIC,  "schemas/response_state.schema.json", "schemas/weigh.schema.json", 2,  weigh_callback)
+                      ])
     fillProxy.loop_forever()
 
 
-def dispense_callback(pubsub: TopicResponse, client, message, properties):
+def dispense_callback(pubsub: Response, client, message, properties):
     response = {}
     response["state"] = "running"
     pubsub.publish(response, client, properties)
@@ -46,7 +45,7 @@ def dispense_callback(pubsub: TopicResponse, client, message, properties):
     pubsub.publish(response, client, properties)
 
 
-def weigh_callback(pubsub: TopicResponse, client, message, properties):
+def weigh_callback(pubsub: Response, client, message, properties):
     response = {}
     response["state"] = "running"
     pubsub.publish(response, client, properties)
