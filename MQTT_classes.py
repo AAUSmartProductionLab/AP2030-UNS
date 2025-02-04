@@ -12,14 +12,19 @@ from utils import load_schema
 
 class Topic:
     # A class for publishing on and subscribing to a topic including json validation before publishing and after receiving a message
-    def __init__(self, topic: str, publish_schema_path: str = None, subscribe_schema_path: str = None, qos: int = 0, callback_method: callable = None):
+    def __init__(self, topic: str = "", publish_schema_path: str = None, subscribe_schema_path: str = None, qos: int = 0, callback_method: callable = None):
 
         self.qos: int = qos
         self.pub_schema = load_schema(publish_schema_path)
         self.sub_schema = load_schema(subscribe_schema_path)
 
-        self.pubtopic: str = topic + self.pub_schema["subtopic"]
-        self.subtopic: str = topic + self.sub_schema["subtopic"]
+        # The suptopic is inspired by VDA5050
+        self.pubtopic: str = topic + \
+            self.pub_schema.get(
+                "subtopic", "") if self.pub_schema != None else topic
+        self.subtopic: str = topic + \
+            self.sub_schema.get(
+                "subtopic", "") if self.sub_schema != None else topic
 
         self.callback_method: callable = callback_method
 
@@ -27,11 +32,11 @@ class Topic:
         self.publish_properties.CorrelationData = str(
             randint(1000, 9999)).encode()
 
-    def publish(self, request, client):
+    def publish(self, message, client):
         if self.pub_schema != None:
-            validate(instance=request, schema=self.pub_schema)
+            validate(instance=message, schema=self.pub_schema)
             if self.pubtopic != None and self.pubtopic != "":
-                client.publish(self.pubtopic, json.dumps(request),
+                client.publish(self.pubtopic, json.dumps(message),
                                self.qos, properties=self.publish_properties)
 
     def registerCallback(self, client):
@@ -104,42 +109,3 @@ class Proxy(mqtt.Client):
 
     def on_disconnect_callback(self, client, userdata, flags, rc, properties):
         print(f"Disconnected with result code {rc}")
-
-
-# class TopicPubSub:
-#     # A generic class that handles the publishing and subscribing to a topic including json validation
-#     def __init__(self, topic: str, qos: int = 0, publish_schema_path: str = None, subscribe_schema_path: str = None, callback_method: callable = None):
-
-#         self.qos: int = qos
-#         self.pub_schema = load_schema(publish_schema_path)
-#         self.sub_schema = load_schema(subscribe_schema_path)
-
-#         self.pubtopic: str = topic + \
-#             self.pub_schema["subtopic"] if self.pub_schema != None else None
-#         self.subtopic: str = topic + \
-#             self.sub_schema["subtopic"] if self.sub_schema != None else None
-#         self.callback_method: callable = callback_method
-
-#     def publish(self, request, client, publish_properties=None):
-#         if publish_properties == None:
-#             publish_properties = Properties(PacketTypes.PUBLISH)
-#             # Random 4digit correlation data so requests can be mapped to responses
-#             publish_properties.CorrelationData = str(
-#                 randint(1000, 9999)).encode()
-#         client.publish(self.pubtopic, json.dumps(request),
-#                        self.qos, properties=publish_properties)
-
-#     def registerCallback(self, client):
-#         if self.sub_schema != None:
-#             client.message_callback_add(self.subtopic, self.callback)
-
-#     def subscribe(self, client):
-#         if self.sub_schema != None:
-#             client.subscribe(self.subtopic, self.qos)
-
-#     def callback(self, client, userdata, message):
-#         msg = json.loads(message.payload.decode("utf-8"))
-#         validate(instance=msg, schema=self.sub_schema)
-#         if self.callback_method is not None:
-#             self.callback_method(self, client, msg, message.properties)
-#         print("Received message: " + str(msg))
