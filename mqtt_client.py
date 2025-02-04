@@ -2,7 +2,7 @@ from MQTT_classes import PMCProxy, TopicPubSub
 
 BROKER_ADDRESS = "192.168.0.104"
 BROKER_PORT = 1883
-BASE_TOPIC = "IMATile/PMC"
+BASE_TOPIC = "IMATile"
 
 
 # A MQTT client that requests things from the PMC proxy. To be replaced with behavior trees down the line
@@ -11,10 +11,14 @@ BASE_TOPIC = "IMATile/PMC"
 def main():
     pmcProxy = PMCProxy(BROKER_ADDRESS, BROKER_PORT,
                         "MQTTPythonClient", [
-                            TopicPubSub(BASE_TOPIC, 0,
+                            TopicPubSub(BASE_TOPIC+"/PMC", 0,
                                         "schemas/connection.schema.json", "schemas/response_state.schema.json"),
-                            TopicPubSub(BASE_TOPIC,
-                                        0, "schemas/moveToPosition.schema.json", "schemas/response_state.schema.json")
+                            TopicPubSub(BASE_TOPIC+"/PMC",
+                                        0, "schemas/moveToPosition.schema.json", "schemas/response_state.schema.json"),
+                            TopicPubSub(BASE_TOPIC+"/Fill",
+                                        0, "schemas/dispense.schema.json", "schemas/response_state.schema.json"),
+                            TopicPubSub(BASE_TOPIC+"/Fill",
+                                        0, "schemas/weigh.schema.json", "schemas/response_state.schema.json"),
                         ]
                         )
     run = True
@@ -33,16 +37,23 @@ def connect_to_simulated_PMC(client):
     request["xbot_no"] = 3
     client.pubsubs[0].publish(request, client)
     move_to_loading(client, 1)
-    move_to_filling(client, 2)
-    move_to_unloading(client, 3)
-
     move_to_filling(client, 1)
-    move_to_unloading(client, 2)
-    move_to_loading(client, 3)
-
+    weigh(client, "empty")
+    dispense(client, "empty")
+    weigh(client, "full")
     move_to_unloading(client, 1)
-    move_to_loading(client, 2)
-    move_to_filling(client, 3)
+
+
+def dispense(client, state: str):
+    request = {}
+    request["product_state"] = state
+    client.pubsubs[2].publish(request, client)
+
+
+def weigh(client, state: str):
+    request = {}
+    request["product_state"] = state
+    client.pubsubs[3].publish(request, client)
 
 
 def move_to_filling(client, id):

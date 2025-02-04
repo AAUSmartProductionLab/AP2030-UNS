@@ -34,6 +34,7 @@ def connection_callback(self, client, message, properties):
 
 
 def move_to_position_callback(self, client, message, properties):
+    # TODO this should ideally be asynchonous
     response = {}
     try:
         if message["target_pos"] == "filling":

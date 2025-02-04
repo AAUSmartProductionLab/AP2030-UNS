@@ -20,5 +20,5 @@
         }
 
     },
-    "required": ["product_state", "filling_speed", "volume"]
+    "required": ["product_state"]
 }

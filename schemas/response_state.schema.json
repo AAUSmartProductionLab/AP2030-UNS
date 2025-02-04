@@ -47,6 +47,12 @@
         "weight":{
             "type": "number",
             "description": "Weight of the ppm in grams"
+        },
+        "filling_status":
+        {
+            "type": "string",
+            "description": "The filling state of the product",
+            "enum": ["unfilled", "filled", "refilled", "overfilled"]
         }
     },
     "if": {
