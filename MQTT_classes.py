@@ -1,16 +1,13 @@
-from utils import load_schema
-
 from random import randint
-
+from typing import List
+from uuid import uuid4
 import json
 from jsonschema import validate
 
 import paho.mqtt.client as mqtt
 from paho.mqtt.properties import Properties, PacketTypes
 
-
-from typing import List
-import uuid
+from utils import load_schema
 
 
 class TopicResponse:
@@ -51,7 +48,7 @@ class TopicRequest:
     def __init__(self, topic: str, publish_schema_path: str, subscribe_schema_path: str, qos: int = 0, callback_method: callable = None):
 
         self.qos: int = qos
-        self.uid = uuid.uuid4()
+        self.uid = uuid4()
         self.pub_schema = load_schema(publish_schema_path)
         self.sub_schema = load_schema(subscribe_schema_path)
 
