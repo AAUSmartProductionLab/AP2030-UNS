@@ -1,4 +1,4 @@
-from MQTT_classes import PMCProxy, TopicPubSub
+from MQTT_classes import PMCProxy, TopicResponse
 
 from pmclib import system_commands as _sys   # PMC System related commands
 from pmclib import xbot_commands as bot     # PMC Mover related commands
@@ -19,6 +19,10 @@ UNLOADING_POS = (0.900, 0.120)
 
 def connection_callback(self, client, message, properties):
     response = {}
+    response["state"] = "running"
+    self.publish(response, client, properties)
+
+    response = {}
     try:
         if message["target_state"] == "connected":
             pmc_startup(message["address"], message.get("xbot_no", 0))
@@ -35,6 +39,10 @@ def connection_callback(self, client, message, properties):
 
 def move_to_position_callback(self, client, message, properties):
     # TODO this should ideally be asynchonous
+    response = {}
+    response["state"] = "running"
+    self.publish(response, client, properties)
+
     response = {}
     try:
         if message["target_pos"] == "filling":
@@ -173,10 +181,10 @@ def main():
     # runs the proxy in a blocking way forever
     pmcProxy = PMCProxy(BROKER_ADDRESS, BROKER_PORT,
                         "PlanarMotorProxy", [
-                            TopicPubSub(BASE_TOPIC, 0, "schemas/response_state.schema.json",
-                                        "schemas/connection.schema.json",  connection_callback),
-                            TopicPubSub(BASE_TOPIC, 0, "schemas/response_state.schema.json",
-                                        "schemas/moveToPosition.schema.json",  move_to_position_callback)
+                            TopicResponse(BASE_TOPIC, "schemas/connection.schema.json",
+                                          "schemas/response_state.schema.json", 2,  connection_callback),
+                            TopicResponse(BASE_TOPIC, "schemas/moveToPosition.schema.json",
+                                          "schemas/response_state.schema.json", 2,  move_to_position_callback)
                         ]
                         )
     pmcProxy.loop_forever()
