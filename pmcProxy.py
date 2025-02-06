@@ -1,4 +1,4 @@
-from MQTT_classes import Proxy, Response
+from MQTT_classes import Proxy, ResponseAsync
 
 from pmclib import system_commands as _sys   # PMC System related commands
 from pmclib import xbot_commands as bot     # PMC Mover related commands
@@ -7,6 +7,7 @@ from pmclib import pmc_types                # PMC API Types
 import time
 from typing import List, Tuple
 from random import randint
+import threading
 
 BROKER_ADDRESS = "192.168.0.104"
 BROKER_PORT = 1883
@@ -181,10 +182,10 @@ def main():
     # runs the proxy in a blocking way forever
     pmcProxy = Proxy(BROKER_ADDRESS, BROKER_PORT,
                      "PlanarMotorProxy", [
-                         Response(BASE_TOPIC, "schemas/response_state.schema.json", "schemas/connection.schema.json",
-                                  2,  connection_callback),
-                         Response(BASE_TOPIC, "schemas/response_state.schema.json", "schemas/moveToPosition.schema.json",
-                                  2,  move_to_position_callback)
+                         ResponseAsync(BASE_TOPIC, "schemas/response_state.schema.json", "schemas/connection.schema.json",
+                                       2,  connection_callback),
+                         ResponseAsync(BASE_TOPIC, "schemas/response_state.schema.json", "schemas/moveToPosition.schema.json",
+                                       2,  move_to_position_callback)
                      ]
                      )
     pmcProxy.loop_forever()

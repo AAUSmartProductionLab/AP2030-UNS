@@ -8,6 +8,7 @@ import paho.mqtt.client as mqtt
 from paho.mqtt.properties import Properties, PacketTypes
 
 from utils import load_schema
+import threading
 
 
 class Topic:
@@ -53,8 +54,8 @@ class Topic:
             validate(instance=msg, schema=self.sub_schema)
             if self.callback_method is not None:
                 self.callback_method(self, client, msg, message.properties)
-            print("Received response: " + str(msg) +
-                  " on topic" + self.subtopic)
+            print("Received message on topic" +
+                  self.subtopic + ": " + str(msg))
 
 
 class Response(Topic):
@@ -70,6 +71,34 @@ class Response(Topic):
                 # The response is to be published on the ResponseTopic provided with the request
                 client.publish(publish_properties.ResponseTopic, json.dumps(request),
                                self.qos, properties=publish_properties)
+
+
+class ResponseAsync(Topic):
+    # A class handling responding to requests on a topic described in the user property ResponseTopic
+    # The callback is executed in a seperate thread so time.sleep can be used to wait for processes to finish without blocking the paho loop
+    def __init__(self, topic: str,  publish_schema_path: str, subscribe_schema_path: str, qos: int = 0, callback_method: callable = None):
+        super().__init__(topic, publish_schema_path,
+                         subscribe_schema_path, qos, callback_method)
+
+    def publish(self, request, client, publish_properties):
+        if self.pub_schema != None:
+            validate(instance=request, schema=self.pub_schema)
+            if publish_properties.ResponseTopic != None and publish_properties.ResponseTopic != "":
+                # The response is to be published on the ResponseTopic provided with the request
+                client.publish(publish_properties.ResponseTopic, json.dumps(request),
+                               self.qos, properties=publish_properties)
+
+    def callback(self, client, userdata, message):
+        # run callback function in seperate thread
+        if self.sub_schema != None:
+            msg = json.loads(message.payload.decode("utf-8"))
+            validate(instance=msg, schema=self.sub_schema)
+            if self.callback_method is not None:
+                thr = threading.Thread(target=self.callback_method, args=(
+                    self, client, msg, message.properties))
+                thr.start()
+            print("Received message on topic" +
+                  self.subtopic + ": " + str(msg))
 
 
 class Request(Topic):

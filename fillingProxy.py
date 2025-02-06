@@ -1,4 +1,4 @@
-from MQTT_classes import Proxy, Response
+from MQTT_classes import Proxy, Topic, ResponseAsync
 
 import time
 
@@ -13,18 +13,18 @@ BASE_TOPIC = "IMATile/Fill"
 def main():
     fillProxy = Proxy(BROKER_ADDRESS, BROKER_PORT,
                       "FillProxy", [
-                          Response(
+                          ResponseAsync(
                               BASE_TOPIC,  "schemas/response_state.schema.json", "schemas/dispense.schema.json", 2,  dispense_callback),
-                          Response(
+                          ResponseAsync(
                               BASE_TOPIC,  "schemas/response_state.schema.json", "schemas/weigh.schema.json", 2,  weigh_callback)
                       ])
     fillProxy.loop_forever()
 
 
-def dispense_callback(pubsub: Response, client, message, properties):
+def dispense_callback(topic: Topic, client, message, properties):
     response = {}
     response["state"] = "running"
-    pubsub.publish(response, client, properties)
+    topic.publish(response, client, properties)
     try:
         duration = 0
         if message["product_state"] == "empty":
@@ -33,24 +33,26 @@ def dispense_callback(pubsub: Response, client, message, properties):
             duration = 3
         else:
             duration = 1
-        time.sleep(duration)
         response["state"] = "successful"
         response["filling_status"] = "filled"
+        time.sleep(duration)
+        topic.publish(response, client, properties)
     # since the process is asynchronos it should return running once it runs
 
     except Exception as e:
         response["state"] = "failure"
         response["error_code"] = str(e)
+        topic.publish(response, client, properties)
     # answer on the same main topic and the configured pubtopic
-    pubsub.publish(response, client, properties)
 
 
-def weigh_callback(pubsub: Response, client, message, properties):
+def weigh_callback(topic: Topic, client, message, properties):
     response = {}
     response["state"] = "running"
-    pubsub.publish(response, client, properties)
+    topic.publish(response, client, properties)
     try:
-        time.sleep(2)
+
+        duration = 2
 
         if message["product_state"] == "empty":
             weight = 0.0
@@ -60,14 +62,15 @@ def weigh_callback(pubsub: Response, client, message, properties):
             weight = 3.0
         response["state"] = "successful"
         response["weight"] = weight
+        time.sleep(duration)
+        topic.publish(response, client, properties)
     # since the process is asynchronos it should return running once it runs
 
     except Exception as e:
         response["state"] = "failure"
         response["error_code"] = str(e)
-
-    # answer on the same main topic and the configured pubtopic
-    pubsub.publish(response, client, properties)
+        duration = 0
+        topic.publish(response, client, properties)
 
 
 if __name__ == "__main__":
