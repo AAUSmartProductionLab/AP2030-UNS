@@ -1,0 +1,24 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Connection request",
+    "subtopic": "/connection",
+    "type": "object",
+    "properties": {
+        "address": {
+            "type": "string",
+            "description": "IP address of the PMC"
+        },
+        "target_state": {
+            "type": "string",
+            "enum": ["connected", "disconnected"],
+            "description": "Desired state of the connection"
+        },
+        "xbot_no": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 64,
+            "description": "Optional xBot number"
+        }
+    },
+    "required": ["address", "target_state"]
+}

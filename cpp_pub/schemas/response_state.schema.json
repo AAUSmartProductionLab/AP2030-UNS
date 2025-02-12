@@ -1,0 +1,67 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Response state",
+    "subtopic": "/response",
+    "description": "JSON Schema for a response as requested by the structure of behavior trees. The topic to respond on should be defined in the schema of the request.",
+    "type": "object",
+    "properties": {
+        "state": {
+            "type": "string",
+            "description": "The state of a request, when failure error_code must be supplied",
+            "enum": ["running", "successful", "failure"]
+        },
+        "error_code": {
+            "type": "string"
+        },
+        "pose": {
+            "type": "object",
+            "description": "Position coordinates of the entity",
+            "properties": {
+                "x": {
+                    "type": "number",
+                    "description": "X coordinate"
+                },
+                "y": {
+                    "type": "number",
+                    "description": "Y coordinate"
+                },
+                "z": {
+                    "type": "number",
+                    "description": "Z coordinate (optional)"
+                },
+                "rx": {
+                    "type": "number",
+                    "description": "Z coordinate (optional)"
+                },
+                "ry": {
+                    "type": "number",
+                    "description": "Z coordinate (optional)"
+                },
+                "rz": {
+                    "type": "number",
+                    "description": "Z coordinate (optional)"
+                }
+            },
+            "required": ["x", "y"]
+        },
+        "weight":{
+            "type": "number",
+            "description": "Weight of the ppm in grams"
+        },
+        "filling_status":
+        {
+            "type": "string",
+            "description": "The filling state of the product",
+            "enum": ["unfilled", "filled", "refilled", "overfilled"]
+        }
+    },
+    "if": {
+    "properties": {
+      "state": { "const": "failure" }
+        }
+    },
+    "then": {
+        "required": ["error_code"]
+    },
+    "required": ["state"]
+}

@@ -1,0 +1,18 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Move to Position Request",
+    "subtopic": "/moveToPosition",
+    "type": "object",
+    "properties": {
+        "xbot_id": {
+            "type": "integer",
+            "description": "ID of the xBot to move"
+        },
+        "target_pos": {
+            "type": "string",
+            "enum": ["filling", "loading", "unloading"],
+            "description": "Target position to move the xBot to"
+        }
+    },
+    "required": ["xbot_id", "target_pos"]
+}
