@@ -45,6 +45,15 @@ class TopicCallback : public virtual mqtt::callback
     std::string &subtopic_;
     void message_arrived(mqtt::const_message_ptr msg) override
     {
+
+        std::cout << "Message arrived on topic: " << msg->get_topic() << std::endl;
+
+        // Only process messages for our specific subtopic
+        if (msg->get_topic() != subtopic_)
+        {
+            std::cout << "Ignoring message for different topic" << std::endl;
+            return;
+        }
         json received_msg = json::parse(msg->get_payload());
 
         if (!sub_schema_.is_null())
@@ -76,6 +85,7 @@ protected:
     json_validator pub_validator;
     json_validator sub_validator;
     std::function<void(const json &, mqtt::properties)> callback_method;
+    std::unique_ptr<TopicCallback> callback_ptr_;
 
 public:
     Topic(const std::string &topic, const std::string &publish_schema_path,
@@ -163,8 +173,10 @@ public:
     {
         if (!subtopic.empty())
         {
-            TopicCallback *callback = new TopicCallback(callback_method, sub_validator, sub_schema, subtopic);
-            client.set_callback(*callback);
+            // Store the callback in a member variable to prevent it from being destroyed
+            callback_ptr_ = std::make_unique<TopicCallback>(callback_method, sub_validator, sub_schema, subtopic);
+            client.set_callback(*callback_ptr_);
+            std::cout << "Registered callback for topic: " << subtopic << std::endl;
         }
     }
 };

@@ -36,20 +36,25 @@ public:
     {
         // TODO needs to parse the json
         std::cout << "Connect Callback received message: " << msg.dump() << std::endl;
-        if (msg["state"] == "failure")
+
         {
-            std::cout << "Failure" << std::endl;
-            state = BT::NodeStatus::FAILURE;
+            std::lock_guard<std::mutex> lock(state_mutex_);
+            if (msg["state"] == "failure")
+            {
+                std::cout << "Failure" << std::endl;
+                state = BT::NodeStatus::FAILURE;
+            }
+            else if (msg["state"] == "successful")
+            {
+                state = BT::NodeStatus::SUCCESS;
+                std::cout << state << "This should be the state" << std::endl;
+            }
+            else if (msg["state"] == "running")
+            {
+                state = BT::NodeStatus::RUNNING;
+            }
         }
-        else if (msg["state"] == "successful")
-        {
-            state = BT::NodeStatus::SUCCESS;
-            std::cout << state << "This should be the state" << std::endl;
-        }
-        else if (msg["state"] == "running")
-        {
-            state = BT::NodeStatus::RUNNING;
-        }
+        state_updated_ = true;
     }
 
     BT::NodeStatus onStart() override
@@ -76,7 +81,8 @@ public:
     /// Keeps returning the current state
     BT::NodeStatus onRunning() override
     {
-        std::cout << "Ticked" << std::endl;
+        std::lock_guard<std::mutex> lock(state_mutex_);
+        std::cout << "Ticked, state: " << static_cast<int>(state) << ", updated: " << state_updated_ << std::endl;
         return state;
     }
 
@@ -93,6 +99,8 @@ private:
     Proxy &bt_proxy_;
     BT::NodeStatus state;
     bool halted;
+    std::mutex state_mutex_;
+    std::atomic<bool> state_updated_{false};
 };
 
 class ConnectToPMC : public BT::StatefulActionNode
@@ -116,18 +124,25 @@ public:
     {
         // TODO needs to parse the json
         std::cout << "Connect Callback received message: " << msg.dump() << std::endl;
-        if (msg["state"] == "failure")
+
         {
-            state = BT::NodeStatus::FAILURE;
+            std::lock_guard<std::mutex> lock(state_mutex_);
+            if (msg["state"] == "failure")
+            {
+                std::cout << "Failure" << std::endl;
+                state = BT::NodeStatus::FAILURE;
+            }
+            else if (msg["state"] == "successful")
+            {
+                state = BT::NodeStatus::SUCCESS;
+                std::cout << state << "This should be the state" << std::endl;
+            }
+            else if (msg["state"] == "running")
+            {
+                state = BT::NodeStatus::RUNNING;
+            }
         }
-        else if (msg["state"] == "successful")
-        {
-            state = BT::NodeStatus::SUCCESS;
-        }
-        else if (msg["state"] == "running")
-        {
-            state = BT::NodeStatus::RUNNING;
-        }
+        state_updated_ = true;
     }
 
     BT::NodeStatus onStart() override
@@ -155,7 +170,8 @@ public:
     /// Keeps returning the current state
     BT::NodeStatus onRunning() override
     {
-        std::cout << state << std::endl;
+        std::lock_guard<std::mutex> lock(state_mutex_);
+        std::cout << "Ticked, state: " << static_cast<int>(state) << ", updated: " << state_updated_ << std::endl;
         return state;
     }
 
@@ -171,6 +187,8 @@ private:
     Proxy &bt_proxy_;
     BT::NodeStatus state;
     bool halted;
+    std::mutex state_mutex_;
+    std::atomic<bool> state_updated_{false};
 };
 
 int main(int argc, char *argv[])
