@@ -11,39 +11,61 @@ const std::string CLIENT_ID("behavior_tree");
 const std::string BASE_TOPIC("IMATile");
 
 // MoveShuttle implementation
-MoveShuttle::MoveShuttle(const std::string &name, const BT::NodeConfig &config, Proxy &bt_proxy)
-    : MqttActionNode(name, config, bt_proxy,
-                     BASE_TOPIC + "/PMC",
-                     "../schemas/moveToPosition.schema.json",
-                     "../schemas/response_state.schema.json")
-{
-}
 
-json MoveShuttle::createMessage()
+class ConnectToPMC : public MqttActionNode
 {
-    json message;
-    message["xbot_id"] = 1;
-    message["target_pos"] = "loading";
-    return message;
-}
+public:
+    ConnectToPMC(const std::string &name, const BT::NodeConfig &config, Proxy &bt_proxy) : MqttActionNode(name, config, bt_proxy,
+                                                                                                          BASE_TOPIC + "/PMC",
+                                                                                                          "../schemas/connection.schema.json",
+                                                                                                          "../schemas/response_state.schema.json")
+    {
+    }
+    json createMessage()
+    {
+        json message;
+        message["address"] = "127.0.0.1";
+        message["target_state"] = "connected";
+        message["xbot_no"] = 3;
+        return message;
+    }
+};
 
-// ConnectToPMC implementation
-ConnectToPMC::ConnectToPMC(const std::string &name, const BT::NodeConfig &config, Proxy &bt_proxy)
-    : MqttActionNode(name, config, bt_proxy,
-                     BASE_TOPIC + "/PMC",
-                     "../schemas/connection.schema.json",
-                     "../schemas/response_state.schema.json")
+class MoveShuttleToLoading : public MqttActionNode
 {
-}
+public:
+    MoveShuttleToLoading(const std::string &name, const BT::NodeConfig &config, Proxy &bt_proxy) : MqttActionNode(name, config, bt_proxy,
+                                                                                                                  BASE_TOPIC + "/PMC",
+                                                                                                                  "../schemas/moveToPosition.schema.json",
+                                                                                                                  "../schemas/response_state.schema.json")
+    {
+    }
+    json createMessage()
+    {
+        json message;
+        message["xbot_id"] = 1;
+        message["target_pos"] = "loading";
+        return message;
+    }
+};
 
-json ConnectToPMC::createMessage()
+class MoveShuttleToFilling : public MqttActionNode
 {
-    json message;
-    message["address"] = "127.0.0.1";
-    message["target_state"] = "connected";
-    message["xbot_no"] = 3;
-    return message;
-}
+public:
+    MoveShuttleToFilling(const std::string &name, const BT::NodeConfig &config, Proxy &bt_proxy) : MqttActionNode(name, config, bt_proxy,
+                                                                                                                  BASE_TOPIC + "/PMC",
+                                                                                                                  "../schemas/moveToPosition.schema.json",
+                                                                                                                  "../schemas/response_state.schema.json")
+    {
+    }
+    json createMessage()
+    {
+        json message;
+        message["xbot_id"] = 1;
+        message["target_pos"] = "filling";
+        return message;
+    }
+};
 
 int main(int argc, char *argv[])
 {
@@ -61,7 +83,8 @@ int main(int argc, char *argv[])
     // BT stuff
     BT::BehaviorTreeFactory factory;
     factory.registerNodeType<ConnectToPMC>("ConnectToPMC", std::ref(bt_proxy));
-    factory.registerNodeType<MoveShuttle>("MoveShuttle", std::ref(bt_proxy));
+    factory.registerNodeType<MoveShuttleToLoading>("MoveShuttleToLoading", std::ref(bt_proxy));
+    factory.registerNodeType<MoveShuttleToFilling>("MoveShuttleToFilling", std::ref(bt_proxy));
     auto tree = factory.createTreeFromFile("../src/bt_tree.xml");
     BT::Groot2Publisher publisher(tree);
 

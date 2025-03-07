@@ -3,7 +3,8 @@
   <BehaviorTree ID="MainTree">
     <Sequence>
         <ConnectToPMC   name="ConnectToPMC"/>
-        <MoveShuttle   name="MoveShuttle"/>
+        <MoveShuttleToLoading   name="MoveShuttleToLoading"/>
+        <MoveShuttleToFilling   name="MoveShuttleToFilling"/>
     </Sequence>
   </BehaviorTree>
 </root>
