@@ -4,7 +4,6 @@
 void RouterCallback::message_arrived(mqtt::const_message_ptr msg)
 {
     std::string topic = msg->get_topic();
-    std::cout << "Router received message on topic: " << topic << std::endl;
 
     try
     {
@@ -16,7 +15,6 @@ void RouterCallback::message_arrived(mqtt::const_message_ptr msg)
         {
             if (topic == handler.topic || topic.find(handler.topic) != std::string::npos)
             {
-                std::cout << "Routing message to handler for: " << handler.topic << std::endl;
                 handler.callback(payload, props);
                 handled = true;
             }
@@ -55,9 +53,6 @@ TopicCallback::TopicCallback(std::function<void(const json &, mqtt::properties)>
 
 void TopicCallback::message_arrived(mqtt::const_message_ptr msg)
 {
-    std::cout << "Message arrived on topic: " << msg->get_topic() << std::endl;
-    std::cout << "Intended arrived on topic: " << subtopic_ << std::endl;
-
     // Only process messages for our specific subtopic
     if (msg->get_topic() != subtopic_)
     {

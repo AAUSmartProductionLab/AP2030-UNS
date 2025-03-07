@@ -44,6 +44,7 @@ add_executable(async_publish
     mqtt/callbacks.cpp
     mqtt/mqtttopic.cpp
     mqtt/proxy.cpp
+    bt/mqtt_action_node.cpp
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE 
