@@ -14,6 +14,9 @@ using namespace std::chrono;
 using nlohmann::json;
 using nlohmann::json_schema::json_validator;
 
+class Proxy;          // Forward declaration of the Proxy class
+class RouterCallback; // Add this line
+
 // Utility function to generate a random correlation ID
 std::string generate_uuid()
 {
@@ -37,6 +40,59 @@ json load_schema(const std::string &schema_path)
     return json::parse(file);
 }
 
+class RouterCallback : public mqtt::callback
+{
+private:
+    struct Handler
+    {
+        std::string topic;
+        std::function<void(const json &, mqtt::properties)> callback;
+        json_validator *validator;
+        json *schema;
+    };
+    std::vector<Handler> handlers_;
+
+public:
+    void message_arrived(mqtt::const_message_ptr msg) override
+    {
+        std::string topic = msg->get_topic();
+
+        try
+        {
+            json payload = json::parse(msg->get_payload());
+            mqtt::properties props = msg->get_properties();
+
+            bool handled = false;
+            for (const auto &handler : handlers_)
+            {
+                if (topic == handler.topic || topic.find(handler.topic) != std::string::npos)
+                {
+                    handler.callback(payload, props);
+                    handled = true;
+                }
+            }
+
+            if (!handled)
+            {
+                std::cout << "No handler found for topic: " << topic << std::endl;
+            }
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error processing message: " << e.what() << std::endl;
+        }
+    }
+
+    void add_handler(const std::string &topic,
+                     std::function<void(const json &, mqtt::properties)> callback,
+                     json_validator *validator = nullptr,
+                     json *schema = nullptr)
+    {
+        handlers_.push_back({topic, callback, validator, schema});
+        std::cout << "Added handler for topic: " << topic << std::endl;
+    }
+};
+
 class TopicCallback : public virtual mqtt::callback
 {
     std::function<void(const json &, mqtt::properties)> callback_method_;
@@ -47,6 +103,8 @@ class TopicCallback : public virtual mqtt::callback
     {
 
         std::cout << "Message arrived on topic: " << msg->get_topic() << std::endl;
+
+        std::cout << "Intended arrived on topic: " << subtopic_ << std::endl;
 
         // Only process messages for our specific subtopic
         if (msg->get_topic() != subtopic_)
@@ -100,7 +158,7 @@ public:
         {
             try
             {
-                pub_validator.set_root_schema(pub_schema); // insert root-schema
+                pub_validator.set_root_schema(pub_schema);
             }
             catch (const std::exception &e)
             {
@@ -169,16 +227,7 @@ public:
             client.subscribe(subtopic, qos);
         }
     }
-    void register_callback(mqtt::async_client &client)
-    {
-        if (!subtopic.empty())
-        {
-            // Store the callback in a member variable to prevent it from being destroyed
-            callback_ptr_ = std::make_unique<TopicCallback>(callback_method, sub_validator, sub_schema, subtopic);
-            client.set_callback(*callback_ptr_);
-            std::cout << "Registered callback for topic: " << subtopic << std::endl;
-        }
-    }
+    void register_callback(Proxy &proxy);
 };
 
 class Response : public Topic
@@ -228,11 +277,14 @@ private:
     std::string &address;
     mqtt::connect_options &connOpts_;
     int &nretry_;
+    std::shared_ptr<RouterCallback> router_;
 
 public:
     Proxy(std::string &address, std::string &client_id, mqtt::connect_options &connOpts, int &nretry)
         : mqtt::async_client(address, client_id), address(address), connOpts_(connOpts), nretry_(nretry)
     {
+        router_ = std::make_shared<RouterCallback>();
+        set_callback(*router_);
         set_connected_handler([this](const std::string &)
                               { on_connect(); });
         set_disconnected_handler([this](const mqtt::properties &, mqtt::ReasonCode)
@@ -242,7 +294,13 @@ public:
         connect(connOpts_)->wait();
         // #TODO this should idealy be in a calllback
     }
-
+    void register_topic_handler(const std::string &topic,
+                                std::function<void(const json &, mqtt::properties)> callback,
+                                json_validator *validator = nullptr,
+                                json *schema = nullptr)
+    {
+        router_->add_handler(topic, callback, validator, schema);
+    }
     void on_connect()
     {
         std::cout << "Connected to broker " << address << std::endl;
@@ -279,3 +337,12 @@ public:
         }
     }
 };
+
+void Topic::register_callback(Proxy &proxy)
+{
+    if (!subtopic.empty())
+    {
+        proxy.register_topic_handler(subtopic, callback_method, &sub_validator, &sub_schema);
+        std::cout << "Registered callback for topic: " << subtopic << std::endl;
+    }
+}

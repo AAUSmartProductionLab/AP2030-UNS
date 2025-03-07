@@ -6,7 +6,10 @@
 #include <functional>
 #include <nlohmann/json.hpp>
 #include <nlohmann/json-schema.hpp>
-#include "MQTT_classes.cpp"
+#include "mqtt/utils.h"
+#include "mqtt/callbacks.h"
+#include "mqtt/mqtttopic.h"
+#include "mqtt/proxy.h"
 
 const std::string BROKER_URI("192.168.0.104:1883");
 const std::string CLIENT_ID("behavior_tree");
@@ -20,7 +23,6 @@ public:
     MoveShuttle(const std::string &name, const BT::NodeConfig &config, Proxy &bt_proxy) : BT::StatefulActionNode(name, config), bt_proxy_(bt_proxy), topic(BASE_TOPIC + "/PMC", "../schemas/moveToPosition.schema.json", "../schemas/response_state.schema.json", 1, std::bind(&MoveShuttle::callback, this, std::placeholders::_1, std::placeholders::_2))
     {
         // TODO base topic should probably be passed along
-        std::cout << "Ticked" << std::endl;
         if (bt_proxy_.is_connected())
         {
             // TODO this should wait until the proxy is connected
@@ -34,32 +36,48 @@ public:
     }
     void callback(const json &msg, mqtt::properties props)
     {
-        // TODO needs to parse the json
-        std::cout << "Connect Callback received message: " << msg.dump() << std::endl;
+        // Debug entry point of callback
+        std::cout << "Message received: " << msg.dump() << std::endl;
 
+        // Use mutex to protect shared state
         {
             std::lock_guard<std::mutex> lock(state_mutex_);
-            if (msg["state"] == "failure")
+
+            // Update state based on message content
+            if (msg.contains("state"))
             {
-                std::cout << "Failure" << std::endl;
-                state = BT::NodeStatus::FAILURE;
+                if (msg["state"] == "failure")
+                {
+                    std::cout << "State updated to FAILURE" << std::endl;
+                    state = BT::NodeStatus::FAILURE;
+                }
+                else if (msg["state"] == "successful")
+                {
+                    std::cout << "State updated to SUCCESS" << std::endl;
+                    state = BT::NodeStatus::SUCCESS;
+                }
+                else if (msg["state"] == "running")
+                {
+                    std::cout << "State updated to RUNNING" << std::endl;
+                    state = BT::NodeStatus::RUNNING;
+                }
+                else
+                {
+                    std::cout << "Unknown state value: " << msg["state"] << std::endl;
+                }
+
+                // Use explicit memory ordering when setting the flag
+                state_updated_.store(true, std::memory_order_seq_cst);
             }
-            else if (msg["state"] == "successful")
+            else
             {
-                state = BT::NodeStatus::SUCCESS;
-                std::cout << state << "This should be the state" << std::endl;
-            }
-            else if (msg["state"] == "running")
-            {
-                state = BT::NodeStatus::RUNNING;
+                std::cout << "Message doesn't contain 'state' field" << std::endl;
             }
         }
-        state_updated_ = true;
     }
 
     BT::NodeStatus onStart() override
     {
-        std::cout << "Ticked" << std::endl;
         try
         {
             json message;
@@ -81,14 +99,29 @@ public:
     /// Keeps returning the current state
     BT::NodeStatus onRunning() override
     {
+
+        // Use mutex for accessing shared state
         std::lock_guard<std::mutex> lock(state_mutex_);
-        std::cout << "Ticked, state: " << static_cast<int>(state) << ", updated: " << state_updated_ << std::endl;
-        return state;
+
+        // Use explicit memory ordering when loading the flag
+        bool updated = state_updated_.load(std::memory_order_acquire);
+        if (updated)
+        {
+            // We got an update from the callback, reset the flag
+            state_updated_.store(false, std::memory_order_seq_cst);
+
+            // Return the updated state (SUCCESS/FAILURE/RUNNING)
+            return state;
+        }
+        else
+        {
+            // No update received yet, continue in RUNNING state
+            return BT::NodeStatus::RUNNING;
+        }
     }
 
     void onHalted() override
     {
-        std::cout << "Ticked" << std::endl;
         /// TODO This should perhaps send a stop command to the PMC?
         std::cout
             << "Move node interrupted" << std::endl;
@@ -122,27 +155,43 @@ public:
     }
     void callback(const json &msg, mqtt::properties props)
     {
-        // TODO needs to parse the json
-        std::cout << "Connect Callback received message: " << msg.dump() << std::endl;
+        std::cout << "Message received: " << msg.dump() << std::endl;
 
+        // Use mutex to protect shared state
         {
             std::lock_guard<std::mutex> lock(state_mutex_);
-            if (msg["state"] == "failure")
+
+            // Update state based on message content
+            if (msg.contains("state"))
             {
-                std::cout << "Failure" << std::endl;
-                state = BT::NodeStatus::FAILURE;
+                if (msg["state"] == "failure")
+                {
+                    std::cout << "Failure" << std::endl;
+                    state = BT::NodeStatus::FAILURE;
+                }
+                else if (msg["state"] == "successful")
+                {
+                    state = BT::NodeStatus::SUCCESS;
+                    std::cout << "State updated to SUCCESS: " << static_cast<int>(state) << std::endl;
+                }
+                else if (msg["state"] == "running")
+                {
+                    state = BT::NodeStatus::RUNNING;
+                    std::cout << "State updated to RUNNING" << std::endl;
+                }
+                else
+                {
+                    std::cout << "Unknown state value: " << msg["state"] << std::endl;
+                }
+
+                // Use explicit memory ordering when setting the flag
+                state_updated_.store(true, std::memory_order_seq_cst);
             }
-            else if (msg["state"] == "successful")
+            else
             {
-                state = BT::NodeStatus::SUCCESS;
-                std::cout << state << "This should be the state" << std::endl;
-            }
-            else if (msg["state"] == "running")
-            {
-                state = BT::NodeStatus::RUNNING;
+                std::cout << "Message doesn't contain 'state' field" << std::endl;
             }
         }
-        state_updated_ = true;
     }
 
     BT::NodeStatus onStart() override
@@ -170,9 +219,26 @@ public:
     /// Keeps returning the current state
     BT::NodeStatus onRunning() override
     {
+
+        // Use mutex for accessing shared state
         std::lock_guard<std::mutex> lock(state_mutex_);
-        std::cout << "Ticked, state: " << static_cast<int>(state) << ", updated: " << state_updated_ << std::endl;
-        return state;
+
+        // Use explicit memory ordering when loading the flag
+        bool updated = state_updated_.load(std::memory_order_acquire);
+
+        if (updated)
+        {
+            // We got an update from the callback, reset the flag
+            state_updated_.store(false, std::memory_order_seq_cst);
+
+            // Return the updated state (SUCCESS/FAILURE/RUNNING)
+            return state;
+        }
+        else
+        {
+            // No update received yet, continue in RUNNING state
+            return BT::NodeStatus::RUNNING;
+        }
     }
 
     void onHalted() override
@@ -213,15 +279,23 @@ int main(int argc, char *argv[])
     BT::Groot2Publisher publisher(tree);
 
     auto status = tree.tickOnce();
-    while (status == BT::NodeStatus::RUNNING)
+    while (true)
     {
-        // Sleep to avoid busy loops.
-        // do NOT use other sleep functions!
-        // Small sleep time is OK, here we use a large one only to
-        // have less messages on the console.
-        std::cout << "ticked" << std::endl;
-        tree.sleep(std::chrono::milliseconds(100));
-        status = tree.tickOnce();
+        // Tick the tree until it completes
+        auto status = tree.tickOnce();
+        while (status == BT::NodeStatus::RUNNING)
+        {
+            tree.sleep(std::chrono::milliseconds(100));
+            status = tree.tickOnce();
+        }
+
+        // When tree completes (SUCCESS or FAILURE), print the result
+        std::cout << "Behavior tree execution completed with status: "
+                  << (status == BT::NodeStatus::SUCCESS ? "SUCCESS" : "FAILURE") << std::endl;
+
+        std::cout << "====== Restarting behavior tree... ======" << std::endl;
+        // Optional: Add a delay between tree executions
+        std::this_thread::sleep_for(std::chrono::seconds(1));
     }
     // while (std::tolower(std::cin.get()) != 'q')
     //     ;

@@ -44,11 +44,19 @@ sudo ldconfig
 
 ## C++ json validation
 ```bash
-sudo apt install nlohmann-json3-dev
-git clone https://github.com/pboettch/json-schema-validator.git
-cd json-schema-validator
-mkdir build && cd build
-cmake ..
-make
-sudo make install
+    # Clone specific versions
+    
+    git clone -b v3.11.2 https://github.com/nlohmann/json.git
+    git clone -b v2.3.0 https://github.com/pboettch/json-schema-validator.git
+
+    # Build and install in the same order
+    cd json
+    mkdir build && cd build
+    cmake .. 
+    make install
+
+    cd ../../json-schema-validator
+    mkdir build && cd build
+    cmake .. -DJSON_VALIDATOR_BUILD_TESTS=OFF
+    make install
 ```
