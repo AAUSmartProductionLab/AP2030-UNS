@@ -5,6 +5,8 @@ services:
   hivemq-broker:
     image: hivemq/hivemq4:latest
     container_name: hivemq-broker
+    volumes:
+      - ./config/UNS-config.xml:/opt/hivemq/conf/config.xml   
     ports:
       - "1883:1883"
       - "8080:8080"
