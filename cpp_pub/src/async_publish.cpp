@@ -11,6 +11,32 @@ const std::string CLIENT_ID("behavior_tree");
 const std::string BASE_TOPIC("IMATile");
 
 // MoveShuttle implementation
+struct Position2D
+{
+    double x;
+    double y;
+};
+
+namespace BT
+{
+    template <>
+    inline Position2D convertFromString(StringView str)
+    {
+        // We expect real numbers separated by semicolons
+        auto parts = splitString(str, ';');
+        if (parts.size() != 2)
+        {
+            throw RuntimeError("invalid input)");
+        }
+        else
+        {
+            Position2D output;
+            output.x = convertFromString<double>(parts[0]);
+            output.y = convertFromString<double>(parts[1]);
+            return output;
+        }
+    }
+}
 
 class ConnectToPMC : public MqttActionNode
 {
@@ -67,6 +93,32 @@ public:
     }
 };
 
+class MoveShuttleToPosition : public MqttActionNode
+{
+public:
+    MoveShuttleToPosition(const std::string &name, const BT::NodeConfig &config, Proxy &bt_proxy) : MqttActionNode(name, config, bt_proxy,
+                                                                                                                   BASE_TOPIC + "/PMC",
+                                                                                                                   "../schemas/moveToPosition.schema.json",
+                                                                                                                   "../schemas/response_state.schema.json")
+    {
+    }
+    static BT::PortsList providedPorts()
+    {
+        return {BT::InputPort<Position2D>("goal"), BT::InputPort<int>("xbot_id")};
+    }
+    json createMessage()
+    {
+        BT::Expected<int> id = getInput<int>("xbot_id");
+        BT::Expected<Position2D> goal = getInput<Position2D>("goal");
+
+        json message;
+        message["xbot_id"] = id.value();
+        message["x"] = goal.value().x;
+        message["y"] = goal.value().y;
+        return message;
+    }
+};
+
 int main(int argc, char *argv[])
 {
     std::string serverURI = (argc > 1) ? std::string{argv[1]} : BROKER_URI;
@@ -83,8 +135,10 @@ int main(int argc, char *argv[])
     // BT stuff
     BT::BehaviorTreeFactory factory;
     factory.registerNodeType<ConnectToPMC>("ConnectToPMC", std::ref(bt_proxy));
-    factory.registerNodeType<MoveShuttleToLoading>("MoveShuttleToLoading", std::ref(bt_proxy));
-    factory.registerNodeType<MoveShuttleToFilling>("MoveShuttleToFilling", std::ref(bt_proxy));
+    factory.registerNodeType<MoveShuttleToPosition>("MoveShuttleToPosition", std::ref(bt_proxy));
+
+    // factory.registerNodeType<MoveShuttleToLoading>("MoveShuttleToLoading", std::ref(bt_proxy));
+    // factory.registerNodeType<MoveShuttleToFilling>("MoveShuttleToFilling", std::ref(bt_proxy));
     auto tree = factory.createTreeFromFile("../src/bt_tree.xml");
     BT::Groot2Publisher publisher(tree);
 
@@ -96,6 +150,7 @@ int main(int argc, char *argv[])
         {
             tree.sleep(std::chrono::milliseconds(100));
             status = tree.tickOnce();
+            tree.tickWhileRunning();
         }
 
         // When tree completes (SUCCESS or FAILURE), print the result
