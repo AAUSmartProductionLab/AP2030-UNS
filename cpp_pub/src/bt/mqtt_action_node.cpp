@@ -1,8 +1,11 @@
 #include "bt/mqtt_action_node.h"
+#include "bt/node_subscription_manager.h"
 #include <iostream>
 
 // Base topic for all MQTT communications
 extern const std::string BASE_TOPIC;
+// Initialize the static member variable
+NodeTypeSubscriptionManager *MqttActionNode::subscription_manager_ = nullptr;
 
 MqttActionNode::MqttActionNode(const std::string &name,
                                const BT::NodeConfig &config,
@@ -16,10 +19,29 @@ MqttActionNode::MqttActionNode(const std::string &name,
       topic(topic_base, pub_schema_path, sub_schema_path, qos,
             std::bind(&MqttActionNode::callback, this, std::placeholders::_1, std::placeholders::_2))
 {
-    if (bt_proxy_.is_connected())
+    // Register this instance with the subscription manager if available
+    if (subscription_manager_)
     {
-        topic.register_callback(bt_proxy);
-        topic.subscribe(bt_proxy);
+        // The manager will handle registering the type if needed
+        subscription_manager_->registerInstance(this);
+    }
+    else
+    {
+        // Fall back to the original implementation if no manager
+        if (bt_proxy_.is_connected())
+        {
+            topic.register_callback(bt_proxy);
+            topic.subscribe(bt_proxy);
+        }
+    }
+}
+
+MqttActionNode::~MqttActionNode()
+{
+    // Unregister this instance when destroyed
+    if (subscription_manager_)
+    {
+        subscription_manager_->unregisterInstance(this);
     }
 }
 
@@ -113,4 +135,23 @@ BT::NodeStatus MqttActionNode::onRunning()
 void MqttActionNode::onHalted()
 {
     std::cout << "MQTT action node halted" << std::endl;
+}
+
+void MqttActionNode::setSubscriptionManager(NodeTypeSubscriptionManager *manager)
+{
+    subscription_manager_ = manager;
+}
+
+void MqttActionNode::handleMessage(const json &msg, mqtt::properties props)
+{
+    // This is called by the subscription manager when a message arrives
+    // Just forward to our existing callback method
+    callback(msg, props);
+}
+
+bool MqttActionNode::isInterestedIn(const std::string &field, const json &value)
+{
+    // Default implementation - nodes are interested in all messages
+    // Override in derived classes to filter by specific fields
+    return true;
 }

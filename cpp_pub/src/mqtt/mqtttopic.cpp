@@ -24,7 +24,7 @@ MqttTopic::MqttTopic(const std::string &topic, const std::string &publish_schema
         {
             std::cerr << "Validation of schema failed, here is why: " << e.what() << "\n";
         }
-        pubtopic = topic + pub_schema.value("subtopic", "");
+        pubtopic = topic + "/CMD" + pub_schema.value("subtopic", "");
     }
     else
     {
@@ -34,7 +34,7 @@ MqttTopic::MqttTopic(const std::string &topic, const std::string &publish_schema
     if (!sub_schema.is_null())
     {
         sub_validator.set_root_schema(sub_schema);
-        subtopic = topic + sub_schema.value("subtopic", "");
+        subtopic = topic + "/DATA" + sub_schema.value("subtopic", "");
     }
     else
     {

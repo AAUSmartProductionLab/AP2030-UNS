@@ -4,11 +4,13 @@
 #include <behaviortree_cpp/loggers/groot2_publisher.h>
 #include <functional>
 #include "bt/mqtt_action_node.h"
+#include "bt/node_subscription_manager.h"
+#include "mqtt/utils.h"
 
 // Constants used throughout the application
 const std::string BROKER_URI("192.168.0.104:1883");
 const std::string CLIENT_ID("behavior_tree");
-const std::string BASE_TOPIC("IMATile");
+const std::string UNS_TOPIC("NN/Nybrovej/InnoLab/Planar");
 
 // MoveShuttle implementation
 struct Position2D
@@ -38,69 +40,21 @@ namespace BT
     }
 }
 
-class ConnectToPMC : public MqttActionNode
-{
-public:
-    ConnectToPMC(const std::string &name, const BT::NodeConfig &config, Proxy &bt_proxy) : MqttActionNode(name, config, bt_proxy,
-                                                                                                          BASE_TOPIC + "/PMC",
-                                                                                                          "../schemas/connection.schema.json",
-                                                                                                          "../schemas/response_state.schema.json")
-    {
-    }
-    json createMessage()
-    {
-        json message;
-        message["address"] = "127.0.0.1";
-        message["target_state"] = "connected";
-        message["xbot_no"] = 3;
-        return message;
-    }
-};
-
-class MoveShuttleToLoading : public MqttActionNode
-{
-public:
-    MoveShuttleToLoading(const std::string &name, const BT::NodeConfig &config, Proxy &bt_proxy) : MqttActionNode(name, config, bt_proxy,
-                                                                                                                  BASE_TOPIC + "/PMC",
-                                                                                                                  "../schemas/moveToPosition.schema.json",
-                                                                                                                  "../schemas/response_state.schema.json")
-    {
-    }
-    json createMessage()
-    {
-        json message;
-        message["xbot_id"] = 1;
-        message["target_pos"] = "loading";
-        return message;
-    }
-};
-
-class MoveShuttleToFilling : public MqttActionNode
-{
-public:
-    MoveShuttleToFilling(const std::string &name, const BT::NodeConfig &config, Proxy &bt_proxy) : MqttActionNode(name, config, bt_proxy,
-                                                                                                                  BASE_TOPIC + "/PMC",
-                                                                                                                  "../schemas/moveToPosition.schema.json",
-                                                                                                                  "../schemas/response_state.schema.json")
-    {
-    }
-    json createMessage()
-    {
-        json message;
-        message["xbot_id"] = 1;
-        message["target_pos"] = "filling";
-        return message;
-    }
-};
-
 class MoveShuttleToPosition : public MqttActionNode
 {
+private:
+    std::string current_command_uuid_;
+
 public:
     MoveShuttleToPosition(const std::string &name, const BT::NodeConfig &config, Proxy &bt_proxy) : MqttActionNode(name, config, bt_proxy,
-                                                                                                                   BASE_TOPIC + "/PMC",
+                                                                                                                   UNS_TOPIC,
                                                                                                                    "../schemas/moveToPosition.schema.json",
-                                                                                                                   "../schemas/response_state.schema.json")
+                                                                                                                   "../schemas/moveResponse.schema.json")
     {
+        if (MqttActionNode::subscription_manager_)
+        {
+            MqttActionNode::subscription_manager_->registerDerivedInstance<MoveShuttleToPosition>(this);
+        }
     }
     static BT::PortsList providedPorts()
     {
@@ -112,10 +66,63 @@ public:
         BT::Expected<Position2D> goal = getInput<Position2D>("goal");
 
         json message;
-        message["xbot_id"] = id.value();
-        message["x"] = goal.value().x;
-        message["y"] = goal.value().y;
+        current_command_uuid_ = mqtt_utils::generate_uuid();
+        message["XbotId"] = id.value();
+        message["TargetPos"] = json::array({goal.value().x, goal.value().y});
+        message["CommandUuid"] = current_command_uuid_;
+        std::cout << current_command_uuid_ << std::endl;
         return message;
+    }
+    // Override isInterestedIn to filter messages
+    bool isInterestedIn(const std::string &field, const json &value) override
+    {
+        if (field == "CommandUuid" && value.is_string())
+        {
+            bool interested = (value.get<std::string>() == current_command_uuid_);
+
+            return interested;
+        }
+        return false;
+    }
+
+    void callback(const json &msg, mqtt::properties props) override
+    {
+
+        // Use mutex to protect shared state
+        {
+            std::lock_guard<std::mutex> lock(state_mutex_);
+
+            // Update state based on message content
+            if (msg.contains("state"))
+            {
+                if (msg["state"] == 0 || msg["state"] == 1 || msg["state"] == 4 || msg["state"] == 10 || msg["state"] == 14)
+                {
+                    std::cout << "State updated to FAILURE" << std::endl;
+                    state = BT::NodeStatus::FAILURE;
+                }
+                else if (msg["state"] == 2 || msg["state"] == 3)
+                {
+                    std::cout << "State updated to SUCCESS" << std::endl;
+                    state = BT::NodeStatus::SUCCESS;
+                }
+                else if (msg["state"] == 5 || msg["state"] == 6 || msg["state"] == 7 || msg["state"] == 8 || msg["state"] == 9)
+                {
+                    std::cout << "State updated to RUNNING" << std::endl;
+                    state = BT::NodeStatus::RUNNING;
+                }
+                else
+                {
+                    std::cout << "Unknown state value: " << msg["state"] << std::endl;
+                }
+
+                // Use explicit memory ordering when setting the flag
+                state_updated_.store(true, std::memory_order_seq_cst);
+            }
+            else
+            {
+                std::cout << "Message doesn't contain 'state' field" << std::endl;
+            }
+        }
     }
 };
 
@@ -132,13 +139,17 @@ int main(int argc, char *argv[])
 
     Proxy bt_proxy(serverURI, clientId, connOpts, repetitions);
 
+    NodeTypeSubscriptionManager subscription_manager(bt_proxy);
+    MqttActionNode::setSubscriptionManager(&subscription_manager);
+
+    subscription_manager.registerNodeType<MoveShuttleToPosition>(
+        UNS_TOPIC,
+        "../schemas/moveResponse.schema.json");
+
     // BT stuff
     BT::BehaviorTreeFactory factory;
-    factory.registerNodeType<ConnectToPMC>("ConnectToPMC", std::ref(bt_proxy));
-    factory.registerNodeType<MoveShuttleToPosition>("MoveShuttleToPosition", std::ref(bt_proxy));
 
-    // factory.registerNodeType<MoveShuttleToLoading>("MoveShuttleToLoading", std::ref(bt_proxy));
-    // factory.registerNodeType<MoveShuttleToFilling>("MoveShuttleToFilling", std::ref(bt_proxy));
+    factory.registerNodeType<MoveShuttleToPosition>("MoveShuttleToPosition", std::ref(bt_proxy));
     auto tree = factory.createTreeFromFile("../src/bt_tree.xml");
     BT::Groot2Publisher publisher(tree);
 

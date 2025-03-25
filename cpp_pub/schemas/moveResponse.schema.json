@@ -8,19 +8,18 @@
             "type": "integer",
             "description": "ID of the xBot to move"
         },
-        "TargetPos": {
-            "type": "array",
-            "description": "Target position to move the xBot to [x, y]",
-            "items": {
-            "type": "number"
-            },
-            "minItems": 2,
-            "maxItems": 2
+        "State": {
+            "type": "integer",
+            "description": "ID of the xBot to move"
+        },
+        "TimeStamp": {
+            "type": "string",
+            "description": "The Timestamp of the response"
         },
         "CommandUuid": {
             "type": "string",
             "description": "Unique identifier for the request"
         }
     },
-    "required": ["XbotId", "TargetPos", "CommandUuid"]
+    "required": ["XbotId", "State", "TimeStamp", "CommandUuid"]
 }
