@@ -230,47 +230,6 @@ public:
     void register_callback(Proxy &proxy);
 };
 
-class Response : public Topic
-{
-public:
-    Response(std::string topic, std::string publish_schema_path,
-             std::string subscribe_schema_path, int qos = 0,
-             std::function<void(const json &, mqtt::properties)> callback_method = nullptr)
-        : Topic(topic, publish_schema_path, subscribe_schema_path, qos, callback_method) {}
-
-    void publish(mqtt::async_client &client, const json &request, mqtt::properties &props)
-    {
-        if (!pub_schema.is_null())
-        {
-            pub_validator.validate(request);
-        }
-        props.add(mqtt::property(mqtt::property::code::CORRELATION_DATA, generate_uuid()));
-        try
-        {
-            std::string response_topic = mqtt::get<std::string>(props.get(mqtt::property::code::RESPONSE_TOPIC));
-            client.publish(response_topic, request.dump(), qos, false, props);
-        }
-        catch (const std::exception &e)
-        {
-            // Handle the case where RESPONSE_TOPIC is not present
-            std::cout << "Error: User Property RESPONSE_TOPIC not found, " << e.what() << std::endl;
-        }
-    }
-};
-
-class Request : public Topic
-{
-public:
-    Request(std::string topic, std::string publish_schema_path,
-            std::string subscribe_schema_path, int qos = 0,
-            std::function<void(const json &, mqtt::properties)> callback_method = nullptr)
-        : Topic(topic, publish_schema_path, subscribe_schema_path, qos, callback_method)
-    {
-
-        subtopic = pubtopic + sub_schema["subtopic"].get<std::string>() + "/" + generate_uuid();
-    }
-};
-
 class Proxy : public mqtt::async_client
 {
 private:

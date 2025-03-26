@@ -1,14 +1,13 @@
 #include "mqtt/proxy.h"
+#include "mqtt/subscription_manager.h"
 #include <iostream>
 #include <chrono>
 
-Proxy::Proxy(std::string &address, std::string &client_id,
-             mqtt::connect_options &connOpts, int &nretry)
-    : mqtt::async_client(address, client_id),
-      address(address), connOpts_(connOpts), nretry_(nretry)
+Proxy::Proxy(std::string serverURI, std::string client_id,
+             mqtt::connect_options connOpts, int nretry)
+    : mqtt::async_client(serverURI, client_id),
+      address(serverURI), connOpts_(connOpts), nretry_(nretry)
 {
-    router_ = std::make_shared<RouterCallback>();
-    set_callback(*router_);
     set_connected_handler([this](const std::string &)
                           { on_connect(); });
     set_disconnected_handler([this](const mqtt::properties &, mqtt::ReasonCode)
@@ -19,12 +18,19 @@ Proxy::Proxy(std::string &address, std::string &client_id,
 }
 
 void Proxy::register_topic_handler(const std::string &topic,
-                                   std::function<void(const json &, mqtt::properties)> callback,
-                                   json_validator *validator,
-                                   json *schema)
+                                   std::function<void(const json &, mqtt::properties)> callback)
 {
-    router_->add_handler(topic, callback, validator, schema);
+    // Forward to the subscription manager if it exists
+    if (auto *subscription_mgr = dynamic_cast<SubscriptionManager *>(callback_))
+    {
+        subscription_mgr->register_topic_handler(topic, callback);
+    }
+    else
+    {
+        std::cerr << "No subscription manager set!" << std::endl;
+    }
 }
+
 void Proxy::on_connect()
 {
     std::cout << "Connected to broker " << address << std::endl;
@@ -48,7 +54,7 @@ void Proxy::on_connection_lost(const std::string &cause)
 
 void Proxy::attempt_reconnect()
 {
-    std::cout << "reconnecting" << std::endl;
+    std::cout << "Reconnecting" << std::endl;
     std::this_thread::sleep_for(std::chrono::milliseconds(2500));
     try
     {

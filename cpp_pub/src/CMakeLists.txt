@@ -43,8 +43,11 @@ add_executable(async_publish
     mqtt/utils.cpp
     mqtt/callbacks.cpp
     mqtt/mqtttopic.cpp
+    mqtt/subscription_manager.cpp 
     mqtt/proxy.cpp
     bt/mqtt_action_node.cpp
+    bt/tree_tick_requester.cpp
+    bt/CustomNodes/move_shuttle_to_position.cpp
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE 

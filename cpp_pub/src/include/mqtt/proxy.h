@@ -1,19 +1,22 @@
 #pragma once
 #include <mqtt/async_client.h>
 #include <nlohmann/json.hpp>
-#include <nlohmann/json-schema.hpp>
-#include "callbacks.h"
+#include <functional>
+#include <memory>
+#include <string>
 
 using nlohmann::json;
-using nlohmann::json_schema::json_validator;
+
+// Forward declaration
+class SubscriptionManager;
 
 class Proxy : public mqtt::async_client
 {
 private:
-    std::string &address;
-    mqtt::connect_options &connOpts_;
-    int &nretry_;
-    std::shared_ptr<RouterCallback> router_;
+    std::string address;
+    mqtt::connect_options connOpts_;
+    int nretry_;
+    mqtt::callback *callback_ = nullptr;
 
     void on_connect();
     void on_disconnect();
@@ -21,11 +24,21 @@ private:
     void attempt_reconnect();
 
 public:
-    Proxy(std::string &address, std::string &client_id,
-          mqtt::connect_options &connOpts, int &nretry);
+    Proxy(std::string serverURI, std::string client_id,
+          mqtt::connect_options connOpts, int nretry);
 
+    void set_callback(mqtt::callback &callback)
+    {
+        callback_ = &callback;
+        mqtt::async_client::set_callback(callback);
+    }
+
+    // Updated method signature - simplified to just topic and callback
     void register_topic_handler(const std::string &topic,
-                                std::function<void(const json &, mqtt::properties)> callback,
-                                json_validator *validator = nullptr,
-                                json *schema = nullptr);
+                                std::function<void(const json &, mqtt::properties)> callback);
+
+    void subscribe(const std::string &topic, int qos)
+    {
+        mqtt::async_client::subscribe(topic, qos)->wait();
+    }
 };

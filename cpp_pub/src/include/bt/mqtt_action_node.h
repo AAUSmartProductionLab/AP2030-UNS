@@ -1,15 +1,15 @@
 #pragma once
 
-#include <mutex>
-#include <atomic>
-#include <functional>
 #include <behaviortree_cpp/action_node.h>
+#include <mqtt/async_client.h>
 #include <nlohmann/json.hpp>
-#include "mqtt/mqtttopic.h"
-#include "mqtt/proxy.h"
+#include <atomic>
+#include <mutex>
+#include <string>
 
-// Forward declaration
-class NodeTypeSubscriptionManager;
+// Forward declarations
+class Proxy;
+class SubscriptionManager;
 
 using nlohmann::json;
 
@@ -19,34 +19,45 @@ using nlohmann::json;
 class MqttActionNode : public BT::StatefulActionNode
 {
 protected:
-    Request topic;
-    Proxy &bt_proxy_;
+    Proxy &proxy_;
+    const std::string topic_base_;
+    const std::string request_schema_path_;
+    const std::string response_schema_path_;
+
+    // Protected state
     BT::NodeStatus state;
-    std::mutex state_mutex_;
     std::atomic<bool> state_updated_{false};
-    static NodeTypeSubscriptionManager *subscription_manager_;
+    std::mutex state_mutex_;
+
+    static SubscriptionManager *subscription_manager_;
 
 public:
-    MqttActionNode(const std::string &name,
-                   const BT::NodeConfig &config,
-                   Proxy &bt_proxy,
+    MqttActionNode(const std::string &name, const BT::NodeConfig &config, Proxy &proxy,
                    const std::string &topic_base,
-                   const std::string &pub_schema_path,
-                   const std::string &sub_schema_path,
-                   int qos = 1);
+                   const std::string &request_schema_path = "",
+                   const std::string &response_schema_path = "");
 
     virtual ~MqttActionNode();
 
-    static void setSubscriptionManager(NodeTypeSubscriptionManager *manager);
+    // Static method to set the subscription manager
+    static void setSubscriptionManager(SubscriptionManager *manager);
+    static void emitWakeUpSignal();
+    // Default ports implementation
+    static BT::PortsList providedPorts();
 
-    // New method to handle messages from the subscription manager
-    virtual void handleMessage(const json &msg, mqtt::properties props);
+    // Internal message handling method used by the subscription manager
+    void handleMessage(const json &msg, mqtt::properties props);
+
+    // Virtual method to filter messages
     virtual bool isInterestedIn(const std::string &field, const json &value);
 
-    // Existing methods remain the same...
-    static BT::PortsList providedPorts();
-    virtual void callback(const json &msg, mqtt::properties props);
+    // Callback method to be implemented by derived classes
+    virtual void callback(const json &msg, mqtt::properties props) = 0;
+
+    // Create message to be implemented by derived classes
     virtual json createMessage() = 0;
+
+    // BT::StatefulActionNode interface implementation
     BT::NodeStatus onStart() override;
     BT::NodeStatus onRunning() override;
     void onHalted() override;

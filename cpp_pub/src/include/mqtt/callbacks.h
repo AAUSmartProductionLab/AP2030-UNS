@@ -26,23 +26,3 @@ public:
                   json_validator &validator, json &sub_schema, std::string &subtopic);
     void message_arrived(mqtt::const_message_ptr msg) override;
 };
-
-class RouterCallback : public mqtt::callback
-{
-private:
-    struct Handler
-    {
-        std::string topic;
-        std::function<void(const json &, mqtt::properties)> callback;
-        json_validator *validator;
-        json *schema;
-    };
-    std::vector<Handler> handlers_;
-
-public:
-    void message_arrived(mqtt::const_message_ptr msg) override;
-    void add_handler(const std::string &topic,
-                     std::function<void(const json &, mqtt::properties)> callback,
-                     json_validator *validator = nullptr,
-                     json *schema = nullptr);
-};

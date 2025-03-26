@@ -1,0 +1,8 @@
+<root BTCPP_format="4">
+    <TreeNodesModel>
+        <Action ID="MoveShuttleToPosition">
+            <input_port name="xbot_id" type="int"/>
+            <input_port name="goal" type="Position2D"/>
+        </Action>
+    </TreeNodesModel>
+</root>

@@ -1,50 +1,38 @@
 #include "bt/mqtt_action_node.h"
-#include "bt/node_subscription_manager.h"
-#include <iostream>
+#include "bt/tree_tick_requester.h"
+#include "mqtt/subscription_manager.h"
+#include "mqtt/proxy.h"
+#include "common_constants.h"
 
-// Base topic for all MQTT communications
-extern const std::string BASE_TOPIC;
+#include <iostream>
+#include <condition_variable>
+#include <mutex>
+
 // Initialize the static member variable
-NodeTypeSubscriptionManager *MqttActionNode::subscription_manager_ = nullptr;
+SubscriptionManager *MqttActionNode::subscription_manager_ = nullptr;
 
 MqttActionNode::MqttActionNode(const std::string &name,
                                const BT::NodeConfig &config,
-                               Proxy &bt_proxy,
+                               Proxy &proxy,
                                const std::string &topic_base,
-                               const std::string &pub_schema_path,
-                               const std::string &sub_schema_path,
-                               int qos)
+                               const std::string &request_schema_path,
+                               const std::string &response_schema_path)
     : BT::StatefulActionNode(name, config),
-      bt_proxy_(bt_proxy),
-      topic(topic_base, pub_schema_path, sub_schema_path, qos,
-            std::bind(&MqttActionNode::callback, this, std::placeholders::_1, std::placeholders::_2))
+      proxy_(proxy),
+      topic_base_(topic_base),
+      request_schema_path_(request_schema_path),
+      response_schema_path_(response_schema_path),
+      state(BT::NodeStatus::IDLE)
 {
-    // Register this instance with the subscription manager if available
-    if (subscription_manager_)
-    {
-        // The manager will handle registering the type if needed
-        subscription_manager_->registerInstance(this);
-    }
-    else
-    {
-        // Fall back to the original implementation if no manager
-        if (bt_proxy_.is_connected())
-        {
-            topic.register_callback(bt_proxy);
-            topic.subscribe(bt_proxy);
-        }
-    }
+    // Registration happens in derived classes
 }
 
 MqttActionNode::~MqttActionNode()
 {
-    // Unregister this instance when destroyed
-    if (subscription_manager_)
-    {
-        subscription_manager_->unregisterInstance(this);
-    }
+    // Optional cleanup if needed
 }
 
+// Default implementation of providedPorts - derived classes should override
 BT::PortsList MqttActionNode::providedPorts()
 {
     return {};
@@ -52,92 +40,54 @@ BT::PortsList MqttActionNode::providedPorts()
 
 void MqttActionNode::callback(const json &msg, mqtt::properties props)
 {
-
-    // Use mutex to protect shared state
-    {
-        std::lock_guard<std::mutex> lock(state_mutex_);
-
-        // Update state based on message content
-        if (msg.contains("state"))
-        {
-            if (msg["state"] == "failure")
-            {
-                std::cout << "State updated to FAILURE" << std::endl;
-                state = BT::NodeStatus::FAILURE;
-            }
-            else if (msg["state"] == "successful")
-            {
-                std::cout << "State updated to SUCCESS" << std::endl;
-                state = BT::NodeStatus::SUCCESS;
-            }
-            else if (msg["state"] == "running")
-            {
-                std::cout << "State updated to RUNNING" << std::endl;
-                state = BT::NodeStatus::RUNNING;
-            }
-            else
-            {
-                std::cout << "Unknown state value: " << msg["state"] << std::endl;
-            }
-
-            // Use explicit memory ordering when setting the flag
-            state_updated_.store(true, std::memory_order_seq_cst);
-        }
-        else
-        {
-            std::cout << "Message doesn't contain 'state' field" << std::endl;
-        }
-    }
+    // Base implementation - should be overridden by derived classes
+    std::cout << "Base callback called - this should be overridden!" << std::endl;
 }
 
 BT::NodeStatus MqttActionNode::onStart()
 {
-    try
+    state_updated_.store(false, std::memory_order_seq_cst);
+
+    // Create the message to send
+    json message = createMessage();
+
+    // Extract subtopic from the request schema and register it with the manager
+    std::string subtopic = "";
+    if (!request_schema_path_.empty() && subscription_manager_)
     {
-        json message = createMessage();
-        topic.publish(bt_proxy_, message);
-        state = BT::NodeStatus::RUNNING;
+        subtopic = subscription_manager_->extractSubtopicFromSchema(request_schema_path_);
     }
-    catch (const std::exception &e)
-    {
-        std::cout << "Exception in onStart(): " << e.what() << std::endl;
-        state = BT::NodeStatus::FAILURE;
-    }
-    catch (...)
-    {
-        std::cout << "Unknown exception in onStart()" << std::endl;
-        state = BT::NodeStatus::FAILURE;
-    }
-    return state;
+
+    // Send the message with the proper subtopic
+    std::string publish_topic = topic_base_ + "/CMD" + subtopic;
+    proxy_.publish(publish_topic, message.dump());
+
+    return BT::NodeStatus::RUNNING;
 }
 
 BT::NodeStatus MqttActionNode::onRunning()
 {
-    // Use mutex for accessing shared state
-    std::lock_guard<std::mutex> lock(state_mutex_);
-
-    // Use explicit memory ordering when loading the flag
-    bool updated = state_updated_.load(std::memory_order_acquire);
-    if (updated)
+    // Check if state has been updated
+    if (state_updated_.load(std::memory_order_seq_cst))
     {
-        // We got an update from the callback, reset the flag
+        // Reset the flag with explicit memory ordering
         state_updated_.store(false, std::memory_order_seq_cst);
-        // Return the updated state (SUCCESS/FAILURE/RUNNING)
+
+        // Return the new state
         return state;
     }
-    else
-    {
-        // No update received yet, continue in RUNNING state
-        return BT::NodeStatus::RUNNING;
-    }
+
+    // State not updated yet, continue running
+    return BT::NodeStatus::RUNNING;
 }
 
 void MqttActionNode::onHalted()
 {
+    // Optional: Cancel the command if needed
     std::cout << "MQTT action node halted" << std::endl;
 }
 
-void MqttActionNode::setSubscriptionManager(NodeTypeSubscriptionManager *manager)
+void MqttActionNode::setSubscriptionManager(SubscriptionManager *manager)
 {
     subscription_manager_ = manager;
 }
@@ -151,7 +101,11 @@ void MqttActionNode::handleMessage(const json &msg, mqtt::properties props)
 
 bool MqttActionNode::isInterestedIn(const std::string &field, const json &value)
 {
-    // Default implementation - nodes are interested in all messages
-    // Override in derived classes to filter by specific fields
     return true;
+}
+
+void MqttActionNode::emitWakeUpSignal()
+{
+    // Also use the TreeTickRequester to ensure compatibility
+    TreeTickRequester::requestTick();
 }

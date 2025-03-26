@@ -50,17 +50,9 @@ void MqttTopic::publish(mqtt::async_client &client, const json &message)
         {
             pub_validator.validate(message);
         }
-
-        std::string correlation_data = mqtt_utils::generate_uuid();
-        mqtt::property correlation_property(mqtt::property::code::CORRELATION_DATA, correlation_data);
-        mqtt::property response_topic(mqtt::property::code::RESPONSE_TOPIC, subtopic);
-        mqtt::properties props;
-        props.add(correlation_property);
-        props.add(response_topic);
-
         if (!pubtopic.empty())
         {
-            mqtt::message_ptr pubmsg = mqtt::make_message(pubtopic, message.dump(), qos, false, props);
+            mqtt::message_ptr pubmsg = mqtt::make_message(pubtopic, message.dump(), qos, false);
             try
             {
                 client.publish(pubmsg)->wait_for(std::chrono::seconds(10));
@@ -74,16 +66,8 @@ void MqttTopic::publish(mqtt::async_client &client, const json &message)
     }
     catch (std::exception &e)
     {
-        std::cout << "Exception when setting up validating: " << e.what() << std::endl;
+        std::cout << "Exception when validating: " << e.what() << std::endl;
         return;
-    }
-}
-
-void MqttTopic::subscribe(mqtt::async_client &client)
-{
-    if (!subtopic.empty())
-    {
-        client.subscribe(subtopic, qos);
     }
 }
 
@@ -91,45 +75,26 @@ void MqttTopic::register_callback(Proxy &proxy)
 {
     if (!subtopic.empty())
     {
-        proxy.register_topic_handler(subtopic, callback_method, &sub_validator, &sub_schema);
+        // Update to use the new simplified interface
+        auto wrapped_callback = [this](const json &message, mqtt::properties props)
+        {
+            try
+            {
+                // Validate the message if we have a schema
+                if (!sub_schema.is_null())
+                {
+                    sub_validator.validate(message);
+                }
+                // Call the original callback
+                callback_method(message, props);
+            }
+            catch (const std::exception &e)
+            {
+                std::cerr << "Validation error: " << e.what() << std::endl;
+            }
+        };
+
+        proxy.register_topic_handler(subtopic, wrapped_callback);
         std::cout << "Registered callback for topic: " << subtopic << std::endl;
     }
-}
-
-// Response implementation
-Response::Response(std::string topic, std::string publish_schema_path,
-                   std::string subscribe_schema_path, int qos,
-                   std::function<void(const json &, mqtt::properties)> callback_method)
-    : MqttTopic(topic, publish_schema_path, subscribe_schema_path, qos, callback_method)
-{
-}
-
-void Response::publish(mqtt::async_client &client, const json &request, mqtt::properties &props)
-{
-    if (!pub_schema.is_null())
-    {
-        pub_validator.validate(request);
-    }
-
-    props.add(mqtt::property(mqtt::property::code::CORRELATION_DATA, mqtt_utils::generate_uuid()));
-
-    try
-    {
-        std::string response_topic = mqtt::get<std::string>(props.get(mqtt::property::code::RESPONSE_TOPIC));
-        client.publish(response_topic, request.dump(), qos, false, props);
-    }
-    catch (const std::exception &e)
-    {
-        // Handle the case where RESPONSE_TOPIC is not present
-        std::cout << "Error: User Property RESPONSE_TOPIC not found, " << e.what() << std::endl;
-    }
-}
-
-// Request implementation
-Request::Request(std::string topic, std::string publish_schema_path,
-                 std::string subscribe_schema_path, int qos,
-                 std::function<void(const json &, mqtt::properties)> callback_method)
-    : MqttTopic(topic, publish_schema_path, subscribe_schema_path, qos, callback_method)
-{
-    subtopic = pubtopic + sub_schema["subtopic"].get<std::string>() + "/" + mqtt_utils::generate_uuid();
 }
