@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(async_publish C CXX)
+project(bt_controller C CXX)
 
 # Set C++ standard early
 set(CMAKE_CXX_STANDARD 17)
@@ -38,8 +38,9 @@ include_directories(
     ${PahoMqttCpp_INCLUDE_DIRS}
 )
 
-add_executable(async_publish
-    async_publish.cpp
+add_executable(bt_controller
+    bt_controller.cpp
+    common_constants.cpp
     mqtt/utils.cpp
     mqtt/callbacks.cpp
     mqtt/mqtttopic.cpp
@@ -57,6 +58,34 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 )
 
 target_link_libraries(${PROJECT_NAME} 
+    PahoMqttCpp::paho-mqttpp3 
+    PahoMqttCpp::paho-mqtt3as 
+    ${UUID_LDFLAGS} 
+    json_schema_validator
+    behaviortree_cpp
+)
+
+# Add model generator executable
+add_executable(generate_model_xml
+    generate_model_xml.cpp
+    common_constants.cpp
+    mqtt/utils.cpp
+    mqtt/callbacks.cpp
+    mqtt/mqtttopic.cpp
+    mqtt/subscription_manager.cpp 
+    mqtt/proxy.cpp
+    bt/mqtt_action_node.cpp
+    bt/tree_tick_requester.cpp
+    bt/CustomNodes/move_shuttle_to_position.cpp
+)
+
+target_include_directories(generate_model_xml PRIVATE 
+    /usr/local/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../third_party/json/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../third_party/json-schema-validator/src
+)
+
+target_link_libraries(generate_model_xml 
     PahoMqttCpp::paho-mqttpp3 
     PahoMqttCpp::paho-mqtt3as 
     ${UUID_LDFLAGS} 

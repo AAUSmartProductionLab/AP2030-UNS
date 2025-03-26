@@ -13,11 +13,6 @@
 #include "common_constants.h"
 #include <fstream>
 
-// Constants used throughout the application
-const std::string BROKER_URI("192.168.0.104:1883");
-const std::string CLIENT_ID("behavior_tree");
-const std::string UNS_TOPIC("NN/Nybrovej/InnoLab/Planar");
-
 int main(int argc, char *argv[])
 {
     std::string serverURI = (argc > 1) ? std::string{argv[1]} : BROKER_URI;

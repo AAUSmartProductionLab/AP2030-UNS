@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4" project_name="Project">
+    <include path="models/tree_nodes_model.xml"/>
+    <include path="src/bt_tree.xml"/>
+    <!-- Description of Node Models (used by Groot) -->
+    <TreeNodesModel>
+        <Action ID="MoveShuttleToPosition">
+            <input_port name="xbot_id" type="int"/>
+            <input_port name="goal" type="Position2D"/>
+        </Action>
+    </TreeNodesModel>
+</root>
