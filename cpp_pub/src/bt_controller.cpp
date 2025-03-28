@@ -8,6 +8,7 @@
 #include "bt/mqtt_action_node.h"
 #include "bt/tree_tick_requester.h"
 #include "bt/CustomNodes/move_shuttle_to_position.h"
+#include "bt/CustomNodes/omron_arcl_request_node.h"
 #include "mqtt/subscription_manager.h"
 #include "mqtt/utils.h"
 #include "common_constants.h"
@@ -32,12 +33,16 @@ int main(int argc, char *argv[])
     SubscriptionManager subscription_manager(bt_proxy);
     MqttActionNode::setSubscriptionManager(&subscription_manager);
     subscription_manager.registerNodeType<MoveShuttleToPosition>(
-        UNS_TOPIC,
+        UNS_TOPIC + "/Planar",
         "../schemas/moveResponse.schema.json");
+    subscription_manager.registerNodeType<OmronArclRequest>(
+        UNS_TOPIC + "/Omron",
+        "../schemas/amrArclUpdate.schema.json");
 
     // BT initiliazation
     BT::BehaviorTreeFactory factory;
     factory.registerNodeType<MoveShuttleToPosition>("MoveShuttleToPosition", std::ref(bt_proxy));
+    factory.registerNodeType<OmronArclRequest>("OmronArclRequest", std::ref(bt_proxy));
     auto tree = factory.createTreeFromFile("../src/bt_tree.xml");
     BT::Groot2Publisher publisher(tree);
 
@@ -46,8 +51,6 @@ int main(int argc, char *argv[])
         auto status = tree.tickOnce();
         while (status == BT::NodeStatus::RUNNING)
         {
-            // Mostly event driven, but ticks at interval additionally.
-            // For pure eventdriven use overload of waitForTickRequest
             TreeTickRequester::waitForTickRequest(std::chrono::milliseconds(5000));
             status = tree.tickOnce();
         }
@@ -60,26 +63,5 @@ int main(int argc, char *argv[])
         // Optional: Add a delay between tree executions
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
-
-    // To generate the model XML for the Groot2
-    // std::string xml_models = BT::writeTreeNodesModelXML(factory);
-    // auto saveXmlToFile = [](const std::string &xml_content, const std::string &filename)
-    // {
-    //     std::ofstream file(filename);
-    //     if (file.is_open())
-    //     {
-    //         file << xml_content;
-    //         file.close();
-    //         std::cout << "Successfully saved XML models to " << filename << std::endl;
-    //         return true;
-    //     }
-    //     else
-    //     {
-    //         std::cerr << "Failed to open file for writing: " << filename << std::endl;
-    //         return false;
-    //     }
-    // };
-    // saveXmlToFile(xml_models, "../models/tree_nodes_model.xml");
-
     return 0;
 }

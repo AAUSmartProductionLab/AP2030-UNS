@@ -2,9 +2,37 @@
 <root BTCPP_format="4">
   <BehaviorTree ID="MainTree">
     <Sequence>
-        <MoveShuttleToPosition   name="MoveShuttleToLoading" goal="1.0;2.1" xbot_id="1"/>
-        <MoveShuttleToPosition   name="MoveShuttleToFilling" goal="1.0;2.1" xbot_id="1"/>
-        <MoveShuttleToPosition   name="MoveShuttleToUnloading" goal="1.0;2.1" xbot_id="1"/>
+      <MoveShuttleToPosition name="MoveShuttleToLoading"
+                             xbot_id="1"
+                             goal="120.0;120.0"/>
+      <PMCConditionNode expected_value=""
+                        comparison_type="equal"
+                        field_name=""/>
+      <MoveShuttleToPosition name="MoveShuttleToFilling"
+                             xbot_id="1"
+                             goal="240.0;240.0"/>
+      <MoveShuttleToPosition name="MoveShuttleToUnloading"
+                             xbot_id="1"
+                             goal="360.0;360.0"/>
     </Sequence>
   </BehaviorTree>
+
+  <!-- Description of Node Models (used by Groot) -->
+  <TreeNodesModel>
+    <Action ID="MoveShuttleToPosition">
+      <input_port name="xbot_id"
+                  type="int"/>
+      <input_port name="goal"
+                  type="Position2D"/>
+    </Action>
+    <Condition ID="PMCConditionNode">
+      <input_port name="expected_value"
+                  type="std::string">Value to compare against</input_port>
+      <input_port name="comparison_type"
+                  type="std::string">Type of comparison: equal, not_equal, greater, less, contains</input_port>
+      <input_port name="field_name"
+                  type="std::string">Name of the field to monitor in the MQTT message</input_port>
+    </Condition>
+  </TreeNodesModel>
+
 </root>

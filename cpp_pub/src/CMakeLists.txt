@@ -50,6 +50,8 @@ add_executable(bt_controller
     bt/mqtt_condition_node.cpp
     bt/tree_tick_requester.cpp
     bt/CustomNodes/move_shuttle_to_position.cpp
+    bt/CustomNodes/omron_arcl_request_node.cpp
+    bt/CustomNodes/pmc_condition_node.cpp
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE 
@@ -79,6 +81,8 @@ add_executable(generate_model_xml
     bt/mqtt_condition_node.cpp
     bt/tree_tick_requester.cpp
     bt/CustomNodes/move_shuttle_to_position.cpp
+    bt/CustomNodes/omron_arcl_request_node.cpp
+    bt/CustomNodes/pmc_condition_node.cpp
 )
 
 target_include_directories(generate_model_xml PRIVATE 

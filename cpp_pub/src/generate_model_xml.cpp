@@ -5,13 +5,12 @@
 #include "behaviortree_cpp/xml_parsing.h"
 #include "mqtt/proxy.h"
 #include "bt/mqtt_action_node.h"
+#include "bt/CustomNodes/pmc_condition_node.h"
 #include "bt/CustomNodes/move_shuttle_to_position.h"
+#include "bt/CustomNodes/omron_arcl_request_node.h"
+#include "common_constants.h"
 
-// Constants
-const std::string BROKER_URI("192.168.0.104:1883");
-const std::string CLIENT_ID("model_generator");
 const std::string OUTPUT_FILE("../models/tree_nodes_model.xml");
-
 /**
  * Saves a string to a file
  */
@@ -47,7 +46,8 @@ int main()
 
     // Register all custom nodes
     factory.registerNodeType<MoveShuttleToPosition>("MoveShuttleToPosition", std::ref(dummy_proxy));
-
+    factory.registerNodeType<OmronArclRequest>("OmronArclRequest", std::ref(dummy_proxy));
+    factory.registerNodeType<PMCConditionNode>("PMCConditionNode", std::ref(dummy_proxy));
     // Generate the XML models
     std::string xml_models = BT::writeTreeNodesModelXML(factory);
 
