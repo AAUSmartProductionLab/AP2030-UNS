@@ -1,6 +1,5 @@
 #include "mqtt/subscription_manager.h"
 #include "mqtt/proxy.h"
-#include "bt/mqtt_action_node.h"
 #include <iostream>
 #include <fstream>
 
@@ -92,7 +91,7 @@ void SubscriptionManager::route_to_nodes(
 
             if (interested)
             {
-                node->callback(msg, props);
+                node->handleMessage(msg, props);
             }
         }
     }

@@ -8,9 +8,8 @@
 #include <mqtt/async_client.h>
 #include <nlohmann/json.hpp>
 #include <nlohmann/json-schema.hpp>
-
+#include "mqtt/subscription_manager_client.h"
 // Forward declarations
-class MqttActionNode;
 class Proxy;
 
 using nlohmann::json;
@@ -63,7 +62,7 @@ public:
 
     // Register the individual nodes
     template <typename T>
-    void registerDerivedInstance(MqttActionNode *instance)
+    void registerDerivedInstance(SubscriptionManagerClient *instance)
     {
         auto type_index = std::type_index(typeid(T));
         if (node_subscriptions_.find(type_index) != node_subscriptions_.end())
@@ -78,7 +77,7 @@ public:
 
     // Node instance unregistration
     template <typename T>
-    void unregisterInstance(MqttActionNode *instance)
+    void unregisterInstance(SubscriptionManagerClient *instance)
     {
         auto type_index = std::type_index(typeid(T));
         if (node_subscriptions_.find(type_index) != node_subscriptions_.end())
@@ -106,7 +105,7 @@ private:
         std::string topic;
         std::string schema_path;
         int qos;
-        std::vector<MqttActionNode *> instances;
+        std::vector<SubscriptionManagerClient *> instances;
     };
     std::map<std::type_index, NodeTypeSubscription> node_subscriptions_;
 

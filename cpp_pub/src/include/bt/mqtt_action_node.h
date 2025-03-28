@@ -6,6 +6,7 @@
 #include <atomic>
 #include <mutex>
 #include <string>
+#include "mqtt/subscription_manager_client.h"
 
 // Forward declarations
 class Proxy;
@@ -16,11 +17,11 @@ using nlohmann::json;
 /**
  * @brief Base class for MQTT-based behavior tree action nodes
  */
-class MqttActionNode : public BT::StatefulActionNode
+class MqttActionNode : public BT::StatefulActionNode, public SubscriptionManagerClient
 {
 protected:
     Proxy &proxy_;
-    const std::string topic_base_;
+    const std::string uns_topic_;
     const std::string request_schema_path_;
     const std::string response_schema_path_;
 
@@ -33,7 +34,7 @@ protected:
 
 public:
     MqttActionNode(const std::string &name, const BT::NodeConfig &config, Proxy &proxy,
-                   const std::string &topic_base,
+                   const std::string &uns_topic,
                    const std::string &request_schema_path = "",
                    const std::string &response_schema_path = "");
 

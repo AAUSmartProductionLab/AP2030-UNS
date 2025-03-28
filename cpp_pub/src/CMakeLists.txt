@@ -47,6 +47,7 @@ add_executable(bt_controller
     mqtt/subscription_manager.cpp 
     mqtt/proxy.cpp
     bt/mqtt_action_node.cpp
+    bt/mqtt_condition_node.cpp
     bt/tree_tick_requester.cpp
     bt/CustomNodes/move_shuttle_to_position.cpp
 )
@@ -75,6 +76,7 @@ add_executable(generate_model_xml
     mqtt/subscription_manager.cpp 
     mqtt/proxy.cpp
     bt/mqtt_action_node.cpp
+    bt/mqtt_condition_node.cpp
     bt/tree_tick_requester.cpp
     bt/CustomNodes/move_shuttle_to_position.cpp
 )

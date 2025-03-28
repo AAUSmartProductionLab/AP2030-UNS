@@ -14,12 +14,12 @@ SubscriptionManager *MqttActionNode::subscription_manager_ = nullptr;
 MqttActionNode::MqttActionNode(const std::string &name,
                                const BT::NodeConfig &config,
                                Proxy &proxy,
-                               const std::string &topic_base,
+                               const std::string &uns_topic,
                                const std::string &request_schema_path,
                                const std::string &response_schema_path)
     : BT::StatefulActionNode(name, config),
       proxy_(proxy),
-      topic_base_(topic_base),
+      uns_topic_(uns_topic),
       request_schema_path_(request_schema_path),
       response_schema_path_(response_schema_path),
       state(BT::NodeStatus::IDLE)
@@ -59,8 +59,8 @@ BT::NodeStatus MqttActionNode::onStart()
     }
 
     // Send the message with the proper subtopic
-    std::string publish_topic = topic_base_ + "/CMD" + subtopic;
-    proxy_.publish(publish_topic, message.dump());
+    std::string publish_topic = uns_topic_ + subtopic;
+    proxy_.publish(publish_topic, message.dump(), 2, false); // TODO QOS and retention should ideally be parameters
 
     return BT::NodeStatus::RUNNING;
 }
@@ -101,6 +101,7 @@ void MqttActionNode::handleMessage(const json &msg, mqtt::properties props)
 
 bool MqttActionNode::isInterestedIn(const std::string &field, const json &value)
 {
+    std::cout << "Base isInterestedIn called - this should be overridden!" << std::endl;
     return true;
 }
 
