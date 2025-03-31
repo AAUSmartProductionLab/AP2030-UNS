@@ -2,18 +2,26 @@
 <root BTCPP_format="4">
   <BehaviorTree ID="MainTree">
     <Sequence>
+      <Sleep msec="2000"/>
       <MoveShuttleToPosition name="MoveShuttleToLoading"
                              xbot_id="1"
                              goal="120.0;120.0"/>
-      <PMCConditionNode expected_value=""
-                        comparison_type="equal"
-                        field_name=""/>
+      <Sleep msec="2000"/>
+      <Fallback>
+        <MoveShuttleToPosition name="MoveShuttleToLoading"
+                               xbot_id="1"
+                               goal="120.0;120.0"/>
+        <MoveShuttleToPosition name="MoveShuttleToFilling"
+                               xbot_id="1"
+                               goal="240.0;240.0"/>
+      </Fallback>
       <MoveShuttleToPosition name="MoveShuttleToFilling"
                              xbot_id="1"
                              goal="240.0;240.0"/>
       <MoveShuttleToPosition name="MoveShuttleToUnloading"
                              xbot_id="1"
                              goal="360.0;360.0"/>
+      <OmronArclRequest command="dock"/>
     </Sequence>
   </BehaviorTree>
 
@@ -25,14 +33,10 @@
       <input_port name="goal"
                   type="Position2D"/>
     </Action>
-    <Condition ID="PMCConditionNode">
-      <input_port name="expected_value"
-                  type="std::string">Value to compare against</input_port>
-      <input_port name="comparison_type"
-                  type="std::string">Type of comparison: equal, not_equal, greater, less, contains</input_port>
-      <input_port name="field_name"
-                  type="std::string">Name of the field to monitor in the MQTT message</input_port>
-    </Condition>
+    <Action ID="OmronArclRequest">
+      <input_port name="command"
+                  type="BT::AnyTypeAllowed"/>
+    </Action>
   </TreeNodesModel>
 
 </root>

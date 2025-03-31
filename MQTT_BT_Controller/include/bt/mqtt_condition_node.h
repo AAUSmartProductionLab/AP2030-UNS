@@ -4,8 +4,8 @@
 #include <nlohmann/json.hpp>
 #include <mutex>
 #include <atomic>
-#include "mqtt/proxy.h"
-#include "mqtt/subscription_manager_client.h"
+#include "../../include/mqtt/proxy.h"
+#include "../../include/mqtt/subscription_manager_client.h"
 
 using json = nlohmann::json;
 

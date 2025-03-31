@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
     BT::BehaviorTreeFactory factory;
     factory.registerNodeType<MoveShuttleToPosition>("MoveShuttleToPosition", std::ref(bt_proxy));
     factory.registerNodeType<OmronArclRequest>("OmronArclRequest", std::ref(bt_proxy));
-    auto tree = factory.createTreeFromFile("../src/bt_tree.xml");
+    auto tree = factory.createTreeFromFile("../src/bt/Description/tree.xml");
     BT::Groot2Publisher publisher(tree);
 
     while (true)
