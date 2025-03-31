@@ -10,7 +10,7 @@ class Proxy;
 using nlohmann::json;
 
 // MoveShuttleToPosition class declaration
-class PMCConditionNode : public MqttValueComparisonCondition
+class PMCConditionNode : public MqttConditionNode
 {
 public:
     PMCConditionNode(const std::string &name, const BT::NodeConfig &config, Proxy &bt_proxy);
@@ -19,4 +19,5 @@ public:
 
     // Override isInterestedIn to filter messages
     bool isInterestedIn(const std::string &field, const json &value) override;
+    BT::NodeStatus tick() override;
 };

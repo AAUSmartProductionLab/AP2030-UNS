@@ -11,7 +11,7 @@ using json = nlohmann::json;
 
 class SubscriptionManager;
 
-class MqttValueComparisonCondition : public BT::ConditionNode, public SubscriptionManagerClient
+class MqttConditionNode : public BT::ConditionNode, public SubscriptionManagerClient
 {
 protected:
     Proxy &proxy_;
@@ -19,27 +19,31 @@ protected:
     std::string response_schema_path_;
     std::string field_name_;
 
-    json latest_value_;
+    json latest_msg_;
     std::mutex value_mutex_;
     static SubscriptionManager *subscription_manager_;
 
 public:
-    MqttValueComparisonCondition(const std::string &name,
-                                 const BT::NodeConfig &config,
-                                 Proxy &proxy,
-                                 const std::string &uns_topic,
-                                 const std::string &response_schema_path);
+    MqttConditionNode(const std::string &name,
+                      const BT::NodeConfig &config,
+                      Proxy &proxy,
+                      const std::string &uns_topic,
+                      const std::string &response_schema_path);
 
-    ~MqttValueComparisonCondition() override;
+    ~MqttConditionNode() override;
 
-    // From BT::ConditionNode
-    BT::NodeStatus tick() override;
+    static void setSubscriptionManager(SubscriptionManager *manager);
+    static BT::PortsList providedPorts();
 
     // From SubscriptionManagerClient
     void handleMessage(const json &msg, mqtt::properties props) override;
-    bool isInterestedIn(const std::string &field, const json &value) override;
+
+    virtual bool isInterestedIn(const std::string &field, const json &value);
+
+    // From BT::ConditionNode
+    void callback(const json &msg, mqtt::properties props);
+
+    virtual BT::NodeStatus tick() = 0;
 
     // Static methods
-    static BT::PortsList providedPorts();
-    static void setSubscriptionManager(SubscriptionManager *manager);
 };

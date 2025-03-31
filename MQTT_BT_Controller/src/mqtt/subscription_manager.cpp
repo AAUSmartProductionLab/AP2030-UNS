@@ -69,23 +69,14 @@ void SubscriptionManager::route_to_nodes(
     {
         if (node)
         {
-            // Check if the node is interested in this message
-            bool interested = true;
+            bool interested = false;
 
-            if (msg.contains("CommandUuid") && msg["CommandUuid"].is_string())
+            for (auto &[key, value] : msg.items())
             {
-                interested = node->isInterestedIn("CommandUuid", msg["CommandUuid"]);
-            }
-            else
-            {
-                // If no CommandUuid, check all fields for interest
-                for (auto &[key, value] : msg.items())
+                if (node->isInterestedIn(key, value))
                 {
-                    if (!node->isInterestedIn(key, value))
-                    {
-                        interested = false;
-                        break;
-                    }
+                    interested = true;
+                    break;
                 }
             }
 

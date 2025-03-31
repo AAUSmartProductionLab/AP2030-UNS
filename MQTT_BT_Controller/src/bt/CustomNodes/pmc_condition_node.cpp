@@ -3,13 +3,13 @@
 #include "common_constants.h"
 
 PMCConditionNode::PMCConditionNode(const std::string &name, const BT::NodeConfig &config, Proxy &bt_proxy)
-    : MqttValueComparisonCondition(name, config, bt_proxy,
-                                   UNS_TOPIC,
-                                   "../schemas/pmcCondition.schema.json")
+    : MqttConditionNode(name, config, bt_proxy,
+                        UNS_TOPIC + "/Planar",
+                        "../schemas/weigh.schema.json")
 {
-    if (MqttValueComparisonCondition::subscription_manager_)
+    if (MqttConditionNode::subscription_manager_)
     {
-        MqttValueComparisonCondition::subscription_manager_->registerDerivedInstance<PMCConditionNode>(this);
+        MqttConditionNode::subscription_manager_->registerDerivedInstance<PMCConditionNode>(this);
     }
 }
 
@@ -24,8 +24,170 @@ BT::PortsList PMCConditionNode::providedPorts()
 bool PMCConditionNode::isInterestedIn(const std::string &field, const json &value)
 {
     // Either call the parent implementation:
-    return MqttValueComparisonCondition::isInterestedIn(field, value);
+    auto field_name_res = getInput<std::string>("field_name");
 
-    // Or implement a custom version specific to PMC's requirements:
-    // return field == field_name_ && [some additional PMC-specific condition];
+    // First check if we have a valid field_name
+    if (!field_name_res)
+    {
+        std::cout << "PMCConditionNode: No field_name input available" << std::endl;
+        return false;
+    }
+    if (field == field_name_res.value())
+    {
+        std::cout << "PMCConditionNode: Interested in field: " << field << std::endl;
+        return true;
+    }
+    return false;
+}
+
+BT::NodeStatus PMCConditionNode::tick()
+{
+    // Get the field name from inputs
+    auto field_name_res = getInput<std::string>("field_name");
+    if (!field_name_res)
+    {
+        std::cout << "MqttConditionNode: Missing field_name" << std::endl;
+        return BT::NodeStatus::FAILURE;
+    }
+    std::string field_name = field_name_res.value(); // Use a local variable to store the field name
+    std::cout << field_name << std::endl;
+
+    auto comparison_type_res = getInput<std::string>("comparison_type");
+    std::string comparison_type = "equal";
+    if (comparison_type_res)
+    {
+        comparison_type = comparison_type_res.value();
+    }
+    std::cout << comparison_type_res.value() << std::endl;
+    // Get the expected value from the input port
+    auto expected_value_res = getInput<std::string>("expected_value");
+    if (!expected_value_res)
+    {
+        std::cout << "MqttConditionNode: Missing expected value" << std::endl;
+        return BT::NodeStatus::FAILURE; // No expected value provided
+    }
+
+    std::cout << expected_value_res.value() << std::endl;
+    std::string expected_str = expected_value_res.value();
+
+    // Lock to safely access the latest value
+    std::lock_guard<std::mutex> lock(value_mutex_);
+    std::cout << latest_msg_.dump() << std::endl;
+    if (latest_msg_.empty() || !latest_msg_.contains(field_name)) // Use the local variable here
+    {
+        std::cout << "MqttConditionNode: No data or field not found: " << field_name << std::endl;
+        return BT::NodeStatus::FAILURE; // No data or field not found
+    }
+
+    // Get the actual value
+    json actual_value = latest_msg_[field_name]; // And here
+
+    bool result = false;
+
+    // Handle different comparison types
+    if (comparison_type == "equal")
+    {
+        // Handle different JSON types appropriately
+        if (actual_value.is_string())
+        {
+            result = (actual_value.get<std::string>() == expected_str);
+        }
+        else if (actual_value.is_number())
+        {
+            try
+            {
+                double expected_num = std::stod(expected_str);
+                result = (std::abs(actual_value.get<double>() - expected_num) < 1e-6);
+            }
+            catch (...)
+            {
+                result = false;
+            }
+        }
+        else if (actual_value.is_boolean())
+        {
+            result = ((expected_str == "true" && actual_value.get<bool>()) ||
+                      (expected_str == "false" && !actual_value.get<bool>()));
+        }
+        else
+        {
+            // For complex types, compare string representations
+            result = (actual_value.dump() == expected_str);
+        }
+    }
+    else if (comparison_type == "not_equal")
+    {
+        if (actual_value.is_string())
+        {
+            result = (actual_value.get<std::string>() != expected_str);
+        }
+        else if (actual_value.is_number())
+        {
+            try
+            {
+                double expected_num = std::stod(expected_str);
+                result = (std::abs(actual_value.get<double>() - expected_num) >= 1e-6);
+            }
+            catch (...)
+            {
+                result = true;
+            }
+        }
+        else
+        {
+            result = (actual_value.dump() != expected_str);
+        }
+    }
+    else if (comparison_type == "greater")
+    {
+        if (actual_value.is_number())
+        {
+            try
+            {
+                double expected_num = std::stod(expected_str);
+                result = (actual_value.get<double>() > expected_num);
+            }
+            catch (...)
+            {
+                result = false;
+            }
+        }
+        else if (actual_value.is_string())
+        {
+            result = (actual_value.get<std::string>() > expected_str);
+        }
+    }
+    else if (comparison_type == "less")
+    {
+        if (actual_value.is_number())
+        {
+            try
+            {
+                double expected_num = std::stod(expected_str);
+                result = (actual_value.get<double>() < expected_num);
+            }
+            catch (...)
+            {
+                result = false;
+            }
+        }
+        else if (actual_value.is_string())
+        {
+            result = (actual_value.get<std::string>() < expected_str);
+        }
+    }
+    else if (comparison_type == "contains")
+    {
+        if (actual_value.is_string())
+        {
+            result = (actual_value.get<std::string>().find(expected_str) != std::string::npos);
+        }
+        else
+        {
+            std::string actual_str = actual_value.dump();
+            result = (actual_str.find(expected_str) != std::string::npos);
+        }
+    }
+
+    return result ? BT::NodeStatus::SUCCESS : BT::NodeStatus::FAILURE;
 }

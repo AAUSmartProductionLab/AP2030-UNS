@@ -43,21 +43,19 @@ public:
         std::string subtopic = extractSubtopicFromSchema(schema_path);
         std::string full_topic = UNS_TOPIC + "/DATA" + subtopic;
 
-        if (node_subscriptions_.find(type_index) == node_subscriptions_.end())
-        {
-            NodeTypeSubscription sub;
-            sub.topic = full_topic;
-            sub.schema_path = schema_path;
-            sub.qos = qos;
-            node_subscriptions_[type_index] = sub;
+        node_subscriptions_[type_index] = {
+            full_topic,
+            schema_path,
+            qos, // Default QoS
+            {}   // Empty vector for instances
+        };
 
-            // Register with MQTT broker via proxy
-            register_topic_handler(full_topic,
-                                   [this, type_index](const json &msg, mqtt::properties props)
-                                   {
-                                       this->route_to_nodes(type_index, msg, props);
-                                   });
-        }
+        // Register with the full topic including subtopic
+        register_topic_handler(full_topic,
+                               [this, type_idx = type_index](const json &msg, mqtt::properties props)
+                               {
+                                   route_to_nodes(type_idx, msg, props);
+                               });
     }
 
     // Register the individual nodes

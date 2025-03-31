@@ -1,19 +1,21 @@
-#include <iostream>
 #include <chrono>
+#include <functional>
+#include <iostream>
+#include <fstream>
 #include <behaviortree_cpp/bt_factory.h>
 #include <behaviortree_cpp/loggers/groot2_publisher.h>
-#include "behaviortree_cpp/xml_parsing.h"
-#include <functional>
+#include <behaviortree_cpp/xml_parsing.h>
+
+#include "common_constants.h"
+
 #include "mqtt/proxy.h"
 #include "bt/mqtt_action_node.h"
 #include "bt/tree_tick_requester.h"
-#include "bt/CustomNodes/move_shuttle_to_position.h"
-#include "bt/CustomNodes/omron_arcl_request_node.h"
 #include "mqtt/subscription_manager.h"
 #include "mqtt/utils.h"
-#include "common_constants.h"
-#include <fstream>
-
+#include "bt/CustomNodes/move_shuttle_to_position.h"
+#include "bt/CustomNodes/omron_arcl_request_node.h"
+#include "bt/CustomNodes/pmc_condition_node.h"
 int main(int argc, char *argv[])
 {
     std::string serverURI = (argc > 1) ? std::string{argv[1]} : BROKER_URI;
@@ -32,17 +34,24 @@ int main(int argc, char *argv[])
     // TODO make this to be handled within registerNodeType or combine the node registration with the bt factory
     SubscriptionManager subscription_manager(bt_proxy);
     MqttActionNode::setSubscriptionManager(&subscription_manager);
+    MqttConditionNode::setSubscriptionManager(&subscription_manager);
+
     subscription_manager.registerNodeType<MoveShuttleToPosition>(
         UNS_TOPIC + "/Planar",
         "../schemas/moveResponse.schema.json");
-    subscription_manager.registerNodeType<OmronArclRequest>(
-        UNS_TOPIC + "/Omron",
-        "../schemas/amrArclUpdate.schema.json");
+    subscription_manager.registerNodeType<PMCConditionNode>(
+        UNS_TOPIC + "/Planar",
+        "../schemas/weigh.schema.json");
+    // subscription_manager.registerNodeType<OmronArclRequest>(
+    //     UNS_TOPIC + "/Omron",
+    //     "../schemas/amrArclUpdate.schema.json");
 
     // BT initiliazation
     BT::BehaviorTreeFactory factory;
     factory.registerNodeType<MoveShuttleToPosition>("MoveShuttleToPosition", std::ref(bt_proxy));
-    factory.registerNodeType<OmronArclRequest>("OmronArclRequest", std::ref(bt_proxy));
+    factory.registerNodeType<PMCConditionNode>("PMCConditionNode", std::ref(bt_proxy));
+    // factory.registerNodeType<OmronArclRequest>("OmronArclRequest", std::ref(bt_proxy));
+
     auto tree = factory.createTreeFromFile("../src/bt/Description/tree.xml");
     BT::Groot2Publisher publisher(tree);
 
