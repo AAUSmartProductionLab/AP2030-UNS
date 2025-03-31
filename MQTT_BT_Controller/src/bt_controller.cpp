@@ -10,11 +10,9 @@
 
 #include "mqtt/proxy.h"
 #include "bt/mqtt_action_node.h"
-#include "bt/tree_tick_requester.h"
 #include "mqtt/subscription_manager.h"
 #include "mqtt/utils.h"
 #include "bt/CustomNodes/move_shuttle_to_position.h"
-#include "bt/CustomNodes/omron_arcl_request_node.h"
 #include "bt/CustomNodes/pmc_condition_node.h"
 int main(int argc, char *argv[])
 {
@@ -58,10 +56,9 @@ int main(int argc, char *argv[])
         auto status = tree.tickOnce();
         while (status == BT::NodeStatus::RUNNING)
         {
-            TreeTickRequester::waitForTickRequest(std::chrono::milliseconds(15000));
-            status = tree.tickOnce();
+            // Use tickWhileRunning to allow the tree to tick continuously
+            auto status = tree.tickWhileRunning(std::chrono::milliseconds(15000));
         }
-
         // When tree completes (SUCCESS or FAILURE), print the result
         std::cout << "Behavior tree execution completed with status: "
                   << (status == BT::NodeStatus::SUCCESS ? "SUCCESS" : "FAILURE") << std::endl;

@@ -1,13 +1,12 @@
 #pragma once
 
 #include <behaviortree_cpp/action_node.h>
-#include <behaviortree_cpp/bt_factory.h> // Add this include
+#include <behaviortree_cpp/bt_factory.h>
 #include <mqtt/async_client.h>
 #include <nlohmann/json.hpp>
-#include <atomic>
 #include <mutex>
 #include <string>
-#include "mqtt/subscription_manager.h" // Include full header, not just forward declaration
+#include "mqtt/subscription_manager.h"
 #include "mqtt/subscription_manager_client.h"
 
 // Forward declarations
@@ -26,9 +25,7 @@ protected:
     const std::string request_schema_path_;
     const std::string response_schema_path_;
 
-    // Protected state
-    BT::NodeStatus state;
-    std::atomic<bool> state_updated_{false};
+    // Mutex for thread safety
     std::mutex state_mutex_;
 
     static SubscriptionManager *subscription_manager_;
@@ -62,7 +59,8 @@ public:
     }
 
     static void setSubscriptionManager(SubscriptionManager *manager);
-    static void emitWakeUpSignal();
+    // void emitWakeUpSignal();
+
     // Default ports implementation
     static BT::PortsList providedPorts();
 

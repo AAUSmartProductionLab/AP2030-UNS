@@ -21,8 +21,7 @@ MqttActionNode::MqttActionNode(const std::string &name,
       proxy_(proxy),
       uns_topic_(uns_topic),
       request_schema_path_(request_schema_path),
-      response_schema_path_(response_schema_path),
-      state(BT::NodeStatus::IDLE)
+      response_schema_path_(response_schema_path)
 {
     // Registration happens in derived classes
 }
@@ -46,8 +45,6 @@ void MqttActionNode::callback(const json &msg, mqtt::properties props)
 
 BT::NodeStatus MqttActionNode::onStart()
 {
-    state_updated_.store(false, std::memory_order_seq_cst);
-
     // Create the message to send
     json message = createMessage();
 
@@ -67,24 +64,15 @@ BT::NodeStatus MqttActionNode::onStart()
 
 BT::NodeStatus MqttActionNode::onRunning()
 {
-    // Check if state has been updated
-    if (state_updated_.load(std::memory_order_seq_cst))
-    {
-        // Reset the flag with explicit memory ordering
-        state_updated_.store(false, std::memory_order_seq_cst);
-
-        // Return the new state
-        return state;
-    }
-
-    // State not updated yet, continue running
-    return BT::NodeStatus::RUNNING;
+    // Simply return the current status - it will be RUNNING until changed by a callback
+    return status();
 }
 
 void MqttActionNode::onHalted()
 {
-    // Optional: Cancel the command if needed
+    // Clean up when the node is halted
     std::cout << "MQTT action node halted" << std::endl;
+    // Additional cleanup as needed
 }
 
 void MqttActionNode::setSubscriptionManager(SubscriptionManager *manager)
@@ -103,10 +91,4 @@ bool MqttActionNode::isInterestedIn(const std::string &field, const json &value)
 {
     std::cout << "Base isInterestedIn called - this should be overridden!" << std::endl;
     return true;
-}
-
-void MqttActionNode::emitWakeUpSignal()
-{
-    // Also use the TreeTickRequester to ensure compatibility
-    TreeTickRequester::requestTick();
 }

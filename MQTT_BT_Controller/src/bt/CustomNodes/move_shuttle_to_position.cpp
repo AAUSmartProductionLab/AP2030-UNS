@@ -79,28 +79,27 @@ void MoveShuttleToPosition::callback(const json &msg, mqtt::properties props)
                 msg["State"] == 10 || msg["State"] == 14)
             {
                 current_command_uuid_ = "";
-                state = BT::NodeStatus::FAILURE;
+                // Change from setting internal state to updating node status
+                setStatus(BT::NodeStatus::FAILURE);
                 emitWakeUpSignal();
             }
             else if (msg["State"] == 2 || msg["State"] == 3)
             {
                 current_command_uuid_ = "";
-                state = BT::NodeStatus::SUCCESS;
+                // Change from setting internal state to updating node status
+                setStatus(BT::NodeStatus::SUCCESS);
                 emitWakeUpSignal();
             }
             else if (msg["State"] == 5 || msg["State"] == 6 || msg["State"] == 7 ||
                      msg["State"] == 8 || msg["State"] == 9)
             {
-                state = BT::NodeStatus::RUNNING;
+                // No need to set RUNNING again if already running
                 emitWakeUpSignal();
             }
             else
             {
                 std::cout << "Unknown State value: " << msg["State"] << std::endl;
             }
-
-            // Use explicit memory ordering when setting the flag
-            state_updated_.store(true, std::memory_order_seq_cst);
         }
         else
         {
