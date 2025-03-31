@@ -1,16 +1,17 @@
 #pragma once
 
 #include <behaviortree_cpp/action_node.h>
+#include <behaviortree_cpp/bt_factory.h> // Add this include
 #include <mqtt/async_client.h>
 #include <nlohmann/json.hpp>
 #include <atomic>
 #include <mutex>
 #include <string>
+#include "mqtt/subscription_manager.h" // Include full header, not just forward declaration
 #include "mqtt/subscription_manager_client.h"
 
 // Forward declarations
 class Proxy;
-class SubscriptionManager;
 
 using nlohmann::json;
 
@@ -41,6 +42,25 @@ public:
     virtual ~MqttActionNode();
 
     // Static method to set the subscription manager
+    template <typename DerivedNode>
+    static void registerNodeType(
+        BT::BehaviorTreeFactory &factory,
+        SubscriptionManager &subscription_manager,
+        const std::string &node_name,
+        const std::string &topic,
+        const std::string &response_schema_path,
+        Proxy &proxy)
+    {
+        // Set the subscription manager for all node instances
+        setSubscriptionManager(&subscription_manager);
+
+        // Register with subscription manager
+        subscription_manager.registerNodeType<DerivedNode>(topic, response_schema_path);
+
+        // Register with behavior tree factory
+        factory.registerNodeType<DerivedNode>(node_name, std::ref(proxy));
+    }
+
     static void setSubscriptionManager(SubscriptionManager *manager);
     static void emitWakeUpSignal();
     // Default ports implementation

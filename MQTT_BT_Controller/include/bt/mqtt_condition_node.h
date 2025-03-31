@@ -1,15 +1,15 @@
 #pragma once
 
 #include <behaviortree_cpp/behavior_tree.h>
+#include <behaviortree_cpp/bt_factory.h> // Add this include
 #include <nlohmann/json.hpp>
 #include <mutex>
 #include <atomic>
 #include "mqtt/proxy.h"
+#include "mqtt/subscription_manager.h"
 #include "mqtt/subscription_manager_client.h"
 
 using json = nlohmann::json;
-
-class SubscriptionManager;
 
 class MqttConditionNode : public BT::ConditionNode, public SubscriptionManagerClient
 {
@@ -31,6 +31,26 @@ public:
                       const std::string &response_schema_path);
 
     ~MqttConditionNode() override;
+
+    // Static method to set the subscription manager
+    template <typename DerivedNode>
+    static void registerNodeType(
+        BT::BehaviorTreeFactory &factory,
+        SubscriptionManager &subscription_manager,
+        const std::string &node_name,
+        const std::string &topic,
+        const std::string &response_schema_path,
+        Proxy &proxy)
+    {
+        // Set the subscription manager for all node instances
+        setSubscriptionManager(&subscription_manager);
+
+        // Register with subscription manager
+        subscription_manager.registerNodeType<DerivedNode>(topic, response_schema_path);
+
+        // Register with behavior tree factory
+        factory.registerNodeType<DerivedNode>(node_name, std::ref(proxy));
+    }
 
     static void setSubscriptionManager(SubscriptionManager *manager);
     static BT::PortsList providedPorts();

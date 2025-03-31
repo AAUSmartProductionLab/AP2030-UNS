@@ -29,38 +29,36 @@ int main(int argc, char *argv[])
                         .finalize();
 
     Proxy bt_proxy(serverURI, clientId, connOpts, repetitions);
-
-    // Create Subscription Manager and gnive pointer to all nodes
-    // TODO make this to be handled within registerNodeType or combine the node registration with the bt factory
     SubscriptionManager subscription_manager(bt_proxy);
-    MqttActionNode::setSubscriptionManager(&subscription_manager);
-    MqttConditionNode::setSubscriptionManager(&subscription_manager);
-
-    subscription_manager.registerNodeType<MoveShuttleToPosition>(
-        UNS_TOPIC + "/Planar",
-        "../schemas/moveResponse.schema.json");
-    subscription_manager.registerNodeType<PMCConditionNode>(
-        UNS_TOPIC + "/Planar",
-        "../schemas/weigh.schema.json");
-    // subscription_manager.registerNodeType<OmronArclRequest>(
-    //     UNS_TOPIC + "/Omron",
-    //     "../schemas/amrArclUpdate.schema.json");
-
-    // BT initiliazation
     BT::BehaviorTreeFactory factory;
-    factory.registerNodeType<MoveShuttleToPosition>("MoveShuttleToPosition", std::ref(bt_proxy));
-    factory.registerNodeType<PMCConditionNode>("PMCConditionNode", std::ref(bt_proxy));
-    // factory.registerNodeType<OmronArclRequest>("OmronArclRequest", std::ref(bt_proxy));
+
+    // Register the nodes with the behavior tree and the mqtt client
+    MqttActionNode::registerNodeType<MoveShuttleToPosition>(
+        factory,
+        subscription_manager,
+        "MoveShuttleToPosition",
+        UNS_TOPIC + "/Planar",
+        "../schemas/moveResponse.schema.json",
+        bt_proxy);
+
+    MqttConditionNode::registerNodeType<PMCConditionNode>(
+        factory,
+        subscription_manager,
+        "PMCConditionNode",
+        UNS_TOPIC + "/Planar",
+        "../schemas/weigh.schema.json",
+        bt_proxy);
 
     auto tree = factory.createTreeFromFile("../src/bt/Description/tree.xml");
     BT::Groot2Publisher publisher(tree);
 
     while (true)
     {
+        std::cout << "====== Starting behavior tree... ======" << std::endl;
         auto status = tree.tickOnce();
         while (status == BT::NodeStatus::RUNNING)
         {
-            TreeTickRequester::waitForTickRequest(std::chrono::milliseconds(5000));
+            TreeTickRequester::waitForTickRequest(std::chrono::milliseconds(15000));
             status = tree.tickOnce();
         }
 
