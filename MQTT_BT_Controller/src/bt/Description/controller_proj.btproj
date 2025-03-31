@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root BTCPP_format="4" project_name="Project">
-    <include path="src/bt/nodes_model.xml"/>
-    <include path="src/bt/tree.xml"/>
+    <include path="tree.xml"/>
+    <include path="tree_nodes_model.xml"/>
     <!-- Description of Node Models (used by Groot) -->
     <TreeNodesModel>
         <Action ID="MoveShuttleToPosition">

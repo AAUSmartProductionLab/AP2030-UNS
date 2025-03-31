@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../mqtt_action_node.h"
+#include "bt/mqtt_action_node.h"
 #include <behaviortree_cpp/bt_factory.h>
 #include <nlohmann/json.hpp>
 #include <string>

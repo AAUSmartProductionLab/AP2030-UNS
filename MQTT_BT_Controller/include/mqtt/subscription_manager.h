@@ -5,10 +5,10 @@
 #include <string>
 #include <memory>
 #include <typeindex>
-#include <mqtt/async_client.h>
 #include <nlohmann/json.hpp>
 #include <nlohmann/json-schema.hpp>
-#include "subscription_manager_client.h"
+#include "mqtt/subscription_manager_client.h"
+#include "mqtt/async_client.h"
 // Forward declarations
 class Proxy;
 

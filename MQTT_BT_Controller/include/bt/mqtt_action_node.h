@@ -6,7 +6,7 @@
 #include <atomic>
 #include <mutex>
 #include <string>
-#include "../mqtt/subscription_manager_client.h"
+#include "mqtt/subscription_manager_client.h"
 
 // Forward declarations
 class Proxy;

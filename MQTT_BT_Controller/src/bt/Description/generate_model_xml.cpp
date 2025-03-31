@@ -10,7 +10,7 @@
 #include "bt/CustomNodes/omron_arcl_request_node.h"
 #include "common_constants.h"
 
-const std::string OUTPUT_FILE("../src/bt/Description/nodes_model.xml");
+const std::string OUTPUT_FILE("../src/bt/Description/tree_nodes_model.xml");
 /**
  * Saves a string to a file
  */
