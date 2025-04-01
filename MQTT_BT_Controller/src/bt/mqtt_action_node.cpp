@@ -55,7 +55,7 @@ BT::NodeStatus MqttActionNode::onStart()
     }
 
     // Send the message with the proper subtopic
-    std::string publish_topic = uns_topic_ + subtopic;
+    std::string publish_topic = uns_topic_ + "/CMD" + subtopic;
     proxy_.publish(publish_topic, message.dump(), 2, false); // TODO QOS and retention should ideally be parameters
 
     return BT::NodeStatus::RUNNING;
