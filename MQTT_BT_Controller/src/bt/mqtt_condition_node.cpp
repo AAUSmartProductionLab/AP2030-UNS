@@ -47,7 +47,7 @@ void MqttConditionNode::setSubscriptionManager(SubscriptionManager *manager)
 void MqttConditionNode::handleMessage(const json &msg, mqtt::properties props)
 {
     std::lock_guard<std::mutex> lock(value_mutex_);
-    latest_msg_ = msg;
+    callback(msg, props);
 }
 
 bool MqttConditionNode::isInterestedIn(const std::string &field, const json &value)

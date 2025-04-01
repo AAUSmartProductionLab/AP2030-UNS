@@ -61,7 +61,7 @@ public:
     virtual bool isInterestedIn(const std::string &field, const json &value);
 
     // From BT::ConditionNode
-    void callback(const json &msg, mqtt::properties props);
+    virtual void callback(const json &msg, mqtt::properties props);
 
     virtual BT::NodeStatus tick() = 0;
 

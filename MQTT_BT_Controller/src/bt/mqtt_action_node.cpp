@@ -1,5 +1,4 @@
 #include "bt/mqtt_action_node.h"
-#include "bt/tree_tick_requester.h"
 #include "mqtt/subscription_manager.h"
 #include "mqtt/proxy.h"
 #include "common_constants.h"
