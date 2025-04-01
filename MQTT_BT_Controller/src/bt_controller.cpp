@@ -12,6 +12,7 @@
 #include "bt/mqtt_action_node.h"
 #include "mqtt/subscription_manager.h"
 #include "mqtt/utils.h"
+#include "mqtt/mqtt_node_base_registration.h"
 #include "bt/CustomNodes/move_shuttle_to_position.h"
 #include "bt/CustomNodes/pmc_condition_node.h"
 int main(int argc, char *argv[])
@@ -31,7 +32,7 @@ int main(int argc, char *argv[])
     BT::BehaviorTreeFactory factory;
 
     // Register the nodes with the behavior tree and the mqtt client
-    MqttActionNode::registerNodeType<MoveShuttleToPosition>(
+    MqttNodeBase::registerNodeType<MoveShuttleToPosition>(
         factory,
         subscription_manager,
         "MoveShuttleToPosition",
@@ -39,7 +40,7 @@ int main(int argc, char *argv[])
         "../schemas/moveResponse.schema.json",
         bt_proxy);
 
-    MqttConditionNode::registerNodeType<PMCConditionNode>(
+    MqttNodeBase::registerNodeType<PMCConditionNode>(
         factory,
         subscription_manager,
         "PMCConditionNode",

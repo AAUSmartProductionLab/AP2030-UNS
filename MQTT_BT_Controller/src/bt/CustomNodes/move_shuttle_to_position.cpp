@@ -32,9 +32,9 @@ MoveShuttleToPosition::MoveShuttleToPosition(const std::string &name, const BT::
                      "../schemas/moveToPosition.schema.json",
                      "../schemas/moveResponse.schema.json")
 {
-    if (MqttActionNode::subscription_manager_)
+    if (MqttNodeBase::subscription_manager_)
     {
-        MqttActionNode::subscription_manager_->registerDerivedInstance<MoveShuttleToPosition>(this);
+        MqttNodeBase::subscription_manager_->registerDerivedInstance(this);
     }
 }
 
@@ -70,7 +70,7 @@ void MoveShuttleToPosition::callback(const json &msg, mqtt::properties props)
 {
     // Use mutex to protect shared state
     {
-        std::lock_guard<std::mutex> lock(state_mutex_);
+        std::lock_guard<std::mutex> lock(mutex_);
 
         // Update state based on message content
         if (msg.contains("State"))

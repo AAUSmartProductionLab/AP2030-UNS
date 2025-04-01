@@ -7,9 +7,9 @@ PMCConditionNode::PMCConditionNode(const std::string &name, const BT::NodeConfig
                         UNS_TOPIC + "/Planar",
                         "../schemas/weigh.schema.json")
 {
-    if (MqttConditionNode::subscription_manager_)
+    if (MqttNodeBase::subscription_manager_)
     {
-        MqttConditionNode::subscription_manager_->registerDerivedInstance<PMCConditionNode>(this);
+        MqttNodeBase::subscription_manager_->registerDerivedInstance(this);
     }
 }
 
@@ -34,10 +34,17 @@ bool PMCConditionNode::isInterestedIn(const std::string &field, const json &valu
     }
     if (field == field_name_res.value())
     {
-        std::cout << "PMCConditionNode: Interested in field: " << field << std::endl;
         return true;
     }
     return false;
+}
+
+void PMCConditionNode::callback(const json &msg, mqtt::properties props)
+{
+    std::lock_guard<std::mutex> lock(value_mutex_);
+    {
+        latest_msg_ = msg;
+    }
 }
 
 BT::NodeStatus PMCConditionNode::tick()
@@ -49,8 +56,7 @@ BT::NodeStatus PMCConditionNode::tick()
         std::cout << "MqttConditionNode: Missing field_name" << std::endl;
         return BT::NodeStatus::FAILURE;
     }
-    std::string field_name = field_name_res.value(); // Use a local variable to store the field name
-    std::cout << field_name << std::endl;
+    std::string field_name = field_name_res.value();
 
     auto comparison_type_res = getInput<std::string>("comparison_type");
     std::string comparison_type = "equal";
@@ -58,7 +64,6 @@ BT::NodeStatus PMCConditionNode::tick()
     {
         comparison_type = comparison_type_res.value();
     }
-    std::cout << comparison_type_res.value() << std::endl;
     // Get the expected value from the input port
     auto expected_value_res = getInput<std::string>("expected_value");
     if (!expected_value_res)
@@ -67,15 +72,12 @@ BT::NodeStatus PMCConditionNode::tick()
         return BT::NodeStatus::FAILURE; // No expected value provided
     }
 
-    std::cout << expected_value_res.value() << std::endl;
     std::string expected_str = expected_value_res.value();
 
     // Lock to safely access the latest value
     std::lock_guard<std::mutex> lock(value_mutex_);
-    std::cout << latest_msg_.dump() << std::endl;
     if (latest_msg_.empty() || !latest_msg_.contains(field_name)) // Use the local variable here
     {
-        std::cout << "MqttConditionNode: No data or field not found: " << field_name << std::endl;
         return BT::NodeStatus::FAILURE; // No data or field not found
     }
 

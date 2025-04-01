@@ -7,9 +7,6 @@
 #include <condition_variable>
 #include <mutex>
 
-// Initialize the static member variable
-SubscriptionManager *MqttActionNode::subscription_manager_ = nullptr;
-
 MqttActionNode::MqttActionNode(const std::string &name,
                                const BT::NodeConfig &config,
                                Proxy &proxy,
@@ -17,10 +14,8 @@ MqttActionNode::MqttActionNode(const std::string &name,
                                const std::string &request_schema_path,
                                const std::string &response_schema_path)
     : BT::StatefulActionNode(name, config),
-      proxy_(proxy),
-      uns_topic_(uns_topic),
-      request_schema_path_(request_schema_path),
-      response_schema_path_(response_schema_path)
+      MqttNodeBase(proxy, uns_topic, response_schema_path),
+      request_schema_path_(request_schema_path)
 {
     // Registration happens in derived classes
 }
@@ -63,7 +58,6 @@ BT::NodeStatus MqttActionNode::onStart()
 
 BT::NodeStatus MqttActionNode::onRunning()
 {
-    // Simply return the current status - it will be RUNNING until changed by a callback
     return status();
 }
 
@@ -72,22 +66,4 @@ void MqttActionNode::onHalted()
     // Clean up when the node is halted
     std::cout << "MQTT action node halted" << std::endl;
     // Additional cleanup as needed
-}
-
-void MqttActionNode::setSubscriptionManager(SubscriptionManager *manager)
-{
-    subscription_manager_ = manager;
-}
-
-void MqttActionNode::handleMessage(const json &msg, mqtt::properties props)
-{
-    // This is called by the subscription manager when a message arrives
-    // Just forward to our existing callback method
-    callback(msg, props);
-}
-
-bool MqttActionNode::isInterestedIn(const std::string &field, const json &value)
-{
-    std::cout << "Base isInterestedIn called - this should be overridden!" << std::endl;
-    return true;
 }

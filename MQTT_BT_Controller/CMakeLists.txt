@@ -46,6 +46,7 @@ add_library(bt_controller_common STATIC
     src/mqtt/mqtttopic.cpp
     src/mqtt/subscription_manager.cpp 
     src/mqtt/proxy.cpp
+    src/mqtt/mqtt_node_base.cpp
     src/bt/mqtt_action_node.cpp
     src/bt/mqtt_condition_node.cpp
     src/bt/CustomNodes/move_shuttle_to_position.cpp

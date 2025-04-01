@@ -33,7 +33,6 @@ public:
         mqtt::async_client::set_callback(callback);
     }
 
-    // Updated method signature - simplified to just topic and callback
     void register_topic_handler(const std::string &topic,
                                 std::function<void(const json &, mqtt::properties)> callback);
 

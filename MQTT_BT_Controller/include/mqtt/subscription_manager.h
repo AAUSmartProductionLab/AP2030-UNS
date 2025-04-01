@@ -1,37 +1,47 @@
 #pragma once
 
-#include <map>
-#include <vector>
-#include <string>
-#include <memory>
-#include <typeindex>
 #include <nlohmann/json.hpp>
-#include <nlohmann/json-schema.hpp>
-#include "mqtt/subscription_manager_client.h"
+#include <vector>
+#include <map>
+#include <string>
+#include <typeindex>
+#include <algorithm>
+#include <functional>
 #include "mqtt/async_client.h"
+#include "mqtt/mqtt_node_base.h"
+using json = nlohmann::json;
+
 // Forward declarations
 class Proxy;
 
-using nlohmann::json;
-using nlohmann::json_schema::json_validator;
-
 /**
- * @brief A subscription manager that routes mqtt messages to behaviourtree nodes that are interested in the specific CommandUuid
- * @brief The messages are generally expected on a topic part of the /Data topic of the UNS
+ * @brief Manages MQTT subscriptions for behavior tree nodes
  */
 class SubscriptionManager : public mqtt::callback
 {
 public:
-    explicit SubscriptionManager(Proxy &proxy);
+    // Constructor and destructor
+    SubscriptionManager(Proxy &proxy);
+    virtual ~SubscriptionManager() override;
 
-    // MQTT callback implementation
+    // MQTT callback interface implementation
     void message_arrived(mqtt::const_message_ptr msg) override;
-    void connected(const std::string &cause) override {}
-    void connection_lost(const std::string &cause) override {}
 
-    // General topic handler registration (simplified version without validation)
+    // Add the other required virtual methods from mqtt::callback
+    void connection_lost(const std::string &cause) override;
+    void delivery_complete(mqtt::delivery_token_ptr token) override;
+    // Add any other virtual methods required by mqtt::callback
+
+    // Add your existing methods...
     void register_topic_handler(const std::string &topic,
                                 std::function<void(const json &, mqtt::properties)> callback);
+
+    // Other methods...
+    void route_to_nodes(const std::type_index &type_index, const json &msg, mqtt::properties props);
+    std::string extractSubtopicFromSchema(const std::string &schema_path);
+
+    // Node registration methods...
+    // Template methods...
 
     // Register a topic handler for the entire node type
     template <typename T>
@@ -59,25 +69,19 @@ public:
     }
 
     // Register the individual nodes
-    template <typename T>
-    void registerDerivedInstance(SubscriptionManagerClient *instance)
+    void registerDerivedInstance(MqttNodeBase *instance)
     {
-        auto type_index = std::type_index(typeid(T));
+        std::type_index type_index(typeid(*instance));
         if (node_subscriptions_.find(type_index) != node_subscriptions_.end())
         {
             node_subscriptions_[type_index].instances.push_back(instance);
         }
-        else
-        {
-            std::cerr << "Attempting to register instance of unregistered type" << std::endl;
-        }
     }
 
     // Node instance unregistration
-    template <typename T>
-    void unregisterInstance(SubscriptionManagerClient *instance)
+    void unregisterInstance(MqttNodeBase *instance)
     {
-        auto type_index = std::type_index(typeid(T));
+        std::type_index type_index(typeid(*instance));
         if (node_subscriptions_.find(type_index) != node_subscriptions_.end())
         {
             auto &instances = node_subscriptions_[type_index].instances;
@@ -85,10 +89,8 @@ public:
         }
     }
 
-    // Make this method public so it can be used by MqttActionNode
-    std::string extractSubtopicFromSchema(const std::string &schema_path);
-
 private:
+    // Your existing members...
     // For general topic handlers
     struct TopicHandler
     {
@@ -103,12 +105,9 @@ private:
         std::string topic;
         std::string schema_path;
         int qos;
-        std::vector<SubscriptionManagerClient *> instances;
+        std::vector<MqttNodeBase *> instances;
     };
     std::map<std::type_index, NodeTypeSubscription> node_subscriptions_;
 
     Proxy &proxy_;
-
-    // Helper methods
-    void route_to_nodes(const std::type_index &type_index, const json &msg, mqtt::properties props);
 };

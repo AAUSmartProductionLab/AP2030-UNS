@@ -9,6 +9,11 @@ SubscriptionManager::SubscriptionManager(Proxy &proxy) : proxy_(proxy)
     proxy.set_callback(*this);
 }
 
+SubscriptionManager::~SubscriptionManager()
+{
+    // Cleanup if needed
+}
+
 void SubscriptionManager::message_arrived(mqtt::const_message_ptr msg)
 {
     std::string topic = msg->get_topic();
@@ -113,4 +118,15 @@ std::string SubscriptionManager::extractSubtopicFromSchema(const std::string &sc
     }
 
     return "";
+}
+
+void SubscriptionManager::connection_lost(const std::string &cause)
+{
+    std::cout << "Connection lost: " << cause << std::endl;
+    // Handle reconnection if needed
+}
+
+void SubscriptionManager::delivery_complete(mqtt::delivery_token_ptr token)
+{
+    // Optional implementation
 }
