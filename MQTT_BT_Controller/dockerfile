@@ -1,4 +1,8 @@
-FROM ubuntu:latest
+FROM mcr.microsoft.com/devcontainers/base:jammy
+
+#Use the following for a non-dev container
+# FROM ubuntu:22.04
+
 
 # Avoid prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
