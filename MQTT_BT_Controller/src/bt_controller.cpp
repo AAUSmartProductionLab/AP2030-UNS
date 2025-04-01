@@ -15,6 +15,7 @@
 #include "mqtt/mqtt_node_base_registration.h"
 #include "bt/CustomNodes/move_shuttle_to_position.h"
 #include "bt/CustomNodes/pmc_condition_node.h"
+#include "bt/CustomNodes/omron_arcl_request_node.h"
 int main(int argc, char *argv[])
 {
     std::string serverURI = (argc > 1) ? std::string{argv[1]} : BROKER_URI;
@@ -38,6 +39,14 @@ int main(int argc, char *argv[])
         "MoveShuttleToPosition",
         UNS_TOPIC + "/Planar",
         "../schemas/moveResponse.schema.json",
+        bt_proxy);
+
+    MqttNodeBase::registerNodeType<OmronArclRequest>(
+        factory,
+        subscription_manager,
+        "OmronArclRequest",
+        UNS_TOPIC + "/Omron",
+        "../schemas/amrArclRequest.schema.json",
         bt_proxy);
 
     MqttNodeBase::registerNodeType<PMCConditionNode>(
