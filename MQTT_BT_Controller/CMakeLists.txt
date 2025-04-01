@@ -48,7 +48,7 @@ add_library(bt_controller_common STATIC
     src/bt/mqtt_action_node.cpp
     src/bt/mqtt_condition_node.cpp
     src/bt/CustomNodes/move_shuttle_to_position.cpp
-    # src/bt/CustomNodes/omron_arcl_request_node.cpp
+    src/bt/CustomNodes/omron_arcl_request_node.cpp
     src/bt/CustomNodes/pmc_condition_node.cpp
 )
 

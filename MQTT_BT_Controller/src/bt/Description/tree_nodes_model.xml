@@ -4,9 +4,6 @@
             <input_port name="xbot_id" type="int"/>
             <input_port name="goal" type="Position2D"/>
         </Action>
-        <Action ID="OmronArclRequest">
-            <input_port name="command" type="BT::AnyTypeAllowed"/>
-        </Action>
         <Condition ID="PMCConditionNode">
             <input_port name="expected_value" type="std::string">Value to compare against</input_port>
             <input_port name="comparison_type" type="std::string">Type of comparison: equal, not_equal, greater, less, contains</input_port>
