@@ -1,15 +1,14 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "title": "Perform IPC Weighing of PPM",
-    "subtopic": "/weigh",
+    "subtopic": "/Weigh",
     "description": "JSON Schema for a IPC weighing using a scale",
     "type": "object",
     "properties": {
-        "product_state": {
-            "type": "string",
-            "enum": ["empty", "half-full", "full"],
-            "description": "State of the product when being weighed"
+        "Weight": {
+            "type": "number",
+            "description": "The weight of the liquid during IPC"
         }
     },
-    "required": ["product_state"]
+    "required": ["Weight"]
 }

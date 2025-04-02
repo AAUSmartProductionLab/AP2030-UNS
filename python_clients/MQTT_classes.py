@@ -20,12 +20,13 @@ class Topic:
         self.sub_schema = load_schema(subscribe_schema_path)
 
         # The suptopic is inspired by VDA5050
-        self.pubtopic: str = topic + \
+        self.pubtopic: str = topic + "/DATA"+\
             self.pub_schema.get(
                 "subtopic", "") if self.pub_schema != None else topic
-        self.subtopic: str = topic + \
+        self.subtopic: str = topic + "/CMD"+\
             self.sub_schema.get(
                 "subtopic", "") if self.sub_schema != None else topic
+        print("Subtopic: " + self.subtopic)
 
         self.callback_method: callable = callback_method
 
@@ -83,10 +84,9 @@ class ResponseAsync(Topic):
     def publish(self, request, client, publish_properties):
         if self.pub_schema != None:
             validate(instance=request, schema=self.pub_schema)
-            if publish_properties.ResponseTopic != None and publish_properties.ResponseTopic != "":
                 # The response is to be published on the ResponseTopic provided with the request
-                client.publish(publish_properties.ResponseTopic, json.dumps(request),
-                               self.qos, properties=publish_properties)
+            client.publish(self.pubtopic, json.dumps(request),
+                               self.qos)
 
     def callback(self, client, userdata, message):
         # run callback function in seperate thread
@@ -113,6 +113,30 @@ class Request(Topic):
         self.publish_properties.ResponseTopic = self.subtopic
         # Not strictly necessary since the response topic includes a uuid
 
+
+class Publisher(Topic):
+    """
+    A class for only publishing messages to a topic with schema validation.
+    This class does not subscribe to any topics or handle responses.
+    """
+    def __init__(self, topic: str, publish_schema_path: str, qos: int = 0):
+        # Pass None for subscribe_schema_path and callback since we won't be subscribing
+        super().__init__(topic, publish_schema_path, None, qos, None)
+    
+    # Override subscribe-related methods to do nothing
+    def registerCallback(self, client):
+        pass  # No subscription, so no callback to register
+    
+    def subscribe(self, client):
+        pass  # Do not subscribe
+    
+    def callback(self, client, userdata, message):
+        pass  # Not expecting any callbacks
+    def publish(self, request, client):
+        if self.pub_schema != None:
+            validate(instance=request, schema=self.pub_schema)
+            client.publish(self.pubtopic, json.dumps(request),
+                               self.qos)
 
 class Proxy(mqtt.Client):
     def __init__(self, address: str, port: int, id: str, pubsubs: List[Topic]):
