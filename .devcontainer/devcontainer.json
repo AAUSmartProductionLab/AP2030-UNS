@@ -2,7 +2,7 @@
 {
 	"name": "Ubuntu",
 	"build": {
-		"dockerfile": "../MQTT_BT_Controller/dockerfile",
+		"dockerfile": "dockerfile",
         "context": ".."
 	}
 }
