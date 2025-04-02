@@ -1,9 +1,5 @@
 FROM ubuntu:jammy
 
-#Use the following for a non-dev container
-# FROM ubuntu:22.04
-
-
 # Avoid prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -55,8 +51,11 @@ WORKDIR /src
 RUN mkdir -p /src/planar-motors-experiments/third_party
 WORKDIR /src/planar-motors-experiments/third_party
 RUN git clone https://github.com/nlohmann/json.git
-RUN git clone https://github.com/pboettch/json-schema-validator.git
+RUN cd json && git checkout v3.11.3
 
+WORKDIR /src/planar-motors-experiments/third_party
+RUN git clone https://github.com/pboettch/json-schema-validator.git
+RUN cd json-schema-validator && git checkout 2.3.0
 
 # Copy the repository content from the host (excluding build directories)
 WORKDIR /src
