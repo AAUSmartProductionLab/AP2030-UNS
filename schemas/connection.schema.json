@@ -6,7 +6,6 @@
     "properties": {
         "address": {
             "type": "string",
-            "format": "ipv4",
             "description": "IP address of the PMC"
         },
         "target_state": {

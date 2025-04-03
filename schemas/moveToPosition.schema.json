@@ -1,18 +1,26 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "title": "Move to Position Request",
-    "subtopic": "/moveToPosition",
+    "subtopic": "/XYMotion",
     "type": "object",
     "properties": {
-        "xbot_id": {
+        "XbotId": {
             "type": "integer",
             "description": "ID of the xBot to move"
         },
-        "target_pos": {
+        "TargetPos": {
+            "type": "array",
+            "description": "Target position to move the xBot to [x, y]",
+            "items": {
+            "type": "number"
+            },
+            "minItems": 2,
+            "maxItems": 2
+        },
+        "CommandUuid": {
             "type": "string",
-            "enum": ["filling", "loading", "unloading"],
-            "description": "Target position to move the xBot to"
+            "description": "Unique identifier for the request"
         }
     },
-    "required": ["xbot_id", "target_pos"]
+    "required": ["XbotId", "TargetPos", "CommandUuid"]
 }
