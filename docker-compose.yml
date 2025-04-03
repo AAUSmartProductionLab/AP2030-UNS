@@ -1,0 +1,34 @@
+name: PlanarMotorsExperiment
+
+services:
+  bt_controller:
+    build:
+      context: .
+      dockerfile: MQTT_BT_Controller/dockerfile
+    container_name: bt_controller
+    network_mode: host
+    volumes:
+      - ./schemas:/src/planar-motors-experiments/schemas
+    depends_on:
+      - filling_station
+      - stoppering_station
+
+  filling_station:
+    build:
+      context: .
+      dockerfile: MQTT_PackML_Stations/dockerfile
+    container_name: filling_station
+    network_mode: host
+    volumes:
+      - ./schemas:/app/schemas
+    command: fillingProxy.py
+
+  stoppering_station:
+    build:
+      context: .
+      dockerfile: MQTT_PackML_Stations/dockerfile
+    container_name: stoppering_station
+    network_mode: host
+    volumes:
+      - ./schemas:/app/schemas
+    command: stopperingProxy.py

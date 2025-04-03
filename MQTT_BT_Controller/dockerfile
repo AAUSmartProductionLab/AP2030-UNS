@@ -63,7 +63,6 @@ RUN mkdir -p /src/planar-motors-experiments/MQTT_BT_Controller
 COPY MQTT_BT_Controller/*.* /src/planar-motors-experiments/MQTT_BT_Controller/
 COPY MQTT_BT_Controller/include /src/planar-motors-experiments/MQTT_BT_Controller/include
 COPY MQTT_BT_Controller/src /src/planar-motors-experiments/MQTT_BT_Controller/src
-COPY MQTT_BT_Controller/schemas /src/planar-motors-experiments/MQTT_BT_Controller/schemas
 # Build the project (the code will be copied during build with Docker context)
 WORKDIR /src/planar-motors-experiments/MQTT_BT_Controller
 RUN mkdir -p build && cd build && \
