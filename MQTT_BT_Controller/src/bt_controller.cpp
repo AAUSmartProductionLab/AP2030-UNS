@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
         subscription_manager,
         "MoveShuttleToPosition",
         UNS_TOPIC + "/Planar",
-        "../schemas/moveResponse.schema.json",
+        "../../schemas/moveResponse.schema.json",
         bt_proxy);
 
     MqttNodeBase::registerNodeType<OmronArclRequest>(
@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
         subscription_manager,
         "OmronArclRequest",
         UNS_TOPIC + "/Omron",
-        "../schemas/amrArclRequest.schema.json",
+        "../../schemas/amrArclRequest.schema.json",
         bt_proxy);
 
     MqttNodeBase::registerNodeType<PMCConditionNode>(
@@ -54,11 +54,11 @@ int main(int argc, char *argv[])
         subscription_manager,
         "PMCConditionNode",
         UNS_TOPIC + "/Planar",
-        "../schemas/weigh.schema.json",
+        "../../schemas/weigh.schema.json",
         bt_proxy);
 
     auto tree = factory.createTreeFromFile("../src/bt/Description/tree.xml");
-    BT::Groot2Publisher publisher(tree);
+    BT::Groot2Publisher publisher(tree, 2222);
 
     while (true)
     {

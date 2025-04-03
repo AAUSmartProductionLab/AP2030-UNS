@@ -5,7 +5,7 @@
 PMCConditionNode::PMCConditionNode(const std::string &name, const BT::NodeConfig &config, Proxy &bt_proxy)
     : MqttConditionNode(name, config, bt_proxy,
                         UNS_TOPIC + "/Planar",
-                        "../schemas/weigh.schema.json")
+                        "../../schemas/weigh.schema.json")
 {
     if (MqttNodeBase::subscription_manager_)
     {

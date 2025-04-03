@@ -7,8 +7,8 @@
 OmronArclRequest::OmronArclRequest(const std::string &name, const BT::NodeConfig &config, Proxy &bt_proxy)
     : MqttActionNode(name, config, bt_proxy,
                      UNS_TOPIC,
-                     "../schemas/amrArclRequest.schema.json",
-                     "../schemas/amrArclUpdate.schema.json")
+                     "../../schemas/amrArclRequest.schema.json",
+                     "../../schemas/amrArclUpdate.schema.json")
 {
     if (MqttActionNode::subscription_manager_)
     {

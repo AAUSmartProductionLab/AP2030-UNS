@@ -29,8 +29,8 @@ namespace BT
 MoveShuttleToPosition::MoveShuttleToPosition(const std::string &name, const BT::NodeConfig &config, Proxy &bt_proxy)
     : MqttActionNode(name, config, bt_proxy,
                      UNS_TOPIC + "/Planar",
-                     "../schemas/moveToPosition.schema.json",
-                     "../schemas/moveResponse.schema.json")
+                     "../../schemas/moveToPosition.schema.json",
+                     "../../schemas/moveResponse.schema.json")
 {
     if (MqttNodeBase::subscription_manager_)
     {
