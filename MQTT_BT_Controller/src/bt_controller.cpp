@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
         bt_proxy);
 
     auto tree = factory.createTreeFromFile("../src/bt/Description/tree.xml");
-    BT::Groot2Publisher publisher(tree, 2222);
+    BT::Groot2Publisher publisher(tree, 1667);
 
     while (true)
     {

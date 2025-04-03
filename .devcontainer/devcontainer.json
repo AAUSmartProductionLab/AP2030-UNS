@@ -7,14 +7,10 @@
 	},
 	"runArgs": [
 		"--network=host"
-		// "--add-host=host.docker.internal:host-gateway"
 	],
 	"features": {
         "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
     },
-	// "mounts": [
-	// 	"source=/var/run/docker.sock,target=/var/run/docker-host.sock,type=bind" //This may only work on ubuntu as it mounts the local docker install in the devcontainer
-	// ],
 	"customizations": {
 		"vscode": {
 			"extensions": [
