@@ -6,10 +6,11 @@
 MqttConditionNode::MqttConditionNode(const std::string &name,
                                      const BT::NodeConfig &config,
                                      Proxy &proxy,
-                                     const std::string &uns_topic,
+                                     const std::string &response_topic,
                                      const std::string &response_schema_path)
     : BT::ConditionNode(name, config),
-      MqttNodeBase(proxy, uns_topic, response_schema_path)
+      MqttSubBase(proxy, response_topic, response_schema_path)
+
 {
     // Registration happens in derived classes
 }

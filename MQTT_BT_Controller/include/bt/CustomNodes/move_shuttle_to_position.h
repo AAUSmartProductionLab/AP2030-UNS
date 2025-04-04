@@ -30,7 +30,11 @@ private:
     std::string current_command_uuid_;
 
 public:
-    MoveShuttleToPosition(const std::string &name, const BT::NodeConfig &config, Proxy &bt_proxy);
+    MoveShuttleToPosition(const std::string &name, const BT::NodeConfig &config, Proxy &bt_proxy,
+                          const std::string &request_topic,
+                          const std::string &response_topic,
+                          const std::string &request_schema_path,
+                          const std::string &response_schema_path);
 
     static BT::PortsList providedPorts();
 

@@ -1,19 +1,18 @@
-#include "bt/CustomNodes/pmc_condition_node.h"
+#include "bt/CustomNodes/generic_condition_node.h"
 #include "mqtt/subscription_manager.h"
 #include "common_constants.h"
 
-PMCConditionNode::PMCConditionNode(const std::string &name, const BT::NodeConfig &config, Proxy &bt_proxy)
-    : MqttConditionNode(name, config, bt_proxy,
-                        UNS_TOPIC + "/Planar",
-                        "../../schemas/weigh.schema.json")
+GenericConditionNode::GenericConditionNode(const std::string &name, const BT::NodeConfig &config, Proxy &bt_proxy,
+                                           const std::string &response_topic, const std::string &response_schema_path)
+    : MqttConditionNode(name, config, bt_proxy, response_topic, response_schema_path)
 {
-    if (MqttNodeBase::subscription_manager_)
+    if (MqttSubBase::subscription_manager_)
     {
-        MqttNodeBase::subscription_manager_->registerDerivedInstance(this);
+        MqttSubBase::subscription_manager_->registerDerivedInstance(this);
     }
 }
 
-BT::PortsList PMCConditionNode::providedPorts()
+BT::PortsList GenericConditionNode::providedPorts()
 {
     return {
         BT::InputPort<std::string>("field_name", "Name of the field to monitor in the MQTT message"),
@@ -21,7 +20,7 @@ BT::PortsList PMCConditionNode::providedPorts()
         BT::InputPort<std::string>("expected_value", "Value to compare against")};
 }
 
-bool PMCConditionNode::isInterestedIn(const std::string &field, const json &value)
+bool GenericConditionNode::isInterestedIn(const std::string &field, const json &value)
 {
     // Either call the parent implementation:
     auto field_name_res = getInput<std::string>("field_name");
@@ -29,7 +28,7 @@ bool PMCConditionNode::isInterestedIn(const std::string &field, const json &valu
     // First check if we have a valid field_name
     if (!field_name_res)
     {
-        std::cout << "PMCConditionNode: No field_name input available" << std::endl;
+        std::cout << "GenericConditionNode: No field_name input available" << std::endl;
         return false;
     }
     if (field == field_name_res.value())
@@ -39,15 +38,15 @@ bool PMCConditionNode::isInterestedIn(const std::string &field, const json &valu
     return false;
 }
 
-void PMCConditionNode::callback(const json &msg, mqtt::properties props)
+void GenericConditionNode::callback(const json &msg, mqtt::properties props)
 {
-    std::lock_guard<std::mutex> lock(value_mutex_);
+    std::lock_guard<std::mutex> lock(mutex_);
     {
         latest_msg_ = msg;
     }
 }
 
-BT::NodeStatus PMCConditionNode::tick()
+BT::NodeStatus GenericConditionNode::tick()
 {
     // Get the field name from inputs
     auto field_name_res = getInput<std::string>("field_name");
@@ -75,7 +74,7 @@ BT::NodeStatus PMCConditionNode::tick()
     std::string expected_str = expected_value_res.value();
 
     // Lock to safely access the latest value
-    std::lock_guard<std::mutex> lock(value_mutex_);
+    std::lock_guard<std::mutex> lock(mutex_);
     if (latest_msg_.empty() || !latest_msg_.contains(field_name)) // Use the local variable here
     {
         return BT::NodeStatus::FAILURE; // No data or field not found

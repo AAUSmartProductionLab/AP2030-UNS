@@ -10,12 +10,15 @@
 MqttActionNode::MqttActionNode(const std::string &name,
                                const BT::NodeConfig &config,
                                Proxy &proxy,
-                               const std::string &uns_topic,
+                               const std::string &request_topic,
+                               const std::string &response_topic,
                                const std::string &request_schema_path,
-                               const std::string &response_schema_path)
+                               const std::string &response_schema_path,
+                               const bool &retain,
+                               const int &qos)
     : BT::StatefulActionNode(name, config),
-      MqttNodeBase(proxy, uns_topic, response_schema_path),
-      request_schema_path_(request_schema_path)
+      MqttSubBase(proxy, response_topic, response_schema_path),
+      MqttPubBase(proxy, request_topic, request_schema_path, qos, retain)
 {
     // Registration happens in derived classes
 }
@@ -40,18 +43,7 @@ void MqttActionNode::callback(const json &msg, mqtt::properties props)
 BT::NodeStatus MqttActionNode::onStart()
 {
     // Create the message to send
-    json message = createMessage();
-
-    // Extract subtopic from the request schema and register it with the manager
-    std::string subtopic = "";
-    if (!request_schema_path_.empty() && subscription_manager_)
-    {
-        subtopic = subscription_manager_->extractSubtopicFromSchema(request_schema_path_);
-    }
-
-    // Send the message with the proper subtopic
-    std::string publish_topic = uns_topic_ + "/CMD" + subtopic;
-    proxy_.publish(publish_topic, message.dump(), 2, false); // TODO QOS and retention should ideally be parameters
+    publish(createMessage());
 
     return BT::NodeStatus::RUNNING;
 }

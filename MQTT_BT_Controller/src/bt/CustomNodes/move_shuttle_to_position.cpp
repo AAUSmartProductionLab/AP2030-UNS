@@ -26,15 +26,13 @@ namespace BT
 }
 
 // MoveShuttleToPosition implementation
-MoveShuttleToPosition::MoveShuttleToPosition(const std::string &name, const BT::NodeConfig &config, Proxy &bt_proxy)
+MoveShuttleToPosition::MoveShuttleToPosition(const std::string &name, const BT::NodeConfig &config, Proxy &bt_proxy, const std::string &request_topic, const std::string &response_topic, const std::string &request_schema_path, const std::string &response_schema_path)
     : MqttActionNode(name, config, bt_proxy,
-                     UNS_TOPIC + "/Planar",
-                     "../../schemas/moveToPosition.schema.json",
-                     "../../schemas/moveResponse.schema.json")
+                     request_topic, response_topic, request_schema_path, response_schema_path)
 {
-    if (MqttNodeBase::subscription_manager_)
+    if (MqttSubBase::subscription_manager_)
     {
-        MqttNodeBase::subscription_manager_->registerDerivedInstance(this);
+        MqttSubBase::subscription_manager_->registerDerivedInstance(this);
     }
 }
 
@@ -75,24 +73,23 @@ void MoveShuttleToPosition::callback(const json &msg, mqtt::properties props)
         // Update state based on message content
         if (msg.contains("State"))
         {
-            if (msg["State"] == 0 || msg["State"] == 1 || msg["State"] == 4 ||
-                msg["State"] == 10 || msg["State"] == 14)
+            if (msg["State"] == "ABORTED" || msg["State"] == "STOPPED")
             {
                 current_command_uuid_ = "";
                 // Change from setting internal state to updating node status
                 setStatus(BT::NodeStatus::FAILURE);
                 emitWakeUpSignal();
             }
-            else if (msg["State"] == 2 || msg["State"] == 3)
+            else if (msg["State"] == "COMPLETE")
             {
                 current_command_uuid_ = "";
                 // Change from setting internal state to updating node status
                 setStatus(BT::NodeStatus::SUCCESS);
                 emitWakeUpSignal();
             }
-            else if (msg["State"] == 5 || msg["State"] == 6 || msg["State"] == 7 ||
-                     msg["State"] == 8 || msg["State"] == 9)
+            else if (msg["State"] == "HELD" || msg["State"] == "SUSPENDED" || msg["State"] == "EXECUTED")
             {
+                std::cout << "State is HELD, SUSPENDED or Executing" << std::endl;
                 // No need to set RUNNING again if already running
                 emitWakeUpSignal();
             }

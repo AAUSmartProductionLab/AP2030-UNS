@@ -16,7 +16,11 @@ private:
     std::string current_command_uuid_;
 
 public:
-    OmronArclRequest(const std::string &name, const BT::NodeConfig &config, Proxy &bt_proxy);
+    OmronArclRequest(const std::string &name, const BT::NodeConfig &config, Proxy &bt_proxy,
+                     const std::string &request_topic,
+                     const std::string &response_topic,
+                     const std::string &request_schema_path,
+                     const std::string &response_schema_path);
 
     static BT::PortsList providedPorts();
 

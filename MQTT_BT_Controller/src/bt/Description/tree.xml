@@ -3,12 +3,11 @@
   <BehaviorTree ID="MainTree">
     <Sequence>
       <Sleep msec="2000"/>
-      <MoveShuttleToPosition name="MoveShuttleToLoading"
-                             xbot_id="1"
+      <MoveShuttleToPosition xbot_id="1"
                              goal="120.0;120.0"/>
-      <PMCConditionNode expected_value="empty"
-                        comparison_type="equal"
-                        field_name="product_state"/>
+      <GenericConditionNode expected_value="empty"
+                            comparison_type="equal"
+                            field_name="product_state"/>
       <MoveShuttleToPosition name="MoveShuttleToFilling"
                              xbot_id="1"
                              goal="240.0;240.0"/>
@@ -20,13 +19,7 @@
 
   <!-- Description of Node Models (used by Groot) -->
   <TreeNodesModel>
-    <Action ID="MoveShuttleToPosition">
-      <input_port name="xbot_id"
-                  type="int"/>
-      <input_port name="goal"
-                  type="Position2D"/>
-    </Action>
-    <Condition ID="PMCConditionNode">
+    <Condition ID="GenericConditionNode">
       <input_port name="expected_value"
                   type="std::string">Value to compare against</input_port>
       <input_port name="comparison_type"
@@ -34,6 +27,12 @@
       <input_port name="field_name"
                   type="std::string">Name of the field to monitor in the MQTT message</input_port>
     </Condition>
+    <Action ID="MoveShuttleToPosition">
+      <input_port name="xbot_id"
+                  type="int"/>
+      <input_port name="goal"
+                  type="Position2D"/>
+    </Action>
   </TreeNodesModel>
 
 </root>

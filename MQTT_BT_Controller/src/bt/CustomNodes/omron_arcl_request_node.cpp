@@ -4,11 +4,10 @@
 #include "common_constants.h"
 
 // MoveShuttleToPosition implementation
-OmronArclRequest::OmronArclRequest(const std::string &name, const BT::NodeConfig &config, Proxy &bt_proxy)
+OmronArclRequest::OmronArclRequest(const std::string &name, const BT::NodeConfig &config, Proxy &bt_proxy, const std::string &request_topic, const std::string &response_topic, const std::string &request_schema_path, const std::string &response_schema_path)
     : MqttActionNode(name, config, bt_proxy,
-                     UNS_TOPIC,
-                     "../../schemas/amrArclRequest.schema.json",
-                     "../../schemas/amrArclUpdate.schema.json")
+                     request_topic, response_topic, request_schema_path, response_schema_path)
+
 {
     if (MqttActionNode::subscription_manager_)
     {

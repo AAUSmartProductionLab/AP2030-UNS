@@ -93,33 +93,6 @@ void SubscriptionManager::route_to_nodes(
     }
 }
 
-std::string SubscriptionManager::extractSubtopicFromSchema(const std::string &schema_path)
-{
-    try
-    {
-        std::ifstream file(schema_path);
-        if (!file.is_open())
-        {
-            std::cerr << "Failed to open schema file: " << schema_path << std::endl;
-            return "";
-        }
-
-        json schema_json;
-        file >> schema_json;
-
-        if (schema_json.contains("subtopic"))
-        {
-            return schema_json["subtopic"].get<std::string>();
-        }
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << "Error parsing schema: " << e.what() << std::endl;
-    }
-
-    return "";
-}
-
 void SubscriptionManager::connection_lost(const std::string &cause)
 {
     std::cout << "Connection lost: " << cause << std::endl;

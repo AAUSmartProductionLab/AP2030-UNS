@@ -8,7 +8,7 @@
 #include <algorithm>
 #include <functional>
 #include "mqtt/async_client.h"
-#include "mqtt/mqtt_node_base.h"
+#include "mqtt/mqtt_sub_base.h"
 using json = nlohmann::json;
 
 // Forward declarations
@@ -38,30 +38,23 @@ public:
 
     // Other methods...
     void route_to_nodes(const std::type_index &type_index, const json &msg, mqtt::properties props);
-    std::string extractSubtopicFromSchema(const std::string &schema_path);
 
     // Node registration methods...
     // Template methods...
 
     // Register a topic handler for the entire node type
     template <typename T>
-    void registerNodeType(const std::string &UNS_TOPIC,
-                          const std::string &schema_path,
-                          int qos = 1)
+    void registerNodeType(const std::string &response_topic)
     {
         auto type_index = std::type_index(typeid(T));
-        std::string subtopic = extractSubtopicFromSchema(schema_path);
-        std::string full_topic = UNS_TOPIC + "/DATA" + subtopic;
 
         node_subscriptions_[type_index] = {
-            full_topic,
-            schema_path,
-            qos, // Default QoS
-            {}   // Empty vector for instances
+            response_topic,
+            {} // Empty vector for instances
         };
-
+        std::cout << "Registering node type: " << type_index.name() << " with topic: " << response_topic << std::endl;
         // Register with the full topic including subtopic
-        register_topic_handler(full_topic,
+        register_topic_handler(response_topic,
                                [this, type_idx = type_index](const json &msg, mqtt::properties props)
                                {
                                    route_to_nodes(type_idx, msg, props);
@@ -69,7 +62,7 @@ public:
     }
 
     // Register the individual nodes
-    void registerDerivedInstance(MqttNodeBase *instance)
+    void registerDerivedInstance(MqttSubBase *instance)
     {
         std::type_index type_index(typeid(*instance));
         if (node_subscriptions_.find(type_index) != node_subscriptions_.end())
@@ -79,7 +72,7 @@ public:
     }
 
     // Node instance unregistration
-    void unregisterInstance(MqttNodeBase *instance)
+    void unregisterInstance(MqttSubBase *instance)
     {
         std::type_index type_index(typeid(*instance));
         if (node_subscriptions_.find(type_index) != node_subscriptions_.end())
@@ -103,9 +96,7 @@ private:
     struct NodeTypeSubscription
     {
         std::string topic;
-        std::string schema_path;
-        int qos;
-        std::vector<MqttNodeBase *> instances;
+        std::vector<MqttSubBase *> instances;
     };
     std::map<std::type_index, NodeTypeSubscription> node_subscriptions_;
 

@@ -10,10 +10,11 @@ class Proxy;
 using nlohmann::json;
 
 // MoveShuttleToPosition class declaration
-class PMCConditionNode : public MqttConditionNode
+class GenericConditionNode : public MqttConditionNode
 {
 public:
-    PMCConditionNode(const std::string &name, const BT::NodeConfig &config, Proxy &bt_proxy);
+    GenericConditionNode(const std::string &name, const BT::NodeConfig &config, Proxy &bt_proxy,
+                         const std::string &response_topic, const std::string &response_schema_path);
 
     static BT::PortsList providedPorts();
 

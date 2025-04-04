@@ -12,9 +12,8 @@
 #include "bt/mqtt_action_node.h"
 #include "mqtt/subscription_manager.h"
 #include "mqtt/utils.h"
-#include "mqtt/mqtt_node_base_registration.h"
 #include "bt/CustomNodes/move_shuttle_to_position.h"
-#include "bt/CustomNodes/pmc_condition_node.h"
+#include "bt/CustomNodes/generic_condition_node.h"
 #include "bt/CustomNodes/omron_arcl_request_node.h"
 int main(int argc, char *argv[])
 {
@@ -33,29 +32,33 @@ int main(int argc, char *argv[])
     BT::BehaviorTreeFactory factory;
 
     // Register the nodes with the behavior tree and the mqtt client
-    MqttNodeBase::registerNodeType<MoveShuttleToPosition>(
+    MqttActionNode::registerNodeType<MoveShuttleToPosition>(
         factory,
         subscription_manager,
+        bt_proxy,
         "MoveShuttleToPosition",
-        UNS_TOPIC + "/Planar",
-        "../../schemas/moveResponse.schema.json",
-        bt_proxy);
+        UNS_TOPIC + "/Planar/CMD/XYMotion",
+        UNS_TOPIC + "/Planar/DATA/State",
+        "../../schemas/moveToPosition.schema.json",
+        "../../schemas/state.schema.json");
 
-    MqttNodeBase::registerNodeType<OmronArclRequest>(
+    MqttActionNode::registerNodeType<OmronArclRequest>(
         factory,
         subscription_manager,
+        bt_proxy,
         "OmronArclRequest",
-        UNS_TOPIC + "/Omron",
+        UNS_TOPIC + "/Omron/CMD/ARCL",
+        UNS_TOPIC + "/Omron/DATA/State",
         "../../schemas/amrArclRequest.schema.json",
-        bt_proxy);
+        "../../schemas/amrArclUpdate.schema.json");
 
-    MqttNodeBase::registerNodeType<PMCConditionNode>(
+    MqttConditionNode::registerNodeType<GenericConditionNode>(
         factory,
         subscription_manager,
-        "PMCConditionNode",
-        UNS_TOPIC + "/Planar",
-        "../../schemas/weigh.schema.json",
-        bt_proxy);
+        bt_proxy,
+        "GenericConditionNode",
+        UNS_TOPIC + "/Planar/DATA/Weight",
+        "../../schemas/weigh.schema.json");
 
     auto tree = factory.createTreeFromFile("../src/bt/Description/tree.xml");
     BT::Groot2Publisher publisher(tree, 1667);
