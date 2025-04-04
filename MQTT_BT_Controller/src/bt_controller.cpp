@@ -37,8 +37,8 @@ int main(int argc, char *argv[])
         subscription_manager,
         bt_proxy,
         "MoveShuttleToPosition",
-        UNS_TOPIC + "/Planar/CMD/XYMotion",
-        UNS_TOPIC + "/Planar/DATA/State",
+        UNS_TOPIC + "/Planar/Xbot1/CMD/XYMotion",
+        UNS_TOPIC + "/Planar/Xbot1/DATA/State",
         "../../schemas/moveToPosition.schema.json",
         "../../schemas/state.schema.json");
 

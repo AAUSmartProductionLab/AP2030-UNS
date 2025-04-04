@@ -46,6 +46,7 @@ void SubscriptionManager::message_arrived(mqtt::const_message_ptr msg)
     }
     catch (const std::exception &e)
     {
+
         std::cerr << "Error processing message: " << e.what() << std::endl;
     }
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <nlohmann/json.hpp>
+#include <nlohmann/json-schema.hpp>
 #include <mutex>
 #include <string>
 #include <functional>
@@ -20,6 +21,7 @@ namespace mqtt
 }
 
 using json = nlohmann::json;
+using json_uri = nlohmann::json_uri;
 
 class MqttSubBase
 {
@@ -29,6 +31,7 @@ protected:
     std::string response_schema_path_;
     std::mutex mutex_;
 
+    std::unique_ptr<nlohmann::json_schema::json_validator> schema_validator_;
     static SubscriptionManager *subscription_manager_;
 
 public:
@@ -38,7 +41,7 @@ public:
 
     virtual ~MqttSubBase() = default;
 
-    virtual void handleMessage(const json &msg, mqtt::properties props);
+    void handleMessage(const json &msg, mqtt::properties props);
 
     virtual bool isInterestedIn(const std::string &field, const json &value);
 

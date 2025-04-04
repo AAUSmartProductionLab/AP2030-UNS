@@ -1,6 +1,7 @@
 #pragma once
 
 #include <nlohmann/json.hpp>
+#include <nlohmann/json-schema.hpp>
 #include <mutex>
 #include <string>
 #include <functional>
@@ -19,6 +20,7 @@ namespace mqtt
 }
 
 using json = nlohmann::json;
+using json_uri = nlohmann::json_uri;
 
 /**
  * @brief Base class for MQTT-enabled nodes
@@ -31,6 +33,7 @@ protected:
     std::string request_schema_path_;
     int qos_;
     bool retain_;
+    std::unique_ptr<nlohmann::json_schema::json_validator> schema_validator_;
 
 public:
     MqttPubBase(Proxy &proxy,

@@ -56,6 +56,7 @@ json MoveShuttleToPosition::createMessage()
 
 bool MoveShuttleToPosition::isInterestedIn(const std::string &field, const json &value)
 {
+
     if (field == "CommandUuid" && value.is_string())
     {
         bool interested = (value.get<std::string>() == current_command_uuid_);
