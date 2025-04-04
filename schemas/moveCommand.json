@@ -1,7 +1,6 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "title": "Move to Position Request",
-    "subtopic": "/XYMotion",
+    "title": "Generic Move Command",
     "type": "object",
     "allOf": [
         {
@@ -10,10 +9,6 @@
         {
             "type": "object",
             "properties": {
-                "XbotId": {
-                    "type": "integer",
-                    "description": "ID of the xBot to move"
-                },
                 "TargetPos": {
                     "type": "array",
                     "description": "Target position to move the xBot to [x, y]",
@@ -24,7 +19,7 @@
                     "maxItems": 2
                 }
             },
-            "required": ["XbotId", "TargetPos"]
+            "required": ["TargetPos"]
         }
     ],
     "required": ["CommandUuid"]
