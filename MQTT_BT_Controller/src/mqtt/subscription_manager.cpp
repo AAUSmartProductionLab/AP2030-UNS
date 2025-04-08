@@ -27,7 +27,7 @@ void SubscriptionManager::message_arrived(mqtt::const_message_ptr msg)
         bool handled = false;
         for (const auto &handler : topic_handlers_)
         {
-            if (topic == handler.topic || topic.find(handler.topic) != std::string::npos)
+            if (topic == handler.topic) //|| topic.find(handler.topic) != std::string::npos
             {
                 handler.callback(payload, props);
                 handled = true;
@@ -46,7 +46,7 @@ void SubscriptionManager::message_arrived(mqtt::const_message_ptr msg)
     }
     catch (const std::exception &e)
     {
-
+        std::cout << msg->get_topic() << " " << msg->get_payload() << std::endl;
         std::cerr << "Error processing message: " << e.what() << std::endl;
     }
 }
@@ -56,7 +56,12 @@ void SubscriptionManager::register_topic_handler(
     std::function<void(const json &, mqtt::properties)> callback)
 {
     topic_handlers_.push_back({topic, callback});
-    proxy_.subscribe(topic, 0); // Default QoS 0
+    std::cout << "Registered topic handler for topic: " << topic << std::endl;
+
+    // Create and store the listener
+    auto listener = std::make_shared<subscription_listener>(topic, *this);
+    subscription_listeners_.push_back(listener);
+    proxy_.subscribe_with_listener(topic, 0, nullptr, listener);
 }
 
 void SubscriptionManager::route_to_nodes(
@@ -97,10 +102,42 @@ void SubscriptionManager::route_to_nodes(
 void SubscriptionManager::connection_lost(const std::string &cause)
 {
     std::cout << "Connection lost: " << cause << std::endl;
-    // Handle reconnection if needed
+    // Connection will be handled by Proxy's reconnect mechanism
 }
 
 void SubscriptionManager::delivery_complete(mqtt::delivery_token_ptr token)
 {
     // Optional implementation
+}
+
+void subscription_listener::on_failure(const mqtt::token &tok)
+{
+    std::cout << "Subscription failed for topic: " << topic_ << std::endl;
+    // Retry subscription after failure
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    manager_.retry_subscription(topic_);
+}
+
+void subscription_listener::on_success(const mqtt::token &tok)
+{
+    std::cout << "Successfully subscribed to topic: " << topic_ << std::endl;
+}
+
+void SubscriptionManager::retry_subscription(const std::string &topic)
+{
+    std::cout << "Retrying subscription for topic: " << topic << std::endl;
+    auto listener = std::make_shared<subscription_listener>(topic, *this);
+    subscription_listeners_.push_back(listener);
+    proxy_.subscribe_with_listener(topic, 0, nullptr, listener);
+}
+
+void SubscriptionManager::resubscribe_all_topics()
+{
+    std::cout << "Resubscribing to all topics after reconnection" << std::endl;
+    for (const auto &handler : topic_handlers_)
+    {
+        auto listener = std::make_shared<subscription_listener>(handler.topic, *this);
+        subscription_listeners_.push_back(listener);
+        proxy_.subscribe_with_listener(handler.topic, 0, nullptr, listener);
+    }
 }

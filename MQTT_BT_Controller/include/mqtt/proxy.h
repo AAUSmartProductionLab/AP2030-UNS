@@ -36,8 +36,10 @@ public:
     void register_topic_handler(const std::string &topic,
                                 std::function<void(const json &, mqtt::properties)> callback);
 
-    void subscribe(const std::string &topic, int qos)
+    void subscribe_with_listener(const std::string &topic, int qos,
+                                 void *context,
+                                 std::shared_ptr<mqtt::iaction_listener> listener)
     {
-        mqtt::async_client::subscribe(topic, qos)->wait();
+        mqtt::async_client::subscribe(topic, qos, context, *listener)->wait();
     }
 };

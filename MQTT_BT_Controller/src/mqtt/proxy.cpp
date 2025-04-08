@@ -34,6 +34,12 @@ void Proxy::register_topic_handler(const std::string &topic,
 void Proxy::on_connect()
 {
     std::cout << "Connected to broker " << address << std::endl;
+
+    // Resubscribe to all topics
+    if (auto *subscription_mgr = dynamic_cast<SubscriptionManager *>(callback_))
+    {
+        subscription_mgr->resubscribe_all_topics();
+    }
 }
 
 void Proxy::on_disconnect()

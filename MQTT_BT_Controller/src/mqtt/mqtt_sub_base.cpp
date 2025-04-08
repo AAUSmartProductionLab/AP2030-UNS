@@ -71,7 +71,7 @@ void MqttSubBase::handleMessage(const json &msg, mqtt::properties props)
         catch (const std::exception &e)
         {
             std::cerr << "JSON validation failed: " << e.what() << std::endl;
-            return; // Don't publish invalid messages
+            return;
         }
     }
     callback(msg, props);

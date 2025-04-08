@@ -82,23 +82,38 @@ public:
         }
     }
 
+    // Add this line to declare the method
+    void resubscribe_all_topics();
+    void retry_subscription(const std::string &topic);
+
 private:
-    // Your existing members...
-    // For general topic handlers
+    std::vector<std::shared_ptr<mqtt::iaction_listener>> subscription_listeners_;
     struct TopicHandler
     {
         std::string topic;
         std::function<void(const json &, mqtt::properties)> callback;
     };
+    Proxy &proxy_;
     std::vector<TopicHandler> topic_handlers_;
 
-    // For node type subscriptions
     struct NodeTypeSubscription
     {
         std::string topic;
         std::vector<MqttSubBase *> instances;
     };
     std::map<std::type_index, NodeTypeSubscription> node_subscriptions_;
+};
 
-    Proxy &proxy_;
+class subscription_listener : public virtual mqtt::iaction_listener
+{
+private:
+    std::string topic_;
+    SubscriptionManager &manager_;
+
+    void on_failure(const mqtt::token &tok) override;
+    void on_success(const mqtt::token &tok) override;
+
+public:
+    subscription_listener(const std::string &topic, SubscriptionManager &manager)
+        : topic_(topic), manager_(manager) {}
 };
