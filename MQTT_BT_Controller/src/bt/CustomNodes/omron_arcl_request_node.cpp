@@ -1,17 +1,17 @@
 #include "bt/CustomNodes/omron_arcl_request_node.h"
 #include "mqtt/utils.h"
-#include "mqtt/subscription_manager.h"
+#include "mqtt/node_message_distributor.h"
 #include "common_constants.h"
 
 // MoveShuttleToPosition implementation
-OmronArclRequest::OmronArclRequest(const std::string &name, const BT::NodeConfig &config, Proxy &bt_proxy, const std::string &request_topic, const std::string &response_topic, const std::string &request_schema_path, const std::string &response_schema_path)
-    : MqttActionNode(name, config, bt_proxy,
+OmronArclRequest::OmronArclRequest(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client, const std::string &request_topic, const std::string &response_topic, const std::string &request_schema_path, const std::string &response_schema_path)
+    : MqttActionNode(name, config, bt_mqtt_client,
                      request_topic, response_topic, request_schema_path, response_schema_path)
 
 {
-    if (MqttActionNode::subscription_manager_)
+    if (MqttActionNode::node_message_distributor_)
     {
-        MqttActionNode::subscription_manager_->registerDerivedInstance(this);
+        MqttActionNode::node_message_distributor_->registerDerivedInstance(this);
     }
 }
 

@@ -1,6 +1,6 @@
 #include "bt/mqtt_action_node.h"
-#include "mqtt/subscription_manager.h"
-#include "mqtt/proxy.h"
+#include "mqtt/node_message_distributor.h"
+#include "mqtt/mqtt_client.h"
 #include "common_constants.h"
 
 #include <iostream>
@@ -9,7 +9,7 @@
 
 MqttActionNode::MqttActionNode(const std::string &name,
                                const BT::NodeConfig &config,
-                               Proxy &proxy,
+                               MqttClient &mqtt_client,
                                const std::string &request_topic,
                                const std::string &response_topic,
                                const std::string &request_schema_path,
@@ -17,8 +17,8 @@ MqttActionNode::MqttActionNode(const std::string &name,
                                const bool &retain,
                                const int &qos)
     : BT::StatefulActionNode(name, config),
-      MqttSubBase(proxy, response_topic, response_schema_path),
-      MqttPubBase(proxy, request_topic, request_schema_path, qos, retain)
+      MqttSubBase(mqtt_client, response_topic, response_schema_path),
+      MqttPubBase(mqtt_client, request_topic, request_schema_path, qos, retain)
 {
     // Registration happens in derived classes
 }

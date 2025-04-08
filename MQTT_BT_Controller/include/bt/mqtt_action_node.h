@@ -5,9 +5,9 @@
 #include <nlohmann/json.hpp>
 #include "mqtt/mqtt_sub_base.h"
 #include "mqtt/mqtt_pub_base.h"
-#include "mqtt/subscription_manager.h"
+#include "mqtt/node_message_distributor.h"
 
-class Proxy;
+class MqttClient;
 
 using nlohmann::json;
 
@@ -19,7 +19,7 @@ class MqttActionNode : public BT::StatefulActionNode, public MqttPubBase, public
 public:
     MqttActionNode(const std::string &name,
                    const BT::NodeConfig &config,
-                   Proxy &proxy,
+                   MqttClient &mqtt_client,
                    const std::string &request_topic,
                    const std::string &response_topic,
                    const std::string &request_schema_path,
@@ -46,8 +46,8 @@ public:
     template <typename DerivedNode>
     static void registerNodeType(
         BT::BehaviorTreeFactory &factory,
-        SubscriptionManager &subscription_manager,
-        Proxy &proxy,
+        NodeMessageDistributor &node_message_distributor,
+        MqttClient &mqtt_client,
         const std::string &node_name,
         const std::string &request_topic,
         const std::string &response_topic,
@@ -58,19 +58,19 @@ public:
         static std::unordered_map<std::string, std::tuple<std::string, std::string, std::string, std::string>> node_configs;
         node_configs[node_name] = std::make_tuple(request_topic, response_topic, request_schema_path, response_schema_path);
 
-        MqttActionNode::setSubscriptionManager(&subscription_manager);
-        subscription_manager.registerNodeType<DerivedNode>(response_topic);
-        Proxy *proxy_ptr = &proxy;
+        MqttActionNode::setNodeMessageDistributor(&node_message_distributor);
+        node_message_distributor.registerNodeType<DerivedNode>(response_topic);
+        MqttClient *mqtt_client_ptr = &mqtt_client;
         // Register a builder that captures the configuration
         factory.registerBuilder<DerivedNode>(
             node_name,
-            [proxy_ptr, node_name](const std::string &name, const BT::NodeConfig &config)
+            [mqtt_client_ptr, node_name](const std::string &name, const BT::NodeConfig &config)
             {
                 // Get the stored configuration
                 auto &[req_topic, resp_topic, req_schema, resp_schema] = node_configs[node_name];
 
                 // Create the node with proper arguments
-                auto node = std::make_unique<DerivedNode>(name, config, *proxy_ptr, req_topic, resp_topic, req_schema, resp_schema);
+                auto node = std::make_unique<DerivedNode>(name, config, *mqtt_client_ptr, req_topic, resp_topic, req_schema, resp_schema);
                 return node;
             });
     }

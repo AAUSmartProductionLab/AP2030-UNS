@@ -1,5 +1,5 @@
 #include "mqtt/mqtt_sub_base.h"
-#include "mqtt/subscription_manager.h"
+#include "mqtt/node_message_distributor.h"
 #include <iostream>
 #include <fstream>
 #include <filesystem>
@@ -7,12 +7,12 @@
 
 namespace fs = std::filesystem;
 // Initialize the static member
-SubscriptionManager *MqttSubBase::subscription_manager_ = nullptr;
+NodeMessageDistributor *MqttSubBase::node_message_distributor_ = nullptr;
 
-MqttSubBase::MqttSubBase(Proxy &proxy,
+MqttSubBase::MqttSubBase(MqttClient &mqtt_client,
                          const std::string &response_topic = "",
                          const std::string &response_schema_path = "")
-    : proxy_(proxy),
+    : mqtt_client_(mqtt_client),
       response_topic_(response_topic),
       response_schema_path_(response_schema_path)
 {
@@ -60,8 +60,6 @@ MqttSubBase::MqttSubBase(Proxy &proxy,
 
 void MqttSubBase::handleMessage(const json &msg, mqtt::properties props)
 {
-    std::cout << "Base handling message!" << std::endl;
-    // TODO this must handle JSON validation
     if (schema_validator_)
     {
         try
@@ -83,7 +81,7 @@ bool MqttSubBase::isInterestedIn(const std::string &field, const json &value)
     return false;
 }
 
-void MqttSubBase::setSubscriptionManager(SubscriptionManager *manager)
+void MqttSubBase::setNodeMessageDistributor(NodeMessageDistributor *manager)
 {
-    subscription_manager_ = manager;
+    node_message_distributor_ = manager;
 }

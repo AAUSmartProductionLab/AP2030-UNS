@@ -8,9 +8,9 @@
 
 #include "common_constants.h"
 
-#include "mqtt/proxy.h"
+#include "mqtt/mqtt_client.h"
 #include "bt/mqtt_action_node.h"
-#include "mqtt/subscription_manager.h"
+#include "mqtt/node_message_distributor.h"
 #include "mqtt/utils.h"
 #include "bt/CustomNodes/move_shuttle_to_position.h"
 #include "bt/CustomNodes/generic_condition_node.h"
@@ -27,15 +27,15 @@ int main(int argc, char *argv[])
                         .properties({{mqtt::property::SESSION_EXPIRY_INTERVAL, 604800}})
                         .finalize();
 
-    Proxy bt_proxy(serverURI, clientId, connOpts, repetitions);
-    SubscriptionManager subscription_manager(bt_proxy);
+    MqttClient bt_mqtt_client(serverURI, clientId, connOpts, repetitions);
+    NodeMessageDistributor node_message_distributor(bt_mqtt_client);
     BT::BehaviorTreeFactory factory;
 
     // Register the nodes with the behavior tree and the mqtt client
     MqttActionNode::registerNodeType<MoveShuttleToPosition>(
         factory,
-        subscription_manager,
-        bt_proxy,
+        node_message_distributor,
+        bt_mqtt_client,
         "MoveShuttleToPosition",
         UNS_TOPIC + "/Planar/Xbot1/CMD/XYMotion",
         UNS_TOPIC + "/Planar/Xbot1/DATA/State",
@@ -44,8 +44,8 @@ int main(int argc, char *argv[])
 
     MqttActionNode::registerNodeType<OmronArclRequest>(
         factory,
-        subscription_manager,
-        bt_proxy,
+        node_message_distributor,
+        bt_mqtt_client,
         "OmronArclRequest",
         UNS_TOPIC + "/Omron/CMD/ARCL",
         UNS_TOPIC + "/Omron/DATA/State",
@@ -54,8 +54,8 @@ int main(int argc, char *argv[])
 
     MqttConditionNode::registerNodeType<GenericConditionNode>(
         factory,
-        subscription_manager,
-        bt_proxy,
+        node_message_distributor,
+        bt_mqtt_client,
         "GenericConditionNode",
         UNS_TOPIC + "/Planar/DATA/Weight",
         "../../schemas/weigh.schema.json");

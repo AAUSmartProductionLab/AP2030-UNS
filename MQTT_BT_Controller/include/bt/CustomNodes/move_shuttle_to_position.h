@@ -6,7 +6,7 @@
 #include <string>
 
 // Forward declarations
-class Proxy;
+class MqttClient;
 using nlohmann::json;
 
 // Position2D struct definition
@@ -30,7 +30,7 @@ private:
     std::string current_command_uuid_;
 
 public:
-    MoveShuttleToPosition(const std::string &name, const BT::NodeConfig &config, Proxy &bt_proxy,
+    MoveShuttleToPosition(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client,
                           const std::string &request_topic,
                           const std::string &response_topic,
                           const std::string &request_schema_path,

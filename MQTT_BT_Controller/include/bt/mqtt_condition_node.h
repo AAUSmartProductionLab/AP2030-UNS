@@ -4,7 +4,7 @@
 #include <behaviortree_cpp/bt_factory.h>
 #include <nlohmann/json.hpp>
 #include "mqtt/mqtt_sub_base.h"
-#include "mqtt/subscription_manager.h"
+#include "mqtt/node_message_distributor.h"
 
 using nlohmann::json;
 
@@ -16,7 +16,7 @@ protected:
 public:
     MqttConditionNode(const std::string &name,
                       const BT::NodeConfig &config,
-                      Proxy &proxy,
+                      MqttClient &mqtt_client,
                       const std::string &response_topic,
                       const std::string &response_schema_path);
 
@@ -32,8 +32,8 @@ public:
     template <typename DerivedNode>
     static void registerNodeType(
         BT::BehaviorTreeFactory &factory,
-        SubscriptionManager &subscription_manager,
-        Proxy &proxy,
+        NodeMessageDistributor &node_message_distributor,
+        MqttClient &mqtt_client,
         const std::string &node_name,
         const std::string &response_topic,
         const std::string &response_schema_path)
@@ -42,19 +42,19 @@ public:
         static std::unordered_map<std::string, std::tuple<std::string, std::string>> node_configs;
         node_configs[node_name] = std::make_tuple(response_topic, response_schema_path);
 
-        MqttConditionNode::setSubscriptionManager(&subscription_manager);
-        subscription_manager.registerNodeType<DerivedNode>(response_topic);
+        MqttConditionNode::setNodeMessageDistributor(&node_message_distributor);
+        node_message_distributor.registerNodeType<DerivedNode>(response_topic);
 
-        Proxy *proxy_ptr = &proxy;
+        MqttClient *mqtt_client_ptr = &mqtt_client;
         // Register a builder that captures the configuration
         factory.registerBuilder<DerivedNode>(
             node_name,
-            [proxy_ptr, node_name](const std::string &name, const BT::NodeConfig &config)
+            [mqtt_client_ptr, node_name](const std::string &name, const BT::NodeConfig &config)
             {
                 // Get the stored configuration
                 auto &[resp_topic, resp_schema] = node_configs[node_name];
 
-                auto node = std::make_unique<DerivedNode>(name, config, *proxy_ptr, resp_topic, resp_schema);
+                auto node = std::make_unique<DerivedNode>(name, config, *mqtt_client_ptr, resp_topic, resp_schema);
                 return node;
             });
     }

@@ -42,8 +42,8 @@ include_directories(
 add_library(bt_controller_common STATIC
     src/common_constants.cpp
     src/mqtt/utils.cpp
-    src/mqtt/subscription_manager.cpp 
-    src/mqtt/proxy.cpp
+    src/mqtt/node_message_distributor.cpp 
+    src/mqtt/mqtt_client.cpp
     src/mqtt/mqtt_sub_base.cpp
     src/mqtt/mqtt_pub_base.cpp
     src/bt/mqtt_action_node.cpp

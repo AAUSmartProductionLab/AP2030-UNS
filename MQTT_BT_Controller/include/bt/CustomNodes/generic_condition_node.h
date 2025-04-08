@@ -6,14 +6,14 @@
 #include <string>
 
 // Forward declarations
-class Proxy;
+class MqttClient;
 using nlohmann::json;
 
 // MoveShuttleToPosition class declaration
 class GenericConditionNode : public MqttConditionNode
 {
 public:
-    GenericConditionNode(const std::string &name, const BT::NodeConfig &config, Proxy &bt_proxy,
+    GenericConditionNode(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client,
                          const std::string &response_topic, const std::string &response_schema_path);
 
     static BT::PortsList providedPorts();

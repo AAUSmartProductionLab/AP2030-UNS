@@ -1,5 +1,5 @@
 #include "mqtt/mqtt_pub_base.h"
-#include "mqtt/proxy.h"
+#include "mqtt/mqtt_client.h"
 #include <iostream>
 #include <fstream>
 #include <filesystem>
@@ -7,12 +7,12 @@
 
 namespace fs = std::filesystem;
 
-MqttPubBase::MqttPubBase(Proxy &proxy,
+MqttPubBase::MqttPubBase(MqttClient &mqtt_client,
                          const std::string &request_topic = "",
                          const std::string &request_schema_path = "",
                          const int &qos = 0,
                          const bool &retain = false)
-    : proxy_(proxy),
+    : mqtt_client_(mqtt_client),
       request_topic_(request_topic),
       request_schema_path_(request_schema_path),
       qos_(qos),
@@ -77,5 +77,5 @@ void MqttPubBase::publish(const json &msg)
       return; // Don't publish invalid messages
     }
   }
-  proxy_.publish(request_topic_, msg.dump(), qos_, retain_);
+  mqtt_client_.publish(request_topic_, msg.dump(), qos_, retain_);
 }

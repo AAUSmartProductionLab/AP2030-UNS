@@ -1,6 +1,6 @@
 #include "bt/CustomNodes/move_shuttle_to_position.h"
 #include "mqtt/utils.h"
-#include "mqtt/subscription_manager.h"
+#include "mqtt/node_message_distributor.h"
 #include "common_constants.h"
 
 // BT template specialization implementation
@@ -26,13 +26,13 @@ namespace BT
 }
 
 // MoveShuttleToPosition implementation
-MoveShuttleToPosition::MoveShuttleToPosition(const std::string &name, const BT::NodeConfig &config, Proxy &bt_proxy, const std::string &request_topic, const std::string &response_topic, const std::string &request_schema_path, const std::string &response_schema_path)
-    : MqttActionNode(name, config, bt_proxy,
+MoveShuttleToPosition::MoveShuttleToPosition(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client, const std::string &request_topic, const std::string &response_topic, const std::string &request_schema_path, const std::string &response_schema_path)
+    : MqttActionNode(name, config, bt_mqtt_client,
                      request_topic, response_topic, request_schema_path, response_schema_path)
 {
-    if (MqttSubBase::subscription_manager_)
+    if (MqttSubBase::node_message_distributor_)
     {
-        MqttSubBase::subscription_manager_->registerDerivedInstance(this);
+        MqttSubBase::node_message_distributor_->registerDerivedInstance(this);
     }
 }
 

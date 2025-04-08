@@ -12,7 +12,7 @@ namespace BT
     class BehaviorTreeFactory;
 }
 
-class Proxy;
+class MqttClient;
 
 namespace mqtt
 {
@@ -28,7 +28,7 @@ using json_uri = nlohmann::json_uri;
 class MqttPubBase
 {
 protected:
-    Proxy &proxy_;
+    MqttClient &mqtt_client_;
     std::string request_topic_;
     std::string request_schema_path_;
     int qos_;
@@ -36,7 +36,7 @@ protected:
     std::unique_ptr<nlohmann::json_schema::json_validator> schema_validator_;
 
 public:
-    MqttPubBase(Proxy &proxy,
+    MqttPubBase(MqttClient &mqtt_client,
                 const std::string &request_topic,
                 const std::string &request_schema_path,
                 const int &qos,

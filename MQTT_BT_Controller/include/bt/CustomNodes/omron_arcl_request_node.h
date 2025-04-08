@@ -6,7 +6,7 @@
 #include <string>
 
 // Forward declarations
-class Proxy;
+class MqttClient;
 using nlohmann::json;
 
 // MoveShuttleToPosition class declaration
@@ -16,7 +16,7 @@ private:
     std::string current_command_uuid_;
 
 public:
-    OmronArclRequest(const std::string &name, const BT::NodeConfig &config, Proxy &bt_proxy,
+    OmronArclRequest(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client,
                      const std::string &request_topic,
                      const std::string &response_topic,
                      const std::string &request_schema_path,

@@ -3,7 +3,7 @@
 #include <fstream>
 #include <behaviortree_cpp/bt_factory.h>
 #include "behaviortree_cpp/xml_parsing.h"
-#include "mqtt/proxy.h"
+#include "mqtt/mqtt_client.h"
 #include "bt/mqtt_action_node.h"
 #include "bt/CustomNodes/generic_condition_node.h"
 #include "bt/CustomNodes/move_shuttle_to_position.h"
@@ -33,21 +33,21 @@ bool saveXmlToFile(const std::string &xml_content, const std::string &filename)
 
 int main()
 {
-    // Create a dummy MQTT proxy for node initialization
+    // Create a dummy MQTT mqtt_client for node initialization
     auto connOpts = mqtt::connect_options_builder::v5()
                         .clean_start(false)
                         .properties({{mqtt::property::SESSION_EXPIRY_INTERVAL, 604800}})
                         .finalize();
 
-    Proxy dummy_proxy(BROKER_URI, CLIENT_ID, connOpts, 1);
+    MqttClient dummy_mqtt_client(BROKER_URI, CLIENT_ID, connOpts, 1);
 
     // Initialize the behavior tree factory
     BT::BehaviorTreeFactory factory;
 
     // Register all custom nodes
-    factory.registerNodeType<MoveShuttleToPosition>("MoveShuttleToPosition", std::ref(dummy_proxy), "", "", "", "");
-    factory.registerNodeType<OmronArclRequest>("OmronArclRequest", std::ref(dummy_proxy), "", "", "", "");
-    factory.registerNodeType<GenericConditionNode>("GenericConditionNode", std::ref(dummy_proxy), "", "");
+    factory.registerNodeType<MoveShuttleToPosition>("MoveShuttleToPosition", std::ref(dummy_mqtt_client), "", "", "", "");
+    factory.registerNodeType<OmronArclRequest>("OmronArclRequest", std::ref(dummy_mqtt_client), "", "", "", "");
+    factory.registerNodeType<GenericConditionNode>("GenericConditionNode", std::ref(dummy_mqtt_client), "", "");
     // Generate the XML models
     std::string xml_models = BT::writeTreeNodesModelXML(factory);
 

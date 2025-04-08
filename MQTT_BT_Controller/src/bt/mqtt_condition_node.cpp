@@ -1,15 +1,15 @@
 #include "bt/mqtt_condition_node.h"
-#include "mqtt/subscription_manager.h"
+#include "mqtt/node_message_distributor.h"
 #include "common_constants.h"
 #include <iostream>
 
 MqttConditionNode::MqttConditionNode(const std::string &name,
                                      const BT::NodeConfig &config,
-                                     Proxy &proxy,
+                                     MqttClient &mqtt_client,
                                      const std::string &response_topic,
                                      const std::string &response_schema_path)
     : BT::ConditionNode(name, config),
-      MqttSubBase(proxy, response_topic, response_schema_path)
+      MqttSubBase(mqtt_client, response_topic, response_schema_path)
 
 {
     // Registration happens in derived classes

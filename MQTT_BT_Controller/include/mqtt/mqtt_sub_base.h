@@ -12,8 +12,8 @@ namespace BT
     class BehaviorTreeFactory;
 }
 
-class Proxy;
-class SubscriptionManager;
+class MqttClient;
+class NodeMessageDistributor;
 
 namespace mqtt
 {
@@ -26,16 +26,16 @@ using json_uri = nlohmann::json_uri;
 class MqttSubBase
 {
 protected:
-    Proxy &proxy_;
+    MqttClient &mqtt_client_;
     std::string response_topic_;
     std::string response_schema_path_;
     std::mutex mutex_;
 
     std::unique_ptr<nlohmann::json_schema::json_validator> schema_validator_;
-    static SubscriptionManager *subscription_manager_;
+    static NodeMessageDistributor *node_message_distributor_;
 
 public:
-    MqttSubBase(Proxy &proxy,
+    MqttSubBase(MqttClient &mqtt_client,
                 const std::string &response_topic,
                 const std::string &response_schema_path);
 
@@ -47,5 +47,5 @@ public:
 
     virtual void callback(const json &msg, mqtt::properties props) = 0;
 
-    static void setSubscriptionManager(SubscriptionManager *manager);
+    static void setNodeMessageDistributor(NodeMessageDistributor *manager);
 };

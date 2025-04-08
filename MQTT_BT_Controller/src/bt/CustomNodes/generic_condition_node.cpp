@@ -1,14 +1,14 @@
 #include "bt/CustomNodes/generic_condition_node.h"
-#include "mqtt/subscription_manager.h"
+#include "mqtt/node_message_distributor.h"
 #include "common_constants.h"
 
-GenericConditionNode::GenericConditionNode(const std::string &name, const BT::NodeConfig &config, Proxy &bt_proxy,
+GenericConditionNode::GenericConditionNode(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client,
                                            const std::string &response_topic, const std::string &response_schema_path)
-    : MqttConditionNode(name, config, bt_proxy, response_topic, response_schema_path)
+    : MqttConditionNode(name, config, bt_mqtt_client, response_topic, response_schema_path)
 {
-    if (MqttSubBase::subscription_manager_)
+    if (MqttSubBase::node_message_distributor_)
     {
-        MqttSubBase::subscription_manager_->registerDerivedInstance(this);
+        MqttSubBase::node_message_distributor_->registerDerivedInstance(this);
     }
 }
 
