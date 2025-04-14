@@ -43,21 +43,22 @@ def stopper_callback(topic, client, message, properties):
 def main():
     """Main entry point for the filling proxy"""
     response_async = ResponseAsync(
-        BASE_TOPIC, 
+        BASE_TOPIC+"/DATA/State", 
+        BASE_TOPIC+"/CMD/Stopper",
         "schemas/state.schema.json", 
-        "schemas/stopper.schema.json", 
-        2, 
+        "schemas/command.schema.json", 
+        0, 
         stopper_callback
     )
     
-    fillProxy = Proxy(
+    stopperProxy = Proxy(
         BROKER_ADDRESS, 
         BROKER_PORT,
-        "FillingProxy", 
+        "StopperingProxy", 
         [response_async]
     )
     
-    fillProxy.loop_forever()
+    stopperProxy.loop_forever()
 
 
 if __name__ == "__main__":

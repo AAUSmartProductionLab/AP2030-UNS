@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
         node_message_distributor,
         bt_mqtt_client,
         "GenericConditionNode",
-        UNS_TOPIC + "/Planar/DATA/Weight",
+        UNS_TOPIC + "/Filling/DATA/Weight",
         "../../schemas/weigh.schema.json");
 
     auto tree = factory.createTreeFromFile("../src/bt/Description/tree.xml");
@@ -69,15 +69,14 @@ int main(int argc, char *argv[])
         auto status = tree.tickOnce();
         while (status == BT::NodeStatus::RUNNING)
         {
-            // Use tickWhileRunning to allow the tree to tick continuously
-            auto status = tree.tickWhileRunning(std::chrono::milliseconds(15000));
+            // The BT is event based but lets tick every few seconds any way
+            auto status = tree.tickWhileRunning(std::chrono::milliseconds(2000));
         }
-        // When tree completes (SUCCESS or FAILURE), print the result
         std::cout << "Behavior tree execution completed with status: "
                   << (status == BT::NodeStatus::SUCCESS ? "SUCCESS" : "FAILURE") << std::endl;
 
+        // For now the behaviour tree is being looped
         std::cout << "====== Restarting behavior tree... ======" << std::endl;
-        // Optional: Add a delay between tree executions
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
     return 0;

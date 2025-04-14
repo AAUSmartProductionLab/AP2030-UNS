@@ -1,17 +1,17 @@
 name: PlanarMotorsExperiment
 
 services:
-  bt_controller:
-    build:
-      context: .
-      dockerfile: MQTT_BT_Controller/dockerfile
-    container_name: bt_controller
-    network_mode: host
-    volumes:
-      - ./schemas:/src/planar-motors-experiments/schemas
-    depends_on:
-      - filling_station
-      - stoppering_station
+  # bt_controller:
+  #   build:
+  #     context: .
+  #     dockerfile: MQTT_BT_Controller/dockerfile
+  #   container_name: bt_controller
+  #   network_mode: host
+  #   volumes:
+  #     - ./schemas:/src/planar-motors-experiments/schemas
+  #   depends_on:
+  #     - filling_station
+  #     - stoppering_station
 
   filling_station:
     build:

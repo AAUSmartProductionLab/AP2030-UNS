@@ -13,26 +13,19 @@ import threading
 
 class Topic:
     # A class for publishing on and subscribing to a topic including json validation before publishing and after receiving a message
-    def __init__(self, topic: str = "", publish_schema_path: str = None, subscribe_schema_path: str = None, qos: int = 0, callback_method: callable = None):
+    def __init__(self, publish_topic: str="",subscribe_topic: str="", publish_schema_path: str = None, subscribe_schema_path: str = None, qos: int = 0, callback_method: callable = None):
 
         self.qos: int = qos
         self.pub_schema = load_schema(publish_schema_path)
         self.sub_schema = load_schema(subscribe_schema_path)
 
         # The suptopic is inspired by VDA5050
-        self.pubtopic: str = topic + "/DATA"+\
-            self.pub_schema.get(
-                "subtopic", "") if self.pub_schema != None else topic
-        self.subtopic: str = topic + "/CMD"+\
-            self.sub_schema.get(
-                "subtopic", "") if self.sub_schema != None else topic
-        print("Subtopic: " + self.subtopic)
+        self.pubtopic: str = publish_topic
+        self.subtopic: str = subscribe_topic
 
         self.callback_method: callable = callback_method
 
         self.publish_properties = Properties(PacketTypes.PUBLISH)
-        self.publish_properties.CorrelationData = str(
-            randint(1000, 9999)).encode()
 
     def publish(self, message, client):
         if self.pub_schema != None:
@@ -47,6 +40,7 @@ class Topic:
 
     def subscribe(self, client):
         if self.subtopic != None and self.subtopic != "":
+            print("Subscribing to topic " + self.subtopic)
             client.subscribe(self.subtopic, self.qos)
 
     def callback(self, client, userdata, message):
@@ -61,8 +55,8 @@ class Topic:
 
 class Response(Topic):
     # A class handling responding to requests on a topic described in the user property ResponseTopic
-    def __init__(self, topic: str,  publish_schema_path: str, subscribe_schema_path: str, qos: int = 0, callback_method: callable = None):
-        super().__init__(topic, publish_schema_path,
+    def __init__(self,publish_topic: str,subscribe_topic: str,  publish_schema_path: str, subscribe_schema_path: str, qos: int = 0, callback_method: callable = None):
+        super().__init__(publish_topic, subscribe_topic, publish_schema_path,
                          subscribe_schema_path, qos, callback_method)
 
     def publish(self, request, client, publish_properties):
@@ -77,8 +71,8 @@ class Response(Topic):
 class ResponseAsync(Topic):
     # A class handling responding to requests on a topic described in the user property ResponseTopic
     # The callback is executed in a seperate thread so time.sleep can be used to wait for processes to finish without blocking the paho loop
-    def __init__(self, topic: str,  publish_schema_path: str, subscribe_schema_path: str, qos: int = 0, callback_method: callable = None):
-        super().__init__(topic, publish_schema_path,
+    def __init__(self, publish_topic: str,subscribe_topic: str, publish_schema_path: str, subscribe_schema_path: str, qos: int = 0, callback_method: callable = None):
+        super().__init__(publish_topic,subscribe_topic, publish_schema_path,
                          subscribe_schema_path, qos, callback_method)
 
     def publish(self, request, client, publish_properties):
@@ -103,14 +97,12 @@ class ResponseAsync(Topic):
 
 class Request(Topic):
     # A class for requesting a service from a proxy and listening for response on a unique topic
-    def __init__(self, topic: str, publish_schema_path: str, subscribe_schema_path: str, qos: int = 0, callback_method: callable = None):
-        super().__init__(topic, publish_schema_path,
+    def __init__(self,publish_topic: str,subscribe_topic: str, publish_schema_path: str, subscribe_schema_path: str, qos: int = 0, callback_method: callable = None):
+        super().__init__(publish_topic,subscribe_topic, publish_schema_path,
                          subscribe_schema_path, qos, callback_method)
 
         # The subtopic is appended with a generated unique identifier and added to the ResponseTopic user property
-        self.subtopic: str = self.pubtopic + self.sub_schema["subtopic"] + \
-            "/"+str(uuid4())
-        self.publish_properties.ResponseTopic = self.subtopic
+        self.subtopic: str = self.pubtopic
         # Not strictly necessary since the response topic includes a uuid
 
 
@@ -119,9 +111,9 @@ class Publisher(Topic):
     A class for only publishing messages to a topic with schema validation.
     This class does not subscribe to any topics or handle responses.
     """
-    def __init__(self, topic: str, publish_schema_path: str, qos: int = 0):
+    def __init__(self, publish_topic: str, publish_schema_path: str, qos: int = 0):
         # Pass None for subscribe_schema_path and callback since we won't be subscribing
-        super().__init__(topic, publish_schema_path, None, qos, None)
+        super().__init__(publish_topic, None,publish_schema_path, None, qos, None)
     
     # Override subscribe-related methods to do nothing
     def registerCallback(self, client):

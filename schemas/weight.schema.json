@@ -1,0 +1,13 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Weight from IPC Weighing of PPM",
+    "description": "JSON Schema for a IPC weighing using a scale",
+    "type": "object",
+    "properties": {
+        "Weight": {
+            "type": "number",
+            "description": "The weight of the liquid during IPC"
+        }
+    },
+    "required": ["Weight"]
+}

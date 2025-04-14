@@ -8,7 +8,10 @@ BROKER_PORT = 1883
 BASE_TOPIC = "NN/Nybrovej/InnoLab/Filling"
 
 
-weigh_publisher = Publisher(BASE_TOPIC, "schemas/weigh.schema.json", 0)
+weigh_publisher = Publisher(
+        BASE_TOPIC + "/DATA/Weight",
+        "./schemas/weigh.schema.json", 
+        0)
 
 
 def dispense_process(duration=2.0, state_machine=None):
@@ -61,10 +64,11 @@ def dispense_callback(topic, client, message, properties):
 def main():
     """Main entry point for the filling proxy"""
     response_async = ResponseAsync(
-        BASE_TOPIC, 
-        "schemas/state.schema.json", 
-        "schemas/dispense.schema.json", 
-        2, 
+        BASE_TOPIC+"/DATA/State", 
+        BASE_TOPIC+"/CMD/Dispense",
+        "./schemas/state.schema.json", 
+        "./schemas/command.schema.json", 
+        0, 
         dispense_callback
     )
     
