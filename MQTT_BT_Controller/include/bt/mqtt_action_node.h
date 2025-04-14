@@ -15,6 +15,8 @@ class MqttActionNode : public BT::StatefulActionNode, public MqttPubBase, public
 {
 
     // Mutex for thread safety
+protected:
+    std::string current_command_uuid_;
 
 public:
     MqttActionNode(const std::string &name,
@@ -37,12 +39,12 @@ public:
 
     // Override the virtual callback method from base class
     virtual void callback(const json &msg, mqtt::properties props) override;
+    bool isInterestedIn(const std::string &field, const json &value) override;
 
     // BT::StatefulActionNode interface implementation
     BT::NodeStatus onStart() override;
     BT::NodeStatus onRunning() override;
     void onHalted() override;
-
     template <typename DerivedNode>
     static void registerNodeType(
         BT::BehaviorTreeFactory &factory,

@@ -1,13 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root BTCPP_format="4">
   <BehaviorTree ID="MainTree">
+    <SubTree ID="xBotControl"
+             _autoremap="false"/>
+  </BehaviorTree>
+
+  <BehaviorTree ID="xBotControl">
     <Sequence>
-      <Sleep msec="2000"/>
-      <MoveShuttleToPosition xbot_id="1"
-                             goal="120.0;120.0"/>
-      <GenericConditionNode expected_value="empty"
-                            comparison_type="equal"
-                            field_name="product_state"/>
+      <RetryUntilSuccessful num_attempts="5">
+        <Fallback>
+          <GenericConditionNode expected_value="2.0"
+                                comparison_type="equal"
+                                field_name="Weight"/>
+          <Dispensing/>
+        </Fallback>
+      </RetryUntilSuccessful>
+      <Stoppering/>
       <MoveShuttleToPosition name="MoveShuttleToFilling"
                              xbot_id="1"
                              goal="240.0;240.0"/>
@@ -19,6 +27,7 @@
 
   <!-- Description of Node Models (used by Groot) -->
   <TreeNodesModel>
+    <Action ID="Dispensing"/>
     <Condition ID="GenericConditionNode">
       <input_port name="expected_value"
                   type="std::string">Value to compare against</input_port>
@@ -33,6 +42,7 @@
       <input_port name="goal"
                   type="Position2D"/>
     </Action>
+    <Action ID="Stoppering"/>
   </TreeNodesModel>
 
 </root>

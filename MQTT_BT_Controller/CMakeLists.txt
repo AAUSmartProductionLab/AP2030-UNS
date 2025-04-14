@@ -51,6 +51,7 @@ add_library(bt_controller_common STATIC
     src/bt/CustomNodes/move_shuttle_to_position.cpp
     src/bt/CustomNodes/omron_arcl_request_node.cpp
     src/bt/CustomNodes/generic_condition_node.cpp
+    src/bt/CustomNodes/generic_action_node.cpp
 )
 
 target_include_directories(bt_controller_common
@@ -86,17 +87,17 @@ target_link_libraries(${PROJECT_NAME}
     bt_controller_common
 )
 
-# Add model generator executable
-add_executable(generate_model_xml
-    src/bt/Description/generate_model_xml.cpp
-)
+# # Add model generator executable
+# add_executable(generate_model_xml
+#     src/bt/Description/generate_model_xml.cpp
+# )
 
-target_include_directories(generate_model_xml PRIVATE 
-    /usr/local/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/json/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/json-schema-validator/src
-)
+# target_include_directories(generate_model_xml PRIVATE 
+#     /usr/local/include
+#     ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/json/include
+#     ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/json-schema-validator/src
+# )
 
-target_link_libraries(generate_model_xml 
-    bt_controller_common
-)
+# target_link_libraries(generate_model_xml 
+#     bt_controller_common
+# )

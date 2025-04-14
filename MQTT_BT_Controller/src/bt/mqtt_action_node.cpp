@@ -34,12 +34,6 @@ BT::PortsList MqttActionNode::providedPorts()
     return {};
 }
 
-void MqttActionNode::callback(const json &msg, mqtt::properties props)
-{
-    // Base implementation - should be overridden by derived classes
-    std::cout << "Base callback called - this should be overridden!" << std::endl;
-}
-
 BT::NodeStatus MqttActionNode::onStart()
 {
     // Create the message to send
@@ -58,4 +52,52 @@ void MqttActionNode::onHalted()
     // Clean up when the node is halted
     std::cout << "MQTT action node halted" << std::endl;
     // Additional cleanup as needed
+}
+
+// Standard implementation based on PackML override this if needed
+void MqttActionNode::callback(const json &msg, mqtt::properties props)
+{
+    // Use mutex to protect shared state
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+
+        // Update state based on message content
+        if (msg.contains("State"))
+        {
+            if (msg["State"] == "ABORTED" || msg["State"] == "STOPPED")
+            {
+                current_command_uuid_ = "";
+                // Change from setting internal state to updating node status
+                setStatus(BT::NodeStatus::FAILURE);
+                emitWakeUpSignal();
+            }
+            else if (msg["State"] == "COMPLETE")
+            {
+                current_command_uuid_ = "";
+                // Change from setting internal state to updating node status
+                setStatus(BT::NodeStatus::SUCCESS);
+                emitWakeUpSignal();
+            }
+            else if (msg["State"] == "HELD" || msg["State"] == "SUSPENDED" || msg["State"] == "EXECUTED")
+            {
+                std::cout << "State is HELD, SUSPENDED or Executing" << std::endl;
+                // No need to set RUNNING again if already running
+                emitWakeUpSignal();
+            }
+        }
+        else
+        {
+            std::cout << "Message doesn't contain 'state' field" << std::endl;
+        }
+    }
+}
+
+bool MqttActionNode::isInterestedIn(const std::string &field, const json &value)
+{
+    if (field == "CommandUuid" && value.is_string())
+    {
+        bool interested = (value.get<std::string>() == current_command_uuid_);
+        return interested;
+    }
+    return false;
 }

@@ -26,8 +26,6 @@ namespace BT
 // MoveShuttleToPosition class declaration
 class MoveShuttleToPosition : public MqttActionNode
 {
-private:
-    std::string current_command_uuid_;
 
 public:
     MoveShuttleToPosition(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client,
@@ -39,9 +37,4 @@ public:
     static BT::PortsList providedPorts();
 
     json createMessage();
-
-    // Override isInterestedIn to filter messages
-    bool isInterestedIn(const std::string &field, const json &value) override;
-
-    void callback(const json &msg, mqtt::properties props) override;
 };

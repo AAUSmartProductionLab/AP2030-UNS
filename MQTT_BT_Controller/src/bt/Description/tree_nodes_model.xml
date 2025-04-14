@@ -1,5 +1,6 @@
 <root BTCPP_format="4">
     <TreeNodesModel>
+        <Action ID="Dispensing"/>
         <Condition ID="GenericConditionNode">
             <input_port name="expected_value" type="std::string">Value to compare against</input_port>
             <input_port name="comparison_type" type="std::string">Type of comparison: equal, not_equal, greater, less, contains</input_port>
@@ -12,5 +13,6 @@
         <Action ID="OmronArclRequest">
             <input_port name="command" type="BT::AnyTypeAllowed"/>
         </Action>
+        <Action ID="Stoppering"/>
     </TreeNodesModel>
 </root>

@@ -3,6 +3,7 @@
     <include path="tree.xml"/>
     <!-- Description of Node Models (used by Groot) -->
     <TreeNodesModel>
+        <Action ID="Dispensing"/>
         <Condition ID="GenericConditionNode">
             <input_port name="expected_value" type="std::string">Value to compare against</input_port>
             <input_port name="comparison_type" type="std::string">Type of comparison: equal, not_equal, greater, less, contains</input_port>
@@ -20,5 +21,6 @@
             <input_port name="comparison_type" type="std::string">Type of comparison: equal, not_equal, greater, less, contains</input_port>
             <input_port name="field_name" type="std::string">Name of the field to monitor in the MQTT message</input_port>
         </Condition>
+        <Action ID="Stoppering"/>
     </TreeNodesModel>
 </root>
