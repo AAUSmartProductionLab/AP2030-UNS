@@ -1,14 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root BTCPP_format="4">
   <BehaviorTree ID="MainTree">
-    <SubTree ID="xBotControl"
-             _autoremap="false"/>
+    <Parallel failure_count="1"
+              success_count="-1">
+      <SubTree ID="XBotControl"
+               XbotId="1"/>
+    </Parallel>
   </BehaviorTree>
 
-  <BehaviorTree ID="xBotControl">
+  <BehaviorTree ID="XBotControl">
     <Sequence>
-      <MoveShuttle xbot_id="1"
-                   goal="120.0;120.0"/>
+      <MoveShuttle TargetPosition="1"/>
+      <MoveShuttle TargetPosition="2"/>
       <RetryUntilSuccessful num_attempts="5">
         <Fallback>
           <GenericConditionNode expected_value="2.0"
@@ -17,11 +20,9 @@
           <Dispensing/>
         </Fallback>
       </RetryUntilSuccessful>
-      <MoveShuttle xbot_id="1"
-                   goal="120.0;120.0"/>
+      <MoveShuttle TargetPosition="3"/>
       <Stoppering/>
-      <MoveShuttle xbot_id="1"
-                   goal="120.0;120.0"/>
+      <MoveShuttle TargetPosition="4"/>
     </Sequence>
   </BehaviorTree>
 
@@ -37,10 +38,8 @@
                   type="std::string">Name of the field to monitor in the MQTT message</input_port>
     </Condition>
     <Action ID="MoveShuttle">
-      <input_port name="xbot_id"
+      <input_port name="TargetPosition"
                   type="int"/>
-      <input_port name="goal"
-                  type="Position2D"/>
     </Action>
     <Action ID="Stoppering"/>
   </TreeNodesModel>

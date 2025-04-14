@@ -9,20 +9,6 @@
 class MqttClient;
 using nlohmann::json;
 
-// Position2D struct definition
-struct Position2D
-{
-    double x;
-    double y;
-};
-
-// Template specialization declaration
-namespace BT
-{
-    template <>
-    Position2D convertFromString(StringView str);
-}
-
 // MoveShuttleToPosition class declaration
 class MoveShuttleToPosition : public MqttActionNode
 {

@@ -10,21 +10,12 @@
         {
             "type": "object",
             "properties": {
-                "XbotId": {
+                "TargetPosition": {
                     "type": "integer",
-                    "description": "ID of the xBot to move"
-                },
-                "TargetPos": {
-                    "type": "array",
-                    "description": "Target position to move the xBot to [x, y]",
-                    "items": {
-                    "type": "number"
-                    },
-                    "minItems": 2,
-                    "maxItems": 2
+                    "description": "Target position to move the xBot to [x, y]"
                 }
             },
-            "required": ["XbotId", "TargetPos"]
+            "required": ["TargetPosition"]
         }
     ],
     "required": ["CommandUuid"]
