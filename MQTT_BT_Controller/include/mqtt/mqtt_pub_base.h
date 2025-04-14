@@ -34,6 +34,17 @@ protected:
     int qos_;
     bool retain_;
     std::unique_ptr<nlohmann::json_schema::json_validator> schema_validator_;
+    std::string request_topic_pattern_;
+    std::string formatTopic(const std::string &topic_pattern, std::string &replacement)
+    {
+        std::string formatted_topic = topic_pattern;
+        size_t pos = formatted_topic.find("+");
+        if (pos != std::string::npos)
+        {
+            formatted_topic.replace(pos, 1, replacement);
+        }
+        return formatted_topic;
+    }
 
 public:
     MqttPubBase(MqttClient &mqtt_client,

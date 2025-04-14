@@ -56,6 +56,7 @@ public:
     void unregisterInstance(MqttSubBase *instance);
 
 private:
+    bool topicMatches(const std::string &pattern, const std::string &topic);
     struct TopicHandler
     {
         std::string topic;

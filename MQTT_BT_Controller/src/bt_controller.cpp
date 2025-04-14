@@ -76,9 +76,9 @@ int main(int argc, char *argv[])
         factory,
         node_message_distributor,
         bt_mqtt_client,
-        "MoveShuttleToPosition",
-        UNS_TOPIC + "/Planar/Xbot1/CMD/XYMotion",
-        UNS_TOPIC + "/Planar/Xbot1/DATA/State",
+        "MoveShuttle",
+        UNS_TOPIC + "/Planar/+/CMD/XYMotion",
+        UNS_TOPIC + "/Planar/+/DATA/State",
         "../../schemas/moveToPosition.schema.json",
         "../../schemas/state.schema.json");
 
@@ -118,7 +118,7 @@ int main(int argc, char *argv[])
         bt_mqtt_client,
         "GenericConditionNode",
         UNS_TOPIC + "/Filling/DATA/Weight",
-        "../../schemas/weigh.schema.json");
+        "../../schemas/weight.schema.json");
 
     // Check if we should generate XML models instead of running the tree
     if (generate_xml_models)

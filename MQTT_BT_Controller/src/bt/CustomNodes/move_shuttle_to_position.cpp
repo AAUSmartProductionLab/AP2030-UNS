@@ -46,6 +46,13 @@ json MoveShuttleToPosition::createMessage()
     BT::Expected<int> id = getInput<int>("xbot_id");
     BT::Expected<Position2D> goal = getInput<Position2D>("goal");
 
+    // since we use a wildcard in the topic pattern, we need to replace it with the id
+    if (id.has_value())
+    {
+        std::string id_str = "Xbot" + std::to_string(id.value());
+        request_topic_ = formatTopic(request_topic_pattern_, id_str);
+    }
+
     json message;
     current_command_uuid_ = mqtt_utils::generate_uuid();
     message["XbotId"] = id.value();

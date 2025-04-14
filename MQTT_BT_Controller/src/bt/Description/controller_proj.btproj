@@ -9,7 +9,7 @@
             <input_port name="comparison_type" type="std::string">Type of comparison: equal, not_equal, greater, less, contains</input_port>
             <input_port name="field_name" type="std::string">Name of the field to monitor in the MQTT message</input_port>
         </Condition>
-        <Action ID="MoveShuttleToPosition">
+        <Action ID="MoveShuttle">
             <input_port name="xbot_id" type="int"/>
             <input_port name="goal" type="Position2D"/>
         </Action>

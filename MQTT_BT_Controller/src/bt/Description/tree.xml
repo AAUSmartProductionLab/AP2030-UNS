@@ -7,6 +7,8 @@
 
   <BehaviorTree ID="xBotControl">
     <Sequence>
+      <MoveShuttle xbot_id="1"
+                   goal="120.0;120.0"/>
       <RetryUntilSuccessful num_attempts="5">
         <Fallback>
           <GenericConditionNode expected_value="2.0"
@@ -15,13 +17,11 @@
           <Dispensing/>
         </Fallback>
       </RetryUntilSuccessful>
+      <MoveShuttle xbot_id="1"
+                   goal="120.0;120.0"/>
       <Stoppering/>
-      <MoveShuttleToPosition name="MoveShuttleToFilling"
-                             xbot_id="1"
-                             goal="240.0;240.0"/>
-      <MoveShuttleToPosition name="MoveShuttleToUnloading"
-                             xbot_id="1"
-                             goal="360.0;360.0"/>
+      <MoveShuttle xbot_id="1"
+                   goal="120.0;120.0"/>
     </Sequence>
   </BehaviorTree>
 
@@ -36,7 +36,7 @@
       <input_port name="field_name"
                   type="std::string">Name of the field to monitor in the MQTT message</input_port>
     </Condition>
-    <Action ID="MoveShuttleToPosition">
+    <Action ID="MoveShuttle">
       <input_port name="xbot_id"
                   type="int"/>
       <input_port name="goal"

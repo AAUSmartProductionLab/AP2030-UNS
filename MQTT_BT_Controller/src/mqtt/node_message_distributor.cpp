@@ -26,7 +26,44 @@ void NodeMessageDistributor::register_topic_handler(
     // Subscribe to the topic through the mqtt_client
     mqtt_client_.subscribe_topic(topic, 0);
 }
+bool NodeMessageDistributor::topicMatches(const std::string &pattern, const std::string &topic)
+{
+    std::istringstream patternStream(pattern);
+    std::istringstream topicStream(topic);
+    std::string patternSegment, topicSegment;
 
+    while (std::getline(patternStream, patternSegment, '/') &&
+           std::getline(topicStream, topicSegment, '/'))
+    {
+        // Match single-level wildcards
+        if (patternSegment == "+")
+        {
+            continue; // + matches any single level
+        }
+        // Match multi-level wildcards
+        else if (patternSegment == "#")
+        {
+            // Check if # is the last segment (must be the last level)
+            if (patternStream.peek() != EOF)
+            {
+                std::cout << "Invalid MQTT pattern: # must be the last segment in topic filter" << std::endl;
+                return false;
+            }
+            return true; // # matches all remaining levels
+        }
+        // Exact match required for non-wildcard segments
+        else if (patternSegment != topicSegment)
+        {
+            return false;
+        }
+    }
+
+    // Check if we reached the end of both strings
+    bool patternDone = !std::getline(patternStream, patternSegment, '/');
+    bool topicDone = !std::getline(topicStream, topicSegment, '/');
+
+    return patternDone && topicDone;
+}
 void NodeMessageDistributor::handle_message(const std::string &topic,
                                             const json &payload,
                                             mqtt::properties props)
@@ -35,7 +72,7 @@ void NodeMessageDistributor::handle_message(const std::string &topic,
     bool handled = false;
     for (const auto &handler : topic_handlers_)
     {
-        if (topic == handler.topic)
+        if (topicMatches(handler.topic, topic))
         {
             handler.callback(payload, props);
             handled = true;

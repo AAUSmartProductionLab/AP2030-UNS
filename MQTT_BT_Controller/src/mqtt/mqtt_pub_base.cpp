@@ -17,7 +17,8 @@ MqttPubBase::MqttPubBase(MqttClient &mqtt_client,
       request_schema_path_(request_schema_path),
       qos_(qos),
       retain_(retain),
-      schema_validator_(nullptr)
+      schema_validator_(nullptr),
+      request_topic_pattern_(request_topic)
 {
   // Load schema if path is provided
   if (!request_schema_path_.empty())
