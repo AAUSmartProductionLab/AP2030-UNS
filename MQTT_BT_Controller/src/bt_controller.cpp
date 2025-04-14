@@ -92,6 +92,26 @@ int main(int argc, char *argv[])
         "../../schemas/amrArclRequest.schema.json",
         "../../schemas/amrArclUpdate.schema.json");
 
+    MqttActionNode::registerNodeType<GenericActionNode>(
+        factory,
+        node_message_distributor,
+        bt_mqtt_client,
+        "Dispensing",
+        UNS_TOPIC + "/Filling/CMD/Dispense",
+        UNS_TOPIC + "/Filling/DATA/State",
+        "../../schemas/command.schema.json",
+        "../../schemas/state.schema.json");
+
+    MqttActionNode::registerNodeType<GenericActionNode>(
+        factory,
+        node_message_distributor,
+        bt_mqtt_client,
+        "Stoppering",
+        UNS_TOPIC + "/Stoppering/CMD/Stopper",
+        UNS_TOPIC + "/Stoppering/DATA/State",
+        "../../schemas/command.schema.json",
+        "../../schemas/state.schema.json");
+
     MqttConditionNode::registerNodeType<GenericConditionNode>(
         factory,
         node_message_distributor,
