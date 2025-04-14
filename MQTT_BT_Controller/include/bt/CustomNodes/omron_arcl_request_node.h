@@ -12,8 +12,6 @@ using nlohmann::json;
 // MoveShuttleToPosition class declaration
 class OmronArclRequest : public MqttActionNode
 {
-private:
-    std::string current_command_uuid_;
 
 public:
     OmronArclRequest(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client,
