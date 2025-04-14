@@ -10,7 +10,7 @@ BASE_TOPIC = "NN/Nybrovej/InnoLab/Filling"
 
 weigh_publisher = Publisher(
         BASE_TOPIC + "/DATA/Weight",
-        "./schemas/weigh.schema.json", 
+        "./schemas/weight.schema.json", 
         0)
 
 
