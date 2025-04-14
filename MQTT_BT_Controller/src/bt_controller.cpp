@@ -2,12 +2,13 @@
 #include <functional>
 #include <iostream>
 #include <fstream>
+#include <filesystem>
+
 #include <behaviortree_cpp/bt_factory.h>
 #include <behaviortree_cpp/loggers/groot2_publisher.h>
 #include <behaviortree_cpp/xml_parsing.h>
 
 #include "common_constants.h"
-
 #include "mqtt/mqtt_client.h"
 #include "bt/mqtt_action_node.h"
 #include "mqtt/node_message_distributor.h"
@@ -24,6 +25,9 @@ const std::string OUTPUT_FILE("../src/bt/Description/tree_nodes_model.xml");
  */
 bool saveXmlToFile(const std::string &xml_content, const std::string &filename)
 {
+    std::filesystem::path abs_path = std::filesystem::absolute(filename);
+    std::cout << "Attempting to save to absolute path: " << abs_path << std::endl;
+
     std::ofstream file(filename);
     if (file.is_open())
     {
