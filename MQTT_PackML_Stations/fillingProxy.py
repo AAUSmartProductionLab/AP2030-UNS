@@ -1,8 +1,6 @@
-from MQTT_classes import Proxy, Topic, ResponseAsync, Publisher
+from MQTT_classes import Proxy, ResponseAsync, Publisher
 import time
-from PackMLSimulator import PackMLStateMachine
-
-
+from PackMLSimulator import queue_command
 BROKER_ADDRESS = "192.168.0.104"
 BROKER_PORT = 1883
 BASE_TOPIC = "NN/Nybrovej/InnoLab/Filling"
@@ -50,12 +48,18 @@ def publish_weight(state_machine, reset=False):
 def dispense_callback(topic, client, message, properties):
     """Callback handler for dispense commands"""
     try:
+        # Make sure duration is properly set
         duration = message.get("duration", 2.0)
         
-        state_machine = PackMLStateMachine(topic, client, properties, publish_weight)
-        state_machine.CommandUuid = message.get("CommandUuid")
-        state_machine.run_state_machine(dispense_process, max_duration=duration, duration=duration)
-        publish_weight(state_machine, True)
+        # Create a copy of the message to modify
+        message_copy = message.copy() if isinstance(message, dict) else {}
+        
+        # Ensure max_duration is set in the message
+        if "max_duration" not in message_copy:
+            message_copy["max_duration"] = duration
+            
+        # Queue the command with the modified message
+        queue_command((topic, client, message_copy, properties, dispense_process, publish_weight))
     except Exception as e:
         # Log the error instead of letting it propagate to thread level
         print(f"Error in dispense_callback: {e}")

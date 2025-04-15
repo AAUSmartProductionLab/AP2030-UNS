@@ -2,6 +2,8 @@ import random
 import enum
 import threading
 import time
+import queue
+
 # Custom exceptions for PackML state transitions
 class HoldException(Exception): pass
 class SuspendException(Exception): pass
@@ -34,6 +36,77 @@ class PackMLState(enum.Enum):
     ABORTED = "ABORTED"
     CLEARING = "CLEARING"
 
+# Module-level queue variables (one per process)
+_command_queue = queue.Queue()
+_queue_lock = threading.Lock()
+_is_processing = False
+_command_uuids = []  # Track all queued command UUIDs
+
+def queue_command(command_data):
+    """Add a command to the queue and try to process it"""
+    # Extract command UUID if available
+    message = command_data[2]  # Message is at index 2
+    command_uuid = message.get("CommandUuid")
+    
+    with _queue_lock:
+        _command_queue.put(command_data)
+        
+        # Track command UUID if available
+        if command_uuid:
+            _command_uuids.append(command_uuid)
+    
+    # Try to process queue if not already processing
+    threading.Thread(target=process_next_command, daemon=True).start()
+
+def process_next_command():
+    """Process the next command in queue"""
+    global _is_processing
+    
+    with _queue_lock:
+        # Skip if already processing or queue is empty
+        if _is_processing or _command_queue.empty():
+            return
+        _is_processing = True
+    
+    try:
+        # Get next command from queue
+        command_data = _command_queue.get()
+        
+        # Unpack with variable length support
+        topic, client, message, properties, process_function, *rest = command_data
+        
+        # Extract command UUID if available
+        command_uuid = message.get("CommandUuid")
+        
+        # Create new state machine and process the command
+        state_machine = PackMLStateMachine(topic, client, properties)
+        if command_uuid:
+            state_machine.CommandUuid = command_uuid
+        
+        # Set up progress callback if provided
+        if len(rest) > 0:
+            state_machine.publish_progress = rest[0]
+        
+        # Extract parameters
+        kwargs = {}
+        if "duration" in message:
+            kwargs["duration"] = message["duration"]
+        if "max_duration" in message:
+            kwargs["max_duration"] = message["max_duration"]
+        
+        # Process the command
+        state_machine.run_state_machine(process_function, **kwargs)
+                    
+    except Exception as e:
+        print(f"Error in queue processing: {e}")
+    
+    finally:
+        with _queue_lock:
+            _is_processing = False
+            # Check if there are more commands
+            if not _command_queue.empty():
+                threading.Thread(target=process_next_command, daemon=True).start()
+
 
 class PackMLStateMachine:
     def __init__(self, topic, client, properties, publish_progress=None):
@@ -41,7 +114,6 @@ class PackMLStateMachine:
         self.topic = topic
         self.client = client
         self.properties = properties
-        self.error_code = None
         self.CommandUuid = None
         self.publish_progress = publish_progress
         self.failureChance=0.01
@@ -102,9 +174,40 @@ class PackMLStateMachine:
         """Transition to a new state and publish it"""
         self.state = new_state
         response = {"State": new_state.value}
-        if new_state != PackMLState.IDLE and new_state != PackMLState.RESETTING:
-            response["CommandUuid"] = self.CommandUuid
+        
+        # Handle CommandUuid tracking
+        if new_state in [PackMLState.IDLE, PackMLState.RESETTING]:
+            # Clear current CommandUuid
+            prev_uuid = self.CommandUuid
+            self.CommandUuid = None
+            
+            # Remove UUID from tracking list when command completes
+            with _queue_lock:
+                if prev_uuid and prev_uuid in _command_uuids:
+                    _command_uuids.remove(prev_uuid)
+                    
+                # Get fresh queue state
+                queued_uuids = _command_uuids.copy()
+                
+                # For IDLE state with empty queue, use empty array
+                response["ProcessQueue"] = queued_uuids if queued_uuids else []
+        else:
+            # Regular handling for other states
+            with _queue_lock:
+                queued_uuids = _command_uuids.copy()
+                
+                # Include current UUID if applicable
+                if self.CommandUuid and self.CommandUuid not in queued_uuids:
+                    response["ProcessQueue"] = [self.CommandUuid] + queued_uuids
+                else:
+                    response["ProcessQueue"] = queued_uuids
+        
         self.topic.publish(response, self.client, self.properties)
+        
+        # Process next command if we're transitioning to IDLE
+        if new_state == PackMLState.IDLE:
+            threading.Thread(target=process_next_command, daemon=True).start()
+        
         time.sleep(delay)
     
     def run_sequence(self, states, delay=0.1):

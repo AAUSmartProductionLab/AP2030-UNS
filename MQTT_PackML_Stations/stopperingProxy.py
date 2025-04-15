@@ -1,6 +1,6 @@
 from MQTT_classes import Proxy, ResponseAsync
 import time
-from PackMLSimulator import PackMLStateMachine
+from PackMLSimulator import queue_command
 
 
 BROKER_ADDRESS = "192.168.0.104"
@@ -31,13 +31,18 @@ def stopper_process(duration=2.0, state_machine=None):
 def stopper_callback(topic, client, message, properties):
     """Callback handler for stopper commands"""
     try:
+        # Make sure duration is properly set
         duration = message.get("duration", 2.0)
         
-        state_machine = PackMLStateMachine(topic, client, properties)
-        state_machine.CommandUuid = message.get("CommandUuid")
-        state_machine.run_state_machine(stopper_process, max_duration=duration, duration=duration)
+        # Create a copy of the message to modify
+        message_copy = message.copy() if isinstance(message, dict) else {}
+        
+        # Ensure max_duration is set in the message
+        if "max_duration" not in message_copy:
+            message_copy["max_duration"] = duration
+        queue_command((topic, client, message_copy, properties, stopper_process))
     except Exception as e:
-        print(f"Error in dispense_callback: {e}")
+        print(f"Error in stopper_callback: {e}")
 
 
 def main():

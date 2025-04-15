@@ -1,7 +1,6 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "title": "Response state",
-    "subtopic": "/State",
+    "title": "Station response state",
     "description": "JSON Schema for the status of a module. The current CommandUuid is expected when the module is not in a IDLE or RESETTING state",
     "type": "object",
     "properties": {
@@ -10,24 +9,17 @@
             "description": "The PackML State the system is in",
             "enum": ["IDLE", "STARTING", "EXECUTE","COMPLETING", "COMPLETE", "RESETTING", "HOLDING","HELD","UNHOLDING","SUSPENDING", "SUSPENDED", "UNSUSPENDING", "ABORTING", "ABORTED", "CLEARING", "STOPPING", "STOPPED"]
         },
-        "CommandUuid": {
-            "type": "string",
-            "description": "The UUID of the command that was executed"
+        "ProcessQueue": {
+            "type": "array",
+            "description": "Array of command UUIDs in the queue and currently executing",
+            "items": {
+                "type": "string"
+            }
         },
         "TimeStamp": {
             "type": "string",
             "description": "The time stamp of the message"
         }
     },
-    "if": {
-        "properties": {
-            "State": {
-                "enum": ["STARTING", "EXECUTE", "COMPLETING", "COMPLETE", "HOLDING", "HELD", "UNHOLDING", "SUSPENDING", "SUSPENDED", "UNSUSPENDING", "ABORTING", "ABORTED", "CLEARING", "STOPPING", "STOPPED"]
-            }
-        }
-    },
-    "then": {
-        "required": ["CommandUuid"]
-    },
-    "required": ["State"]
+    "required": ["State", "ProcessQueue"]
 }
