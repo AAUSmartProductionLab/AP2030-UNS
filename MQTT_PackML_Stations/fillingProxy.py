@@ -1,6 +1,6 @@
 from MQTT_classes import Proxy, ResponseAsync, Publisher
 import time
-from PackMLSimulator import queue_command
+from PackMLSimulator import PackMLStateMachine
 BROKER_ADDRESS = "192.168.0.104"
 BROKER_PORT = 1883
 BASE_TOPIC = "NN/Nybrovej/InnoLab/Filling"
@@ -44,44 +44,53 @@ def publish_weight(state_machine, reset=False):
     response = {"Weight": weight}
     weigh_publisher.publish(response, state_machine.client)
 
+def register_callback(topic, client, message, properties):
+    """Callback handler for registering commands without executing them"""
+    try:  
+        # Register the command without executing
+        state_machine.register_command(message)
+        
+    except Exception as e:
+        print(f"Error in register_callback: {e}")
 
 def dispense_callback(topic, client, message, properties):
     """Callback handler for dispense commands"""
     try:
-        # Make sure duration is properly set
-        duration = message.get("duration", 2.0)
-        
-        # Create a copy of the message to modify
-        message_copy = message.copy() if isinstance(message, dict) else {}
-        
-        # Ensure max_duration is set in the message
-        if "max_duration" not in message_copy:
-            message_copy["max_duration"] = duration
-            
-        # Queue the command with the modified message
-        queue_command((topic, client, message_copy, properties, dispense_process, publish_weight))
+        duration = 2.0
+        state_machine.process_next_command(message, dispense_process, duration,publish_weight)
     except Exception as e:
-        # Log the error instead of letting it propagate to thread level
-        print(f"Error in dispense_callback: {e}")
+        print(f"Error in stopper_callback: {e}")
+
+response_async_execute = ResponseAsync(
+    BASE_TOPIC+"/DATA/State", 
+    BASE_TOPIC+"/CMD/Dispense",
+    "./schemas/state.schema.json", 
+    "./schemas/command.schema.json", 
+    0, 
+    dispense_callback
+)
+response_async_register = ResponseAsync(
+BASE_TOPIC+"/DATA/State", 
+BASE_TOPIC+"/CMD/Register",
+"./schemas/state.schema.json", 
+"./schemas/command.schema.json", 
+0, 
+register_callback
+)
+
+
+fillProxy = Proxy(
+    BROKER_ADDRESS, 
+    BROKER_PORT,
+    "FillingProxy", 
+    [response_async_execute,response_async_register, weigh_publisher]
+)
+state_machine = PackMLStateMachine(response_async_execute,response_async_register, fillProxy, None)
 
 
 def main():
     """Main entry point for the filling proxy"""
-    response_async = ResponseAsync(
-        BASE_TOPIC+"/DATA/State", 
-        BASE_TOPIC+"/CMD/Dispense",
-        "./schemas/state.schema.json", 
-        "./schemas/command.schema.json", 
-        0, 
-        dispense_callback
-    )
-    
-    fillProxy = Proxy(
-        BROKER_ADDRESS, 
-        BROKER_PORT,
-        "FillingProxy", 
-        [response_async, weigh_publisher]
-    )
+
     
     fillProxy.loop_forever()
 

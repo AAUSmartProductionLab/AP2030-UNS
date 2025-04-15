@@ -36,86 +36,16 @@ class PackMLState(enum.Enum):
     ABORTED = "ABORTED"
     CLEARING = "CLEARING"
 
-# Module-level queue variables (one per process)
-_command_queue = queue.Queue()
-_queue_lock = threading.Lock()
-_is_processing = False
-_command_uuids = []  # Track all queued command UUIDs
-
-def queue_command(command_data):
-    """Add a command to the queue and try to process it"""
-    # Extract command UUID if available
-    message = command_data[2]  # Message is at index 2
-    command_uuid = message.get("CommandUuid")
-    
-    with _queue_lock:
-        _command_queue.put(command_data)
-        
-        # Track command UUID if available
-        if command_uuid:
-            _command_uuids.append(command_uuid)
-    
-    # Try to process queue if not already processing
-    threading.Thread(target=process_next_command, daemon=True).start()
-
-def process_next_command():
-    """Process the next command in queue"""
-    global _is_processing
-    
-    with _queue_lock:
-        # Skip if already processing or queue is empty
-        if _is_processing or _command_queue.empty():
-            return
-        _is_processing = True
-    
-    try:
-        # Get next command from queue
-        command_data = _command_queue.get()
-        
-        # Unpack with variable length support
-        topic, client, message, properties, process_function, *rest = command_data
-        
-        # Extract command UUID if available
-        command_uuid = message.get("CommandUuid")
-        
-        # Create new state machine and process the command
-        state_machine = PackMLStateMachine(topic, client, properties)
-        if command_uuid:
-            state_machine.CommandUuid = command_uuid
-        
-        # Set up progress callback if provided
-        if len(rest) > 0:
-            state_machine.publish_progress = rest[0]
-        
-        # Extract parameters
-        kwargs = {}
-        if "duration" in message:
-            kwargs["duration"] = message["duration"]
-        if "max_duration" in message:
-            kwargs["max_duration"] = message["max_duration"]
-        
-        # Process the command
-        state_machine.run_state_machine(process_function, **kwargs)
-                    
-    except Exception as e:
-        print(f"Error in queue processing: {e}")
-    
-    finally:
-        with _queue_lock:
-            _is_processing = False
-            # Check if there are more commands
-            if not _command_queue.empty():
-                threading.Thread(target=process_next_command, daemon=True).start()
-
 
 class PackMLStateMachine:
-    def __init__(self, topic, client, properties, publish_progress=None):
+    def __init__(self, register_topic,execute_topic, client, properties):
         self.state = PackMLState.IDLE
-        self.topic = topic
+        self.register_topic = register_topic
+        self.execute_topic = execute_topic
         self.client = client
         self.properties = properties
         self.CommandUuid = None
-        self.publish_progress = publish_progress
+        self.publish_progress = None
         self.failureChance=0.01
         # Progress tracking
         self.total_duration = 0
@@ -125,7 +55,42 @@ class PackMLStateMachine:
         # Threading control
         self.progress_thread = None
         self.stop_progress = threading.Event()
+
+        # ProcessQueue
+        self.command_queue = queue.Queue()
+        self.is_processing = False
+        self.command_uuids = []  # Track all queued command UUIDs
+
+    def register_command(self,message):
+        """Register a command without immediate processing"""
+        # Extract command UUID if available
+        command_uuid = message.get("CommandUuid")
+        
+        # Just add the UUID to the tracking list without queueing for execution
+        if command_uuid not in self.command_uuids:
+            self.command_uuids.append(command_uuid)
+        
+        
+        response = {
+            "State": self.state.value,
+            "ProcessQueue": self.command_uuids.copy()
+        }
+        self.register_topic.publish(response, self.client, self.properties)
+        
+        return command_uuid
+
+    def process_next_command(self, message, process_function, duration=None, publish_progress=None):
+
+        command_uuid = message.get("CommandUuid")
+
+        if command_uuid and self.command_uuids and command_uuid == self.command_uuids[0]:
     
+            # Extract command UUID if available
+            self.CommandUuid = message.get("CommandUuid")
+            self.publish_progress = publish_progress
+            # Process the command
+            self.run_state_machine(process_function, duration)
+
     def update_progress(self, progress_interval=0.1):
         """Background thread function to update and publish progress"""
         while not self.stop_progress.is_set():
@@ -180,43 +145,36 @@ class PackMLStateMachine:
             # Clear current CommandUuid
             prev_uuid = self.CommandUuid
             self.CommandUuid = None
+            self.publish_progress(self,reset=True)
+
+            if prev_uuid and prev_uuid in self.command_uuids:
+                self.command_uuids.remove(prev_uuid)
+                
+            # Get fresh queue state
+            queued_uuids = self.command_uuids.copy()
             
-            # Remove UUID from tracking list when command completes
-            with _queue_lock:
-                if prev_uuid and prev_uuid in _command_uuids:
-                    _command_uuids.remove(prev_uuid)
-                    
-                # Get fresh queue state
-                queued_uuids = _command_uuids.copy()
-                
-                # For IDLE state with empty queue, use empty array
-                response["ProcessQueue"] = queued_uuids if queued_uuids else []
+            # For IDLE state with empty queue, use empty array
+            response["ProcessQueue"] = queued_uuids if queued_uuids else []
         else:
-            # Regular handling for other states
-            with _queue_lock:
-                queued_uuids = _command_uuids.copy()
-                
-                # Include current UUID if applicable
-                if self.CommandUuid and self.CommandUuid not in queued_uuids:
-                    response["ProcessQueue"] = [self.CommandUuid] + queued_uuids
-                else:
-                    response["ProcessQueue"] = queued_uuids
+            queued_uuids = self.command_uuids.copy()
+            
+            # Include current UUID if applicable
+            if self.CommandUuid and self.CommandUuid not in queued_uuids:
+                response["ProcessQueue"] = [self.CommandUuid] + queued_uuids
+            else:
+                response["ProcessQueue"] = queued_uuids
         
-        self.topic.publish(response, self.client, self.properties)
-        
-        # Process next command if we're transitioning to IDLE
-        if new_state == PackMLState.IDLE:
-            threading.Thread(target=process_next_command, daemon=True).start()
-        
-        time.sleep(delay)
+        self.execute_topic.publish(response, self.client, self.properties)
+
     
-    def run_sequence(self, states, delay=0.1):
+    def run_sequence(self, states, delay=0.1, check_exceptions=True):
         """Run a sequence of states with checks between each"""
         for state in states:
             self.transition_to(state, delay)
-            self.check_random_exceptions(in_execute=(state == PackMLState.EXECUTE))
+            if check_exceptions:
+                        self.check_random_exceptions(in_execute=(state == PackMLState.EXECUTE))
     
-    def execute_process_step(self, process_function, **kwargs):
+    def execute_process_step(self, process_function, duration=2.0):
         """Execute a single step of the process with timing and progress tracking"""
         process_start = time.time()
         
@@ -227,13 +185,9 @@ class PackMLStateMachine:
             # Adjust duration based on remaining time
             if self.total_duration:
                 remaining_time = self.total_duration - self.elapsed_time
-                kwargs['duration'] = min(kwargs.get('duration', remaining_time), remaining_time)
-            
-            # Pass state machine reference to process function
-            kwargs['state_machine'] = self
             
             # Execute the process
-            result = process_function(**kwargs)
+            result = process_function(min(duration, remaining_time),self)
             
             # Check for exceptions after completion
             self.check_random_exceptions(in_execute=True)
@@ -308,7 +262,7 @@ class PackMLStateMachine:
                 PackMLState.STOPPED,
                 PackMLState.RESETTING,
                 PackMLState.IDLE
-            ])
+            ], check_exceptions=False)
             
         except AbortException:
             self.stop_progress_monitoring()
@@ -318,6 +272,6 @@ class PackMLStateMachine:
                 PackMLState.CLEARING,
                 PackMLState.STOPPED,
                 PackMLState.IDLE
-            ])
+            ], check_exceptions=False)
             
         return result

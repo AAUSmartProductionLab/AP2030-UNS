@@ -1,11 +1,14 @@
 from MQTT_classes import Proxy, ResponseAsync
 import time
-from PackMLSimulator import queue_command
+from PackMLSimulator import PackMLStateMachine
 
 
 BROKER_ADDRESS = "192.168.0.104"
 BROKER_PORT = 1883
 BASE_TOPIC = "NN/Nybrovej/InnoLab/Stoppering"
+# Create a global state machine instance
+
+
 
 
 def stopper_process(duration=2.0, state_machine=None):
@@ -27,42 +30,53 @@ def stopper_process(duration=2.0, state_machine=None):
     return {"dispensed": True}
 
 
+def register_callback(topic, client, message, properties):
+    """Callback handler for registering commands without executing them"""
+    try:  
+        # Register the command without executing
+        state_machine.register_command(message)
+        
+    except Exception as e:
+        print(f"Error in register_callback: {e}")
+
 
 def stopper_callback(topic, client, message, properties):
-    """Callback handler for stopper commands"""
+    """Callback handler for stopper commands that actually execute"""
     try:
-        # Make sure duration is properly set
-        duration = message.get("duration", 2.0)
-        
-        # Create a copy of the message to modify
-        message_copy = message.copy() if isinstance(message, dict) else {}
-        
-        # Ensure max_duration is set in the message
-        if "max_duration" not in message_copy:
-            message_copy["max_duration"] = duration
-        queue_command((topic, client, message_copy, properties, stopper_process))
+        duration = 2.0
+        state_machine.process_next_command(message, stopper_process, duration)
     except Exception as e:
         print(f"Error in stopper_callback: {e}")
 
+"""Main entry point for the stoppering proxy"""
+response_async_execute = ResponseAsync(
+    BASE_TOPIC+"/DATA/State", 
+    BASE_TOPIC+"/CMD/Stopper",
+    "./schemas/state.schema.json", 
+    "./schemas/command.schema.json", 
+    0, 
+    stopper_callback
+)
+
+response_async_register = ResponseAsync(
+    BASE_TOPIC+"/DATA/State", 
+    BASE_TOPIC+"/CMD/Register",
+    "./schemas/state.schema.json", 
+    "./schemas/command.schema.json", 
+    0, 
+    register_callback
+)
+
+stopperProxy = Proxy(
+    BROKER_ADDRESS, 
+    BROKER_PORT,
+    "StopperingProxy", 
+    [response_async_execute, response_async_register]
+)
+state_machine = PackMLStateMachine(response_async_execute,response_async_execute, stopperProxy, None)
+
 
 def main():
-    """Main entry point for the filling proxy"""
-    response_async = ResponseAsync(
-        BASE_TOPIC+"/DATA/State", 
-        BASE_TOPIC+"/CMD/Stopper",
-        "schemas/state.schema.json", 
-        "schemas/command.schema.json", 
-        0, 
-        stopper_callback
-    )
-    
-    stopperProxy = Proxy(
-        BROKER_ADDRESS, 
-        BROKER_PORT,
-        "StopperingProxy", 
-        [response_async]
-    )
-    
     stopperProxy.loop_forever()
 
 
