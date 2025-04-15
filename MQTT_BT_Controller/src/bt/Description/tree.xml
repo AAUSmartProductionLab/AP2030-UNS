@@ -3,12 +3,13 @@
   <BehaviorTree ID="MainTree">
     <Parallel failure_count="1"
               success_count="-1">
-      <SubTree ID="XBotControl"
-               XbotId="1"/>
+      <SubTree ID="Produce"
+               XbotId="1"
+               _autoremap="true"/>
     </Parallel>
   </BehaviorTree>
 
-  <BehaviorTree ID="XBotControl">
+  <BehaviorTree ID="Produce">
     <Sequence>
       <MoveShuttle TargetPosition="1"/>
       <MoveShuttle TargetPosition="2"/>
