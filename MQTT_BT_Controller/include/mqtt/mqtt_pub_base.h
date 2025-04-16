@@ -33,7 +33,7 @@ protected:
     std::string request_schema_path_;
     int qos_;
     bool retain_;
-    std::unique_ptr<nlohmann::json_schema::json_validator> schema_validator_;
+    std::unique_ptr<nlohmann::json_schema::json_validator> request_schema_validator_;
     std::string request_topic_pattern_;
     std::string formatTopic(const std::string &topic_pattern, std::string &replacement)
     {

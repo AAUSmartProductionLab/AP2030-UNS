@@ -48,8 +48,8 @@ MqttSubBase::MqttSubBase(MqttClient &mqtt_client,
 
             json schema_json = json::parse(schema_file);
 
-            schema_validator_ = std::make_unique<nlohmann::json_schema::json_validator>(schema_loader);
-            schema_validator_->set_root_schema(schema_json);
+            response_schema_validator_ = std::make_unique<nlohmann::json_schema::json_validator>(schema_loader);
+            response_schema_validator_->set_root_schema(schema_json);
         }
         catch (const std::exception &e)
         {
@@ -60,11 +60,11 @@ MqttSubBase::MqttSubBase(MqttClient &mqtt_client,
 
 void MqttSubBase::handleMessage(const json &msg, mqtt::properties props)
 {
-    if (schema_validator_)
+    if (response_schema_validator_)
     {
         try
         {
-            schema_validator_->validate(msg);
+            response_schema_validator_->validate(msg);
         }
         catch (const std::exception &e)
         {

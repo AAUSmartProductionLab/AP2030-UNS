@@ -121,7 +121,7 @@ int main(int argc, char *argv[])
         node_message_distributor,
         bt_mqtt_client,
         "Stopper",
-        UNS_TOPIC + "/Stoppering/CMD/Dispense",
+        UNS_TOPIC + "/Stoppering/CMD/Stopper",
         UNS_TOPIC + "/Stoppering/DATA/State",
         "../../schemas/command.schema.json",
         "../../schemas/stationState.schema.json");

@@ -60,16 +60,14 @@ void MqttActionNode::callback(const json &msg, mqtt::properties props)
     // Use mutex to protect shared state
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        std::cout << "Received message: " << msg.dump() << std::endl;
         // Update state based on message content
-        if (msg.contains("State"))
+        if (status() == BT::NodeStatus::RUNNING)
         {
             if (msg["State"] == "ABORTED" || msg["State"] == "STOPPED")
             {
                 current_command_uuid_ = "";
                 // Change from setting internal state to updating node status
                 setStatus(BT::NodeStatus::FAILURE);
-                emitWakeUpSignal();
             }
             else if (msg["State"] == "COMPLETE")
             {
@@ -77,14 +75,13 @@ void MqttActionNode::callback(const json &msg, mqtt::properties props)
                 current_command_uuid_ = "";
                 // Change from setting internal state to updating node status
                 setStatus(BT::NodeStatus::SUCCESS);
-                emitWakeUpSignal();
             }
             else if (msg["State"] == "HELD" || msg["State"] == "SUSPENDED" || msg["State"] == "EXECUTED")
             {
                 std::cout << "State is HELD, SUSPENDED or Executing" << std::endl;
                 // No need to set RUNNING again if already running
-                emitWakeUpSignal();
-            }
+                        }
+            emitWakeUpSignal();
         }
         else
         {
@@ -95,16 +92,22 @@ void MqttActionNode::callback(const json &msg, mqtt::properties props)
 
 bool MqttActionNode::isInterestedIn(const json &msg)
 {
-    // Use mutex to protect shared state
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        // Only interested in messages when the node is running
-        if (status() == BT::NodeStatus::RUNNING)
+        if (this->response_schema_validator_)
         {
-            if (!msg.contains("CommandUuid"))
+            try
             {
+                this->response_schema_validator_->validate(msg);
+            }
+            catch (const std::exception &e)
+            {
+                std::cerr << "JSON validation failed: " << e.what() << std::endl;
                 return false;
             }
+        }
+        if (status() == BT::NodeStatus::RUNNING)
+        {
 
             if (msg["CommandUuid"].get<std::string>() == current_command_uuid_)
             {

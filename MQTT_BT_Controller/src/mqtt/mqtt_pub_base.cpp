@@ -17,7 +17,7 @@ MqttPubBase::MqttPubBase(MqttClient &mqtt_client,
       request_schema_path_(request_schema_path),
       qos_(qos),
       retain_(retain),
-      schema_validator_(nullptr),
+      request_schema_validator_(nullptr),
       request_topic_pattern_(request_topic)
 {
   // Load schema if path is provided
@@ -52,8 +52,8 @@ MqttPubBase::MqttPubBase(MqttClient &mqtt_client,
 
       json schema_json = json::parse(schema_file);
 
-      schema_validator_ = std::make_unique<nlohmann::json_schema::json_validator>(schema_loader);
-      schema_validator_->set_root_schema(schema_json);
+      request_schema_validator_ = std::make_unique<nlohmann::json_schema::json_validator>(schema_loader);
+      request_schema_validator_->set_root_schema(schema_json);
     }
     catch (const std::exception &e)
     {
@@ -66,11 +66,11 @@ void MqttPubBase::publish(const json &msg)
 {
   // TODO this should do json validation
   // Validate JSON against schema if validator is available
-  if (schema_validator_)
+  if (request_schema_validator_)
   {
     try
     {
-      schema_validator_->validate(msg);
+      request_schema_validator_->validate(msg);
     }
     catch (const std::exception &e)
     {

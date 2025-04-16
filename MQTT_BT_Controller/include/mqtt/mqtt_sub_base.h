@@ -31,7 +31,7 @@ protected:
     std::string response_schema_path_;
     std::mutex mutex_;
 
-    std::unique_ptr<nlohmann::json_schema::json_validator> schema_validator_;
+    std::unique_ptr<nlohmann::json_schema::json_validator> response_schema_validator_;
     static NodeMessageDistributor *node_message_distributor_;
 
 public:

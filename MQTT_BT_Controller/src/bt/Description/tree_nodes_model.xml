@@ -1,7 +1,11 @@
 <root BTCPP_format="4">
     <TreeNodesModel>
-        <Action ID="Dispense"/>
-        <Action ID="FillingRegistration"/>
+        <Action ID="Dispense">
+            <input_port name="CommandUuid" type="std::string"/>
+        </Action>
+        <Action ID="FillingRegistration">
+            <output_port name="CommandUuid" type="std::string"/>
+        </Action>
         <Condition ID="GenericConditionNode">
             <input_port name="expected_value" type="std::string">Value to compare against</input_port>
             <input_port name="comparison_type" type="std::string">Type of comparison: equal, not_equal, greater, less, contains</input_port>
@@ -13,7 +17,11 @@
         <Action ID="OmronArclRequest">
             <input_port name="command" type="BT::AnyTypeAllowed"/>
         </Action>
-        <Action ID="Stopper"/>
-        <Action ID="StopperRegistration"/>
+        <Action ID="Stopper">
+            <input_port name="CommandUuid" type="std::string"/>
+        </Action>
+        <Action ID="StopperRegistration">
+            <output_port name="CommandUuid" type="std::string"/>
+        </Action>
     </TreeNodesModel>
 </root>

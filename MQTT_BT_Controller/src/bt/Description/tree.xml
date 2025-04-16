@@ -2,14 +2,14 @@
 <root BTCPP_format="4">
   <BehaviorTree ID="Filling">
     <Sequence>
-      <FillingRegistration/>
+      <FillingRegistration CommandUuid="{FillID}"/>
       <MoveShuttle TargetPosition="2"/>
       <RetryUntilSuccessful num_attempts="5">
         <Fallback>
+          <Dispense CommandUuid="{FillID}"/>
           <GenericConditionNode expected_value="2.0"
                                 comparison_type="equal"
                                 field_name="Weight"/>
-          <Dispense/>
         </Fallback>
       </RetryUntilSuccessful>
     </Sequence>
@@ -37,16 +37,22 @@
 
   <BehaviorTree ID="Stoppering">
     <Sequence>
-      <StopperRegistration/>
+      <StopperRegistration CommandUuid="{StopperID}"/>
       <MoveShuttle TargetPosition="3"/>
-      <Stopper/>
+      <Stopper CommandUuid="{StopperID}"/>
     </Sequence>
   </BehaviorTree>
 
   <!-- Description of Node Models (used by Groot) -->
   <TreeNodesModel>
-    <Action ID="Dispense"/>
-    <Action ID="FillingRegistration"/>
+    <Action ID="Dispense">
+      <input_port name="CommandUuid"
+                  type="std::string"/>
+    </Action>
+    <Action ID="FillingRegistration">
+      <output_port name="CommandUuid"
+                   type="std::string"/>
+    </Action>
     <Condition ID="GenericConditionNode">
       <input_port name="expected_value"
                   type="std::string">Value to compare against</input_port>
@@ -59,8 +65,14 @@
       <input_port name="TargetPosition"
                   type="int"/>
     </Action>
-    <Action ID="Stopper"/>
-    <Action ID="StopperRegistration"/>
+    <Action ID="Stopper">
+      <input_port name="CommandUuid"
+                  type="std::string"/>
+    </Action>
+    <Action ID="StopperRegistration">
+      <output_port name="CommandUuid"
+                   type="std::string"/>
+    </Action>
   </TreeNodesModel>
 
 </root>
