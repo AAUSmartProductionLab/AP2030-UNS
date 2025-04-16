@@ -64,7 +64,7 @@ def dispense_callback(topic, client, message, properties):
 response_async_execute = ResponseAsync(
     BASE_TOPIC+"/DATA/State", 
     BASE_TOPIC+"/CMD/Dispense",
-    "./schemas/state.schema.json", 
+    "./schemas/stationState.schema.json", 
     "./schemas/command.schema.json", 
     0, 
     dispense_callback
@@ -72,7 +72,7 @@ response_async_execute = ResponseAsync(
 response_async_register = ResponseAsync(
 BASE_TOPIC+"/DATA/State", 
 BASE_TOPIC+"/CMD/Register",
-"./schemas/state.schema.json", 
+"./schemas/stationState.schema.json", 
 "./schemas/command.schema.json", 
 0, 
 register_callback
