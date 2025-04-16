@@ -90,6 +90,12 @@ class PackMLStateMachine:
             self.publish_progress = publish_progress
             # Process the command
             self.run_state_machine(process_function, duration)
+        else:
+            response = {
+                "State": self.state.value,
+                "ProcessQueue": self.command_uuids.copy()
+            }
+            self.execute_topic.publish(response, self.client, self.properties)
 
     def update_progress(self, progress_interval=0.1):
         """Background thread function to update and publish progress"""
