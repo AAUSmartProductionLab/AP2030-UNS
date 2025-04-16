@@ -20,7 +20,7 @@ BT::PortsList GenericConditionNode::providedPorts()
         BT::InputPort<std::string>("expected_value", "Value to compare against")};
 }
 
-bool GenericConditionNode::isInterestedIn(const std::string &field, const json &value)
+bool GenericConditionNode::isInterestedIn(const json &msg)
 {
     // Either call the parent implementation:
     auto field_name_res = getInput<std::string>("field_name");
@@ -31,7 +31,7 @@ bool GenericConditionNode::isInterestedIn(const std::string &field, const json &
         std::cout << "GenericConditionNode: No field_name input available" << std::endl;
         return false;
     }
-    if (field == field_name_res.value())
+    if (msg.contains(field_name_res.value()))
     {
         return true;
     }

@@ -43,7 +43,7 @@ public:
 
     void handleMessage(const json &msg, mqtt::properties props);
 
-    virtual bool isInterestedIn(const std::string &field, const json &value);
+    virtual bool isInterestedIn(const json &msg);
 
     virtual void callback(const json &msg, mqtt::properties props) = 0;
 

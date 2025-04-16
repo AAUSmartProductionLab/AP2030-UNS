@@ -19,5 +19,5 @@ public:
                       const std::string &request_schema_path,
                       const std::string &response_schema_path);
 
-    json createMessage();
+    json createMessage() override;
 };

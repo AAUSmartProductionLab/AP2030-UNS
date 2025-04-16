@@ -1,7 +1,6 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "title": "Move to Position Request",
-    "subtopic": "/XYMotion",
     "type": "object",
     "allOf": [
         {
@@ -17,6 +16,5 @@
             },
             "required": ["TargetPosition"]
         }
-    ],
-    "required": ["CommandUuid"]
+    ]
 }

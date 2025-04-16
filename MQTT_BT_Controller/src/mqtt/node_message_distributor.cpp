@@ -101,18 +101,7 @@ void NodeMessageDistributor::route_to_nodes(
     {
         if (node)
         {
-            bool interested = false;
-
-            for (auto &[key, value] : msg.items())
-            {
-                if (node->isInterestedIn(key, value))
-                {
-                    interested = true;
-                    break;
-                }
-            }
-
-            if (interested)
+            if (node->isInterestedIn(msg))
             {
                 node->handleMessage(msg, props);
             }

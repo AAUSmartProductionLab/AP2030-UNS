@@ -1,0 +1,24 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Station response state",
+    "description": "JSON Schema for the status of a module. The current CommandUuid is expected when the module is not in a IDLE or RESETTING state",
+    "type": "object",
+    "allOf": [
+        {
+            "$ref": "state.schema.json"
+        },
+        {
+            "type": "object",
+            "properties": {
+                "ProcessQueue": {
+                    "type": "array",
+                    "description": "Array of command UUIDs in the queue and currently executing",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            },
+            "required": ["ProcessQueue"]
+        }
+    ]
+}

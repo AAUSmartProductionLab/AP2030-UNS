@@ -22,10 +22,10 @@ public:
 
     static BT::PortsList providedPorts();
 
-    json createMessage();
+    json createMessage() override;
 
     // Override isInterestedIn to filter messages
-    bool isInterestedIn(const std::string &field, const json &value) override;
+    bool isInterestedIn(const json &msg) override;
 
     void callback(const json &msg, mqtt::properties props) override;
 };

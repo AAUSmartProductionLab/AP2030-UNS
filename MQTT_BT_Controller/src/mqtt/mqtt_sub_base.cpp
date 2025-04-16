@@ -75,7 +75,7 @@ void MqttSubBase::handleMessage(const json &msg, mqtt::properties props)
     callback(msg, props);
 }
 
-bool MqttSubBase::isInterestedIn(const std::string &field, const json &value)
+bool MqttSubBase::isInterestedIn(const json &msg)
 {
     std::cout << "Base isInterestedIn called - this should be overridden!" << std::endl;
     return false;

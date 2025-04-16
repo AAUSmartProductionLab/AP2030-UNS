@@ -60,7 +60,7 @@ void MqttActionNode::callback(const json &msg, mqtt::properties props)
     // Use mutex to protect shared state
     {
         std::lock_guard<std::mutex> lock(mutex_);
-
+        std::cout << "Received message: " << msg.dump() << std::endl;
         // Update state based on message content
         if (msg.contains("State"))
         {
@@ -73,6 +73,7 @@ void MqttActionNode::callback(const json &msg, mqtt::properties props)
             }
             else if (msg["State"] == "COMPLETE")
             {
+                std::cout << "State is COMPLETE" << std::endl;
                 current_command_uuid_ = "";
                 // Change from setting internal state to updating node status
                 setStatus(BT::NodeStatus::SUCCESS);
@@ -92,12 +93,24 @@ void MqttActionNode::callback(const json &msg, mqtt::properties props)
     }
 }
 
-bool MqttActionNode::isInterestedIn(const std::string &field, const json &value)
+bool MqttActionNode::isInterestedIn(const json &msg)
 {
-    if (field == "CommandUuid" && value.is_string())
+    // Use mutex to protect shared state
     {
-        bool interested = (value.get<std::string>() == current_command_uuid_);
-        return interested;
+        std::lock_guard<std::mutex> lock(mutex_);
+        // Only interested in messages when the node is running
+        if (status() == BT::NodeStatus::RUNNING)
+        {
+            if (!msg.contains("CommandUuid"))
+            {
+                return false;
+            }
+
+            if (msg["CommandUuid"].get<std::string>() == current_command_uuid_)
+            {
+                return true;
+            }
+        }
+        return false;
     }
-    return false;
 }

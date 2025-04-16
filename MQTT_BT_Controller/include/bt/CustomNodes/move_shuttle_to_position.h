@@ -22,5 +22,5 @@ public:
 
     static BT::PortsList providedPorts();
 
-    json createMessage();
+    json createMessage() override;
 };

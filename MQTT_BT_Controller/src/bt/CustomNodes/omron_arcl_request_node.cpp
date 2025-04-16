@@ -31,12 +31,18 @@ json OmronArclRequest::createMessage()
     return message;
 }
 
-bool OmronArclRequest::isInterestedIn(const std::string &field, const json &value)
+bool OmronArclRequest::isInterestedIn(const json &msg)
 {
-    if (field == "id" && value.is_string())
+    if (status() == BT::NodeStatus::RUNNING)
     {
-        bool interested = (value.get<std::string>() == current_command_uuid_);
-        return interested;
+        if (!msg.contains("id"))
+        {
+            return false;
+        }
+        if (msg["id"].get<std::string>() == current_command_uuid_)
+        {
+            return true;
+        }
     }
     return false;
 }

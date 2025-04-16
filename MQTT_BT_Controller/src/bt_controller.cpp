@@ -17,6 +17,8 @@
 #include "bt/CustomNodes/generic_condition_node.h"
 #include "bt/CustomNodes/generic_action_node.h"
 #include "bt/CustomNodes/omron_arcl_request_node.h"
+#include "bt/CustomNodes/station_register_node.h"
+#include "bt/CustomNodes/station_execute_node.h"
 
 const std::string OUTPUT_FILE("../src/bt/Description/tree_nodes_model.xml");
 
@@ -96,26 +98,6 @@ int main(int argc, char *argv[])
         "../../schemas/amrArclRequest.schema.json",
         "../../schemas/amrArclUpdate.schema.json");
 
-    MqttActionNode::registerNodeType<GenericActionNode>(
-        factory,
-        node_message_distributor,
-        bt_mqtt_client,
-        "Dispensing",
-        UNS_TOPIC + "/Filling/CMD/Dispense",
-        UNS_TOPIC + "/Filling/DATA/State",
-        "../../schemas/command.schema.json",
-        "../../schemas/state.schema.json");
-
-    MqttActionNode::registerNodeType<GenericActionNode>(
-        factory,
-        node_message_distributor,
-        bt_mqtt_client,
-        "Stoppering",
-        UNS_TOPIC + "/Stoppering/CMD/Stopper",
-        UNS_TOPIC + "/Stoppering/DATA/State",
-        "../../schemas/command.schema.json",
-        "../../schemas/state.schema.json");
-
     MqttConditionNode::registerNodeType<GenericConditionNode>(
         factory,
         node_message_distributor,
@@ -123,6 +105,46 @@ int main(int argc, char *argv[])
         "GenericConditionNode",
         UNS_TOPIC + "/Filling/DATA/Weight",
         "../../schemas/weight.schema.json");
+
+    MqttActionNode::registerNodeType<StationRegisterNode>(
+        factory,
+        node_message_distributor,
+        bt_mqtt_client,
+        "StopperRegistration",
+        UNS_TOPIC + "/Stoppering/CMD/Register",
+        UNS_TOPIC + "/Stoppering/DATA/State",
+        "../../schemas/command.schema.json",
+        "../../schemas/stationState.schema.json");
+
+    MqttActionNode::registerNodeType<StationExecuteNode>(
+        factory,
+        node_message_distributor,
+        bt_mqtt_client,
+        "Stopper",
+        UNS_TOPIC + "/Stoppering/CMD/Dispense",
+        UNS_TOPIC + "/Stoppering/DATA/State",
+        "../../schemas/command.schema.json",
+        "../../schemas/stationState.schema.json");
+
+    MqttActionNode::registerNodeType<StationRegisterNode>(
+        factory,
+        node_message_distributor,
+        bt_mqtt_client,
+        "FillingRegistration",
+        UNS_TOPIC + "/Filling/CMD/Register",
+        UNS_TOPIC + "/Filling/DATA/State",
+        "../../schemas/command.schema.json",
+        "../../schemas/stationState.schema.json");
+
+    MqttActionNode::registerNodeType<StationExecuteNode>(
+        factory,
+        node_message_distributor,
+        bt_mqtt_client,
+        "Dispense",
+        UNS_TOPIC + "/Filling/CMD/Dispense",
+        UNS_TOPIC + "/Filling/DATA/State",
+        "../../schemas/command.schema.json",
+        "../../schemas/stationState.schema.json");
 
     // Check if we should generate XML models instead of running the tree
     if (generate_xml_models)
