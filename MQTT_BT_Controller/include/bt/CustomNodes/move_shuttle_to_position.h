@@ -12,7 +12,8 @@ using nlohmann::json;
 // MoveShuttleToPosition class declaration
 class MoveShuttleToPosition : public MqttActionNode
 {
-
+private:
+    static std::string getFormattedTopic(const std::string &pattern, const BT::NodeConfig &config);
 public:
     MoveShuttleToPosition(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client,
                           const std::string &request_topic,

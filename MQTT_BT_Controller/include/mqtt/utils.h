@@ -9,4 +9,6 @@ namespace mqtt_utils
 
     // Load and parse a JSON schema from file
     nlohmann::json load_schema(const std::string &schema_path);
+
+    std::string formatWildcardTopic(const std::string &topic, const std::string &id);
 }

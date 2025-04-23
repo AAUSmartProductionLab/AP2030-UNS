@@ -27,4 +27,14 @@ namespace mqtt_utils
         return nlohmann::json::parse(file);
     }
 
+    std::string formatWildcardTopic(const std::string &topic_pattern, const std::string &replacement)
+    {
+        std::string formatted_topic = topic_pattern;
+        size_t pos = formatted_topic.find("+");
+        if (pos != std::string::npos)
+        {
+            formatted_topic.replace(pos, 1, replacement);
+        }
+        return formatted_topic;
+    }
 } // namespace mqtt_utils

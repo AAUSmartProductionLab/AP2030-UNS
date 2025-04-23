@@ -27,11 +27,11 @@ public:
 
     // Topic handler registration
     void register_topic_handler(const std::string &topic,
-                                std::function<void(const json &, mqtt::properties)> callback);
+                                std::function<void(const std::string &, const json &, mqtt::properties)> callback);
 
     // Message handling
-    void handle_message(const std::string &topic, const json &payload, mqtt::properties props);
-    void route_to_nodes(const std::type_index &type_index, const json &msg, mqtt::properties props);
+    void handle_message(const std::string &msg_topic, const json &payload, mqtt::properties props);
+    void route_to_nodes(const std::type_index &type_index, const std::string &topic, const json &msg, mqtt::properties props);
 
     // Node registration methods
     template <typename T>
@@ -45,9 +45,9 @@ public:
         };
         // Register with the topic
         register_topic_handler(response_topic,
-                               [this, type_idx = type_index](const json &msg, mqtt::properties props)
+                               [this, type_idx = type_index](const std::string &msg_topic, const json &msg, mqtt::properties props)
                                {
-                                   route_to_nodes(type_idx, msg, props);
+                                   route_to_nodes(type_idx, msg_topic, msg, props);
                                });
     }
 
@@ -60,7 +60,7 @@ private:
     struct TopicHandler
     {
         std::string topic;
-        std::function<void(const json &, mqtt::properties)> callback;
+        std::function<void(const std::string &, const json &, mqtt::properties)> callback;
     };
     struct NodeTypeSubscription
     {

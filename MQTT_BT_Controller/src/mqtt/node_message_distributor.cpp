@@ -6,10 +6,7 @@
 NodeMessageDistributor::NodeMessageDistributor(MqttClient &mqtt_client) : mqtt_client_(mqtt_client)
 {
     // Set this manager as the message handler for the mqtt_client
-    mqtt_client.set_message_handler([this](const std::string &topic,
-                                           const json &payload,
-                                           mqtt::properties props)
-                                    { handle_message(topic, payload, props); });
+    mqtt_client.set_message_handler([this](const std::string &msg_topic, const json &payload, mqtt::properties props){ handle_message(msg_topic, payload, props); });
 }
 
 NodeMessageDistributor::~NodeMessageDistributor()
@@ -19,7 +16,7 @@ NodeMessageDistributor::~NodeMessageDistributor()
 
 void NodeMessageDistributor::register_topic_handler(
     const std::string &topic,
-    std::function<void(const json &, mqtt::properties)> callback)
+    std::function<void(const std::string &, const json &, mqtt::properties)> callback)
 {
     topic_handlers_.push_back({topic, callback});
 
@@ -64,7 +61,7 @@ bool NodeMessageDistributor::topicMatches(const std::string &pattern, const std:
 
     return patternDone && topicDone;
 }
-void NodeMessageDistributor::handle_message(const std::string &topic,
+void NodeMessageDistributor::handle_message(const std::string &msg_topic,
                                             const json &payload,
                                             mqtt::properties props)
 {
@@ -72,21 +69,23 @@ void NodeMessageDistributor::handle_message(const std::string &topic,
     bool handled = false;
     for (const auto &handler : topic_handlers_)
     {
-        if (topicMatches(handler.topic, topic))
+        // Check if the incoming topic matches to any registered handlers considering wild cards
+        if (topicMatches(handler.topic, msg_topic))
         {
-            handler.callback(payload, props);
+            handler.callback(msg_topic, payload, props);
             handled = true;
         }
     }
 
     if (!handled)
     {
-        std::cout << "No handler found for topic: " << topic << std::endl;
+        std::cout << "No handler found for topic: " << msg_topic << std::endl;
     }
 }
 
 void NodeMessageDistributor::route_to_nodes(
     const std::type_index &type_index,
+    const std::string &topic,
     const json &msg,
     mqtt::properties props)
 {
@@ -96,14 +95,16 @@ void NodeMessageDistributor::route_to_nodes(
         return;
     }
 
-    auto &instances = node_subscriptions_[type_index].instances;
-    for (auto *node : instances)
+    auto &subscription = node_subscriptions_[type_index];
+    for (auto *node : subscription.instances)
     {
         if (node)
         {
-            if (node->isInterestedIn(msg))
+            // Check if the bt node is interested in exactly this topic ignoring wild cards
+            // and if the node is interested in the message
+            if (node->getResponseTopic() == topic  && node->isInterestedIn(msg))
             {
-                node->handleMessage(msg, props);
+                node->processMessage(msg, props);
             }
         }
     }

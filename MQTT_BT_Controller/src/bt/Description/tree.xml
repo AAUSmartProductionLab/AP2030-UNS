@@ -4,14 +4,20 @@
     <Sequence>
       <FillingRegistration CommandUuid="{FillID}"/>
       <MoveShuttle TargetPosition="2"/>
-      <RetryUntilSuccessful num_attempts="2">
-        <Fallback>
-          <Dispense CommandUuid="{FillID}"/>
-          <GenericConditionNode expected_value="2.0"
-                                comparison_type="equal"
-                                field_name="Weight"/>
-        </Fallback>
-      </RetryUntilSuccessful>
+      <Dispense CommandUuid="{FillID}"/>
+      <Fallback>
+        <GenericConditionNode expected_value="2.0"
+                              comparison_type="equal"
+                              field_name="Weight"/>
+        <RetryUntilSuccessful num_attempts="2">
+          <Sequence>
+            <Dispense CommandUuid="{FillID}"/>
+            <GenericConditionNode expected_value="2.0"
+                                  comparison_type="equal"
+                                  field_name="Weight"/>
+          </Sequence>
+        </RetryUntilSuccessful>
+      </Fallback>
     </Sequence>
   </BehaviorTree>
 
