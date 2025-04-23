@@ -16,12 +16,13 @@ NodeMessageDistributor::~NodeMessageDistributor()
 
 void NodeMessageDistributor::register_topic_handler(
     const std::string &topic,
-    std::function<void(const std::string &, const json &, mqtt::properties)> callback)
+    std::function<void(const std::string &, const json &, mqtt::properties)> callback,
+    const int &subqos=0)
 {
     topic_handlers_.push_back({topic, callback});
 
     // Subscribe to the topic through the mqtt_client
-    mqtt_client_.subscribe_topic(topic, 0);
+    mqtt_client_.subscribe_topic(topic, subqos);
 }
 bool NodeMessageDistributor::topicMatches(const std::string &pattern, const std::string &topic)
 {
@@ -32,51 +33,42 @@ bool NodeMessageDistributor::topicMatches(const std::string &pattern, const std:
     while (std::getline(patternStream, patternSegment, '/') &&
            std::getline(topicStream, topicSegment, '/'))
     {
-        // Match single-level wildcards
         if (patternSegment == "+")
         {
-            continue; // + matches any single level
+            continue;
         }
-        // Match multi-level wildcards
         else if (patternSegment == "#")
         {
-            // Check if # is the last segment (must be the last level)
             if (patternStream.peek() != EOF)
             {
                 std::cout << "Invalid MQTT pattern: # must be the last segment in topic filter" << std::endl;
                 return false;
             }
-            return true; // # matches all remaining levels
+            return true;
         }
-        // Exact match required for non-wildcard segments
         else if (patternSegment != topicSegment)
         {
             return false;
         }
     }
-
-    // Check if we reached the end of both strings
     bool patternDone = !std::getline(patternStream, patternSegment, '/');
     bool topicDone = !std::getline(topicStream, topicSegment, '/');
-
     return patternDone && topicDone;
 }
 void NodeMessageDistributor::handle_message(const std::string &msg_topic,
                                             const json &payload,
                                             mqtt::properties props)
 {
-    // Check for any matching handlers
     bool handled = false;
     for (const auto &handler : topic_handlers_)
     {
-        // Check if the incoming topic matches to any registered handlers considering wild cards
+        // Check if the incoming topic fits to any registered handlers considering wild cards
         if (topicMatches(handler.topic, msg_topic))
         {
             handler.callback(msg_topic, payload, props);
             handled = true;
         }
     }
-
     if (!handled)
     {
         std::cout << "No handler found for topic: " << msg_topic << std::endl;

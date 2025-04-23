@@ -4,9 +4,9 @@
 #include "common_constants.h"
 
 // MoveShuttleToPosition implementation
-OmronArclRequest::OmronArclRequest(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client, const std::string &request_topic, const std::string &response_topic, const std::string &request_schema_path, const std::string &response_schema_path)
+OmronArclRequest::OmronArclRequest(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client, const std::string &request_topic, const std::string &response_topic, const std::string &request_schema_path, const std::string &response_schema_path,const bool &retain,const int &pubqos)
     : MqttActionNode(name, config, bt_mqtt_client,
-                     request_topic, response_topic, request_schema_path, response_schema_path)
+                     request_topic, response_topic, request_schema_path, response_schema_path, retain, pubqos)
 
 {
     if (MqttActionNode::node_message_distributor_)

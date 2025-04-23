@@ -36,14 +36,15 @@ public:
         MqttClient &mqtt_client,
         const std::string &node_name,
         const std::string &response_topic,
-        const std::string &response_schema_path)
+        const std::string &response_schema_path,
+        const int &subqos = 0)
     {
         // Store configuration in a static map that persists throughout program execution
         static std::unordered_map<std::string, std::tuple<std::string, std::string>> node_configs;
         node_configs[node_name] = std::make_tuple(response_topic, response_schema_path);
 
         MqttConditionNode::setNodeMessageDistributor(&node_message_distributor);
-        node_message_distributor.registerNodeType<DerivedNode>(response_topic);
+        node_message_distributor.registerNodeType<DerivedNode>(response_topic,subqos);
 
         MqttClient *mqtt_client_ptr = &mqtt_client;
         // Register a builder that captures the configuration

@@ -22,18 +22,20 @@
   </BehaviorTree>
 
   <BehaviorTree ID="MainTree">
-    <Parallel failure_count="3"
-              success_count="3">
-      <SubTree ID="Produce"
-               XbotId="1"
-               _autoremap="true"/>
-      <SubTree ID="Produce"
-               XbotId="2"
-               _autoremap="true"/>
-      <SubTree ID="Produce"
-               XbotId="3"
-               _autoremap="true"/>
-    </Parallel>
+    <Sequence>
+      <Parallel failure_count="3"
+                success_count="3">
+        <SubTree ID="Produce"
+                 XbotId="1"
+                 _autoremap="true"/>
+        <SubTree ID="Produce"
+                 XbotId="2"
+                 _autoremap="true"/>
+        <SubTree ID="Produce"
+                 XbotId="3"
+                 _autoremap="true"/>
+      </Parallel>
+    </Sequence>
   </BehaviorTree>
 
   <BehaviorTree ID="Produce">

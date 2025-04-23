@@ -25,17 +25,18 @@ public:
     NodeMessageDistributor(MqttClient &mqtt_client);
     ~NodeMessageDistributor();
 
-    // Topic handler registration
-    void register_topic_handler(const std::string &topic,
-                                std::function<void(const std::string &, const json &, mqtt::properties)> callback);
-
     // Message handling
     void handle_message(const std::string &msg_topic, const json &payload, mqtt::properties props);
     void route_to_nodes(const std::type_index &type_index, const std::string &topic, const json &msg, mqtt::properties props);
 
+    // Topic handler registration
+    void register_topic_handler(const std::string &topic,
+        std::function<void(const std::string &, const json &, mqtt::properties)> callback,
+        const int &qos);
+
     // Node registration methods
     template <typename T>
-    void registerNodeType(const std::string &response_topic)
+    void registerNodeType(const std::string &response_topic, const int &qos)
     {
         auto type_index = std::type_index(typeid(T));
 
@@ -48,7 +49,7 @@ public:
                                [this, type_idx = type_index](const std::string &msg_topic, const json &msg, mqtt::properties props)
                                {
                                    route_to_nodes(type_idx, msg_topic, msg, props);
-                               });
+                               },qos);
     }
 
     // Register the individual nodes

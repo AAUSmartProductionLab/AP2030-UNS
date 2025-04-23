@@ -19,7 +19,9 @@ public:
                           const std::string &request_topic,
                           const std::string &response_topic,
                           const std::string &request_schema_path,
-                          const std::string &response_schema_path);
+                          const std::string &response_schema_path,
+                          const bool &retain = false,
+                          const int &pubqos = 0);
 
     static BT::PortsList providedPorts();
 

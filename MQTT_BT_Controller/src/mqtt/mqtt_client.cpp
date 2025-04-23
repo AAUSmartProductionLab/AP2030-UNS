@@ -95,7 +95,7 @@ void MqttClient::delivery_complete(mqtt::delivery_token_ptr token)
     // Implementation can be empty if not needed
 }
 
-bool MqttClient::subscribe_topic(const std::string &topic, int qos)
+bool MqttClient::subscribe_topic(const std::string &topic, int subqos)
 {
     if (!is_connected())
     {
@@ -106,9 +106,9 @@ bool MqttClient::subscribe_topic(const std::string &topic, int qos)
     try
     {
         auto listener = new subscription_listener(topic, *this);
-        subscribe(topic, qos, nullptr, *listener);
+        subscribe(topic, subqos, nullptr, *listener);
         // Asynchronously subscribe to the topic
-        subscriptions_.push_back({topic, qos});
+        subscriptions_.push_back({topic, subqos});
         return true;
     }
     catch (const mqtt::exception &exc)
@@ -126,22 +126,22 @@ void MqttClient::resubscribe_all_topics()
         return;
     }
 
-    for (const auto &sub : subscriptions_)
+    for (const auto &subscription : subscriptions_)
     {
         try
         {
-            std::cout << "Resubscribing to: " << sub.topic << std::endl;
-            subscribe(sub.topic, sub.qos)->wait();
+            std::cout << "Resubscribing to: " << subscription.topic << std::endl;
+            subscribe(subscription.topic, subscription.subqos)->wait();
         }
         catch (const mqtt::exception &exc)
         {
-            std::cerr << "Resubscription to " << sub.topic << " failed: " << exc.what() << std::endl;
+            std::cerr << "Resubscription to " << subscription.topic << " failed: " << exc.what() << std::endl;
         }
     }
 }
 
 bool MqttClient::publish_message(const std::string &topic, const json &payload,
-                                 int qos, bool retained)
+                                 int pubqos, bool retained)
 {
     if (!is_connected())
     {
@@ -153,7 +153,7 @@ bool MqttClient::publish_message(const std::string &topic, const json &payload,
     {
         std::string payload_str = payload.dump();
         auto msg = mqtt::make_message(topic, payload_str);
-        msg->set_qos(qos);
+        msg->set_qos(pubqos);
         msg->set_retained(retained);
 
         publish(msg)->wait();

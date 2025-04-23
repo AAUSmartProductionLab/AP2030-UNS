@@ -32,7 +32,7 @@ protected:
     std::string request_topic_; // The precise request_topic on which the node is publishing without wildcards
     const std::string request_topic_pattern_; // The request_topic that may include wildcards
     std::string request_schema_path_;
-    int qos_;
+    int pubqos_;
     bool retain_;
     std::unique_ptr<nlohmann::json_schema::json_validator> request_schema_validator_;
 
@@ -41,7 +41,7 @@ public:
     MqttPubBase(MqttClient &mqtt_client,
                 const std::string &request_topic,
                 const std::string &request_schema_path,
-                const int &qos,
+                const int &pubqos,
                 const bool &retain);
 
     virtual ~MqttPubBase() = default;
