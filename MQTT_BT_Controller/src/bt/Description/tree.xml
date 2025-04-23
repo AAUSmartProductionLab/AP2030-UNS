@@ -22,8 +22,8 @@
   </BehaviorTree>
 
   <BehaviorTree ID="MainTree">
-    <Parallel failure_count="-1"
-              success_count="-1">
+    <Parallel failure_count="3"
+              success_count="3">
       <SubTree ID="Produce"
                XbotId="1"
                _autoremap="true"/>

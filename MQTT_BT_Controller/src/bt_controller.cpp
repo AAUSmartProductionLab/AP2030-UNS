@@ -176,7 +176,7 @@ int main(int argc, char *argv[])
             auto status = tree.tickOnce();
             while (status == BT::NodeStatus::RUNNING)
             {
-                // The BT is event based so after mqtt messages it traverses immediately but lets tick every few ms any way
+                // The BT is event based so after mqtt messages arrive it traverses immediately but lets tick every few ms any way
                 auto status = tree.tickWhileRunning(std::chrono::milliseconds(100));
             }
             std::cout << "Behavior tree execution completed with status: "
