@@ -4,7 +4,7 @@
     <Sequence>
       <FillingRegistration CommandUuid="{FillID}"/>
       <MoveShuttle TargetPosition="2"/>
-      <RetryUntilSuccessful num_attempts="5">
+      <RetryUntilSuccessful num_attempts="2">
         <Fallback>
           <Dispense CommandUuid="{FillID}"/>
           <GenericConditionNode expected_value="2.0"
@@ -16,10 +16,16 @@
   </BehaviorTree>
 
   <BehaviorTree ID="MainTree">
-    <Parallel failure_count="1"
+    <Parallel failure_count="-1"
               success_count="-1">
       <SubTree ID="Produce"
                XbotId="1"
+               _autoremap="true"/>
+      <SubTree ID="Produce"
+               XbotId="2"
+               _autoremap="true"/>
+      <SubTree ID="Produce"
+               XbotId="3"
                _autoremap="true"/>
     </Parallel>
   </BehaviorTree>
