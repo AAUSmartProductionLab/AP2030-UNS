@@ -151,7 +151,8 @@ class PackMLStateMachine:
             # Clear current CommandUuid
             prev_uuid = self.CommandUuid
             self.CommandUuid = None
-            self.publish_progress(self,reset=True)
+            if self.publish_progress:  # <-- Add this check
+                self.publish_progress(self, reset=True)
 
             if prev_uuid and prev_uuid in self.command_uuids:
                 self.command_uuids.remove(prev_uuid)
