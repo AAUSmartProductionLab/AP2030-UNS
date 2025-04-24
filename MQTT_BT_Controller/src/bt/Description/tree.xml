@@ -23,6 +23,7 @@
 
   <BehaviorTree ID="MainTree">
     <Sequence>
+      <BuildProductionOrder ProductIDs="{ProductIDs}"/>
       <Parallel failure_count="3"
                 success_count="3">
         <SubTree ID="Produce"
@@ -39,14 +40,18 @@
   </BehaviorTree>
 
   <BehaviorTree ID="Produce">
-    <Sequence>
-      <MoveShuttle TargetPosition="1"/>
-      <SubTree ID="Filling"
-               _autoremap="true"/>
-      <SubTree ID="Stoppering"
-               _autoremap="true"/>
-      <MoveShuttle TargetPosition="4"/>
-    </Sequence>
+    <LoopString if_empty="SUCCESS"
+                value="{ProductID}"
+                queue="{ProductIDs}">
+      <Sequence>
+        <MoveShuttle TargetPosition="1"/>
+        <SubTree ID="Filling"
+                 _autoremap="true"/>
+        <SubTree ID="Stoppering"
+                 _autoremap="true"/>
+        <MoveShuttle TargetPosition="4"/>
+      </Sequence>
+    </LoopString>
   </BehaviorTree>
 
   <BehaviorTree ID="Stoppering">
@@ -59,6 +64,10 @@
 
   <!-- Description of Node Models (used by Groot) -->
   <TreeNodesModel>
+    <Action ID="BuildProductionOrder">
+      <output_port name="ProductIDs"
+                   type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;">List of product IDs to produce</output_port>
+    </Action>
     <Action ID="Dispense">
       <input_port name="CommandUuid"
                   type="std::string"/>

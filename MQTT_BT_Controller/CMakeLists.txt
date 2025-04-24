@@ -48,10 +48,12 @@ add_library(bt_controller_common STATIC
     src/mqtt/mqtt_pub_base.cpp
     src/bt/mqtt_action_node.cpp
     src/bt/mqtt_condition_node.cpp
+    src/bt/mqtt_async_sub_node.cpp
     src/bt/CustomNodes/move_shuttle_to_position.cpp
     src/bt/CustomNodes/omron_arcl_request_node.cpp
     src/bt/CustomNodes/generic_condition_node.cpp
     src/bt/CustomNodes/generic_action_node.cpp
+    src/bt/CustomNodes/build_production_order_node.cpp
 )
 
 target_include_directories(bt_controller_common

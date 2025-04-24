@@ -15,7 +15,7 @@ MoveShuttleToPosition::MoveShuttleToPosition(const std::string &name, const BT::
 
     if (MqttSubBase::node_message_distributor_)
     {
-    MqttSubBase::node_message_distributor_->registerDerivedInstance(this);
+        MqttSubBase::node_message_distributor_->registerDerivedInstance(this);
     }
 }
 
@@ -38,6 +38,7 @@ BT::PortsList MoveShuttleToPosition::providedPorts()
 json MoveShuttleToPosition::createMessage()
 {
     BT::Expected<int> TargetPosition = getInput<int>("TargetPosition");
+    
     json message;
     current_command_uuid_ = mqtt_utils::generate_uuid();
     message["TargetPosition"] = TargetPosition.value();
