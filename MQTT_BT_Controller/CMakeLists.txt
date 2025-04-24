@@ -54,8 +54,6 @@ add_library(bt_controller_common STATIC
     src/bt/CustomNodes/generic_condition_node.cpp
     src/bt/CustomNodes/generic_action_node.cpp
     src/bt/CustomNodes/build_production_order_node.cpp
-    src/bt/parallel_subtree_node.cpp
-    src/bt/parallel_subtree_parser.cpp
 )
 
 target_include_directories(bt_controller_common
