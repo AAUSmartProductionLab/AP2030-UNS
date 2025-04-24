@@ -31,7 +31,12 @@ public:
     }
     static BT::PortsList providedPorts()
     {
-        return {BT::InputPort<std::string>("CommandUuid")};
+        return {
+            BT::details::PortWithDefault<std::string>(
+                BT::PortDirection::INPUT,
+                "CommandUuid",
+                "{_ID}",
+                "UUID for the command to execute")};
     }
     json createMessage() override
     {

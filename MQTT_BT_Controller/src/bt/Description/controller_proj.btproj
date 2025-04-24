@@ -7,10 +7,10 @@
             <output_port name="ProductIDs" type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;">List of product IDs to produce</output_port>
         </Action>
         <Action ID="Dispense">
-            <input_port name="CommandUuid" type="std::string"/>
+            <input_port name="CommandUuid" default="{_ID}" type="std::string">UUID for the command to execute</input_port>
         </Action>
         <Action ID="FillingRegistration">
-            <output_port name="CommandUuid" type="std::string"/>
+            <output_port name="CommandUuid" default="{_ID}" type="std::string">UUID for the command to execute</output_port>
         </Action>
         <Condition ID="GenericConditionNode">
             <input_port name="expected_value" type="std::string">Value to compare against</input_port>
@@ -33,10 +33,10 @@
             <input_port name="ProductIDs" type="std::string"/>
         </Action>
         <Action ID="Stopper">
-            <input_port name="CommandUuid" type="std::string"/>
+            <input_port name="CommandUuid" default="{_ID}" type="std::string">UUID for the command to execute</input_port>
         </Action>
         <Action ID="StopperRegistration">
-            <output_port name="CommandUuid" type="std::string"/>
+            <output_port name="CommandUuid" default="{_ID}" type="std::string">UUID for the command to execute</output_port>
         </Action>
     </TreeNodesModel>
 </root>

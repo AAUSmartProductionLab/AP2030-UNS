@@ -2,16 +2,16 @@
 <root BTCPP_format="4">
   <BehaviorTree ID="Filling">
     <Sequence>
-      <FillingRegistration CommandUuid="{FillID}"/>
+      <FillingRegistration/>
       <MoveShuttle TargetPosition="2"/>
-      <Dispense CommandUuid="{FillID}"/>
+      <Dispense/>
       <Fallback>
         <GenericConditionNode expected_value="2.0"
                               comparison_type="equal"
                               field_name="Weight"/>
         <RetryUntilSuccessful num_attempts="2">
           <Sequence>
-            <Dispense CommandUuid="{FillID}"/>
+            <Dispense/>
             <GenericConditionNode expected_value="2.0"
                                   comparison_type="equal"
                                   field_name="Weight"/>
@@ -56,9 +56,9 @@
 
   <BehaviorTree ID="Stoppering">
     <Sequence>
-      <StopperRegistration CommandUuid="{StopperID}"/>
+      <StopperRegistration/>
       <MoveShuttle TargetPosition="3"/>
-      <Stopper CommandUuid="{StopperID}"/>
+      <Stopper/>
     </Sequence>
   </BehaviorTree>
 
@@ -70,11 +70,13 @@
     </Action>
     <Action ID="Dispense">
       <input_port name="CommandUuid"
-                  type="std::string"/>
+                  default="{_ID}"
+                  type="std::string">UUID for the command to execute</input_port>
     </Action>
     <Action ID="FillingRegistration">
       <output_port name="CommandUuid"
-                   type="std::string"/>
+                   default="{_ID}"
+                   type="std::string">UUID for the command to execute</output_port>
     </Action>
     <Condition ID="GenericConditionNode">
       <input_port name="expected_value"
@@ -90,11 +92,13 @@
     </Action>
     <Action ID="Stopper">
       <input_port name="CommandUuid"
-                  type="std::string"/>
+                  default="{_ID}"
+                  type="std::string">UUID for the command to execute</input_port>
     </Action>
     <Action ID="StopperRegistration">
       <output_port name="CommandUuid"
-                   type="std::string"/>
+                   default="{_ID}"
+                   type="std::string">UUID for the command to execute</output_port>
     </Action>
   </TreeNodesModel>
 
