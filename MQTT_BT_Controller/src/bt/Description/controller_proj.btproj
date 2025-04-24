@@ -3,6 +3,9 @@
     <include path="tree.xml"/>
     <!-- Description of Node Models (used by Groot) -->
     <TreeNodesModel>
+        <Action ID="BuildProductionOrder">
+            <output_port name="ProductIDs" type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;">List of product IDs to produce</output_port>
+        </Action>
         <Action ID="Dispense">
             <input_port name="CommandUuid" type="std::string"/>
         </Action>
@@ -16,6 +19,18 @@
         </Condition>
         <Action ID="MoveShuttle">
             <input_port name="TargetPosition" type="int"/>
+        </Action>
+        <Action ID="OmronArclRequest">
+            <input_port name="command" type="BT::AnyTypeAllowed"/>
+        </Action>
+        <Control ID="ParallelSubtreeNode">
+            <input_port name="failure_count" default="1" type="int">Number of children that need to fail to trigger FAILURE</input_port>
+            <input_port name="success_count" default="-1" type="int">Number of children that need to succeed to trigger SUCCESS</input_port>
+            <input_port name="id_param" default="id" type="std::string">Parameter name to receive the instance index</input_port>
+            <input_port name="count" default="1" type="int">Number of instances to create</input_port>
+        </Control>
+        <Action ID="SetProductId">
+            <input_port name="ProductIDs" type="std::string"/>
         </Action>
         <Action ID="Stopper">
             <input_port name="CommandUuid" type="std::string"/>

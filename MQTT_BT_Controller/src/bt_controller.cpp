@@ -19,7 +19,7 @@
 #include "bt/CustomNodes/omron_arcl_request_node.h"
 #include "bt/CustomNodes/station_register_node.h"
 #include "bt/CustomNodes/station_execute_node.h"
-
+#include "bt/CustomNodes/build_production_order_node.h"
 const std::string OUTPUT_FILE("../src/bt/Description/tree_nodes_model.xml");
 
 /**
@@ -145,6 +145,14 @@ int main(int argc, char *argv[])
         UNS_TOPIC + "/Filling/DATA/State",
         "../../schemas/command.schema.json",
         "../../schemas/stationState.schema.json");
+
+    MqttAsyncSubNode::registerNodeType<BuildProductionOrderNode>(
+        factory,
+        node_message_distributor,
+        bt_mqtt_client,
+        "BuildProductionOrder",
+        UNS_TOPIC + "/Configurator/DATA/Order",
+        "../../schemas/order.schema.json");
 
     // Check if we should generate XML models instead of running the tree
     if (generate_xml_models)

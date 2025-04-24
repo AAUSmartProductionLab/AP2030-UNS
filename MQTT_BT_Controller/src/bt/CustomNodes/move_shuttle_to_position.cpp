@@ -5,9 +5,9 @@
 
 // MoveShuttleToPosition implementation
 MoveShuttleToPosition::MoveShuttleToPosition(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client, const std::string &request_topic, const std::string &response_topic, const std::string &request_schema_path, const std::string &response_schema_path)
-: MqttActionNode(name, config, bt_mqtt_client,
-    request_topic, 
-    response_topic, request_schema_path, response_schema_path)
+    : MqttActionNode(name, config, bt_mqtt_client,
+                     request_topic,
+                     response_topic, request_schema_path, response_schema_path)
 {
     // Replace the wildcard in the request and response topics with the XbotId of this node
     response_topic_ = getFormattedTopic(response_topic_pattern_, config);
@@ -15,7 +15,7 @@ MoveShuttleToPosition::MoveShuttleToPosition(const std::string &name, const BT::
 
     if (MqttSubBase::node_message_distributor_)
     {
-    MqttSubBase::node_message_distributor_->registerDerivedInstance(this);
+        MqttSubBase::node_message_distributor_->registerDerivedInstance(this);
     }
 }
 
@@ -39,7 +39,7 @@ json MoveShuttleToPosition::createMessage()
 {
 
     BT::Expected<int> TargetPosition = getInput<int>("TargetPosition");
-    
+
     json message;
     current_command_uuid_ = mqtt_utils::generate_uuid();
     message["TargetPosition"] = TargetPosition.value();
