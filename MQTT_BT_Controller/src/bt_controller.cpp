@@ -171,7 +171,7 @@ int main(int argc, char *argv[])
     {
         factory.registerBehaviorTreeFromFile("../src/bt/Description/tree.xml");
         auto tree = factory.createTree("MainTree");
-        BT::Groot2Publisher publisher(tree, 1687);
+        BT::Groot2Publisher publisher(tree, 1667);
 
         while (true)
         {
