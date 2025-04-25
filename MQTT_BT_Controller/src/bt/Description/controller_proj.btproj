@@ -3,8 +3,8 @@
     <include path="tree.xml"/>
     <!-- Description of Node Models (used by Groot) -->
     <TreeNodesModel>
-        <Action ID="BuildProductionOrder">
-            <output_port name="ProductIDs" type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;">List of product IDs to produce</output_port>
+        <Action ID="BuildProductionQueue">
+            <output_port name="ProductIDs" default="{ProductIDs}" type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;">List of product IDs to produce</output_port>
         </Action>
         <Action ID="Dispense">
             <input_port name="CommandUuid" default="{_ID}" type="std::string">UUID for the command to execute</input_port>
@@ -17,20 +17,16 @@
             <input_port name="comparison_type" type="std::string">Type of comparison: equal, not_equal, greater, less, contains</input_port>
             <input_port name="field_name" type="std::string">Name of the field to monitor in the MQTT message</input_port>
         </Condition>
+        <Decorator ID="GetProductFromQueue">
+            <output_port name="Product" default="{_ProductID}" type="std::string">The product ID of the current product</output_port>
+            <input_port name="if_empty" default="SUCCESS" type="BT::NodeStatus">Status to return if queue is empty: SUCCESS, FAILURE, SKIPPED</input_port>
+            <input_port name="Queue" default="{ProductIDs}" type="std::string">The queue of all product IDs of the batch</input_port>
+        </Decorator>
         <Action ID="MoveShuttle">
             <input_port name="TargetPosition" type="int"/>
         </Action>
         <Action ID="OmronArclRequest">
             <input_port name="command" type="BT::AnyTypeAllowed"/>
-        </Action>
-        <Control ID="ParallelSubtreeNode">
-            <input_port name="failure_count" default="1" type="int">Number of children that need to fail to trigger FAILURE</input_port>
-            <input_port name="success_count" default="-1" type="int">Number of children that need to succeed to trigger SUCCESS</input_port>
-            <input_port name="id_param" default="id" type="std::string">Parameter name to receive the instance index</input_port>
-            <input_port name="count" default="1" type="int">Number of instances to create</input_port>
-        </Control>
-        <Action ID="SetProductId">
-            <input_port name="ProductIDs" type="std::string"/>
         </Action>
         <Action ID="Stopper">
             <input_port name="CommandUuid" default="{_ID}" type="std::string">UUID for the command to execute</input_port>

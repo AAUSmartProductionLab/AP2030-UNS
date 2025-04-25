@@ -1,10 +1,10 @@
-#include "bt/CustomNodes/build_production_order_node.h"
+#include "bt/CustomNodes/build_production_queue_node.h"
 #include "mqtt/utils.h"
 #include "mqtt/node_message_distributor.h"
 #include "common_constants.h"
 #include <deque>
 
-BuildProductionOrderNode::BuildProductionOrderNode(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client, const std::string &response_topic, const std::string &response_schema_path)
+BuildProductionQueueNode::BuildProductionQueueNode(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client, const std::string &response_topic, const std::string &response_schema_path)
     : MqttAsyncSubNode(name, config, bt_mqtt_client,
                        response_topic, response_schema_path)
 {
@@ -15,14 +15,16 @@ BuildProductionOrderNode::BuildProductionOrderNode(const std::string &name, cons
     }
 }
 
-BT::PortsList BuildProductionOrderNode::providedPorts()
+BT::PortsList BuildProductionQueueNode::providedPorts()
 {
     return {
-        BT::OutputPort<BT::SharedQueue<std::string>>("ProductIDs", "List of product IDs to produce"),
-    };
+        BT::details::PortWithDefault<BT::SharedQueue<std::string>>(BT::PortDirection::OUTPUT,
+                                                                   "ProductIDs",
+                                                                   "{ProductIDs}",
+                                                                   "List of product IDs to produce")};
 }
 
-void BuildProductionOrderNode::callback(const json &msg, mqtt::properties props)
+void BuildProductionQueueNode::callback(const json &msg, mqtt::properties props)
 {
     // Use mutex to protect shared state
     {
@@ -50,7 +52,6 @@ void BuildProductionOrderNode::callback(const json &msg, mqtt::properties props)
             {
                 setStatus(BT::NodeStatus::FAILURE);
             }
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
             emitWakeUpSignal();
         }
     }
