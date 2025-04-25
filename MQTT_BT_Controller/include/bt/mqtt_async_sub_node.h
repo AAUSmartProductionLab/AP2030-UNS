@@ -14,10 +14,6 @@ using nlohmann::json;
 class MqttAsyncSubNode : public BT::StatefulActionNode, public MqttSubBase
 {
 
-    // Mutex for thread safety
-protected:
-    std::string current_command_uuid_;
-
 public:
     MqttAsyncSubNode(const std::string &name,
                      const BT::NodeConfig &config,
@@ -40,6 +36,7 @@ public:
     BT::NodeStatus onStart() override;
     BT::NodeStatus onRunning() override;
     void onHalted() override;
+
     template <typename DerivedNode>
     static void registerNodeType(
         BT::BehaviorTreeFactory &factory,
@@ -55,7 +52,7 @@ public:
         node_configs[node_name] = std::make_tuple(response_topic, response_schema_path);
 
         MqttAsyncSubNode::setNodeMessageDistributor(&node_message_distributor);
-        node_message_distributor.registerNodeType<DerivedNode>(response_topic,subqos);
+        node_message_distributor.registerNodeType<DerivedNode>(response_topic, subqos);
         MqttClient *mqtt_client_ptr = &mqtt_client;
         // Register a builder that captures the configuration
         factory.registerBuilder<DerivedNode>(

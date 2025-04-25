@@ -2,22 +2,29 @@
 <root BTCPP_format="4">
   <BehaviorTree ID="Filling">
     <Sequence>
-      <FillingRegistration CommandUuid="{_ID}"/>
+      <Station_Registration CommandUuid="{_ID}"
+                            Station="{Station}"/>
       <MoveShuttle TargetPosition="2"/>
-      <Dispense CommandUuid="{_ID}"/>
+      <Station_Execution CommandUuid="{_ID}"
+                         Command="Dispense"
+                         Station="{Station}"/>
       <Fallback>
         <GenericConditionNode expected_value="2.0"
                               comparison_type="equal"
                               field_name="Weight"/>
         <RetryUntilSuccessful num_attempts="2">
           <Sequence>
-            <Dispense CommandUuid="{_ID}"/>
+            <Station_Execution CommandUuid="{_ID}"
+                               Command="Dispense"
+                               Station="{Station}"/>
             <GenericConditionNode expected_value="2.0"
                                   comparison_type="equal"
                                   field_name="Weight"/>
           </Sequence>
         </RetryUntilSuccessful>
       </Fallback>
+      <Station_Unregistration CommandUuid="{_ID}"
+                              Station="{Station}"/>
     </Sequence>
   </BehaviorTree>
 
@@ -46,19 +53,30 @@
       <Sequence>
         <MoveShuttle TargetPosition="1"/>
         <SubTree ID="Filling"
+                 Station="Filling"
                  _autoremap="true"/>
         <SubTree ID="Stoppering"
+                 Station="Stoppering"
                  _autoremap="true"/>
         <MoveShuttle TargetPosition="4"/>
       </Sequence>
     </GetProductFromQueue>
   </BehaviorTree>
 
+  <BehaviorTree ID="StationProcess">
+    <AlwaysSuccess/>
+  </BehaviorTree>
+
   <BehaviorTree ID="Stoppering">
     <Sequence>
-      <StopperRegistration CommandUuid="{_ID}"/>
+      <Station_Registration CommandUuid="{_ID}"
+                            Station="{Station}"/>
       <MoveShuttle TargetPosition="3"/>
-      <Stopper CommandUuid="{_ID}"/>
+      <Station_Execution CommandUuid="{_ID}"
+                         Command="Stopper"
+                         Station="{Station}"/>
+      <Station_Unregistration CommandUuid="{_ID}"
+                              Station="{Station}"/>
     </Sequence>
   </BehaviorTree>
 
@@ -69,16 +87,11 @@
                    default="{ProductIDs}"
                    type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;">List of product IDs to produce</output_port>
     </Action>
-    <Action ID="Dispense">
-      <input_port name="CommandUuid"
-                  default="{_ID}"
-                  type="std::string">UUID for the command to execute</input_port>
-    </Action>
-    <Action ID="FillingRegistration">
-      <output_port name="CommandUuid"
-                   default="{_ID}"
-                   type="std::string">UUID for the command to execute</output_port>
-    </Action>
+    <SubTree ID="Filling"
+             editable="true">
+      <input_port name="Station"
+                  default="Filling"/>
+    </SubTree>
     <Condition ID="GenericConditionNode">
       <input_port name="expected_value"
                   type="std::string">Value to compare against</input_port>
@@ -102,16 +115,42 @@
       <input_port name="TargetPosition"
                   type="int"/>
     </Action>
-    <Action ID="Stopper">
+    <SubTree ID="Produce"
+             editable="true">
+      <input_port name="XbotId"/>
+    </SubTree>
+    <Action ID="Station_Execution">
       <input_port name="CommandUuid"
                   default="{_ID}"
                   type="std::string">UUID for the command to execute</input_port>
+      <input_port name="Command"
+                  default="Command"
+                  type="std::string">The command to execute on the station</input_port>
+      <input_port name="Station"
+                  default="{_Station}"
+                  type="std::string">The station to register with</input_port>
     </Action>
-    <Action ID="StopperRegistration">
+    <Action ID="Station_Registration">
       <output_port name="CommandUuid"
                    default="{_ID}"
                    type="std::string">UUID for the command to execute</output_port>
+      <input_port name="Station"
+                  default="{_Station}"
+                  type="std::string">The station to register with</input_port>
     </Action>
+    <Action ID="Station_Unregistration">
+      <input_port name="CommandUuid"
+                  default="{_ID}"
+                  type="std::string">UUID for the command to execute</input_port>
+      <input_port name="Station"
+                  default="{_Station}"
+                  type="std::string">The station to unregister from</input_port>
+    </Action>
+    <SubTree ID="Stoppering"
+             editable="true">
+      <input_port name="Station"
+                  default="Stoppering"/>
+    </SubTree>
   </TreeNodesModel>
 
 </root>

@@ -13,8 +13,6 @@ using nlohmann::json;
 
 class MqttActionNode : public BT::StatefulActionNode, public MqttPubBase, public MqttSubBase
 {
-
-    // Mutex for thread safety
 protected:
     std::string current_command_uuid_;
 
@@ -45,6 +43,7 @@ public:
     BT::NodeStatus onStart() override;
     BT::NodeStatus onRunning() override;
     void onHalted() override;
+
     template <typename DerivedNode>
     static void registerNodeType(
         BT::BehaviorTreeFactory &factory,

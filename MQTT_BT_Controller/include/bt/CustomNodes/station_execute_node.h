@@ -28,15 +28,26 @@ public:
         {
             MqttSubBase::node_message_distributor_->registerDerivedInstance(this);
         }
+        request_topic_ = getFormattedTopic(request_topic_pattern_, config);
+        response_topic_ = getFormattedTopic(response_topic_pattern_, config);
     }
     static BT::PortsList providedPorts()
     {
-        return {
-            BT::details::PortWithDefault<std::string>(
-                BT::PortDirection::INPUT,
-                "CommandUuid",
-                "{_ID}",
-                "UUID for the command to execute")};
+        return {BT::details::PortWithDefault<std::string>(
+                    BT::PortDirection::INPUT,
+                    "Station",
+                    "{_Station}",
+                    "The station to register with"),
+                BT::details::PortWithDefault<std::string>(
+                    BT::PortDirection::INPUT,
+                    "Command",
+                    "Command",
+                    "The command to execute on the station"),
+                BT::details::PortWithDefault<std::string>(
+                    BT::PortDirection::INPUT,
+                    "CommandUuid",
+                    "{_ID}",
+                    "UUID for the command to execute")};
     }
     json createMessage() override
     {
@@ -59,6 +70,19 @@ public:
         }
         message["CommandUuid"] = current_command_uuid_;
         return message;
+    }
+    std::string getFormattedTopic(const std::string &pattern, const BT::NodeConfig &config)
+    {
+        std::vector<std::string> replacements;
+        BT::Expected<std::string> station = config.blackboard->get<std::string>("Station");
+        BT::Expected<std::string> command = getInput<std::string>("Command");
+        if (station.has_value() && command.has_value())
+        {
+            replacements.push_back(station.value());
+            replacements.push_back(command.value());
+            return mqtt_utils::formatWildcardTopic(pattern, replacements);
+        }
+        return pattern;
     }
     bool isInterestedIn(const json &msg) override
     {

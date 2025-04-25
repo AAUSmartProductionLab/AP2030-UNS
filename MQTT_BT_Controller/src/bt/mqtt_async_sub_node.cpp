@@ -43,12 +43,9 @@ BT::NodeStatus MqttAsyncSubNode::onRunning()
 
 void MqttAsyncSubNode::onHalted()
 {
-    // Clean up when the node is halted
-    std::cout << "MQTT action node halted" << std::endl;
-    // Additional cleanup as needed
+    std::cout << this->name() << "halted" << std::endl;
 }
 
-// Standard implementation based on PackML override this if needed
 void MqttAsyncSubNode::callback(const json &msg, mqtt::properties props)
 {
     // Use mutex to protect shared state
@@ -57,29 +54,12 @@ void MqttAsyncSubNode::callback(const json &msg, mqtt::properties props)
         // Update state based on message content
         if (status() == BT::NodeStatus::RUNNING)
         {
-            if (msg["State"] == "ABORTED" || msg["State"] == "STOPPED")
-            {
-                current_command_uuid_ = "";
-                // Change from setting internal state to updating node status
-                setStatus(BT::NodeStatus::FAILURE);
-            }
-            else if (msg["State"] == "COMPLETE")
-            {
-                std::cout << "State is COMPLETE" << std::endl;
-                current_command_uuid_ = "";
-                // Change from setting internal state to updating node status
-                setStatus(BT::NodeStatus::SUCCESS);
-            }
-            else if (msg["State"] == "HELD" || msg["State"] == "SUSPENDED" || msg["State"] == "EXECUTED")
-            {
-                std::cout << "State is HELD, SUSPENDED or Executing" << std::endl;
-                // No need to set RUNNING again if already running
-            }
+            setStatus(BT::NodeStatus::SUCCESS);
             emitWakeUpSignal();
         }
         else
         {
-            std::cout << "Message doesn't contain 'state' field" << std::endl;
+            std::cout << "Message the node is not running" << std::endl;
         }
     }
 }

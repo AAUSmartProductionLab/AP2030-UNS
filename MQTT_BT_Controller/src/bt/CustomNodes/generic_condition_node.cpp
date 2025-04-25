@@ -4,7 +4,7 @@
 
 GenericConditionNode::GenericConditionNode(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client,
                                            const std::string &response_topic, const std::string &response_schema_path)
-    : MqttConditionNode(name, config, bt_mqtt_client, response_topic, response_schema_path)
+    : MqttSyncSubNode(name, config, bt_mqtt_client, response_topic, response_schema_path)
 {
     if (MqttSubBase::node_message_distributor_)
     {

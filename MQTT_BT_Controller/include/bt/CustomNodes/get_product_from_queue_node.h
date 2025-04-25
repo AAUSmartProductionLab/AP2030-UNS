@@ -5,11 +5,9 @@
 #include <nlohmann/json.hpp>
 #include <string>
 
-// Forward declarations
 class MqttClient;
 using nlohmann::json;
 
-// GetProductFromQueue class declaration
 class GetProductFromQueue : public BT::DecoratorNode
 {
 private:
@@ -35,7 +33,6 @@ public:
             child_running_ = false;
         }
 
-        // Pop value from queue, if the child is not RUNNING
         if (!child_running_)
         {
             BT::AnyPtrLocked any_ref =
@@ -84,7 +81,7 @@ public:
     {
         // we mark "Queue" as BidirectionalPort, because the original element is modified
         return {
-            BT::details::PortWithDefault<std::string>(
+            BT::details::PortWithDefault<BT::SharedQueue<std::string>>(
                 BT::PortDirection::INPUT,
                 "Queue",
                 "{ProductIDs}",

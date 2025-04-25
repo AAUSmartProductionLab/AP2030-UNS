@@ -11,6 +11,7 @@ namespace mqtt_utils
     nlohmann::json load_schema(const std::string &schema_path);
 
     std::string formatWildcardTopic(const std::string &topic, const std::string &id);
+    std::string formatWildcardTopic(const std::string &topic_pattern, const std::vector<std::string> &replacements);
     std::unique_ptr<nlohmann::json_schema::json_validator> createSchemaValidator(const std::string &schema_path);
-    
+
 }

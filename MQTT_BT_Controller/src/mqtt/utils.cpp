@@ -40,6 +40,26 @@ namespace mqtt_utils
         }
         return formatted_topic;
     }
+
+    // New overload that accepts a vector of replacements
+    std::string formatWildcardTopic(const std::string &topic_pattern, const std::vector<std::string> &replacements)
+    {
+        std::string formatted_topic = topic_pattern;
+        size_t pos = 0;
+        size_t replacement_index = 0;
+
+        // Replace each "+" wildcard with corresponding replacement value
+        while ((pos = formatted_topic.find("+", pos)) != std::string::npos &&
+               replacement_index < replacements.size())
+        {
+            formatted_topic.replace(pos, 1, replacements[replacement_index]);
+            // Move position past the inserted replacement
+            pos += replacements[replacement_index].length();
+            replacement_index++;
+        }
+
+        return formatted_topic;
+    }
     std::unique_ptr<nlohmann::json_schema::json_validator> createSchemaValidator(const std::string &schema_path)
     {
         if (schema_path.empty())

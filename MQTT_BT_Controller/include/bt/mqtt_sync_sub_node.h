@@ -8,19 +8,19 @@
 
 using nlohmann::json;
 
-class MqttConditionNode : public BT::ConditionNode, public MqttSubBase
+class MqttSyncSubNode : public BT::ConditionNode, public MqttSubBase
 {
 protected:
     json latest_msg_;
 
 public:
-    MqttConditionNode(const std::string &name,
-                      const BT::NodeConfig &config,
-                      MqttClient &mqtt_client,
-                      const std::string &response_topic,
-                      const std::string &response_schema_path);
+    MqttSyncSubNode(const std::string &name,
+                    const BT::NodeConfig &config,
+                    MqttClient &mqtt_client,
+                    const std::string &response_topic,
+                    const std::string &response_schema_path);
 
-    ~MqttConditionNode() override;
+    ~MqttSyncSubNode() override;
 
     static BT::PortsList providedPorts();
 
@@ -43,8 +43,8 @@ public:
         static std::unordered_map<std::string, std::tuple<std::string, std::string>> node_configs;
         node_configs[node_name] = std::make_tuple(response_topic, response_schema_path);
 
-        MqttConditionNode::setNodeMessageDistributor(&node_message_distributor);
-        node_message_distributor.registerNodeType<DerivedNode>(response_topic,subqos);
+        MqttSyncSubNode::setNodeMessageDistributor(&node_message_distributor);
+        node_message_distributor.registerNodeType<DerivedNode>(response_topic, subqos);
 
         MqttClient *mqtt_client_ptr = &mqtt_client;
         // Register a builder that captures the configuration
