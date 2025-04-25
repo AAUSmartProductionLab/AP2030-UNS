@@ -39,6 +39,14 @@ def register_callback(topic, client, message, properties):
     except Exception as e:
         print(f"Error in register_callback: {e}")
 
+def unregister_callback(topic, client, message, properties):
+    """Callback handler for unregistering commands by removing them from the queue"""
+    try:  
+        # Unregister/remove the command from the queue if it's not being processed
+        state_machine.unregister_command(message)
+        
+    except Exception as e:
+        print(f"Error in unregister_callback: {e}")
 
 def stopper_callback(topic, client, message, properties):
     """Callback handler for stopper commands that actually execute"""
@@ -67,13 +75,22 @@ response_async_register = ResponseAsync(
     register_callback
 )
 
+response_async_unregister = ResponseAsync(
+    BASE_TOPIC+"/DATA/State", 
+    BASE_TOPIC+"/CMD/Unregister",
+    "./schemas/stationState.schema.json", 
+    "./schemas/command.schema.json", 
+    0, 
+    unregister_callback
+)
+
 stopperProxy = Proxy(
     BROKER_ADDRESS, 
     BROKER_PORT,
     "StopperingProxy", 
-    [response_async_execute, response_async_register]
+    [response_async_execute, response_async_register,response_async_unregister]
 )
-state_machine = PackMLStateMachine(response_async_execute,response_async_execute, stopperProxy, None)
+state_machine = PackMLStateMachine(response_async_execute, response_async_register,response_async_unregister, stopperProxy, None)
 
 
 def main():

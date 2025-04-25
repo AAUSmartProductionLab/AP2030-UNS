@@ -77,15 +77,30 @@ BASE_TOPIC+"/CMD/Register",
 0, 
 register_callback
 )
+def unregister_callback(topic, client, message, properties):
+    """Callback handler for unregistering commands by removing them from the queue"""
+    try:  
+        # Unregister/remove the command from the queue if it's not being processed
+        state_machine.unregister_command(message)
+        
+    except Exception as e:
+        print(f"Error in unregister_callback: {e}")
 
-
+response_async_unregister = ResponseAsync(
+    BASE_TOPIC+"/DATA/State", 
+    BASE_TOPIC+"/CMD/Unregister",
+    "./schemas/stationState.schema.json", 
+    "./schemas/command.schema.json", 
+    0, 
+    unregister_callback
+)
 fillProxy = Proxy(
     BROKER_ADDRESS, 
     BROKER_PORT,
     "FillingProxy", 
-    [response_async_execute,response_async_register, weigh_publisher]
+    [response_async_execute,response_async_register, response_async_unregister,weigh_publisher]
 )
-state_machine = PackMLStateMachine(response_async_execute,response_async_register, fillProxy, None)
+state_machine = PackMLStateMachine(response_async_execute,response_async_register,response_async_unregister, fillProxy, None)
 
 
 def main():

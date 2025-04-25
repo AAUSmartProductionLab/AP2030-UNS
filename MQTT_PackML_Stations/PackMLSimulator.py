@@ -38,15 +38,16 @@ class PackMLState(enum.Enum):
 
 
 class PackMLStateMachine:
-    def __init__(self, register_topic,execute_topic, client, properties):
+    def __init__(self, execute_topic, register_topic, unregister_topic, client, properties):
         self.state = PackMLState.IDLE
-        self.register_topic = register_topic
         self.execute_topic = execute_topic
+        self.register_topic = register_topic
+        self.unregister_topic = unregister_topic
         self.client = client
         self.properties = properties
         self.CommandUuid = None
         self.publish_progress = None
-        self.failureChance=0.01
+        self.failureChance = 0.01
         # Progress tracking
         self.total_duration = 0
         self.elapsed_time = 0
@@ -63,13 +64,10 @@ class PackMLStateMachine:
 
     def register_command(self,message):
         """Register a command without immediate processing"""
-        # Extract command UUID if available
         command_uuid = message.get("CommandUuid")
         
-        # Just add the UUID to the tracking list without queueing for execution
         if command_uuid not in self.command_uuids:
             self.command_uuids.append(command_uuid)
-        
         
         response = {
             "State": self.state.value,
@@ -78,7 +76,26 @@ class PackMLStateMachine:
         self.register_topic.publish(response, self.client, self.properties)
         
         return command_uuid
-
+    
+    def unregister_command(self, message):
+        """Unregister a command by removing it from the queue if not being processed"""
+        command_uuid = message.get("CommandUuid")
+        
+        # Check if the command exists and is not currently being processed
+        if command_uuid in self.command_uuids:
+            # Don't remove if it's the current active command
+            if self.CommandUuid != command_uuid:
+                self.command_uuids.remove(command_uuid)
+                
+        # Respond with updated queue state
+        response = {
+            "State": self.state.value,
+            "ProcessQueue": self.command_uuids.copy()
+        }
+        self.unregister_topic.publish(response, self.client, self.properties)
+        
+        return command_uuid
+    
     def process_next_command(self, message, process_function, duration=None, publish_progress=None):
 
         command_uuid = message.get("CommandUuid")
@@ -149,13 +166,9 @@ class PackMLStateMachine:
         # Handle CommandUuid tracking
         if new_state in [PackMLState.IDLE, PackMLState.RESETTING]:
             # Clear current CommandUuid
-            prev_uuid = self.CommandUuid
             self.CommandUuid = None
             if self.publish_progress:  # <-- Add this check
                 self.publish_progress(self, reset=True)
-
-            if prev_uuid and prev_uuid in self.command_uuids:
-                self.command_uuids.remove(prev_uuid)
                 
             # Get fresh queue state
             queued_uuids = self.command_uuids.copy()
