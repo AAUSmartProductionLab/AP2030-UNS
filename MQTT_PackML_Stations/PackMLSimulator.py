@@ -3,6 +3,8 @@ import enum
 import threading
 import time
 import queue
+import datetime  # Importing datetime module
+
 
 # Custom exceptions for PackML state transitions
 class HoldException(Exception): pass
@@ -161,13 +163,20 @@ class PackMLStateMachine:
     def transition_to(self, new_state, delay=0.1):
         """Transition to a new state and publish it"""
         self.state = new_state
-        response = {"State": new_state.value}
+        
+        # Generate ISO 8601 timestamp with Z suffix for UTC
+        timestamp = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+        
+        response = {
+            "State": new_state.value,
+            "TimeStamp": timestamp
+        }
         
         # Handle CommandUuid tracking
         if new_state in [PackMLState.IDLE, PackMLState.RESETTING]:
             # Clear current CommandUuid
             self.CommandUuid = None
-            if self.publish_progress:  # <-- Add this check
+            if self.publish_progress:
                 self.publish_progress(self, reset=True)
                 
             # Get fresh queue state
@@ -184,7 +193,7 @@ class PackMLStateMachine:
             else:
                 response["ProcessQueue"] = queued_uuids
         
-        self.execute_topic.publish(response, self.client, self.properties,True)
+        self.execute_topic.publish(response, self.client, self.properties, True)
 
     
     def run_sequence(self, states, delay=0.1, check_exceptions=True):

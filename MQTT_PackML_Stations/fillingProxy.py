@@ -2,6 +2,7 @@ from MQTT_classes import Proxy, ResponseAsync, Publisher
 import time
 import numpy as np
 from PackMLSimulator import PackMLStateMachine
+import datetime
 BROKER_ADDRESS = "192.168.0.104"
 BROKER_PORT = 1883
 BASE_TOPIC = "NN/Nybrovej/InnoLab/Filling"
@@ -68,7 +69,13 @@ def publish_weight(state_machine, reset=False):
         progress = state_machine.progress
         weight = progress * 2.0
     
-    response = {"Weight": weight}
+    # Generate ISO 8601 timestamp with Z suffix for UTC
+    timestamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+    
+    response = {
+        "Weight": weight,
+        "TimeStamp": timestamp
+    }
     weigh_publisher.publish(response, state_machine.client, True)
 
 def register_callback(topic, client, message, properties):

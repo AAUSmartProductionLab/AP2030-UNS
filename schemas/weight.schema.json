@@ -7,6 +7,10 @@
         "Weight": {
             "type": "number",
             "description": "The weight of the liquid during IPC"
+        },
+        "TimeStamp": {
+            "type": "string",
+            "description": "The time stamp of the message"
         }
     },
     "required": ["Weight"]
