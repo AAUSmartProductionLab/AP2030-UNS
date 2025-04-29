@@ -34,7 +34,7 @@ def dispense_process(mean_duration=2.0, state_machine=None):
         state_machine.total_duration = duration
         # Generate random target weight with normal distribution
         state_machine.target_weight = np.random.normal(2.0, 0.1)
-        state_machine.target_weight = max(0.5, state_machine.target_weight)  # Ensure minimum weight
+        state_machine.target_weight = max(1.5, state_machine.target_weight)  # Ensure minimum weight
     
     for i in range(steps):
         time.sleep(step_size)
@@ -69,7 +69,7 @@ def publish_weight(state_machine, reset=False):
         weight = progress * 2.0
     
     response = {"Weight": weight}
-    weigh_publisher.publish(response, state_machine.client)
+    weigh_publisher.publish(response, state_machine.client, True)
 
 def register_callback(topic, client, message, properties):
     """Callback handler for registering commands without executing them"""

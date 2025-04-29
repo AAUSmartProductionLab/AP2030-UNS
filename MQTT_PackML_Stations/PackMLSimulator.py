@@ -73,7 +73,7 @@ class PackMLStateMachine:
             "State": self.state.value,
             "ProcessQueue": self.command_uuids.copy()
         }
-        self.register_topic.publish(response, self.client, self.properties)
+        self.register_topic.publish(response, self.client, self.properties,True)
         
         return command_uuid
     
@@ -92,7 +92,7 @@ class PackMLStateMachine:
             "State": self.state.value,
             "ProcessQueue": self.command_uuids.copy()
         }
-        self.unregister_topic.publish(response, self.client, self.properties)
+        self.unregister_topic.publish(response, self.client, self.properties,True)
         
         return command_uuid
     
@@ -112,7 +112,7 @@ class PackMLStateMachine:
                 "State": self.state.value,
                 "ProcessQueue": self.command_uuids.copy()
             }
-            self.execute_topic.publish(response, self.client, self.properties)
+            self.execute_topic.publish(response, self.client, self.properties,True)
 
     def update_progress(self, progress_interval=0.1):
         """Background thread function to update and publish progress"""
@@ -184,7 +184,7 @@ class PackMLStateMachine:
             else:
                 response["ProcessQueue"] = queued_uuids
         
-        self.execute_topic.publish(response, self.client, self.properties)
+        self.execute_topic.publish(response, self.client, self.properties,True)
 
     
     def run_sequence(self, states, delay=0.1, check_exceptions=True):
