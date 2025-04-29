@@ -52,7 +52,8 @@ def dispense_process(mean_duration=2.0, state_machine=None):
         time.sleep(remaining)
         if state_machine and state_machine.total_duration:
             state_machine.elapsed_time = duration
-            state_machine.pt1_progress = 1.0
+            # Calculate final PT1 progress using the same formula instead of forcing 1.0
+            state_machine.pt1_progress = 1.0 - np.exp(-duration / time_constant)
     
     return {"dispensed": True}
 
