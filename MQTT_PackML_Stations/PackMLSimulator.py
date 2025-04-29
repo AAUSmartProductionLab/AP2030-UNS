@@ -70,11 +70,13 @@ class PackMLStateMachine:
         
         if command_uuid not in self.command_uuids:
             self.command_uuids.append(command_uuid)
-        
+        timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
         response = {
             "State": self.state.value,
             "ProcessQueue": self.command_uuids.copy()
+            "TimeStamp": timestamp
         }
+            
         self.register_topic.publish(response, self.client, self.properties,True)
         
         return command_uuid
@@ -89,11 +91,13 @@ class PackMLStateMachine:
             if self.CommandUuid != command_uuid:
                 self.command_uuids.remove(command_uuid)
                 
-        # Respond with updated queue state
+        timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
         response = {
             "State": self.state.value,
             "ProcessQueue": self.command_uuids.copy()
+            "TimeStamp": timestamp
         }
+            
         self.unregister_topic.publish(response, self.client, self.properties,True)
         
         return command_uuid
@@ -110,10 +114,13 @@ class PackMLStateMachine:
             # Process the command
             self.run_state_machine(process_function, duration)
         else:
+            timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
             response = {
                 "State": self.state.value,
                 "ProcessQueue": self.command_uuids.copy()
+                "TimeStamp": timestamp
             }
+                
             self.execute_topic.publish(response, self.client, self.properties,True)
 
     def update_progress(self, progress_interval=0.1):
