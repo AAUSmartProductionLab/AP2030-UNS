@@ -1,6 +1,5 @@
 #include "bt/CustomNodes/generic_condition_node.h"
 #include "mqtt/node_message_distributor.h"
-#include "common_constants.h"
 
 GenericConditionNode::GenericConditionNode(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client,
                                            const std::string &response_topic, const std::string &response_schema_path)

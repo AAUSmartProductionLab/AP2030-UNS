@@ -29,7 +29,7 @@ find_package(PkgConfig REQUIRED)
 find_package(Threads REQUIRED)
 find_package(PahoMqttCpp REQUIRED)
 find_package(behaviortree_cpp REQUIRED)
-
+find_package(yaml-cpp REQUIRED)
 pkg_check_modules(UUID REQUIRED uuid)
 
 
@@ -40,7 +40,6 @@ include_directories(
 
 # Create common library with shared source files
 add_library(bt_controller_common STATIC
-    src/common_constants.cpp
     src/mqtt/utils.cpp
     src/mqtt/node_message_distributor.cpp 
     src/mqtt/mqtt_client.cpp
@@ -70,6 +69,7 @@ target_link_libraries(bt_controller_common
         PahoMqttCpp::paho-mqttpp3
         PahoMqttCpp::paho-mqtt3as
         ${UUID_LDFLAGS}
+        ${YAML_CPP_LIBRARIES}
 )
 
 add_executable(bt_controller

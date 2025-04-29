@@ -1,6 +1,5 @@
 #include "bt/mqtt_sync_sub_node.h"
 #include "mqtt/node_message_distributor.h"
-#include "common_constants.h"
 #include <iostream>
 
 MqttSyncSubNode::MqttSyncSubNode(const std::string &name,

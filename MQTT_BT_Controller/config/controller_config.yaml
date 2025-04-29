@@ -1,0 +1,10 @@
+broker_uri: "192.168.0.104:1883"
+client_id: "bt_controller"
+
+uns_topic: "NN/Nybrovej/InnoLab"
+
+generate_xml_models: false
+
+groot2_port: 1667
+
+bt_description_path: "../config/bt_description/tree.xml"

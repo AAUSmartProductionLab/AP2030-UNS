@@ -9,18 +9,13 @@
         <SubTree ID="Filling" editable="true">
             <input_port name="Station" default="Filling"/>
         </SubTree>
-        <Condition ID="GenericConditionNode">
-            <input_port name="expected_value" type="std::string">Value to compare against</input_port>
-            <input_port name="comparison_type" type="std::string">Type of comparison: equal, not_equal, greater, less, contains</input_port>
-            <input_port name="field_name" type="std::string">Name of the field to monitor in the MQTT message</input_port>
-        </Condition>
         <Decorator ID="GetProductFromQueue">
             <output_port name="Product" default="{_ProductID}" type="std::string">The product ID of the current product</output_port>
             <input_port name="if_empty" default="SUCCESS" type="BT::NodeStatus">Status to return if queue is empty: SUCCESS, FAILURE, SKIPPED</input_port>
-            <input_port name="Queue" default="{ProductIDs}" type="std::string">The queue of all product IDs of the batch</input_port>
+            <input_port name="Queue" default="{ProductIDs}" type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;">The queue of all product IDs of the batch</input_port>
         </Decorator>
         <Action ID="MoveShuttle">
-            <input_port name="TargetPosition" type="int"/>
+            <input_port name="TargetPosition" type="std::string"/>
         </Action>
         <Action ID="OmronArclRequest">
             <input_port name="command" type="BT::AnyTypeAllowed"/>
@@ -40,6 +35,11 @@
             <output_port name="CommandUuid" default="{_ID}" type="std::string">UUID for the command to execute</output_port>
             <input_port name="Station" default="{_Station}" type="std::string">The station to register with</input_port>
         </Action>
+        <Condition ID="Station_State_Condition">
+            <input_port name="expected_value" type="std::string">Value to compare against</input_port>
+            <input_port name="comparison_type" type="std::string">Type of comparison: equal, not_equal, greater, less, contains</input_port>
+            <input_port name="field_name" type="std::string">Name of the field to monitor in the MQTT message</input_port>
+        </Condition>
         <Action ID="Station_Unregistration">
             <input_port name="CommandUuid" default="{_ID}" type="std::string">UUID for the command to execute</input_port>
             <input_port name="Station" default="{_Station}" type="std::string">The station to unregister from</input_port>
@@ -47,5 +47,10 @@
         <SubTree ID="Stoppering" editable="true">
             <input_port name="Station" default="Stoppering"/>
         </SubTree>
+        <Condition ID="Weight_Condition">
+            <input_port name="expected_value" type="std::string">Value to compare against</input_port>
+            <input_port name="comparison_type" type="std::string">Type of comparison: equal, not_equal, greater, less, contains</input_port>
+            <input_port name="field_name" type="std::string">Name of the field to monitor in the MQTT message</input_port>
+        </Condition>
     </TreeNodesModel>
 </root>

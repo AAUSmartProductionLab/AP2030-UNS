@@ -1,7 +1,6 @@
 #include "bt/mqtt_action_node.h"
 #include "mqtt/node_message_distributor.h"
 #include "mqtt/mqtt_client.h"
-#include "common_constants.h"
 
 #include <iostream>
 #include <condition_variable>
@@ -80,7 +79,7 @@ void MqttActionNode::callback(const json &msg, mqtt::properties props)
             {
                 std::cout << "State is HELD, SUSPENDED or Executing" << std::endl;
                 // No need to set RUNNING again if already running
-                        }
+            }
             emitWakeUpSignal();
         }
         else

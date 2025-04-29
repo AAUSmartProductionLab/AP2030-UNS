@@ -1,7 +1,6 @@
 #include "bt/mqtt_async_sub_node.h"
 #include "mqtt/node_message_distributor.h"
 #include "mqtt/mqtt_client.h"
-#include "common_constants.h"
 
 #include <iostream>
 #include <condition_variable>

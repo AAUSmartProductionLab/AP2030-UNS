@@ -1,7 +1,6 @@
 #include "bt/CustomNodes/omron_arcl_request_node.h"
 #include "mqtt/utils.h"
 #include "mqtt/node_message_distributor.h"
-#include "common_constants.h"
 
 // MoveShuttleToPosition implementation
 OmronArclRequest::OmronArclRequest(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client, const std::string &request_topic, const std::string &response_topic, const std::string &request_schema_path, const std::string &response_schema_path,const bool &retain,const int &pubqos)
