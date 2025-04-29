@@ -103,6 +103,19 @@ bool MqttClient::subscribe_topic(const std::string &topic, int subqos)
         return false;
     }
 
+    // Check if we already have a subscription for this topic
+    auto it = std::find_if(subscriptions_.begin(), subscriptions_.end(),
+                           [&topic](const TopicSubscription &sub)
+                           {
+                               return sub.topic == topic;
+                           });
+
+    // If subscription already exists, return true without resubscribing
+    if (it != subscriptions_.end())
+    {
+        return true;
+    }
+
     try
     {
         auto listener = new subscription_listener(topic, *this);
