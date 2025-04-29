@@ -33,12 +33,12 @@ class Topic:
 
         self.publish_properties = Properties(PacketTypes.PUBLISH)
 
-    def publish(self, message, client):
+    def publish(self, message, client, retain=False):
         if self.pub_schema != None:
             validate(instance=message, schema=self.pub_schema, resolver=self.pub_resolver)
             if self.pubtopic != None and self.pubtopic != "":
                 client.publish(self.pubtopic, json.dumps(message),
-                               self.qos, properties=self.publish_properties)
+                               self.qos, properties=self.publish_properties, retain=retain)
 
     def registerCallback(self, client):
         if self.subtopic != None and self.subtopic != "":
@@ -68,13 +68,13 @@ class Response(Topic):
         super().__init__(publish_topic, subscribe_topic, publish_schema_path,
                          subscribe_schema_path, qos, callback_method)
 
-    def publish(self, request, client, publish_properties):
+    def publish(self, request, client, publish_properties, retain=False):
         if self.pub_schema != None:
             validate(instance=request, schema=self.pub_schema, resolver=self.pub_resolver)
             if publish_properties.ResponseTopic != None and publish_properties.ResponseTopic != "":
                 # The response is to be published on the ResponseTopic provided with the request
                 client.publish(publish_properties.ResponseTopic, json.dumps(request),
-                               self.qos, properties=publish_properties)
+                               self.qos, properties=publish_properties, retain=retain)
 
 
 class ResponseAsync(Topic):
@@ -84,13 +84,13 @@ class ResponseAsync(Topic):
         super().__init__(publish_topic,subscribe_topic, publish_schema_path,
                          subscribe_schema_path, qos, callback_method)
 
-    def publish(self, request, client, publish_properties=None):
+    def publish(self, request, client, publish_properties=None, retain=False):
         if self.pub_schema != None:
             try:
                 validate(instance=request, schema=self.pub_schema, resolver=self.pub_resolver)
                 # The response is to be published on the ResponseTopic provided with the request
                 client.publish(self.pubtopic, json.dumps(request),
-                               self.qos)
+                               self.qos, retain=retain)
             except Exception as e:
                 print(f"Error in publish: {e}")
 
@@ -140,11 +140,11 @@ class Publisher(Topic):
     def callback(self, client, userdata, message):
         pass  # Not expecting any callbacks
         
-    def publish(self, request, client):
+    def publish(self, request, client, retain=False):
         if self.pub_schema != None:
             validate(instance=request, schema=self.pub_schema, resolver=self.pub_resolver)
             client.publish(self.pubtopic, json.dumps(request),
-                               self.qos)
+                           self.qos, retain=retain)
 
 
 class Proxy(mqtt.Client):
