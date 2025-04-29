@@ -1,7 +1,7 @@
 from MQTT_classes import Proxy, ResponseAsync, Publisher
 import time
 import numpy as np
-from PackMLSimulator import PackMLStateMachine
+from PackMLSimulator import PackMLStateMachine, PackMLState
 import datetime
 BROKER_ADDRESS = "192.168.0.104"
 BROKER_PORT = 1883
@@ -90,11 +90,12 @@ def register_callback(topic, client, message, properties):
 
 def dispense_callback(topic, client, message, properties):
     """Callback handler for dispense commands"""
-    try:
-        duration = 2.0
-        state_machine.process_next_command(message, dispense_process, duration,publish_weight)
-    except Exception as e:
-        print(f"Error in stopper_callback: {e}")
+    if state_machine.state == PackMLState.IDLE:
+        try:
+            duration = 2.0
+            state_machine.process_next_command(message, dispense_process, duration,publish_weight)
+        except Exception as e:
+            print(f"Error in stopper_callback: {e}")
 
 response_async_execute = ResponseAsync(
     BASE_TOPIC+"/DATA/State", 
