@@ -11,8 +11,7 @@ MqttAsyncSubNode::MqttAsyncSubNode(const std::string &name,
                                    MqttClient &mqtt_client,
                                    const std::string &response_topic,
                                    const std::string &response_schema_path,
-                                   const bool &retain,
-                                   const int &qos)
+                                   const int &subqos)
     : BT::StatefulActionNode(name, config),
       MqttSubBase(mqtt_client, response_topic, response_schema_path)
 {

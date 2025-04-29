@@ -31,12 +31,12 @@ public:
 
     // Topic handler registration
     void register_topic_handler(const std::string &topic,
-        std::function<void(const std::string &, const json &, mqtt::properties)> callback,
-        const int &qos);
+                                std::function<void(const std::string &, const json &, mqtt::properties)> callback,
+                                const int &subqos);
 
     // Node registration methods
     template <typename T>
-    void registerNodeType(const std::string &response_topic, const int &qos)
+    void registerNodeType(const std::string &response_topic, const int &subqos)
     {
         auto type_index = std::type_index(typeid(T));
 
@@ -45,11 +45,8 @@ public:
             {} // Empty vector for instances
         };
         // Register with the topic
-        register_topic_handler(response_topic,
-                               [this, type_idx = type_index](const std::string &msg_topic, const json &msg, mqtt::properties props)
-                               {
-                                   route_to_nodes(type_idx, msg_topic, msg, props);
-                               },qos);
+        register_topic_handler(response_topic, [this, type_idx = type_index](const std::string &msg_topic, const json &msg, mqtt::properties props)
+                               { route_to_nodes(type_idx, msg_topic, msg, props); }, subqos);
     }
 
     // Register the individual nodes

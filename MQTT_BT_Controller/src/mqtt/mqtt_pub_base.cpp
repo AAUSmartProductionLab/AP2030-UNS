@@ -8,15 +8,15 @@ namespace fs = std::filesystem;
 MqttPubBase::MqttPubBase(MqttClient &mqtt_client,
                          const std::string &request_topic = "",
                          const std::string &request_schema_path = "",
-                         const int &qos = 0,
+                         const int &pubqos = 0,
                          const bool &retain = false)
     : mqtt_client_(mqtt_client),
       request_topic_(request_topic),
       request_topic_pattern_(request_topic),
       request_schema_path_(request_schema_path),
       request_schema_validator_(nullptr),
-      pubqos_(qos),
-      retain_(retain)     
+      pubqos_(pubqos),
+      retain_(retain)
 {
   // Load schema if path is provided
   if (!request_schema_path_.empty())

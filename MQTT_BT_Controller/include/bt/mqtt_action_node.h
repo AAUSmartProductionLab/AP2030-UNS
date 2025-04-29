@@ -25,7 +25,7 @@ public:
                    const std::string &request_schema_path,
                    const std::string &response_schema_path,
                    const bool &retain = false,
-                   const int &qos = 0);
+                   const int &pubqos = 0);
 
     virtual ~MqttActionNode();
 

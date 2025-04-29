@@ -29,7 +29,10 @@ void registerAllNodes(
         unsTopicPrefix + "/Planar/+/CMD/XYMotion",
         unsTopicPrefix + "/Planar/+/DATA/State",
         "../../schemas/moveToPosition.schema.json",
-        "../../schemas/state.schema.json");
+        "../../schemas/state.schema.json",
+        false,
+        2,
+        2);
 
     MqttActionNode::registerNodeType<OmronArclRequest>(
         factory,
@@ -39,23 +42,10 @@ void registerAllNodes(
         unsTopicPrefix + "/Omron/CMD/ARCL",
         unsTopicPrefix + "/Omron/DATA/State",
         "../../schemas/amrArclRequest.schema.json",
-        "../../schemas/amrArclUpdate.schema.json");
-
-    MqttSyncSubNode::registerNodeType<GenericConditionNode>(
-        factory,
-        node_message_distributor,
-        bt_mqtt_client,
-        "Weight_Condition",
-        unsTopicPrefix + "/Filling/DATA/Weight",
-        "../../schemas/weight.schema.json");
-
-    MqttSyncSubNode::registerNodeType<GenericConditionNode>(
-        factory,
-        node_message_distributor,
-        bt_mqtt_client,
-        "Station_State_Condition",
-        unsTopicPrefix + "/+/DATA/State",
-        "../../schemas/stationState.schema.json");
+        "../../schemas/amrArclUpdate.schema.json",
+        false,
+        2,
+        2);
 
     MqttActionNode::registerNodeType<StationRegisterNode>(
         factory,
@@ -65,7 +55,10 @@ void registerAllNodes(
         unsTopicPrefix + "/+/CMD/Register",
         unsTopicPrefix + "/+/DATA/State",
         "../../schemas/command.schema.json",
-        "../../schemas/stationState.schema.json");
+        "../../schemas/stationState.schema.json",
+        false,
+        2,
+        2);
 
     MqttActionNode::registerNodeType<StationUnRegisterNode>(
         factory,
@@ -75,7 +68,10 @@ void registerAllNodes(
         unsTopicPrefix + "/+/CMD/Unregister",
         unsTopicPrefix + "/+/DATA/State",
         "../../schemas/command.schema.json",
-        "../../schemas/stationState.schema.json");
+        "../../schemas/stationState.schema.json",
+        false,
+        2,
+        2);
 
     MqttActionNode::registerNodeType<StationExecuteNode>(
         factory,
@@ -85,7 +81,19 @@ void registerAllNodes(
         unsTopicPrefix + "/+/CMD/+",
         unsTopicPrefix + "/+/DATA/State",
         "../../schemas/command.schema.json",
-        "../../schemas/stationState.schema.json");
+        "../../schemas/stationState.schema.json",
+        false,
+        2,
+        2);
+
+    MqttSyncSubNode::registerNodeType<GenericConditionNode>(
+        factory,
+        node_message_distributor,
+        bt_mqtt_client,
+        "Weight_Condition",
+        unsTopicPrefix + "/Filling/DATA/Weight",
+        "../../schemas/weight.schema.json",
+        2);
 
     MqttAsyncSubNode::registerNodeType<BuildProductionQueueNode>(
         factory,
@@ -93,7 +101,17 @@ void registerAllNodes(
         bt_mqtt_client,
         "BuildProductionQueue",
         unsTopicPrefix + "/Configurator/DATA/Order",
-        "../../schemas/order.schema.json");
+        "../../schemas/order.schema.json",
+        2);
+
+    MqttSyncSubNode::registerNodeType<GenericConditionNode>(
+        factory,
+        node_message_distributor,
+        bt_mqtt_client,
+        "Station_State_Condition",
+        unsTopicPrefix + "/+/DATA/State",
+        "../../schemas/stationState.schema.json",
+        2);
 
     factory.registerNodeType<GetProductFromQueue>("GetProductFromQueue");
 }

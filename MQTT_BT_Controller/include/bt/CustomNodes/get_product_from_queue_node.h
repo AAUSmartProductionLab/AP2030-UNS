@@ -31,18 +31,17 @@ public:
         if (status() == BT::NodeStatus::IDLE)
         {
             child_running_ = false;
-        }
 
-        if (!child_running_)
-        {
-            BT::AnyPtrLocked any_ref =
-                queue_ ? BT::AnyPtrLocked() : getLockedPortContent("Queue");
-
+            // Always get a fresh queue reference when starting from IDLE
+            BT::AnyPtrLocked any_ref = getLockedPortContent("Queue");
             if (any_ref)
             {
                 queue_ = any_ref.get()->cast<BT::SharedQueue<std::string>>();
             }
+        }
 
+        if (!child_running_)
+        {
             if (queue_ && !queue_->empty())
             {
                 auto value = std::move(queue_->front());

@@ -20,8 +20,7 @@ public:
                      MqttClient &mqtt_client,
                      const std::string &response_topic,
                      const std::string &response_schema_path,
-                     const bool &retain = false,
-                     const int &qos = 0);
+                     const int &subqos = 0);
 
     virtual ~MqttAsyncSubNode();
 
