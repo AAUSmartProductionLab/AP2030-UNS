@@ -73,7 +73,7 @@ class PackMLStateMachine:
         timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
         response = {
             "State": self.state.value,
-            "ProcessQueue": self.command_uuids.copy()
+            "ProcessQueue": self.command_uuids.copy(),
             "TimeStamp": timestamp
         }
             
@@ -94,7 +94,7 @@ class PackMLStateMachine:
         timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
         response = {
             "State": self.state.value,
-            "ProcessQueue": self.command_uuids.copy()
+            "ProcessQueue": self.command_uuids.copy(),
             "TimeStamp": timestamp
         }
             
@@ -117,7 +117,7 @@ class PackMLStateMachine:
             timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
             response = {
                 "State": self.state.value,
-                "ProcessQueue": self.command_uuids.copy()
+                "ProcessQueue": self.command_uuids.copy(),
                 "TimeStamp": timestamp
             }
                 
