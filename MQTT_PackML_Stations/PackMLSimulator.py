@@ -165,7 +165,7 @@ class PackMLStateMachine:
         self.state = new_state
         
         # Generate ISO 8601 timestamp with Z suffix for UTC
-        timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='milliseconds')
+        timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
         
         response = {
             "State": new_state.value,
