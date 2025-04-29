@@ -1,13 +1,16 @@
 #include "bt/CustomNodes/move_shuttle_to_position.h"
 #include "mqtt/utils.h"
 #include "mqtt/node_message_distributor.h"
-#include "common_constants.h"
 
+std::map<std::string, int> stationMap = {
+    {"Loading", 1},
+    {"Filling", 2},
+    {"Stoppering", 3},
+    {"Unloading", 4}};
 
-MoveShuttleToPosition::MoveShuttleToPosition(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client, const std::string &request_topic, const std::string &response_topic, const std::string &request_schema_path, const std::string &response_schema_path,const bool &retain,const int &pubqos)
-: MqttActionNode(name, config, bt_mqtt_client,
-    request_topic, 
-    response_topic, request_schema_path, response_schema_path, retain, pubqos)
+MoveShuttleToPosition::MoveShuttleToPosition(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client, const std::string &request_topic, const std::string &response_topic, const std::string &request_schema_path, const std::string &response_schema_path, const bool &retain, const int &pubqos) : MqttActionNode(name, config, bt_mqtt_client,
+                                                                                                                                                                                                                                                                                                                                              request_topic,
+                                                                                                                                                                                                                                                                                                                                              response_topic, request_schema_path, response_schema_path, retain, pubqos)
 {
     // Replace the wildcard in the request and response topics with the XbotId of this node instance
     response_topic_ = getFormattedTopic(response_topic_pattern_, config);
@@ -32,16 +35,21 @@ std::string MoveShuttleToPosition::getFormattedTopic(const std::string &pattern,
 
 BT::PortsList MoveShuttleToPosition::providedPorts()
 {
-    return {BT::InputPort<int>("TargetPosition")};
+    return {BT::InputPort<std::string>("TargetPosition")};
 }
 
 json MoveShuttleToPosition::createMessage()
 {
-    BT::Expected<int> TargetPosition = getInput<int>("TargetPosition");
-    
+    BT::Expected<std::string> TargetPosition = getInput<std::string>("TargetPosition");
+
     json message;
-    current_command_uuid_ = mqtt_utils::generate_uuid();
-    message["TargetPosition"] = TargetPosition.value();
-    message["CommandUuid"] = current_command_uuid_;
-    return message;
+    std::string station = TargetPosition.value();
+    if (stationMap.find(station) != stationMap.end())
+    {
+        current_command_uuid_ = mqtt_utils::generate_uuid();
+        message["TargetPosition"] = stationMap[station];
+        message["CommandUuid"] = current_command_uuid_;
+        return message;
+    }
+    return json();
 }
