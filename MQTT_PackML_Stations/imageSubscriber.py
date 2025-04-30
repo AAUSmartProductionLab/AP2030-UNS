@@ -7,7 +7,7 @@ import paho.mqtt.client as mqtt
 # MQTT broker settings
 MQTT_BROKER = "192.168.0.104"  # Change to your broker address if needed
 MQTT_PORT = 1883
-MQTT_TOPIC = "NN/Nybrovej/Innolab/Camera/DATA/Image"
+MQTT_TOPIC = "NN/Nybrovej/InnoLab/Camera/DATA/Image"
 
 # Callback when connecting to the MQTT broker
 def on_connect(client, userdata, flags, rc):
