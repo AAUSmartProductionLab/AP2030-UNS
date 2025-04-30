@@ -26,6 +26,10 @@ def capture_process(duration=0.5, state_machine=None):
 
 
 def publishImage(state_machine, reset=False):
+    # Only publish on final completion, not during progress or reset
+    if reset or state_machine.progress < 1.0:
+        return
+        
     webcam = None
     try:
         webcam = cv2.VideoCapture(0)
