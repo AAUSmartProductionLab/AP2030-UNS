@@ -41,4 +41,6 @@ services:
     network_mode: host
     volumes:
       - ./schemas:/app/schemas
+    devices:
+      - /dev/video0:/dev/video0
     command: cameraProxy.py
