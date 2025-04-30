@@ -45,7 +45,7 @@ def on_message(client, userdata, msg):
         print(f"Payload: {msg.payload}")
 
 # Set up the MQTT client
-client = mqtt.Client()
+client = mqtt.Client(client_id="ImageSubscriber")
 client.on_connect = on_connect
 client.on_message = on_message
 
