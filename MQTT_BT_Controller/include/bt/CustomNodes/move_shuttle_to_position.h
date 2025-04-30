@@ -13,15 +13,17 @@ using nlohmann::json;
 class MoveShuttleToPosition : public MqttActionNode
 {
 private:
-    static std::string getFormattedTopic(const std::string &pattern, const BT::NodeConfig &config);
+    std::string getFormattedTopic(const std::string &pattern, const BT::NodeConfig &config);
+
 public:
     MoveShuttleToPosition(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client,
                           const std::string &request_topic,
                           const std::string &response_topic,
                           const std::string &request_schema_path,
                           const std::string &response_schema_path,
-                          const bool &retain = false,
-                          const int &pubqos = 0);
+                          const bool &retain,
+                          const int &pubqos,
+                          const int &subqos);
 
     static BT::PortsList providedPorts();
 

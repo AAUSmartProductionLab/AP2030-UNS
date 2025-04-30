@@ -14,8 +14,6 @@
 #include "mqtt/utils.h"
 #include "bt/register_all_nodes.h"
 
-const std::string OUTPUT_FILE("../src/bt/Description/tree_nodes_model.xml");
-
 /**
  * Saves a string to a file
  */
@@ -44,7 +42,8 @@ bool loadConfigFromYaml(const std::string &filename,
                         std::string &clientId,
                         std::string &unsTopicPrefix,
                         int &groot2_port,
-                        std::string &bt_description_path)
+                        std::string &bt_description_path,
+                        std::string &bt_nodes_path)
 {
     try
     {
@@ -80,6 +79,10 @@ bool loadConfigFromYaml(const std::string &filename,
         {
             bt_description_path = config["bt_description_path"].as<std::string>();
         }
+        if (config["bt_nodes_path"])
+        {
+            bt_nodes_path = config["bt_nodes_path"].as<std::string>();
+        }
         std::cout << "Configuration loaded from: " << filename << std::endl;
         return true;
     }
@@ -91,25 +94,18 @@ bool loadConfigFromYaml(const std::string &filename,
 }
 int main(int argc, char *argv[])
 {
+    // Default parameter values
     std::string configFile = "../config/controller_config.yaml";
     std::string serverURI = "192.168.0.140:1883";
     std::string clientId = "bt";
     std::string unsTopicPrefix = "NN/nybrovej/InnoLab";
     std::string bt_description_path = "../config/bt_description/tree.xml";
+    std::string bt_nodes_path("../config/bt_description/tree_nodes_model.xml");
     int groot2_port = 1667;
     bool generate_xml_models = false;
 
     loadConfigFromYaml(configFile, generate_xml_models, serverURI, clientId, unsTopicPrefix, groot2_port,
-                       bt_description_path);
-    std::cout << " ----------------------------------------------------------------------" << std::endl;
-    std::cout << "Using configuration:" << std::endl
-              << "  Broker URI: " << serverURI << std::endl
-              << "  Client ID: " << clientId << std::endl
-              << "  UNS Topic: " << unsTopicPrefix << std::endl
-              << "  Generate XML Models: " << (generate_xml_models ? "Yes" : "No") << std::endl
-              << "  Groot2 port: " << groot2_port << std::endl
-              << "  BT Description Path: " << bt_description_path << std::endl
-              << " ----------------------------------------------------------------------" << std::endl;
+                       bt_description_path, bt_nodes_path);
 
     auto connOpts = mqtt::connect_options_builder::v5()
                         .clean_start(true) // if false the broker retains previous subscriptions
@@ -127,12 +123,16 @@ int main(int argc, char *argv[])
     if (generate_xml_models)
     {
         std::string xml_models = BT::writeTreeNodesModelXML(factory);
-        return saveXmlToFile(xml_models, OUTPUT_FILE);
+        return saveXmlToFile(xml_models, bt_nodes_path);
     }
     else
     {
         factory.registerBehaviorTreeFromFile(bt_description_path);
         BT::Tree tree = factory.createTree("MainTree");
+
+        // Subscribe only to topics for nodes actually used in the tree
+        node_message_distributor.subscribeToActiveNodes(tree);
+
         BT::Groot2Publisher publisher(tree, groot2_port);
 
         // Create a backup of the initial blackboard state

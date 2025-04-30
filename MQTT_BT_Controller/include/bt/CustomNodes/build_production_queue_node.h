@@ -15,7 +15,8 @@ class BuildProductionQueueNode : public MqttAsyncSubNode
 public:
     BuildProductionQueueNode(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client,
                              const std::string &response_topic,
-                             const std::string &response_schema_path);
+                             const std::string &response_schema_path,
+                             const int &subqos);
 
     static BT::PortsList providedPorts();
     void callback(const json &msg, mqtt::properties props) override;

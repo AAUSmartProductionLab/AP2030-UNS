@@ -3,6 +3,13 @@
         <Action ID="BuildProductionQueue">
             <output_port name="ProductIDs" type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;" default="{ProductIDs}">List of product IDs to produce</output_port>
         </Action>
+        <Condition ID="Data_Condition">
+            <input_port name="expected_value" type="std::string">Value to compare against</input_port>
+            <input_port name="comparison_type" type="std::string">Type of comparison: equal, not_equal, greater, less, contains</input_port>
+            <input_port name="Field" type="std::string">Name of the field to monitor in the MQTT message</input_port>
+            <input_port name="Message" type="std::string">The message from the station</input_port>
+            <input_port name="Station" type="std::string" default="{Station}">The station from which to receive a message</input_port>
+        </Condition>
         <Decorator ID="GetProductFromQueue">
             <output_port name="Product" type="std::string" default="{_ProductID}">The product ID of the current product</output_port>
             <input_port name="if_empty" type="BT::NodeStatus" default="SUCCESS">Status to return if queue is empty: SUCCESS, FAILURE, SKIPPED</input_port>
@@ -17,7 +24,7 @@
         <Action ID="Station_Execution">
             <input_port name="CommandUuid" type="std::string" default="{_ID}">UUID for the command to execute</input_port>
             <input_port name="Command" type="std::string" default="Command">The command to execute on the station</input_port>
-            <input_port name="Station" type="std::string" default="{_Station}">The station to register with</input_port>
+            <input_port name="Station" type="std::string" default="{Station}">The station to register with</input_port>
         </Action>
         <Action ID="Station_Registration">
             <output_port name="CommandUuid" type="std::string" default="{_ID}">UUID for the command to execute</output_port>
@@ -26,16 +33,13 @@
         <Condition ID="Station_State_Condition">
             <input_port name="expected_value" type="std::string">Value to compare against</input_port>
             <input_port name="comparison_type" type="std::string">Type of comparison: equal, not_equal, greater, less, contains</input_port>
-            <input_port name="field_name" type="std::string">Name of the field to monitor in the MQTT message</input_port>
+            <input_port name="Field" type="std::string">Name of the field to monitor in the MQTT message</input_port>
+            <input_port name="Message" type="std::string">The message from the station</input_port>
+            <input_port name="Station" type="std::string" default="{Station}">The station from which to receive a message</input_port>
         </Condition>
         <Action ID="Station_Unregistration">
             <input_port name="CommandUuid" type="std::string" default="{_ID}">UUID for the command to execute</input_port>
             <input_port name="Station" type="std::string" default="{_Station}">The station to unregister from</input_port>
         </Action>
-        <Condition ID="Weight_Condition">
-            <input_port name="expected_value" type="std::string">Value to compare against</input_port>
-            <input_port name="comparison_type" type="std::string">Type of comparison: equal, not_equal, greater, less, contains</input_port>
-            <input_port name="field_name" type="std::string">Name of the field to monitor in the MQTT message</input_port>
-        </Condition>
     </TreeNodesModel>
 </root>

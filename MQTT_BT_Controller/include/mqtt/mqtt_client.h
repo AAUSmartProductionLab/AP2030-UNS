@@ -27,7 +27,7 @@ public:
     void delivery_complete(mqtt::delivery_token_ptr token) override;
 
     // Topic subscription management
-    bool subscribe_topic(const std::string &topic, int subqos = 0);
+    bool subscribe_topic(const std::string &topic, int subqos);
     void resubscribe_all_topics();
 
     // Set message handler
@@ -35,7 +35,7 @@ public:
 
     // Publishing interface
     bool publish_message(const std::string &topic, const json &payload,
-                         int pubqos = 0, bool retained = false);
+                         int pubqos, bool retained = false);
 
 private:
     // Nested class for subscription status events

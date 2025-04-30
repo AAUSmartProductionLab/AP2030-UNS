@@ -9,12 +9,14 @@ NodeMessageDistributor *MqttSubBase::node_message_distributor_ = nullptr;
 
 MqttSubBase::MqttSubBase(MqttClient &mqtt_client,
                          const std::string &response_topic = "",
-                         const std::string &response_schema_path = "")
+                         const std::string &response_schema_path = "",
+                         const int &subqos = 0)
     : mqtt_client_(mqtt_client),
       response_topic_(response_topic),
       response_topic_pattern_(response_topic),
       response_schema_path_(response_schema_path),
-      response_schema_validator_(nullptr)
+      response_schema_validator_(nullptr),
+      subqos_(subqos)
 {
     // Load schema if path is provided
     if (!response_schema_path_.empty())

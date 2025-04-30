@@ -13,7 +13,7 @@ MqttAsyncSubNode::MqttAsyncSubNode(const std::string &name,
                                    const std::string &response_schema_path,
                                    const int &subqos)
     : BT::StatefulActionNode(name, config),
-      MqttSubBase(mqtt_client, response_topic, response_schema_path)
+      MqttSubBase(mqtt_client, response_topic, response_schema_path, subqos)
 {
     // Registration happens in derived classes
 }

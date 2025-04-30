@@ -1,10 +1,12 @@
 #include "bt/CustomNodes/generic_condition_node.h"
 #include "mqtt/node_message_distributor.h"
+#include "mqtt/utils.h"
 
 GenericConditionNode::GenericConditionNode(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client,
-                                           const std::string &response_topic, const std::string &response_schema_path)
-    : MqttSyncSubNode(name, config, bt_mqtt_client, response_topic, response_schema_path)
+                                           const std::string &response_topic, const std::string &response_schema_path, const int &subqos)
+    : MqttSyncSubNode(name, config, bt_mqtt_client, response_topic, response_schema_path, subqos)
 {
+    response_topic_ = getFormattedTopic(response_topic_pattern_, config);
     if (MqttSubBase::node_message_distributor_)
     {
         MqttSubBase::node_message_distributor_->registerDerivedInstance(this);
@@ -14,20 +16,38 @@ GenericConditionNode::GenericConditionNode(const std::string &name, const BT::No
 BT::PortsList GenericConditionNode::providedPorts()
 {
     return {
-        BT::InputPort<std::string>("field_name", "Name of the field to monitor in the MQTT message"),
+        BT::details::PortWithDefault<std::string>(
+            BT::PortDirection::INPUT,
+            "Station",
+            "{Station}",
+            "The station from which to receive a message"),
+        BT::InputPort<std::string>("Message", "The message from the station"),
+        BT::InputPort<std::string>("Field", "Name of the field to monitor in the MQTT message"),
         BT::InputPort<std::string>("comparison_type", "Type of comparison: equal, not_equal, greater, less, contains"),
         BT::InputPort<std::string>("expected_value", "Value to compare against")};
 }
-
+std::string GenericConditionNode::getFormattedTopic(const std::string &pattern, const BT::NodeConfig &config)
+{
+    std::vector<std::string> replacements;
+    BT::Expected<std::string> station = getInput<std::string>("Station");
+    BT::Expected<std::string> message = getInput<std::string>("Message");
+    if (station.has_value() && message.has_value())
+    {
+        replacements.push_back(station.value());
+        replacements.push_back(message.value());
+        return mqtt_utils::formatWildcardTopic(pattern, replacements);
+    }
+    return pattern;
+}
 bool GenericConditionNode::isInterestedIn(const json &msg)
 {
     // Either call the parent implementation:
-    auto field_name_res = getInput<std::string>("field_name");
+    auto field_name_res = getInput<std::string>("Field");
 
     // First check if we have a valid field_name
     if (!field_name_res)
     {
-        std::cout << "GenericConditionNode: No field_name input available" << std::endl;
+        std::cout << "GenericConditionNode: No Field input available" << std::endl;
         return false;
     }
     if (msg.contains(field_name_res.value()))
@@ -48,10 +68,10 @@ void GenericConditionNode::callback(const json &msg, mqtt::properties props)
 BT::NodeStatus GenericConditionNode::tick()
 {
     // Get the field name from inputs
-    auto field_name_res = getInput<std::string>("field_name");
+    auto field_name_res = getInput<std::string>("Field");
     if (!field_name_res)
     {
-        std::cout << "MqttConditionNode: Missing field_name" << std::endl;
+        std::cout << "MqttConditionNode: Missing Field" << std::endl;
         return BT::NodeStatus::FAILURE;
     }
     std::string field_name = field_name_res.value();

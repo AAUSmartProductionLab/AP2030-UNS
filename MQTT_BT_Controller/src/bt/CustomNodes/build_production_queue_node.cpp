@@ -3,9 +3,10 @@
 #include "mqtt/node_message_distributor.h"
 #include <deque>
 
-BuildProductionQueueNode::BuildProductionQueueNode(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client, const std::string &response_topic, const std::string &response_schema_path)
+BuildProductionQueueNode::BuildProductionQueueNode(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client, const std::string &response_topic, const std::string &response_schema_path,
+                                                   const int &subqos)
     : MqttAsyncSubNode(name, config, bt_mqtt_client,
-                       response_topic, response_schema_path)
+                       response_topic, response_schema_path, subqos)
 {
 
     if (MqttSubBase::node_message_distributor_)

@@ -2,11 +2,14 @@
 #include "mqtt/mqtt_client.h"
 #include <iostream>
 #include <fstream>
+#include <unordered_set>
+#include <sstream>
 
 NodeMessageDistributor::NodeMessageDistributor(MqttClient &mqtt_client) : mqtt_client_(mqtt_client)
 {
     // Set this manager as the message handler for the mqtt_client
-    mqtt_client.set_message_handler([this](const std::string &msg_topic, const json &payload, mqtt::properties props){ handle_message(msg_topic, payload, props); });
+    mqtt_client.set_message_handler([this](const std::string &msg_topic, const json &payload, mqtt::properties props)
+                                    { handle_message(msg_topic, payload, props); });
 }
 
 NodeMessageDistributor::~NodeMessageDistributor()
@@ -14,16 +17,70 @@ NodeMessageDistributor::~NodeMessageDistributor()
     // No need for explicit cleanup
 }
 
-void NodeMessageDistributor::register_topic_handler(
-    const std::string &topic,
-    std::function<void(const std::string &, const json &, mqtt::properties)> callback,
-    const int &subqos=0)
+void NodeMessageDistributor::subscribeToActiveNodes(const BT::Tree &tree)
 {
-    topic_handlers_.push_back({topic, callback});
+    std::cout << "Subscribing to topics for active behavior tree nodes..." << std::endl;
 
-    // Subscribe to the topic through the mqtt_client
-    mqtt_client_.subscribe_topic(topic, subqos);
+    // Collect all node types in the tree
+    std::set<std::string> activeNodeTypes;
+    BT::applyRecursiveVisitor(tree.rootNode(), [&activeNodeTypes](const BT::TreeNode *node)
+                              {
+        if (node) {
+            activeNodeTypes.insert(node->registrationName());
+        } });
+
+    // Map topics to their subscriber type indices
+    std::map<std::string, std::vector<std::type_index>> topicSubscribers;
+    std::map<std::string, int> topicMaxQoS; // Track maximum QoS per topic
+
+    // Find all topics needed by active nodes
+    for (const auto &[type_index, subscription] : node_subscriptions_)
+    {
+        for (auto *instance : subscription.instances)
+        {
+            if (!instance)
+                continue;
+
+            std::string nodeName = instance->getBTNodeName();
+            if (activeNodeTypes.find(nodeName) == activeNodeTypes.end())
+                continue;
+
+            // Store the type index for this topic
+            topicSubscribers[instance->response_topic_].push_back(type_index);
+
+            // Update maximum QoS for this topic if necessary
+            if (topicMaxQoS.find(instance->response_topic_) == topicMaxQoS.end() ||
+                instance->subqos_ > topicMaxQoS[instance->response_topic_])
+            {
+                topicMaxQoS[instance->response_topic_] = instance->subqos_;
+            }
+        }
+    }
+
+    // Clear existing handlers
+    topic_handlers_.clear();
+
+    // Create new handlers and subscribe
+    for (const auto &[topic, type_indices] : topicSubscribers)
+    {
+        // Create a handler that routes messages to appropriate node types
+        auto callback = [this, type_indices](
+                            const std::string &msg_topic, const json &msg, mqtt::properties props)
+        {
+            for (const auto &type_index : type_indices)
+            {
+                this->route_to_nodes(type_index, msg_topic, msg, props);
+            }
+        };
+        const int qos = topicMaxQoS[topic];
+        topic_handlers_.push_back({topic, callback, qos, false});
+        mqtt_client_.subscribe_topic(topic, qos);
+        topic_handlers_.back().subscribed = true;
+    }
+
+    std::cout << "Subscribed to " << topicSubscribers.size() << " topics for active nodes." << std::endl;
 }
+
 bool NodeMessageDistributor::topicMatches(const std::string &pattern, const std::string &topic)
 {
     std::istringstream patternStream(pattern);
@@ -39,11 +96,6 @@ bool NodeMessageDistributor::topicMatches(const std::string &pattern, const std:
         }
         else if (patternSegment == "#")
         {
-            if (patternStream.peek() != EOF)
-            {
-                std::cout << "Invalid MQTT pattern: # must be the last segment in topic filter" << std::endl;
-                return false;
-            }
             return true;
         }
         else if (patternSegment != topicSegment)
@@ -51,10 +103,13 @@ bool NodeMessageDistributor::topicMatches(const std::string &pattern, const std:
             return false;
         }
     }
+
     bool patternDone = !std::getline(patternStream, patternSegment, '/');
     bool topicDone = !std::getline(topicStream, topicSegment, '/');
+
     return patternDone && topicDone;
 }
+
 void NodeMessageDistributor::handle_message(const std::string &msg_topic,
                                             const json &payload,
                                             mqtt::properties props)
@@ -94,7 +149,7 @@ void NodeMessageDistributor::route_to_nodes(
         {
             // Check if the bt node is interested in exactly this topic ignoring wild cards
             // and if the node is interested in the message
-            if (node->getResponseTopic() == topic  && node->isInterestedIn(msg))
+            if (node->getResponseTopic() == topic && node->isInterestedIn(msg))
             {
                 node->processMessage(msg, props);
             }
@@ -104,11 +159,11 @@ void NodeMessageDistributor::route_to_nodes(
 
 void NodeMessageDistributor::registerDerivedInstance(MqttSubBase *instance)
 {
+    if (!instance)
+        return;
+
     std::type_index type_index(typeid(*instance));
-    if (node_subscriptions_.find(type_index) != node_subscriptions_.end())
-    {
-        node_subscriptions_[type_index].instances.push_back(instance);
-    }
+    node_subscriptions_[type_index].instances.push_back(instance);
 }
 
 void NodeMessageDistributor::unregisterInstance(MqttSubBase *instance)

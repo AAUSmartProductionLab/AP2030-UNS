@@ -3,15 +3,19 @@
     "title": "Weight from IPC Weighing of PPM",
     "description": "JSON Schema for a IPC weighing using a scale",
     "type": "object",
-    "properties": {
-        "Weight": {
-            "type": "number",
-            "description": "The weight of the liquid during IPC"
+    "allOf": [
+        {
+            "$ref": "data.schema.json"
         },
-        "TimeStamp": {
-            "type": "string",
-            "description": "The time stamp of the message"
+        {
+            "type": "object",
+            "properties": {
+            "Weight": {
+                "type": "number",
+                "description": "The weight of the liquid during IPC"
+            }
+        },
+        "required": ["Weight"]
         }
-    },
-    "required": ["Weight"]
+    ]
 }

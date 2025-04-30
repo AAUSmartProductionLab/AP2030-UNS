@@ -14,9 +14,10 @@ MqttActionNode::MqttActionNode(const std::string &name,
                                const std::string &request_schema_path,
                                const std::string &response_schema_path,
                                const bool &retain,
-                               const int &pubqos)
+                               const int &pubqos,
+                               const int &subqos)
     : BT::StatefulActionNode(name, config),
-      MqttSubBase(mqtt_client, response_topic, response_schema_path),
+      MqttSubBase(mqtt_client, response_topic, response_schema_path, subqos),
       MqttPubBase(mqtt_client, request_topic, request_schema_path, pubqos, retain)
 {
     // Registration happens in derived classes

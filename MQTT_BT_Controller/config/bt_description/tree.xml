@@ -5,16 +5,18 @@
       <Station_Registration CommandUuid="{_ID}"
                             Station="{Station}"/>
       <MoveShuttle TargetPosition="{Station}"/>
-      <ReactiveFallback>
-        <Weight_Condition expected_value="2.0"
-                          comparison_type="equal"
-                          field_name="Weight"/>
-        <RetryUntilSuccessful num_attempts="2">
+      <RetryUntilSuccessful num_attempts="2">
+        <Sequence>
           <Station_Execution CommandUuid="{_ID}"
                              Command="Dispense"
                              Station="{Station}"/>
-        </RetryUntilSuccessful>
-      </ReactiveFallback>
+          <Data_Condition expected_value="2.2"
+                          comparison_type="less"
+                          Field="Weight"
+                          Message="Weight"
+                          Station="{Station}"/>
+        </Sequence>
+      </RetryUntilSuccessful>
       <Station_Unregistration CommandUuid="{_ID}"
                               Station="{Station}"/>
     </Sequence>
@@ -55,10 +57,6 @@
     </GetProductFromQueue>
   </BehaviorTree>
 
-  <BehaviorTree ID="StationProcess">
-    <AlwaysSuccess/>
-  </BehaviorTree>
-
   <BehaviorTree ID="Stoppering">
     <Sequence>
       <Station_Registration CommandUuid="{_ID}"
@@ -79,6 +77,19 @@
                    default="{ProductIDs}"
                    type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;">List of product IDs to produce</output_port>
     </Action>
+    <Condition ID="Data_Condition">
+      <input_port name="expected_value"
+                  type="std::string">Value to compare against</input_port>
+      <input_port name="comparison_type"
+                  type="std::string">Type of comparison: equal, not_equal, greater, less, contains</input_port>
+      <input_port name="Field"
+                  type="std::string">Name of the field to monitor in the MQTT message</input_port>
+      <input_port name="Message"
+                  type="std::string">The message from the station</input_port>
+      <input_port name="Station"
+                  default="{Station}"
+                  type="std::string">The station from which to receive a message</input_port>
+    </Condition>
     <SubTree ID="Filling"
              editable="true">
       <input_port name="Station"
@@ -111,7 +122,7 @@
                   default="Command"
                   type="std::string">The command to execute on the station</input_port>
       <input_port name="Station"
-                  default="{_Station}"
+                  default="{Station}"
                   type="std::string">The station to register with</input_port>
     </Action>
     <Action ID="Station_Registration">
@@ -135,14 +146,6 @@
       <input_port name="Station"
                   default="Stoppering"/>
     </SubTree>
-    <Condition ID="Weight_Condition">
-      <input_port name="expected_value"
-                  type="std::string">Value to compare against</input_port>
-      <input_port name="comparison_type"
-                  type="std::string">Type of comparison: equal, not_equal, greater, less, contains</input_port>
-      <input_port name="field_name"
-                  type="std::string">Name of the field to monitor in the MQTT message</input_port>
-    </Condition>
   </TreeNodesModel>
 
 </root>

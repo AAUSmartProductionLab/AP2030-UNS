@@ -18,9 +18,10 @@ public:
                         const std::string &request_topic,
                         const std::string &response_topic,
                         const std::string &request_schema_path,
-                        const std::string &response_schema_path, const bool &retain, const int &pubqos)
+                        const std::string &response_schema_path, const bool &retain, const int &pubqos,
+                        const int &subqos)
         : MqttActionNode(name, config, bt_mqtt_client,
-                         request_topic, response_topic, request_schema_path, response_schema_path, retain, pubqos)
+                         request_topic, response_topic, request_schema_path, response_schema_path, retain, pubqos, subqos)
     {
         if (MqttSubBase::node_message_distributor_)
         {

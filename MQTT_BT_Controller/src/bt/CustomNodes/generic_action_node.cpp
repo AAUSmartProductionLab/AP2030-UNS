@@ -3,9 +3,18 @@
 #include "mqtt/node_message_distributor.h"
 
 // MoveShuttleToPosition implementation
-GenericActionNode::GenericActionNode(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client, const std::string &request_topic, const std::string &response_topic, const std::string &request_schema_path, const std::string &response_schema_path)
+GenericActionNode::GenericActionNode(const std::string &name,
+                                     const BT::NodeConfig &config,
+                                     MqttClient &bt_mqtt_client,
+                                     const std::string &request_topic,
+                                     const std::string &response_topic,
+                                     const std::string &request_schema_path,
+                                     const std::string &response_schema_path,
+                                     const bool &retain,
+                                     const int &pubqos,
+                                     const int &subqos)
     : MqttActionNode(name, config, bt_mqtt_client,
-                     request_topic, response_topic, request_schema_path, response_schema_path)
+                     request_topic, response_topic, request_schema_path, response_schema_path, retain, pubqos, subqos)
 {
     if (MqttSubBase::node_message_distributor_)
     {

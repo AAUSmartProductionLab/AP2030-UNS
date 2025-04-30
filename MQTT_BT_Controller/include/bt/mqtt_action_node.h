@@ -24,8 +24,9 @@ public:
                    const std::string &response_topic,
                    const std::string &request_schema_path,
                    const std::string &response_schema_path,
-                   const bool &retain = false,
-                   const int &pubqos = 0);
+                   const bool &retain,
+                   const int &pubqos,
+                   const int &subqos);
 
     virtual ~MqttActionNode();
 
@@ -54,28 +55,38 @@ public:
         const std::string &response_topic,
         const std::string &request_schema_path,
         const std::string &response_schema_path,
-        const bool &retain = false,
-        const int &pubqos = 0,
-        const int &subqos = 0)
+        const bool &retain,
+        const int &pubqos,
+        const int &subqos)
     {
-        // Store configuration in a static map that persists throughout program execution
-        static std::unordered_map<std::string, std::tuple<std::string, std::string, std::string, std::string, bool, int>> node_configs;
-        node_configs[node_name] = std::make_tuple(request_topic, response_topic, request_schema_path, response_schema_path, retain, pubqos);
-
         MqttActionNode::setNodeMessageDistributor(&node_message_distributor);
-        node_message_distributor.registerNodeType<DerivedNode>(response_topic, subqos);
-        MqttClient *mqtt_client_ptr = &mqtt_client;
-        // Register a builder that captures the configuration
+
         factory.registerBuilder<DerivedNode>(
             node_name,
-            [mqtt_client_ptr, node_name](const std::string &name, const BT::NodeConfig &config)
+            [mqtt_client_ptr = &mqtt_client,
+             request_topic,
+             response_topic,
+             response_schema_path,
+             request_schema_path,
+             retain,
+             pubqos,
+             subqos](const std::string &name, const BT::NodeConfig &config)
             {
-                // Get the stored configuration
-                auto &[req_topic, resp_topic, req_schema, resp_schema, retain, pubqos] = node_configs[node_name];
-
-                // Create the node with proper arguments
-                auto node = std::make_unique<DerivedNode>(name, config, *mqtt_client_ptr, req_topic, resp_topic, req_schema, resp_schema, retain, pubqos);
-                return node;
+                return std::make_unique<DerivedNode>(
+                    name,
+                    config,
+                    *mqtt_client_ptr,
+                    request_topic,
+                    response_topic,
+                    response_schema_path,
+                    request_schema_path,
+                    retain,
+                    pubqos,
+                    subqos);
             });
     }
+    virtual std::string getBTNodeName() const override
+    {
+        return this->name();
+    };
 };

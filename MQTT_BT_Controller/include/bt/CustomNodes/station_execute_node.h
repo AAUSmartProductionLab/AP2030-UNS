@@ -19,24 +19,25 @@ public:
                        const std::string &response_topic,
                        const std::string &request_schema_path,
                        const std::string &response_schema_path,
-                       const bool &retain = false,
-                       const int &pubqos = 0)
+                       const bool &retain,
+                       const int &pubqos,
+                       const int &subqos)
         : MqttActionNode(name, config, bt_mqtt_client,
-                         request_topic, response_topic, request_schema_path, response_schema_path, retain, pubqos)
+                         request_topic, response_topic, request_schema_path, response_schema_path, retain, pubqos, subqos)
     {
+        request_topic_ = getFormattedTopic(request_topic_pattern_, config);
+        response_topic_ = getFormattedTopic(response_topic_pattern_, config);
         if (MqttSubBase::node_message_distributor_)
         {
             MqttSubBase::node_message_distributor_->registerDerivedInstance(this);
         }
-        request_topic_ = getFormattedTopic(request_topic_pattern_, config);
-        response_topic_ = getFormattedTopic(response_topic_pattern_, config);
     }
     static BT::PortsList providedPorts()
     {
         return {BT::details::PortWithDefault<std::string>(
                     BT::PortDirection::INPUT,
                     "Station",
-                    "{_Station}",
+                    "{Station}",
                     "The station to register with"),
                 BT::details::PortWithDefault<std::string>(
                     BT::PortDirection::INPUT,
@@ -74,7 +75,7 @@ public:
     std::string getFormattedTopic(const std::string &pattern, const BT::NodeConfig &config)
     {
         std::vector<std::string> replacements;
-        BT::Expected<std::string> station = config.blackboard->get<std::string>("Station");
+        BT::Expected<std::string> station = getInput<std::string>("Station");
         BT::Expected<std::string> command = getInput<std::string>("Command");
         if (station.has_value() && command.has_value())
         {

@@ -14,11 +14,12 @@ class GenericConditionNode : public MqttSyncSubNode
 {
 public:
     GenericConditionNode(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client,
-                         const std::string &response_topic, const std::string &response_schema_path);
+                         const std::string &response_topic, const std::string &response_schema_path, const int &subqos);
 
     static BT::PortsList providedPorts();
 
     BT::NodeStatus tick() override;
     bool isInterestedIn(const json &msg) override;
     void callback(const json &msg, mqtt::properties props) override;
+    std::string getFormattedTopic(const std::string &pattern, const BT::NodeConfig &config);
 };

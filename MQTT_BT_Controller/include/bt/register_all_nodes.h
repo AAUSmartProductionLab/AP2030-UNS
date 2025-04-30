@@ -90,9 +90,9 @@ void registerAllNodes(
         factory,
         node_message_distributor,
         bt_mqtt_client,
-        "Weight_Condition",
-        unsTopicPrefix + "/Filling/DATA/Weight",
-        "../../schemas/weight.schema.json",
+        "Data_Condition",
+        unsTopicPrefix + "/+/DATA/+",
+        "../../schemas/data.schema.json",
         2);
 
     MqttAsyncSubNode::registerNodeType<BuildProductionQueueNode>(

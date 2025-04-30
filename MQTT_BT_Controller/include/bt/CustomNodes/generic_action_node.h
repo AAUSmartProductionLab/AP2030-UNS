@@ -17,7 +17,10 @@ public:
                       const std::string &request_topic,
                       const std::string &response_topic,
                       const std::string &request_schema_path,
-                      const std::string &response_schema_path);
+                      const std::string &response_schema_path,
+                      const bool &retain,
+                      const int &pubqos,
+                      const int &subqos);
 
     json createMessage() override;
 };

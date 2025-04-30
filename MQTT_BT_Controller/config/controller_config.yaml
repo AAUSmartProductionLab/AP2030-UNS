@@ -8,3 +8,4 @@ generate_xml_models: false
 groot2_port: 1667
 
 bt_description_path: "../config/bt_description/tree.xml"
+bt_nodes_path: "../config/bt_description/tree_nodes_model.xml"

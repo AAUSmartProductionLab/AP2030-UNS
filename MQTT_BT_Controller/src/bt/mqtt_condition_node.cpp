@@ -6,9 +6,10 @@ MqttSyncSubNode::MqttSyncSubNode(const std::string &name,
                                  const BT::NodeConfig &config,
                                  MqttClient &mqtt_client,
                                  const std::string &response_topic,
-                                 const std::string &response_schema_path)
+                                 const std::string &response_schema_path,
+                                 const int &subqos)
     : BT::ConditionNode(name, config),
-      MqttSubBase(mqtt_client, response_topic, response_schema_path)
+      MqttSubBase(mqtt_client, response_topic, response_schema_path, subqos)
 
 {
     // Registration happens in derived classes
