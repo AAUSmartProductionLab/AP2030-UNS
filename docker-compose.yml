@@ -39,6 +39,7 @@ services:
       dockerfile: MQTT_PackML_Stations/dockerfile
     container_name: camera_station
     network_mode: host
+    restart: always
     volumes:
       - ./schemas:/app/schemas
     devices:
