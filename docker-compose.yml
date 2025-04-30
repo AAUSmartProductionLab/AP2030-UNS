@@ -32,3 +32,13 @@ services:
     volumes:
       - ./schemas:/app/schemas
     command: stopperingProxy.py
+    
+  camera_station:
+    build:
+      context: .
+      dockerfile: MQTT_PackML_Stations/dockerfile
+    container_name: camera_station
+    network_mode: host
+    volumes:
+      - ./schemas:/app/schemas
+    command: cameraProxy.py
