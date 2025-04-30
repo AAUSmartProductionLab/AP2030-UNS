@@ -1,0 +1,26 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Image",
+    "description": "JSON Schema for byte encoded images",
+    "type": "object",
+    "allOf": [
+        {
+            "$ref": "data.schema.json"
+        },
+        {
+            "type": "object",
+            "properties": {
+            "Image": {
+                "type": "string",
+                "description": "Base64 encoded image data"
+            },
+            "Format": {
+                "type": "string",
+                "description": "Format of the encoded image (e.g., base64_jpeg)",
+                "enum": ["base64_jpeg", "base64_png"]
+            }
+        },
+        "required": ["Image", "Format"]
+        }
+    ]
+}

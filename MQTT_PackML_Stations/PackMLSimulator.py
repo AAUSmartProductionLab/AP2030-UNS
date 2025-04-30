@@ -179,18 +179,24 @@ class PackMLStateMachine:
             "TimeStamp": timestamp
         }
         
+        # Add CommandUuid to the response ONLY if available AND not in IDLE or RESETTING states
+        if self.CommandUuid and new_state not in [PackMLState.IDLE, PackMLState.RESETTING]:
+            response["CommandUuid"] = self.CommandUuid
+        
         # Handle CommandUuid tracking
         if new_state in [PackMLState.IDLE, PackMLState.RESETTING]:
-            # Clear current CommandUuid
-            self.CommandUuid = None
-            if self.publish_progress:
-                self.publish_progress(self, reset=True)
-                
             # Get fresh queue state
             queued_uuids = self.command_uuids.copy()
             
             # For IDLE state with empty queue, use empty array
             response["ProcessQueue"] = queued_uuids if queued_uuids else []
+            
+            # Call publish_progress with reset if available
+            if self.publish_progress:
+                self.publish_progress(self, reset=True)
+                
+            # Clear CommandUuid last (after NOT including it in the message)
+            self.CommandUuid = None
         else:
             queued_uuids = self.command_uuids.copy()
             

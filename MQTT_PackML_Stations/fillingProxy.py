@@ -11,7 +11,7 @@ BASE_TOPIC = "NN/Nybrovej/InnoLab/Filling"
 weigh_publisher = Publisher(
         BASE_TOPIC + "/DATA/Weight",
         "./schemas/weight.schema.json", 
-        0)
+        2)
 
 
 def dispense_process(mean_duration=2.0, state_machine=None):
