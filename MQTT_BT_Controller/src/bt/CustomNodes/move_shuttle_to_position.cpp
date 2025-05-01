@@ -2,13 +2,6 @@
 #include "mqtt/utils.h"
 #include "mqtt/node_message_distributor.h"
 
-std::map<std::string, int> stationMap = {
-    {"Loading", 1},
-    {"Filling", 2},
-    {"Stoppering", 3},
-    {"Camera", 4},
-    {"Unloading", 5}};
-
 MoveShuttleToPosition::MoveShuttleToPosition(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client, const mqtt_utils::Topic &request_topic, const mqtt_utils::Topic &response_topic) : MqttActionNode(name, config, bt_mqtt_client,
                                                                                                                                                                                                                                   request_topic,
                                                                                                                                                                                                                                   response_topic)
@@ -43,13 +36,13 @@ BT::PortsList MoveShuttleToPosition::providedPorts()
 json MoveShuttleToPosition::createMessage()
 {
     BT::Expected<std::string> TargetPosition = getInput<std::string>("TargetPosition");
-
+    BT::Expected<std::map<std::string, int>> stationMap = config().blackboard->get<std::map<std::string, int>>("StationMap"); // hacky way of getting the ID from the subtree parameter
     json message;
     std::string station = TargetPosition.value();
-    if (stationMap.find(station) != stationMap.end())
+    if (stationMap.value().find(station) != stationMap.value().end())
     {
         current_command_uuid_ = mqtt_utils::generate_uuid();
-        message["TargetPosition"] = stationMap[station];
+        message["TargetPosition"] = stationMap.value()[station];
         message["CommandUuid"] = current_command_uuid_;
         return message;
     }

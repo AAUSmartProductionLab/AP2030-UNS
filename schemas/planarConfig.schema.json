@@ -1,0 +1,44 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Station Schema",
+    "description": "The station configuration of the production line",
+    "type": "object",
+    "properties": {
+        "Stations": {
+            "type": "array",
+            "items": {
+                "$ref": "#/$defs/Station"
+            }
+        }
+    },
+    "required": ["Stations"],
+    "$defs": {
+        "Station": {
+            "type": "object",
+            "properties": {
+                "Name": {
+                    "type": "string"
+                },
+                "StationId": {
+                    "type": "integer"
+                },
+                "Approach Position": {
+                    "$ref": "#/$defs/Position"
+                },
+                "Process Position": {
+                    "$ref": "#/$defs/Position"
+                }
+            },
+            "required": ["Name", "StationId", "Approach Position", "Process Position"]
+        },
+        "Position": {
+            "type": "array",
+            "items": {
+                "$ref": "#/$defs/Coordinate"
+            }
+        },
+        "Coordinate": {
+            "type": ["number", "null"]
+        }
+    }
+}

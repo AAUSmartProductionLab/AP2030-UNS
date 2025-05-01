@@ -1,13 +1,14 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "title": "Order Schema",
-    "description": "JSON Schema for an order",
+    "title": "The configuration of the production system",
+    "description": "JSON Schema for a generic configuration. Matches any of the config schemas",
     "type": "object",
-    "properties": {
-        "BatchSize": {
-            "type": "integer",
-            "description": "The batch size of the order"
+    "anyOf": [
+        {
+            "$ref": "order.schema.json"
+        },
+        {
+            "$ref": "planarConfig.schema.json"
         }
-    },
-    "required": ["BatchSize"]
+    ]
 }

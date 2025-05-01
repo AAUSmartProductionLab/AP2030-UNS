@@ -4,6 +4,7 @@
 #include <behaviortree_cpp/bt_factory.h>
 #include <nlohmann/json.hpp>
 #include <string>
+#include <deque>
 
 // Forward declarations
 class MqttClient;
@@ -18,4 +19,6 @@ public:
 
     static BT::PortsList providedPorts();
     void callback(const json &msg, mqtt::properties props) override;
+    std::shared_ptr<std::deque<std::string>> shared_queue;
+    std::map<std::string, int> stationMap;
 };
