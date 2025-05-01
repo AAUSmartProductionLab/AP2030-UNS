@@ -45,7 +45,6 @@ json MoveShuttleToPosition::createMessage()
         current_command_uuid_ = mqtt_utils::generate_uuid();
         message["TargetPosition"] = stationMap.value()[station];
         message["CommandUuid"] = current_command_uuid_;
-        std::cout << "Sending command to move shuttle to position: " << message.dump() << std::endl;
         return message;
     }
     return json();

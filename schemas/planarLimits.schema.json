@@ -1,0 +1,33 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Planar Limits Schema",
+    "description": "Configuration for the speed and acceleration limits of planar motors",
+    "type": "object",
+    "properties": {
+        "maxAccelRz": {
+            "type": "string",
+            "description": "Maximum acceleration for rotation around Z axis in rad/s²"
+        },
+        "maxAccelX": {
+            "type": "string",
+            "description": "Maximum acceleration for X axis in m/s²"
+        },
+        "maxAccelY": {
+            "type": "string",
+            "description": "Maximum acceleration for Y axis in m/s²"
+        },
+        "maxSpeedRz": {
+            "type": "string",
+            "description": "Maximum speed for rotation around Z axis in rad/s"
+        },
+        "maxSpeedX": {
+            "type": "string",
+            "description": "Maximum speed for X axis in m/s"
+        },
+        "maxSpeedY": {
+            "type": "string",
+            "description": "Maximum speed for Y axis in m/s"
+        }
+    },
+    "required": ["maxAccelRz", "maxAccelX", "maxAccelY", "maxSpeedRz", "maxSpeedX", "maxSpeedY"]
+}

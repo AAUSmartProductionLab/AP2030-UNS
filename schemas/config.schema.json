@@ -8,7 +8,10 @@
             "$ref": "order.schema.json"
         },
         {
-            "$ref": "planarConfig.schema.json"
+            "$ref": "planarStations.schema.json"
+        },
+        {
+            "$ref": "planarLimits.schema.json"
         }
     ]
 }
