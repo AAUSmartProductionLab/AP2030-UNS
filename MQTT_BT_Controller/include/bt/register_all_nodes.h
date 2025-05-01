@@ -64,8 +64,8 @@ void registerAllNodes(
         "../../schemas/data.schema.json",
         2);
     mqtt_utils::Topic ConfigurationDATA(
-        unsTopicPrefix + "/Configurator/DATA/Order",
-        "../../schemas/order.schema.json",
+        unsTopicPrefix + "/Configuration/DATA/+",
+        "../../schemas/config.schema.json",
         2);
 
     // Register the nodes with the behavior tree and the mqtt client

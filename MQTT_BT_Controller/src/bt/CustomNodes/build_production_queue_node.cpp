@@ -34,6 +34,7 @@ void BuildProductionQueueNode::callback(const json &msg, mqtt::properties props)
     {
         std::lock_guard<std::mutex> lock(mutex_);
         // Update state based on message content
+        std::cout << "Received message in BuildProductionQueueNode: " << msg.dump() << std::endl;
         if (status() == BT::NodeStatus::RUNNING)
         {
 

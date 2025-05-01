@@ -90,11 +90,11 @@ bool NodeMessageDistributor::topicMatches(const std::string &pattern, const std:
     while (std::getline(patternStream, patternSegment, '/') &&
            std::getline(topicStream, topicSegment, '/'))
     {
-        if (patternSegment == "+")
+        if (patternSegment == "+" || topicSegment == "+")
         {
             continue;
         }
-        else if (patternSegment == "#")
+        else if (patternSegment == "#" || topicSegment == "#")
         {
             return true;
         }
@@ -149,7 +149,7 @@ void NodeMessageDistributor::route_to_nodes(
         {
             // Check if the bt node is interested in exactly this topic ignoring wild cards
             // and if the node is interested in the message
-            if (node->response_topic_.getTopic() == topic && node->isInterestedIn(msg))
+            if (topicMatches(node->response_topic_.getTopic(), topic) && node->isInterestedIn(msg))
             {
                 node->processMessage(msg, props);
             }
