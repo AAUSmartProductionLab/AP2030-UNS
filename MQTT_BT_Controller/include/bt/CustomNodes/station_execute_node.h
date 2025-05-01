@@ -22,8 +22,16 @@ public:
                        const bool &retain,
                        const int &pubqos,
                        const int &subqos)
-        : MqttActionNode(name, config, bt_mqtt_client,
-                         request_topic, response_topic, request_schema_path, response_schema_path, retain, pubqos, subqos)
+        : MqttActionNode(name,
+                         config,
+                         bt_mqtt_client,
+                         request_topic,
+                         response_topic,
+                         request_schema_path,
+                         response_schema_path,
+                         retain,
+                         pubqos,
+                         subqos)
     {
         request_topic_ = getFormattedTopic(request_topic_pattern_, config);
         response_topic_ = getFormattedTopic(response_topic_pattern_, config);
@@ -89,11 +97,13 @@ public:
     {
         {
             std::lock_guard<std::mutex> lock(mutex_);
-
             if (this->response_schema_validator_)
             {
                 try
                 {
+                    static nlohmann::json schema = mqtt_utils::getValidatorSchema(response_schema_path_);
+                    std::cout << "Validating against schema: " << schema.dump(2) << std::endl;
+
                     this->response_schema_validator_->validate(msg);
                 }
                 catch (const std::exception &e)
@@ -112,7 +122,8 @@ public:
     }
 
     // Standard implementation based on PackML override this if needed
-    void callback(const json &msg, mqtt::properties props) override
+    void
+    callback(const json &msg, mqtt::properties props) override
     {
         // Use mutex to protect shared state
         {

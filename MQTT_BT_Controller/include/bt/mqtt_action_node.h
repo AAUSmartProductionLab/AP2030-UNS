@@ -66,8 +66,8 @@ public:
             [mqtt_client_ptr = &mqtt_client,
              request_topic,
              response_topic,
-             response_schema_path,
              request_schema_path,
+             response_schema_path,
              retain,
              pubqos,
              subqos](const std::string &name, const BT::NodeConfig &config)
@@ -78,8 +78,8 @@ public:
                     *mqtt_client_ptr,
                     request_topic,
                     response_topic,
-                    response_schema_path,
                     request_schema_path,
+                    response_schema_path,
                     retain,
                     pubqos,
                     subqos);
