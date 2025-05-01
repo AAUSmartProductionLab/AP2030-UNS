@@ -101,9 +101,6 @@ public:
             {
                 try
                 {
-                    static nlohmann::json schema = mqtt_utils::getValidatorSchema(response_schema_path_);
-                    std::cout << "Validating against schema: " << schema.dump(2) << std::endl;
-
                     this->response_schema_validator_->validate(msg);
                 }
                 catch (const std::exception &e)
