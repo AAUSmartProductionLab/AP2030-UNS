@@ -45,7 +45,7 @@
                          if_empty="SUCCESS"
                          Queue="{ProductIDs}">
       <Sequence>
-        <MoveShuttle TargetPosition="Loading"/>
+        <MoveShuttle TargetPosition="Load"/>
         <SubTree ID="Filling"
                  Station="Filling"
                  _autoremap="true"/>
@@ -55,7 +55,7 @@
         <SubTree ID="QualityControl"
                  Station="Camera"
                  _autoremap="true"/>
-        <MoveShuttle TargetPosition="Unloading"/>
+        <MoveShuttle TargetPosition="Unload"/>
       </Sequence>
     </GetProductFromQueue>
   </BehaviorTree>

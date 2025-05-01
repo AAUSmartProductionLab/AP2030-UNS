@@ -64,8 +64,11 @@ void BuildProductionQueueNode::callback(const json &msg, mqtt::properties props)
             }
             if (!shared_queue->empty() && !stationMap.empty())
             {
-                setOutput("ProductIDs", shared_queue);
-                setOutput("StationMap", stationMap);
+                // setOutput("ProductIDs", shared_queue);
+                // setOutput("StationMap", stationMap);
+                config().blackboard->set("ProductIDs", shared_queue);
+                config().blackboard->set("StationMap", stationMap);
+
                 setStatus(BT::NodeStatus::SUCCESS);
             }
             // else

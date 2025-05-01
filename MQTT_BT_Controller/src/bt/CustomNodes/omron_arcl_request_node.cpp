@@ -36,16 +36,10 @@ json OmronArclRequest::createMessage()
 
 bool OmronArclRequest::isInterestedIn(const json &msg)
 {
-    if (status() == BT::NodeStatus::RUNNING)
+    if (status() == BT::NodeStatus::RUNNING && msg.contains("id") && msg["id"].get<std::string>() == current_command_uuid_)
     {
-        if (!msg.contains("id"))
-        {
-            return false;
-        }
-        if (msg["id"].get<std::string>() == current_command_uuid_)
-        {
-            return true;
-        }
+
+        return true;
     }
     return false;
 }

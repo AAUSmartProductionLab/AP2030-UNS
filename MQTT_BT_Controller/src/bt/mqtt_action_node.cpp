@@ -76,12 +76,12 @@ void MqttActionNode::callback(const json &msg, mqtt::properties props)
                 std::cout << "State is HELD, SUSPENDED or Executing" << std::endl;
                 // No need to set RUNNING again if already running
             }
-            emitWakeUpSignal();
         }
         else
         {
             std::cout << "Message doesn't contain 'state' field" << std::endl;
         }
+        emitWakeUpSignal();
     }
 }
 
@@ -89,7 +89,7 @@ bool MqttActionNode::isInterestedIn(const json &msg)
 {
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        if (response_topic_.validateMessage(msg) && status() == BT::NodeStatus::RUNNING)
+        if (response_topic_.validateMessage(msg) && status() == BT::NodeStatus::RUNNING && msg.contains("CommandUuid") && msg["CommandUuid"] == current_command_uuid_)
         {
             return true;
         }

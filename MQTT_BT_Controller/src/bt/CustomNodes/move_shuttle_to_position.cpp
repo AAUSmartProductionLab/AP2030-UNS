@@ -38,12 +38,14 @@ json MoveShuttleToPosition::createMessage()
     BT::Expected<std::string> TargetPosition = getInput<std::string>("TargetPosition");
     BT::Expected<std::map<std::string, int>> stationMap = config().blackboard->get<std::map<std::string, int>>("StationMap"); // hacky way of getting the ID from the subtree parameter
     json message;
+
     std::string station = TargetPosition.value();
     if (stationMap.value().find(station) != stationMap.value().end())
     {
         current_command_uuid_ = mqtt_utils::generate_uuid();
         message["TargetPosition"] = stationMap.value()[station];
         message["CommandUuid"] = current_command_uuid_;
+        std::cout << "Sending command to move shuttle to position: " << message.dump() << std::endl;
         return message;
     }
     return json();
