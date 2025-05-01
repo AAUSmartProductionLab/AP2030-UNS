@@ -91,11 +91,10 @@ stopperProxy = Proxy(
     [response_async_execute, response_async_register,response_async_unregister]
 )
 state_machine = PackMLStateMachine(response_async_execute, response_async_register,response_async_unregister, stopperProxy, None)
-
+state_machine.failureChance=0
 
 def main():
     stopperProxy.loop_forever()
-
 
 if __name__ == "__main__":
     main()
