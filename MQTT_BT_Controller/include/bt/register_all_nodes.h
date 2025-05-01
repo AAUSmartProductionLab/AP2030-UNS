@@ -21,7 +21,7 @@ void registerAllNodes(
     MqttClient &bt_mqtt_client,
     const std::string &unsTopicPrefix)
 {
-
+    // Define the topics for the nodes (may contain wildcards if replaced using bt entries)
     mqtt_utils::Topic XYMotionCMD(
         unsTopicPrefix + "/Planar/+/CMD/XYMotion",
         "../../schemas/moveToPosition.schema.json",
