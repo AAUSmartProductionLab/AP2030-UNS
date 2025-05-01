@@ -5,7 +5,7 @@
 #include <mutex>
 #include <string>
 #include <functional>
-
+#include "mqtt/utils.h"
 // Forward declarations
 namespace BT
 {
@@ -29,21 +29,13 @@ class MqttPubBase
 {
 protected:
     MqttClient &mqtt_client_;
-    std::string request_topic_; // The precise request_topic on which the node is publishing without wildcards
-    const std::string request_topic_pattern_; // The request_topic that may include wildcards
-    std::string request_schema_path_;
-    int pubqos_;
-    bool retain_;
-    std::unique_ptr<nlohmann::json_schema::json_validator> request_schema_validator_;
-
 
 public:
     MqttPubBase(MqttClient &mqtt_client,
-                const std::string &request_topic,
-                const std::string &request_schema_path,
-                const int &pubqos,
-                const bool &retain);
+                const mqtt_utils::Topic &resquest_topic);
 
     virtual ~MqttPubBase() = default;
     void publish(const json &msg);
+
+    mqtt_utils::Topic request_topic_;
 };

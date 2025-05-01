@@ -5,7 +5,7 @@
 #include <nlohmann/json.hpp>
 #include "mqtt/mqtt_sub_base.h"
 #include "mqtt/node_message_distributor.h"
-
+#include "mqtt/utils.h"
 using nlohmann::json;
 
 class MqttSyncSubNode : public BT::ConditionNode, public MqttSubBase
@@ -17,9 +17,7 @@ public:
     MqttSyncSubNode(const std::string &name,
                     const BT::NodeConfig &config,
                     MqttClient &mqtt_client,
-                    const std::string &response_topic,
-                    const std::string &response_schema_path,
-                    const int &subqos);
+                    const mqtt_utils::Topic &response_topic);
 
     ~MqttSyncSubNode() override;
 
@@ -36,26 +34,20 @@ public:
         NodeMessageDistributor &node_message_distributor,
         MqttClient &mqtt_client,
         const std::string &node_name,
-        const std::string &response_topic,
-        const std::string &response_schema_path,
-        const int &subqos)
+        const mqtt_utils::Topic &response_topic)
     {
         MqttSyncSubNode::setNodeMessageDistributor(&node_message_distributor);
 
         factory.registerBuilder<DerivedNode>(
             node_name,
             [mqtt_client_ptr = &mqtt_client,
-             response_topic,
-             response_schema_path,
-             subqos](const std::string &name, const BT::NodeConfig &config)
+             response_topic](const std::string &name, const BT::NodeConfig &config)
             {
                 return std::make_unique<DerivedNode>(
                     name,
                     config,
                     *mqtt_client_ptr,
-                    response_topic,
-                    response_schema_path,
-                    subqos);
+                    response_topic);
             });
     }
     virtual std::string getBTNodeName() const override

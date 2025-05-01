@@ -3,10 +3,10 @@
 #include "mqtt/utils.h"
 
 GenericConditionNode::GenericConditionNode(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client,
-                                           const std::string &response_topic, const std::string &response_schema_path, const int &subqos)
-    : MqttSyncSubNode(name, config, bt_mqtt_client, response_topic, response_schema_path, subqos)
+                                           const mqtt_utils::Topic &response_topic)
+    : MqttSyncSubNode(name, config, bt_mqtt_client, response_topic)
 {
-    response_topic_ = getFormattedTopic(response_topic_pattern_, config);
+    response_topic_.setTopic(getFormattedTopic(response_topic.getPattern(), config));
     if (MqttSubBase::node_message_distributor_)
     {
         MqttSubBase::node_message_distributor_->registerDerivedInstance(this);

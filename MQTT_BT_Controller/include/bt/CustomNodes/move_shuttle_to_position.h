@@ -17,13 +17,8 @@ private:
 
 public:
     MoveShuttleToPosition(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client,
-                          const std::string &request_topic,
-                          const std::string &response_topic,
-                          const std::string &request_schema_path,
-                          const std::string &response_schema_path,
-                          const bool &retain,
-                          const int &pubqos,
-                          const int &subqos);
+                          const mqtt_utils::Topic &request_topic,
+                          const mqtt_utils::Topic &response_topic);
 
     static BT::PortsList providedPorts();
 

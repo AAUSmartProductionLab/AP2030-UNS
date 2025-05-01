@@ -8,38 +8,19 @@ namespace fs = std::filesystem;
 NodeMessageDistributor *MqttSubBase::node_message_distributor_ = nullptr;
 
 MqttSubBase::MqttSubBase(MqttClient &mqtt_client,
-                         const std::string &response_topic = "",
-                         const std::string &response_schema_path = "",
-                         const int &subqos = 0)
+                         const mqtt_utils::Topic &response_topic)
     : mqtt_client_(mqtt_client),
-      response_topic_(response_topic),
-      response_topic_pattern_(response_topic),
-      response_schema_path_(response_schema_path),
-      response_schema_validator_(nullptr),
-      subqos_(subqos)
+      response_topic_(response_topic)
 {
-    // Load schema if path is provided
-    if (!response_schema_path_.empty())
-    {
-        response_schema_validator_ = mqtt_utils::createSchemaValidator(response_schema_path_);
-    }
+    response_topic_.initValidator();
 }
 
 void MqttSubBase::processMessage(const json &msg, mqtt::properties props)
 {
-    if (response_schema_validator_)
+    if (response_topic_.validateMessage(msg))
     {
-        try
-        {
-            response_schema_validator_->validate(msg);
-        }
-        catch (const std::exception &e)
-        {
-            std::cerr << "JSON validation failed: " << e.what() << std::endl;
-            return;
-        }
+        callback(msg, props);
     }
-    callback(msg, props);
 }
 
 bool MqttSubBase::isInterestedIn(const json &msg)

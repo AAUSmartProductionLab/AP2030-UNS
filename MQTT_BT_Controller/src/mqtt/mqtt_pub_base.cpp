@@ -6,40 +6,17 @@
 namespace fs = std::filesystem;
 
 MqttPubBase::MqttPubBase(MqttClient &mqtt_client,
-                         const std::string &request_topic = "",
-                         const std::string &request_schema_path = "",
-                         const int &pubqos = 0,
-                         const bool &retain = false)
+                         const mqtt_utils::Topic &request_topic)
     : mqtt_client_(mqtt_client),
-      request_topic_(request_topic),
-      request_topic_pattern_(request_topic),
-      request_schema_path_(request_schema_path),
-      request_schema_validator_(nullptr),
-      pubqos_(pubqos),
-      retain_(retain)
+      request_topic_(request_topic)
 {
-  // Load schema if path is provided
-  if (!request_schema_path_.empty())
-  {
-    request_schema_validator_ = mqtt_utils::createSchemaValidator(request_schema_path_);
-  }
+  request_topic_.initValidator();
 }
 
 void MqttPubBase::publish(const json &msg)
 {
-  // TODO this should do json validation
-  // Validate JSON against schema if validator is available
-  if (request_schema_validator_)
+  if (request_topic_.validateMessage(msg))
   {
-    try
-    {
-      request_schema_validator_->validate(msg);
-    }
-    catch (const std::exception &e)
-    {
-      std::cerr << "JSON validation failed: " << e.what() << std::endl;
-      return; // Don't publish invalid messages
-    }
+    mqtt_client_.publish(request_topic_.getTopic(), msg.dump(), request_topic_.getQos(), request_topic_.getRetain());
   }
-  mqtt_client_.publish(request_topic_, msg.dump(), pubqos_, retain_);
 }

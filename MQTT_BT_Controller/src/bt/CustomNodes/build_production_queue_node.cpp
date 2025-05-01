@@ -3,10 +3,9 @@
 #include "mqtt/node_message_distributor.h"
 #include <deque>
 
-BuildProductionQueueNode::BuildProductionQueueNode(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client, const std::string &response_topic, const std::string &response_schema_path,
-                                                   const int &subqos)
+BuildProductionQueueNode::BuildProductionQueueNode(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client, const mqtt_utils::Topic &response_topic)
     : MqttAsyncSubNode(name, config, bt_mqtt_client,
-                       response_topic, response_schema_path, subqos)
+                       response_topic)
 {
 
     if (MqttSubBase::node_message_distributor_)
@@ -21,7 +20,12 @@ BT::PortsList BuildProductionQueueNode::providedPorts()
         BT::details::PortWithDefault<BT::SharedQueue<std::string>>(BT::PortDirection::OUTPUT,
                                                                    "ProductIDs",
                                                                    "{ProductIDs}",
-                                                                   "List of product IDs to produce")};
+                                                                   "List of product IDs to produce"),
+
+        BT::details::PortWithDefault<std::map<std::string, int>>(BT::PortDirection::OUTPUT,
+                                                                 "StationMap",
+                                                                 "{StationMap}",
+                                                                 "The StationMap of the system for this batch")};
 }
 
 void BuildProductionQueueNode::callback(const json &msg, mqtt::properties props)

@@ -46,13 +46,13 @@ void NodeMessageDistributor::subscribeToActiveNodes(const BT::Tree &tree)
                 continue;
 
             // Store the type index for this topic
-            topicSubscribers[instance->response_topic_].push_back(type_index);
+            topicSubscribers[instance->response_topic_.getTopic()].push_back(type_index);
 
             // Update maximum QoS for this topic if necessary
-            if (topicMaxQoS.find(instance->response_topic_) == topicMaxQoS.end() ||
-                instance->subqos_ > topicMaxQoS[instance->response_topic_])
+            if (topicMaxQoS.find(instance->response_topic_.getTopic()) == topicMaxQoS.end() ||
+                instance->response_topic_.getQos() > topicMaxQoS[instance->response_topic_.getTopic()])
             {
-                topicMaxQoS[instance->response_topic_] = instance->subqos_;
+                topicMaxQoS[instance->response_topic_.getTopic()] = instance->response_topic_.getQos();
             }
         }
     }
@@ -149,7 +149,7 @@ void NodeMessageDistributor::route_to_nodes(
         {
             // Check if the bt node is interested in exactly this topic ignoring wild cards
             // and if the node is interested in the message
-            if (node->getResponseTopic() == topic && node->isInterestedIn(msg))
+            if (node->response_topic_.getTopic() == topic && node->isInterestedIn(msg))
             {
                 node->processMessage(msg, props);
             }

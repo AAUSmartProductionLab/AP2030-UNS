@@ -2,6 +2,7 @@
 
 #include <behaviortree_cpp/bt_factory.h>
 #include "mqtt/mqtt_client.h"
+#include "mqtt/utils.h"
 #include "mqtt/node_message_distributor.h"
 #include "bt/mqtt_action_node.h"
 #include "bt/CustomNodes/move_shuttle_to_position.h"
@@ -20,98 +21,113 @@ void registerAllNodes(
     MqttClient &bt_mqtt_client,
     const std::string &unsTopicPrefix)
 {
+
+    mqtt_utils::Topic XYMotionCMD(
+        unsTopicPrefix + "/Planar/+/CMD/XYMotion",
+        "../../schemas/moveToPosition.schema.json",
+        2,
+        false);
+    mqtt_utils::Topic OmronARCLCMD(
+        unsTopicPrefix + "/Omron/CMD/ARCL",
+        "../../schemas/amrArclRequest.schema.json",
+        2,
+        false);
+    mqtt_utils::Topic StationRegistrationCMD(
+        unsTopicPrefix + "/+/CMD/Register",
+        "../../schemas/command.schema.json",
+        2,
+        false);
+    mqtt_utils::Topic StationUnregistrationCMD(
+        unsTopicPrefix + "/+/CMD/Unregister",
+        "../../schemas/command.schema.json",
+        2,
+        false);
+    mqtt_utils::Topic StationExecuteCMD(
+        unsTopicPrefix + "/+/CMD/+",
+        "../../schemas/command.schema.json",
+        2,
+        false);
+    mqtt_utils::Topic PlanarState(
+        unsTopicPrefix + "/Planar/+/DATA/State",
+        "../../schemas/state.schema.json",
+        2);
+    mqtt_utils::Topic OmronARCLState(
+        unsTopicPrefix + "/Omron/DATA/State",
+        "../../schemas/amrArclUpdate.schema.json",
+        2);
+    mqtt_utils::Topic StationState(
+        unsTopicPrefix + "/+/DATA/State",
+        "../../schemas/stationState.schema.json",
+        2);
+    mqtt_utils::Topic GenericConditonDATA(
+        unsTopicPrefix + "/+/DATA/+",
+        "../../schemas/data.schema.json",
+        2);
+    mqtt_utils::Topic ConfigurationDATA(
+        unsTopicPrefix + "/Configurator/DATA/Order",
+        "../../schemas/order.schema.json",
+        2);
+
     // Register the nodes with the behavior tree and the mqtt client
     MqttActionNode::registerNodeType<MoveShuttleToPosition>(
         factory,
         node_message_distributor,
         bt_mqtt_client,
         "MoveShuttle",
-        unsTopicPrefix + "/Planar/+/CMD/XYMotion",
-        unsTopicPrefix + "/Planar/+/DATA/State",
-        "../../schemas/moveToPosition.schema.json",
-        "../../schemas/state.schema.json",
-        false,
-        2,
-        2);
+        XYMotionCMD, PlanarState);
 
     MqttActionNode::registerNodeType<OmronArclRequest>(
         factory,
         node_message_distributor,
         bt_mqtt_client,
         "OmronArclRequest",
-        unsTopicPrefix + "/Omron/CMD/ARCL",
-        unsTopicPrefix + "/Omron/DATA/State",
-        "../../schemas/amrArclRequest.schema.json",
-        "../../schemas/amrArclUpdate.schema.json",
-        false,
-        2,
-        2);
+        OmronARCLCMD,
+        OmronARCLState);
 
     MqttActionNode::registerNodeType<StationRegisterNode>(
         factory,
         node_message_distributor,
         bt_mqtt_client,
         "Station_Registration",
-        unsTopicPrefix + "/+/CMD/Register",
-        unsTopicPrefix + "/+/DATA/State",
-        "../../schemas/command.schema.json",
-        "../../schemas/stationState.schema.json",
-        false,
-        2,
-        2);
+        StationRegistrationCMD,
+        StationState);
 
     MqttActionNode::registerNodeType<StationUnRegisterNode>(
         factory,
         node_message_distributor,
         bt_mqtt_client,
         "Station_Unregistration",
-        unsTopicPrefix + "/+/CMD/Unregister",
-        unsTopicPrefix + "/+/DATA/State",
-        "../../schemas/command.schema.json",
-        "../../schemas/stationState.schema.json",
-        false,
-        2,
-        2);
+        StationUnregistrationCMD,
+        StationState);
 
     MqttActionNode::registerNodeType<StationExecuteNode>(
         factory,
         node_message_distributor,
         bt_mqtt_client,
         "Station_Execution",
-        unsTopicPrefix + "/+/CMD/+",
-        unsTopicPrefix + "/+/DATA/State",
-        "../../schemas/command.schema.json",
-        "../../schemas/stationState.schema.json",
-        false,
-        2,
-        2);
+        StationExecuteCMD,
+        StationState);
 
     MqttSyncSubNode::registerNodeType<GenericConditionNode>(
         factory,
         node_message_distributor,
         bt_mqtt_client,
         "Data_Condition",
-        unsTopicPrefix + "/+/DATA/+",
-        "../../schemas/data.schema.json",
-        2);
+        GenericConditonDATA);
 
     MqttAsyncSubNode::registerNodeType<BuildProductionQueueNode>(
         factory,
         node_message_distributor,
         bt_mqtt_client,
         "BuildProductionQueue",
-        unsTopicPrefix + "/Configurator/DATA/Order",
-        "../../schemas/order.schema.json",
-        2);
+        ConfigurationDATA);
 
     MqttSyncSubNode::registerNodeType<GenericConditionNode>(
         factory,
         node_message_distributor,
         bt_mqtt_client,
         "Station_State_Condition",
-        unsTopicPrefix + "/+/DATA/State",
-        "../../schemas/stationState.schema.json",
-        2);
+        StationState);
 
     factory.registerNodeType<GetProductFromQueue>("GetProductFromQueue");
 }

@@ -20,13 +20,8 @@ public:
     MqttActionNode(const std::string &name,
                    const BT::NodeConfig &config,
                    MqttClient &mqtt_client,
-                   const std::string &request_topic,
-                   const std::string &response_topic,
-                   const std::string &request_schema_path,
-                   const std::string &response_schema_path,
-                   const bool &retain,
-                   const int &pubqos,
-                   const int &subqos);
+                   const mqtt_utils::Topic &request_topic,
+                   const mqtt_utils::Topic &response_topic);
 
     virtual ~MqttActionNode();
 
@@ -51,13 +46,8 @@ public:
         NodeMessageDistributor &node_message_distributor,
         MqttClient &mqtt_client,
         const std::string &node_name,
-        const std::string &request_topic,
-        const std::string &response_topic,
-        const std::string &request_schema_path,
-        const std::string &response_schema_path,
-        const bool &retain,
-        const int &pubqos,
-        const int &subqos)
+        const mqtt_utils::Topic &request_topic,
+        const mqtt_utils::Topic &response_topic)
     {
         MqttActionNode::setNodeMessageDistributor(&node_message_distributor);
 
@@ -65,24 +55,14 @@ public:
             node_name,
             [mqtt_client_ptr = &mqtt_client,
              request_topic,
-             response_topic,
-             request_schema_path,
-             response_schema_path,
-             retain,
-             pubqos,
-             subqos](const std::string &name, const BT::NodeConfig &config)
+             response_topic](const std::string &name, const BT::NodeConfig &config)
             {
                 return std::make_unique<DerivedNode>(
                     name,
                     config,
                     *mqtt_client_ptr,
                     request_topic,
-                    response_topic,
-                    request_schema_path,
-                    response_schema_path,
-                    retain,
-                    pubqos,
-                    subqos);
+                    response_topic);
             });
     }
     virtual std::string getBTNodeName() const override

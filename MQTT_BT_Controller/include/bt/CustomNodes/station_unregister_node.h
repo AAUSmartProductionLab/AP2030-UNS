@@ -15,20 +15,17 @@ class StationUnRegisterNode : public MqttActionNode
 {
 public:
     StationUnRegisterNode(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client,
-                          const std::string &request_topic,
-                          const std::string &response_topic,
-                          const std::string &request_schema_path,
-                          const std::string &response_schema_path, const bool &retain, const int &pubqos,
-                          const int &subqos)
+                          const mqtt_utils::Topic &request_topic,
+                          const mqtt_utils::Topic &response_topic)
         : MqttActionNode(name, config, bt_mqtt_client,
-                         request_topic, response_topic, request_schema_path, response_schema_path, retain, pubqos, subqos)
+                         request_topic, response_topic)
     {
         if (MqttSubBase::node_message_distributor_)
         {
             MqttSubBase::node_message_distributor_->registerDerivedInstance(this);
         }
-        request_topic_ = getFormattedTopic(request_topic_pattern_, config);
-        response_topic_ = getFormattedTopic(response_topic_pattern_, config);
+        response_topic_.setTopic(getFormattedTopic(response_topic.getPattern(), config));
+        request_topic_.setTopic(getFormattedTopic(request_topic_.getPattern(), config));
     }
     static BT::PortsList providedPorts()
     {
@@ -72,22 +69,8 @@ public:
     {
         {
             std::lock_guard<std::mutex> lock(mutex_);
-
-            if (this->response_schema_validator_)
+            if (response_topic_.validateMessage(msg) && status() == BT::NodeStatus::RUNNING)
             {
-                try
-                {
-                    this->response_schema_validator_->validate(msg);
-                }
-                catch (const std::exception &e)
-                {
-                    std::cerr << "JSON validation failed: " << e.what() << std::endl;
-                    return false;
-                }
-            }
-            if (status() == BT::NodeStatus::RUNNING)
-            {
-
                 return true;
             }
             return false;

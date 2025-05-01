@@ -5,6 +5,7 @@
 #include <mutex>
 #include <string>
 #include <functional>
+#include "mqtt/utils.h"
 
 // Forward declarations
 namespace BT
@@ -27,19 +28,12 @@ class MqttSubBase
 {
 protected:
     MqttClient &mqtt_client_;
-    std::string response_schema_path_;
-
     std::mutex mutex_;
-
-    std::unique_ptr<nlohmann::json_schema::json_validator> response_schema_validator_;
-    // The response_topic that may include wildcards
     static NodeMessageDistributor *node_message_distributor_;
 
 public:
     MqttSubBase(MqttClient &mqtt_client,
-                const std::string &response_topic,
-                const std::string &response_schema_path,
-                const int &subqos);
+                const mqtt_utils::Topic &response_topic);
 
     virtual ~MqttSubBase() = default;
 
@@ -51,17 +45,12 @@ public:
 
     static void setNodeMessageDistributor(NodeMessageDistributor *manager);
 
-    const std::string &getResponseTopic() const
-    {
-        return response_topic_;
-    }
     virtual std::string getRegistrationName() const
     {
         // Default implementation - derived classes can override this
         return typeid(*this).name();
     }
     virtual std::string getBTNodeName() const = 0;
-    const std::string response_topic_pattern_;
-    std::string response_topic_; // The precise response_topic the node is interested in without wildcards
-    int subqos_;
+
+    mqtt_utils::Topic response_topic_;
 };

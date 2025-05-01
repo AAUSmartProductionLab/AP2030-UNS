@@ -1,7 +1,7 @@
 #include "bt/mqtt_async_sub_node.h"
 #include "mqtt/node_message_distributor.h"
 #include "mqtt/mqtt_client.h"
-
+#include "mqtt/utils.h"
 #include <iostream>
 #include <condition_variable>
 #include <mutex>
@@ -9,11 +9,9 @@
 MqttAsyncSubNode::MqttAsyncSubNode(const std::string &name,
                                    const BT::NodeConfig &config,
                                    MqttClient &mqtt_client,
-                                   const std::string &response_topic,
-                                   const std::string &response_schema_path,
-                                   const int &subqos)
+                                   const mqtt_utils::Topic &response_topic)
     : BT::StatefulActionNode(name, config),
-      MqttSubBase(mqtt_client, response_topic, response_schema_path, subqos)
+      MqttSubBase(mqtt_client, response_topic)
 {
     // Registration happens in derived classes
 }
@@ -66,17 +64,9 @@ bool MqttAsyncSubNode::isInterestedIn(const json &msg)
 {
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        if (this->response_schema_validator_ && status() == BT::NodeStatus::RUNNING)
+        if (response_topic_.validateMessage(msg) && status() == BT::NodeStatus::RUNNING)
         {
-            try
-            {
-                this->response_schema_validator_->validate(msg);
-                return true;
-            }
-            catch (const std::exception &e)
-            {
-                std::cerr << "JSON validation failed: " << e.what() << std::endl;
-            }
+            return true;
         }
         return false;
     }

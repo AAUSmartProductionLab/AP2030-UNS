@@ -1,7 +1,7 @@
 #include "bt/mqtt_action_node.h"
 #include "mqtt/node_message_distributor.h"
 #include "mqtt/mqtt_client.h"
-
+#include "mqtt/utils.h"
 #include <iostream>
 #include <condition_variable>
 #include <mutex>
@@ -9,16 +9,11 @@
 MqttActionNode::MqttActionNode(const std::string &name,
                                const BT::NodeConfig &config,
                                MqttClient &mqtt_client,
-                               const std::string &request_topic,
-                               const std::string &response_topic,
-                               const std::string &request_schema_path,
-                               const std::string &response_schema_path,
-                               const bool &retain,
-                               const int &pubqos,
-                               const int &subqos)
+                               const mqtt_utils::Topic &request_topic,
+                               const mqtt_utils::Topic &response_topic)
     : BT::StatefulActionNode(name, config),
-      MqttSubBase(mqtt_client, response_topic, response_schema_path, subqos),
-      MqttPubBase(mqtt_client, request_topic, request_schema_path, pubqos, retain)
+      MqttSubBase(mqtt_client, response_topic),
+      MqttPubBase(mqtt_client, request_topic)
 {
     // Registration happens in derived classes
 }
@@ -94,25 +89,9 @@ bool MqttActionNode::isInterestedIn(const json &msg)
 {
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        if (this->response_schema_validator_)
+        if (response_topic_.validateMessage(msg) && status() == BT::NodeStatus::RUNNING)
         {
-            try
-            {
-                this->response_schema_validator_->validate(msg);
-            }
-            catch (const std::exception &e)
-            {
-                std::cerr << "JSON validation failed: " << e.what() << std::endl;
-                return false;
-            }
-        }
-        if (status() == BT::NodeStatus::RUNNING)
-        {
-
-            if (msg["CommandUuid"].get<std::string>() == current_command_uuid_)
-            {
-                return true;
-            }
+            return true;
         }
         return false;
     }
