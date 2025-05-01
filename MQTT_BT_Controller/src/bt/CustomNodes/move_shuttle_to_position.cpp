@@ -6,7 +6,8 @@ std::map<std::string, int> stationMap = {
     {"Loading", 1},
     {"Filling", 2},
     {"Stoppering", 3},
-    {"Unloading", 4}};
+    {"Camera", 4},
+    {"Unloading", 5}};
 
 MoveShuttleToPosition::MoveShuttleToPosition(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client, const std::string &request_topic, const std::string &response_topic, const std::string &request_schema_path, const std::string &response_schema_path, const bool &retain, const int &pubqos, const int &subqos) : MqttActionNode(name, config, bt_mqtt_client,
                                                                                                                                                                                                                                                                                                                                                                  request_topic,
