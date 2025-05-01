@@ -5,11 +5,16 @@
     "type": "object",
     "allOf": [
         {
-            "$ref": "state.schema.json"
+            "$ref": "data.schema.json"
         },
         {
             "type": "object",
             "properties": {
+                "State": {
+                    "type": "string",
+                    "description": "The PackML State the system is in",
+                    "enum": ["IDLE", "STARTING", "EXECUTE","COMPLETING", "COMPLETE", "RESETTING", "HOLDING","HELD","UNHOLDING","SUSPENDING", "SUSPENDED", "UNSUSPENDING", "ABORTING", "ABORTED", "CLEARING", "STOPPING", "STOPPED"]
+                },
                 "ProcessQueue": {
                     "type": "array",
                     "description": "Array of command UUIDs in the queue and currently executing",
@@ -18,7 +23,7 @@
                     }
                 }
             },
-            "required": ["ProcessQueue"]
+            "required": ["State","ProcessQueue"]
         }
     ]
 }

@@ -52,9 +52,25 @@
         <SubTree ID="Stoppering"
                  Station="Stoppering"
                  _autoremap="true"/>
+        <SubTree ID="QualityControl"
+                 Station="Camera"
+                 _autoremap="true"/>
         <MoveShuttle TargetPosition="Unloading"/>
       </Sequence>
     </GetProductFromQueue>
+  </BehaviorTree>
+
+  <BehaviorTree ID="QualityControl">
+    <Sequence>
+      <Station_Registration CommandUuid="{_ID}"
+                            Station="{Station}"/>
+      <MoveShuttle TargetPosition="{Station}"/>
+      <Station_Execution CommandUuid="{_ID}"
+                         Command="Capture"
+                         Station="{Station}"/>
+      <Station_Unregistration CommandUuid="{_ID}"
+                              Station="{Station}"/>
+    </Sequence>
   </BehaviorTree>
 
   <BehaviorTree ID="Stoppering">
