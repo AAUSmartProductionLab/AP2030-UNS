@@ -24,7 +24,8 @@ BT::PortsList GenericConditionNode::providedPorts()
         BT::InputPort<std::string>("Message", "The message from the station"),
         BT::InputPort<std::string>("Field", "Name of the field to monitor in the MQTT message"),
         BT::InputPort<std::string>("comparison_type", "Type of comparison: equal, not_equal, greater, less, contains"),
-        BT::InputPort<std::string>("expected_value", "Value to compare against")};
+        BT::InputPort<std::string>("expected_value", "Value to compare against"),
+        BT::InputPort<int>("timeout_ms", "Timeout in milliseconds (default: 5000)")};
 }
 std::string GenericConditionNode::getFormattedTopic(const std::string &pattern, const BT::NodeConfig &config)
 {
@@ -60,9 +61,8 @@ bool GenericConditionNode::isInterestedIn(const json &msg)
 void GenericConditionNode::callback(const json &msg, mqtt::properties props)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    {
-        latest_msg_ = msg;
-    }
+    latest_msg_ = msg;
+    cv_.notify_one(); // Notify waiting threads that new data has arrived
 }
 
 BT::NodeStatus GenericConditionNode::tick()
@@ -82,25 +82,48 @@ BT::NodeStatus GenericConditionNode::tick()
     {
         comparison_type = comparison_type_res.value();
     }
-    // Get the expected value from the input port
+
     auto expected_value_res = getInput<std::string>("expected_value");
     if (!expected_value_res)
     {
         std::cout << "MqttConditionNode: Missing expected value" << std::endl;
-        return BT::NodeStatus::FAILURE; // No expected value provided
+        return BT::NodeStatus::FAILURE;
     }
-
     std::string expected_str = expected_value_res.value();
 
-    // Lock to safely access the latest value
-    std::lock_guard<std::mutex> lock(mutex_);
-    if (latest_msg_.empty() || !latest_msg_.contains(field_name)) // Use the local variable here
+    // Optional timeout parameter
+    BT::Expected<int> timeout_ms_res = getInput<int>("timeout_ms");
+    if (timeout_ms_res)
     {
-        return BT::NodeStatus::FAILURE; // No data or field not found
+        timeout_ = std::chrono::milliseconds(timeout_ms_res.value());
     }
 
-    // Get the actual value
-    json actual_value = latest_msg_[field_name]; // And here
+    // Lock and wait for data
+    std::unique_lock<std::mutex> lock(mutex_);
+
+    // Check if we need to wait for data
+    if (latest_msg_.empty() || !latest_msg_.contains(field_name))
+    {
+        if (has_timed_out_)
+        {
+            // Reset timeout flag for next tick and return failure
+            has_timed_out_ = false;
+            return BT::NodeStatus::FAILURE;
+        }
+
+        // Wait for notification with timeout
+        bool data_received = cv_.wait_for(lock, timeout_, [this, &field_name]()
+                                          { return !latest_msg_.empty() && latest_msg_.contains(field_name); });
+
+        if (!data_received)
+        {
+            has_timed_out_ = true;
+            return BT::NodeStatus::RUNNING; // Still waiting for data
+        }
+    }
+
+    // Now we have data, proceed with comparison
+    json actual_value = latest_msg_[field_name];
 
     bool result = false;
 

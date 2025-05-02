@@ -6,6 +6,7 @@
                       comparison_type="equal"
                       Field="State"
                       Message="State"
+                      timeout_ms="5000"
                       Station="{Station}"/>
       <Sequence>
         <Station_Registration CommandUuid="{_ID}"
@@ -20,6 +21,7 @@
                             comparison_type="less"
                             Field="Weight"
                             Message="Weight"
+                            timeout_ms="5000"
                             Station="{Station}"/>
           </Sequence>
         </RetryUntilSuccessful>
@@ -31,40 +33,49 @@
 
   <BehaviorTree ID="MainTree">
     <Sequence>
-      <BuildProductionQueue ProductIDs="{ProductIDs}"/>
+      <ProduceConfiguration StationMap="{StationMap}"
+                            ProductIDs="{ProductIDs}"/>
       <Parallel failure_count="3"
                 success_count="3">
         <SubTree ID="Produce"
-                 XbotId="1"
+                 XbotTopic="Planar/Xbot1"
                  _autoremap="true"/>
         <SubTree ID="Produce"
-                 XbotId="2"
+                 XbotTopic="Planar/Xbot2"
                  _autoremap="true"/>
         <SubTree ID="Produce"
-                 XbotId="3"
+                 XbotTopic="Planar/Xbot3"
                  _autoremap="true"/>
       </Parallel>
     </Sequence>
   </BehaviorTree>
 
   <BehaviorTree ID="Produce">
-    <GetProductFromQueue Product="{_ProductID}"
-                         if_empty="SUCCESS"
-                         Queue="{ProductIDs}">
-      <Sequence>
-        <MoveShuttle TargetPosition="Load"/>
-        <SubTree ID="Filling"
-                 Station="Filling"
-                 _autoremap="true"/>
-        <SubTree ID="Stoppering"
-                 Station="Stoppering"
-                 _autoremap="true"/>
-        <SubTree ID="QualityControl"
-                 Station="Camera"
-                 _autoremap="true"/>
-        <MoveShuttle TargetPosition="Unload"/>
-      </Sequence>
-    </GetProductFromQueue>
+    <ReactiveSequence>
+      <Data_Condition expected_value="operational"
+                      comparison_type="equal"
+                      Field="State"
+                      Message="State"
+                      timeout_ms="5000"
+                      Station="{XbotTopic}"/>
+      <GetProductFromQueue Product="{_ProductID}"
+                           if_empty="SUCCESS"
+                           Queue="{ProductIDs}">
+        <Sequence>
+          <MoveShuttle TargetPosition="Load"/>
+          <SubTree ID="Filling"
+                   Station="Filling"
+                   _autoremap="true"/>
+          <SubTree ID="Stoppering"
+                   Station="Stoppering"
+                   _autoremap="true"/>
+          <SubTree ID="QualityControl"
+                   Station="Camera"
+                   _autoremap="true"/>
+          <MoveShuttle TargetPosition="Unload"/>
+        </Sequence>
+      </GetProductFromQueue>
+    </ReactiveSequence>
   </BehaviorTree>
 
   <BehaviorTree ID="QualityControl">
@@ -73,6 +84,7 @@
                       comparison_type="equal"
                       Field="State"
                       Message="State"
+                      timeout_ms="5000"
                       Station="{Station}"/>
       <Sequence>
         <Station_Registration CommandUuid="{_ID}"
@@ -93,6 +105,7 @@
                       comparison_type="equal"
                       Field="State"
                       Message="State"
+                      timeout_ms="5000"
                       Station="{Station}"/>
       <Sequence>
         <Station_Registration CommandUuid="{_ID}"
@@ -109,11 +122,6 @@
 
   <!-- Description of Node Models (used by Groot) -->
   <TreeNodesModel>
-    <Action ID="BuildProductionQueue">
-      <output_port name="ProductIDs"
-                   default="{ProductIDs}"
-                   type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;">List of product IDs to produce</output_port>
-    </Action>
     <Condition ID="Data_Condition">
       <input_port name="expected_value"
                   type="std::string">Value to compare against</input_port>
@@ -123,6 +131,8 @@
                   type="std::string">Name of the field to monitor in the MQTT message</input_port>
       <input_port name="Message"
                   type="std::string">The message from the station</input_port>
+      <input_port name="timeout_ms"
+                  type="int">Timeout in milliseconds (default: 5000)</input_port>
       <input_port name="Station"
                   default="{Station}"
                   type="std::string">The station from which to receive a message</input_port>
@@ -149,8 +159,16 @@
     </Action>
     <SubTree ID="Produce"
              editable="true">
-      <input_port name="XbotId"/>
+      <input_port name="XbotTopic"/>
     </SubTree>
+    <Action ID="ProduceConfiguration">
+      <output_port name="StationMap"
+                   default="{StationMap}"
+                   type="std::map&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, int, std::less&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt;, std::allocator&lt;std::pair&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; const, int&gt; &gt; &gt;">The StationMap of the system for this batch</output_port>
+      <output_port name="ProductIDs"
+                   default="{ProductIDs}"
+                   type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;">List of product IDs to produce</output_port>
+    </Action>
     <Action ID="Station_Execution">
       <input_port name="CommandUuid"
                   default="{_ID}"

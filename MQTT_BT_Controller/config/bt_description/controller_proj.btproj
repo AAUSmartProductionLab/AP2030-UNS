@@ -11,6 +11,7 @@
             <input_port name="comparison_type" type="std::string">Type of comparison: equal, not_equal, greater, less, contains</input_port>
             <input_port name="Field" type="std::string">Name of the field to monitor in the MQTT message</input_port>
             <input_port name="Message" type="std::string">The message from the station</input_port>
+            <input_port name="timeout_ms" type="int">Timeout in milliseconds (default: 5000)</input_port>
             <input_port name="Station" default="{Station}" type="std::string">The station from which to receive a message</input_port>
         </Condition>
         <SubTree ID="Filling" editable="true">
@@ -28,8 +29,12 @@
             <input_port name="command" type="BT::AnyTypeAllowed"/>
         </Action>
         <SubTree ID="Produce" editable="true">
-            <input_port name="XbotId"/>
+            <input_port name="XbotTopic"/>
         </SubTree>
+        <Action ID="ProduceConfiguration">
+            <output_port name="StationMap" default="{StationMap}" type="std::map&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, int, std::less&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt;, std::allocator&lt;std::pair&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; const, int&gt; &gt; &gt;">The StationMap of the system for this batch</output_port>
+            <output_port name="ProductIDs" default="{ProductIDs}" type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;">List of product IDs to produce</output_port>
+        </Action>
         <SubTree ID="StationProcess" editable="true">
             <input_port name="Station" default="Stoppering"/>
         </SubTree>

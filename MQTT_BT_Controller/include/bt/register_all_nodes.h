@@ -23,7 +23,7 @@ void registerAllNodes(
 {
     // Define the topics for the nodes (may contain wildcards if replaced using bt entries)
     mqtt_utils::Topic XYMotionCMD(
-        unsTopicPrefix + "/Planar/+/CMD/XYMotion",
+        unsTopicPrefix + "/+/CMD/XYMotion",
         "../../schemas/moveToPosition.schema.json",
         2,
         false);
@@ -47,10 +47,6 @@ void registerAllNodes(
         "../../schemas/command.schema.json",
         2,
         false);
-    mqtt_utils::Topic PlanarState(
-        unsTopicPrefix + "/Planar/+/DATA/State",
-        "../../schemas/state.schema.json",
-        2);
     mqtt_utils::Topic OmronARCLState(
         unsTopicPrefix + "/Omron/DATA/State",
         "../../schemas/amrArclUpdate.schema.json",
@@ -58,6 +54,10 @@ void registerAllNodes(
     mqtt_utils::Topic StationState(
         unsTopicPrefix + "/+/DATA/State",
         "../../schemas/stationState.schema.json",
+        2);
+    mqtt_utils::Topic StateData(
+        unsTopicPrefix + "/+/DATA/State",
+        "../../schemas/state.schema.json",
         2);
     mqtt_utils::Topic GenericConditonDATA(
         unsTopicPrefix + "/+/DATA/+",
@@ -74,7 +74,7 @@ void registerAllNodes(
         node_message_distributor,
         bt_mqtt_client,
         "MoveShuttle",
-        XYMotionCMD, PlanarState);
+        XYMotionCMD, StateData);
 
     MqttActionNode::registerNodeType<OmronArclRequest>(
         factory,
@@ -119,15 +119,8 @@ void registerAllNodes(
         factory,
         node_message_distributor,
         bt_mqtt_client,
-        "BuildProductionQueue",
+        "ProduceConfiguration",
         ConfigurationDATA);
-
-    MqttSyncSubNode::registerNodeType<GenericConditionNode>(
-        factory,
-        node_message_distributor,
-        bt_mqtt_client,
-        "Station_State_Condition",
-        StationState);
 
     factory.registerNodeType<GetProductFromQueue>("GetProductFromQueue");
 }

@@ -18,11 +18,10 @@ MoveShuttleToPosition::MoveShuttleToPosition(const std::string &name, const BT::
 
 std::string MoveShuttleToPosition::getFormattedTopic(const std::string &pattern, const BT::NodeConfig &config)
 {
-    BT::Expected<int> id = config.blackboard->get<int>("XbotId"); // hacky way of getting the ID from the subtree parameter
+    BT::Expected<std::string> id = config.blackboard->get<std::string>("XbotTopic"); // hacky way of getting the ID from the subtree parameter
     if (id.has_value())
     {
-        std::string id_str = "Xbot" + std::to_string(id.value());
-        std::string formatted = mqtt_utils::formatWildcardTopic(pattern, id_str);
+        std::string formatted = mqtt_utils::formatWildcardTopic(pattern, id.value());
         return formatted;
     }
     return pattern;

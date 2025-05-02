@@ -1,14 +1,11 @@
 <root BTCPP_format="4">
     <TreeNodesModel>
-        <Action ID="BuildProductionQueue">
-            <output_port name="StationMap" type="std::map&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, int, std::less&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt;, std::allocator&lt;std::pair&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; const, int&gt; &gt; &gt;" default="{StationMap}">The StationMap of the system for this batch</output_port>
-            <output_port name="ProductIDs" type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;" default="{ProductIDs}">List of product IDs to produce</output_port>
-        </Action>
         <Condition ID="Data_Condition">
             <input_port name="expected_value" type="std::string">Value to compare against</input_port>
             <input_port name="comparison_type" type="std::string">Type of comparison: equal, not_equal, greater, less, contains</input_port>
             <input_port name="Field" type="std::string">Name of the field to monitor in the MQTT message</input_port>
             <input_port name="Message" type="std::string">The message from the station</input_port>
+            <input_port name="timeout_ms" type="int">Timeout in milliseconds (default: 5000)</input_port>
             <input_port name="Station" type="std::string" default="{Station}">The station from which to receive a message</input_port>
         </Condition>
         <Decorator ID="GetProductFromQueue">
@@ -22,6 +19,10 @@
         <Action ID="OmronArclRequest">
             <input_port name="command" type="BT::AnyTypeAllowed"/>
         </Action>
+        <Action ID="ProduceConfiguration">
+            <output_port name="StationMap" type="std::map&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, int, std::less&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt;, std::allocator&lt;std::pair&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; const, int&gt; &gt; &gt;" default="{StationMap}">The StationMap of the system for this batch</output_port>
+            <output_port name="ProductIDs" type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;" default="{ProductIDs}">List of product IDs to produce</output_port>
+        </Action>
         <Action ID="Station_Execution">
             <input_port name="CommandUuid" type="std::string" default="{_ID}">UUID for the command to execute</input_port>
             <input_port name="Command" type="std::string" default="Command">The command to execute on the station</input_port>
@@ -31,13 +32,6 @@
             <output_port name="CommandUuid" type="std::string" default="{_ID}">UUID for the command to execute</output_port>
             <input_port name="Station" type="std::string" default="{_Station}">The station to register with</input_port>
         </Action>
-        <Condition ID="Station_State_Condition">
-            <input_port name="expected_value" type="std::string">Value to compare against</input_port>
-            <input_port name="comparison_type" type="std::string">Type of comparison: equal, not_equal, greater, less, contains</input_port>
-            <input_port name="Field" type="std::string">Name of the field to monitor in the MQTT message</input_port>
-            <input_port name="Message" type="std::string">The message from the station</input_port>
-            <input_port name="Station" type="std::string" default="{Station}">The station from which to receive a message</input_port>
-        </Condition>
         <Action ID="Station_Unregistration">
             <input_port name="CommandUuid" type="std::string" default="{_ID}">UUID for the command to execute</input_port>
             <input_port name="Station" type="std::string" default="{_Station}">The station to unregister from</input_port>
