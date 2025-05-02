@@ -105,12 +105,31 @@ BT::NodeStatus GenericConditionNode::tick()
     bool result = false;
 
     // Handle different comparison types
-    if (comparison_type == "equal")
+    if (comparison_type == "equal" || comparison_type == "not_equal")
     {
         // Handle different JSON types appropriately
         if (actual_value.is_string())
         {
-            result = (actual_value.get<std::string>() == expected_str);
+            if (expected_str == "operational" && field_name == "State")
+            {
+                std::string state = actual_value.get<std::string>();
+                result = (state == "IDLE" ||
+                          state == "STARTING" ||
+                          state == "EXECUTE" ||
+                          state == "COMPLETING" ||
+                          state == "COMPLETE" ||
+                          state == "RESETTING" ||
+                          state == "HOLDING" ||
+                          state == "HELD" ||
+                          state == "UNHOLDING" ||
+                          state == "SUSPENDING" ||
+                          state == "SUSPENDED" ||
+                          state == "UNSUSPENDING");
+            }
+            else
+            {
+                result = (actual_value.get<std::string>() == expected_str);
+            }
         }
         else if (actual_value.is_number())
         {
@@ -134,38 +153,29 @@ BT::NodeStatus GenericConditionNode::tick()
             // For complex types, compare string representations
             result = (actual_value.dump() == expected_str);
         }
-    }
-    else if (comparison_type == "not_equal")
-    {
-        if (actual_value.is_string())
+
+        // Invert the result if comparison_type is "not_equal"
+        if (comparison_type == "not_equal")
         {
-            result = (actual_value.get<std::string>() != expected_str);
-        }
-        else if (actual_value.is_number())
-        {
-            try
-            {
-                double expected_num = std::stod(expected_str);
-                result = (std::abs(actual_value.get<double>() - expected_num) >= 1e-6);
-            }
-            catch (...)
-            {
-                result = true;
-            }
-        }
-        else
-        {
-            result = (actual_value.dump() != expected_str);
+            result = !result;
         }
     }
-    else if (comparison_type == "greater")
+    else if (comparison_type == "greater" || comparison_type == "less")
     {
         if (actual_value.is_number())
         {
             try
             {
                 double expected_num = std::stod(expected_str);
-                result = (actual_value.get<double>() > expected_num);
+                // Use greater-than by default, switch to less-than if needed
+                if (comparison_type == "greater")
+                {
+                    result = (actual_value.get<double>() > expected_num);
+                }
+                else
+                { // "less"
+                    result = (actual_value.get<double>() < expected_num);
+                }
             }
             catch (...)
             {
@@ -174,26 +184,15 @@ BT::NodeStatus GenericConditionNode::tick()
         }
         else if (actual_value.is_string())
         {
-            result = (actual_value.get<std::string>() > expected_str);
-        }
-    }
-    else if (comparison_type == "less")
-    {
-        if (actual_value.is_number())
-        {
-            try
+            // Use greater-than by default, switch to less-than if needed
+            if (comparison_type == "greater")
             {
-                double expected_num = std::stod(expected_str);
-                result = (actual_value.get<double>() < expected_num);
+                result = (actual_value.get<std::string>() > expected_str);
             }
-            catch (...)
-            {
-                result = false;
+            else
+            { // "less"
+                result = (actual_value.get<std::string>() < expected_str);
             }
-        }
-        else if (actual_value.is_string())
-        {
-            result = (actual_value.get<std::string>() < expected_str);
         }
     }
     else if (comparison_type == "contains")

@@ -1,25 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root BTCPP_format="4">
   <BehaviorTree ID="Filling">
-    <Sequence>
-      <Station_Registration CommandUuid="{_ID}"
-                            Station="{Station}"/>
-      <MoveShuttle TargetPosition="{Station}"/>
-      <RetryUntilSuccessful num_attempts="2">
-        <Sequence>
-          <Station_Execution CommandUuid="{_ID}"
-                             Command="Dispense"
-                             Station="{Station}"/>
-          <Data_Condition expected_value="2.2"
-                          comparison_type="less"
-                          Field="Weight"
-                          Message="Weight"
-                          Station="{Station}"/>
-        </Sequence>
-      </RetryUntilSuccessful>
-      <Station_Unregistration CommandUuid="{_ID}"
+    <ReactiveSequence>
+      <Data_Condition expected_value="operational"
+                      comparison_type="equal"
+                      Field="State"
+                      Message="State"
+                      Station="{Station}"/>
+      <Sequence>
+        <Station_Registration CommandUuid="{_ID}"
                               Station="{Station}"/>
-    </Sequence>
+        <MoveShuttle TargetPosition="{Station}"/>
+        <RetryUntilSuccessful num_attempts="2">
+          <Sequence>
+            <Station_Execution CommandUuid="{_ID}"
+                               Command="Dispense"
+                               Station="{Station}"/>
+            <Data_Condition expected_value="2.2"
+                            comparison_type="less"
+                            Field="Weight"
+                            Message="Weight"
+                            Station="{Station}"/>
+          </Sequence>
+        </RetryUntilSuccessful>
+        <Station_Unregistration CommandUuid="{_ID}"
+                                Station="{Station}"/>
+      </Sequence>
+    </ReactiveSequence>
   </BehaviorTree>
 
   <BehaviorTree ID="MainTree">
@@ -61,29 +68,43 @@
   </BehaviorTree>
 
   <BehaviorTree ID="QualityControl">
-    <Sequence>
-      <Station_Registration CommandUuid="{_ID}"
-                            Station="{Station}"/>
-      <MoveShuttle TargetPosition="{Station}"/>
-      <Station_Execution CommandUuid="{_ID}"
-                         Command="Capture"
-                         Station="{Station}"/>
-      <Station_Unregistration CommandUuid="{_ID}"
+    <ReactiveSequence>
+      <Data_Condition expected_value="operational"
+                      comparison_type="equal"
+                      Field="State"
+                      Message="State"
+                      Station="{Station}"/>
+      <Sequence>
+        <Station_Registration CommandUuid="{_ID}"
                               Station="{Station}"/>
-    </Sequence>
+        <MoveShuttle TargetPosition="{Station}"/>
+        <Station_Execution CommandUuid="{_ID}"
+                           Command="Capture"
+                           Station="{Station}"/>
+        <Station_Unregistration CommandUuid="{_ID}"
+                                Station="{Station}"/>
+      </Sequence>
+    </ReactiveSequence>
   </BehaviorTree>
 
   <BehaviorTree ID="Stoppering">
-    <Sequence>
-      <Station_Registration CommandUuid="{_ID}"
-                            Station="{Station}"/>
-      <MoveShuttle TargetPosition="{Station}"/>
-      <Station_Execution CommandUuid="{_ID}"
-                         Command="Stopper"
-                         Station="{Station}"/>
-      <Station_Unregistration CommandUuid="{_ID}"
+    <ReactiveSequence>
+      <Data_Condition expected_value="operational"
+                      comparison_type="equal"
+                      Field="State"
+                      Message="State"
+                      Station="{Station}"/>
+      <Sequence>
+        <Station_Registration CommandUuid="{_ID}"
                               Station="{Station}"/>
-    </Sequence>
+        <MoveShuttle TargetPosition="{Station}"/>
+        <Station_Execution CommandUuid="{_ID}"
+                           Command="Stopper"
+                           Station="{Station}"/>
+        <Station_Unregistration CommandUuid="{_ID}"
+                                Station="{Station}"/>
+      </Sequence>
+    </ReactiveSequence>
   </BehaviorTree>
 
   <!-- Description of Node Models (used by Groot) -->
