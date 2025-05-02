@@ -73,15 +73,14 @@ RUN apt-get update && apt-get install -y \
     libglvnd0 libgl1 libglx0 libegl1 libxkbcommon0 libxcomposite1 \
     libxcursor1 libxdamage1 libxfixes3 libxi6 libxrandr2 libxtst6 libfontconfig1 \
     libopengl0 libglu1 mesa-utils \
-    libyaml-cpp-dev \
+    libyaml-cpp-dev ffmpeg libsm6 libxext6 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 # Setup Python environment in final image
 RUN python3 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
-RUN pip install --no-cache-dir paho-mqtt jsonschema conan
-
+RUN pip install --no-cache-dir paho-mqtt jsonschema conan numpy opencv-python
 # Copy installed libraries from builder
 COPY --from=builder /usr/local/lib/ /usr/local/lib/
 COPY --from=builder /usr/local/include/ /usr/local/include/
