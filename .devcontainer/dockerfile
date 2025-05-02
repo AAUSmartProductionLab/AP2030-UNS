@@ -80,7 +80,7 @@ RUN apt-get update && apt-get install -y \
 # Setup Python environment in final image
 RUN python3 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
-RUN pip install --no-cache-dir paho-mqtt jsonschema conan numpy opencv-python
+RUN pip install --no-cache-dir paho-mqtt jsonschema conan numpy opencv-python pillow
 # Copy installed libraries from builder
 COPY --from=builder /usr/local/lib/ /usr/local/lib/
 COPY --from=builder /usr/local/include/ /usr/local/include/
