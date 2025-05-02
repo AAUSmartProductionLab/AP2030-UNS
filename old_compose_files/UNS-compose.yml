@@ -13,8 +13,17 @@ services:
       - "8883:8883"
       - "8884:8884"
       - "8081:8081"
+  groot:
+    build:
+      context: ./Groot2
+      dockerfile: groot2.dockerfile
+    container_name: groot2-web
+    ports:
+      - "6080:6080"
     networks:
       - hivemq-network
+    restart: unless-stopped
+    
 networks:
   hivemq-network:
     driver: bridge
