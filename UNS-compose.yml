@@ -108,7 +108,17 @@ services:
     networks:
       - hivemq-network
     restart: unless-stopped
-    
+
+  filling_station:
+   extends:
+      file: ./PackML_Stations/stations-compose.yml
+      service: filling_station
+
+  stoppering_station:
+   extends:
+      file: ./PackML_Stations/stations-compose.yml
+      service: stoppering_station
+      
 networks:
   hivemq-network:
     driver: bridge
