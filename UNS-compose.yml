@@ -73,6 +73,8 @@ services:
       context: ./Groot2
       dockerfile: groot2.dockerfile
     container_name: groot2-web
+    volumes:
+      - ./BT_Controller/config/bt_description:/bt_description
     ports:
       - "6080:6080"
     networks:
