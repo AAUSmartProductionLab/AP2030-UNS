@@ -1,0 +1,6 @@
+[submodule "BT_Controller/third_party/json"]
+	path = BT_Controller/third_party/json
+	url = https://github.com/nlohmann/json.git
+[submodule "BT_Controller/third_party/json-schema-validator"]
+	path = BT_Controller/third_party/json-schema-validator
+	url = https://github.com/pboettch/json-schema-validator.git
