@@ -11,10 +11,11 @@
             <port>8000</port>
             <bind-address>0.0.0.0</bind-address>
             <path>/mqtt</path>
-            <name>my-websocket-listener</name>
+            <name>websocket-listener-frontend</name>
             <subprotocols>
-                <subprotocol>mqttv3.1</subprotocol>
+                <subprotocol>mqttv3.1.1</subprotocol>
                 <subprotocol>mqtt</subprotocol>
+                <subprotocol>mqttv5</subprotocol>
             </subprotocols>
             <allow-extensions>true</allow-extensions>
         </websocket-listener>
