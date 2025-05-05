@@ -145,29 +145,27 @@ class MappingService {
           process: [60, 360, 90]
         },
         9: {
-            approach: [120, 240, 90],
-            process: [60, 240, 90]
+            approach: [120, 120, 90],
+            process: [60, 120, 90]
         },
-
         // Right edge - orientation 270 (west facing)
         5: {
-            approach: [600, 840, 270],  // Approach from right flyway
-            process: [600, 900, 270]    // Process is 60mm to the right
+          approach: [840, 600, 270],  // Approach from right flyway
+          process: [900, 600, 270]    // Process is 60mm to the right
         },
         8: {
-            approach: [360, 840, 270],  // Approach from right flyway
-            process: [360, 900, 270]    // Process is 60mm to the right
+          approach: [840, 360, 270],  // Approach from right flyway
+          process: [900, 360, 270]    // Process is 60mm to the right
         },
         10: {
-            approach: [120, 840, 270],  // Approach from right flyway
-            process: [120, 900, 270]    // Process is 60mm to the right
+          approach: [840, 120, 270],  // Approach from right flyway
+          process: [900, 120, 270]    // Process is 60mm to the right
         },
         // Middle EM square
         7: {
           approach: [360, 360, 270],
           process: [420, 360, 270]    // Matches example data
         },
-
         // Bottom row - orientation 180 (north facing)
         11: {
           approach: [120, 120, 270],
