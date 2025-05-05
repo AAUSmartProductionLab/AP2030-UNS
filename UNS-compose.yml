@@ -115,6 +115,8 @@ services:
       service: filling_station
     networks:
       - hivemq-network
+    depends_on:
+      - hivemq-broker
 
   stoppering_station:
     extends:
@@ -122,6 +124,8 @@ services:
       service: stoppering_station
     networks:
       - hivemq-network
+    depends_on:
+      - hivemq-broker
       
 networks:
   hivemq-network:
