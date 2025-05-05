@@ -1,0 +1,20 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Move to Position Request",
+    "type": "object",
+    "allOf": [
+        {
+            "$ref": "command.schema.json"
+        },
+        {
+            "type": "object",
+            "properties": {
+                "TargetPosition": {
+                    "type": "integer",
+                    "description": "Target position to move the xBot to [x, y]"
+                }
+            },
+            "required": ["TargetPosition"]
+        }
+    ]
+}

@@ -1,0 +1,13 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Generic data schema",
+    "description": "A base class for all data messages",
+    "type": "object",
+    "properties": {
+        "TimeStamp": {
+            "type": "string",
+            "description": "The time stamp of the message"
+        }
+    },
+    "required": ["TimeStamp"]
+}

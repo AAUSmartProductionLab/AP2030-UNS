@@ -1,0 +1,25 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Generic Move Command",
+    "type": "object",
+    "allOf": [
+        {
+            "$ref": "command.schema.json"
+        },
+        {
+            "type": "object",
+            "properties": {
+                "TargetPos": {
+                    "type": "array",
+                    "description": "Target position to move the xBot to [x, y]",
+                    "items": {
+                    "type": "number"
+                    },
+                    "minItems": 2,
+                    "maxItems": 2
+                }
+            },
+            "required": ["TargetPos"]
+        }
+    ]
+}

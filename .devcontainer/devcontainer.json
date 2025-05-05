@@ -1,0 +1,25 @@
+
+{
+	"name": "Ubuntu",
+	"build": {
+		"dockerfile": "dockerfile",
+        "context": ".."
+	},
+	"runArgs": [
+		"--network=host"
+	],
+	"features": {
+        "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
+    },
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-azuretools.vscode-docker",
+				"ms-vscode.cpptools",
+				"ms-vscode.cpptools-extension-pack",
+				"ms-python.autopep8"
+			]
+		}
+	}
+
+}

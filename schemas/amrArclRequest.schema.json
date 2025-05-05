@@ -1,0 +1,17 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Omron amr generic arcl request schema",
+    "subtopic": "/Omron/CMD/itk/Sim43/cmd/arcl/req",
+    "type": "object",
+    "properties": {
+        "id": {
+            "type": "string",
+            "description": "id for the request"
+        },
+        "command": {
+            "type": "string",
+            "description": "Unique identifier for the request"
+        }
+    },
+    "required": ["id", "command"]
+}
