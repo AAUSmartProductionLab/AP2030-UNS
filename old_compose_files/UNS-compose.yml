@@ -6,13 +6,68 @@ services:
     image: hivemq/hivemq4:latest
     container_name: hivemq-broker
     volumes:
-      - ./config/UNS-config.xml:/opt/hivemq/conf/config.xml   
+      - ./HiveMQ/conf:/opt/hivemq/conf
+      - ./HiveMQ/extensions:/opt/hivemq/extensions  
     ports:
       - "1883:1883"
       - "8080:8080"
       - "8883:8883"
       - "8884:8884"
       - "8081:8081"
+      - "8000:8000"
+    networks:
+      - hivemq-network
+
+  frontend:
+    build:
+      context: ./Configurator
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./Configurator:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    networks:
+      - hivemq-network
+    depends_on:
+      - hivemq-broker
+    restart: unless-stopped
+    
+  timescaledb:
+    image: timescale/timescaledb:latest-pg14
+    container_name: timescaledb
+    volumes:
+      - ./TimescaleDB/timescaledb-data:/var/lib/postgresql/data
+      - ./TimescaleDB/database/init-scripts:/docker-entrypoint-initdb.d
+    environment:
+      - POSTGRES_PASSWORD=admin
+      - POSTGRES_USER=admin
+      - POSTGRES_DB=uns_data
+    ports:
+      - "5432:5432"
+    networks:
+      - hivemq-network
+    restart: unless-stopped
+    
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    volumes:
+      - ./Grafana/grafana-data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+    ports:
+      - "3000:3000"
+    networks:
+      - hivemq-network
+    depends_on:
+      - timescaledb
+    restart: unless-stopped
+ 
   groot:
     build:
       context: ./Groot2
@@ -23,7 +78,39 @@ services:
     networks:
       - hivemq-network
     restart: unless-stopped
+
+  mqtt-explorer:
+    image: smeagolworms4/mqtt-explorer
+    container_name: mqtt-explorer
+    volumes:
+      - ./MQTT-Explorer/config:/mqtt-explorer/config
+    ports:
+      - "4000:4000"
+    environment:
+      - HTTP_PORT=4000
+      - CONFIG_PATH=/mqtt-explorer/config
+    networks:
+      - hivemq-network
+    depends_on:
+      - hivemq-broker
+    restart: unless-stopped
+    
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./Portainer/data:/data
+    ports:
+      - "9000:9000"
+    networks:
+      - hivemq-network
+    restart: unless-stopped
     
 networks:
   hivemq-network:
     driver: bridge
+
+volumes:
+  timescaledb-data:
+  grafana-data:

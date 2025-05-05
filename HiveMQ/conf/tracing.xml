@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<!--
+    This file is used to configure the trace sampling and tracing context propagation within the HiveMQ Broker
+    Tracing is only available by purchasing the HiveMQ Tracing Extension and can be used to visualize latencies.
+-->
+<tracing xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="./tracing.xsd">
+    <context-propagation>
+        <outbound-context-propagation>
+            <enabled>false</enabled>
+        </outbound-context-propagation>
+    </context-propagation>
+    <sampling>
+        <publish-sampling>
+            <enabled>false</enabled>
+        </publish-sampling>
+    </sampling>
+</tracing>
+
+

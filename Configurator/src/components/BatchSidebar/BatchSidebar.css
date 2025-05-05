@@ -1,0 +1,238 @@
+/* Sidebar container styling */
+.sidebar-container {
+    display: flex;
+    flex-direction: row; /* Changed from column to row */
+    gap: 1.5rem;
+    padding: 1.5rem;
+    overflow-y: auto;
+  }
+  
+  .sidebar-section {
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    flex: 1; /* Each section takes equal width */
+    min-width: 0; /* Prevents flex items from overflowing */
+  }
+  
+  .sidebar-section .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    background-color: #e9ecef;
+    border-bottom: 1px solid #dee2e6;
+  }
+  
+  .sidebar-section .section-header h2 {
+    margin: 0;
+    color: #495057;
+    font-size: 1.3rem;
+    font-weight: 600;
+  }
+  
+  .item-count {
+    background-color: #0056b3;
+    color: white;
+    padding: 0.25rem 0.6rem;
+    border-radius: 2rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  
+  /* Queue item styling */
+  .queue-list, .log-list {
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-height: 1000px; /* Increased for more vertical space */
+    overflow-y: auto;
+  }
+  
+  .queue-item, .log-item {
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+    padding: 1rem;
+    cursor: grab;
+    transition: all 0.2s ease;
+  }
+  
+  .queue-item:hover {
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
+  
+  .queue-item:active {
+    cursor: grabbing;
+  }
+  
+  .queue-item-header, .log-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+  }
+  
+  .queue-item-header h4, .log-item-header h4 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #212529;
+  }
+  
+  .queue-item-status, .log-item-status {
+    display: inline-block;
+    padding: 0.2rem 0.5rem;
+    border-radius: 3px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  
+  .queue-item-status {
+    background-color: #ffd166;
+    color: #664500;
+  }
+  
+  .queue-item-status.running {
+    background-color: #007bff;
+    color: white;
+  }
+  
+  .queue-item-status.pending {
+    background-color: #ffc107;
+    color: #212529;
+  }
+  
+  .log-item-status.completed {
+    background-color: #a8e6cf;
+    color: #1d5c42;
+  }
+  
+  .log-item-status.failed {
+    background-color: #ffb3ba;
+    color: #8c0000;
+  }
+  
+  .queue-item-details, .log-item-details {
+    margin-bottom: 0.75rem;
+  }
+  
+  .detail-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.35rem;
+    font-size: 0.85rem;
+  }
+  
+  .detail-label {
+    color: #6c757d;
+    font-weight: 500;
+  }
+  
+  .detail-value {
+    color: #212529;
+    font-weight: 600;
+  }
+  
+  .queue-item-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+  }
+  
+  .queue-action-btn {
+    border: none;
+    border-radius: 4px;
+    padding: 0.35rem 0.6rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .queue-action-btn.start {
+    background-color: #0056b3;
+    color: white;
+  }
+  
+  .queue-action-btn.start:hover {
+    background-color: #004494;
+  }
+  
+  .queue-action-btn.remove {
+    background-color: transparent;
+    color: #dc3545;
+    border: 1px solid #dc3545;
+  }
+  
+  .queue-action-btn.remove:hover {
+    background-color: #dc3545;
+    color: white;
+  }
+  .queue-item.running {
+    border-left: 4px solid #4CAF50;
+    background-color: rgba(76, 175, 80, 0.1);
+    position: relative;
+  }
+  
+  .queue-item.running::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    border: 2px solid rgba(76, 175, 80, 0.5);
+    border-radius: inherit;
+  }
+  
+  .running-indicator {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .running-icon {
+    display: inline-block;
+    animation: spin 2s linear infinite;
+    font-size: 16px;
+  }
+  
+  .queue-item.running .queue-item-status.running {
+    background-color: #4CAF50;
+    color: white;
+    font-weight: bold;
+  }
+  
+  /* Animation for the running icon */
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  /* Disable hover effects for running batches */
+  .queue-item.running:hover {
+    transform: none;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Style for the disabled start button */
+  .queue-item.running .queue-action-btn.start {
+    background-color: #4CAF50;
+    color: white;
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+
+  @media (max-width: 1200px) {
+    .sidebar-container {
+      flex-direction: column; /* Stack on smaller screens */
+    }
+  }

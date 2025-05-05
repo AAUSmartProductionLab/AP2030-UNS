@@ -20,7 +20,7 @@ services:
     container_name: filling_station
     network_mode: host
     volumes:
-      - ./schemas:/app/schemas
+      - ../schemas:/app/schemas
     command: fillingProxy.py
 
   stoppering_station:
@@ -30,7 +30,7 @@ services:
     container_name: stoppering_station
     network_mode: host
     volumes:
-      - ./schemas:/app/schemas
+      - ../schemas:/app/schemas
     command: stopperingProxy.py
     
   camera_station:
@@ -41,7 +41,7 @@ services:
     network_mode: host
     restart: always
     volumes:
-      - ./schemas:/app/schemas
+      - ../schemas:/app/schemas
     devices:
       - /dev/video0:/dev/video0
     command: cameraProxy.py

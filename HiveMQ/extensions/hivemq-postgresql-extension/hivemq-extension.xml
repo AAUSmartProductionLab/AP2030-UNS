@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<hivemq-extension>
+    <id>hivemq-postgresql-extension</id>
+    <version>4.39.0</version>
+    <name>HiveMQ Enterprise Extension for PostgreSQL</name>
+    <author>HiveMQ</author>
+    <priority>1000</priority>
+    <start-priority>1000</start-priority>
+</hivemq-extension>

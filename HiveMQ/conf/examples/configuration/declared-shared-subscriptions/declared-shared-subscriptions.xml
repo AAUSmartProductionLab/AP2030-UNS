@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<declared-shared-subscriptions  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="declared-shared-subscriptions.xsd">
+    <subscription>
+        <topic-filter>device/status</topic-filter>
+        <share-name>group1</share-name>
+    </subscription>
+    <subscription>
+        <topic-filter>device/update</topic-filter>
+        <share-name>group2</share-name>
+    </subscription>
+</declared-shared-subscriptions>

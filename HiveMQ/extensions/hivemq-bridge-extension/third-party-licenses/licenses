@@ -1,0 +1,64 @@
+Third Party Licenses
+==============================
+
+HiveMQ Enterprise Bridge Extension uses the following third party libraries:
+
+ Module                                                                     | Version                                   | License ID       | License URL
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ com.bucket4j:bucket4j_jdk11-core                                           | 8.14.0                                    | Apache-2.0       | https://spdx.org/licenses/Apache-2.0.html
+ com.fasterxml.jackson.core:jackson-annotations                             | 2.18.3                                    | Apache-2.0       | https://spdx.org/licenses/Apache-2.0.html
+ com.fasterxml.jackson.core:jackson-core                                    | 2.18.3                                    | Apache-2.0       | https://spdx.org/licenses/Apache-2.0.html
+ com.fasterxml.jackson.core:jackson-databind                                | 2.18.3                                    | Apache-2.0       | https://spdx.org/licenses/Apache-2.0.html
+ com.google.code.findbugs:jsr305                                            | 3.0.2                                     | Apache-2.0       | https://spdx.org/licenses/Apache-2.0.html
+ com.google.dagger:dagger                                                   | 2.56.2                                    | Apache-2.0       | https://spdx.org/licenses/Apache-2.0.html
+ com.google.errorprone:error_prone_annotations                              | 2.36.0                                    | Apache-2.0       | https://spdx.org/licenses/Apache-2.0.html
+ com.google.guava:failureaccess                                             | 1.0.2                                     | Apache-2.0       | https://spdx.org/licenses/Apache-2.0.html
+ com.google.guava:guava                                                     | 33.4.0-jre                                | Apache-2.0       | https://spdx.org/licenses/Apache-2.0.html
+ com.google.guava:listenablefuture                                          | 9999.0-empty-to-avoid-conflict-with-guava | Apache-2.0       | https://spdx.org/licenses/Apache-2.0.html
+ com.google.j2objc:j2objc-annotations                                       | 3.0.0                                     | Apache-2.0       | https://spdx.org/licenses/Apache-2.0.html
+ com.hivemq:hivemq-mqtt-client                                              | 1.3.5                                     | Apache-2.0       | https://spdx.org/licenses/Apache-2.0.html
+ com.sun.istack:istack-commons-runtime                                      | 4.1.2                                     | BSD-3-Clause     | https://www.eclipse.org/org/documents/edl-v10.php
+ com.vaadin.external.flute:flute                                            | 1.3.0.gg2                                 | W3C-19980720     | https://spdx.org/licenses/W3C-19980720.html
+ com.vaadin.external.gwt:gwt-elemental                                      | 2.8.2.vaadin2                             | Apache-2.0       | https://spdx.org/licenses/Apache-2.0.html
+ com.vaadin.external:gentyref                                               | 1.2.0.vaadin1                             | Apache-2.0       | https://spdx.org/licenses/Apache-2.0.html
+ com.vaadin:vaadin-sass-compiler                                            | 0.9.13                                    | Apache-2.0       | https://spdx.org/licenses/Apache-2.0.html
+ com.vaadin:vaadin-server                                                   | 8.14.3                                    | Apache-2.0       | https://spdx.org/licenses/Apache-2.0.html
+ com.vaadin:vaadin-shared                                                   | 8.14.3                                    | Apache-2.0       | https://spdx.org/licenses/Apache-2.0.html
+ io.dropwizard.metrics:metrics-core                                         | 4.2.30                                    | Apache-2.0       | https://spdx.org/licenses/Apache-2.0.html
+ io.netty:netty-buffer                                                      | 4.1.119.Final                             | Apache-2.0       | https://spdx.org/licenses/Apache-2.0.html
+ io.netty:netty-codec                                                       | 4.1.119.Final                             | Apache-2.0       | https://spdx.org/licenses/Apache-2.0.html
+ io.netty:netty-codec-http                                                  | 4.1.119.Final                             | Apache-2.0       | https://spdx.org/licenses/Apache-2.0.html
+ io.netty:netty-common                                                      | 4.1.119.Final                             | Apache-2.0       | https://spdx.org/licenses/Apache-2.0.html
+ io.netty:netty-handler                                                     | 4.1.119.Final                             | Apache-2.0       | https://spdx.org/licenses/Apache-2.0.html
+ io.netty:netty-resolver                                                    | 4.1.119.Final                             | Apache-2.0       | https://spdx.org/licenses/Apache-2.0.html
+ io.netty:netty-tcnative-boringssl-static                                   | 2.0.70.Final                              | Apache-2.0       | https://spdx.org/licenses/Apache-2.0.html
+ io.netty:netty-tcnative-classes                                            | 2.0.70.Final                              | Apache-2.0       | https://spdx.org/licenses/Apache-2.0.html
+ io.netty:netty-transport                                                   | 4.1.119.Final                             | Apache-2.0       | https://spdx.org/licenses/Apache-2.0.html
+ io.netty:netty-transport-classes-epoll                                     | 4.1.119.Final                             | Apache-2.0       | https://spdx.org/licenses/Apache-2.0.html
+ io.netty:netty-transport-native-epoll                                      | 4.1.119.Final                             | Apache-2.0       | https://spdx.org/licenses/Apache-2.0.html
+ io.netty:netty-transport-native-unix-common                                | 4.1.119.Final                             | Apache-2.0       | https://spdx.org/licenses/Apache-2.0.html
+ io.opentelemetry:opentelemetry-api                                         | 1.49.0                                    | Apache-2.0       | https://spdx.org/licenses/Apache-2.0.html
+ io.opentelemetry:opentelemetry-context                                     | 1.49.0                                    | Apache-2.0       | https://spdx.org/licenses/Apache-2.0.html
+ io.reactivex.rxjava2:rxjava                                                | 2.2.21                                    | Apache-2.0       | https://spdx.org/licenses/Apache-2.0.html
+ jakarta.activation:jakarta.activation-api                                  | 2.1.3                                     | BSD-3-Clause     | https://www.eclipse.org/org/documents/edl-v10.php
+ jakarta.inject:jakarta.inject-api                                          | 2.0.1                                     | Apache-2.0       | https://spdx.org/licenses/Apache-2.0.html
+ jakarta.xml.bind:jakarta.xml.bind-api                                      | 4.0.2                                     | BSD-3-Clause     | https://www.eclipse.org/org/documents/edl-v10.php
+ javax.inject:javax.inject                                                  | 1                                         | Apache-2.0       | https://spdx.org/licenses/Apache-2.0.html
+ javax.ws.rs:javax.ws.rs-api                                                | 2.1.1                                     | EPL-2.0          | https://spdx.org/licenses/EPL-2.0.html
+ net.logstash.logback:logstash-logback-encoder                              | 8.1                                       | Apache-2.0       | https://spdx.org/licenses/Apache-2.0.html
+ org.apache.commons:commons-lang3                                           | 3.17.0                                    | Apache-2.0       | https://spdx.org/licenses/Apache-2.0.html
+ org.checkerframework:checker-qual                                          | 3.43.0                                    | MIT              | https://spdx.org/licenses/MIT.html
+ org.eclipse.angus:angus-activation                                         | 2.0.2                                     | BSD-3-Clause     | https://www.eclipse.org/org/documents/edl-v10.php
+ org.glassfish.jaxb:jaxb-core                                               | 4.0.5                                     | BSD-3-Clause     | https://www.eclipse.org/org/documents/edl-v10.php
+ org.glassfish.jaxb:jaxb-runtime                                            | 4.0.5                                     | BSD-3-Clause     | https://www.eclipse.org/org/documents/edl-v10.php
+ org.glassfish.jaxb:txw2                                                    | 4.0.5                                     | BSD-3-Clause     | https://www.eclipse.org/org/documents/edl-v10.php
+ org.jctools:jctools-core                                                   | 2.1.2                                     | Apache-2.0       | https://spdx.org/licenses/Apache-2.0.html
+ org.jetbrains:annotations                                                  | 26.0.2                                    | Apache-2.0       | https://spdx.org/licenses/Apache-2.0.html
+ org.jsoup:jsoup                                                            | 1.16.2                                    | MIT              | https://spdx.org/licenses/MIT.html
+ org.jspecify:jspecify                                                      | 1.0.0                                     | Apache-2.0       | https://spdx.org/licenses/Apache-2.0.html
+ org.reactivestreams:reactive-streams                                       | 1.0.4                                     | MIT-0            | https://spdx.org/licenses/MIT-0.html
+ org.slf4j:slf4j-api                                                        | 2.0.17                                    | MIT              | https://spdx.org/licenses/MIT.html
+ org.w3c.css:sac                                                            | 1.3                                       | W3C-19980720     | https://spdx.org/licenses/W3C-19980720.html
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+The open source code of the libraries can be obtained by sending an email to legal@hivemq.com.

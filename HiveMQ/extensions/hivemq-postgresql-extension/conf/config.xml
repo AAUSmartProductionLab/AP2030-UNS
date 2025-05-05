@@ -1,0 +1,25 @@
+<hivemq-postgresql-extension xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                             xsi:noNamespaceSchemaLocation="config.xsd">
+    <postgresqls>
+        <postgresql>
+            <id>order-data-postgresql</id>
+            <host>timescaledb</host>
+            <port>5432</port>
+            <database>uns_data</database>
+            <username>admin</username>
+            <password>admin</password>
+        </postgresql>
+    </postgresqls>
+    <mqtt-to-postgresql-routes>
+        <mqtt-to-postgresql-route>
+            <id>order-data-template-route</id>
+            <postgresql-id>order-data-postgresql</postgresql-id>
+            <mqtt-topic-filters>
+                <mqtt-topic-filter>NN/Nybrovej/InnoLab/Configuration/DATA/Order</mqtt-topic-filter>
+            </mqtt-topic-filters>
+            <processor>
+                <statement-template>sql-template-statements/orders/order-data-insert.sql</statement-template>
+            </processor>
+        </mqtt-to-postgresql-route>
+    </mqtt-to-postgresql-routes>
+</hivemq-postgresql-extension>

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="tracing" type="tracingType">
+    <xs:annotation>
+      <xs:documentation>
+        This file is used to configure the trace sampling and tracing context propagation within the HiveMQ Broker
+        Tracing is only available by purchasing the HiveMQ Tracing Extension and can be used to visualize latencies.
+      </xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:complexType name="client-id-patternsType">
+    <xs:sequence>
+      <xs:element type="xs:string" name="client-id-pattern" maxOccurs="unbounded" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="includeType">
+    <xs:sequence>
+      <xs:element type="client-id-patternsType" name="client-id-patterns" minOccurs="0"/>
+      <xs:element type="topic-filtersType" name="topic-filters" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="excludeType">
+    <xs:sequence>
+      <xs:element type="client-id-patternsType" name="client-id-patterns" minOccurs="0"/>
+      <xs:element type="topic-filtersType" name="topic-filters" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="outbound-context-propagationType">
+    <xs:sequence>
+      <xs:element type="xs:boolean" name="enabled"/>
+      <xs:element type="includeType" name="include" minOccurs="0"/>
+      <xs:element type="excludeType" name="exclude" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="context-propagationType">
+    <xs:sequence>
+      <xs:element type="outbound-context-propagationType" name="outbound-context-propagation" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="topic-filtersType">
+    <xs:sequence>
+      <xs:element name="topic-filter" type="xs:string" maxOccurs="unbounded" minOccurs="0">
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="publish-samplingType" >
+    <xs:sequence>
+      <xs:element type="xs:boolean" name="enabled"/>
+      <xs:element type="includeType" name="include" minOccurs="0"/>
+      <xs:element type="excludeType" name="exclude" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="samplingType">
+    <xs:sequence>
+      <xs:element type="publish-samplingType" name="publish-sampling" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="tracingType">
+    <xs:sequence>
+      <xs:element type="context-propagationType" name="context-propagation" minOccurs="0"/>
+      <xs:element type="samplingType" name="sampling" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema>

@@ -1,0 +1,21 @@
+<configuration>
+    <appender name="BRIDGE-MQTT-LOG-FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${hivemq.log.folder}/bridge-mqtt-message.log</file>
+        <append>true</append>
+        <encoder>
+            <pattern>%-24(%d)- %msg%n%ex</pattern>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+            <fileNamePattern>${hivemq.log.folder}/bridge-mqtt-message-%i.log.gz</fileNamePattern>
+            <minIndex>1</minIndex>
+            <maxIndex>5</maxIndex>
+        </rollingPolicy>
+        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+            <maxFileSize>100MB</maxFileSize>
+        </triggeringPolicy>
+    </appender>
+
+    <logger name="com.hivemq.bridge.log" additivity="false">
+        <appender-ref ref="BRIDGE-MQTT-LOG-FILE"/>
+    </logger>
+</configuration>

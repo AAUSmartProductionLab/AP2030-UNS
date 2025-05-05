@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hivemq-bridge-extension xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                         xsi:noNamespaceSchemaLocation="config.xsd">
+    <message-log>
+        <enabled>true</enabled>
+        <log-level>DEBUG</log-level>
+        <mqtt-packets>CONNECT, INCOMING-PUBLISH, SUBSCRIBE, OUTGOING-PUBLISH</mqtt-packets>
+    </message-log>
+    <bridges>
+        <bridge>
+            <!-- default is true -->
+            <enabled>true</enabled>
+            <!-- environment variable can be used  i.e. $ENV{HIVEMQ_BRIDGE_NAME} -->
+            <name>test-bridge</name>
+            <remote-broker>
+                <authentication>
+                    <mqtt-simple-authentication>
+                        <username>myBridgeClient</username>
+                        <password>myPassword</password>
+                        <token>myToken</token>
+                    </mqtt-simple-authentication>
+                </authentication>
+                <connection>
+                    <static>
+                        <!-- environment variables can be used  i.e. $ENV{REMOTE_BROKER_HOST} $ENV{REMOTE_BROKER_PORT} -->
+                        <host>localhost</host>
+                        <port>8883</port>
+                    </static>
+                </connection>
+                <mqtt>
+                    <clean-start>true</clean-start>
+                    <keep-alive>60</keep-alive>
+                    <session-expiry>3600</session-expiry>
+                </mqtt>
+                <tls>
+                    <enabled>true</enabled>
+                    <keystore>
+                        <path>keystore.jks</path>
+                        <password>changeme</password>
+                        <private-key-password>changeme</private-key-password>
+                    </keystore>
+                    <truststore>
+                        <path>truststore.jks</path>
+                        <password>changeme</password>
+                    </truststore>
+                    <cipher-suites>
+                        <cipher-suite>TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384</cipher-suite>
+                        <cipher-suite>TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256</cipher-suite>
+                        <cipher-suite>TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256</cipher-suite>
+                        <cipher-suite>TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384</cipher-suite>
+                        <cipher-suite>TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA</cipher-suite>
+                        <cipher-suite>TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA</cipher-suite>
+                        <cipher-suite>TLS_RSA_WITH_AES_128_GCM_SHA256</cipher-suite>
+                        <cipher-suite>TLS_RSA_WITH_AES_128_CBC_SHA</cipher-suite>
+                        <cipher-suite>TLS_RSA_WITH_AES_256_CBC_SHA</cipher-suite>
+                    </cipher-suites>
+                    <protocols>
+                        <protocol>TLSv1.2</protocol>
+                    </protocols>
+                </tls>
+            </remote-broker>
+            <topics>
+                <topic>
+                    <filter>+/+/+/+/machine/data</filter>
+                    <mode>PUB</mode>
+                    <!-- destination will be mytest/original-topic -->
+                    <destination>mytest/{#}</destination>
+                    <!-- default is false -->
+                    <preserve-retained>false</preserve-retained>
+                </topic>
+                <topic>
+                    <filter>+/+/+/+/machine/station</filter>
+                    <mode>PUB</mode>
+                    <!-- destination will be mytest/original-topic -->
+                    <destination>mytest/{#}</destination>
+                </topic>
+                <topic>
+                    <filter>+/+/+/+/machine/error</filter>
+                    <mode>PUB</mode>
+                    <!-- destination will be mytest/original-topic -->
+                    <destination>mytest/{#}</destination>
+                </topic>
+                <topic>
+                    <filter>mytest/+/area/line/cell/machine/station</filter>
+                    <mode>SUB</mode>
+                    <!-- destination will be original-topic -->
+                    <!-- default is false -->
+                    <preserve-retained>false</preserve-retained>
+                </topic>
+            </topics>
+        </bridge>
+        <bridge>
+            <!-- default is true -->
+            <enabled>true</enabled>
+            <!-- environment variable can be used  i.e. $ENV{HIVEMQ_BRIDGE_NAME} -->
+            <name>$ENV{HIVEMQ_BRIDGE_NAME}-cloud</name>
+            <remote-broker>
+                <authentication>
+                    <mqtt-simple-authentication>
+                        <username>AUserName</username>
+                        <password>APassword</password>
+                    </mqtt-simple-authentication>
+                </authentication>
+                <connection>
+                    <static>
+                        <!-- environment variables can be used  i.e. $ENV{REMOTE_BROKER_HOST} $ENV{REMOTE_BROKER_PORT} -->
+                        <host>someIP.env-1.hivemq.cloud</host>
+                        <port>8883</port>
+                    </static>
+                </connection>
+                <mqtt>
+                    <clean-start>true</clean-start>
+                    <keep-alive>60</keep-alive>
+                    <session-expiry>3600</session-expiry>
+                </mqtt>
+            </remote-broker>
+            <topics>
+                <topic>
+                    <filter>+/+/+/+/machine/data</filter>
+                    <mode>PUB</mode>
+                    <!-- destination will be mytest/original-topic -->
+                    <destination>mytest/{#}</destination>
+                </topic>
+                <topic>
+                    <filter>+/+/+/+/machine/station</filter>
+                    <mode>PUB</mode>
+                    <!-- exclude specific topics from bridging -->
+                    <exclude>test/+/+/+/machine/station</exclude>
+                    <!-- destination will be mytest/original-topic -->
+                    <destination>mytest/{#}</destination>
+                </topic>
+                <topic>
+                    <filter>mytest/+/area/line/cell/machine/station</filter>
+                    <mode>SUB</mode>
+                    <!-- destination will be original-topic -->
+                </topic>
+                <topic>
+                    <filter>+/trade/+/+/machine/data</filter>
+                    <mode>PUB</mode>
+                    <!-- destination will be mytest/trade/+/+... removing level 0 from origin -->
+                    <destination>mytest/{1-#}</destination>
+                </topic>
+                <topic>
+                    <filter>+/cell/machine/station/worker/temperature</filter>
+                    <mode>SUB</mode>
+                    <!-- destination will be "mytest/cell/machine/station" mytest/ + level 1-3 from origin  -->
+                    <destination>mytest/{1-3}</destination>
+                </topic>
+            </topics>
+        </bridge>
+    </bridges>
+</hivemq-bridge-extension>

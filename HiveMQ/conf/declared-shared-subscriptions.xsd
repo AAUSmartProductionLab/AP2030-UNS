@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+    <!--- root -->
+    <xs:element name="declared-shared-subscriptions">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:choice minOccurs="0" maxOccurs="unbounded">
+                    <xs:element name="subscription" minOccurs="0">
+                        <xs:complexType>
+                            <xs:all>
+                                <xs:element name="topic-filter" type="xs:string"/>
+                                <xs:element name="share-name" type="xs:string"/>
+                            </xs:all>
+                        </xs:complexType>
+                    </xs:element>
+                </xs:choice>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+</xs:schema>

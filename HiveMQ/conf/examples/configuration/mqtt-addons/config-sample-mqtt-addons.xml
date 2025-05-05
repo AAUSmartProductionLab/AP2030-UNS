@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<hivemq>
+
+    <listeners>
+        <tcp-listener>
+            <port>1883</port>
+            <bind-address>0.0.0.0</bind-address>
+        </tcp-listener>
+    </listeners>
+
+    <mqtt-addons>
+
+        <expired-messages-topic>
+            <enabled>true</enabled>
+        </expired-messages-topic>
+
+        <dropped-messages-topic>
+            <enabled>true</enabled>
+        </dropped-messages-topic>
+
+    </mqtt-addons>
+
+</hivemq>

@@ -1,0 +1,204 @@
+.config-panel {
+    width: 240px;
+    flex-shrink: 0;
+    background-color: #F8F8F8;
+    color: #333333;
+    border-left: 1px solid #E0E0E0;
+    height: 100%;
+    overflow-y: auto;
+    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.05);
+  }
+  
+  .config-header {
+    border-bottom: 1px solid #E0E0E0;
+    padding: 15px 18px;
+    background-color: #0033A0; /* Novo Nordisk Blue */
+  }
+  
+  .config-header h2 {
+    margin: 0;
+    font-size: 22px;
+    text-align: center;
+    font-weight: 500;
+    color: #ffffff;
+  }
+  
+  .config-section {
+    padding: 15px;
+    border-bottom: 1px solid #E0E0E0;
+  }
+  
+  .config-section h3 {
+    margin: 0 0 15px 0;
+    font-size: 20px;
+    font-weight: 500;
+    color: #0033A0; /* Novo Nordisk Blue */
+  }
+  .config-section h4 {
+    margin: 0 0 15px 0;
+    font-size: 13px;
+    font-weight: 500;
+    color: #000000; /* Novo Nordisk Blue */
+  }
+  
+  .input-group {
+    margin-bottom: 12px;
+  }
+  
+  .input-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 14px;
+    color: #555555;
+  }
+  
+  .input-group input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #D0D0D0;
+    border-radius: 4px;
+    font-size: 14px;
+    color: #333333;
+    background-color: #FFFFFF;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  
+  .input-group input:focus {
+    outline: none;
+    border-color: #0033A0;
+    box-shadow: 0 0 0 2px rgba(0, 51, 160, 0.2);
+  }
+  
+  /* Add some subtle styling for invalid input */
+  .input-group input.invalid {
+    border-color: #e74c3c;
+    background-color: #fef5f5;
+  }
+  .buttons-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: auto; /* Push to bottom if space allows */
+    padding-top: 20px;
+  }
+  
+  .config-button {
+    padding: 12px 16px;
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 14px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  .clear-stations-button {
+    background-color: #fc050596; /* Orange for stations */
+    color: white;
+  }
+  
+  .clear-stations-button:hover {
+    background-color: #9e070796;
+  }
+  
+  .clear-limits-button {
+    background-color: #fc050596; /* Purple for limits */
+    color: white;
+  }
+  
+  .clear-limits-button:hover {
+    background-color: #9e070796;
+  }
+  
+  .clear-button {
+    background-color: #fc0505;
+    color: #ffffff;
+  }
+  
+  .clear-button:hover {
+    background-color: #c20707fd;
+  }
+  
+  .submit-button {
+    background-color: #0033A0; /* Novo Nordisk Blue */
+    color: white;
+  }
+  
+  .submit-button:hover {
+    background-color: #002A85;
+  }
+  
+  .submit-lowest-button {
+    background-color: #007AB3; /* Lighter blue */
+    color: white;
+  }
+  
+  .submit-lowest-button:hover {
+    background-color: #00698D;
+  }
+
+  .publish-config-button {
+    background-color: #00A040; /* Green color for configuration */
+    color: white;
+  }
+  
+  .publish-config-button:hover {
+    background-color: #008535;
+  }
+
+  .default-layout-button {
+    background-color: #fcfcfc; /* Blue color that complements the other buttons */
+    color: rgb(0, 0, 0);
+  }
+  
+  .default-layout-button:hover {
+    background-color: #e6e6e6;
+  }
+  
+  /* Make the config panel take the full height */
+  .config-panel {
+    width: 240px;
+    flex-shrink: 0;
+    background-color: #F8F8F8;
+    color: #333333;
+    border-left: 1px solid #E0E0E0;
+    height: 100%;
+    overflow-y: auto;
+    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+  }
+  
+  @media (max-width: 1200px) {
+    .config-panel {
+      width: 220px;
+    }
+  }
+  
+  @media (max-width: 992px) {
+    .config-panel {
+      width: 200px;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .config-panel {
+      width: 180px;
+    }
+    
+    .config-header h2 {
+      font-size: 18px;
+    }
+    
+    .config-section h3 {
+      font-size: 15px;
+    }
+    
+    .input-group label,
+    .input-group input {
+      font-size: 13px;
+    }
+  }

@@ -1,0 +1,99 @@
+.task {
+  background-color: white;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+  cursor: grab;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  font-weight: 500;
+  text-align: center;
+  overflow: hidden;
+  word-break: break-word;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  user-select: none;
+  /* Default task styling in sidebar */
+  aspect-ratio: 1/1;
+  width: 85%;
+  height: 85%;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+}
+
+/* For tasks in sidebar */
+.task-template {
+  aspect-ratio: 3/1;
+  width: 95%;
+  height: auto;
+  max-width: none;
+  max-height: none;
+  font-size: 1.1rem;
+  font-weight: 500;
+  border-radius: 6px;
+}
+
+.droppable-area .task {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  border-radius: 8px;
+  overflow: hidden;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* Style for tasks being dragged toward deletion zone */
+.dragging-to-delete {
+  transform: scale(0.95) !important;
+  box-shadow: 0 0 20px rgba(231, 76, 60, 0.6) !important;
+  border-color: #e74c3c !important;
+}
+
+.task:active {
+  cursor: grabbing;
+}
+
+/* Hide delete button by default */
+.delete-task-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: #E74C3C;
+  color: white;
+  border: none;
+  font-size: 16px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0; /* Hidden by default */
+  transition: opacity 0.2s, background-color 0.2s, transform 0.2s;
+  z-index: 20;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* Show delete button on hover */
+.task:hover .delete-task-btn {
+  opacity: 1;
+}
+
+.delete-task-btn:hover {
+  background-color: #C0392B;
+  transform: scale(1.1);
+}
+
+/* Prevent the button from triggering drag */
+.delete-task-btn:active {
+  cursor: pointer;
+}

@@ -1,0 +1,69 @@
+.droppable-area {
+  background-color: #ffffff;
+  border-radius: 8px;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  box-sizing: border-box;
+  box-shadow: 0 2px 4px rgba(0, 51, 160, 0.05);
+  overflow: hidden; /* Ensure nothing spills outside */
+  padding: 0; /* Remove padding to allow full coverage */
+  border: 3px solid transparent;
+  transition: all 0.2s ease-in-out;
+}
+
+.droppable-area.black {
+  background-color: #002369; /* Darker Novo blue */
+  color: white;
+}
+
+.droppable-area.corner {
+  background-color: #768FC0; /* Medium Novo blue */
+  color: white;
+}
+
+.droppable-area.over {
+  border-color: #0033A0; /* Novo Nordisk Blue */
+  background-color: #F0F5FF; /* Very light blue */
+  transform: scale(1.03); /* Subtle scale effect */
+  box-shadow: 0 0 20px rgba(0, 51, 160, 0.2);
+  z-index: 5;
+}
+
+.droppable-area.black.over {
+  border-color: #005BDB; /* Brighter blue */
+  background-color: #00297A; /* Darker shade */
+}
+
+.droppable-area.corner.over {
+  border-color: #005BDB;
+  background-color: #5B79B4;
+}
+
+/* Animation when a task is added */
+.droppable-area.has-task .droppable-title {
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.droppable-title {
+  font-weight: bold;
+  font-size: 1.1rem;
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  opacity: 0.8;
+  z-index: 1;
+  pointer-events: none; /* Prevent it from interfering with dragging */
+  padding: 0 8px;
+  transition: opacity 0.2s;
+}
+
+.droppable-content {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}

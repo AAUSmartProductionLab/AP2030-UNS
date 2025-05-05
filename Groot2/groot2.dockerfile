@@ -33,11 +33,6 @@ RUN mkdir -p /opt/groot && \
     mv squashfs-root/* /opt/groot/ && \
     rm -rf /tmp/squashfs-root Groot2.AppImage
 
-# Configure VNC with a secure empty password
-RUN mkdir -p /root/.vnc && \
-    echo "robotlab" | vncpasswd -f > /root/.vnc/passwd && \
-    chmod 600 /root/.vnc/passwd
-
 # Create Openbox configuration to maximize Groot2 and remove all window decorations
 RUN mkdir -p /root/.config/openbox && \
     echo '<?xml version="1.0" encoding="UTF-8"?>' > /root/.config/openbox/rc.xml && \
@@ -55,18 +50,13 @@ RUN mkdir -p /root/.config/openbox && \
 
 # Modify noVNC to auto-connect without showing the connection screen
 RUN sed -i 's/UI.connect();/UI.connect(); document.getElementById("noVNC_connect_button").click();/' /usr/share/novnc/app/ui.js
+RUN sed -i 's/UI.initSetting('\''view_clip'\''/document.getElementById("noVNC_control_bar").style.display = "none"; UI.initSetting('\''view_clip'\''/' /usr/share/novnc/app/ui.js
 
 # Create startup script for VNC server with minimal window manager
 RUN echo '#!/bin/bash' > /usr/local/bin/start-vnc && \
-    echo 'vncserver :1 -geometry 2560x1440 -depth 24 -localhost no -xstartup /usr/bin/openbox-session' >> /usr/local/bin/start-vnc && \
+    echo 'vncserver :1 -geometry 2560x1440 -depth 24 -localhost no -SecurityTypes None --I-KNOW-THIS-IS-INSECURE -name "Groot2" -xstartup /usr/bin/openbox-session' >> /usr/local/bin/start-vnc && \
     echo 'websockify -D --web=/usr/share/novnc/ 6080 localhost:5901' >> /usr/local/bin/start-vnc && \
     chmod +x /usr/local/bin/start-vnc
-
-# Create custom index.html for noVNC to auto-connect
-RUN echo '<!DOCTYPE html>' > /usr/share/novnc/index.html && \
-    echo '<html><head>' >> /usr/share/novnc/index.html && \
-    echo '<meta http-equiv="refresh" content="0; url=vnc.html?autoconnect=true&reconnect=true&reconnect_delay=1000&resize=remote&quality=9&compression=0&view_only=0">' >> /usr/share/novnc/index.html && \
-    echo '</head></html>' >> /usr/share/novnc/index.html
 
 # Create Groot2 script with VNC display and auto-maximize
 RUN echo '#!/bin/bash' > /usr/local/bin/groot2 && \
