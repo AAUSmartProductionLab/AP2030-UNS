@@ -49,7 +49,7 @@ void ConfigurationNode::callback(const json &msg, mqtt::properties props)
                     }
                 }
             }
-            else if (msg.contains("Stations"))
+            if (msg.contains("Stations"))
             { // Clear existing station map
                 stationMap.clear();
                 for (const auto &station : msg["Stations"])

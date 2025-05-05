@@ -13,10 +13,7 @@ using nlohmann::json;
 class GenericConditionNode : public MqttSyncSubNode
 {
 private:
-    std::condition_variable cv_;
-    std::chrono::milliseconds timeout_{5000}; // 5 second default timeout
-    bool has_timed_out_ = false;
-
+    std::condition_variable cv_message_received_; // Add this condition variable
 public:
     GenericConditionNode(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client,
                          const mqtt_utils::Topic &response_topic);
@@ -26,5 +23,7 @@ public:
     BT::NodeStatus tick() override;
     bool isInterestedIn(const json &msg) override;
     void callback(const json &msg, mqtt::properties props) override;
+    bool compare(const json &msg, const std::string &field_name, const std::string &comparison_type,
+                 const std::string &expected_value);
     std::string getFormattedTopic(const std::string &pattern, const BT::NodeConfig &config);
 };
