@@ -8,19 +8,19 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Add JSON library (header-only)
 add_library(json INTERFACE)
 target_include_directories(json INTERFACE 
-    ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/json/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/json/include
 )
 
 # Add JSON schema validator
 add_library(json_schema_validator STATIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/json-schema-validator/src/json-schema-draft7.json.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/json-schema-validator/src/json-uri.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/json-schema-validator/src/json-validator.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/json-schema-validator/src/json-patch.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/json-schema-validator/src/json-schema-draft7.json.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/json-schema-validator/src/json-uri.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/json-schema-validator/src/json-validator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/json-schema-validator/src/json-patch.cpp
 )
 target_include_directories(json_schema_validator PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/json-schema-validator/src
-    ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/json/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/json-schema-validator/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/json/include
 )
 target_link_libraries(json_schema_validator PUBLIC json)
 
@@ -81,8 +81,8 @@ target_include_directories(${PROJECT_NAME}
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     PRIVATE 
         /usr/local/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/json/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/json-schema-validator/src
+        ${CMAKE_CURRENT_SOURCE_DIR}/third_party/json/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/third_party/json-schema-validator/src
 )
 
 target_link_libraries(${PROJECT_NAME} 
@@ -96,8 +96,8 @@ target_link_libraries(${PROJECT_NAME}
 
 # target_include_directories(generate_model_xml PRIVATE 
 #     /usr/local/include
-#     ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/json/include
-#     ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/json-schema-validator/src
+#     ${CMAKE_CURRENT_SOURCE_DIR}/third_party/json/include
+#     ${CMAKE_CURRENT_SOURCE_DIR}/third_party/json-schema-validator/src
 # )
 
 # target_link_libraries(generate_model_xml 
