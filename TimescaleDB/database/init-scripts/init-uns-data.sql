@@ -38,7 +38,7 @@ DECLARE
     i INTEGER;
     table_name TEXT;
 BEGIN
-    -- Loop to create tables for Xbot1 through Xbot5
+    -- Loop to create tables for Xbot1 through Xbot10
     FOR i IN 1..10 LOOP
         table_name := 'xbot' || i || '_state';
         
@@ -47,19 +47,19 @@ BEGIN
                 id SERIAL PRIMARY KEY,
                 station_id INTEGER,
                 state VARCHAR(50),
-                timestamp TIMESTAMP,
-                command_uuid UUID,
-                received_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+                timestamp_utc TIMESTAMP NOT NULL,
+                command_uuid UUID
             )', table_name);
             
         -- Create index for each table
         EXECUTE format('
-            CREATE INDEX IF NOT EXISTS idx_%I_timestamp ON %I(timestamp)
+            CREATE INDEX IF NOT EXISTS idx_%I_timestamp_utc ON %I(timestamp_utc)
         ', table_name, table_name);
     END LOOP;
 END
 $$;
 
+-- This function can insert data from a given topic into the appropriate Xbot state table
 CREATE OR REPLACE FUNCTION insert_xbot_state(
     topic TEXT,
     station_id INTEGER,
@@ -82,10 +82,9 @@ BEGIN
         INSERT INTO %I (
             station_id,
             state,
-            timestamp,
-            command_uuid,
-            timestamp_utc
-        ) VALUES ($1, $2, $3, $4, NOW())',
+            timestamp_utc,
+            command_uuid
+        ) VALUES ($1, $2, $3, $4)',
         table_name)
     USING station_id, state, timestamp_value, command_uuid;
 END;
