@@ -106,7 +106,15 @@ int main(int argc, char *argv[])
 
     loadConfigFromYaml(configFile, generate_xml_models, serverURI, clientId, unsTopicPrefix, groot2_port,
                        bt_description_path, bt_nodes_path);
-
+    // Parse command line arguments
+    for (int i = 1; i < argc; i++)
+    {
+        std::string arg = argv[i];
+        if (arg == "-g")
+        {
+            generate_xml_models = true;
+        }
+    }
     auto connOpts = mqtt::connect_options_builder::v5()
                         .clean_start(true) // if false the broker retains previous subscriptions
                         .properties({{mqtt::property::SESSION_EXPIRY_INTERVAL, 604800}})

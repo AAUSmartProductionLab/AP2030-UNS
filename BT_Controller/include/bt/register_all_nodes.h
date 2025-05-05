@@ -12,7 +12,7 @@
 #include "bt/CustomNodes/station_register_node.h"
 #include "bt/CustomNodes/station_unregister_node.h"
 #include "bt/CustomNodes/station_execute_node.h"
-#include "bt/CustomNodes/build_production_queue_node.h"
+#include "bt/CustomNodes/configuration_node.h"
 #include "bt/CustomNodes/get_product_from_queue_node.h"
 
 void registerAllNodes(
@@ -115,11 +115,11 @@ void registerAllNodes(
         "Data_Condition",
         GenericConditonDATA);
 
-    MqttAsyncSubNode::registerNodeType<BuildProductionQueueNode>(
+    MqttAsyncSubNode::registerNodeType<ConfigurationNode>(
         factory,
         node_message_distributor,
         bt_mqtt_client,
-        "ProduceConfiguration",
+        "Configure",
         ConfigurationDATA);
 
     factory.registerNodeType<GetProductFromQueue>("GetProductFromQueue");

@@ -1,5 +1,9 @@
 <root BTCPP_format="4">
     <TreeNodesModel>
+        <Action ID="Configure">
+            <output_port name="StationMap" type="std::map&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, int, std::less&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt;, std::allocator&lt;std::pair&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; const, int&gt; &gt; &gt;" default="{StationMap}">The StationMap of the system for this batch</output_port>
+            <output_port name="ProductIDs" type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;" default="{ProductIDs}">List of product IDs to produce</output_port>
+        </Action>
         <Condition ID="Data_Condition">
             <input_port name="expected_value" type="std::string">Value to compare against</input_port>
             <input_port name="comparison_type" type="std::string">Type of comparison: equal, not_equal, greater, less, contains</input_port>
@@ -18,10 +22,6 @@
         </Action>
         <Action ID="OmronArclRequest">
             <input_port name="command" type="BT::AnyTypeAllowed"/>
-        </Action>
-        <Action ID="ProduceConfiguration">
-            <output_port name="StationMap" type="std::map&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, int, std::less&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt;, std::allocator&lt;std::pair&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; const, int&gt; &gt; &gt;" default="{StationMap}">The StationMap of the system for this batch</output_port>
-            <output_port name="ProductIDs" type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;" default="{ProductIDs}">List of product IDs to produce</output_port>
         </Action>
         <Action ID="Station_Execution">
             <input_port name="CommandUuid" type="std::string" default="{_ID}">UUID for the command to execute</input_port>

@@ -52,7 +52,7 @@ add_library(bt_controller_common STATIC
     src/bt/CustomNodes/omron_arcl_request_node.cpp
     src/bt/CustomNodes/generic_condition_node.cpp
     src/bt/CustomNodes/generic_action_node.cpp
-    src/bt/CustomNodes/build_production_queue_node.cpp
+    src/bt/CustomNodes/configuration_node.cpp
 )
 
 target_include_directories(bt_controller_common

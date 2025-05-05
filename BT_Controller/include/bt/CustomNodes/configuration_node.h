@@ -11,11 +11,11 @@ class MqttClient;
 using nlohmann::json;
 
 // MoveShuttleToPosition class declaration
-class BuildProductionQueueNode : public MqttAsyncSubNode
+class ConfigurationNode : public MqttAsyncSubNode
 {
 public:
-    BuildProductionQueueNode(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client,
-                             const mqtt_utils::Topic &response_topic);
+    ConfigurationNode(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client,
+                      const mqtt_utils::Topic &response_topic);
 
     static BT::PortsList providedPorts();
     void callback(const json &msg, mqtt::properties props) override;

@@ -1,8 +1,8 @@
-#include "bt/CustomNodes/build_production_queue_node.h"
+#include "bt/CustomNodes/configuration_node.h"
 #include "mqtt/utils.h"
 #include "mqtt/node_message_distributor.h"
 
-BuildProductionQueueNode::BuildProductionQueueNode(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client, const mqtt_utils::Topic &response_topic)
+ConfigurationNode::ConfigurationNode(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client, const mqtt_utils::Topic &response_topic)
     : MqttAsyncSubNode(name, config, bt_mqtt_client,
                        response_topic)
 {
@@ -13,7 +13,7 @@ BuildProductionQueueNode::BuildProductionQueueNode(const std::string &name, cons
     }
 }
 
-BT::PortsList BuildProductionQueueNode::providedPorts()
+BT::PortsList ConfigurationNode::providedPorts()
 {
     return {
         BT::details::PortWithDefault<BT::SharedQueue<std::string>>(BT::PortDirection::OUTPUT,
@@ -27,7 +27,7 @@ BT::PortsList BuildProductionQueueNode::providedPorts()
                                                                  "The StationMap of the system for this batch")};
 }
 
-void BuildProductionQueueNode::callback(const json &msg, mqtt::properties props)
+void ConfigurationNode::callback(const json &msg, mqtt::properties props)
 {
     // Use mutex to protect shared state
     {
