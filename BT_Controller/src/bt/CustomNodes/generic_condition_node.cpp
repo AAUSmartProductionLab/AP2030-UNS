@@ -24,8 +24,7 @@ BT::PortsList GenericConditionNode::providedPorts()
         BT::InputPort<std::string>("Message", "The message from the station"),
         BT::InputPort<std::string>("Field", "Name of the field to monitor in the MQTT message"),
         BT::InputPort<std::string>("comparison_type", "Type of comparison: equal, not_equal, greater, less, contains"),
-        BT::InputPort<std::string>("expected_value", "Value to compare against"),
-        BT::InputPort<int>("timeout_ms", "Timeout in milliseconds (default: 5000)")};
+        BT::InputPort<std::string>("expected_value", "Value to compare against")};
 }
 std::string GenericConditionNode::getFormattedTopic(const std::string &pattern, const BT::NodeConfig &config)
 {
@@ -58,74 +57,45 @@ bool GenericConditionNode::isInterestedIn(const json &msg)
     return false;
 }
 
+BT::NodeStatus GenericConditionNode::tick()
+{ // Use a unique_lock since we need to wait on a condition variable
+    std::unique_lock<std::mutex> lock(mutex_);
+
+    // Wait until a message is received
+    if (latest_msg_.is_null())
+    {
+        std::cout << "Waiting for message..." << std::endl;
+        cv_message_received_.wait(lock, [this]()
+                                  { return !latest_msg_.is_null(); });
+    }
+    BT::Expected<std::string> field_name_res = getInput<std::string>("Field");
+    BT::Expected<std::string> expected_value_res = getInput<std::string>("expected_value");
+    BT::Expected<std::string> comparison_type_res = getInput<std::string>("comparison_type");
+
+    if (field_name_res.has_value() && expected_value_res.has_value() && comparison_type_res.has_value())
+    {
+        bool result = compare(latest_msg_, field_name_res.value(), comparison_type_res.value(), expected_value_res.value());
+        if (result)
+        {
+            return BT::NodeStatus::SUCCESS;
+        }
+    }
+    return BT::NodeStatus::FAILURE;
+}
+
 void GenericConditionNode::callback(const json &msg, mqtt::properties props)
 {
     std::lock_guard<std::mutex> lock(mutex_);
     latest_msg_ = msg;
-    cv_.notify_one(); // Notify waiting threads that new data has arrived
+    cv_message_received_.notify_all();
 }
 
-BT::NodeStatus GenericConditionNode::tick()
+bool GenericConditionNode::compare(const json &msg, const std::string &field_name, const std::string &comparison_type,
+                                   const std::string &expected_str)
 {
-    // Get the field name from inputs
-    auto field_name_res = getInput<std::string>("Field");
-    if (!field_name_res)
-    {
-        std::cout << "MqttConditionNode: Missing Field" << std::endl;
-        return BT::NodeStatus::FAILURE;
-    }
-    std::string field_name = field_name_res.value();
-
-    auto comparison_type_res = getInput<std::string>("comparison_type");
-    std::string comparison_type = "equal";
-    if (comparison_type_res)
-    {
-        comparison_type = comparison_type_res.value();
-    }
-
-    auto expected_value_res = getInput<std::string>("expected_value");
-    if (!expected_value_res)
-    {
-        std::cout << "MqttConditionNode: Missing expected value" << std::endl;
-        return BT::NodeStatus::FAILURE;
-    }
-    std::string expected_str = expected_value_res.value();
-
-    // Optional timeout parameter
-    BT::Expected<int> timeout_ms_res = getInput<int>("timeout_ms");
-    if (timeout_ms_res)
-    {
-        timeout_ = std::chrono::milliseconds(timeout_ms_res.value());
-    }
-
-    // Lock and wait for data
-    std::unique_lock<std::mutex> lock(mutex_);
-
-    // Check if we need to wait for data
-    if (latest_msg_.empty() || !latest_msg_.contains(field_name))
-    {
-        if (has_timed_out_)
-        {
-            // Reset timeout flag for next tick and return failure
-            has_timed_out_ = false;
-            return BT::NodeStatus::FAILURE;
-        }
-
-        // Wait for notification with timeout
-        bool data_received = cv_.wait_for(lock, timeout_, [this, &field_name]()
-                                          { return !latest_msg_.empty() && latest_msg_.contains(field_name); });
-
-        if (!data_received)
-        {
-            has_timed_out_ = true;
-            return BT::NodeStatus::RUNNING; // Still waiting for data
-        }
-    }
-
-    // Now we have data, proceed with comparison
-    json actual_value = latest_msg_[field_name];
-
     bool result = false;
+
+    json actual_value = msg[field_name];
 
     // Handle different comparison types
     if (comparison_type == "equal" || comparison_type == "not_equal")
@@ -231,5 +201,5 @@ BT::NodeStatus GenericConditionNode::tick()
         }
     }
 
-    return result ? BT::NodeStatus::SUCCESS : BT::NodeStatus::FAILURE;
+    return result;
 }
