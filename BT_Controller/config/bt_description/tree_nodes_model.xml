@@ -9,7 +9,6 @@
             <input_port name="comparison_type" type="std::string">Type of comparison: equal, not_equal, greater, less, contains</input_port>
             <input_port name="Field" type="std::string">Name of the field to monitor in the MQTT message</input_port>
             <input_port name="Message" type="std::string">The message from the station</input_port>
-            <input_port name="timeout_ms" type="int">Timeout in milliseconds (default: 5000)</input_port>
             <input_port name="Station" type="std::string" default="{Station}">The station from which to receive a message</input_port>
         </Condition>
         <Decorator ID="GetProductFromQueue">
