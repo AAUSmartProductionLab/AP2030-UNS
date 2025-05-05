@@ -4,7 +4,7 @@ services:
   # bt_controller:
   #   build:
   #     context: .
-  #     dockerfile: MQTT_BT_Controller/dockerfile
+  #     dockerfile: BT_Controller/dockerfile
   #   container_name: bt_controller
   #   network_mode: host
   #   volumes:
@@ -16,7 +16,7 @@ services:
   filling_station:
     build:
       context: .
-      dockerfile: MQTT_PackML_Stations/dockerfile
+      dockerfile: PackML_Stations/dockerfile
     container_name: filling_station
     network_mode: host
     volumes:
@@ -26,7 +26,7 @@ services:
   stoppering_station:
     build:
       context: .
-      dockerfile: MQTT_PackML_Stations/dockerfile
+      dockerfile: PackML_Stations/dockerfile
     container_name: stoppering_station
     network_mode: host
     volumes:
@@ -36,7 +36,7 @@ services:
   camera_station:
     build:
       context: .
-      dockerfile: MQTT_PackML_Stations/dockerfile
+      dockerfile: PackML_Stations/dockerfile
     container_name: camera_station
     network_mode: host
     restart: always

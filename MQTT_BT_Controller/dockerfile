@@ -59,15 +59,15 @@ RUN cd json-schema-validator && git checkout 2.3.0
 
 # Copy the repository content from the host (excluding build directories)
 WORKDIR /src
-RUN mkdir -p /src/planar-motors-experiments/MQTT_BT_Controller
-COPY MQTT_BT_Controller/*.* /src/planar-motors-experiments/MQTT_BT_Controller/
-COPY MQTT_BT_Controller/include /src/planar-motors-experiments/MQTT_BT_Controller/include
-COPY MQTT_BT_Controller/src /src/planar-motors-experiments/MQTT_BT_Controller/src
+RUN mkdir -p /src/planar-motors-experiments/BT_Controller
+COPY BT_Controller/*.* /src/planar-motors-experiments/BT_Controller/
+COPY BT_Controller/include /src/planar-motors-experiments/BT_Controller/include
+COPY BT_Controller/src /src/planar-motors-experiments/BT_Controller/src
 # Build the project (the code will be copied during build with Docker context)
-WORKDIR /src/planar-motors-experiments/MQTT_BT_Controller
+WORKDIR /src/planar-motors-experiments/BT_Controller
 RUN mkdir -p build && cd build && \
     cmake .. && \
     make -j$(nproc)
 
-WORKDIR /src/planar-motors-experiments/MQTT_BT_Controller/build
+WORKDIR /src/planar-motors-experiments/BT_Controller/build
 CMD ["./bt_controller"]

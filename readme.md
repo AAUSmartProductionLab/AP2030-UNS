@@ -30,8 +30,8 @@ The Docker Compose file builds both of the dockerfiles below. It then can run th
 # Build docker images
 All Docker Images are built from the root of the repository
 ```bash
-docker build --pull --rm -f 'MQTT_BT_Controller/dockerfile' -t 'mqtt_bt_controller:latest' .
-docker build --pull --rm -f 'MQTT_PackML_Stations/dockerfile' -t 'mqtt_packml_stations:latest' .
+docker build --pull --rm -f 'BT_Controller/dockerfile' -t 'mqtt_bt_controller:latest' .
+docker build --pull --rm -f 'PackML_Stations/dockerfile' -t 'mqtt_packml_stations:latest' .
 ```
 
 

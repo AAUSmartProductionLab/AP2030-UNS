@@ -7,7 +7,7 @@ WORKDIR /app
 RUN pip install --no-cache-dir paho-mqtt jsonschema numpy opencv-python
 RUN apt-get update && apt-get install ffmpeg libsm6 libxext6  -y
 # Copy all Python files
-COPY MQTT_PackML_Stations/*.py ./
+COPY PackML_Stations/*.py ./
 
 # Define entrypoint with a default command that can be overridden
 ENTRYPOINT ["python"]
