@@ -21,5 +21,25 @@
                 <statement-template>sql-template-statements/orders/order-data-insert.sql</statement-template>
             </processor>
         </mqtt-to-postgresql-route>
+        <mqtt-to-postgresql-route>
+            <id>order-done-template-route</id>
+            <postgresql-id>order-data-postgresql</postgresql-id>
+            <mqtt-topic-filters>
+                <mqtt-topic-filter>NN/Nybrovej/InnoLab/Configuration/CMD/Order/Done</mqtt-topic-filter>
+            </mqtt-topic-filters>
+            <processor>
+                <statement-template>sql-template-statements/orders/order-done-insert.sql</statement-template>
+            </processor>
+        </mqtt-to-postgresql-route>
+        <mqtt-to-postgresql-route>
+            <id>order-ack-template-route</id>
+            <postgresql-id>order-data-postgresql</postgresql-id>
+            <mqtt-topic-filters>
+                <mqtt-topic-filter>NN/Nybrovej/InnoLab/Configuration/CMD/Order/Acknowledge</mqtt-topic-filter>
+            </mqtt-topic-filters>
+            <processor>
+                <statement-template>sql-template-statements/orders/order-ack-insert.sql</statement-template>
+            </processor>
+        </mqtt-to-postgresql-route>
     </mqtt-to-postgresql-routes>
 </hivemq-postgresql-extension>
