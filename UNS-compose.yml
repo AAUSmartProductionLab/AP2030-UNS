@@ -110,14 +110,18 @@ services:
     restart: unless-stopped
 
   filling_station:
-   extends:
+    extends:
       file: ./PackML_Stations/stations-compose.yml
       service: filling_station
+    networks:
+      - hivemq-network
 
   stoppering_station:
-   extends:
+    extends:
       file: ./PackML_Stations/stations-compose.yml
       service: stoppering_station
+    networks:
+      - hivemq-network
       
 networks:
   hivemq-network:
