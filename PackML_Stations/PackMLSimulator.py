@@ -64,6 +64,15 @@ class PackMLStateMachine:
         self.is_processing = False
         self.command_uuids = []  # Track all queued command UUIDs
 
+        timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
+        response = {
+            "State": "IDLE",
+            "ProcessQueue": [],
+            "TimeStamp": timestamp
+        }
+            
+        self.register_topic.publish(response, self.client, self.properties,True)
+
     def register_command(self,message):
         """Register a command without immediate processing"""
         command_uuid = message.get("CommandUuid")
