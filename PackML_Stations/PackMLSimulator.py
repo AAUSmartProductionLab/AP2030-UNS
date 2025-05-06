@@ -136,12 +136,9 @@ class PackMLStateMachine:
         """Background thread function to update and publish progress"""
         while not self.stop_progress.is_set():
             if self.state == PackMLState.EXECUTE and self.total_duration > 0:
-                if self.publish_progress:
-                    self.publish_progress(self)
-                else:
-                    current_progress = min(self.elapsed_time / self.total_duration, 1.0)
-                    if current_progress != self.progress:
-                        self.progress = current_progress
+                current_progress = min(self.elapsed_time / self.total_duration, 1.0)
+                if current_progress != self.progress:
+                    self.progress = current_progress
             time.sleep(progress_interval)
     
     def start_progress_monitoring(self, progress_interval=0.1):
