@@ -44,7 +44,7 @@ def stopper_callback(topic, client, message, properties):
         print(f"Error in stopper_callback: {e}")
 
 """Main entry point for the stoppering proxy"""
-response_async_execute = ResponseAsync(
+stopper = ResponseAsync(
     BASE_TOPIC+"/DATA/State", 
     BASE_TOPIC+"/CMD/Stopper",
     "./schemas/stationState.schema.json", 
@@ -53,7 +53,7 @@ response_async_execute = ResponseAsync(
     stopper_callback
 )
 
-response_async_register = ResponseAsync(
+register = ResponseAsync(
     BASE_TOPIC+"/DATA/State", 
     BASE_TOPIC+"/CMD/Register",
     "./schemas/stationState.schema.json", 
@@ -62,7 +62,7 @@ response_async_register = ResponseAsync(
     register_callback
 )
 
-response_async_unregister = ResponseAsync(
+unregister = ResponseAsync(
     BASE_TOPIC+"/DATA/State", 
     BASE_TOPIC+"/CMD/Unregister",
     "./schemas/stationState.schema.json", 
@@ -75,9 +75,9 @@ stopperProxy = Proxy(
     BROKER_ADDRESS, 
     BROKER_PORT,
     "StopperingProxy", 
-    [response_async_execute, response_async_register,response_async_unregister]
+    [stopper, register,unregister]
 )
-state_machine = PackMLStateMachine(response_async_execute, response_async_register,response_async_unregister, stopperProxy, None)
+state_machine = PackMLStateMachine(stopper, register,unregister, stopperProxy, None)
 state_machine.failureChance=0
 
 def main():

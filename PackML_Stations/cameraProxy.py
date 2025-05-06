@@ -70,7 +70,7 @@ def capture_callback(topic, client, message, properties):
     if state_machine.state == PackMLState.IDLE:
         try:
             duration = 2.0
-            state_machine.process_next_command(message, capture_process, duration,publishImage)
+            state_machine.process_next_command(message, capture_process, duration)
         except Exception as e:
             print(f"Error in stopper_callback: {e}")
 
@@ -83,7 +83,7 @@ def unregister_callback(topic, client, message, properties):
     except Exception as e:
         print(f"Error in unregister_callback: {e}")
 
-response_async_execute = ResponseAsync(
+capture = ResponseAsync(
     BASE_TOPIC+"/DATA/State", 
     BASE_TOPIC+"/CMD/Capture",
     "./schemas/stationState.schema.json", 
@@ -91,7 +91,7 @@ response_async_execute = ResponseAsync(
     2, 
     capture_callback
 )
-response_async_register = ResponseAsync(
+register = ResponseAsync(
     BASE_TOPIC+"/DATA/State", 
     BASE_TOPIC+"/CMD/Register",
     "./schemas/stationState.schema.json", 
@@ -100,7 +100,7 @@ response_async_register = ResponseAsync(
     register_callback
 )
 
-response_async_unregister = ResponseAsync(
+unregister = ResponseAsync(
     BASE_TOPIC+"/DATA/State", 
     BASE_TOPIC+"/CMD/Unregister",
     "./schemas/stationState.schema.json", 
@@ -113,9 +113,9 @@ cameraProxy = Proxy(
     BROKER_ADDRESS, 
     BROKER_PORT,
     "CameraProxy", 
-    [response_async_execute,response_async_register, response_async_unregister,image_publisher]
+    [capture,register, unregister,image_publisher]
 )
-state_machine = PackMLStateMachine(response_async_execute,response_async_register,response_async_unregister, cameraProxy, None)
+state_machine = PackMLStateMachine(capture,register,unregister, cameraProxy, None,publishImage)
 state_machine.failureChance=0
 
 def main():

@@ -40,7 +40,7 @@ class PackMLState(enum.Enum):
 
 
 class PackMLStateMachine:
-    def __init__(self, execute_topic, register_topic, unregister_topic, client, properties):
+    def __init__(self, execute_topic, register_topic, unregister_topic, client, properties,publish_progress=None):
         self.state = PackMLState.IDLE
         self.execute_topic = execute_topic
         self.register_topic = register_topic
@@ -48,7 +48,7 @@ class PackMLStateMachine:
         self.client = client
         self.properties = properties
         self.CommandUuid = None
-        self.publish_progress = None
+        self.publish_progress = publish_progress
         self.failureChance = 0.01
         # Progress tracking
         self.total_duration = 0
@@ -72,7 +72,8 @@ class PackMLStateMachine:
         }
             
         self.register_topic.publish(response, self.client, self.properties,True)
-
+        if self.publish_progress:
+            self.publish_progress(self,True)
     def register_command(self,message):
         """Register a command without immediate processing"""
         command_uuid = message.get("CommandUuid")
@@ -111,7 +112,7 @@ class PackMLStateMachine:
         
         return command_uuid
     
-    def process_next_command(self, message, process_function, duration=None, publish_progress=None):
+    def process_next_command(self, message, process_function, duration=None):
 
         command_uuid = message.get("CommandUuid")
 
@@ -119,7 +120,6 @@ class PackMLStateMachine:
     
             # Extract command UUID if available
             self.CommandUuid = message.get("CommandUuid")
-            self.publish_progress = publish_progress
             # Process the command
             self.run_state_machine(process_function, duration)
         else:
@@ -136,11 +136,12 @@ class PackMLStateMachine:
         """Background thread function to update and publish progress"""
         while not self.stop_progress.is_set():
             if self.state == PackMLState.EXECUTE and self.total_duration > 0:
-                current_progress = min(self.elapsed_time / self.total_duration, 1.0)
-                if current_progress != self.progress:
-                    self.progress = current_progress
-                    if self.publish_progress:
-                        self.publish_progress(self)
+                if self.publish_progress:
+                    self.publish_progress(self)
+                else:
+                    current_progress = min(self.elapsed_time / self.total_duration, 1.0)
+                    if current_progress != self.progress:
+                        self.progress = current_progress
             time.sleep(progress_interval)
     
     def start_progress_monitoring(self, progress_interval=0.1):
@@ -286,12 +287,6 @@ class PackMLStateMachine:
             
             # Stop progress monitoring
             self.stop_progress_monitoring()
-            
-            # Set final progress and completion sequence
-            if max_duration:
-                self.progress = 1.0
-                if self.publish_progress:
-                    self.publish_progress(self)
             
             # Completion sequence
             self.run_sequence([
