@@ -87,7 +87,7 @@ export default function Homepage() {
         </a>
 
         {/* Groot */}
-        <a href="http://192.168.0.104:6080" target="_blank" rel="noopener noreferrer" className="service-card with-bg-image external">
+        <a href="http://192.168.0.104:6080/vnc.html?autoconnect=true&reconnect=true&reconnect_delay=1000&resize=remote&quality=9&compression=0&view_only=0" target="_blank" rel="noopener noreferrer" className="service-card with-bg-image external">
           <img src="/groot.png" alt="" className="card-image-bg" />
           <div className="card-content">
             <div className="card-icon"></div>
