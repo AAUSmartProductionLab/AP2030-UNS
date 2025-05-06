@@ -15,7 +15,6 @@ def stopper_process(duration=2.0, state_machine=None):
     time.sleep(duration)
     if state_machine and state_machine.total_duration:
         state_machine.elapsed_time = duration
-    return {"dispensed": True}
 
 
 def register_callback(topic, client, message, properties):

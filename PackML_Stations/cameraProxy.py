@@ -21,7 +21,6 @@ def capture_process(duration=0.5, state_machine=None):
     time.sleep(duration)
     if state_machine and state_machine.total_duration:
         state_machine.elapsed_time = duration
-    return {"dispensed": True}
 
 
 def publishImage(state_machine, reset=False):

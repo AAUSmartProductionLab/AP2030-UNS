@@ -54,14 +54,15 @@ def dispense_process(mean_duration=2.0, state_machine=None):
             state_machine.elapsed_time = duration
             # Calculate final PT1 progress using the same formula instead of forcing 1.0
             state_machine.pt1_progress = 1.0 - np.exp(-duration / time_constant)
-    
-    return {"dispensed": True}
+
 
 def tare_process(duration=2.0, state_machine=None):
     time.sleep(duration)
     if state_machine and state_machine.total_duration:
         state_machine.elapsed_time = duration
-    return {"dispensed": True}
+
+        publish_weight(state_machine, reset=True)
+
 
 
 def publish_weight(state_machine, reset=False):
@@ -100,7 +101,7 @@ def dispense_callback(topic, client, message, properties):
     if state_machine.state == PackMLState.IDLE:
         try:
             duration = 2.0
-            state_machine.process_next_command(message, dispense_process, duration,publish_weight)
+            state_machine.process_next_command(message, dispense_process, duration, publish_weight)
         except Exception as e:
             print(f"Error in stopper_callback: {e}")
 
@@ -110,7 +111,7 @@ def tare_callback(topic, client, message, properties):
     if state_machine.state == PackMLState.IDLE:
         try:
             duration = 0.1
-            state_machine.process_next_command(message, tare_process, duration)
+            state_machine.process_next_command(message, tare_process, duration, publish_weight)
         except Exception as e:
             print(f"Error in tare_callback: {e}")
 

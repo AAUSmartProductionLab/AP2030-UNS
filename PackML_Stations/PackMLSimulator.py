@@ -265,7 +265,6 @@ class PackMLStateMachine:
         self.total_duration = max_duration
         self.elapsed_time = 0
         self.progress = 0
-        result = None
         
         try:
             # Initial check and start sequence
@@ -279,11 +278,11 @@ class PackMLStateMachine:
             
             # Execute the process
             try:
-                result = self.execute_process_step(process_function, **kwargs)
+                self.execute_process_step(process_function, **kwargs)
             except HoldException:
-                result = self.handle_hold_sequence(process_function, **kwargs)
+                self.handle_hold_sequence(process_function, **kwargs)
             except SuspendException:
-                result = self.handle_suspend_sequence(process_function, **kwargs)
+                self.handle_suspend_sequence(process_function, **kwargs)
             
             # Stop progress monitoring
             self.stop_progress_monitoring()
@@ -320,5 +319,3 @@ class PackMLStateMachine:
                 PackMLState.STOPPED,
                 PackMLState.IDLE
             ], check_exceptions=False)
-            
-        return result
