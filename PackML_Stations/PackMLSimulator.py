@@ -177,37 +177,19 @@ class PackMLStateMachine:
     def transition_to(self, new_state, delay=0.1):
         """Transition to a new state and publish it"""
         self.state = new_state
+                    # Get fresh queue state
+        queued_uuids = self.command_uuids.copy()
         
         # Generate ISO 8601 timestamp with Z suffix for UTC
-        timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
-        
+
         response = {
             "State": new_state.value,
-            "TimeStamp": timestamp
+            "TimeStamp": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z'),
+            "ProcessQueue": queued_uuids if queued_uuids else []
         }
         
-        # Add CommandUuid to the response ONLY if available AND not in IDLE or RESETTING states
-        if self.CommandUuid and new_state not in [PackMLState.IDLE, PackMLState.RESETTING]:
-            response["CommandUuid"] = self.CommandUuid
-        
-        # Handle CommandUuid tracking
         if new_state in [PackMLState.IDLE, PackMLState.RESETTING]:
-            # Get fresh queue state
-            queued_uuids = self.command_uuids.copy()
-            
-            # For IDLE state with empty queue, use empty array
-            response["ProcessQueue"] = queued_uuids if queued_uuids else []
-
-            # Clear CommandUuid last (after NOT including it in the message)
             self.CommandUuid = None
-        else:
-            queued_uuids = self.command_uuids.copy()
-            
-            # Include current UUID if applicable
-            if self.CommandUuid and self.CommandUuid not in queued_uuids:
-                response["ProcessQueue"] = [self.CommandUuid] + queued_uuids
-            else:
-                response["ProcessQueue"] = queued_uuids
         
         self.execute_topic.publish(response, self.client, self.properties, True)
 
