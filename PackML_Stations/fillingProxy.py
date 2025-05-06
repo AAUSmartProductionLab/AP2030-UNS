@@ -60,6 +60,9 @@ def tare_process(duration=2.0, state_machine=None):
     time.sleep(duration)
     if state_machine and state_machine.total_duration:
         state_machine.elapsed_time = duration
+        
+        if hasattr(state_machine, 'pt1_progress'):
+            state_machine.pt1_progress = 0.0
 
         publish_weight(state_machine, reset=True)
 
