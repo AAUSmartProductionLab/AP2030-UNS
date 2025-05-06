@@ -199,11 +199,7 @@ class PackMLStateMachine:
             
             # For IDLE state with empty queue, use empty array
             response["ProcessQueue"] = queued_uuids if queued_uuids else []
-            
-            # Call publish_progress with reset if available
-            if self.publish_progress:
-                self.publish_progress(self, reset=True)
-                
+
             # Clear CommandUuid last (after NOT including it in the message)
             self.CommandUuid = None
         else:
