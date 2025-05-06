@@ -57,6 +57,12 @@ def dispense_process(mean_duration=2.0, state_machine=None):
     
     return {"dispensed": True}
 
+def tare_process(duration=2.0, state_machine=None):
+    time.sleep(duration)
+    if state_machine and state_machine.total_duration:
+        state_machine.elapsed_time = duration
+    return {"dispensed": True}
+
 
 def publish_weight(state_machine, reset=False):
     """Publish current progress as weight using PT1 curve"""
@@ -88,6 +94,7 @@ def register_callback(topic, client, message, properties):
     except Exception as e:
         print(f"Error in register_callback: {e}")
 
+
 def dispense_callback(topic, client, message, properties):
     """Callback handler for dispense commands"""
     if state_machine.state == PackMLState.IDLE:
@@ -97,22 +104,16 @@ def dispense_callback(topic, client, message, properties):
         except Exception as e:
             print(f"Error in stopper_callback: {e}")
 
-response_async_execute = ResponseAsync(
-    BASE_TOPIC+"/DATA/State", 
-    BASE_TOPIC+"/CMD/Dispense",
-    "./schemas/stationState.schema.json", 
-    "./schemas/command.schema.json", 
-    2, 
-    dispense_callback
-)
-response_async_register = ResponseAsync(
-    BASE_TOPIC+"/DATA/State", 
-    BASE_TOPIC+"/CMD/Register",
-    "./schemas/stationState.schema.json", 
-    "./schemas/command.schema.json", 
-    2, 
-    register_callback
-)
+
+def tare_callback(topic, client, message, properties):
+    """Callback handler for dispense commands"""
+    if state_machine.state == PackMLState.IDLE:
+        try:
+            duration = 0.1
+            state_machine.process_next_command(message, tare_process, duration)
+        except Exception as e:
+            print(f"Error in tare_callback: {e}")
+
 def unregister_callback(topic, client, message, properties):
     """Callback handler for unregistering commands by removing them from the queue"""
     try:  
@@ -122,7 +123,34 @@ def unregister_callback(topic, client, message, properties):
     except Exception as e:
         print(f"Error in unregister_callback: {e}")
 
-response_async_unregister = ResponseAsync(
+
+dispense = ResponseAsync(
+    BASE_TOPIC+"/DATA/State", 
+    BASE_TOPIC+"/CMD/Dispense",
+    "./schemas/stationState.schema.json", 
+    "./schemas/command.schema.json", 
+    2, 
+    dispense_callback
+)
+
+tare = ResponseAsync(
+    BASE_TOPIC+"/DATA/State", 
+    BASE_TOPIC+"/CMD/Tare",
+    "./schemas/stationState.schema.json", 
+    "./schemas/command.schema.json", 
+    2, 
+    tare_callback
+)
+
+register = ResponseAsync(
+    BASE_TOPIC+"/DATA/State", 
+    BASE_TOPIC+"/CMD/Register",
+    "./schemas/stationState.schema.json", 
+    "./schemas/command.schema.json", 
+    2, 
+    register_callback
+)
+unregister = ResponseAsync(
     BASE_TOPIC+"/DATA/State", 
     BASE_TOPIC+"/CMD/Unregister",
     "./schemas/stationState.schema.json", 
@@ -134,9 +162,9 @@ fillProxy = Proxy(
     BROKER_ADDRESS, 
     BROKER_PORT,
     "FillingProxy", 
-    [response_async_execute,response_async_register, response_async_unregister,weigh_publisher]
+    [dispense,register, unregister,weigh_publisher,tare]
 )
-state_machine = PackMLStateMachine(response_async_execute,response_async_register,response_async_unregister, fillProxy, None)
+state_machine = PackMLStateMachine(dispense,register,unregister, fillProxy, None)
 
 
 def main():

@@ -12,21 +12,9 @@ BASE_TOPIC = "NN/Nybrovej/InnoLab/Stoppering"
 
 
 def stopper_process(duration=2.0, state_machine=None):
-    """Simulate dispensing process with small increments for continuous progress updates"""
-    step_size = 0.1  # Update every 100ms
-    steps = int(duration / step_size)
-    
-    for i in range(steps):
-        time.sleep(step_size)
-        if state_machine and state_machine.total_duration:
-            state_machine.elapsed_time = (i+1) * step_size
-
-    remaining = duration - (steps * step_size)
-    if remaining > 0:
-        time.sleep(remaining)
-        if state_machine and state_machine.total_duration:
-            state_machine.elapsed_time = duration
-    
+    time.sleep(duration)
+    if state_machine and state_machine.total_duration:
+        state_machine.elapsed_time = duration
     return {"dispensed": True}
 
 
