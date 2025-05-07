@@ -69,6 +69,7 @@ RUN apt-get update && apt-get install -y \
     sudo \
     pkg-config \
     uuid-dev \
+    libfmt-dev \
     # Groot2 dependencies - add missing OpenGL libraries
     libglvnd0 libgl1 libglx0 libegl1 libxkbcommon0 libxcomposite1 \
     libxcursor1 libxdamage1 libxfixes3 libxi6 libxrandr2 libxtst6 libfontconfig1 \

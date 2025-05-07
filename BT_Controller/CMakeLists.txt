@@ -1,8 +1,8 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.22.1)
 project(bt_controller C CXX)
 
 # Set C++ standard early
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Add JSON library (header-only)
@@ -30,6 +30,7 @@ find_package(Threads REQUIRED)
 find_package(PahoMqttCpp REQUIRED)
 find_package(behaviortree_cpp REQUIRED)
 find_package(yaml-cpp REQUIRED)
+find_package(fmt REQUIRED)
 pkg_check_modules(UUID REQUIRED uuid)
 
 
@@ -71,6 +72,7 @@ target_link_libraries(bt_controller_common
         PahoMqttCpp::paho-mqtt3as
         ${UUID_LDFLAGS}
         ${YAML_CPP_LIBRARIES}
+        fmt::fmt
 )
 
 add_executable(bt_controller

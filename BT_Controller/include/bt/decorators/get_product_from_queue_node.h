@@ -4,25 +4,43 @@
 #include <behaviortree_cpp/bt_factory.h>
 #include <nlohmann/json.hpp>
 #include <string>
-
+#include "mqtt/mqtt_pub_base.h"
+#include <fmt/chrono.h>
+#include <chrono>
 class MqttClient;
 using nlohmann::json;
 
-class GetProductFromQueue : public BT::DecoratorNode
+class GetProductFromQueue : public BT::DecoratorNode, public MqttPubBase
 {
 private:
     bool child_running_ = false;
     BT::SharedQueue<std::string> queue_;
 
 public:
-    GetProductFromQueue(const std::string &name, const BT::NodeConfig &config)
-        : DecoratorNode(name, config)
+    GetProductFromQueue(const std::string &name,
+                        const BT::NodeConfig &config,
+                        MqttClient &mqtt_client,
+                        const mqtt_utils::Topic &request_topic)
+        : DecoratorNode(name, config),
+          MqttPubBase(mqtt_client, request_topic)
     {
+
+        request_topic_.setTopic(getFormattedTopic(request_topic_.getPattern(), config));
         auto raw_port = getRawPortValue("Queue");
         if (!isBlackboardPointer(raw_port))
         {
             queue_ = BT::convertFromString<BT::SharedQueue<std::string>>(raw_port);
         }
+    }
+    std::string getFormattedTopic(const std::string &pattern, const BT::NodeConfig &config)
+    {
+        BT::Expected<std::string> id = config.blackboard->get<std::string>("XbotTopic"); // hacky way of getting the ID from the subtree parameter
+        if (id.has_value())
+        {
+            std::string formatted = mqtt_utils::formatWildcardTopic(pattern, id.value());
+            return formatted;
+        }
+        return pattern;
     }
 
     BT::NodeStatus tick() override
@@ -47,6 +65,15 @@ public:
                 auto value = std::move(queue_->front());
                 queue_->pop_front();
                 popped = true;
+
+                // Publish the product ID to the MQTT topic
+                json message;
+                message["ProductId"] = value;
+                auto now = std::chrono::system_clock::now();
+                message["TimeStamp"] = fmt::format("{:%FT%T}Z",
+                                                   std::chrono::floor<std::chrono::milliseconds>(now));
+                publish(message);
+
                 setOutput("Product", value);
             }
         }
@@ -93,5 +120,23 @@ public:
                 "Product",
                 "{_ProductID}",
                 "The product ID of the current product")};
+    }
+
+    template <typename DerivedNode>
+    static void registerNodeType(
+        BT::BehaviorTreeFactory &factory,
+        MqttClient &mqtt_client,
+        const std::string &node_name,
+        const mqtt_utils::Topic &request_topic)
+    {
+        factory.registerBuilder<DerivedNode>(
+            node_name,
+            [mqtt_client_ptr = &mqtt_client,
+             request_topic](const std::string &name, const BT::NodeConfig &config)
+            {
+                return std::make_unique<DerivedNode>(
+                    name, config, *mqtt_client_ptr,
+                    request_topic);
+            });
     }
 };

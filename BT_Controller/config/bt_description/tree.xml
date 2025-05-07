@@ -20,7 +20,7 @@
                           Field="Weight"
                           Message="Weight"
                           Station="{Station}"/>
-          <BC_Fallback>
+          <Sequence>
             <Data_Condition expected_value="0"
                             comparison_type="equal"
                             Field="Weight"
@@ -29,8 +29,8 @@
             <Station_Execution CommandUuid="{_ID}"
                                Command="Dispense"
                                Station="{Station}"/>
-          </BC_Fallback>
-          <BC_Fallback>
+          </Sequence>
+          <Sequence>
             <Data_Condition expected_value="0"
                             comparison_type="greater"
                             Field="Weight"
@@ -41,7 +41,7 @@
                                  Command="Refill"
                                  Station="{Station}"/>
             </RetryUntilSuccessful>
-          </BC_Fallback>
+          </Sequence>
         </BC_Fallback>
         <Station_Unregistration CommandUuid="{_ID}"
                                 Station="{Station}"/>

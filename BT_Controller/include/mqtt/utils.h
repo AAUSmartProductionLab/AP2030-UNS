@@ -31,7 +31,7 @@ namespace mqtt_utils
             : topic_(other.topic_),
               pattern_(other.topic_),
               schema_path_(other.schema_path_),
-              schema_validator_(nullptr), // Don't copy the validator
+              schema_validator_(nullptr),
               qos_(other.qos_),
               retain_(other.retain_)
         {

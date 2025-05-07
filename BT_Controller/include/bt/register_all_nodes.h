@@ -6,14 +6,14 @@
 #include "mqtt/node_message_distributor.h"
 #include "bt/mqtt_action_node.h"
 #include "bt/actions/move_shuttle_to_position.h"
-#include "bt/conditions/generic_condition_node.h"
 #include "bt/actions/generic_action_node.h"
 #include "bt/actions/omron_arcl_request_node.h"
 #include "bt/actions/station_register_node.h"
 #include "bt/actions/station_unregister_node.h"
 #include "bt/actions/station_execute_node.h"
 #include "bt/actions/configuration_node.h"
-#include "bt/actions/get_product_from_queue_node.h"
+#include "bt/conditions/generic_condition_node.h"
+#include "bt/decorators/get_product_from_queue_node.h"
 #include "bt/controls/bc_fallback_node.h"
 
 void registerAllNodes(
@@ -68,6 +68,11 @@ void registerAllNodes(
         unsTopicPrefix + "/Configuration/DATA/#",
         "../../schemas/config.schema.json",
         2);
+    mqtt_utils::Topic ProductAssociation(
+        unsTopicPrefix + "/+/DATA/ProductId",
+        "../../schemas/productId.schema.json",
+        2,
+        true);
 
     // Register the nodes with the behavior tree and the mqtt client
     MqttActionNode::registerNodeTypeWithHalt<MoveShuttleToPosition>(
@@ -124,7 +129,12 @@ void registerAllNodes(
         "Configure",
         ConfigurationDATA);
 
-    factory.registerNodeType<GetProductFromQueue>("GetProductFromQueue");
+    GetProductFromQueue::registerNodeType<GetProductFromQueue>(
+        factory,
+        bt_mqtt_client,
+        "GetProductFromQueue",
+        ProductAssociation);
+
     factory.registerNodeType<BT::BC_FallbackNode>("BC_Fallback");
     factory.registerNodeType<BT::BC_FallbackNode>("BC_Fallback_Async", true);
 }
