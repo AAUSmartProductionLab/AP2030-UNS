@@ -53,6 +53,7 @@ add_library(bt_controller_common STATIC
     src/bt/CustomNodes/generic_condition_node.cpp
     src/bt/CustomNodes/generic_action_node.cpp
     src/bt/CustomNodes/configuration_node.cpp
+    src/bt/controls/bc_fallback_node.cpp
 )
 
 target_include_directories(bt_controller_common
