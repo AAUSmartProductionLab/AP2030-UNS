@@ -23,6 +23,12 @@ public:
                    const mqtt_utils::Topic &request_topic,
                    const mqtt_utils::Topic &response_topic);
 
+    MqttActionNode(const std::string &name, const BT::NodeConfig &config,
+                   MqttClient &mqtt_client,
+                   const mqtt_utils::Topic &request_topic,
+                   const mqtt_utils::Topic &response_topic,
+                   const mqtt_utils::Topic &halt_topic);
+
     virtual ~MqttActionNode();
 
     // Default ports implementation
@@ -58,11 +64,34 @@ public:
              response_topic](const std::string &name, const BT::NodeConfig &config)
             {
                 return std::make_unique<DerivedNode>(
-                    name,
-                    config,
-                    *mqtt_client_ptr,
-                    request_topic,
-                    response_topic);
+                    name, config, *mqtt_client_ptr,
+                    request_topic, response_topic);
+            });
+    }
+
+    // Special registration for nodes that need halt_topic
+    template <typename DerivedNode>
+    static void registerNodeTypeWithHalt(
+        BT::BehaviorTreeFactory &factory,
+        NodeMessageDistributor &node_message_distributor,
+        MqttClient &mqtt_client,
+        const std::string &node_name,
+        const mqtt_utils::Topic &request_topic,
+        const mqtt_utils::Topic &response_topic,
+        const mqtt_utils::Topic &halt_topic)
+    {
+        MqttActionNode::setNodeMessageDistributor(&node_message_distributor);
+
+        factory.registerBuilder<DerivedNode>(
+            node_name,
+            [mqtt_client_ptr = &mqtt_client,
+             request_topic,
+             response_topic,
+             halt_topic](const std::string &name, const BT::NodeConfig &config)
+            {
+                return std::make_unique<DerivedNode>(
+                    name, config, *mqtt_client_ptr,
+                    request_topic, response_topic, halt_topic);
             });
     }
     virtual std::string getBTNodeName() const override

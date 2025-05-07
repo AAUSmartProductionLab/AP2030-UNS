@@ -2,14 +2,18 @@
 #include "mqtt/utils.h"
 #include "mqtt/node_message_distributor.h"
 
-MoveShuttleToPosition::MoveShuttleToPosition(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client, const mqtt_utils::Topic &request_topic, const mqtt_utils::Topic &response_topic) : MqttActionNode(name, config, bt_mqtt_client,
-                                                                                                                                                                                                                                  request_topic,
-                                                                                                                                                                                                                                  response_topic)
+MoveShuttleToPosition::MoveShuttleToPosition(
+    const std::string &name,
+    const BT::NodeConfig &config,
+    MqttClient &bt_mqtt_client,
+    const mqtt_utils::Topic &request_topic,
+    const mqtt_utils::Topic &response_topic,
+    const mqtt_utils::Topic &halt_topic) : MqttActionNode(name, config, bt_mqtt_client, request_topic, response_topic, halt_topic)
 {
     // Replace the wildcard in the request and response topics with the XbotId of this node instance
     response_topic_.setTopic(getFormattedTopic(response_topic.getPattern(), config));
     request_topic_.setTopic(getFormattedTopic(request_topic_.getPattern(), config));
-
+    halt_topic_.setTopic(getFormattedTopic(halt_topic_.getPattern(), config));
     if (MqttSubBase::node_message_distributor_)
     {
         MqttSubBase::node_message_distributor_->registerDerivedInstance(this);
@@ -30,6 +34,18 @@ std::string MoveShuttleToPosition::getFormattedTopic(const std::string &pattern,
 BT::PortsList MoveShuttleToPosition::providedPorts()
 {
     return {BT::InputPort<std::string>("TargetPosition")};
+}
+
+void MoveShuttleToPosition::onHalted()
+{
+    // Clean up when the node is halted
+    std::cout << "MQTT action node halted" << std::endl;
+    // Additional cleanup as needed
+    json message;
+    current_command_uuid_ = mqtt_utils::generate_uuid();
+    message["TargetPosition"] = 0;
+    message["CommandUuid"] = current_command_uuid_;
+    publish(message, halt_topic_);
 }
 
 json MoveShuttleToPosition::createMessage()

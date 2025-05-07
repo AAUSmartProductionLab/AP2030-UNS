@@ -26,6 +26,7 @@ public:
         }
         response_topic_.setTopic(getFormattedTopic(response_topic.getPattern(), config));
         request_topic_.setTopic(getFormattedTopic(request_topic_.getPattern(), config));
+        halt_topic_.setTopic(getFormattedTopic(request_topic_.getPattern(), config));
     }
     static BT::PortsList providedPorts()
     {

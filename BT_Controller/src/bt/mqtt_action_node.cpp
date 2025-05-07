@@ -17,7 +17,17 @@ MqttActionNode::MqttActionNode(const std::string &name,
 {
     // Registration happens in derived classes
 }
-
+MqttActionNode::MqttActionNode(const std::string &name,
+                               const BT::NodeConfig &config,
+                               MqttClient &mqtt_client,
+                               const mqtt_utils::Topic &request_topic,
+                               const mqtt_utils::Topic &response_topic,
+                               const mqtt_utils::Topic &halt_topic)
+    : StatefulActionNode(name, config),
+      MqttPubBase(mqtt_client, request_topic, halt_topic),
+      MqttSubBase(mqtt_client, response_topic)
+{
+}
 MqttActionNode::~MqttActionNode()
 {
     // Optional cleanup if needed

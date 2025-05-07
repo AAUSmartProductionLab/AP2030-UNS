@@ -69,12 +69,12 @@ void registerAllNodes(
         2);
 
     // Register the nodes with the behavior tree and the mqtt client
-    MqttActionNode::registerNodeType<MoveShuttleToPosition>(
+    MqttActionNode::registerNodeTypeWithHalt<MoveShuttleToPosition>(
         factory,
         node_message_distributor,
         bt_mqtt_client,
         "MoveShuttle",
-        XYMotionCMD, StateData);
+        XYMotionCMD, StateData, XYMotionCMD);
 
     MqttActionNode::registerNodeType<OmronArclRequest>(
         factory,
@@ -84,13 +84,14 @@ void registerAllNodes(
         OmronARCLCMD,
         OmronARCLState);
 
-    MqttActionNode::registerNodeType<StationRegisterNode>(
+    MqttActionNode::registerNodeTypeWithHalt<StationRegisterNode>(
         factory,
         node_message_distributor,
         bt_mqtt_client,
         "Station_Registration",
         StationRegistrationCMD,
-        StationState);
+        StationState,
+        StationUnregistrationCMD);
 
     MqttActionNode::registerNodeType<StationUnRegisterNode>(
         factory,

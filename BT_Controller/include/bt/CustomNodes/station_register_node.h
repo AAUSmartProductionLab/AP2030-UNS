@@ -16,9 +16,10 @@ class StationRegisterNode : public MqttActionNode
 public:
     StationRegisterNode(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client,
                         const mqtt_utils::Topic &request_topic,
-                        const mqtt_utils::Topic &response_topic)
+                        const mqtt_utils::Topic &response_topic,
+                        const mqtt_utils::Topic &halt_topic)
         : MqttActionNode(name, config, bt_mqtt_client,
-                         request_topic, response_topic)
+                         request_topic, response_topic, halt_topic)
     {
         response_topic_.setTopic(getFormattedTopic(response_topic.getPattern(), config));
         request_topic_.setTopic(getFormattedTopic(request_topic_.getPattern(), config));
@@ -70,7 +71,12 @@ public:
             return false;
         }
     }
-
+    void onHalted() override
+    {
+        json message;
+        message["CommandUuid"] = current_command_uuid_;
+        publish(message, halt_topic_);
+    }
     void callback(const json &msg, mqtt::properties props) override
     {
         // Use mutex to protect shared state
@@ -89,4 +95,8 @@ public:
             }
         }
     }
+
+private:
+    // other private members
+    mqtt_utils::Topic halt_topic_; // Add this line
 };
