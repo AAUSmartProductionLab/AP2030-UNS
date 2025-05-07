@@ -11,18 +11,38 @@
         <Station_Registration CommandUuid="{_ID}"
                               Station="{Station}"/>
         <MoveShuttle TargetPosition="{Station}"/>
-        <RetryUntilSuccessful num_attempts="2">
-          <Sequence>
-            <Station_Execution CommandUuid="{_ID}"
-                               Command="Dispense"
-                               Station="{Station}"/>
-            <Data_Condition expected_value="2.2"
-                            comparison_type="less"
+        <Station_Execution CommandUuid="{_ID}"
+                           Command="Tare"
+                           Station="{Station}"/>
+        <BC_Fallback>
+          <Data_Condition expected_value="1.9;2.2"
+                          comparison_type="inside"
+                          Field="Weight"
+                          Message="Weight"
+                          Station="{Station}"/>
+          <BC_Fallback>
+            <Data_Condition expected_value="0"
+                            comparison_type="equal"
                             Field="Weight"
                             Message="Weight"
                             Station="{Station}"/>
-          </Sequence>
-        </RetryUntilSuccessful>
+            <Station_Execution CommandUuid="{_ID}"
+                               Command="Dispense"
+                               Station="{Station}"/>
+          </BC_Fallback>
+          <BC_Fallback>
+            <Data_Condition expected_value="0"
+                            comparison_type="greater"
+                            Field="Weight"
+                            Message="Weight"
+                            Station="{Station}"/>
+            <RetryUntilSuccessful num_attempts="2">
+              <Station_Execution CommandUuid="{_ID}"
+                                 Command="Refill"
+                                 Station="{Station}"/>
+            </RetryUntilSuccessful>
+          </BC_Fallback>
+        </BC_Fallback>
         <Station_Unregistration CommandUuid="{_ID}"
                                 Station="{Station}"/>
       </Sequence>
@@ -117,6 +137,7 @@
 
   <!-- Description of Node Models (used by Groot) -->
   <TreeNodesModel>
+    <Control ID="BC_Fallback"/>
     <Action ID="Configure">
       <output_port name="StationMap"
                    default="{StationMap}"

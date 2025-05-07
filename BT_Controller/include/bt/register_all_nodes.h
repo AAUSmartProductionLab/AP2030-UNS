@@ -14,6 +14,7 @@
 #include "bt/CustomNodes/station_execute_node.h"
 #include "bt/CustomNodes/configuration_node.h"
 #include "bt/CustomNodes/get_product_from_queue_node.h"
+#include "bt/controls/bc_fallback_node.h"
 
 void registerAllNodes(
     BT::BehaviorTreeFactory &factory,
@@ -124,4 +125,6 @@ void registerAllNodes(
         ConfigurationDATA);
 
     factory.registerNodeType<GetProductFromQueue>("GetProductFromQueue");
+    factory.registerNodeType<BT::BC_FallbackNode>("BC_Fallback");
+    factory.registerNodeType<BT::BC_FallbackNode>("BC_Fallback_Async", true);
 }
