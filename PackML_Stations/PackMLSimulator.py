@@ -49,7 +49,7 @@ class PackMLStateMachine:
         self.properties = properties
         self.CommandUuid = None
         self.publish_progress = publish_progress
-        self.failureChance = 0.01
+        self.failureChance = 0.00
         # Progress tracking
         self.total_duration = 0
         self.elapsed_time = 0
