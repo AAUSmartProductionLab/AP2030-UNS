@@ -200,6 +200,33 @@ bool GenericConditionNode::compare(const json &msg, const std::string &field_nam
             result = (actual_str.find(expected_str) != std::string::npos);
         }
     }
+    else if (comparison_type == "inside" || comparison_type == "outside")
+    {
+        // Parse the expected range values (format: "min;max")
+        size_t delimiter_pos = expected_str.find(';');
+        if (delimiter_pos != std::string::npos)
+        {
+            std::string min_str = expected_str.substr(0, delimiter_pos);
+            std::string max_str = expected_str.substr(delimiter_pos + 1);
 
+            if (actual_value.is_number())
+            {
+                try
+                {
+                    double min_val = std::stod(min_str);
+                    double max_val = std::stod(max_str);
+                    double actual_num = actual_value.get<double>();
+
+                    // Check if the value is inside or outside the range
+                    bool is_inside = (actual_num >= min_val && actual_num <= max_val);
+                    result = (comparison_type == "inside") ? is_inside : !is_inside;
+                }
+                catch (...)
+                {
+                    std::cerr << "Error parsing number for inside/outside comparison" << std::endl;
+                }
+            }
+        }
+    }
     return result;
 }
