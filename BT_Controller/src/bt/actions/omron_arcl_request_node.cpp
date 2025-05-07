@@ -1,4 +1,4 @@
-#include "bt/CustomNodes/omron_arcl_request_node.h"
+#include "bt/actions/omron_arcl_request_node.h"
 #include "mqtt/utils.h"
 #include "mqtt/node_message_distributor.h"
 

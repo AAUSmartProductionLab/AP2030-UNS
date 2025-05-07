@@ -1,4 +1,4 @@
-#include "bt/CustomNodes/generic_condition_node.h"
+#include "bt/conditions/generic_condition_node.h"
 #include "mqtt/node_message_distributor.h"
 #include "mqtt/utils.h"
 

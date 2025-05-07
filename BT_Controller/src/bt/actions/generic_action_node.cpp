@@ -1,4 +1,4 @@
-#include "bt/CustomNodes/generic_action_node.h"
+#include "bt/actions/generic_action_node.h"
 #include "mqtt/utils.h"
 #include "mqtt/node_message_distributor.h"
 
