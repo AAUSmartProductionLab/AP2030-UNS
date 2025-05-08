@@ -25,8 +25,12 @@ def dispense_process(mean_duration=2.0, mean_weight=2.0, start_weight=0.0):
     steps= 50
     step_size = duration / steps  # Ensure step size does not exceed duration
 
+    # Calculate expected completion percentage at end of simulation
+    expected_completion = 1.0 - np.exp(-duration / time_constant)
+    
     # Generate random target weight with normal distribution
-    target_weight = np.random.normal(mean_weight-start_weight, 0.05)
+    # Scale up to compensate for PT1 not reaching 100%
+    target_weight = np.random.normal(mean_weight-start_weight, 0.05) / expected_completion
     publish_weight(start_weight)
 
     for i in range(steps):
@@ -97,7 +101,7 @@ def refill_callback(topic, client, message, properties):
         start_weight_raw = message.get("StartWeight")
         uuid = message.get("Uuid")
         start_weight = float(start_weight_raw)
-        if start_weight > weight:
+        if (start_weight > weight):
             raise ValueError("Start weight cannot be greater than target weight")
         state_machine.execute_command(message,refill, dispense_process, duration, weight, start_weight)
     except Exception as e:
