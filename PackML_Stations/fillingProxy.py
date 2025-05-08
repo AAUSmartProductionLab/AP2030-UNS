@@ -9,8 +9,7 @@ BASE_TOPIC = "NN/Nybrovej/InnoLab/Filling"
 
 
 
-
-def dispense_process(mean_duration=2.0, mean_weight=2.0):
+def dispense_process(mean_duration=2.0, mean_weight=2.0, start_weight=0.0):
     """
     Simulate dispensing process with PT1 element (first-order lag) characteristics
     Uses normal distribution for both duration and final weight
@@ -22,9 +21,6 @@ def dispense_process(mean_duration=2.0, mean_weight=2.0):
     # Time constant for PT1 element (affects curve shape)
     time_constant = duration / 3
     
-    # Calculate the maximum PT1 value at end time (for scaling)
-    max_pt1_value = 1.0 - np.exp(-duration / time_constant)
-    
     # Simulation parameters
     steps= 50
     step_size = duration / steps  # Ensure step size does not exceed duration
@@ -32,14 +28,15 @@ def dispense_process(mean_duration=2.0, mean_weight=2.0):
     # Generate random target weight with normal distribution
     target_weight = np.random.normal(mean_weight, 0.05)
     target_weight = max(1.5, target_weight)  # Ensure minimum weight
-    publish_weight(0.0,reset=True)
+    publish_weight(start_weight,reset=True)
 
     for i in range(steps):
         time.sleep(step_size)
         current_time = (i+1) * step_size
         # PT1 response formula with scaling to ensure reaching 1.0
         pt1_value = 1.0 - np.exp(-current_time / time_constant)
-        publish_weight(pt1_value)
+        current_weight = start_weight + (pt1_value * target_weight)
+        publish_weight(current_weight)
 
 def tare_process(duration=2.0, state_machine=None):
     time.sleep(duration)
@@ -94,6 +91,31 @@ def tare_callback(topic, client, message, properties):
     except Exception as e:
         print(f"Error in tare_callback: {e}")
 
+def refill_callback(topic, client, message, properties):
+    try:
+        duration = 2.0
+        state_machine.execute_command(message,refill, dispense_process, duration, start_weight)
+        start_weight_raw = message.get("StartWeight", 0.0)
+        command_uuid = message.get("CommandUuid")
+        start_weight = float(start_weight_raw)
+    except Exception as e:
+        print(f"Error in stopper_callback: {e}")
+        timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
+        response = {
+            "State": "FAILURE",
+            "TimeStamp": timestamp,
+            "CommandUuid": command_uuid
+        }
+        refill.publish(response, fillProxy, False)
+
+refill = ResponseAsync(
+    BASE_TOPIC+"/DATA/Refill", 
+    BASE_TOPIC+"/CMD/Refill",
+    "./schemas/commandResponse.schema.json", 
+    "./schemas/command.schema.json", 
+    2, 
+    refill_callback
+)
 
 
 dispense = ResponseAsync(
