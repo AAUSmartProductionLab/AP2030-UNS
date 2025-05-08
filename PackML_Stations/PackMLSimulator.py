@@ -130,18 +130,18 @@ class PackMLStateMachine:
 
     def idle_state(self):
         if self.command_uuids and len(self.command_uuids) > 0:
-            self.CommandUuid = self.command_uuids[0]
-            response={}
-            timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
-            response = {
-                "State": "FAILURE",
-                "TimeStamp": timestamp,
-                "CommandUuid": self.CommandUuid
-            }
-            self.start_topic.publish(response, self.client, False)
             self.transition_to(PackMLState.STARTING)
 
     def starting_state(self):
+        self.CommandUuid = self.command_uuids[0]
+        response={}
+        timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
+        response = {
+            "State": "SUCCESSFUL",
+            "TimeStamp": timestamp,
+            "CommandUuid": self.CommandUuid 
+        }
+        self.start_topic.publish(response, self.client, False)
         self.transition_to(PackMLState.EXECUTE)
 
     def completing_state(self, command_uuid):
