@@ -3,10 +3,23 @@
     "title": "Command Schema",
     "description": "An arbitrary command",
     "type": "object",
-    "properties": {
-        "CommandUuid": {
-            "type": "string"
+    "allOf": [
+        {
+            "$ref": "data.schema.json"
+        },
+        {
+            "type": "object",
+            "properties": {
+                "CommandUuid": {
+                    "type": "string"
+                }
+            },
+            "State": {
+                    "type": "string",
+                    "description": "The state of the command being executed",
+                    "enum": ["RUNNING","SUCCESSFUL","FAILURE"]
+                },
+        "required": ["CommandUuid", "State"]
         }
-    },
-    "required": ["CommandUuid"]
+    ]
 }

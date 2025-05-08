@@ -40,7 +40,7 @@ class PackMLState(enum.Enum):
 
 
 class PackMLStateMachine:
-    def __init__(self,  state_topic, client, properties):
+    def __init__(self,  state_topic, start_topic,complete_topic,client, properties):
         self.state = PackMLState.IDLE
         self.state_topic = state_topic
         self.running_execution = False
@@ -49,7 +49,10 @@ class PackMLStateMachine:
         self.properties = properties
         self.CommandUuid = None
         self.failureChance = 0.00
-       
+
+        self.start_topic = start_topic
+        self.complete_topic = complete_topic
+
         # ProcessQueue
         self.is_processing = False
         self.command_uuids = []  # Track all queued command UUIDs
@@ -64,7 +67,7 @@ class PackMLStateMachine:
         self.state_topic.publish(response, self.client, True)
 
 
-    def start_command(self,message,start_topic):
+    def start_command(self,message):
         """Register a command without immediate processing"""
         command_uuid = message.get("CommandUuid")
         
@@ -76,7 +79,7 @@ class PackMLStateMachine:
             "TimeStamp": timestamp,
             "CommandUuid": command_uuid
         }
-        start_topic.publish(response, self.client,  False)
+        self.start_topic.publish(response, self.client,  False)
         self.transition_to(PackMLState.IDLE)
 
     def execute_command(self, message, execute_topic, process_function, *args):
@@ -109,37 +112,47 @@ class PackMLStateMachine:
             }
             execute_topic.publish(response, self.client, False)
 
-    def complete_command(self, message, complete_topic):
+    def complete_command(self, message):
         """Unregister a command by removing it from the queue if not being processed"""
         command_uuid = message.get("CommandUuid")
         response={}
-        timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
         # Check if the command exists and is not currently being processed
         if command_uuid in self.command_uuids and ((command_uuid == self.command_uuids[0] and self.is_processing==False) or command_uuid != self.command_uuids[0]):
-            self.command_uuids.remove(command_uuid)
-            response = {
-                "State": "SUCCESSFUL",
-                "TimeStamp": timestamp,
-                "CommandUuid": command_uuid
-            }
-            self.transition_to(PackMLState.COMPLETING)
+            self.transition_to(PackMLState.COMPLETING, command_uuid)
         else:
+            timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
             response = {
                 "State": "FAILURE",
                 "TimeStamp": timestamp,
                 "CommandUuid": command_uuid
             }
-        complete_topic.publish(response, self.client, False)
+            self.complete_topic.publish(response, self.client, False)
 
     def idle_state(self):
-        if self.command_uuids and len(self.command_uuids)>0:
+        if self.command_uuids and len(self.command_uuids) > 0:
             self.CommandUuid = self.command_uuids[0]
+            response={}
+            timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
+            response = {
+                "State": "FAILURE",
+                "TimeStamp": timestamp,
+                "CommandUuid": self.CommandUuid
+            }
+            self.start_topic.publish(response, self.client, False)
             self.transition_to(PackMLState.STARTING)
 
     def starting_state(self):
         self.transition_to(PackMLState.EXECUTE)
 
-    def completing_state(self):
+    def completing_state(self, command_uuid):
+        self.command_uuids.remove(command_uuid)
+        timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
+        response = {
+            "State": "SUCCESSFUL",
+            "TimeStamp": timestamp,
+            "CommandUuid": command_uuid
+        }
+        self.complete_topic.publish(response, self.client, False)
         self.transition_to(PackMLState.COMPLETE)
 
     def complete_state(self):
@@ -149,7 +162,7 @@ class PackMLStateMachine:
         self.CommandUuid = None
         self.transition_to(PackMLState.IDLE)
 
-    def transition_to(self, new_state):
+    def transition_to(self, new_state, command_uuid=None):  
         """Transition to a new state and publish it"""
         self.state = new_state
         # report the state change
@@ -166,7 +179,7 @@ class PackMLStateMachine:
         elif new_state == PackMLState.STARTING:
             self.starting_state()
         elif new_state == PackMLState.COMPLETING:
-            self.completing_state()
+            self.completing_state(command_uuid)
         elif new_state == PackMLState.COMPLETE:
             self.complete_state()
         elif new_state == PackMLState.RESETTING:

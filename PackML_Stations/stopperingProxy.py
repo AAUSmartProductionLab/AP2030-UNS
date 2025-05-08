@@ -75,7 +75,7 @@ stopperProxy = Proxy(
     [stopper, start,complete]
 )
 
-state_machine = PackMLStateMachine(state, stopperProxy, None)
+state_machine = PackMLStateMachine(state, start, complete, stopperProxy, None)
 
 def main():
     stopperProxy.loop_forever()

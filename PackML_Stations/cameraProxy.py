@@ -112,7 +112,7 @@ cameraProxy = Proxy(
     [capture,start, complete,image_publisher]
 )
 
-state_machine = PackMLStateMachine(state, cameraProxy, None)
+state_machine = PackMLStateMachine(state, start, complete, cameraProxy, None)
 state_machine.failureChance=0
 
 def main():
