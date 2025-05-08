@@ -8,10 +8,10 @@
                       Message="State"
                       Station="{Station}"/>
       <Sequence>
-        <Station_Registration Uuid="{_ID}"
+        <Station_Registration Uuid="{ProductID}"
                               Station="{Station}"/>
         <MoveShuttle TargetPosition="{Station}"/>
-        <Station_Execution Uuid="{_ID}"
+        <Station_Execution Uuid="{ProductID}"
                            Command="Tare"
                            Station="{Station}"/>
         <BC_Fallback>
@@ -26,7 +26,7 @@
                             Field="Weight"
                             Message="Weight"
                             Station="{Station}"/>
-            <Station_Execution Uuid="{_ID}"
+            <Station_Execution Uuid="{ProductID}"
                                Command="Dispense"
                                Station="{Station}"/>
           </Sequence>
@@ -37,13 +37,13 @@
                             Message="Weight"
                             Station="{Station}"/>
             <RetryUntilSuccessful num_attempts="2">
-              <Station_Execution Uuid="{_ID}"
+              <Station_Execution Uuid="{ProductID}"
                                  Command="Refill"
                                  Station="{Station}"/>
             </RetryUntilSuccessful>
           </Sequence>
         </BC_Fallback>
-        <Station_Unregistration Uuid="{_ID}"
+        <Station_Unregistration Uuid="{ProductID}"
                                 Station="{Station}"/>
       </Sequence>
     </ReactiveSequence>
@@ -57,12 +57,15 @@
                 success_count="-1">
         <SubTree ID="Produce"
                  XbotTopic="Planar/Xbot1"
+                 ProductID=""
                  _autoremap="true"/>
         <SubTree ID="Produce"
                  XbotTopic="Planar/Xbot2"
+                 ProductID=""
                  _autoremap="true"/>
         <SubTree ID="Produce"
                  XbotTopic="Planar/Xbot3"
+                 ProductID=""
                  _autoremap="true"/>
       </Parallel>
     </Sequence>
@@ -75,7 +78,7 @@
                       Field="State"
                       Message="State"
                       Station="{XbotTopic}"/>
-      <GetProductFromQueue Product="{_ProductID}"
+      <GetProductFromQueue Product="{ProductID}"
                            if_empty="SUCCESS"
                            Queue="{ProductIDs}">
         <Sequence>
@@ -103,13 +106,13 @@
                       Message="State"
                       Station="{Station}"/>
       <Sequence>
-        <Station_Registration Uuid="{_ID}"
+        <Station_Registration Uuid="{ProductID}"
                               Station="{Station}"/>
         <MoveShuttle TargetPosition="{Station}"/>
-        <Station_Execution Uuid="{_ID}"
+        <Station_Execution Uuid="{ProductID}"
                            Command="Capture"
                            Station="{Station}"/>
-        <Station_Unregistration Uuid="{_ID}"
+        <Station_Unregistration Uuid="{ProductID}"
                                 Station="{Station}"/>
       </Sequence>
     </ReactiveSequence>
@@ -123,13 +126,13 @@
                       Message="State"
                       Station="{Station}"/>
       <Sequence>
-        <Station_Registration Uuid="{_ID}"
+        <Station_Registration Uuid="{ProductID}"
                               Station="{Station}"/>
         <MoveShuttle TargetPosition="{Station}"/>
-        <Station_Execution Uuid="{_ID}"
+        <Station_Execution Uuid="{ProductID}"
                            Command="Stopper"
                            Station="{Station}"/>
-        <Station_Unregistration Uuid="{_ID}"
+        <Station_Unregistration Uuid="{ProductID}"
                                 Station="{Station}"/>
       </Sequence>
     </ReactiveSequence>
@@ -166,7 +169,7 @@
     </SubTree>
     <Decorator ID="GetProductFromQueue">
       <output_port name="Product"
-                   default="{_ProductID}"
+                   default="{ProductID}"
                    type="std::string">The product ID of the current product</output_port>
       <input_port name="if_empty"
                   default="SUCCESS"
@@ -181,7 +184,9 @@
     </Action>
     <SubTree ID="Produce"
              editable="true">
-      <input_port name="XbotTopic"/>
+      <input_port name="XbotTopic"
+                  default="Planar/Xbot1"/>
+      <output_port name="ProductID"/>
     </SubTree>
     <Action ID="Station_Execution">
       <input_port name="Uuid"
@@ -195,9 +200,9 @@
                   type="std::string">The station to register with</input_port>
     </Action>
     <Action ID="Station_Registration">
-      <output_port name="Uuid"
-                   default="{_ID}"
-                   type="std::string">UUID for the command to execute</output_port>
+      <input_port name="Uuid"
+                  default="{_ID}"
+                  type="std::string">UUID for the command to execute</input_port>
       <input_port name="Station"
                   default="{_Station}"
                   type="std::string">The station to register with</input_port>

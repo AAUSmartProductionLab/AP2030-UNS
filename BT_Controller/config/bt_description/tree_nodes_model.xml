@@ -30,7 +30,7 @@
             <input_port name="Station" type="std::string" default="{Station}">The station to register with</input_port>
         </Action>
         <Action ID="Station_Registration">
-            <output_port name="Uuid" type="std::string" default="{_ID}">UUID for the command to execute</output_port>
+            <input_port name="Uuid" type="std::string" default="{_ID}">UUID for the command to execute</input_port>
             <input_port name="Station" type="std::string" default="{_Station}">The station to register with</input_port>
         </Action>
         <Action ID="Station_Unregistration">

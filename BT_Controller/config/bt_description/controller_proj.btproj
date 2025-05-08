@@ -20,7 +20,7 @@
             <input_port name="Station" default="Filling"/>
         </SubTree>
         <Decorator ID="GetProductFromQueue">
-            <output_port name="Product" default="{_ProductID}" type="std::string">The product ID of the current product</output_port>
+            <output_port name="Product" default="{ProductID}" type="std::string">The product ID of the current product</output_port>
             <input_port name="if_empty" default="SUCCESS" type="BT::NodeStatus">Status to return if queue is empty: SUCCESS, FAILURE, SKIPPED</input_port>
             <input_port name="Queue" default="{ProductIDs}" type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;">The queue of all product IDs of the batch</input_port>
         </Decorator>
@@ -31,7 +31,8 @@
             <input_port name="command" type="BT::AnyTypeAllowed"/>
         </Action>
         <SubTree ID="Produce" editable="true">
-            <input_port name="XbotTopic"/>
+            <input_port name="XbotTopic" default="Planar/Xbot1"/>
+            <output_port name="ProductID"/>
         </SubTree>
         <SubTree ID="StationProcess" editable="true">
             <input_port name="Station" default="Stoppering"/>
@@ -42,7 +43,7 @@
             <input_port name="Station" default="{Station}" type="std::string">The station to register with</input_port>
         </Action>
         <Action ID="Station_Registration">
-            <output_port name="Uuid" default="{_ID}" type="std::string">UUID for the command to execute</output_port>
+            <input_port name="Uuid" default="{_ID}" type="std::string">UUID for the command to execute</input_port>
             <input_port name="Station" default="{_Station}" type="std::string">The station to register with</input_port>
         </Action>
         <Action ID="Station_Unregistration">

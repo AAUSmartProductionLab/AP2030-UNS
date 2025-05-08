@@ -37,19 +37,23 @@ public:
                 "{_Station}",
                 "The station to register with"),
             BT::details::PortWithDefault<std::string>(
-                BT::PortDirection::OUTPUT,
+                BT::PortDirection::INPUT,
                 "Uuid",
                 "{_ID}",
                 "UUID for the command to execute")};
     }
     json createMessage() override
     {
-        std::cout << "Creating message in StationRegisterNode" << std::endl;
+        std::cout << "Creating message in StationStartNode" << std::endl;
         json message;
-        current_uuid_ = mqtt_utils::generate_uuid();
-        setOutput<std::string>("Uuid", current_uuid_);
-        message["Uuid"] = current_uuid_;
-        return message;
+        BT::Expected<std::string> uuid = getInput<std::string>("Uuid");
+        if (uuid.has_value())
+        {
+            current_uuid_ = uuid.value();
+            message["Uuid"] = current_uuid_;
+            return message;
+        }
+        return json();
     }
     std::string getFormattedTopic(const std::string &pattern, const BT::NodeConfig &config)
     {
