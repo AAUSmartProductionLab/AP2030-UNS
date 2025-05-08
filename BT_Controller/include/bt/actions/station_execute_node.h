@@ -96,8 +96,7 @@ public:
     }
 
     // Standard implementation based on PackML override this if needed
-    void
-    callback(const json &msg, mqtt::properties props) override
+    void callback(const json &msg, mqtt::properties props) override
     {
         // Use mutex to protect shared state
         {
@@ -106,25 +105,23 @@ public:
             // Update state based on message content
             if (status() == BT::NodeStatus::RUNNING)
             {
-                if (!msg["ProcessQueue"].empty() && msg["ProcessQueue"][0].get<std::string>() == current_command_uuid_)
+                if (msg["CommandUuid"] == current_command_uuid_)
                 {
 
-                    if (msg["State"] == "ABORTED" || msg["State"] == "STOPPED")
+                    if (msg["State"] == "FAILURE")
                     {
                         current_command_uuid_ = "";
                         setStatus(BT::NodeStatus::FAILURE);
                     }
-                    else if (msg["State"] == "COMPLETE")
+                    else if (msg["State"] == "SUCCESSFUL")
                     {
                         current_command_uuid_ = "";
                         setStatus(BT::NodeStatus::SUCCESS);
                     }
-                }
-                else
-                {
-                    std::cout << "The station does not have the command uuid any longer" << std::endl;
-                    current_command_uuid_ = "";
-                    setStatus(BT::NodeStatus::FAILURE);
+                    else if (msg["State"] == "RUNNING")
+                    {
+                        setStatus(BT::NodeStatus::RUNNING);
+                    }
                 }
                 emitWakeUpSignal();
             }

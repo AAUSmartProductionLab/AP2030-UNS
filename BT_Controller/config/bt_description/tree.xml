@@ -53,8 +53,8 @@
     <Sequence>
       <Configure StationMap="{StationMap}"
                  ProductIDs="{ProductIDs}"/>
-      <Parallel failure_count="3"
-                success_count="3">
+      <Parallel failure_count="-1"
+                success_count="-1">
         <SubTree ID="Produce"
                  XbotTopic="Planar/Xbot1"
                  _autoremap="true"/>

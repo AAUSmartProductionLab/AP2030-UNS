@@ -11,13 +11,13 @@ class MqttClient;
 using nlohmann::json;
 
 // MoveShuttleToPosition class declaration
-class StationRegisterNode : public MqttActionNode
+class StationStartNode : public MqttActionNode
 {
 public:
-    StationRegisterNode(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client,
-                        const mqtt_utils::Topic &request_topic,
-                        const mqtt_utils::Topic &response_topic,
-                        const mqtt_utils::Topic &halt_topic)
+    StationStartNode(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client,
+                     const mqtt_utils::Topic &request_topic,
+                     const mqtt_utils::Topic &response_topic,
+                     const mqtt_utils::Topic &halt_topic)
         : MqttActionNode(name, config, bt_mqtt_client,
                          request_topic, response_topic, halt_topic)
     {
@@ -53,10 +53,14 @@ public:
     }
     std::string getFormattedTopic(const std::string &pattern, const BT::NodeConfig &config)
     {
-        BT::Expected<std::string> id = config.blackboard->get<std::string>("Station");
-        if (id.has_value())
+        std::vector<std::string> replacements;
+        BT::Expected<std::string> station = getInput<std::string>("Station");
+        std::string command = "Start";
+        if (station.has_value())
         {
-            return mqtt_utils::formatWildcardTopic(pattern, id.value());
+            replacements.push_back(station.value());
+            replacements.push_back(command);
+            return mqtt_utils::formatWildcardTopic(pattern, replacements);
         }
         return pattern;
     }
@@ -82,15 +86,28 @@ public:
         // Use mutex to protect shared state
         {
             std::lock_guard<std::mutex> lock(mutex_);
-            std::cout << "Received message in StationRegisterNode: " << msg.dump() << std::endl;
-            if (!msg["ProcessQueue"].empty() && msg["ProcessQueue"][0].get<std::string>() == current_command_uuid_ && msg["State"].get<std::string>() == "IDLE")
+            std::cout << "Received message: " << msg.dump() << std::endl;
+            // Update state based on message content
+            if (status() == BT::NodeStatus::RUNNING)
             {
-                current_command_uuid_ = "";
-                setStatus(BT::NodeStatus::SUCCESS);
-                emitWakeUpSignal();
-            }
-            else
-            {
+                if (msg["CommandUuid"] == current_command_uuid_)
+                {
+
+                    if (msg["State"] == "FAILURE")
+                    {
+                        current_command_uuid_ = "";
+                        setStatus(BT::NodeStatus::FAILURE);
+                    }
+                    else if (msg["State"] == "SUCCESSFUL")
+                    {
+                        current_command_uuid_ = "";
+                        setStatus(BT::NodeStatus::SUCCESS);
+                    }
+                    else if (msg["State"] == "RUNNING")
+                    {
+                        setStatus(BT::NodeStatus::RUNNING);
+                    }
+                }
                 emitWakeUpSignal();
             }
         }

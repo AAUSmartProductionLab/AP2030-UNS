@@ -8,8 +8,8 @@
 #include "bt/actions/move_shuttle_to_position.h"
 #include "bt/actions/generic_action_node.h"
 #include "bt/actions/omron_arcl_request_node.h"
-#include "bt/actions/station_register_node.h"
-#include "bt/actions/station_unregister_node.h"
+#include "bt/actions/station_start_node.h"
+#include "bt/actions/station_complete_node.h"
 #include "bt/actions/station_execute_node.h"
 #include "bt/actions/configuration_node.h"
 #include "bt/conditions/generic_condition_node.h"
@@ -34,12 +34,12 @@ void registerAllNodes(
         2,
         false);
     mqtt_utils::Topic StationRegistrationCMD(
-        unsTopicPrefix + "/+/CMD/Register",
+        unsTopicPrefix + "/+/CMD/Start",
         "../../schemas/command.schema.json",
         2,
         false);
     mqtt_utils::Topic StationUnregistrationCMD(
-        unsTopicPrefix + "/+/CMD/Unregister",
+        unsTopicPrefix + "/+/CMD/Complete",
         "../../schemas/command.schema.json",
         2,
         false);
@@ -55,6 +55,10 @@ void registerAllNodes(
     mqtt_utils::Topic StationState(
         unsTopicPrefix + "/+/DATA/State",
         "../../schemas/stationState.schema.json",
+        2);
+    mqtt_utils::Topic StationCommandResponse(
+        unsTopicPrefix + "/+/DATA/+",
+        "../../schemas/commandResponse.schema.json",
         2);
     mqtt_utils::Topic StateData(
         unsTopicPrefix + "/+/DATA/State",
@@ -90,22 +94,22 @@ void registerAllNodes(
         OmronARCLCMD,
         OmronARCLState);
 
-    MqttActionNode::registerNodeTypeWithHalt<StationRegisterNode>(
+    MqttActionNode::registerNodeTypeWithHalt<StationStartNode>(
         factory,
         node_message_distributor,
         bt_mqtt_client,
         "Station_Registration",
         StationRegistrationCMD,
-        StationState,
+        StationCommandResponse,
         StationUnregistrationCMD);
 
-    MqttActionNode::registerNodeType<StationUnRegisterNode>(
+    MqttActionNode::registerNodeType<StationCompleteNode>(
         factory,
         node_message_distributor,
         bt_mqtt_client,
         "Station_Unregistration",
         StationUnregistrationCMD,
-        StationState);
+        StationCommandResponse);
 
     MqttActionNode::registerNodeType<StationExecuteNode>(
         factory,
@@ -113,7 +117,7 @@ void registerAllNodes(
         bt_mqtt_client,
         "Station_Execution",
         StationExecuteCMD,
-        StationState);
+        StationCommandResponse);
 
     MqttSyncSubNode::registerNodeType<GenericConditionNode>(
         factory,
