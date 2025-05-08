@@ -26,9 +26,8 @@ def dispense_process(mean_duration=2.0, mean_weight=2.0, start_weight=0.0):
     step_size = duration / steps  # Ensure step size does not exceed duration
 
     # Generate random target weight with normal distribution
-    target_weight = np.random.normal(mean_weight, 0.05)
-    target_weight = max(1.5, target_weight)  # Ensure minimum weight
-    publish_weight(start_weight,reset=True)
+    target_weight = np.random.normal(mean_weight-start_weight, 0.05)
+    publish_weight(start_weight)
 
     for i in range(steps):
         time.sleep(step_size)
@@ -94,10 +93,13 @@ def tare_callback(topic, client, message, properties):
 def refill_callback(topic, client, message, properties):
     try:
         duration = 2.0
-        state_machine.execute_command(message,refill, dispense_process, duration, start_weight)
-        start_weight_raw = message.get("StartWeight", 0.0)
+        weight=2.0
+        start_weight_raw = message.get("StartWeight")
         command_uuid = message.get("CommandUuid")
         start_weight = float(start_weight_raw)
+        if start_weight > weight:
+            raise ValueError("Start weight cannot be greater than target weight")
+        state_machine.execute_command(message,refill, dispense_process, duration, weight, start_weight)
     except Exception as e:
         print(f"Error in stopper_callback: {e}")
         timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
@@ -169,7 +171,7 @@ fillProxy = Proxy(
     BROKER_ADDRESS, 
     BROKER_PORT,
     "FillingProxy", 
-    [dispense, start, complete, weigh_publisher, tare]
+    [dispense, start, complete, weigh_publisher, tare, refill]
 )
 state_machine = PackMLStateMachine(state, fillProxy, None)
 
