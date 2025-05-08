@@ -51,7 +51,7 @@ def start_callback(topic, client, message, properties):
     """Callback handler for registering commands without executing them"""
     try:  
         # Register the command without executing
-        state_machine.start_command(message, start)
+        state_machine.start_command(message)
         
     except Exception as e:
         print(f"Error in register_callback: {e}")
@@ -60,7 +60,7 @@ def complete_callback(topic, client, message, properties):
     """Callback handler for unregistering commands by removing them from the queue"""
     try:  
         # Unregister/remove the command from the queue if it's not being processed
-        state_machine.complete_command(message, complete)
+        state_machine.complete_command(message)
         
     except Exception as e:
         print(f"Error in unregister_callback: {e}")
