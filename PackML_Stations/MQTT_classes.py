@@ -76,6 +76,26 @@ class Response(Topic):
                 client.publish(publish_properties.ResponseTopic, json.dumps(request),
                                self.qos, properties=publish_properties, retain=retain)
 
+class Subscriber(Topic):
+    # A class handling responding to requests on a topic described in the user property ResponseTopic
+    # The callback is executed in a seperate thread so time.sleep can be used to wait for processes to finish without blocking the paho loop
+    def __init__(self, subscribe_topic: str, subscribe_schema_path: str, qos: int = 2, callback_method: callable = None):
+        super().__init__("",subscribe_topic, "",subscribe_schema_path, qos, callback_method)
+    def callback(self, client, userdata, message):
+        # run callback function in seperate thread
+        if self.sub_schema != None:
+            try:
+                msg = json.loads(message.payload.decode("utf-8"))
+                validate(instance=msg, schema=self.sub_schema, resolver=self.sub_resolver)
+                if self.callback_method is not None:
+                    thr = threading.Thread(target=self.callback_method, args=(
+                        self, client, msg, message.properties))
+                    thr.start()
+                print("Received message on topic" +
+                      self.subtopic + ": " + str(msg))
+            except Exception as e:
+                print(f"Error in register_callback: {e}")
+
 
 class ResponseAsync(Topic):
     # A class handling responding to requests on a topic described in the user property ResponseTopic

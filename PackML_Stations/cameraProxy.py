@@ -1,7 +1,6 @@
 from MQTT_classes import Proxy, ResponseAsync, Publisher
 import time
-import numpy as np
-from PackMLSimulator import PackMLStateMachine, PackMLState
+from PackMLSimulator import PackMLStateMachine
 import datetime
 import cv2
 import base64
@@ -19,15 +18,6 @@ image_publisher = Publisher(
 
 def capture_process(duration=0.5, state_machine=None):
     time.sleep(duration)
-    if state_machine and state_machine.total_duration:
-        state_machine.elapsed_time = duration
-
-
-def publishImage(state_machine, reset=False):
-    # Only publish on final completion, not during progress or reset
-    if reset or state_machine.progress < 1.0:
-        return
-        
     webcam = None
     try:
         webcam = cv2.VideoCapture(0)
@@ -49,73 +39,80 @@ def publishImage(state_machine, reset=False):
             "TimeStamp": timestamp,
             "Format": "base64_jpeg"
         }
-        image_publisher.publish(response, state_machine.client, True)
+        image_publisher.publish(response, cameraProxy, True)
     except Exception as e:
         print(f"Error publishing image: {e}")
     finally:
         if webcam is not None:
             webcam.release()
 
-def register_callback(topic, client, message, properties):
+
+def start_callback(topic, client, message, properties):
     """Callback handler for registering commands without executing them"""
     try:  
         # Register the command without executing
-        state_machine.register_command(message)
+        state_machine.start_command(message, start)
         
     except Exception as e:
         print(f"Error in register_callback: {e}")
 
-def capture_callback(topic, client, message, properties):
-    """Callback handler for capture commands"""
-    if state_machine.state == PackMLState.IDLE:
-        try:
-            duration = 2.0
-            state_machine.process_next_command(message, capture_process, duration)
-        except Exception as e:
-            print(f"Error in stopper_callback: {e}")
-
-def unregister_callback(topic, client, message, properties):
+def complete_callback(topic, client, message, properties):
     """Callback handler for unregistering commands by removing them from the queue"""
     try:  
         # Unregister/remove the command from the queue if it's not being processed
-        state_machine.unregister_command(message)
+        state_machine.complete_command(message, complete)
         
     except Exception as e:
         print(f"Error in unregister_callback: {e}")
 
-capture = ResponseAsync(
+def capture_callback(topic, client, message, properties):
+    """Callback handler for capture commands"""
+    try:
+        state_machine.execute_command(message, capture, capture_process)
+    except Exception as e:
+        print(f"Error in dispense_callback: {e}")
+
+
+start = ResponseAsync(
+    BASE_TOPIC+"/DATA/Start", 
+    BASE_TOPIC+"/CMD/Start",
+    "./schemas/commandResponse.schema.json", 
+    "./schemas/command.schema.json", 
+    2, 
+    start_callback
+)
+complete = ResponseAsync(
+    BASE_TOPIC+"/DATA/Complete", 
+    BASE_TOPIC+"/CMD/Complete",
+    "./schemas/commandResponse.schema.json", 
+    "./schemas/command.schema.json", 
+    2, 
+    complete_callback
+)
+
+state = Publisher(
     BASE_TOPIC+"/DATA/State", 
+    "./schemas/stationState.schema.json",
+    2
+)
+
+capture = ResponseAsync(
+    BASE_TOPIC+"/DATA/Capture", 
     BASE_TOPIC+"/CMD/Capture",
-    "./schemas/stationState.schema.json", 
+    "./schemas/commandResponse.schema.json", 
     "./schemas/command.schema.json", 
     2, 
     capture_callback
-)
-register = ResponseAsync(
-    BASE_TOPIC+"/DATA/State", 
-    BASE_TOPIC+"/CMD/Register",
-    "./schemas/stationState.schema.json", 
-    "./schemas/command.schema.json", 
-    2, 
-    register_callback
-)
-
-unregister = ResponseAsync(
-    BASE_TOPIC+"/DATA/State", 
-    BASE_TOPIC+"/CMD/Unregister",
-    "./schemas/stationState.schema.json", 
-    "./schemas/command.schema.json", 
-    2, 
-    unregister_callback
 )
 
 cameraProxy = Proxy(
     BROKER_ADDRESS, 
     BROKER_PORT,
     "CameraProxy", 
-    [capture,register, unregister,image_publisher]
+    [capture,start, complete,image_publisher]
 )
-state_machine = PackMLStateMachine(capture,register,unregister, cameraProxy, None,publishImage)
+
+state_machine = PackMLStateMachine(state, cameraProxy, None)
 state_machine.failureChance=0
 
 def main():
