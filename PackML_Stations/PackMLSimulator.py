@@ -75,7 +75,7 @@ class PackMLStateMachine:
             self.command_uuids.append(command_uuid)
         timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
         response = {
-            "State": "SUCCESSFUL",
+            "State": "RUNNING",
             "TimeStamp": timestamp,
             "CommandUuid": command_uuid
         }
