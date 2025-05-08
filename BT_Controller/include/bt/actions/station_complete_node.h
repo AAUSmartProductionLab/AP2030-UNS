@@ -11,12 +11,12 @@ class MqttClient;
 using nlohmann::json;
 
 // MoveShuttleToPosition class declaration
-class StationUnRegisterNode : public MqttActionNode
+class StationCompleteNode : public MqttActionNode
 {
 public:
-    StationUnRegisterNode(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client,
-                          const mqtt_utils::Topic &request_topic,
-                          const mqtt_utils::Topic &response_topic)
+    StationCompleteNode(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client,
+                        const mqtt_utils::Topic &request_topic,
+                        const mqtt_utils::Topic &response_topic)
         : MqttActionNode(name, config, bt_mqtt_client,
                          request_topic, response_topic)
     {
@@ -58,10 +58,14 @@ public:
 
     std::string getFormattedTopic(const std::string &pattern, const BT::NodeConfig &config)
     {
-        BT::Expected<std::string> id = getInput<std::string>("Station");
-        if (id.has_value())
+        std::vector<std::string> replacements;
+        BT::Expected<std::string> station = getInput<std::string>("Station");
+        std::string command = "Complete";
+        if (station.has_value())
         {
-            return mqtt_utils::formatWildcardTopic(pattern, id.value());
+            replacements.push_back(station.value());
+            replacements.push_back(command);
+            return mqtt_utils::formatWildcardTopic(pattern, replacements);
         }
         return pattern;
     }
@@ -83,17 +87,30 @@ public:
         // Use mutex to protect shared state
         {
             std::lock_guard<std::mutex> lock(mutex_);
-            std::cout << "Received message in StationUnRegisterNode: " << msg.dump() << std::endl;
-            if (msg["ProcessQueue"].empty() ||
-                (std::find_if(msg["ProcessQueue"].begin(), msg["ProcessQueue"].end(),
-                              [this](const auto &item)
-                              { return std::string(item) == current_command_uuid_; }) == msg["ProcessQueue"].end()))
+            std::cout << "Received message: " << msg.dump() << std::endl;
+            // Update state based on message content
+            if (status() == BT::NodeStatus::RUNNING)
             {
-                current_command_uuid_ = "";
-                setStatus(BT::NodeStatus::SUCCESS);
+                if (msg["CommandUuid"] == current_command_uuid_)
+                {
+
+                    if (msg["State"] == "FAILURE")
+                    {
+                        current_command_uuid_ = "";
+                        setStatus(BT::NodeStatus::FAILURE);
+                    }
+                    else if (msg["State"] == "SUCCESSFUL")
+                    {
+                        current_command_uuid_ = "";
+                        setStatus(BT::NodeStatus::SUCCESS);
+                    }
+                    else if (msg["State"] == "RUNNING")
+                    {
+                        setStatus(BT::NodeStatus::RUNNING);
+                    }
+                }
+                emitWakeUpSignal();
             }
-            // there might be a time based criteria when the node would fail
-            emitWakeUpSignal();
         }
     }
 };
