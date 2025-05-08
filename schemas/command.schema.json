@@ -4,9 +4,9 @@
     "description": "An arbitrary command",
     "type": "object",
     "properties": {
-        "CommandUuid": {
+        "Uuid": {
             "type": "string"
         }
     },
-    "required": ["CommandUuid"]
+    "required": ["Uuid"]
 }

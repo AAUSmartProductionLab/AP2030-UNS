@@ -14,7 +14,7 @@ using nlohmann::json;
 class MqttActionNode : public BT::StatefulActionNode, public MqttPubBase, public MqttSubBase
 {
 protected:
-    std::string current_command_uuid_;
+    std::string current_uuid_;
 
 public:
     MqttActionNode(const std::string &name,

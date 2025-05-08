@@ -70,14 +70,14 @@ void MqttActionNode::callback(const json &msg, mqtt::properties props)
         {
             if (msg["State"] == "ABORTED" || msg["State"] == "STOPPED")
             {
-                current_command_uuid_ = "";
+                current_uuid_ = "";
                 // Change from setting internal state to updating node status
                 setStatus(BT::NodeStatus::FAILURE);
             }
             else if (msg["State"] == "COMPLETE")
             {
                 std::cout << "State is COMPLETE" << std::endl;
-                current_command_uuid_ = "";
+                current_uuid_ = "";
                 // Change from setting internal state to updating node status
                 setStatus(BT::NodeStatus::SUCCESS);
             }
@@ -99,7 +99,7 @@ bool MqttActionNode::isInterestedIn(const json &msg)
 {
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        if (response_topic_.validateMessage(msg) && status() == BT::NodeStatus::RUNNING && msg.contains("CommandUuid") && msg["CommandUuid"] == current_command_uuid_)
+        if (response_topic_.validateMessage(msg) && status() == BT::NodeStatus::RUNNING && msg.contains("Uuid") && msg["Uuid"] == current_uuid_)
         {
             return true;
         }

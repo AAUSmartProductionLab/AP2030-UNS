@@ -28,15 +28,15 @@ json OmronArclRequest::createMessage()
     BT::Expected<std::string> command = getInput<std::string>("command");
 
     json message;
-    current_command_uuid_ = mqtt_utils::generate_uuid();
-    message["id"] = current_command_uuid_;
+    current_uuid_ = mqtt_utils::generate_uuid();
+    message["id"] = current_uuid_;
     message["command"] = command.value();
     return message;
 }
 
 bool OmronArclRequest::isInterestedIn(const json &msg)
 {
-    if (status() == BT::NodeStatus::RUNNING && msg.contains("id") && msg["id"].get<std::string>() == current_command_uuid_)
+    if (status() == BT::NodeStatus::RUNNING && msg.contains("id") && msg["id"].get<std::string>() == current_uuid_)
     {
 
         return true;

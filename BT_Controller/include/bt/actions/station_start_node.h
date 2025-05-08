@@ -38,7 +38,7 @@ public:
                 "The station to register with"),
             BT::details::PortWithDefault<std::string>(
                 BT::PortDirection::OUTPUT,
-                "CommandUuid",
+                "Uuid",
                 "{_ID}",
                 "UUID for the command to execute")};
     }
@@ -46,9 +46,9 @@ public:
     {
         std::cout << "Creating message in StationRegisterNode" << std::endl;
         json message;
-        current_command_uuid_ = mqtt_utils::generate_uuid();
-        setOutput<std::string>("CommandUuid", current_command_uuid_);
-        message["CommandUuid"] = current_command_uuid_;
+        current_uuid_ = mqtt_utils::generate_uuid();
+        setOutput<std::string>("Uuid", current_uuid_);
+        message["Uuid"] = current_uuid_;
         return message;
     }
     std::string getFormattedTopic(const std::string &pattern, const BT::NodeConfig &config)
@@ -78,7 +78,7 @@ public:
     void onHalted() override
     {
         json message;
-        message["CommandUuid"] = current_command_uuid_;
+        message["Uuid"] = current_uuid_;
         publish(message, halt_topic_);
     }
     void callback(const json &msg, mqtt::properties props) override
@@ -90,17 +90,17 @@ public:
             // Update state based on message content
             if (status() == BT::NodeStatus::RUNNING)
             {
-                if (msg["CommandUuid"] == current_command_uuid_)
+                if (msg["Uuid"] == current_uuid_)
                 {
 
                     if (msg["State"] == "FAILURE")
                     {
-                        current_command_uuid_ = "";
+                        current_uuid_ = "";
                         setStatus(BT::NodeStatus::FAILURE);
                     }
                     else if (msg["State"] == "SUCCESSFUL")
                     {
-                        current_command_uuid_ = "";
+                        current_uuid_ = "";
                         setStatus(BT::NodeStatus::SUCCESS);
                     }
                     else if (msg["State"] == "RUNNING")

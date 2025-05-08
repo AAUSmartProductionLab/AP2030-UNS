@@ -10,7 +10,7 @@
         {
             "type": "object",
             "properties": {
-                "CommandUuid": {
+                "Uuid": {
                     "type": "string"
                 }
             },
@@ -19,7 +19,7 @@
                     "description": "The state of the command being executed",
                     "enum": ["RUNNING","SUCCESSFUL","FAILURE"]
                 },
-        "required": ["CommandUuid", "State"]
+        "required": ["Uuid", "State"]
         }
     ]
 }

@@ -44,30 +44,30 @@ public:
                     "The command to execute on the station"),
                 BT::details::PortWithDefault<std::string>(
                     BT::PortDirection::INPUT,
-                    "CommandUuid",
+                    "Uuid",
                     "{_ID}",
                     "UUID for the command to execute")};
     }
     json createMessage() override
     {
         json message;
-        auto command_uuid_result = getInput<std::string>("CommandUuid");
+        auto uuid_result = getInput<std::string>("Uuid");
 
-        if (command_uuid_result)
+        if (uuid_result)
         {
-            current_command_uuid_ = command_uuid_result.value();
+            current_uuid_ = uuid_result.value();
         }
         else
         {
-            // Handle the error - CommandUuid is missing
-            std::cerr << "Error: CommandUuid not provided to StationExecuteNode. Error: "
-                      << command_uuid_result.error() << std::endl;
+            // Handle the error - Uuid is missing
+            std::cerr << "Error: Uuid not provided to StationExecuteNode. Error: "
+                      << uuid_result.error() << std::endl;
 
             // Generate a new UUID as fallback or set empty
-            current_command_uuid_ = mqtt_utils::generate_uuid();
-            std::cerr << "Using generated UUID instead: " << current_command_uuid_ << std::endl;
+            current_uuid_ = mqtt_utils::generate_uuid();
+            std::cerr << "Using generated UUID instead: " << current_uuid_ << std::endl;
         }
-        message["CommandUuid"] = current_command_uuid_;
+        message["Uuid"] = current_uuid_;
         return message;
     }
     std::string getFormattedTopic(const std::string &pattern, const BT::NodeConfig &config)
@@ -105,17 +105,17 @@ public:
             // Update state based on message content
             if (status() == BT::NodeStatus::RUNNING)
             {
-                if (msg["CommandUuid"] == current_command_uuid_)
+                if (msg["Uuid"] == current_uuid_)
                 {
 
                     if (msg["State"] == "FAILURE")
                     {
-                        current_command_uuid_ = "";
+                        current_uuid_ = "";
                         setStatus(BT::NodeStatus::FAILURE);
                     }
                     else if (msg["State"] == "SUCCESSFUL")
                     {
-                        current_command_uuid_ = "";
+                        current_uuid_ = "";
                         setStatus(BT::NodeStatus::SUCCESS);
                     }
                     else if (msg["State"] == "RUNNING")

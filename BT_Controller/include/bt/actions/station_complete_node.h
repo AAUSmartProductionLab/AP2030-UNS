@@ -38,7 +38,7 @@ public:
                 "The station to unregister from"),
             BT::details::PortWithDefault<std::string>(
                 BT::PortDirection::INPUT,
-                "CommandUuid",
+                "Uuid",
                 "{_ID}",
                 "UUID for the command to execute")};
     }
@@ -47,11 +47,11 @@ public:
         std::cout << "Creating message in StationUnRegisterNode" << std::endl;
         json message;
 
-        BT::Expected<std::string> uuid = getInput<std::string>("CommandUuid");
+        BT::Expected<std::string> uuid = getInput<std::string>("Uuid");
         if (uuid.has_value())
         {
-            current_command_uuid_ = uuid.value();
-            message["CommandUuid"] = current_command_uuid_;
+            current_uuid_ = uuid.value();
+            message["Uuid"] = current_uuid_;
         }
         return message;
     }
@@ -91,17 +91,17 @@ public:
             // Update state based on message content
             if (status() == BT::NodeStatus::RUNNING)
             {
-                if (msg["CommandUuid"] == current_command_uuid_)
+                if (msg["Uuid"] == current_uuid_)
                 {
 
                     if (msg["State"] == "FAILURE")
                     {
-                        current_command_uuid_ = "";
+                        current_uuid_ = "";
                         setStatus(BT::NodeStatus::FAILURE);
                     }
                     else if (msg["State"] == "SUCCESSFUL")
                     {
-                        current_command_uuid_ = "";
+                        current_uuid_ = "";
                         setStatus(BT::NodeStatus::SUCCESS);
                     }
                     else if (msg["State"] == "RUNNING")

@@ -37,16 +37,16 @@
             <input_port name="Station" default="Stoppering"/>
         </SubTree>
         <Action ID="Station_Execution">
-            <input_port name="CommandUuid" default="{_ID}" type="std::string">UUID for the command to execute</input_port>
+            <input_port name="Uuid" default="{_ID}" type="std::string">UUID for the command to execute</input_port>
             <input_port name="Command" default="Command" type="std::string">The command to execute on the station</input_port>
             <input_port name="Station" default="{Station}" type="std::string">The station to register with</input_port>
         </Action>
         <Action ID="Station_Registration">
-            <output_port name="CommandUuid" default="{_ID}" type="std::string">UUID for the command to execute</output_port>
+            <output_port name="Uuid" default="{_ID}" type="std::string">UUID for the command to execute</output_port>
             <input_port name="Station" default="{_Station}" type="std::string">The station to register with</input_port>
         </Action>
         <Action ID="Station_Unregistration">
-            <input_port name="CommandUuid" default="{_ID}" type="std::string">UUID for the command to execute</input_port>
+            <input_port name="Uuid" default="{_ID}" type="std::string">UUID for the command to execute</input_port>
             <input_port name="Station" default="{_Station}" type="std::string">The station to unregister from</input_port>
         </Action>
         <SubTree ID="Stoppering" editable="true">

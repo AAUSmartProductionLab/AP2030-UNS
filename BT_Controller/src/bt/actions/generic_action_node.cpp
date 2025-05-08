@@ -20,7 +20,7 @@ GenericActionNode::GenericActionNode(const std::string &name,
 json GenericActionNode::createMessage()
 {
     json message;
-    current_command_uuid_ = mqtt_utils::generate_uuid();
-    message["CommandUuid"] = current_command_uuid_;
+    current_uuid_ = mqtt_utils::generate_uuid();
+    message["Uuid"] = current_uuid_;
     return message;
 }

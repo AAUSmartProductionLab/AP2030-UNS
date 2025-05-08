@@ -1,7 +1,7 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "title": "Generic response state",
-    "description": "JSON Schema for the status of a module. The current CommandUuid is expected when the module is not in a IDLE or RESETTING state",
+    "description": "JSON Schema for the status of a module. The current Uuid is expected when the module is not in a IDLE or RESETTING state",
     "type": "object",
     "allOf": [
         {
@@ -15,9 +15,9 @@
                     "description": "The PackML State the system is in",
                     "enum": ["IDLE", "STARTING", "EXECUTE","COMPLETING", "COMPLETE", "RESETTING", "HOLDING","HELD","UNHOLDING","SUSPENDING", "SUSPENDED", "UNSUSPENDING", "ABORTING", "ABORTED", "CLEARING", "STOPPING", "STOPPED"]
                 },
-                "CommandUuid": {
+                "Uuid": {
                     "type": "string",
-                    "description": "The CommandUuid of the current command"
+                    "description": "The Uuid of the current command"
                 }
             },
             "if": {
@@ -31,7 +31,7 @@
                 "required": ["State"]
               },
               "else": {
-                "required": ["State","CommandUuid"]
+                "required": ["State","Uuid"]
               }
         }
     ]

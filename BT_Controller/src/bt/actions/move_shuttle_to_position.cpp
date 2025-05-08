@@ -42,9 +42,9 @@ void MoveShuttleToPosition::onHalted()
     std::cout << "MQTT action node halted" << std::endl;
     // Additional cleanup as needed
     json message;
-    current_command_uuid_ = mqtt_utils::generate_uuid();
+    current_uuid_ = mqtt_utils::generate_uuid();
     message["TargetPosition"] = 0;
-    message["CommandUuid"] = current_command_uuid_;
+    message["Uuid"] = current_uuid_;
     publish(message, halt_topic_);
 }
 
@@ -57,9 +57,9 @@ json MoveShuttleToPosition::createMessage()
     std::string station = TargetPosition.value();
     if (stationMap.value().find(station) != stationMap.value().end())
     {
-        current_command_uuid_ = mqtt_utils::generate_uuid();
+        current_uuid_ = mqtt_utils::generate_uuid();
         message["TargetPosition"] = stationMap.value()[station];
-        message["CommandUuid"] = current_command_uuid_;
+        message["Uuid"] = current_uuid_;
         return message;
     }
     return json();

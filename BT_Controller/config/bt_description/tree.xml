@@ -8,10 +8,10 @@
                       Message="State"
                       Station="{Station}"/>
       <Sequence>
-        <Station_Registration CommandUuid="{_ID}"
+        <Station_Registration Uuid="{_ID}"
                               Station="{Station}"/>
         <MoveShuttle TargetPosition="{Station}"/>
-        <Station_Execution CommandUuid="{_ID}"
+        <Station_Execution Uuid="{_ID}"
                            Command="Tare"
                            Station="{Station}"/>
         <BC_Fallback>
@@ -26,7 +26,7 @@
                             Field="Weight"
                             Message="Weight"
                             Station="{Station}"/>
-            <Station_Execution CommandUuid="{_ID}"
+            <Station_Execution Uuid="{_ID}"
                                Command="Dispense"
                                Station="{Station}"/>
           </Sequence>
@@ -37,13 +37,13 @@
                             Message="Weight"
                             Station="{Station}"/>
             <RetryUntilSuccessful num_attempts="2">
-              <Station_Execution CommandUuid="{_ID}"
+              <Station_Execution Uuid="{_ID}"
                                  Command="Refill"
                                  Station="{Station}"/>
             </RetryUntilSuccessful>
           </Sequence>
         </BC_Fallback>
-        <Station_Unregistration CommandUuid="{_ID}"
+        <Station_Unregistration Uuid="{_ID}"
                                 Station="{Station}"/>
       </Sequence>
     </ReactiveSequence>
@@ -103,13 +103,13 @@
                       Message="State"
                       Station="{Station}"/>
       <Sequence>
-        <Station_Registration CommandUuid="{_ID}"
+        <Station_Registration Uuid="{_ID}"
                               Station="{Station}"/>
         <MoveShuttle TargetPosition="{Station}"/>
-        <Station_Execution CommandUuid="{_ID}"
+        <Station_Execution Uuid="{_ID}"
                            Command="Capture"
                            Station="{Station}"/>
-        <Station_Unregistration CommandUuid="{_ID}"
+        <Station_Unregistration Uuid="{_ID}"
                                 Station="{Station}"/>
       </Sequence>
     </ReactiveSequence>
@@ -123,13 +123,13 @@
                       Message="State"
                       Station="{Station}"/>
       <Sequence>
-        <Station_Registration CommandUuid="{_ID}"
+        <Station_Registration Uuid="{_ID}"
                               Station="{Station}"/>
         <MoveShuttle TargetPosition="{Station}"/>
-        <Station_Execution CommandUuid="{_ID}"
+        <Station_Execution Uuid="{_ID}"
                            Command="Stopper"
                            Station="{Station}"/>
-        <Station_Unregistration CommandUuid="{_ID}"
+        <Station_Unregistration Uuid="{_ID}"
                                 Station="{Station}"/>
       </Sequence>
     </ReactiveSequence>
@@ -184,7 +184,7 @@
       <input_port name="XbotTopic"/>
     </SubTree>
     <Action ID="Station_Execution">
-      <input_port name="CommandUuid"
+      <input_port name="Uuid"
                   default="{_ID}"
                   type="std::string">UUID for the command to execute</input_port>
       <input_port name="Command"
@@ -195,7 +195,7 @@
                   type="std::string">The station to register with</input_port>
     </Action>
     <Action ID="Station_Registration">
-      <output_port name="CommandUuid"
+      <output_port name="Uuid"
                    default="{_ID}"
                    type="std::string">UUID for the command to execute</output_port>
       <input_port name="Station"
@@ -203,7 +203,7 @@
                   type="std::string">The station to register with</input_port>
     </Action>
     <Action ID="Station_Unregistration">
-      <input_port name="CommandUuid"
+      <input_port name="Uuid"
                   default="{_ID}"
                   type="std::string">UUID for the command to execute</input_port>
       <input_port name="Station"

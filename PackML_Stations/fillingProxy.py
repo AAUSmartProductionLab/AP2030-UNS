@@ -95,7 +95,7 @@ def refill_callback(topic, client, message, properties):
         duration = 2.0
         weight=2.0
         start_weight_raw = message.get("StartWeight")
-        command_uuid = message.get("CommandUuid")
+        uuid = message.get("Uuid")
         start_weight = float(start_weight_raw)
         if start_weight > weight:
             raise ValueError("Start weight cannot be greater than target weight")
@@ -106,7 +106,7 @@ def refill_callback(topic, client, message, properties):
         response = {
             "State": "FAILURE",
             "TimeStamp": timestamp,
-            "CommandUuid": command_uuid
+            "Uuid": uuid
         }
         refill.publish(response, fillProxy, False)
 

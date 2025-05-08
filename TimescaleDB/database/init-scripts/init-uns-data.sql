@@ -48,7 +48,7 @@ BEGIN
                 station_id INTEGER,
                 state VARCHAR(50),
                 timestamp_utc TIMESTAMP NOT NULL,
-                command_uuid UUID
+                uuid UUID
             )', table_name);
             
         -- Create index for each table
@@ -65,7 +65,7 @@ CREATE OR REPLACE FUNCTION insert_xbot_state(
     station_id INTEGER,
     state TEXT,
     timestamp_value TIMESTAMP,
-    command_uuid UUID
+    uuid UUID
 ) RETURNS VOID AS $$
 DECLARE
     xbot_id TEXT;
@@ -83,9 +83,9 @@ BEGIN
             station_id,
             state,
             timestamp_utc,
-            command_uuid
+            uuid
         ) VALUES ($1, $2, $3, $4)',
         table_name)
-    USING station_id, state, timestamp_value, command_uuid;
+    USING station_id, state, timestamp_value, uuid;
 END;
 $$ LANGUAGE plpgsql;

@@ -47,7 +47,7 @@ class PackMLStateMachine:
         # Mqtt stuff
         self.client = client
         self.properties = properties
-        self.CommandUuid = None
+        self.Uuid = None
         self.failureChance = 0.00
 
         self.start_topic = start_topic
@@ -55,7 +55,7 @@ class PackMLStateMachine:
 
         # ProcessQueue
         self.is_processing = False
-        self.command_uuids = []  # Track all queued command UUIDs
+        self.uuids = []  # Track all queued command UUIDs
 
         timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
         response = {
@@ -69,27 +69,27 @@ class PackMLStateMachine:
 
     def start_command(self,message):
         """Register a command without immediate processing"""
-        command_uuid = message.get("CommandUuid")
+        uuid = message.get("Uuid")
         
-        if command_uuid not in self.command_uuids:
-            self.command_uuids.append(command_uuid)
+        if uuid not in self.uuids:
+            self.uuids.append(uuid)
         timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
         response = {
             "State": "RUNNING",
             "TimeStamp": timestamp,
-            "CommandUuid": command_uuid
+            "Uuid": uuid
         }
         self.start_topic.publish(response, self.client,  False)
         self.transition_to(PackMLState.IDLE)
 
     def execute_command(self, message, execute_topic, process_function, *args):
-        command_uuid = message.get("CommandUuid")
-        if len(self.command_uuids)>0 and command_uuid == self.command_uuids[0] and self.state == PackMLState.EXECUTE and not self.is_processing:
+        uuid = message.get("Uuid")
+        if len(self.uuids)>0 and uuid == self.uuids[0] and self.state == PackMLState.EXECUTE and not self.is_processing:
             timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
             response = {
                 "State": "RUNNING",
                 "TimeStamp": timestamp,
-                "CommandUuid": command_uuid
+                "Uuid": uuid
             }
             execute_topic.publish(response, self.client,  False)
             self.is_processing=True
@@ -99,7 +99,7 @@ class PackMLStateMachine:
             response = {
                 "State": "SUCCESSFUL",
                 "TimeStamp": timestamp,
-                "CommandUuid": command_uuid
+                "Uuid": uuid
             }
             execute_topic.publish(response, self.client,  False)
         else:
@@ -108,49 +108,49 @@ class PackMLStateMachine:
             response = {
                 "State": "FAILURE",
                 "TimeStamp": timestamp,
-                "CommandUuid": command_uuid
+                "Uuid": uuid
             }
             execute_topic.publish(response, self.client, False)
 
     def complete_command(self, message):
         """Unregister a command by removing it from the queue if not being processed"""
-        command_uuid = message.get("CommandUuid")
+        uuid = message.get("Uuid")
         response={}
         # Check if the command exists and is not currently being processed
-        if command_uuid in self.command_uuids and ((command_uuid == self.command_uuids[0] and self.is_processing==False) or command_uuid != self.command_uuids[0]):
-            self.transition_to(PackMLState.COMPLETING, command_uuid)
+        if uuid in self.uuids and ((uuid == self.uuids[0] and self.is_processing==False) or uuid != self.uuids[0]):
+            self.transition_to(PackMLState.COMPLETING, uuid)
         else:
             timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
             response = {
                 "State": "FAILURE",
                 "TimeStamp": timestamp,
-                "CommandUuid": command_uuid
+                "Uuid": uuid
             }
             self.complete_topic.publish(response, self.client, False)
 
     def idle_state(self):
-        if self.command_uuids and len(self.command_uuids) > 0:
+        if self.uuids and len(self.uuids) > 0:
             self.transition_to(PackMLState.STARTING)
 
     def starting_state(self):
-        self.CommandUuid = self.command_uuids[0]
+        self.Uuid = self.uuids[0]
         response={}
         timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
         response = {
             "State": "SUCCESSFUL",
             "TimeStamp": timestamp,
-            "CommandUuid": self.CommandUuid 
+            "Uuid": self.Uuid 
         }
         self.start_topic.publish(response, self.client, False)
         self.transition_to(PackMLState.EXECUTE)
 
-    def completing_state(self, command_uuid):
-        self.command_uuids.remove(command_uuid)
+    def completing_state(self, uuid):
+        self.uuids.remove(uuid)
         timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
         response = {
             "State": "SUCCESSFUL",
             "TimeStamp": timestamp,
-            "CommandUuid": command_uuid
+            "Uuid": uuid
         }
         self.complete_topic.publish(response, self.client, False)
         self.transition_to(PackMLState.COMPLETE)
@@ -159,14 +159,14 @@ class PackMLStateMachine:
         self.transition_to(PackMLState.RESETTING)
 
     def resetting_state(self):
-        self.CommandUuid = None
+        self.Uuid = None
         self.transition_to(PackMLState.IDLE)
 
-    def transition_to(self, new_state, command_uuid=None):  
+    def transition_to(self, new_state, uuid=None):  
         """Transition to a new state and publish it"""
         self.state = new_state
         # report the state change
-        queued_uuids = self.command_uuids.copy()
+        queued_uuids = self.uuids.copy()
         response = {
             "State": new_state.value,
             "TimeStamp": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z'),
@@ -179,7 +179,7 @@ class PackMLStateMachine:
         elif new_state == PackMLState.STARTING:
             self.starting_state()
         elif new_state == PackMLState.COMPLETING:
-            self.completing_state(command_uuid)
+            self.completing_state(uuid)
         elif new_state == PackMLState.COMPLETE:
             self.complete_state()
         elif new_state == PackMLState.RESETTING:
