@@ -27,7 +27,6 @@ public:
 
     // Override the virtual callback method from base class
     virtual void callback(const json &msg, mqtt::properties props) override;
-    bool isInterestedIn(const json &msg) override;
 
     // BT::StatefulActionNode interface implementation
     BT::NodeStatus onStart() override;

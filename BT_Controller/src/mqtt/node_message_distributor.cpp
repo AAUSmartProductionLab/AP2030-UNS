@@ -147,9 +147,7 @@ void NodeMessageDistributor::route_to_nodes(
     {
         if (node)
         {
-            // Check if the bt node is interested in exactly this topic ignoring wild cards
-            // and if the node is interested in the message
-            if (topicMatches(node->response_topic_.getTopic(), topic) && node->isInterestedIn(msg))
+            if (topicMatches(node->response_topic_.getTopic(), topic))
             {
                 node->processMessage(msg, props);
             }

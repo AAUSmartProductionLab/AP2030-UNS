@@ -23,12 +23,6 @@ void MqttSubBase::processMessage(const json &msg, mqtt::properties props)
     }
 }
 
-bool MqttSubBase::isInterestedIn(const json &msg)
-{
-    std::cout << "Base isInterestedIn called - this should be overridden!" << std::endl;
-    return false;
-}
-
 void MqttSubBase::setNodeMessageDistributor(NodeMessageDistributor *manager)
 {
     node_message_distributor_ = manager;

@@ -39,23 +39,6 @@ std::string GenericConditionNode::getFormattedTopic(const std::string &pattern, 
     }
     return pattern;
 }
-bool GenericConditionNode::isInterestedIn(const json &msg)
-{
-    // Either call the parent implementation:
-    auto field_name_res = getInput<std::string>("Field");
-
-    // First check if we have a valid field_name
-    if (!field_name_res)
-    {
-        std::cout << "GenericConditionNode: No Field input available" << std::endl;
-        return false;
-    }
-    if (msg.contains(field_name_res.value()))
-    {
-        return true;
-    }
-    return false;
-}
 
 BT::NodeStatus GenericConditionNode::tick()
 { // Use a unique_lock since we need to wait on a condition variable
@@ -85,9 +68,17 @@ BT::NodeStatus GenericConditionNode::tick()
 
 void GenericConditionNode::callback(const json &msg, mqtt::properties props)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
-    latest_msg_ = msg;
-    cv_message_received_.notify_all();
+    BT::Expected<std::string> field_name_res = getInput<std::string>("Field");
+    if (field_name_res && msg.contains(field_name_res.value()))
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        latest_msg_ = msg;
+        cv_message_received_.notify_all();
+    }
+    else
+    {
+        std::cout << "GenericConditionNode: No valid field name or message does not contain the field." << std::endl;
+    }
 }
 
 bool GenericConditionNode::compare(const json &msg, const std::string &field_name, const std::string &comparison_type,

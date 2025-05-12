@@ -68,17 +68,7 @@ public:
         }
         return pattern;
     }
-    bool isInterestedIn(const json &msg) override
-    {
-        {
-            std::lock_guard<std::mutex> lock(mutex_);
-            if (response_topic_.validateMessage(msg) && status() == BT::NodeStatus::RUNNING)
-            {
-                return true;
-            }
-            return false;
-        }
-    }
+
     void onHalted() override
     {
         json message;
@@ -90,7 +80,6 @@ public:
         // Use mutex to protect shared state
         {
             std::lock_guard<std::mutex> lock(mutex_);
-            std::cout << "Received message: " << msg.dump() << std::endl;
             // Update state based on message content
             if (status() == BT::NodeStatus::RUNNING)
             {

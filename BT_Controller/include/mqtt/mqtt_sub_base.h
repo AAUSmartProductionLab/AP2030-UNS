@@ -39,8 +39,6 @@ public:
 
     void processMessage(const json &msg, mqtt::properties props);
 
-    virtual bool isInterestedIn(const json &msg);
-
     virtual void callback(const json &msg, mqtt::properties props) = 0;
 
     static void setNodeMessageDistributor(NodeMessageDistributor *manager);

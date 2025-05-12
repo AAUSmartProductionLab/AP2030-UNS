@@ -66,7 +66,7 @@ void MqttActionNode::callback(const json &msg, mqtt::properties props)
     {
         std::lock_guard<std::mutex> lock(mutex_);
         // Update state based on message content
-        if (status() == BT::NodeStatus::RUNNING)
+        if (status() == BT::NodeStatus::RUNNING && msg.contains("Uuid") && msg["Uuid"] == current_uuid_)
         {
             if (msg["State"] == "ABORTED" || msg["State"] == "STOPPED")
             {
@@ -89,20 +89,8 @@ void MqttActionNode::callback(const json &msg, mqtt::properties props)
         }
         else
         {
-            std::cout << "Message doesn't contain 'state' field" << std::endl;
+            std::cout << "Not interested in message" << std::endl;
         }
         emitWakeUpSignal();
-    }
-}
-
-bool MqttActionNode::isInterestedIn(const json &msg)
-{
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        if (response_topic_.validateMessage(msg) && status() == BT::NodeStatus::RUNNING && msg.contains("Uuid") && msg["Uuid"] == current_uuid_)
-        {
-            return true;
-        }
-        return false;
     }
 }

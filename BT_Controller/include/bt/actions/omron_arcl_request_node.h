@@ -22,8 +22,5 @@ public:
 
     json createMessage() override;
 
-    // Override isInterestedIn to filter messages
-    bool isInterestedIn(const json &msg) override;
-
     void callback(const json &msg, mqtt::properties props) override;
 };

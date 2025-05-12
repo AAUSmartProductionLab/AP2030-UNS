@@ -59,15 +59,3 @@ void MqttAsyncSubNode::callback(const json &msg, mqtt::properties props)
         }
     }
 }
-
-bool MqttAsyncSubNode::isInterestedIn(const json &msg)
-{
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        if (response_topic_.validateMessage(msg) && status() == BT::NodeStatus::RUNNING)
-        {
-            return true;
-        }
-        return false;
-    }
-}

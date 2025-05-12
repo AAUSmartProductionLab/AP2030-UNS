@@ -21,7 +21,6 @@ public:
     static BT::PortsList providedPorts();
 
     BT::NodeStatus tick() override;
-    bool isInterestedIn(const json &msg) override;
     void callback(const json &msg, mqtt::properties props) override;
     bool compare(const json &msg, const std::string &field_name, const std::string &comparison_type,
                  const std::string &expected_value);

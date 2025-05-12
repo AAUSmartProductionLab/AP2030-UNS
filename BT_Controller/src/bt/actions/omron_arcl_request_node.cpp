@@ -34,22 +34,15 @@ json OmronArclRequest::createMessage()
     return message;
 }
 
-bool OmronArclRequest::isInterestedIn(const json &msg)
-{
-    if (status() == BT::NodeStatus::RUNNING && msg.contains("id") && msg["id"].get<std::string>() == current_uuid_)
-    {
-
-        return true;
-    }
-    return false;
-}
-
 void OmronArclRequest::callback(const json &msg, mqtt::properties props)
 {
     {
         // Todo implment state management
         std::lock_guard<std::mutex> lock(mutex_);
-        setStatus(BT::NodeStatus::SUCCESS);
+        if (status() == BT::NodeStatus::RUNNING && msg.contains("id") && msg["id"].get<std::string>() == current_uuid_)
+        {
+            setStatus(BT::NodeStatus::SUCCESS);
+        }
         emitWakeUpSignal();
     }
 }
