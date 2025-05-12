@@ -106,4 +106,33 @@ namespace mqtt_utils
             return nullptr;
         }
     }
+
+    bool topicMatches(const std::string &pattern, const std::string &topic)
+    {
+        std::istringstream patternStream(pattern);
+        std::istringstream topicStream(topic);
+        std::string patternSegment, topicSegment;
+
+        while (std::getline(patternStream, patternSegment, '/') &&
+               std::getline(topicStream, topicSegment, '/'))
+        {
+            if (patternSegment == "+" || topicSegment == "+")
+            {
+                continue;
+            }
+            else if (patternSegment == "#" || topicSegment == "#")
+            {
+                return true;
+            }
+            else if (patternSegment != topicSegment)
+            {
+                return false;
+            }
+        }
+
+        bool patternDone = !std::getline(patternStream, patternSegment, '/');
+        bool topicDone = !std::getline(topicStream, topicSegment, '/');
+
+        return patternDone && topicDone;
+    }
 } // namespace mqtt_utils

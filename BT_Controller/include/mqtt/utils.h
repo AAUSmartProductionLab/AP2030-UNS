@@ -14,6 +14,7 @@ namespace mqtt_utils
     std::string formatWildcardTopic(const std::string &topic, const std::string &id);
     std::string formatWildcardTopic(const std::string &topic_pattern, const std::vector<std::string> &replacements);
     std::unique_ptr<nlohmann::json_schema::json_validator> createSchemaValidator(const std::string &schema_path);
+    bool topicMatches(const std::string &pattern, const std::string &topic);
     class Topic
     {
     public:
@@ -64,11 +65,11 @@ namespace mqtt_utils
         void setRetain(bool retain) { retain_ = retain; }
 
         // Update topic using wildcards
-        void applyPattern(const std::string &id)
+        void applyPattern(const std::string &replacement)
         {
             if (!pattern_.empty())
             {
-                topic_ = formatWildcardTopic(pattern_, id);
+                topic_ = formatWildcardTopic(pattern_, replacement);
             }
         }
 
@@ -96,7 +97,7 @@ namespace mqtt_utils
                     return false;
                 }
             }
-            return true; // If no validator, assume valid
+            return false; // If no validator, assume valid
         }
 
     private:

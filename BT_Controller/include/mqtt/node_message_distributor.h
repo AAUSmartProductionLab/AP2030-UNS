@@ -27,7 +27,7 @@ public:
     ~NodeMessageDistributor();
 
     // Message handling
-    void handle_message(const std::string &msg_topic, const json &payload, mqtt::properties props);
+    void handle_incoming_message(const std::string &msg_topic, const json &payload, mqtt::properties props);
     void route_to_nodes(const std::type_index &type_index, const std::string &topic, const json &msg, mqtt::properties props);
 
     // Node registration methods
@@ -64,9 +64,7 @@ private:
     };
     MqttClient &mqtt_client_;
     std::vector<TopicHandler> topic_handlers_;
-
     std::map<std::type_index, NodeTypeSubscription> node_subscriptions_;
 
-    // Helper method to check if a topic matches a pattern (including MQTT wildcards)
     bool topicMatches(const std::string &pattern, const std::string &topic);
 };

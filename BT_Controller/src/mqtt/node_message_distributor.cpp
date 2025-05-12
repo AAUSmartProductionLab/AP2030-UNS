@@ -1,15 +1,12 @@
 #include "mqtt/node_message_distributor.h"
 #include "mqtt/mqtt_client.h"
+#include "mqtt/utils.h"
 #include <iostream>
-#include <fstream>
-#include <unordered_set>
-#include <sstream>
-
 NodeMessageDistributor::NodeMessageDistributor(MqttClient &mqtt_client) : mqtt_client_(mqtt_client)
 {
     // Set this manager as the message handler for the mqtt_client
     mqtt_client.set_message_handler([this](const std::string &msg_topic, const json &payload, mqtt::properties props)
-                                    { handle_message(msg_topic, payload, props); });
+                                    { handle_incoming_message(msg_topic, payload, props); });
 }
 
 NodeMessageDistributor::~NodeMessageDistributor()
@@ -81,44 +78,15 @@ void NodeMessageDistributor::subscribeToActiveNodes(const BT::Tree &tree)
     std::cout << "Subscribed to " << topicSubscribers.size() << " topics for active nodes." << std::endl;
 }
 
-bool NodeMessageDistributor::topicMatches(const std::string &pattern, const std::string &topic)
-{
-    std::istringstream patternStream(pattern);
-    std::istringstream topicStream(topic);
-    std::string patternSegment, topicSegment;
-
-    while (std::getline(patternStream, patternSegment, '/') &&
-           std::getline(topicStream, topicSegment, '/'))
-    {
-        if (patternSegment == "+" || topicSegment == "+")
-        {
-            continue;
-        }
-        else if (patternSegment == "#" || topicSegment == "#")
-        {
-            return true;
-        }
-        else if (patternSegment != topicSegment)
-        {
-            return false;
-        }
-    }
-
-    bool patternDone = !std::getline(patternStream, patternSegment, '/');
-    bool topicDone = !std::getline(topicStream, topicSegment, '/');
-
-    return patternDone && topicDone;
-}
-
-void NodeMessageDistributor::handle_message(const std::string &msg_topic,
-                                            const json &payload,
-                                            mqtt::properties props)
+void NodeMessageDistributor::handle_incoming_message(const std::string &msg_topic,
+                                                     const json &payload,
+                                                     mqtt::properties props)
 {
     bool handled = false;
     for (const auto &handler : topic_handlers_)
     {
         // Check if the incoming topic fits to any registered handlers considering wild cards
-        if (topicMatches(handler.topic, msg_topic))
+        if (mqtt_utils::topicMatches(handler.topic, msg_topic))
         {
             handler.callback(msg_topic, payload, props);
             handled = true;
@@ -147,7 +115,7 @@ void NodeMessageDistributor::route_to_nodes(
     {
         if (node)
         {
-            if (topicMatches(node->response_topic_.getTopic(), topic))
+            if (mqtt_utils::topicMatches(node->response_topic_.getTopic(), topic))
             {
                 node->processMessage(msg, props);
             }

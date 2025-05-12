@@ -44,7 +44,6 @@ public:
     }
     json createMessage() override
     {
-        std::cout << "Creating message in StationUnRegisterNode" << std::endl;
         json message;
 
         BT::Expected<std::string> uuid = getInput<std::string>("Uuid");

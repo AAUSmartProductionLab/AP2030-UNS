@@ -87,10 +87,6 @@ void MqttActionNode::callback(const json &msg, mqtt::properties props)
                 // No need to set RUNNING again if already running
             }
         }
-        else
-        {
-            std::cout << "Not interested in message" << std::endl;
-        }
         emitWakeUpSignal();
     }
 }
