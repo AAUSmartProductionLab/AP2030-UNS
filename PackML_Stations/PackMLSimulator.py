@@ -117,7 +117,7 @@ class PackMLStateMachine:
         uuid = message.get("Uuid")
         response={}
         # Check if the command exists and is not currently being processed
-        if uuid in self.uuids and ((uuid == self.uuids[0] and self.is_processing==False) or uuid != self.uuids[0]):
+        if uuid in self.uuids and ((uuid == self.uuids[0] and self.is_processing==False) or uuid != self.uuids[0] or (uuid == "#" and self.is_processing==False)):
             self.transition_to(PackMLState.COMPLETING, uuid)
         else:
             timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
@@ -145,7 +145,10 @@ class PackMLStateMachine:
         self.transition_to(PackMLState.EXECUTE)
 
     def completing_state(self, uuid):
-        self.uuids.remove(uuid)
+        if uuid=="#":
+            self.uuids.clear()
+        else:
+            self.uuids.remove(uuid)
         timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
         response = {
             "State": "SUCCESSFUL",
