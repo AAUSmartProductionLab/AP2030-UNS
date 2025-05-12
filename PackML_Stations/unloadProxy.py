@@ -30,7 +30,7 @@ def complete_callback(topic, client, message, properties):
 def unload_callback(topic, client, message, properties):
     """Callback handler for stopper commands"""
     try:
-        state_machine.execute_command(message, stopper, unload_process)
+        state_machine.execute_command(message, unload, unload_process)
     except Exception as e:
         print(f"Error in dispense_callback: {e}")
 
