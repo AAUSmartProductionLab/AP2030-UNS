@@ -20,6 +20,7 @@ services:
     container_name: filling_station
     volumes:
       - ../schemas:/app/schemas
+      - .:/app  # Mount entire directory
     command: fillingProxy.py
 
   stoppering_station:
@@ -29,6 +30,7 @@ services:
     container_name: stoppering_station
     volumes:
       - ../schemas:/app/schemas
+      - .:/app  # Mount entire directory
     command: stopperingProxy.py
 
   load_station:
@@ -38,6 +40,7 @@ services:
     container_name: load_station
     volumes:
       - ../schemas:/app/schemas
+      - .:/app  # Mount entire directory
     command: loadProxy.py
 
   unload_station:
@@ -47,6 +50,7 @@ services:
     container_name: unload_station
     volumes:
       - ../schemas:/app/schemas
+      - .:/app
     command: unloadProxy.py
     
   camera_station:
@@ -57,6 +61,7 @@ services:
     restart: always
     volumes:
       - ../schemas:/app/schemas
+      - .:/app  # Mount entire directory
     devices:
       - /dev/video0:/dev/video0
     command: cameraProxy.py
