@@ -30,6 +30,24 @@ services:
     volumes:
       - ../schemas:/app/schemas
     command: stopperingProxy.py
+
+  load_station:
+    build:
+      context: .
+      dockerfile: ./dockerfile
+    container_name: load_station
+    volumes:
+      - ../schemas:/app/schemas
+    command: loadProxy.py
+
+  unload_station:
+    build:
+      context: .
+      dockerfile: ./dockerfile
+    container_name: unload_station
+    volumes:
+      - ../schemas:/app/schemas
+    command: unloadProxy.py
     
   camera_station:
     build:
