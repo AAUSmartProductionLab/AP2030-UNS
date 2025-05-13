@@ -71,7 +71,7 @@ loadProxy = Proxy(
     [load, start, complete]
 )
 
-state_machine = PackMLStateMachine(state, start, complete, loadProxy, None)
+state_machine = PackMLStateMachine(state, loadProxy, None)
 
 def main():
     loadProxy.loop_forever()
