@@ -126,6 +126,24 @@ services:
       - hivemq-network
     depends_on:
       - hivemq-broker
+
+  load_station:
+    extends:
+      file: ./PackML_Stations/stations-compose.yml
+      service: load_station
+    networks:
+      - hivemq-network
+    depends_on:
+      - hivemq-broker
+
+  unload_station:
+    extends:
+      file: ./PackML_Stations/stations-compose.yml
+      service: unload_station
+    networks:
+      - hivemq-network
+    depends_on:
+      - hivemq-broker
       
 networks:
   hivemq-network:
