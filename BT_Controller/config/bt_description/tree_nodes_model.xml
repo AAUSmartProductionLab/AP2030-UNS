@@ -38,5 +38,9 @@
             <input_port name="Uuid" type="std::string" default="{ID}">UUID for the command to execute</input_port>
             <input_port name="Station" type="std::string" default="{Station}">The station to register with</input_port>
         </Action>
+        <Decorator ID="UseStation">
+            <input_port name="Uuid" type="std::string" default="{ID}">UUID Used for registration</input_port>
+            <input_port name="Station" type="std::string" default="{Station}">The station to register with</input_port>
+        </Decorator>
     </TreeNodesModel>
 </root>

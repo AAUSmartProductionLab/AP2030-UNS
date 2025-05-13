@@ -69,7 +69,7 @@ public:
     {
         json message;
         message["Uuid"] = current_uuid_;
-        publish(message, halt_topic_);
+        publishHalt(message);
     }
     void callback(const json &msg, mqtt::properties props) override
     {

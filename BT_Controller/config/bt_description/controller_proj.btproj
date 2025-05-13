@@ -56,6 +56,10 @@
         <SubTree ID="Unload" editable="true">
             <input_port name="Station" default="Unload"/>
         </SubTree>
+        <Decorator ID="UseStation">
+            <input_port name="Uuid" default="{ID}" type="std::string">UUID Used for registration</input_port>
+            <input_port name="Station" default="{Station}" type="std::string">The station to register with</input_port>
+        </Decorator>
         <SubTree ID="Xbot_Production" editable="true">
             <input_port name="XbotTopic" default="Planar/Xbot1"/>
             <output_port name="ProductID"/>

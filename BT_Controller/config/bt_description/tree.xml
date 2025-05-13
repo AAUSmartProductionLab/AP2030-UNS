@@ -7,46 +7,45 @@
                       Field="State"
                       Message="State"
                       Station="{Station}"/>
-      <Sequence>
-        <Station_Start Uuid="{ProductID}"
-                       Station="{Station}"/>
-        <MoveShuttle Uuid="{ProductID}"
-                     TargetPosition="{Station}"/>
-        <Station_Execution Uuid="{ProductID}"
-                           Command="Tare"
-                           Station="{Station}"/>
-        <BC_Fallback>
-          <Data_Condition expected_value="1.9;2.2"
-                          comparison_type="inside"
-                          Field="Weight"
-                          Message="Weight"
-                          Station="{Station}"/>
-          <Sequence>
-            <Data_Condition expected_value="0"
-                            comparison_type="equal"
+      <UseStation Uuid="{ProductID}"
+                  Station="{Station}">
+        <Sequence>
+          <MoveShuttle Uuid="{ProductID}"
+                       TargetPosition="{Station}"/>
+          <Station_Execution Uuid="{ProductID}"
+                             Command="Tare"
+                             Station="{Station}"/>
+          <BC_Fallback>
+            <Data_Condition expected_value="1.9;2.2"
+                            comparison_type="inside"
                             Field="Weight"
                             Message="Weight"
                             Station="{Station}"/>
-            <Station_Execution Uuid="{ProductID}"
-                               Command="Dispense"
-                               Station="{Station}"/>
-          </Sequence>
-          <Sequence>
-            <Data_Condition expected_value="0"
-                            comparison_type="greater"
-                            Field="Weight"
-                            Message="Weight"
-                            Station="{Station}"/>
-            <RetryUntilSuccessful num_attempts="2">
+            <Sequence>
+              <Data_Condition expected_value="0"
+                              comparison_type="equal"
+                              Field="Weight"
+                              Message="Weight"
+                              Station="{Station}"/>
               <Station_Execution Uuid="{ProductID}"
-                                 Command="Refill"
+                                 Command="Dispense"
                                  Station="{Station}"/>
-            </RetryUntilSuccessful>
-          </Sequence>
-        </BC_Fallback>
-        <Station_Complete Uuid="{ProductID}"
-                          Station="{Station}"/>
-      </Sequence>
+            </Sequence>
+            <Sequence>
+              <Data_Condition expected_value="0"
+                              comparison_type="greater"
+                              Field="Weight"
+                              Message="Weight"
+                              Station="{Station}"/>
+              <RetryUntilSuccessful num_attempts="2">
+                <Station_Execution Uuid="{ProductID}"
+                                   Command="Refill"
+                                   Station="{Station}"/>
+              </RetryUntilSuccessful>
+            </Sequence>
+          </BC_Fallback>
+        </Sequence>
+      </UseStation>
     </ReactiveSequence>
   </BehaviorTree>
 
@@ -57,17 +56,16 @@
                       Field="State"
                       Message="State"
                       Station="{Station}"/>
-      <Sequence>
-        <Station_Start Uuid="{ProductID}"
-                       Station="{Station}"/>
-        <MoveShuttle Uuid="{ProductID}"
-                     TargetPosition="{Station}"/>
-        <Station_Execution Uuid="{ProductID}"
-                           Command="Load"
-                           Station="{Station}"/>
-        <Station_Complete Uuid="{ProductID}"
-                          Station="{Station}"/>
-      </Sequence>
+      <UseStation Uuid="{ProductID}"
+                  Station="{Station}">
+        <Sequence>
+          <MoveShuttle Uuid="{ProductID}"
+                       TargetPosition="{Station}"/>
+          <Station_Execution Uuid="{ProductID}"
+                             Command="Load"
+                             Station="{Station}"/>
+        </Sequence>
+      </UseStation>
     </ReactiveSequence>
   </BehaviorTree>
 
@@ -96,17 +94,16 @@
                       Field="State"
                       Message="State"
                       Station="{Station}"/>
-      <Sequence>
-        <Station_Start Uuid="{ProductID}"
-                       Station="{Station}"/>
-        <MoveShuttle Uuid="{ProductID}"
-                     TargetPosition="{Station}"/>
-        <Station_Execution Uuid="{ProductID}"
-                           Command="Capture"
-                           Station="{Station}"/>
-        <Station_Complete Uuid="{ProductID}"
-                          Station="{Station}"/>
-      </Sequence>
+      <UseStation Uuid="{ProductID}"
+                  Station="{Station}">
+        <Sequence>
+          <MoveShuttle Uuid="{ProductID}"
+                       TargetPosition="{Station}"/>
+          <Station_Execution Uuid="{ProductID}"
+                             Command="Capture"
+                             Station="{Station}"/>
+        </Sequence>
+      </UseStation>
     </ReactiveSequence>
   </BehaviorTree>
 
@@ -117,17 +114,16 @@
                       Field="State"
                       Message="State"
                       Station="{Station}"/>
-      <Sequence>
-        <Station_Start Uuid="{ProductID}"
-                       Station="{Station}"/>
-        <MoveShuttle Uuid="{ProductID}"
-                     TargetPosition="{Station}"/>
-        <Station_Execution Uuid="{ProductID}"
-                           Command="Stopper"
-                           Station="{Station}"/>
-        <Station_Complete Uuid="{ProductID}"
-                          Station="{Station}"/>
-      </Sequence>
+      <UseStation Uuid="{ProductID}"
+                  Station="{Station}">
+        <Sequence>
+          <MoveShuttle Uuid="{ProductID}"
+                       TargetPosition="{Station}"/>
+          <Station_Execution Uuid="{ProductID}"
+                             Command="Stopper"
+                             Station="{Station}"/>
+        </Sequence>
+      </UseStation>
     </ReactiveSequence>
   </BehaviorTree>
 
@@ -138,17 +134,16 @@
                       Field="State"
                       Message="State"
                       Station="{Station}"/>
-      <Sequence>
-        <Station_Start Uuid="{ProductID}"
-                       Station="{Station}"/>
-        <MoveShuttle Uuid="{ProductID}"
-                     TargetPosition="{Station}"/>
-        <Station_Execution Uuid="{ProductID}"
-                           Command="Unload"
-                           Station="{Station}"/>
-        <Station_Complete Uuid="{ProductID}"
-                          Station="{Station}"/>
-      </Sequence>
+      <UseStation Uuid="{ProductID}"
+                  Station="{Station}">
+        <Sequence>
+          <MoveShuttle Uuid="{ProductID}"
+                       TargetPosition="{Station}"/>
+          <Station_Execution Uuid="{ProductID}"
+                             Command="Unload"
+                             Station="{Station}"/>
+        </Sequence>
+      </UseStation>
     </ReactiveSequence>
   </BehaviorTree>
 
@@ -217,6 +212,7 @@
     </SubTree>
     <Decorator ID="GetProductFromQueue">
       <output_port name="ProductID"
+                   default="{ProductID}"
                    type="std::string">The product ID of the current product</output_port>
       <input_port name="if_empty"
                   default="SUCCESS"
@@ -238,29 +234,13 @@
                   default="{Station}"
                   type="std::string">The name of the station to move to</input_port>
     </Action>
-    <Action ID="Station_Complete">
-      <input_port name="Uuid"
-                  default="{ID}"
-                  type="std::string">UUID for the command to execute</input_port>
-      <input_port name="Station"
-                  default="{Station}"
-                  type="std::string">The station to unregister from</input_port>
-    </Action>
     <Action ID="Station_Execution">
       <input_port name="Uuid"
-                  default="{_ID}"
+                  default="{ID}"
                   type="std::string">UUID for the command to execute</input_port>
       <input_port name="Command"
                   default="Command"
                   type="std::string">The command to execute on the station</input_port>
-      <input_port name="Station"
-                  default="{Station}"
-                  type="std::string">The station to register with</input_port>
-    </Action>
-    <Action ID="Station_Start">
-      <input_port name="Uuid"
-                  default="{ID}"
-                  type="std::string">UUID for the command to execute</input_port>
       <input_port name="Station"
                   default="{Station}"
                   type="std::string">The station to register with</input_port>
@@ -275,6 +255,14 @@
       <input_port name="Station"
                   default="Unload"/>
     </SubTree>
+    <Decorator ID="UseStation">
+      <input_port name="Uuid"
+                  default="{ID}"
+                  type="std::string">UUID Used for registration</input_port>
+      <input_port name="Station"
+                  default="{Station}"
+                  type="std::string">The station to register with</input_port>
+    </Decorator>
     <SubTree ID="Xbot_Production"
              editable="true">
       <input_port name="XbotTopic"

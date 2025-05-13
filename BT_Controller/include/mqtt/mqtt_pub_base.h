@@ -32,13 +32,13 @@ protected:
 
 public:
     MqttPubBase(MqttClient &mqtt_client,
-                const mqtt_utils::Topic &resquest_topic);
+                const mqtt_utils::Topic &request_topic);
     MqttPubBase(MqttClient &mqtt_client,
-                const mqtt_utils::Topic &resquest_topic,
+                const mqtt_utils::Topic &request_topic,
                 const mqtt_utils::Topic &halt_topic);
     virtual ~MqttPubBase() = default;
     void publish(const json &msg);
-    void publish(const json &msg, const mqtt_utils::Topic &topic);
+    void publishHalt(const json &msg);
 
     mqtt_utils::Topic request_topic_;
     mqtt_utils::Topic halt_topic_;
