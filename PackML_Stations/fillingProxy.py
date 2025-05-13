@@ -173,7 +173,7 @@ fillProxy = Proxy(
     "FillingProxy", 
     [dispense, start, complete, weigh_publisher, tare, refill]
 )
-state_machine = PackMLStateMachine(state, start, complete, fillProxy, None)
+state_machine = PackMLStateMachine(state, fillProxy, None)
 
 
 def main():

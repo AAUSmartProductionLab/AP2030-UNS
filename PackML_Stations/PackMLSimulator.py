@@ -59,7 +59,20 @@ class PackMLStateMachine:
         
         if uuid not in self.uuids:
             self.uuids.append(uuid)
-        self.publish_state()
+        self.transition_to(self.state)
+
+    def complete_command(self, message):
+        """Unregister a command by removing it from the queue if not being processed"""
+        uuid = message.get("Uuid")
+        if (uuid == self.uuids[0] and self.is_processing==False) or (uuid == "#" and self.is_processing==False):
+            self.transition_to(PackMLState.COMPLETING, uuid)
+            self.transition_to(PackMLState.RESETTING)
+        elif uuid != self.uuids[0]:
+            self.uuids.remove(uuid)
+            self.transition_to(PackMLState.EXECUTE)
+        else:
+            # Remain in execute if it was not valid
+            self.transition_to(PackMLState.EXECUTE)
 
     def execute_command(self, message, execute_topic, process_function, *args):
         if self.state == PackMLState.EXECUTE:
@@ -90,17 +103,6 @@ class PackMLStateMachine:
                     "Uuid": self.uuids[0]
                 }
                 execute_topic.publish(response, self.client, False)
-
-    def complete_command(self, message):
-        """Unregister a command by removing it from the queue if not being processed"""
-        uuid = message.get("Uuid")
-        # Check if the command exists and is not currently being processed
-        if uuid in self.uuids and ((uuid == self.uuids[0] and self.is_processing==False) or uuid != self.uuids[0]) or (uuid == "#" and self.is_processing==False):
-            self.transition_to(PackMLState.COMPLETING, uuid)
-            self.transition_to(PackMLState.RESETTING)
-        else:
-            # Remain in execute if it was not valid
-            self.transition_to(PackMLState.EXECUTE)
 
     def idle_state(self):
         #Start the next process if there ary any that registered themselves with the start command
