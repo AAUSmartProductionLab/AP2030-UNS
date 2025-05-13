@@ -153,7 +153,7 @@
   </BehaviorTree>
 
   <BehaviorTree ID="Xbot_Production">
-    <GetProductFromQueue ProductID=""
+    <GetProductFromQueue ProductID="{ProductID}"
                          if_empty="SUCCESS"
                          Queue="{ProductIDs}">
       <ReactiveSequence>

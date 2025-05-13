@@ -100,7 +100,7 @@ void registerAllNodes(
         bt_mqtt_client,
         "Station_Start",
         StationRegistrationCMD,
-        StateData,
+        StationState,
         StationUnregistrationCMD);
 
     MqttActionNode::registerNodeType<StationCompleteNode>(
@@ -109,7 +109,7 @@ void registerAllNodes(
         bt_mqtt_client,
         "Station_Complete",
         StationUnregistrationCMD,
-        StateData);
+        StationState);
 
     MqttActionNode::registerNodeType<StationExecuteNode>(
         factory,

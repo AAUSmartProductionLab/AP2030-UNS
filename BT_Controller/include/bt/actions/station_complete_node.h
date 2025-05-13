@@ -57,14 +57,10 @@ public:
 
     std::string getFormattedTopic(const std::string &pattern, const BT::NodeConfig &config)
     {
-        std::vector<std::string> replacements;
         BT::Expected<std::string> station = getInput<std::string>("Station");
-        std::string command = "Complete";
         if (station.has_value())
         {
-            replacements.push_back(station.value());
-            replacements.push_back(command);
-            return mqtt_utils::formatWildcardTopic(pattern, replacements);
+            return mqtt_utils::formatWildcardTopic(pattern, station.value());
         }
         return pattern;
     }
@@ -77,9 +73,16 @@ public:
             // Update state based on message content
             if (status() == BT::NodeStatus::RUNNING)
             {
-                if (msg["Uuid"] == current_uuid_)
+                // such that we can unregister evwen when it is not our turn
+                if (std::find(msg["ProcessQueue"].begin(),
+                              msg["ProcessQueue"].end(),
+                              current_uuid_) != msg["ProcessQueue"].end())
                 {
-
+                    current_uuid_ = "";
+                    setStatus(BT::NodeStatus::SUCCESS);
+                }
+                else if (!msg["ProcessQueue"].empty() && msg["ProcessQueue"][0] == current_uuid_)
+                {
                     if (msg["State"] == "STOPPING")
                     {
                         current_uuid_ = "";
@@ -90,11 +93,8 @@ public:
                         current_uuid_ = "";
                         setStatus(BT::NodeStatus::SUCCESS);
                     }
-                    else if (msg["State"] == "COMPLETING")
-                    {
-                        setStatus(BT::NodeStatus::RUNNING);
-                    }
                 }
+
                 emitWakeUpSignal();
             }
         }

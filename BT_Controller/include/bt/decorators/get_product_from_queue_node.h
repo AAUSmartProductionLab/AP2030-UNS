@@ -118,7 +118,7 @@ public:
             BT::details::PortWithDefault<std::string>(
                 BT::PortDirection::OUTPUT,
                 "ProductID",
-                "",
+                "{ProductID}",
                 "The product ID of the current product")};
     }
 

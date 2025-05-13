@@ -14,7 +14,7 @@
             <input_port name="Station" type="std::string" default="{Station}">The station from which to receive a message</input_port>
         </Condition>
         <Decorator ID="GetProductFromQueue">
-            <output_port name="ProductID" type="std::string" default="">The product ID of the current product</output_port>
+            <output_port name="ProductID" type="std::string" default="{ProductID}">The product ID of the current product</output_port>
             <input_port name="if_empty" type="BT::NodeStatus" default="SUCCESS">Status to return if queue is empty: SUCCESS, FAILURE, SKIPPED</input_port>
             <input_port name="Queue" type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;" default="{ProductIDs}">The queue of all product IDs of the batch</input_port>
         </Decorator>
@@ -30,7 +30,7 @@
             <input_port name="Station" type="std::string" default="{Station}">The station to unregister from</input_port>
         </Action>
         <Action ID="Station_Execution">
-            <input_port name="Uuid" type="std::string" default="{_ID}">UUID for the command to execute</input_port>
+            <input_port name="Uuid" type="std::string" default="{ID}">UUID for the command to execute</input_port>
             <input_port name="Command" type="std::string" default="Command">The command to execute on the station</input_port>
             <input_port name="Station" type="std::string" default="{Station}">The station to register with</input_port>
         </Action>

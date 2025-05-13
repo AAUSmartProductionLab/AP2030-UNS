@@ -45,7 +45,7 @@ public:
                 BT::details::PortWithDefault<std::string>(
                     BT::PortDirection::INPUT,
                     "Uuid",
-                    "{_ID}",
+                    "{ID}",
                     "UUID for the command to execute")};
     }
     json createMessage() override
