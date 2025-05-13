@@ -1,4 +1,4 @@
-from MQTT_classes import Proxy, Publisher, ResponseAsync
+from MQTT_classes import Proxy, Publisher, ResponseAsync, Subscriber
 import time
 import numpy as np
 from PackMLSimulator import PackMLStateMachine
@@ -142,18 +142,14 @@ tare = ResponseAsync(
     tare_callback
 )
 
-start = ResponseAsync(
-    BASE_TOPIC+"/DATA/Start", 
+start = Subscriber(
     BASE_TOPIC+"/CMD/Start",
-    "./schemas/commandResponse.schema.json", 
     "./schemas/command.schema.json", 
     2, 
     start_callback
 )
-complete = ResponseAsync(
-    BASE_TOPIC+"/DATA/Complete", 
+complete = Subscriber(
     BASE_TOPIC+"/CMD/Complete",
-    "./schemas/commandResponse.schema.json", 
     "./schemas/command.schema.json", 
     2, 
     complete_callback

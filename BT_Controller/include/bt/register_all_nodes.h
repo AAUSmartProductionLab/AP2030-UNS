@@ -98,18 +98,18 @@ void registerAllNodes(
         factory,
         node_message_distributor,
         bt_mqtt_client,
-        "Station_Registration",
+        "Station_Start",
         StationRegistrationCMD,
-        StationCommandResponse,
+        StateData,
         StationUnregistrationCMD);
 
     MqttActionNode::registerNodeType<StationCompleteNode>(
         factory,
         node_message_distributor,
         bt_mqtt_client,
-        "Station_Unregistration",
+        "Station_Complete",
         StationUnregistrationCMD,
-        StationCommandResponse);
+        StateData);
 
     MqttActionNode::registerNodeType<StationExecuteNode>(
         factory,

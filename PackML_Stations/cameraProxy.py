@@ -1,4 +1,4 @@
-from MQTT_classes import Proxy, ResponseAsync, Publisher
+from MQTT_classes import Proxy, ResponseAsync, Publisher, Subscriber
 import time
 from PackMLSimulator import PackMLStateMachine
 import datetime
@@ -73,18 +73,14 @@ def capture_callback(topic, client, message, properties):
         print(f"Error in dispense_callback: {e}")
 
 
-start = ResponseAsync(
-    BASE_TOPIC+"/DATA/Start", 
+start = Subscriber(
     BASE_TOPIC+"/CMD/Start",
-    "./schemas/commandResponse.schema.json", 
     "./schemas/command.schema.json", 
     2, 
     start_callback
 )
-complete = ResponseAsync(
-    BASE_TOPIC+"/DATA/Complete", 
+complete = Subscriber(
     BASE_TOPIC+"/CMD/Complete",
-    "./schemas/commandResponse.schema.json", 
     "./schemas/command.schema.json", 
     2, 
     complete_callback

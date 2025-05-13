@@ -34,12 +34,12 @@ public:
             BT::details::PortWithDefault<std::string>(
                 BT::PortDirection::INPUT,
                 "Station",
-                "{_Station}",
+                "{Station}",
                 "The station to unregister from"),
             BT::details::PortWithDefault<std::string>(
                 BT::PortDirection::INPUT,
                 "Uuid",
-                "{_ID}",
+                "{ID}",
                 "UUID for the command to execute")};
     }
     json createMessage() override
@@ -80,17 +80,17 @@ public:
                 if (msg["Uuid"] == current_uuid_)
                 {
 
-                    if (msg["State"] == "FAILURE")
+                    if (msg["State"] == "STOPPING")
                     {
                         current_uuid_ = "";
                         setStatus(BT::NodeStatus::FAILURE);
                     }
-                    else if (msg["State"] == "SUCCESSFUL")
+                    else if (msg["State"] == "COMPLETE")
                     {
                         current_uuid_ = "";
                         setStatus(BT::NodeStatus::SUCCESS);
                     }
-                    else if (msg["State"] == "RUNNING")
+                    else if (msg["State"] == "COMPLETING")
                     {
                         setStatus(BT::NodeStatus::RUNNING);
                     }
