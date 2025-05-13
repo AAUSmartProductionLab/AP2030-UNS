@@ -20,38 +20,45 @@
             <input_port name="Station" default="Filling"/>
         </SubTree>
         <Decorator ID="GetProductFromQueue">
-            <output_port name="Product" default="{ProductID}" type="std::string">The product ID of the current product</output_port>
+            <output_port name="ProductID" type="std::string">The product ID of the current product</output_port>
             <input_port name="if_empty" default="SUCCESS" type="BT::NodeStatus">Status to return if queue is empty: SUCCESS, FAILURE, SKIPPED</input_port>
             <input_port name="Queue" default="{ProductIDs}" type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;">The queue of all product IDs of the batch</input_port>
         </Decorator>
+        <SubTree ID="Load" editable="true">
+            <input_port name="Station" default="Load"/>
+        </SubTree>
         <Action ID="MoveShuttle">
-            <input_port name="TargetPosition" type="std::string"/>
+            <input_port name="Uuid" default="{ProductID}" type="std::string">UUID for the command to execute</input_port>
+            <input_port name="TargetPosition" default="{Station}" type="std::string">The name of the station to move to</input_port>
         </Action>
         <Action ID="OmronArclRequest">
             <input_port name="command" type="BT::AnyTypeAllowed"/>
         </Action>
-        <SubTree ID="Produce" editable="true">
-            <input_port name="XbotTopic" default="Planar/Xbot1"/>
-            <output_port name="ProductID"/>
-        </SubTree>
         <SubTree ID="StationProcess" editable="true">
             <input_port name="Station" default="Stoppering"/>
         </SubTree>
+        <Action ID="Station_Complete">
+            <input_port name="Uuid" default="{ID}" type="std::string">UUID for the command to execute</input_port>
+            <input_port name="Station" default="{Station}" type="std::string">The station to unregister from</input_port>
+        </Action>
         <Action ID="Station_Execution">
             <input_port name="Uuid" default="{_ID}" type="std::string">UUID for the command to execute</input_port>
             <input_port name="Command" default="Command" type="std::string">The command to execute on the station</input_port>
             <input_port name="Station" default="{Station}" type="std::string">The station to register with</input_port>
         </Action>
-        <Action ID="Station_Registration">
-            <input_port name="Uuid" default="{_ID}" type="std::string">UUID for the command to execute</input_port>
-            <input_port name="Station" default="{_Station}" type="std::string">The station to register with</input_port>
-        </Action>
-        <Action ID="Station_Unregistration">
-            <input_port name="Uuid" default="{_ID}" type="std::string">UUID for the command to execute</input_port>
-            <input_port name="Station" default="{_Station}" type="std::string">The station to unregister from</input_port>
+        <Action ID="Station_Start">
+            <input_port name="Uuid" default="{ID}" type="std::string">UUID for the command to execute</input_port>
+            <input_port name="Station" default="{Station}" type="std::string">The station to register with</input_port>
         </Action>
         <SubTree ID="Stoppering" editable="true">
             <input_port name="Station" default="Stoppering"/>
+        </SubTree>
+        <SubTree ID="Unload" editable="true">
+            <input_port name="Station" default="Unload"/>
+        </SubTree>
+        <SubTree ID="Xbot_Production" editable="true">
+            <input_port name="XbotTopic" default="Planar/Xbot1"/>
+            <output_port name="ProductID"/>
         </SubTree>
     </TreeNodesModel>
 </root>

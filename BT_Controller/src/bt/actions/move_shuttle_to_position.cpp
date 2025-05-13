@@ -33,7 +33,16 @@ std::string MoveShuttleToPosition::getFormattedTopic(const std::string &pattern,
 
 BT::PortsList MoveShuttleToPosition::providedPorts()
 {
-    return {BT::InputPort<std::string>("TargetPosition")};
+    return {BT::details::PortWithDefault<std::string>(
+                BT::PortDirection::INPUT,
+                "TargetPosition",
+                "{Station}",
+                "The name of the station to move to"),
+            BT::details::PortWithDefault<std::string>(
+                BT::PortDirection::INPUT,
+                "Uuid",
+                "{ProductID}",
+                "UUID for the command to execute")};
 }
 
 void MoveShuttleToPosition::onHalted()
@@ -42,7 +51,6 @@ void MoveShuttleToPosition::onHalted()
     std::cout << "MQTT action node halted" << std::endl;
     // Additional cleanup as needed
     json message;
-    current_uuid_ = mqtt_utils::generate_uuid();
     message["TargetPosition"] = 0;
     message["Uuid"] = current_uuid_;
     publish(message, halt_topic_);
@@ -51,16 +59,19 @@ void MoveShuttleToPosition::onHalted()
 json MoveShuttleToPosition::createMessage()
 {
     BT::Expected<std::string> TargetPosition = getInput<std::string>("TargetPosition");
+    BT::Expected<std::string> Uuid = getInput<std::string>("Uuid");
     BT::Expected<std::map<std::string, int>> stationMap = config().blackboard->get<std::map<std::string, int>>("StationMap"); // hacky way of getting the ID from the subtree parameter
     json message;
-
-    std::string station = TargetPosition.value();
-    if (stationMap.value().find(station) != stationMap.value().end())
+    if (TargetPosition.has_value() && Uuid.has_value())
     {
-        current_uuid_ = mqtt_utils::generate_uuid();
-        message["TargetPosition"] = stationMap.value()[station];
-        message["Uuid"] = current_uuid_;
-        return message;
+        std::string station = TargetPosition.value();
+        if (stationMap.value().find(station) != stationMap.value().end())
+        {
+            current_uuid_ = Uuid.value();
+            message["TargetPosition"] = stationMap.value()[station];
+            message["Uuid"] = current_uuid_;
+            return message;
+        }
     }
     return json();
 }

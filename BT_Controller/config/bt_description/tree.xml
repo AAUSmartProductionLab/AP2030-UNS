@@ -8,9 +8,10 @@
                       Message="State"
                       Station="{Station}"/>
       <Sequence>
-        <Station_Registration Uuid="{ProductID}"
-                              Station="{Station}"/>
-        <MoveShuttle TargetPosition="{Station}"/>
+        <Station_Start Uuid="{ProductID}"
+                       Station="{Station}"/>
+        <MoveShuttle Uuid="{ProductID}"
+                     TargetPosition="{Station}"/>
         <Station_Execution Uuid="{ProductID}"
                            Command="Tare"
                            Station="{Station}"/>
@@ -43,8 +44,29 @@
             </RetryUntilSuccessful>
           </Sequence>
         </BC_Fallback>
-        <Station_Unregistration Uuid="{ProductID}"
-                                Station="{Station}"/>
+        <Station_Complete Uuid="{ProductID}"
+                          Station="{Station}"/>
+      </Sequence>
+    </ReactiveSequence>
+  </BehaviorTree>
+
+  <BehaviorTree ID="Load">
+    <ReactiveSequence>
+      <Data_Condition expected_value="operational"
+                      comparison_type="equal"
+                      Field="State"
+                      Message="State"
+                      Station="{Station}"/>
+      <Sequence>
+        <Station_Start Uuid="{ProductID}"
+                       Station="{Station}"/>
+        <MoveShuttle Uuid="{ProductID}"
+                     TargetPosition="{Station}"/>
+        <Station_Execution Uuid="{ProductID}"
+                           Command="Load"
+                           Station="{Station}"/>
+        <Station_Complete Uuid="{ProductID}"
+                          Station="{Station}"/>
       </Sequence>
     </ReactiveSequence>
   </BehaviorTree>
@@ -55,47 +77,16 @@
                  ProductIDs="{ProductIDs}"/>
       <Parallel failure_count="-1"
                 success_count="-1">
-        <SubTree ID="Produce"
+        <SubTree ID="Xbot_Production"
                  XbotTopic="Planar/Xbot1"
                  ProductID=""
                  _autoremap="true"/>
-        <SubTree ID="Produce"
+        <SubTree ID="Xbot_Production"
                  XbotTopic="Planar/Xbot2"
-                 ProductID=""
-                 _autoremap="true"/>
-        <SubTree ID="Produce"
-                 XbotTopic="Planar/Xbot3"
                  ProductID=""
                  _autoremap="true"/>
       </Parallel>
     </Sequence>
-  </BehaviorTree>
-
-  <BehaviorTree ID="Produce">
-    <ReactiveSequence>
-      <Data_Condition expected_value="operational"
-                      comparison_type="equal"
-                      Field="State"
-                      Message="State"
-                      Station="{XbotTopic}"/>
-      <GetProductFromQueue Product="{ProductID}"
-                           if_empty="SUCCESS"
-                           Queue="{ProductIDs}">
-        <Sequence>
-          <MoveShuttle TargetPosition="Load"/>
-          <SubTree ID="Filling"
-                   Station="Filling"
-                   _autoremap="true"/>
-          <SubTree ID="Stoppering"
-                   Station="Stoppering"
-                   _autoremap="true"/>
-          <SubTree ID="QualityControl"
-                   Station="Camera"
-                   _autoremap="true"/>
-          <MoveShuttle TargetPosition="Unload"/>
-        </Sequence>
-      </GetProductFromQueue>
-    </ReactiveSequence>
   </BehaviorTree>
 
   <BehaviorTree ID="QualityControl">
@@ -106,14 +97,15 @@
                       Message="State"
                       Station="{Station}"/>
       <Sequence>
-        <Station_Registration Uuid="{ProductID}"
-                              Station="{Station}"/>
-        <MoveShuttle TargetPosition="{Station}"/>
+        <Station_Start Uuid="{ProductID}"
+                       Station="{Station}"/>
+        <MoveShuttle Uuid="{ProductID}"
+                     TargetPosition="{Station}"/>
         <Station_Execution Uuid="{ProductID}"
                            Command="Capture"
                            Station="{Station}"/>
-        <Station_Unregistration Uuid="{ProductID}"
-                                Station="{Station}"/>
+        <Station_Complete Uuid="{ProductID}"
+                          Station="{Station}"/>
       </Sequence>
     </ReactiveSequence>
   </BehaviorTree>
@@ -126,16 +118,72 @@
                       Message="State"
                       Station="{Station}"/>
       <Sequence>
-        <Station_Registration Uuid="{ProductID}"
-                              Station="{Station}"/>
-        <MoveShuttle TargetPosition="{Station}"/>
+        <Station_Start Uuid="{ProductID}"
+                       Station="{Station}"/>
+        <MoveShuttle Uuid="{ProductID}"
+                     TargetPosition="{Station}"/>
         <Station_Execution Uuid="{ProductID}"
                            Command="Stopper"
                            Station="{Station}"/>
-        <Station_Unregistration Uuid="{ProductID}"
-                                Station="{Station}"/>
+        <Station_Complete Uuid="{ProductID}"
+                          Station="{Station}"/>
       </Sequence>
     </ReactiveSequence>
+  </BehaviorTree>
+
+  <BehaviorTree ID="Unload">
+    <ReactiveSequence>
+      <Data_Condition expected_value="operational"
+                      comparison_type="equal"
+                      Field="State"
+                      Message="State"
+                      Station="{Station}"/>
+      <Sequence>
+        <Station_Start Uuid="{ProductID}"
+                       Station="{Station}"/>
+        <MoveShuttle Uuid="{ProductID}"
+                     TargetPosition="{Station}"/>
+        <Station_Execution Uuid="{ProductID}"
+                           Command="Unload"
+                           Station="{Station}"/>
+        <Station_Complete Uuid="{ProductID}"
+                          Station="{Station}"/>
+      </Sequence>
+    </ReactiveSequence>
+  </BehaviorTree>
+
+  <BehaviorTree ID="Xbot_Production">
+    <GetProductFromQueue ProductID=""
+                         if_empty="SUCCESS"
+                         Queue="{ProductIDs}">
+      <ReactiveSequence>
+        <ReactiveFallback>
+          <Data_Condition expected_value="operational"
+                          comparison_type="equal"
+                          Field="State"
+                          Message="State"
+                          Station="{XbotTopic}"/>
+          <Sleep msec="10000"/>
+        </ReactiveFallback>
+        <SequenceWithMemory>
+          <SubTree ID="Load"
+                   Station="Load"
+                   _autoremap="true"/>
+          <SubTree ID="Filling"
+                   Station="Filling"
+                   _autoremap="true"/>
+          <SubTree ID="Stoppering"
+                   Station="Stoppering"
+                   _autoremap="true"/>
+          <SubTree ID="QualityControl"
+                   Station="Camera"
+                   _autoremap="true"/>
+          <SubTree ID="Unload"
+                   Station="Unload"
+                   _autoremap="true"/>
+        </SequenceWithMemory>
+      </ReactiveSequence>
+    </GetProductFromQueue>
   </BehaviorTree>
 
   <!-- Description of Node Models (used by Groot) -->
@@ -168,8 +216,7 @@
                   default="Filling"/>
     </SubTree>
     <Decorator ID="GetProductFromQueue">
-      <output_port name="Product"
-                   default="{ProductID}"
+      <output_port name="ProductID"
                    type="std::string">The product ID of the current product</output_port>
       <input_port name="if_empty"
                   default="SUCCESS"
@@ -178,16 +225,27 @@
                   default="{ProductIDs}"
                   type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;">The queue of all product IDs of the batch</input_port>
     </Decorator>
-    <Action ID="MoveShuttle">
-      <input_port name="TargetPosition"
-                  type="std::string"/>
-    </Action>
-    <SubTree ID="Produce"
+    <SubTree ID="Load"
              editable="true">
-      <input_port name="XbotTopic"
-                  default="Planar/Xbot1"/>
-      <output_port name="ProductID"/>
+      <input_port name="Station"
+                  default="Load"/>
     </SubTree>
+    <Action ID="MoveShuttle">
+      <input_port name="Uuid"
+                  default="{ProductID}"
+                  type="std::string">UUID for the command to execute</input_port>
+      <input_port name="TargetPosition"
+                  default="{Station}"
+                  type="std::string">The name of the station to move to</input_port>
+    </Action>
+    <Action ID="Station_Complete">
+      <input_port name="Uuid"
+                  default="{ID}"
+                  type="std::string">UUID for the command to execute</input_port>
+      <input_port name="Station"
+                  default="{Station}"
+                  type="std::string">The station to unregister from</input_port>
+    </Action>
     <Action ID="Station_Execution">
       <input_port name="Uuid"
                   default="{_ID}"
@@ -199,26 +257,29 @@
                   default="{Station}"
                   type="std::string">The station to register with</input_port>
     </Action>
-    <Action ID="Station_Registration">
+    <Action ID="Station_Start">
       <input_port name="Uuid"
-                  default="{_ID}"
+                  default="{ID}"
                   type="std::string">UUID for the command to execute</input_port>
       <input_port name="Station"
-                  default="{_Station}"
+                  default="{Station}"
                   type="std::string">The station to register with</input_port>
-    </Action>
-    <Action ID="Station_Unregistration">
-      <input_port name="Uuid"
-                  default="{_ID}"
-                  type="std::string">UUID for the command to execute</input_port>
-      <input_port name="Station"
-                  default="{_Station}"
-                  type="std::string">The station to unregister from</input_port>
     </Action>
     <SubTree ID="Stoppering"
              editable="true">
       <input_port name="Station"
                   default="Stoppering"/>
+    </SubTree>
+    <SubTree ID="Unload"
+             editable="true">
+      <input_port name="Station"
+                  default="Unload"/>
+    </SubTree>
+    <SubTree ID="Xbot_Production"
+             editable="true">
+      <input_port name="XbotTopic"
+                  default="Planar/Xbot1"/>
+      <output_port name="ProductID"/>
     </SubTree>
   </TreeNodesModel>
 

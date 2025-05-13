@@ -143,23 +143,23 @@ int main(int argc, char *argv[])
 
         BT::Groot2Publisher publisher(tree, groot2_port);
 
-        // Create a backup of the initial blackboard state
-        std::vector<BT::Blackboard::Ptr> initial_state_backup;
+        // // Create a backup of the initial blackboard state
+        // std::vector<BT::Blackboard::Ptr> initial_state_backup;
 
         while (true)
         {
             std::cout << "====== Starting behavior tree... ======" << std::endl;
 
-            // On first run, save the initial blackboard state
-            if (initial_state_backup.empty())
-            {
-                initial_state_backup = BT::BlackboardBackup(tree);
-            }
-            // On subsequent runs, restore from backup
-            else
-            {
-                BT::BlackboardRestore(initial_state_backup, tree);
-            }
+            // // On first run, save the initial blackboard state
+            // if (initial_state_backup.empty())
+            // {
+            //     initial_state_backup = BT::BlackboardBackup(tree);
+            // }
+            // // On subsequent runs, restore from backup
+            // else
+            // {
+            //     BT::BlackboardRestore(initial_state_backup, tree);
+            // }
 
             auto status = tree.tickOnce();
             while (status == BT::NodeStatus::RUNNING)

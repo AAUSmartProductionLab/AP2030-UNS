@@ -74,7 +74,7 @@ public:
                                                    std::chrono::floor<std::chrono::milliseconds>(now));
                 publish(message);
 
-                setOutput("Product", value);
+                setOutput("ProductID", value);
             }
         }
 
@@ -117,8 +117,8 @@ public:
                                           "SUCCESS, FAILURE, SKIPPED"),
             BT::details::PortWithDefault<std::string>(
                 BT::PortDirection::OUTPUT,
-                "Product",
-                "{_ProductID}",
+                "ProductID",
+                "",
                 "The product ID of the current product")};
     }
 

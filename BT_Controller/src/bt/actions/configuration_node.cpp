@@ -27,55 +27,62 @@ BT::PortsList ConfigurationNode::providedPorts()
                                                                  "The StationMap of the system for this batch")};
 }
 
+BT::NodeStatus ConfigurationNode::onStart()
+{
+    if (!shared_queue->empty() && !stationMap.empty())
+    {
+        // setOutput("ProductIDs", shared_queue);
+        // setOutput("StationMap", stationMap);
+        config().blackboard->set("ProductIDs", shared_queue);
+        config().blackboard->set("StationMap", stationMap);
+
+        return BT::NodeStatus::SUCCESS;
+    }
+    return BT::NodeStatus::RUNNING;
+}
+
 void ConfigurationNode::callback(const json &msg, mqtt::properties props)
 {
     // Use mutex to protect shared state
     {
         std::lock_guard<std::mutex> lock(mutex_);
         // Update state based on message content
-        if (status() == BT::NodeStatus::RUNNING)
-        {
-            if (msg.contains("Units"))
-            {
-                // Process the message and update
-                shared_queue = std::make_shared<std::deque<std::string>>();
-                int batchSize = msg["Units"];
-                if (batchSize > 0)
-                {
-                    for (int i = 0; i < batchSize; ++i)
-                    {
-                        std::string id = mqtt_utils::generate_uuid();
-                        shared_queue->push_back(id);
-                    }
-                }
-            }
-            if (msg.contains("Stations"))
-            { // Clear existing station map
-                stationMap.clear();
-                for (const auto &station : msg["Stations"])
-                {
-                    if (station.contains("Name") && station.contains("StationId"))
-                    {
-                        std::string name = station["Name"];
-                        int id = station["StationId"];
-                        stationMap[name] = id;
-                    }
-                }
-            }
-            if (!shared_queue->empty() && !stationMap.empty())
-            {
-                // setOutput("ProductIDs", shared_queue);
-                // setOutput("StationMap", stationMap);
-                config().blackboard->set("ProductIDs", shared_queue);
-                config().blackboard->set("StationMap", stationMap);
 
-                setStatus(BT::NodeStatus::SUCCESS);
+        if (msg.contains("Units"))
+        {
+            // Process the message and update
+            int batchSize = msg["Units"];
+            if (batchSize > 0)
+            {
+                for (int i = 0; i < batchSize; ++i)
+                {
+                    std::string id = mqtt_utils::generate_uuid();
+                    shared_queue->push_back(id);
+                }
             }
-            // else
-            // {
-            //     setStatus(BT::NodeStatus::FAILURE);
-            // }
-            emitWakeUpSignal();
         }
+        if (msg.contains("Stations"))
+        { // Clear existing station map
+            stationMap.clear();
+            for (const auto &station : msg["Stations"])
+            {
+                if (station.contains("Name") && station.contains("StationId"))
+                {
+                    std::string name = station["Name"];
+                    int id = station["StationId"];
+                    stationMap[name] = id;
+                }
+            }
+        }
+        if (status() == BT::NodeStatus::RUNNING && !shared_queue->empty() && !stationMap.empty())
+        {
+            // setOutput("ProductIDs", shared_queue);
+            // setOutput("StationMap", stationMap);
+            config().blackboard->set("ProductIDs", shared_queue);
+            config().blackboard->set("StationMap", stationMap);
+
+            setStatus(BT::NodeStatus::SUCCESS);
+        }
+        emitWakeUpSignal();
     }
 }
