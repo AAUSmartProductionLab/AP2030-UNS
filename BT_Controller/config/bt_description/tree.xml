@@ -56,16 +56,21 @@
                       Field="State"
                       Message="State"
                       Station="{Station}"/>
-      <UseStation Uuid="{ProductID}"
-                  Station="{Station}">
-        <Sequence>
-          <MoveShuttle Uuid="{ProductID}"
-                       TargetPosition="{Station}"/>
-          <Station_Execution Uuid="{ProductID}"
-                             Command="Load"
-                             Station="{Station}"/>
-        </Sequence>
-      </UseStation>
+      <SequenceWithMemory>
+        <PopElement ProductID="{ProductID}"
+                    if_empty="SUCCESS"
+                    Queue="{ProductIDs}"/>
+        <UseStation Uuid="{ProductID}"
+                    Station="{Station}">
+          <Sequence>
+            <MoveShuttle Uuid="{ProductID}"
+                         TargetPosition="{Station}"/>
+            <Station_Execution Uuid="{ProductID}"
+                               Command="Load"
+                               Station="{Station}"/>
+          </Sequence>
+        </UseStation>
+      </SequenceWithMemory>
     </ReactiveSequence>
   </BehaviorTree>
 
@@ -73,7 +78,7 @@
     <Sequence>
       <Configure StationMap="{StationMap}"
                  ProductIDs="{ProductIDs}"/>
-      <Parallel failure_count="2"
+      <Parallel failure_count="1"
                 success_count="1">
         <SubTree ID="Xbot_Production"
                  XbotTopic="Planar/Xbot1"
@@ -148,9 +153,8 @@
   </BehaviorTree>
 
   <BehaviorTree ID="Xbot_Production">
-    <GetProductFromQueue ProductID="{ProductID}"
-                         if_empty="SUCCESS"
-                         Queue="{ProductIDs}">
+    <KeepRunningUntilEmpty if_empty="SUCCESS"
+                           Queue="{ProductIDs}">
       <ReactiveSequence>
         <ReactiveFallback>
           <Data_Condition expected_value="operational"
@@ -178,7 +182,7 @@
                    _autoremap="true"/>
         </SequenceWithMemory>
       </ReactiveSequence>
-    </GetProductFromQueue>
+    </KeepRunningUntilEmpty>
   </BehaviorTree>
 
   <!-- Description of Node Models (used by Groot) -->
@@ -210,16 +214,13 @@
       <input_port name="Station"
                   default="Filling"/>
     </SubTree>
-    <Decorator ID="GetProductFromQueue">
-      <output_port name="ProductID"
-                   default="{ProductID}"
-                   type="std::string">The product ID of the current product</output_port>
+    <Decorator ID="KeepRunningUntilEmpty">
       <input_port name="if_empty"
                   default="SUCCESS"
                   type="BT::NodeStatus">Status to return if queue is empty: SUCCESS, FAILURE, SKIPPED</input_port>
       <input_port name="Queue"
                   default="{ProductIDs}"
-                  type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;">The queue of all product IDs of the batch</input_port>
+                  type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;">The queue to monitor. Node runs child while this queue is not empty.</input_port>
     </Decorator>
     <SubTree ID="Load"
              editable="true">
@@ -233,6 +234,17 @@
       <input_port name="TargetPosition"
                   default="{Station}"
                   type="std::string">The name of the station to move to</input_port>
+    </Action>
+    <Action ID="PopElement">
+      <output_port name="ProductID"
+                   default="{ProductID}"
+                   type="std::string">The product ID popped from the queue.</output_port>
+      <input_port name="if_empty"
+                  default="SUCCESS"
+                  type="BT::NodeStatus">Status to return if the queue is empty (SUCCESS, FAILURE, SKIPPED).</input_port>
+      <input_port name="Queue"
+                  default="{ProductIDs}"
+                  type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;">The shared queue of product IDs. An element will be popped from it.</input_port>
     </Action>
     <Action ID="Station_Execution">
       <input_port name="Uuid"

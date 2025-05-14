@@ -16,6 +16,8 @@
 #include "bt/decorators/get_product_from_queue_node.h"
 #include "bt/decorators/use_station.h"
 #include "bt/controls/bc_fallback_node.h"
+#include "bt/decorators/keep_running_until_empty.h"
+#include "bt/actions/pop_element_node.h"
 
 void registerAllNodes(
     BT::BehaviorTreeFactory &factory,
@@ -147,6 +149,16 @@ void registerAllNodes(
         StationRegistrationCMD,
         StationUnregistrationCMD,
         StationState);
+
+    KeepRunningUntilEmpty::registerNodeType<KeepRunningUntilEmpty>(
+        factory,
+        "KeepRunningUntilEmpty");
+
+    PopElementNode::registerNodeType<PopElementNode>(
+        factory,
+        bt_mqtt_client,
+        "PopElement",
+        ProductAssociation);
 
     factory.registerNodeType<BT::BC_FallbackNode>("BC_Fallback");
     factory.registerNodeType<BT::BC_FallbackNode>("BC_Fallback_Async", true);
