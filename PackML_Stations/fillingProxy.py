@@ -77,6 +77,15 @@ def complete_callback(topic, client, message, properties):
     except Exception as e:
         print(f"Error in unregister_callback: {e}")
 
+def abort_callback(topic, client, message, properties):
+    """Callback handler for unregistering commands by removing them from the queue"""
+    try:  
+        # Unregister/remove the command from the queue if it's not being processed
+        state_machine.abort_command(message)
+        
+    except Exception as e:
+        print(f"Error in unregister_callback: {e}")
+
 def dispense_callback(topic, client, message, properties):
     """Callback handler for dispense commands"""
     try:
@@ -154,6 +163,13 @@ complete = Subscriber(
     2, 
     complete_callback
 )
+abort = Subscriber(
+    BASE_TOPIC+"/CMD/Abort",
+    "./schemas/command.schema.json", 
+    2, 
+    abort_callback
+)
+
 
 state = Publisher(
     BASE_TOPIC+"/DATA/State", 
@@ -171,7 +187,7 @@ fillProxy = Proxy(
     BROKER_ADDRESS, 
     BROKER_PORT,
     "FillingProxy", 
-    [dispense, start, complete, weigh_publisher, tare, refill]
+    [dispense, start, complete, abort, weigh_publisher, tare, refill]
 )
 state_machine = PackMLStateMachine(state, fillProxy, None)
 
