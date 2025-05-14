@@ -2,7 +2,7 @@
 
 #include <behaviortree_cpp/bt_factory.h>
 #include "mqtt/mqtt_client.h"
-#include "mqtt/utils.h"
+#include "utils.h"
 #include "mqtt/node_message_distributor.h"
 #include "bt/mqtt_action_node.h"
 #include "bt/actions/move_shuttle_to_position.h"
@@ -14,6 +14,7 @@
 #include "bt/actions/configuration_node.h"
 #include "bt/conditions/generic_condition_node.h"
 #include "bt/decorators/get_product_from_queue_node.h"
+#include "bt/decorators/use_station.h"
 #include "bt/controls/bc_fallback_node.h"
 
 void registerAllNodes(
@@ -100,7 +101,7 @@ void registerAllNodes(
         bt_mqtt_client,
         "Station_Start",
         StationRegistrationCMD,
-        StateData,
+        StationState,
         StationUnregistrationCMD);
 
     MqttActionNode::registerNodeType<StationCompleteNode>(
@@ -109,7 +110,7 @@ void registerAllNodes(
         bt_mqtt_client,
         "Station_Complete",
         StationUnregistrationCMD,
-        StateData);
+        StationState);
 
     MqttActionNode::registerNodeType<StationExecuteNode>(
         factory,
@@ -138,6 +139,14 @@ void registerAllNodes(
         bt_mqtt_client,
         "GetProductFromQueue",
         ProductAssociation);
+
+    UseStation::registerNodeType<UseStation>(
+        factory,
+        bt_mqtt_client,
+        "UseStation",
+        StationRegistrationCMD,
+        StationUnregistrationCMD,
+        StationState);
 
     factory.registerNodeType<BT::BC_FallbackNode>("BC_Fallback");
     factory.registerNodeType<BT::BC_FallbackNode>("BC_Fallback_Async", true);

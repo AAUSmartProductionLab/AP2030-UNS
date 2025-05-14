@@ -1,5 +1,5 @@
 #include "bt/actions/move_shuttle_to_position.h"
-#include "mqtt/utils.h"
+#include "utils.h"
 #include "mqtt/node_message_distributor.h"
 
 MoveShuttleToPosition::MoveShuttleToPosition(
@@ -53,7 +53,7 @@ void MoveShuttleToPosition::onHalted()
     json message;
     message["TargetPosition"] = 0;
     message["Uuid"] = current_uuid_;
-    publish(message, halt_topic_);
+    publishHalt(message);
 }
 
 json MoveShuttleToPosition::createMessage()

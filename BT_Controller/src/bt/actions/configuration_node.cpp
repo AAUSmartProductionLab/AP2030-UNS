@@ -1,5 +1,5 @@
 #include "bt/actions/configuration_node.h"
-#include "mqtt/utils.h"
+#include "utils.h"
 #include "mqtt/node_message_distributor.h"
 
 ConfigurationNode::ConfigurationNode(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client, const mqtt_utils::Topic &response_topic)

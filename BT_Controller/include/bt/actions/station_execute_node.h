@@ -3,7 +3,7 @@
 #include "bt/mqtt_action_node.h"
 #include <behaviortree_cpp/bt_factory.h>
 #include <nlohmann/json.hpp>
-#include "mqtt/utils.h"
+#include "utils.h"
 #include <string>
 
 // Forward declarations
@@ -45,7 +45,7 @@ public:
                 BT::details::PortWithDefault<std::string>(
                     BT::PortDirection::INPUT,
                     "Uuid",
-                    "{_ID}",
+                    "{ID}",
                     "UUID for the command to execute")};
     }
     json createMessage() override

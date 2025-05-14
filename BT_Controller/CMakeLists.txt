@@ -11,6 +11,12 @@ target_include_directories(json INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/third_party/json/include
 )
 
+# Add Magic Enum library (header-only)
+add_library(magic_enum INTERFACE)
+target_include_directories(magic_enum INTERFACE 
+    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/magic_enum/include
+)
+
 # Add JSON schema validator
 add_library(json_schema_validator STATIC
     ${CMAKE_CURRENT_SOURCE_DIR}/third_party/json-schema-validator/src/json-schema-draft7.json.cpp
@@ -41,7 +47,7 @@ include_directories(
 
 # Create common library with shared source files
 add_library(bt_controller_common STATIC
-    src/mqtt/utils.cpp
+    src/utils.cpp
     src/mqtt/node_message_distributor.cpp 
     src/mqtt/mqtt_client.cpp
     src/mqtt/mqtt_sub_base.cpp
@@ -73,6 +79,7 @@ target_link_libraries(bt_controller_common
         ${UUID_LDFLAGS}
         ${YAML_CPP_LIBRARIES}
         fmt::fmt
+        magic_enum
 )
 
 add_executable(bt_controller

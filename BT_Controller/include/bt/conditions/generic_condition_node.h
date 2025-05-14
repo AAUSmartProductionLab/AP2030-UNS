@@ -12,8 +12,6 @@ using nlohmann::json;
 // MoveShuttleToPosition class declaration
 class GenericConditionNode : public MqttSyncSubNode
 {
-private:
-    std::condition_variable cv_message_received_; // Add this condition variable
 public:
     GenericConditionNode(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client,
                          const mqtt_utils::Topic &response_topic);

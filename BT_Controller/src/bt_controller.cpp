@@ -11,7 +11,7 @@
 #include "mqtt/mqtt_client.h"
 #include "bt/mqtt_action_node.h"
 #include "mqtt/node_message_distributor.h"
-#include "mqtt/utils.h"
+#include "utils.h"
 #include "bt/register_all_nodes.h"
 
 /**
@@ -149,18 +149,6 @@ int main(int argc, char *argv[])
         while (true)
         {
             std::cout << "====== Starting behavior tree... ======" << std::endl;
-
-            // // On first run, save the initial blackboard state
-            // if (initial_state_backup.empty())
-            // {
-            //     initial_state_backup = BT::BlackboardBackup(tree);
-            // }
-            // // On subsequent runs, restore from backup
-            // else
-            // {
-            //     BT::BlackboardRestore(initial_state_backup, tree);
-            // }
-
             auto status = tree.tickOnce();
             while (status == BT::NodeStatus::RUNNING)
             {

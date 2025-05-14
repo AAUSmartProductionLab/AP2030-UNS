@@ -1,5 +1,5 @@
 #include "bt/actions/omron_arcl_request_node.h"
-#include "mqtt/utils.h"
+#include "utils.h"
 #include "mqtt/node_message_distributor.h"
 
 // MoveShuttleToPosition implementation

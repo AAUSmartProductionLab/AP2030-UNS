@@ -3,7 +3,7 @@
 #include "bt/mqtt_action_node.h"
 #include <behaviortree_cpp/bt_factory.h>
 #include <nlohmann/json.hpp>
-#include "mqtt/utils.h"
+#include "utils.h"
 #include <string>
 
 // Forward declarations
@@ -54,16 +54,13 @@ public:
         }
         return json();
     }
+
     std::string getFormattedTopic(const std::string &pattern, const BT::NodeConfig &config)
     {
-        std::vector<std::string> replacements;
         BT::Expected<std::string> station = getInput<std::string>("Station");
-        std::string command = "Start";
         if (station.has_value())
         {
-            replacements.push_back(station.value());
-            replacements.push_back(command);
-            return mqtt_utils::formatWildcardTopic(pattern, replacements);
+            return mqtt_utils::formatWildcardTopic(pattern, station.value());
         }
         return pattern;
     }
@@ -72,7 +69,7 @@ public:
     {
         json message;
         message["Uuid"] = current_uuid_;
-        publish(message, halt_topic_);
+        publishHalt(message);
     }
     void callback(const json &msg, mqtt::properties props) override
     {
@@ -80,25 +77,19 @@ public:
         {
             std::lock_guard<std::mutex> lock(mutex_);
             // Update state based on message content
-            if (status() == BT::NodeStatus::RUNNING)
+            if (status() == BT::NodeStatus::RUNNING &&
+                !msg["ProcessQueue"].empty() &&
+                msg["ProcessQueue"][0] == current_uuid_)
             {
-                if (msg["Uuid"] == current_uuid_)
+                if (msg["State"] == "STOPPING")
                 {
-
-                    if (msg["State"] == "STOPPING") // TODO this should be enumerations declared in the utils
-                    {
-                        current_uuid_ = "";
-                        setStatus(BT::NodeStatus::FAILURE);
-                    }
-                    else if (msg["State"] == "EXECUTE")
-                    {
-                        current_uuid_ = "";
-                        setStatus(BT::NodeStatus::SUCCESS);
-                    }
-                    else if (msg["State"] == "STARTING")
-                    {
-                        setStatus(BT::NodeStatus::RUNNING);
-                    }
+                    current_uuid_ = "";
+                    setStatus(BT::NodeStatus::FAILURE);
+                }
+                else if (msg["State"] == "EXECUTE")
+                {
+                    current_uuid_ = "";
+                    setStatus(BT::NodeStatus::SUCCESS);
                 }
                 emitWakeUpSignal();
             }
