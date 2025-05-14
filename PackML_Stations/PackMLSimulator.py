@@ -114,11 +114,11 @@ class PackMLStateMachine:
         self.transition_to(PackMLState.EXECUTE)
 
     def completing_state(self, uuid):
+        self.transition_to(PackMLState.COMPLETE)        
         if uuid=="#":
             self.uuids.clear()
         else:
             self.uuids.remove(uuid)
-        self.transition_to(PackMLState.COMPLETE)
 
     def resetting_state(self):
         self.Uuid = None
