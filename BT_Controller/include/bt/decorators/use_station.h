@@ -7,6 +7,7 @@
 #include "mqtt/mqtt_pub_base.h"
 #include <fmt/chrono.h>
 #include <chrono>
+#include <utils.h>
 class MqttClient;
 using nlohmann::json;
 
@@ -16,16 +17,7 @@ private:
     std::string current_uuid_;
     std::mutex mutex_;
 
-    // State tracking using a single enum
-    enum class Phase
-    {
-        REGISTERING, // Waiting for EXECUTE state
-        EXECUTING,   // Child is running
-        COMPLETING,
-        COMPLETE // Waiting for COMPLETE confirmation
-    };
-
-    Phase current_phase_ = Phase::REGISTERING;
+    PackML::State current_phase_ = PackML::State::IDLE;
 
 public:
     UseStation(const std::string &name,
@@ -63,11 +55,6 @@ public:
 
     BT::NodeStatus tick() override
     {
-        Phase current_phase;
-        {
-            std::lock_guard<std::mutex> lock(mutex_);
-            current_phase = current_phase_;
-        }
 
         if (status() == BT::NodeStatus::IDLE)
         {
@@ -76,39 +63,49 @@ public:
             {
                 current_uuid_ = uuid.value();
             }
-            setStatus(BT::NodeStatus::RUNNING);
-
-            std::lock_guard<std::mutex> lock(mutex_);
-            current_phase_ = Phase::REGISTERING;
+            current_phase_ = PackML::State::STARTING;
             sendStartCommand();
             return BT::NodeStatus::RUNNING;
         }
-
         // Only tick child if we've confirmed we're in EXECUTE state
-        if (current_phase == Phase::EXECUTING)
+        if (current_phase_ == PackML::State::EXECUTE)
         {
             BT::NodeStatus child_state = child_node_->executeTick();
-            if (isStatusCompleted(child_state))
+            if (child_state == BT::NodeStatus::FAILURE)
+            {
+                current_phase_ = PackML::State::STOPPING;
+                sendCompleteCommand();
+                return BT::NodeStatus::RUNNING;
+            }
+            else if (child_state == BT::NodeStatus::SUCCESS)
             {
                 resetChild();
-
-                std::lock_guard<std::mutex> lock(mutex_);
-                current_phase_ = Phase::COMPLETING;
+                current_phase_ = PackML::State::COMPLETING;
                 sendCompleteCommand();
                 return BT::NodeStatus::RUNNING; // Keep running until COMPLETE is confirmed
             }
         }
-
-        if (current_phase == Phase::COMPLETE)
+        // The node should forward the states of its child nodes upwards after it has executed the command to unregister
+        else if (current_phase_ == PackML::State::STOPPED)
         {
+            current_phase_ = PackML::State::IDLE;
+            return BT::NodeStatus::FAILURE;
+        }
+        else if (current_phase_ == PackML::State::COMPLETE)
+        {
+            current_phase_ = PackML::State::IDLE;
             return BT::NodeStatus::SUCCESS;
         }
-
         return BT::NodeStatus::RUNNING;
     }
 
     void halt()
     {
+        BT::Expected<std::string> uuid = getInput<std::string>("Uuid");
+        if (uuid.has_value())
+        {
+            current_uuid_ = uuid.value();
+        }
         sendCompleteCommand();
         DecoratorNode::halt();
     }
@@ -139,17 +136,25 @@ public:
                 std::string first_uuid = msg["ProcessQueue"][0];
                 if (first_uuid == current_uuid_)
                 {
-                    if (msg["State"] == "STOPPING")
+                    if (msg["State"] == PackML::stateToString(PackML::State::STOPPING))
                     {
-                        setStatus(BT::NodeStatus::FAILURE);
+                        current_phase_ = PackML::State::STOPPED;
                     }
-                    else if (msg["State"] == "EXECUTE" && current_phase_ == Phase::REGISTERING)
+                    else if (msg["State"] == PackML::stateToString(PackML::State::EXECUTE) &&
+                             current_phase_ == PackML::State::STARTING)
                     {
-                        current_phase_ = Phase::EXECUTING;
+                        current_phase_ = PackML::State::EXECUTE;
                     }
-                    else if (msg["State"] == "COMPLETING" && current_phase_ == Phase::COMPLETING)
+                    else if (msg["State"] == PackML::stateToString(PackML::State::COMPLETE))
                     {
-                        current_phase_ = Phase::COMPLETE;
+                        if (current_phase_ == PackML::State::STOPPING)
+                        {
+                            current_phase_ = PackML::State::STOPPED;
+                        }
+                        else if (current_phase_ == PackML::State::COMPLETING)
+                        {
+                            current_phase_ = PackML::State::COMPLETE;
+                        }
                     }
                 }
             }

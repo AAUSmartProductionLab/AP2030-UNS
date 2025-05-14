@@ -1,6 +1,6 @@
 #include "mqtt/node_message_distributor.h"
 #include "mqtt/mqtt_client.h"
-#include "mqtt/utils.h"
+#include "utils.h"
 #include <iostream>
 NodeMessageDistributor::NodeMessageDistributor(MqttClient &mqtt_client) : mqtt_client_(mqtt_client)
 {

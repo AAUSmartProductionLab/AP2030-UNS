@@ -2,7 +2,7 @@
 
 #include <behaviortree_cpp/bt_factory.h>
 #include "mqtt/mqtt_client.h"
-#include "mqtt/utils.h"
+#include "utils.h"
 #include "mqtt/node_message_distributor.h"
 #include "bt/mqtt_action_node.h"
 #include "bt/actions/move_shuttle_to_position.h"

@@ -3,6 +3,42 @@
 #include <nlohmann/json.hpp>
 #include <nlohmann/json-schema.hpp>
 #include <iostream>
+#include <magic_enum/magic_enum.hpp>
+
+namespace PackML
+{
+    // Define the state machine states
+    enum class State
+    {
+        IDLE,
+        STARTING,
+        EXECUTE,
+        COMPLETING,
+        COMPLETE,
+        RESETTING,
+        HOLDING,
+        HELD,
+        UNHOLDING,
+        SUSPENDING,
+        SUSPENDED,
+        UNSUSPENDING,
+        ABORTING,
+        ABORTED,
+        CLEARING,
+        STOPPING,
+        STOPPED,
+    };
+    inline std::string stateToString(State state)
+    {
+        return std::string(magic_enum::enum_name(state));
+    }
+
+    inline std::optional<State> stringToState(const std::string &str)
+    {
+        return magic_enum::enum_cast<State>(str);
+    }
+}
+
 namespace mqtt_utils
 {
     // Generate a random UUID string

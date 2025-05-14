@@ -5,7 +5,7 @@
 #include <mutex>
 #include <string>
 #include <functional>
-#include "mqtt/utils.h"
+#include "utils.h"
 // Forward declarations
 namespace BT
 {

@@ -1,6 +1,6 @@
 #include "bt/conditions/generic_condition_node.h"
 #include "mqtt/node_message_distributor.h"
-#include "mqtt/utils.h"
+#include "utils.h"
 
 GenericConditionNode::GenericConditionNode(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client,
                                            const mqtt_utils::Topic &response_topic)
@@ -47,9 +47,7 @@ BT::NodeStatus GenericConditionNode::tick()
     // Wait until a message is received
     if (latest_msg_.is_null())
     {
-        std::cout << "Waiting for message..." << std::endl;
-        cv_message_received_.wait(lock, [this]()
-                                  { return !latest_msg_.is_null(); });
+        return BT::NodeStatus::FAILURE;
     }
     BT::Expected<std::string> field_name_res = getInput<std::string>("Field");
     BT::Expected<std::string> expected_value_res = getInput<std::string>("expected_value");
@@ -73,7 +71,6 @@ void GenericConditionNode::callback(const json &msg, mqtt::properties props)
     {
         std::lock_guard<std::mutex> lock(mutex_);
         latest_msg_ = msg;
-        cv_message_received_.notify_all();
     }
     else
     {
