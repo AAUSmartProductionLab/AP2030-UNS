@@ -20,6 +20,14 @@ MoveShuttleToPosition::MoveShuttleToPosition(
     }
 }
 
+MoveShuttleToPosition::~MoveShuttleToPosition()
+{
+    if (MqttSubBase::node_message_distributor_)
+    {
+        MqttSubBase::node_message_distributor_->unregisterInstance(this);
+    }
+}
+
 std::string MoveShuttleToPosition::getFormattedTopic(const std::string &pattern, const BT::NodeConfig &config)
 {
     BT::Expected<std::string> id = config.blackboard->get<std::string>("XbotTopic"); // hacky way of getting the ID from the subtree parameter

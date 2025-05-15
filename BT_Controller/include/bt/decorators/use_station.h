@@ -42,6 +42,14 @@ public:
         }
     }
 
+    ~UseStation()
+    {
+        if (MqttSubBase::node_message_distributor_)
+        {
+            MqttSubBase::node_message_distributor_->unregisterInstance(this);
+        }
+    }
+
     std::string getFormattedTopic(const std::string &pattern, const BT::NodeConfig &config)
     {
         BT::Expected<std::string> station = getInput<std::string>("Station");

@@ -17,7 +17,7 @@ class ConfigurationNode : public MqttAsyncSubNode
 public:
     ConfigurationNode(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client,
                       const mqtt_utils::Topic &response_topic);
-
+    virtual ~ConfigurationNode();
     static BT::PortsList providedPorts();
     BT::NodeStatus onStart();
     void callback(const json &msg, mqtt::properties props) override;

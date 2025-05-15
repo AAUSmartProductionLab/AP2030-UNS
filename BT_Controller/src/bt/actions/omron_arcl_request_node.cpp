@@ -18,6 +18,14 @@ OmronArclRequest::OmronArclRequest(const std::string &name,
     }
 }
 
+OmronArclRequest::~OmronArclRequest()
+{
+    if (MqttActionNode::node_message_distributor_)
+    {
+        MqttActionNode::node_message_distributor_->unregisterInstance(this);
+    }
+}
+
 BT::PortsList OmronArclRequest::providedPorts()
 {
     return {BT::InputPort("command")};

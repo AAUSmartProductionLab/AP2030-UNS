@@ -15,7 +15,7 @@ class GenericConditionNode : public MqttSyncSubNode
 public:
     GenericConditionNode(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client,
                          const mqtt_utils::Topic &response_topic);
-
+    virtual ~GenericConditionNode();
     static BT::PortsList providedPorts();
 
     BT::NodeStatus tick() override;

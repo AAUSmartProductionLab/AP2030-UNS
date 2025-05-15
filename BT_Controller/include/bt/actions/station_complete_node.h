@@ -28,6 +28,13 @@ public:
         request_topic_.setTopic(getFormattedTopic(request_topic_.getPattern(), config));
         halt_topic_.setTopic(getFormattedTopic(request_topic_.getPattern(), config));
     }
+    ~StationCompleteNode()
+    {
+        if (MqttSubBase::node_message_distributor_)
+        {
+            MqttSubBase::node_message_distributor_->unregisterInstance(this);
+        }
+    }
     static BT::PortsList providedPorts()
     {
         return {

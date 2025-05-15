@@ -17,7 +17,7 @@ public:
     OmronArclRequest(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client,
                      const mqtt_utils::Topic &request_topic,
                      const mqtt_utils::Topic &response_topic);
-
+    virtual ~OmronArclRequest();
     static BT::PortsList providedPorts();
 
     json createMessage() override;

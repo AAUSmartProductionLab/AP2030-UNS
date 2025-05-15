@@ -17,5 +17,6 @@ public:
                       const mqtt_utils::Topic &request_topic,
                       const mqtt_utils::Topic &response_topic);
 
+    virtual ~GenericActionNode();
     json createMessage() override;
 };

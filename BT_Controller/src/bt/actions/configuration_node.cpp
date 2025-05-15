@@ -13,6 +13,14 @@ ConfigurationNode::ConfigurationNode(const std::string &name, const BT::NodeConf
     }
 }
 
+ConfigurationNode::~ConfigurationNode()
+{
+    if (MqttSubBase::node_message_distributor_)
+    {
+        MqttSubBase::node_message_distributor_->unregisterInstance(this);
+    }
+}
+
 BT::PortsList ConfigurationNode::providedPorts()
 {
     return {

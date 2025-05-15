@@ -20,7 +20,7 @@ public:
                           const mqtt_utils::Topic &request_topic,
                           const mqtt_utils::Topic &response_topic,
                           const mqtt_utils::Topic &halt_topic);
-
+    virtual ~MoveShuttleToPosition();
     static BT::PortsList providedPorts();
     void onHalted() override;
     json createMessage() override;

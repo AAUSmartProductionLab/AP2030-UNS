@@ -30,6 +30,13 @@ public:
             MqttSubBase::node_message_distributor_->registerDerivedInstance(this);
         }
     }
+    ~StationExecuteNode()
+    {
+        if (MqttSubBase::node_message_distributor_)
+        {
+            MqttSubBase::node_message_distributor_->unregisterInstance(this);
+        }
+    }
     static BT::PortsList providedPorts()
     {
         return {BT::details::PortWithDefault<std::string>(

@@ -15,7 +15,10 @@ MqttSyncSubNode::MqttSyncSubNode(const std::string &name,
 
 MqttSyncSubNode::~MqttSyncSubNode()
 {
-    // Optional cleanup
+    if (MqttSubBase::node_message_distributor_)
+    {
+        MqttSubBase::node_message_distributor_->unregisterInstance(this);
+    }
 }
 
 BT::PortsList MqttSyncSubNode::providedPorts()

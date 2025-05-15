@@ -30,7 +30,10 @@ MqttActionNode::MqttActionNode(const std::string &name,
 }
 MqttActionNode::~MqttActionNode()
 {
-    // Optional cleanup if needed
+    if (MqttSubBase::node_message_distributor_)
+    {
+        MqttSubBase::node_message_distributor_->unregisterInstance(this);
+    }
 }
 
 // Default implementation of providedPorts - derived classes should override

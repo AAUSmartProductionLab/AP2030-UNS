@@ -13,6 +13,14 @@ GenericConditionNode::GenericConditionNode(const std::string &name, const BT::No
     }
 }
 
+GenericConditionNode::~GenericConditionNode()
+{
+    if (MqttSubBase::node_message_distributor_)
+    {
+        MqttSubBase::node_message_distributor_->unregisterInstance(this);
+    }
+}
+
 BT::PortsList GenericConditionNode::providedPorts()
 {
     return {
