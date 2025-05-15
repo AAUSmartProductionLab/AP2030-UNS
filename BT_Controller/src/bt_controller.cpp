@@ -1,9 +1,3 @@
-#include <chrono>
-#include <functional>
-#include <iostream>
-#include <fstream>
-#include <filesystem>
-#include <yaml-cpp/yaml.h>
 #include <behaviortree_cpp/bt_factory.h>
 #include <behaviortree_cpp/loggers/groot2_publisher.h>
 #include <behaviortree_cpp/xml_parsing.h>
@@ -13,85 +7,20 @@
 #include "mqtt/node_message_distributor.h"
 #include "utils.h"
 #include "bt/register_all_nodes.h"
+#include <csignal>
+#include <atomic>
+#include <chrono> // Required for std::chrono::milliseconds
 
-/**
- * Saves a string to a file
- */
-int saveXmlToFile(const std::string &xml_content, const std::string &filename)
+// Global flag to signal shutdown
+std::atomic<bool> g_shutdown_flag{false};
+
+// Signal handler function
+void signalHandler(int signum)
 {
-    std::filesystem::path abs_path = std::filesystem::absolute(filename);
-    std::cout << "Attempting to save to absolute path: " << abs_path << std::endl;
-
-    std::ofstream file(filename);
-    if (file.is_open())
-    {
-        file << xml_content;
-        file.close();
-        std::cout << "Successfully saved XML models to " << filename << std::endl;
-        return 0;
-    }
-    else
-    {
-        std::cerr << "Failed to open file for writing: " << filename << std::endl;
-        return 1;
-    }
+    std::cout << "Interrupt signal (" << signum << ") received.\n";
+    g_shutdown_flag = true;
 }
-bool loadConfigFromYaml(const std::string &filename,
-                        bool &generate_xml_models,
-                        std::string &serverURI,
-                        std::string &clientId,
-                        std::string &unsTopicPrefix,
-                        int &groot2_port,
-                        std::string &bt_description_path,
-                        std::string &bt_nodes_path)
-{
-    try
-    {
-        if (!std::filesystem::exists(filename))
-        {
-            std::cerr << "Config file not found: " << filename << std::endl;
-            return false;
-        }
 
-        YAML::Node config = YAML::LoadFile(filename);
-
-        if (config["broker_uri"])
-        {
-            serverURI = config["broker_uri"].as<std::string>();
-        }
-        if (config["client_id"])
-        {
-            clientId = config["client_id"].as<std::string>();
-        }
-        if (config["uns_topic"])
-        {
-            unsTopicPrefix = config["uns_topic"].as<std::string>();
-        }
-        if (config["generate_xml_models"])
-        {
-            generate_xml_models = config["generate_xml_models"].as<bool>();
-        }
-        if (config["groot2_port"])
-        {
-            groot2_port = config["groot2_port"].as<int>();
-        }
-        if (config["bt_description_path"])
-        {
-            bt_description_path = config["bt_description_path"].as<std::string>();
-        }
-        if (config["bt_nodes_path"])
-        {
-            bt_nodes_path = config["bt_nodes_path"].as<std::string>();
-        }
-        std::cout << "Configuration loaded from: " << filename << std::endl;
-        return true;
-    }
-    catch (const YAML::Exception &e)
-    {
-        std::cerr << "Error parsing YAML config: " << e.what() << std::endl;
-        return false;
-    }
-}
 int main(int argc, char *argv[])
 {
     // Default parameter values
@@ -104,8 +33,8 @@ int main(int argc, char *argv[])
     int groot2_port = 1667;
     bool generate_xml_models = false;
 
-    loadConfigFromYaml(configFile, generate_xml_models, serverURI, clientId, unsTopicPrefix, groot2_port,
-                       bt_description_path, bt_nodes_path);
+    bt_utils::loadConfigFromYaml(configFile, generate_xml_models, serverURI, clientId, unsTopicPrefix, groot2_port,
+                                 bt_description_path, bt_nodes_path);
     // Parse command line arguments
     for (int i = 1; i < argc; i++)
     {
@@ -116,7 +45,7 @@ int main(int argc, char *argv[])
         }
     }
     auto connOpts = mqtt::connect_options_builder::v5()
-                        .clean_start(true) // if false the broker retains previous subscriptions
+                        .clean_start(true)
                         .properties({{mqtt::property::SESSION_EXPIRY_INTERVAL, 604800}})
                         .finalize();
 
@@ -125,41 +54,39 @@ int main(int argc, char *argv[])
     NodeMessageDistributor node_message_distributor(bt_mqtt_client);
     BT::BehaviorTreeFactory factory;
 
-    // Register the nodes with the behavior tree and the mqtt client
     registerAllNodes(factory, node_message_distributor, bt_mqtt_client, unsTopicPrefix);
-
+    std::signal(SIGINT, signalHandler);
     if (generate_xml_models)
     {
         std::string xml_models = BT::writeTreeNodesModelXML(factory);
-        return saveXmlToFile(xml_models, bt_nodes_path);
+        return bt_utils::saveXmlToFile(xml_models, bt_nodes_path);
     }
     else
     {
         factory.registerBehaviorTreeFromFile(bt_description_path);
         BT::Tree tree = factory.createTree("MainTree");
 
-        // Subscribe only to topics for nodes actually used in the tree
         node_message_distributor.subscribeToActiveNodes(tree);
 
         BT::Groot2Publisher publisher(tree, groot2_port);
 
-        // // Create a backup of the initial blackboard state
-        // std::vector<BT::Blackboard::Ptr> initial_state_backup;
+        std::cout << "====== Starting behavior tree... Press Ctrl+C to exit. ======" << std::endl;
+        BT::NodeStatus status = tree.tickOnce(); // Initial tick
 
-        std::cout << "====== Starting behavior tree... ======" << std::endl;
-        auto status = tree.tickOnce();
-        while (status == BT::NodeStatus::RUNNING)
+        // Loop while the tree is running AND no shutdown signal
+        while (status == BT::NodeStatus::RUNNING && !g_shutdown_flag.load())
         {
-            // The BT is event based so after mqtt messages arrive it traverses immediately but lets tick every few ms any way
-            status = tree.tickWhileRunning(std::chrono::milliseconds(100));
+            status = tree.tickOnce();
+            tree.sleep(std::chrono::milliseconds(100));
+            if (g_shutdown_flag.load())
+            {
+                std::cout << "Tree halted with Crtl+C" << std::endl;
+                break;
+            }
         }
+
         std::cout << "Behavior tree execution completed with status: "
                   << (status == BT::NodeStatus::SUCCESS ? "SUCCESS" : "FAILURE") << std::endl;
-
-        // // For now the behaviour tree is being looped
-        // std::cout << "====== Restarting behavior tree... ======" << std::endl;
-        // tree.haltTree();
-        // std::this_thread::sleep_for(std::chrono::seconds(1));
     }
     return 0;
 }
