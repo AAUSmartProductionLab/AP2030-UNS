@@ -20,19 +20,8 @@
                     "description": "The Uuid of the current command"
                 }
             },
-            "if": {
-                "properties": {
-                  "State": {
-                    "enum": ["IDLE", "RESETTING"]
-                  }
-                }
-              },
-              "then": {
-                "required": ["State"]
-              },
-              "else": {
-                "required": ["State","Uuid"]
-              }
+
+            "required": ["State"]
         }
     ]
 

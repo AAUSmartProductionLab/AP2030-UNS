@@ -1,81 +1,90 @@
 #include "mqtt/node_message_distributor.h"
-#include "mqtt/mqtt_client.h"
-#include "utils.h"
+#include "mqtt/mqtt_client.h" // For MqttClient::subscribe_topic
+#include "utils.h"            // For mqtt_utils::topicMatches
 #include <iostream>
-NodeMessageDistributor::NodeMessageDistributor(MqttClient &mqtt_client) : mqtt_client_(mqtt_client)
-{
-    // Set this manager as the message handler for the mqtt_client
-    mqtt_client.set_message_handler([this](const std::string &msg_topic, const json &payload, mqtt::properties props)
-                                    { handle_incoming_message(msg_topic, payload, props); });
-}
+#include <set> // For std::set in getActiveTopicPatterns & subscribeToActiveNodes
+
+NodeMessageDistributor::NodeMessageDistributor(MqttClient &mqtt_client_ref)
+    : mqtt_client_(mqtt_client_ref) {}
 
 NodeMessageDistributor::~NodeMessageDistributor()
 {
-    // No need for explicit cleanup
+}
+
+std::vector<std::string> NodeMessageDistributor::getActiveTopicPatterns() const
+{
+    std::set<std::string> unique_topics;
+    for (const auto &handler : topic_handlers_)
+    {
+        if (handler.subscribed) // Only include topics that are actively subscribed
+        {
+            unique_topics.insert(handler.topic);
+        }
+    }
+    return std::vector<std::string>(unique_topics.begin(), unique_topics.end());
 }
 
 void NodeMessageDistributor::subscribeToActiveNodes(const BT::Tree &tree)
 {
-    std::cout << "Subscribing to topics for active behavior tree nodes..." << std::endl;
-
-    // Collect all node types in the tree
-    std::set<std::string> activeNodeTypes;
-    BT::applyRecursiveVisitor(tree.rootNode(), [&activeNodeTypes](const BT::TreeNode *node)
+    std::set<std::string> active_node_registration_names;
+    BT::applyRecursiveVisitor(tree.rootNode(),
+                              [&active_node_registration_names](const BT::TreeNode *node)
                               {
-        if (node) {
-            activeNodeTypes.insert(node->registrationName());
-        } });
+                                  if (node)
+                                  {
+                                      active_node_registration_names.insert(node->registrationName());
+                                  }
+                              });
 
-    // Map topics to their subscriber type indices
-    std::map<std::string, std::vector<std::type_index>> topicSubscribers;
-    std::map<std::string, int> topicMaxQoS; // Track maximum QoS per topic
+    std::map<std::string, std::vector<std::type_index>> topic_to_subscriber_types;
+    std::map<std::string, int> topic_to_max_qos;
 
-    // Find all topics needed by active nodes
-    for (const auto &[type_index, subscription] : node_subscriptions_)
+    for (const auto &[type_idx, type_subscription_info] : node_subscriptions_)
     {
-        for (auto *instance : subscription.instances)
+        for (MqttSubBase *instance : type_subscription_info.instances)
         {
             if (!instance)
                 continue;
+            const std::string &topic_str = instance->response_topic_.getTopic();
+            topic_to_subscriber_types[topic_str].push_back(type_idx);
 
-            std::string nodeName = instance->getBTNodeName();
-            if (activeNodeTypes.find(nodeName) == activeNodeTypes.end())
-                continue;
-
-            // Store the type index for this topic
-            topicSubscribers[instance->response_topic_.getTopic()].push_back(type_index);
-
-            // Update maximum QoS for this topic if necessary
-            if (topicMaxQoS.find(instance->response_topic_.getTopic()) == topicMaxQoS.end() ||
-                instance->response_topic_.getQos() > topicMaxQoS[instance->response_topic_.getTopic()])
+            int instance_qos = instance->response_topic_.getQos();
+            if (topic_to_max_qos.find(topic_str) == topic_to_max_qos.end() || instance_qos > topic_to_max_qos[topic_str])
             {
-                topicMaxQoS[instance->response_topic_.getTopic()] = instance->response_topic_.getQos();
+                topic_to_max_qos[topic_str] = instance_qos;
             }
         }
     }
 
-    // Clear existing handlers
     topic_handlers_.clear();
+    int subscribed_count = 0;
 
-    // Create new handlers and subscribe
-    for (const auto &[topic, type_indices] : topicSubscribers)
+    for (const auto &[topic_str, subscriber_type_indices] : topic_to_subscriber_types)
     {
-        // Create a handler that routes messages to appropriate node types
-        auto callback = [this, type_indices](
+        if (subscriber_type_indices.empty())
+            continue;
+
+        auto callback = [this, subscriber_type_indices_copy = subscriber_type_indices](
                             const std::string &msg_topic, const json &msg, mqtt::properties props)
         {
-            for (const auto &type_index : type_indices)
+            for (const auto &type_idx : subscriber_type_indices_copy)
             {
-                this->route_to_nodes(type_index, msg_topic, msg, props);
+                this->route_to_nodes(type_idx, msg_topic, msg, props);
             }
         };
-        const int qos = topicMaxQoS[topic];
-        topic_handlers_.push_back({topic, callback, qos, false});
-        mqtt_client_.subscribe_topic(topic, qos);
-        topic_handlers_.back().subscribed = true;
-    }
 
-    std::cout << "Subscribed to " << topicSubscribers.size() << " topics for active nodes." << std::endl;
+        int qos = topic_to_max_qos[topic_str];
+        if (mqtt_client_.subscribe_topic(topic_str, qos))
+        {
+            topic_handlers_.push_back({topic_str, callback, qos, true});
+            subscribed_count++;
+        }
+        else
+        {
+            topic_handlers_.push_back({topic_str, callback, qos, false});
+            std::cerr << "NodeMessageDistributor: Failed to subscribe to topic '" << topic_str << "'" << std::endl;
+        }
+    }
 }
 
 void NodeMessageDistributor::handle_incoming_message(const std::string &msg_topic,
@@ -85,39 +94,37 @@ void NodeMessageDistributor::handle_incoming_message(const std::string &msg_topi
     bool handled = false;
     for (const auto &handler : topic_handlers_)
     {
-        // Check if the incoming topic fits to any registered handlers considering wild cards
-        if (mqtt_utils::topicMatches(handler.topic, msg_topic))
+        if (handler.subscribed && mqtt_utils::topicMatches(handler.topic, msg_topic))
         {
             handler.callback(msg_topic, payload, props);
             handled = true;
         }
     }
+
     if (!handled)
     {
-        std::cout << "No handler found for topic: " << msg_topic << std::endl;
     }
 }
 
 void NodeMessageDistributor::route_to_nodes(
-    const std::type_index &type_index,
+    const std::type_index &type_idx_param,
     const std::string &topic,
     const json &msg,
     mqtt::properties props)
 {
-    if (node_subscriptions_.find(type_index) == node_subscriptions_.end())
+    auto it = node_subscriptions_.find(type_idx_param);
+    if (it == node_subscriptions_.end())
     {
-        std::cout << "No subscription found for type index: " << type_index.name() << std::endl;
         return;
     }
 
-    auto &subscription = node_subscriptions_[type_index];
-    for (auto *node : subscription.instances)
+    for (MqttSubBase *node_instance : it->second.instances)
     {
-        if (node)
+        if (node_instance)
         {
-            if (mqtt_utils::topicMatches(node->response_topic_.getTopic(), topic))
+            if (mqtt_utils::topicMatches(node_instance->response_topic_.getTopic(), topic))
             {
-                node->processMessage(msg, props);
+                node_instance->processMessage(msg, props);
             }
         }
     }
@@ -128,16 +135,20 @@ void NodeMessageDistributor::registerDerivedInstance(MqttSubBase *instance)
     if (!instance)
         return;
 
-    std::type_index type_index(typeid(*instance));
-    node_subscriptions_[type_index].instances.push_back(instance);
+    std::type_index instance_type_idx(typeid(*instance));
+    node_subscriptions_[instance_type_idx].instances.push_back(instance);
 }
 
 void NodeMessageDistributor::unregisterInstance(MqttSubBase *instance)
 {
-    std::type_index type_index(typeid(*instance));
-    if (node_subscriptions_.find(type_index) != node_subscriptions_.end())
+    if (!instance)
+        return;
+
+    std::type_index instance_type_idx(typeid(*instance));
+    auto it = node_subscriptions_.find(instance_type_idx);
+    if (it != node_subscriptions_.end())
     {
-        auto &instances = node_subscriptions_[type_index].instances;
-        instances.erase(std::remove(instances.begin(), instances.end(), instance), instances.end());
+        auto &instances_vec = it->second.instances;
+        instances_vec.erase(std::remove(instances_vec.begin(), instances_vec.end(), instance), instances_vec.end());
     }
 }

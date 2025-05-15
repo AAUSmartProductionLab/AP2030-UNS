@@ -47,6 +47,7 @@ include_directories(
 
 # Create common library with shared source files
 add_library(bt_controller_common STATIC
+    src/BehaviorTreeController.cpp
     src/utils.cpp
     src/mqtt/node_message_distributor.cpp 
     src/mqtt/mqtt_client.cpp
@@ -83,7 +84,7 @@ target_link_libraries(bt_controller_common
 )
 
 add_executable(bt_controller
-    src/bt_controller.cpp
+    src/BehaviorTreeController.cpp
 )
 
 target_include_directories(${PROJECT_NAME} 
@@ -98,18 +99,3 @@ target_include_directories(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME} 
     bt_controller_common
 )
-
-# # Add model generator executable
-# add_executable(generate_model_xml
-#     src/bt/Description/generate_model_xml.cpp
-# )
-
-# target_include_directories(generate_model_xml PRIVATE 
-#     /usr/local/include
-#     ${CMAKE_CURRENT_SOURCE_DIR}/third_party/json/include
-#     ${CMAKE_CURRENT_SOURCE_DIR}/third_party/json-schema-validator/src
-# )
-
-# target_link_libraries(generate_model_xml 
-#     bt_controller_common
-# )

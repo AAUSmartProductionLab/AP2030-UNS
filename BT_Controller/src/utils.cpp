@@ -6,6 +6,96 @@
 #include <uuid/uuid.h>
 #include <nlohmann/json-schema.hpp>
 namespace fs = std::filesystem;
+
+namespace bt_utils
+{
+    std::string getCurrentTimestampISO()
+    {
+        auto now = std::chrono::system_clock::now();
+        auto itt = std::chrono::system_clock::to_time_t(now);
+        std::ostringstream ss;
+        // Use gmtime_r for thread-safety if available and needed, otherwise gmtime
+        // For simplicity here, using gmtime. Ensure it's appropriate for your threading model.
+        ss << std::put_time(std::gmtime(&itt), "%FT%TZ"); // UTC time
+        return ss.str();
+    }
+    int saveXmlToFile(const std::string &xml_content, const std::string &filename)
+    {
+        std::filesystem::path abs_path = std::filesystem::absolute(filename);
+        std::cout << "Attempting to save to absolute path: " << abs_path << std::endl;
+
+        std::ofstream file(filename);
+        if (file.is_open())
+        {
+            file << xml_content;
+            file.close();
+            std::cout << "Successfully saved XML models to " << filename << std::endl;
+            return 0;
+        }
+        else
+        {
+            std::cerr << "Failed to open file for writing: " << filename << std::endl;
+            return 1;
+        }
+    }
+    bool loadConfigFromYaml(const std::string &filename,
+                            bool &generate_xml_models,
+                            std::string &serverURI,
+                            std::string &clientId,
+                            std::string &unsTopicPrefix,
+                            int &groot2_port,
+                            std::string &bt_description_path,
+                            std::string &bt_nodes_path)
+    {
+        try
+        {
+            if (!std::filesystem::exists(filename))
+            {
+                std::cerr << "Config file not found: " << filename << std::endl;
+                return false;
+            }
+
+            YAML::Node config = YAML::LoadFile(filename);
+
+            if (config["broker_uri"])
+            {
+                serverURI = config["broker_uri"].as<std::string>();
+            }
+            if (config["client_id"])
+            {
+                clientId = config["client_id"].as<std::string>();
+            }
+            if (config["uns_topic"])
+            {
+                unsTopicPrefix = config["uns_topic"].as<std::string>();
+            }
+            if (config["generate_xml_models"])
+            {
+                generate_xml_models = config["generate_xml_models"].as<bool>();
+            }
+            if (config["groot2_port"])
+            {
+                groot2_port = config["groot2_port"].as<int>();
+            }
+            if (config["bt_description_path"])
+            {
+                bt_description_path = config["bt_description_path"].as<std::string>();
+            }
+            if (config["bt_nodes_path"])
+            {
+                bt_nodes_path = config["bt_nodes_path"].as<std::string>();
+            }
+            std::cout << "Configuration loaded from: " << filename << std::endl;
+            return true;
+        }
+        catch (const YAML::Exception &e)
+        {
+            std::cerr << "Error parsing YAML config: " << e.what() << std::endl;
+            return false;
+        }
+    }
+}
+
 namespace mqtt_utils
 {
 

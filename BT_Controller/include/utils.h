@@ -49,81 +49,16 @@ namespace bt_utils
     /**
      * Saves a string to a file
      */
-    inline int saveXmlToFile(const std::string &xml_content, const std::string &filename)
-    {
-        std::filesystem::path abs_path = std::filesystem::absolute(filename);
-        std::cout << "Attempting to save to absolute path: " << abs_path << std::endl;
-
-        std::ofstream file(filename);
-        if (file.is_open())
-        {
-            file << xml_content;
-            file.close();
-            std::cout << "Successfully saved XML models to " << filename << std::endl;
-            return 0;
-        }
-        else
-        {
-            std::cerr << "Failed to open file for writing: " << filename << std::endl;
-            return 1;
-        }
-    }
-    inline bool loadConfigFromYaml(const std::string &filename,
-                                   bool &generate_xml_models,
-                                   std::string &serverURI,
-                                   std::string &clientId,
-                                   std::string &unsTopicPrefix,
-                                   int &groot2_port,
-                                   std::string &bt_description_path,
-                                   std::string &bt_nodes_path)
-    {
-        try
-        {
-            if (!std::filesystem::exists(filename))
-            {
-                std::cerr << "Config file not found: " << filename << std::endl;
-                return false;
-            }
-
-            YAML::Node config = YAML::LoadFile(filename);
-
-            if (config["broker_uri"])
-            {
-                serverURI = config["broker_uri"].as<std::string>();
-            }
-            if (config["client_id"])
-            {
-                clientId = config["client_id"].as<std::string>();
-            }
-            if (config["uns_topic"])
-            {
-                unsTopicPrefix = config["uns_topic"].as<std::string>();
-            }
-            if (config["generate_xml_models"])
-            {
-                generate_xml_models = config["generate_xml_models"].as<bool>();
-            }
-            if (config["groot2_port"])
-            {
-                groot2_port = config["groot2_port"].as<int>();
-            }
-            if (config["bt_description_path"])
-            {
-                bt_description_path = config["bt_description_path"].as<std::string>();
-            }
-            if (config["bt_nodes_path"])
-            {
-                bt_nodes_path = config["bt_nodes_path"].as<std::string>();
-            }
-            std::cout << "Configuration loaded from: " << filename << std::endl;
-            return true;
-        }
-        catch (const YAML::Exception &e)
-        {
-            std::cerr << "Error parsing YAML config: " << e.what() << std::endl;
-            return false;
-        }
-    }
+    std::string getCurrentTimestampISO();
+    int saveXmlToFile(const std::string &xml_content, const std::string &filename);
+    bool loadConfigFromYaml(const std::string &filename,
+                            bool &generate_xml_models,
+                            std::string &serverURI,
+                            std::string &clientId,
+                            std::string &unsTopicPrefix,
+                            int &groot2_port,
+                            std::string &bt_description_path,
+                            std::string &bt_nodes_path);
 }
 
 namespace mqtt_utils
@@ -146,20 +81,64 @@ namespace mqtt_utils
               int qos = 0,
               bool retain = false)
             : topic_(topic),
-              pattern_(topic),
+              pattern_(topic), // Assuming pattern is initially the same as topic
               schema_path_(schema_path),
               schema_validator_(nullptr),
               qos_(qos),
-              retain_(retain) {}
+              retain_(retain)
+        {
+        }
+
+        // Copy Constructor
         Topic(const Topic &other)
             : topic_(other.topic_),
-              pattern_(other.topic_),
+              pattern_(other.pattern_), // Corrected from other.topic_
               schema_path_(other.schema_path_),
-              schema_validator_(nullptr),
+              schema_validator_(nullptr), // New validator must be initialized via initValidator()
               qos_(other.qos_),
               retain_(other.retain_)
         {
+            // If you want the copied Topic to also have a validator immediately,
+            // you might call initValidator() here, or clone the validator if possible.
+            // Current behavior: copy does not get a validator automatically.
         }
+
+        // Move Constructor
+        Topic(Topic &&other) noexcept
+            : topic_(std::move(other.topic_)),
+              pattern_(std::move(other.pattern_)),
+              schema_path_(std::move(other.schema_path_)),
+              schema_validator_(std::move(other.schema_validator_)),
+              qos_(other.qos_),
+              retain_(other.retain_)
+        {
+            // other is now in a valid but unspecified state (its members were moved from)
+        }
+
+        // Copy Assignment Operator - explicitly defined or deleted
+        // If you need copy assignment, you'd define it similar to the copy constructor.
+        // For now, let's explicitly delete it to be clear if it's not fully implemented,
+        // or implement it if needed. Given the unique_ptr, a simple copy is tricky.
+        // However, the error was due to assigning a temporary, which move assignment will handle.
+        // If copy assignment is truly needed, it requires careful thought for schema_validator_.
+        // For now, relying on move assignment for temporaries.
+        // Topic& operator=(const Topic& other) = delete; // Or implement carefully
+
+        // Move Assignment Operator
+        Topic &operator=(Topic &&other) noexcept
+        {
+            if (this != &other)
+            {
+                topic_ = std::move(other.topic_);
+                pattern_ = std::move(other.pattern_);
+                schema_path_ = std::move(other.schema_path_);
+                schema_validator_ = std::move(other.schema_validator_);
+                qos_ = other.qos_;
+                retain_ = other.retain_;
+            }
+            return *this;
+        }
+
         // Initialize schema validator
         void initValidator()
         {
@@ -183,6 +162,8 @@ namespace mqtt_utils
         {
             schema_path_ = schema_path;
             schema_validator_.reset(); // Reset existing validator
+            // Consider calling initValidator() here if a new path means a new validator should be immediately ready
+            // initValidator();
         }
         void setQos(int qos) { qos_ = qos; }
         void setRetain(bool retain) { retain_ = retain; }
@@ -205,7 +186,7 @@ namespace mqtt_utils
         }
 
         // Validate message against schema
-        bool validateMessage(const nlohmann::json &message)
+        bool validateMessage(const nlohmann::json &message) const // Added const
         {
             if (schema_validator_)
             {
@@ -216,11 +197,19 @@ namespace mqtt_utils
                 }
                 catch (const std::exception &e)
                 {
-                    std::cerr << "JSON validation failed: " << e.what() << std::endl;
+                    std::cerr << "JSON validation failed for topic '" << topic_ << "': " << e.what() << std::endl;
+                    // You might want to log the message itself for debugging:
+                    // std::cerr << "Message: " << message.dump(2) << std::endl;
                     return false;
                 }
             }
-            return false; // If no validator, assume valid
+            // If there's no schema path, and thus no validator, consider it valid or invalid based on requirements.
+            // Current: if no validator, it's not validated, so effectively "passes" this check if not strict.
+            // If a schema_path is provided but validator creation failed, schema_validator_ would be null.
+            // If strict validation is required even if schema_path is empty, this logic might change.
+            // For now, if no validator, it returns false. If you want it to be true:
+            return schema_path_.empty(); // Returns true if no schema path was ever set, false otherwise if validator is null.
+                                         // Or simply: return true; // if no validator means "don't care, it's valid"
         }
 
     private:
