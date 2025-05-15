@@ -1,8 +1,8 @@
 #include "mqtt/node_message_distributor.h"
-#include "mqtt/mqtt_client.h" // For MqttClient::subscribe_topic
-#include "utils.h"            // For mqtt_utils::topicMatches
+#include "mqtt/mqtt_client.h"
+#include "utils.h"
 #include <iostream>
-#include <set> // For std::set in getActiveTopicPatterns & subscribeToActiveNodes
+#include <set>
 
 NodeMessageDistributor::NodeMessageDistributor(MqttClient &mqtt_client_ref)
     : mqtt_client_(mqtt_client_ref) {}
@@ -16,7 +16,7 @@ std::vector<std::string> NodeMessageDistributor::getActiveTopicPatterns() const
     std::set<std::string> unique_topics;
     for (const auto &handler : topic_handlers_)
     {
-        if (handler.subscribed) // Only include topics that are actively subscribed
+        if (handler.subscribed)
         {
             unique_topics.insert(handler.topic);
         }

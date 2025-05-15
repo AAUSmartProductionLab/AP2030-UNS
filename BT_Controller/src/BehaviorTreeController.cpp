@@ -30,7 +30,7 @@ BehaviorTreeController::BehaviorTreeController(int argc, char *argv[])
 
     auto connOpts = mqtt::connect_options_builder::v5()
                         .clean_start(true)
-                        .properties({{mqtt::property::SESSION_EXPIRY_INTERVAL, 604800}}) // 7 days
+                        .properties({{mqtt::property::SESSION_EXPIRY_INTERVAL, 604800}})
                         .finalize();
 
     mqtt_client_ = std::make_unique<MqttClient>(app_params_.serverURI, app_params_.clientId, connOpts, 5);
@@ -58,24 +58,15 @@ BehaviorTreeController::~BehaviorTreeController()
             {
                 mqtt_client_->unsubscribe_topic(topic);
             }
-            catch (const std::exception &e)
+            catch (const std::exception &)
             {
-                std::cerr << "Exception during unsubscribe in destructor for topic " << topic << ": " << e.what() << std::endl;
+                // Exception during unsubscribe in destructor is ignored
             }
         }
     }
 
-    if (mqtt_client_ && mqtt_client_->is_connected())
-    {
-        try
-        {
-            mqtt_client_->disconnect();
-        }
-        catch (const std::exception &e)
-        {
-            std::cerr << "Exception during disconnect in destructor: " << e.what() << std::endl;
-        }
-    }
+    // Removed explicit mqtt_client_->disconnect() call.
+    // MqttClient's destructor will handle disconnection.
     g_controller_instance = nullptr;
 }
 

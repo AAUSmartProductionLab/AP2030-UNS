@@ -1,10 +1,9 @@
 #include "mqtt/mqtt_client.h"
-// #include "mqtt/node_message_distributor.h" // Not directly needed here
 
 #include <iostream>
-#include <chrono>    // For std::chrono::seconds
-#include <thread>    // For std::this_thread::sleep_for (if manual reconnect used)
-#include <algorithm> // For std::find_if, std::remove_if
+#include <chrono>
+#include <thread>
+#include <algorithm>
 
 MqttClient::MqttClient(std::string serverURI, std::string client_id,
                        mqtt::connect_options connOpts, int nretry_attempts)
@@ -43,14 +42,27 @@ MqttClient::~MqttClient()
 {
     if (is_connected())
     {
-        std::cout << "Disconnecting MQTT client in destructor..." << std::endl;
         try
         {
-            disconnect(std::chrono::seconds(5))->wait();
+            mqtt::disconnect_options opts;
+            opts.set_timeout(std::chrono::seconds(1));
+            auto token = disconnect(opts);
+            if (token)
+            {
+                token->wait_for(std::chrono::seconds(2));
+            }
         }
-        catch (const mqtt::exception &exc)
+        catch (const mqtt::exception &)
         {
-            std::cerr << "Exception during MQTT disconnect: " << exc.what() << std::endl;
+            // Exception caught and ignored during shutdown
+        }
+        catch (const std::exception &)
+        {
+            // Exception caught and ignored during shutdown
+        }
+        catch (...)
+        {
+            // Exception caught and ignored during shutdown
         }
     }
 }
@@ -105,8 +117,7 @@ bool MqttClient::subscribe_topic(const std::string &topic, int qos)
 {
     if (!is_connected())
     {
-        std::cerr << "Cannot subscribe to topic '" << topic << "', MQTT client not connected." << std::endl;
-        // Add to tracked_subscriptions_ anyway, so on_successful_connect can pick it up
+        // std::cerr << "Cannot subscribe to topic '" << topic << "', MQTT client not connected." << std::endl; // MODIFIED
         if (std::find_if(tracked_subscriptions_.begin(), tracked_subscriptions_.end(),
                          [&](const TopicSubscriptionInfo &tsi)
                          { return tsi.topic == topic; }) == tracked_subscriptions_.end())
@@ -121,13 +132,13 @@ bool MqttClient::subscribe_topic(const std::string &topic, int qos)
                            { return sub.topic == topic; });
 
     if (it == tracked_subscriptions_.end())
-    { // Not in our tracking list yet
+    {
         tracked_subscriptions_.push_back({topic, qos});
     }
     else if (it->qos != qos)
     {
         it->qos = qos;
-        std::cout << "QoS for tracked subscription '" << topic << "' updated to " << qos << ". Re-subscription needed to apply." << std::endl;
+        // std::cout << "QoS for tracked subscription '" << topic << "' updated to " << qos << ". Re-subscription needed to apply." << std::endl; // MODIFIED
     }
 
     try
@@ -136,9 +147,9 @@ bool MqttClient::subscribe_topic(const std::string &topic, int qos)
         subscribe(topic, qos, nullptr, *listener);
         return true;
     }
-    catch (const mqtt::exception &exc)
+    catch (const mqtt::exception &) // MODIFIED
     {
-        std::cerr << "Subscription to topic '" << topic << "' failed: " << exc.what() << std::endl;
+        // std::cerr << "Subscription to topic '" << topic << "' failed: " << exc.what() << std::endl; // MODIFIED
         return false;
     }
 }
@@ -153,8 +164,8 @@ bool MqttClient::unsubscribe_topic(const std::string &topic)
 
     if (!is_connected())
     {
-        std::cerr << "Cannot unsubscribe from topic '" << topic << "', MQTT client not connected (removed from tracking)." << std::endl;
-        return false; // Not connected, but removed from our list
+        // std::cerr << "Cannot unsubscribe from topic '" << topic << "', MQTT client not connected (removed from tracking)." << std::endl; // MODIFIED
+        return false;
     }
 
     try
@@ -163,9 +174,9 @@ bool MqttClient::unsubscribe_topic(const std::string &topic)
         unsubscribe(topic, nullptr, *listener);
         return true;
     }
-    catch (const mqtt::exception &exc)
+    catch (const mqtt::exception &) // MODIFIED
     {
-        std::cerr << "Unsubscription from topic '" << topic << "' failed: " << exc.what() << std::endl;
+        // std::cerr << "Unsubscription from topic '" << topic << "' failed: " << exc.what() << std::endl; // MODIFIED
         return false;
     }
 }
