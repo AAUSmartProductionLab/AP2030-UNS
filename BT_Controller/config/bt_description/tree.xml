@@ -1,14 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root BTCPP_format="4">
   <BehaviorTree ID="Filling">
-    <ReactiveSequence>
-      <Data_Condition expected_value="operational"
-                      comparison_type="equal"
-                      Field="State"
-                      Message="State"
-                      Station="{Station}"/>
-      <UseStation Uuid="{ProductID}"
-                  Station="{Station}">
+    <UseStation Uuid="{ProductID}"
+                Station="{Station}">
+      <ReactiveSequence>
+        <ReactiveFallback>
+          <Data_Condition expected_value="operational"
+                          comparison_type="equal"
+                          Field="State"
+                          Message="State"
+                          Station="{Station}"/>
+          <Sleep msec="10000"/>
+        </ReactiveFallback>
         <Sequence>
           <MoveShuttle Uuid="{ProductID}"
                        TargetPosition="{Station}"/>
@@ -45,23 +48,26 @@
             </Sequence>
           </BC_Fallback>
         </Sequence>
-      </UseStation>
-    </ReactiveSequence>
+      </ReactiveSequence>
+    </UseStation>
   </BehaviorTree>
 
   <BehaviorTree ID="Load">
-    <ReactiveSequence>
-      <Data_Condition expected_value="operational"
-                      comparison_type="equal"
-                      Field="State"
-                      Message="State"
-                      Station="{Station}"/>
-      <SequenceWithMemory>
-        <PopElement ProductID="{ProductID}"
-                    if_empty="SUCCESS"
-                    Queue="{ProductIDs}"/>
-        <UseStation Uuid="{ProductID}"
-                    Station="{Station}">
+    <SequenceWithMemory>
+      <PopElement ProductID="{ProductID}"
+                  if_empty="SUCCESS"
+                  Queue="{ProductIDs}"/>
+      <UseStation Uuid="{ProductID}"
+                  Station="{Station}">
+        <ReactiveSequence>
+          <ReactiveFallback>
+            <Data_Condition expected_value="operational"
+                            comparison_type="equal"
+                            Field="State"
+                            Message="State"
+                            Station="{Station}"/>
+            <Sleep msec="10000"/>
+          </ReactiveFallback>
           <Sequence>
             <MoveShuttle Uuid="{ProductID}"
                          TargetPosition="{Station}"/>
@@ -69,17 +75,17 @@
                                Command="Load"
                                Station="{Station}"/>
           </Sequence>
-        </UseStation>
-      </SequenceWithMemory>
-    </ReactiveSequence>
+        </ReactiveSequence>
+      </UseStation>
+    </SequenceWithMemory>
   </BehaviorTree>
 
   <BehaviorTree ID="MainTree">
     <Sequence>
       <Configure StationMap="{StationMap}"
                  ProductIDs="{ProductIDs}"/>
-      <Parallel failure_count="1"
-                success_count="1">
+      <Parallel failure_count="-1"
+                success_count="-1">
         <SubTree ID="Xbot_Production"
                  XbotTopic="Planar/Xbot1"
                  ProductID=""
@@ -93,14 +99,17 @@
   </BehaviorTree>
 
   <BehaviorTree ID="QualityControl">
-    <ReactiveSequence>
-      <Data_Condition expected_value="operational"
-                      comparison_type="equal"
-                      Field="State"
-                      Message="State"
-                      Station="{Station}"/>
-      <UseStation Uuid="{ProductID}"
-                  Station="{Station}">
+    <UseStation Uuid="{ProductID}"
+                Station="{Station}">
+      <ReactiveSequence>
+        <ReactiveFallback>
+          <Data_Condition expected_value="operational"
+                          comparison_type="equal"
+                          Field="State"
+                          Message="State"
+                          Station="{Station}"/>
+          <Sleep msec="10000"/>
+        </ReactiveFallback>
         <Sequence>
           <MoveShuttle Uuid="{ProductID}"
                        TargetPosition="{Station}"/>
@@ -108,19 +117,22 @@
                              Command="Capture"
                              Station="{Station}"/>
         </Sequence>
-      </UseStation>
-    </ReactiveSequence>
+      </ReactiveSequence>
+    </UseStation>
   </BehaviorTree>
 
   <BehaviorTree ID="Stoppering">
-    <ReactiveSequence>
-      <Data_Condition expected_value="operational"
-                      comparison_type="equal"
-                      Field="State"
-                      Message="State"
-                      Station="{Station}"/>
-      <UseStation Uuid="{ProductID}"
-                  Station="{Station}">
+    <UseStation Uuid="{ProductID}"
+                Station="{Station}">
+      <ReactiveSequence>
+        <ReactiveFallback>
+          <Data_Condition expected_value="operational"
+                          comparison_type="equal"
+                          Field="State"
+                          Message="State"
+                          Station="{Station}"/>
+          <Sleep msec="10000"/>
+        </ReactiveFallback>
         <Sequence>
           <MoveShuttle Uuid="{ProductID}"
                        TargetPosition="{Station}"/>
@@ -128,19 +140,22 @@
                              Command="Stopper"
                              Station="{Station}"/>
         </Sequence>
-      </UseStation>
-    </ReactiveSequence>
+      </ReactiveSequence>
+    </UseStation>
   </BehaviorTree>
 
   <BehaviorTree ID="Unload">
-    <ReactiveSequence>
-      <Data_Condition expected_value="operational"
-                      comparison_type="equal"
-                      Field="State"
-                      Message="State"
-                      Station="{Station}"/>
-      <UseStation Uuid="{ProductID}"
-                  Station="{Station}">
+    <UseStation Uuid="{ProductID}"
+                Station="{Station}">
+      <ReactiveSequence>
+        <ReactiveFallback>
+          <Data_Condition expected_value="operational"
+                          comparison_type="equal"
+                          Field="State"
+                          Message="State"
+                          Station="{Station}"/>
+          <Sleep msec="10000"/>
+        </ReactiveFallback>
         <Sequence>
           <MoveShuttle Uuid="{ProductID}"
                        TargetPosition="{Station}"/>
@@ -148,8 +163,8 @@
                              Command="Unload"
                              Station="{Station}"/>
         </Sequence>
-      </UseStation>
-    </ReactiveSequence>
+      </ReactiveSequence>
+    </UseStation>
   </BehaviorTree>
 
   <BehaviorTree ID="Xbot_Production">
