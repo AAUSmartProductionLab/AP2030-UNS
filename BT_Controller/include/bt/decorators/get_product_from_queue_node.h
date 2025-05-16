@@ -10,7 +10,7 @@
 class MqttClient;
 using nlohmann::json;
 
-class GetProductFromQueue : public BT::DecoratorNode, public MqttPubBase
+class GetProductFromQueue : public BT::DecoratorNode, public MqttPubBase // Assuming no MqttSubBase here
 {
 private:
     bool child_running_ = false;
@@ -20,16 +20,13 @@ public:
     GetProductFromQueue(const std::string &name,
                         const BT::NodeConfig &config,
                         MqttClient &mqtt_client,
-                        const mqtt_utils::Topic &request_topic)
-        : DecoratorNode(name, config),
-          MqttPubBase(mqtt_client, request_topic)
+                        const mqtt_utils::Topic &request_topic) // This is a pattern
+        : BT::DecoratorNode(name, config),
+          MqttPubBase(mqtt_client, {{"request", request_topic}}) // Pass as a map
     {
-
-        request_topic_.setTopic(getFormattedTopic(request_topic_.getPattern(), config));
-        auto raw_port = getRawPortValue("Queue");
-        if (!isBlackboardPointer(raw_port))
+        for (auto &[key, topic_obj] : MqttPubBase::topics_)
         {
-            queue_ = BT::convertFromString<BT::SharedQueue<std::string>>(raw_port);
+            topic_obj.setTopic(getFormattedTopic(topic_obj.getPattern(), config));
         }
     }
     std::string getFormattedTopic(const std::string &pattern, const BT::NodeConfig &config)
@@ -72,7 +69,7 @@ public:
                 auto now = std::chrono::system_clock::now();
                 message["TimeStamp"] = fmt::format("{:%FT%T}Z",
                                                    std::chrono::floor<std::chrono::milliseconds>(now));
-                publish(message);
+                MqttPubBase::publish("request", message); // Use the "request" key
 
                 setOutput("ProductID", value);
             }

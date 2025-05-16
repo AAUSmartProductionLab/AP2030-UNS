@@ -438,6 +438,7 @@ void signalHandler(int signum)
 
 int main(int argc, char *argv[])
 {
+    std::cout << "Starting Behavior Tree Controller..." << std::endl;
     BehaviorTreeController controller(argc, argv);
     return controller.run();
 }

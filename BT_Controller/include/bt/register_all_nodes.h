@@ -37,12 +37,12 @@ void registerAllNodes(
         2,
         false);
     mqtt_utils::Topic StationRegistrationCMD(
-        unsTopicPrefix + "/+/CMD/Start",
+        unsTopicPrefix + "/+/CMD/Register",
         "../../schemas/command.schema.json",
         2,
         false);
     mqtt_utils::Topic StationUnregistrationCMD(
-        unsTopicPrefix + "/+/CMD/Complete",
+        unsTopicPrefix + "/+/CMD/Unregister",
         "../../schemas/command.schema.json",
         2,
         false);
@@ -148,7 +148,8 @@ void registerAllNodes(
         "UseStation",
         StationRegistrationCMD,
         StationUnregistrationCMD,
-        StationState);
+        StationCommandResponse,
+        StationCommandResponse);
 
     KeepRunningUntilEmpty::registerNodeType<KeepRunningUntilEmpty>(
         factory,

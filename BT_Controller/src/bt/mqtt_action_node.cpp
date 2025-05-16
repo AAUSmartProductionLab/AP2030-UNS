@@ -6,36 +6,6 @@
 #include <condition_variable>
 #include <mutex>
 
-MqttActionNode::MqttActionNode(const std::string &name,
-                               const BT::NodeConfig &config,
-                               MqttClient &mqtt_client,
-                               const mqtt_utils::Topic &request_topic,
-                               const mqtt_utils::Topic &response_topic)
-    : BT::StatefulActionNode(name, config),
-      MqttSubBase(mqtt_client, response_topic),
-      MqttPubBase(mqtt_client, request_topic)
-{
-    // Registration happens in derived classes
-}
-MqttActionNode::MqttActionNode(const std::string &name,
-                               const BT::NodeConfig &config,
-                               MqttClient &mqtt_client,
-                               const mqtt_utils::Topic &request_topic,
-                               const mqtt_utils::Topic &response_topic,
-                               const mqtt_utils::Topic &halt_topic)
-    : StatefulActionNode(name, config),
-      MqttPubBase(mqtt_client, request_topic, halt_topic),
-      MqttSubBase(mqtt_client, response_topic)
-{
-}
-MqttActionNode::~MqttActionNode()
-{
-    if (MqttSubBase::node_message_distributor_)
-    {
-        MqttSubBase::node_message_distributor_->unregisterInstance(this);
-    }
-}
-
 // Default implementation of providedPorts - derived classes should override
 BT::PortsList MqttActionNode::providedPorts()
 {
@@ -45,7 +15,7 @@ BT::PortsList MqttActionNode::providedPorts()
 BT::NodeStatus MqttActionNode::onStart()
 {
     // Create the message to send
-    publish(createMessage());
+    publish("request", createMessage());
 
     return BT::NodeStatus::RUNNING;
 }
@@ -63,7 +33,7 @@ void MqttActionNode::onHalted()
 }
 
 // Standard implementation based on PackML override this if needed
-void MqttActionNode::callback(const json &msg, mqtt::properties props)
+void MqttActionNode::callback(const std::string &topic_key, const json &msg, mqtt::properties props)
 {
     // Use mutex to protect shared state
     {

@@ -49,7 +49,7 @@ BT::NodeStatus ConfigurationNode::onStart()
     return BT::NodeStatus::RUNNING;
 }
 
-void ConfigurationNode::callback(const json &msg, mqtt::properties props)
+void ConfigurationNode::callback(const std::string &topic_key, const json &msg, mqtt::properties props)
 {
     // Use mutex to protect shared state
     {

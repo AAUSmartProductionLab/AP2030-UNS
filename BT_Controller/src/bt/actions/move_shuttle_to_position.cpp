@@ -11,9 +11,15 @@ MoveShuttleToPosition::MoveShuttleToPosition(
     const mqtt_utils::Topic &halt_topic) : MqttActionNode(name, config, bt_mqtt_client, request_topic, response_topic, halt_topic)
 {
     // Replace the wildcard in the request and response topics with the XbotId of this node instance
-    response_topic_.setTopic(getFormattedTopic(response_topic.getPattern(), config));
-    request_topic_.setTopic(getFormattedTopic(request_topic_.getPattern(), config));
-    halt_topic_.setTopic(getFormattedTopic(halt_topic_.getPattern(), config));
+    for (auto &[key, topic_obj] : MqttPubBase::topics_)
+    {
+        topic_obj.setTopic(getFormattedTopic(topic_obj.getPattern(), config));
+    }
+    // For SubBase topics
+    for (auto &[key, topic_obj] : MqttSubBase::topics_)
+    {
+        topic_obj.setTopic(getFormattedTopic(topic_obj.getPattern(), config));
+    }
     if (MqttSubBase::node_message_distributor_)
     {
         MqttSubBase::node_message_distributor_->registerDerivedInstance(this);
@@ -61,7 +67,7 @@ void MoveShuttleToPosition::onHalted()
     json message;
     message["TargetPosition"] = 0;
     message["Uuid"] = current_uuid_;
-    publishHalt(message);
+    publish("halt", message);
 }
 
 json MoveShuttleToPosition::createMessage()

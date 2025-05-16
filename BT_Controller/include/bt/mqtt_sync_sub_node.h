@@ -24,7 +24,7 @@ public:
     static BT::PortsList providedPorts();
 
     // Override callback to store the latest message
-    void callback(const json &msg, mqtt::properties props) override;
+    virtual void callback(const std::string &topic_key, const json &msg, mqtt::properties props) override;
 
     virtual BT::NodeStatus tick() override;
 

@@ -20,7 +20,7 @@ public:
     virtual ~ConfigurationNode();
     static BT::PortsList providedPorts();
     BT::NodeStatus onStart();
-    void callback(const json &msg, mqtt::properties props) override;
+    void callback(const std::string &topic_key, const json &msg, mqtt::properties props) override;
     std::shared_ptr<std::deque<std::string>> shared_queue = std::make_shared<std::deque<std::string>>();
     std::map<std::string, int> stationMap;
 };

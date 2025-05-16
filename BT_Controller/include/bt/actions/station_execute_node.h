@@ -11,20 +11,27 @@ class MqttClient;
 using nlohmann::json;
 
 // MoveShuttleToPosition class declaration
-class StationExecuteNode : public MqttActionNode
+class StationExecuteNode : public MqttActionNode // Assuming MqttActionNode is the base
 {
 public:
-    StationExecuteNode(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client,
-                       const mqtt_utils::Topic &request_topic,
-                       const mqtt_utils::Topic &response_topic)
-        : MqttActionNode(name,
-                         config,
-                         bt_mqtt_client,
-                         request_topic,
-                         response_topic)
+    StationExecuteNode(const std::string &name,
+                       const BT::NodeConfig &config,
+                       MqttClient &mqtt_client,
+                       const mqtt_utils::Topic &request_topic,  // This is a pattern
+                       const mqtt_utils::Topic &response_topic) // This is a pattern
+        : MqttActionNode(name, config, mqtt_client,
+                         request_topic,  // Pass pattern to MqttActionNode
+                         response_topic) // Sub topics
     {
-        response_topic_.setTopic(getFormattedTopic(response_topic.getPattern(), config));
-        request_topic_.setTopic(getFormattedTopic(request_topic_.getPattern(), config));
+        for (auto &[key, topic_obj] : MqttPubBase::topics_)
+        {
+            topic_obj.setTopic(getFormattedTopic(topic_obj.getPattern()));
+        }
+        // For SubBase topics
+        for (auto &[key, topic_obj] : MqttSubBase::topics_)
+        {
+            topic_obj.setTopic(getFormattedTopic(topic_obj.getPattern()));
+        }
         if (MqttSubBase::node_message_distributor_)
         {
             MqttSubBase::node_message_distributor_->registerDerivedInstance(this);
@@ -77,7 +84,7 @@ public:
         message["Uuid"] = current_uuid_;
         return message;
     }
-    std::string getFormattedTopic(const std::string &pattern, const BT::NodeConfig &config)
+    std::string getFormattedTopic(const std::string &pattern)
     {
         std::vector<std::string> replacements;
         BT::Expected<std::string> station = getInput<std::string>("Station");
@@ -91,7 +98,7 @@ public:
         return pattern;
     }
     // Standard implementation based on PackML override this if needed
-    void callback(const json &msg, mqtt::properties props) override
+    void callback(const std::string &topic_key, const json &msg, mqtt::properties props) override
     {
         // Use mutex to protect shared state
         {

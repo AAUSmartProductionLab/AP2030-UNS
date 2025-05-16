@@ -23,17 +23,32 @@ public:
     UseStation(const std::string &name,
                const BT::NodeConfig &config,
                MqttClient &mqtt_client,
-               const mqtt_utils::Topic &start_topic,
-               const mqtt_utils::Topic &complete_topic,
-               const mqtt_utils::Topic &response_topic)
+               // Topics for MqttPubBase
+               const mqtt_utils::Topic &raw_register_topic,   // Renamed for clarity, this is the pattern
+               const mqtt_utils::Topic &raw_unregister_topic, // Renamed for clarity, this is the pattern
+               // Topics for MqttSubBase
+               const mqtt_utils::Topic &raw_register_response_topic,  // Renamed for clarity
+               const mqtt_utils::Topic &raw_unregister_response_topic // Renamed for clarity
+               )
         : DecoratorNode(name, config),
-          MqttPubBase(mqtt_client, start_topic, complete_topic),
-          MqttSubBase(mqtt_client, response_topic)
+          MqttPubBase(mqtt_client, {
+                                       {"register", raw_register_topic},    // Key "register"
+                                       {"unregister", raw_unregister_topic} // Key "unregister"
+                                   }),
+          MqttSubBase(mqtt_client, {
+                                       {"register_response", raw_register_response_topic},    // Key "register_response"
+                                       {"unregister_response", raw_unregister_response_topic} // Key "unregister_response"
+                                   })
     {
-        // Format all topic patterns with station ID
-        response_topic_.setTopic(getFormattedTopic(response_topic_.getPattern(), config));
-        request_topic_.setTopic(getFormattedTopic(request_topic_.getPattern(), config));
-        halt_topic_.setTopic(getFormattedTopic(halt_topic_.getPattern(), config));
+        for (auto &[key, topic_obj] : MqttPubBase::topics_)
+        {
+            topic_obj.setTopic(getFormattedTopic(topic_obj.getPattern(), key));
+        }
+        // For SubBase topics
+        for (auto &[key, topic_obj] : MqttSubBase::topics_)
+        {
+            topic_obj.setTopic(getFormattedTopic(topic_obj.getPattern(), key));
+        }
 
         // Register with message distributor
         if (MqttSubBase::node_message_distributor_)
@@ -50,15 +65,25 @@ public:
         }
     }
 
-    std::string getFormattedTopic(const std::string &pattern, const BT::NodeConfig &config)
+    std::string getFormattedTopic(const std::string &pattern_to_format, const std::string &topic_key)
     {
+        std::vector<std::string> replacements;
         BT::Expected<std::string> station = getInput<std::string>("Station");
-        if (station.has_value())
+        if (!station.has_value())
         {
-            std::string formatted = mqtt_utils::formatWildcardTopic(pattern, station.value());
-            return formatted;
+            return pattern_to_format;
         }
-        return pattern;
+        replacements.push_back(station.value());
+        if (topic_key == "register_response")
+        {
+            replacements.push_back("Register");
+        }
+        else if (topic_key == "unregister_response")
+        {
+            replacements.push_back("Unregister");
+        }
+        std::string formatted = mqtt_utils::formatWildcardTopic(pattern_to_format, replacements);
+        return formatted;
     }
 
     BT::NodeStatus tick() override
@@ -72,25 +97,24 @@ public:
                 current_uuid_ = uuid.value();
             }
             current_phase_ = PackML::State::STARTING;
-            sendStartCommand();
+            sendRegisterCommand();
             return BT::NodeStatus::RUNNING;
         }
-        // Only tick child if we've confirmed we're in EXECUTE state
         if (current_phase_ == PackML::State::EXECUTE)
         {
             BT::NodeStatus child_state = child_node_->executeTick();
             if (child_state == BT::NodeStatus::FAILURE)
             {
                 current_phase_ = PackML::State::STOPPING;
-                sendCompleteCommand();
+                sendUnregisterCommand();
                 return BT::NodeStatus::RUNNING;
             }
             else if (child_state == BT::NodeStatus::SUCCESS)
             {
                 resetChild();
                 current_phase_ = PackML::State::COMPLETING;
-                sendCompleteCommand();
-                return BT::NodeStatus::RUNNING; // Keep running until COMPLETE is confirmed
+                sendUnregisterCommand();
+                return BT::NodeStatus::RUNNING;
             }
         }
         // The node should forward the states of its child nodes upwards after it has executed the command to unregister
@@ -114,56 +138,50 @@ public:
         {
             current_uuid_ = uuid.value();
         }
-        sendCompleteCommand();
+        sendUnregisterCommand();
         DecoratorNode::halt();
     }
 
-    void sendStartCommand()
+    void sendRegisterCommand()
     {
         json message;
         message["Uuid"] = current_uuid_;
-        publish(message);
+        MqttPubBase::publish("register", message);
     }
-    void sendCompleteCommand()
+    void sendUnregisterCommand()
     {
         json message;
         message["Uuid"] = current_uuid_;
-        publishHalt(message);
+        MqttPubBase::publish("unregister", message);
     }
 
-    void callback(const json &msg, mqtt::properties props) override
+    void callback(const std::string &topic_key, const json &msg, mqtt::properties props) override
     {
         std::lock_guard<std::mutex> lock(mutex_);
 
-        // Handle both start and complete responses
-        if (status() == BT::NodeStatus::RUNNING)
+        if (status() == BT::NodeStatus::RUNNING && msg.at("Uuid") == current_uuid_)
         {
-            // Check if our UUID is in the process queue
-            if (!msg["ProcessQueue"].empty())
+            std::string state = msg.at("State");
+            if (topic_key == "register_response")
             {
-                std::string first_uuid = msg["ProcessQueue"][0];
-                if (first_uuid == current_uuid_)
+                if (msg.at("State") == "SUCCESS")
                 {
-                    if (msg["State"] == PackML::stateToString(PackML::State::STOPPING))
-                    {
-                        current_phase_ = PackML::State::STOPPED;
-                    }
-                    else if (msg["State"] == PackML::stateToString(PackML::State::EXECUTE) &&
-                             current_phase_ == PackML::State::STARTING)
-                    {
-                        current_phase_ = PackML::State::EXECUTE;
-                    }
-                    else if (msg["State"] == PackML::stateToString(PackML::State::COMPLETE))
-                    {
-                        if (current_phase_ == PackML::State::STOPPING)
-                        {
-                            current_phase_ = PackML::State::STOPPED;
-                        }
-                        else if (current_phase_ == PackML::State::COMPLETING)
-                        {
-                            current_phase_ = PackML::State::COMPLETE;
-                        }
-                    }
+                    current_phase_ = PackML::State::EXECUTE;
+                }
+                else if (msg.at("State") == "FAILURE")
+                {
+                    current_phase_ = PackML::State::STOPPED;
+                }
+            }
+            else if (topic_key == "unregister_response")
+            {
+                if (msg.at("State") == "SUCCESS")
+                {
+                    current_phase_ = PackML::State::COMPLETE;
+                }
+                else if (msg.at("State") == "FAILURE")
+                {
+                    current_phase_ = PackML::State::STOPPED;
                 }
             }
             emitWakeUpSignal();
@@ -190,22 +208,31 @@ public:
         BT::BehaviorTreeFactory &factory,
         MqttClient &mqtt_client,
         const std::string &node_name,
-        const mqtt_utils::Topic &start_topic,
-        const mqtt_utils::Topic &complete_topic,
-        const mqtt_utils::Topic &response_topic)
+        // Pass the four topic patterns required by UseStation constructor
+        const mqtt_utils::Topic &register_topic_pattern,
+        const mqtt_utils::Topic &unregister_topic_pattern,
+        const mqtt_utils::Topic &register_response_topic_pattern,
+        const mqtt_utils::Topic &unregister_response_topic_pattern)
     {
-        factory.registerBuilder<DerivedNode>(
+        auto mqtt_client_ptr = &mqtt_client; // Ensure lifetime management if necessary
+
+        factory.registerBuilder<DerivedNode>( // Typically DerivedNode would be UseStation itself or a derived class
             node_name,
-            [mqtt_client_ptr = &mqtt_client,
-             start_topic,
-             complete_topic,
-             response_topic](const std::string &name, const BT::NodeConfig &config)
+            [mqtt_client_ptr,
+             register_topic_pattern,
+             unregister_topic_pattern,
+             register_response_topic_pattern,
+             unregister_response_topic_pattern](const std::string &name, const BT::NodeConfig &config)
             {
-                return std::make_unique<DerivedNode>(
+                return std::make_unique<DerivedNode>( // Or std::make_unique<UseStation> if DerivedNode is fixed
                     name, config, *mqtt_client_ptr,
-                    start_topic, complete_topic, response_topic);
+                    register_topic_pattern,
+                    unregister_topic_pattern,
+                    register_response_topic_pattern,
+                    unregister_response_topic_pattern);
             });
     }
+
     virtual std::string getBTNodeName() const override
     {
         return this->name();

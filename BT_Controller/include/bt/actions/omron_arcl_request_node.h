@@ -22,5 +22,5 @@ public:
 
     json createMessage() override;
 
-    void callback(const json &msg, mqtt::properties props) override;
+    void callback(const std::string &topic_key, const json &msg, mqtt::properties props) override;
 };

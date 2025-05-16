@@ -11,7 +11,7 @@ MqttAsyncSubNode::MqttAsyncSubNode(const std::string &name,
                                    MqttClient &mqtt_client,
                                    const mqtt_utils::Topic &response_topic)
     : BT::StatefulActionNode(name, config),
-      MqttSubBase(mqtt_client, response_topic)
+      MqttSubBase(mqtt_client, {{"response", response_topic}})
 {
     // Registration happens in derived classes
 }
@@ -45,7 +45,7 @@ void MqttAsyncSubNode::onHalted()
     std::cout << this->name() << "halted" << std::endl;
 }
 
-void MqttAsyncSubNode::callback(const json &msg, mqtt::properties props)
+void MqttAsyncSubNode::callback(const std::string &topic_key, const json &msg, mqtt::properties props)
 {
     // Use mutex to protect shared state
     {

@@ -36,7 +36,7 @@ void NodeMessageDistributor::subscribeToActiveNodes(const BT::Tree &tree)
                                   }
                               });
 
-    std::map<std::string, std::vector<std::type_index>> topic_to_subscriber_types;
+    std::map<std::string, std::vector<MqttSubBase *>> topic_to_instances_map;
     std::map<std::string, int> topic_to_max_qos;
 
     for (const auto &[type_idx, type_subscription_info] : node_subscriptions_)
@@ -45,13 +45,20 @@ void NodeMessageDistributor::subscribeToActiveNodes(const BT::Tree &tree)
         {
             if (!instance)
                 continue;
-            const std::string &topic_str = instance->response_topic_.getTopic();
-            topic_to_subscriber_types[topic_str].push_back(type_idx);
 
-            int instance_qos = instance->response_topic_.getQos();
-            if (topic_to_max_qos.find(topic_str) == topic_to_max_qos.end() || instance_qos > topic_to_max_qos[topic_str])
+            for (const auto &[key, topic_obj] : instance->topics_) // Accessing public topics_
             {
-                topic_to_max_qos[topic_str] = instance_qos;
+                const std::string &topic_str = topic_obj.getTopic(); // This is the fully formatted topic string
+                if (topic_str.empty())
+                    continue;
+
+                topic_to_instances_map[topic_str].push_back(instance);
+
+                int instance_qos = topic_obj.getQos();
+                if (topic_to_max_qos.find(topic_str) == topic_to_max_qos.end() || instance_qos > topic_to_max_qos[topic_str])
+                {
+                    topic_to_max_qos[topic_str] = instance_qos;
+                }
             }
         }
     }
@@ -59,17 +66,18 @@ void NodeMessageDistributor::subscribeToActiveNodes(const BT::Tree &tree)
     topic_handlers_.clear();
     int subscribed_count = 0;
 
-    for (const auto &[topic_str, subscriber_type_indices] : topic_to_subscriber_types)
+    for (const auto &[topic_str, instances_for_topic] : topic_to_instances_map)
     {
-        if (subscriber_type_indices.empty())
+        if (instances_for_topic.empty())
             continue;
 
-        auto callback = [this, subscriber_type_indices_copy = subscriber_type_indices](
+        auto callback = [this, instances_copy = instances_for_topic](
                             const std::string &msg_topic, const json &msg, mqtt::properties props)
         {
-            for (const auto &type_idx : subscriber_type_indices_copy)
+            for (MqttSubBase *instance : instances_copy)
             {
-                this->route_to_nodes(type_idx, msg_topic, msg, props);
+                // MqttSubBase::processMessage will internally find the matching logical topic (key)
+                instance->processMessage(msg_topic, msg, props);
             }
         };
 
@@ -94,39 +102,20 @@ void NodeMessageDistributor::handle_incoming_message(const std::string &msg_topi
     bool handled = false;
     for (const auto &handler : topic_handlers_)
     {
+        // handler.topic is the subscribed topic (can have wildcards)
+        // msg_topic is the actual topic the message arrived on
         if (handler.subscribed && mqtt_utils::topicMatches(handler.topic, msg_topic))
         {
             handler.callback(msg_topic, payload, props);
             handled = true;
+            // If multiple handlers match (e.g. overlapping wildcards), all will be called.
+            // If only one should handle, the logic might need adjustment or ensure non-overlapping subscriptions.
         }
     }
 
     if (!handled)
     {
-    }
-}
-
-void NodeMessageDistributor::route_to_nodes(
-    const std::type_index &type_idx_param,
-    const std::string &topic,
-    const json &msg,
-    mqtt::properties props)
-{
-    auto it = node_subscriptions_.find(type_idx_param);
-    if (it == node_subscriptions_.end())
-    {
-        return;
-    }
-
-    for (MqttSubBase *node_instance : it->second.instances)
-    {
-        if (node_instance)
-        {
-            if (mqtt_utils::topicMatches(node_instance->response_topic_.getTopic(), topic))
-            {
-                node_instance->processMessage(msg, props);
-            }
-        }
+        // std::cout << "NodeMessageDistributor: Message on topic '" << msg_topic << "' was not handled." << std::endl;
     }
 }
 

@@ -92,15 +92,18 @@ namespace mqtt_utils
         // Copy Constructor
         Topic(const Topic &other)
             : topic_(other.topic_),
-              pattern_(other.pattern_), // Corrected from other.topic_
+              pattern_(other.pattern_),
               schema_path_(other.schema_path_),
               schema_validator_(nullptr), // New validator must be initialized via initValidator()
               qos_(other.qos_),
               retain_(other.retain_)
         {
             // If you want the copied Topic to also have a validator immediately,
-            // you might call initValidator() here, or clone the validator if possible.
-            // Current behavior: copy does not get a validator automatically.
+            // you might call initValidator() here.
+            // Or, if the validator itself can be "cloned" (if json_validator supports it):
+            // if (other.schema_validator_) {
+            //    schema_validator_ = std::make_unique<nlohmann::json_schema::json_validator>(*other.schema_validator_); // Requires validator to be copyable
+            // }
         }
 
         // Move Constructor
@@ -112,17 +115,35 @@ namespace mqtt_utils
               qos_(other.qos_),
               retain_(other.retain_)
         {
-            // other is now in a valid but unspecified state (its members were moved from)
         }
 
-        // Copy Assignment Operator - explicitly defined or deleted
-        // If you need copy assignment, you'd define it similar to the copy constructor.
-        // For now, let's explicitly delete it to be clear if it's not fully implemented,
-        // or implement it if needed. Given the unique_ptr, a simple copy is tricky.
-        // However, the error was due to assigning a temporary, which move assignment will handle.
-        // If copy assignment is truly needed, it requires careful thought for schema_validator_.
-        // For now, relying on move assignment for temporaries.
-        // Topic& operator=(const Topic& other) = delete; // Or implement carefully
+        // Copy Assignment Operator
+        // If you need copy assignment, implement it carefully.
+        // A simple member-wise copy is problematic with unique_ptr.
+        // You'd need to decide how to handle schema_validator_.
+        // Option 1: Delete it (prevents copy assignment)
+        // Topic& operator=(const Topic& other) = delete;
+
+        // Option 2: Implement it (example, similar to copy constructor)
+        Topic &operator=(const Topic &other)
+        {
+            if (this != &other)
+            {
+                topic_ = other.topic_;
+                pattern_ = other.pattern_;
+                schema_path_ = other.schema_path_;
+                // Handle schema_validator_ (e.g., reset and optionally re-init or clone)
+                schema_validator_.reset(); // Reset current validator
+                // if (other.schema_validator_) { // If you want to clone
+                //    schema_validator_ = std::make_unique<nlohmann::json_schema::json_validator>(*other.schema_validator_);
+                // } else if (!schema_path_.empty()) { // Or re-initialize if path exists
+                //    initValidator();
+                // }
+                qos_ = other.qos_;
+                retain_ = other.retain_;
+            }
+            return *this;
+        }
 
         // Move Assignment Operator
         Topic &operator=(Topic &&other) noexcept

@@ -4,6 +4,7 @@ project(bt_controller C CXX)
 # Set C++ standard early
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_BUILD_TYPE Debug)
 
 # Add JSON library (header-only)
 add_library(json INTERFACE)

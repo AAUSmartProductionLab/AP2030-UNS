@@ -7,7 +7,7 @@ MqttSyncSubNode::MqttSyncSubNode(const std::string &name,
                                  MqttClient &mqtt_client,
                                  const mqtt_utils::Topic &response_topic)
     : BT::ConditionNode(name, config),
-      MqttSubBase(mqtt_client, response_topic)
+      MqttSubBase(mqtt_client, {{"response", response_topic}})
 
 {
     // Registration happens in derived classes
@@ -26,7 +26,7 @@ BT::PortsList MqttSyncSubNode::providedPorts()
     return {};
 }
 
-void MqttSyncSubNode::callback(const json &msg, mqtt::properties props)
+void MqttSyncSubNode::callback(const std::string &topic_key, const json &msg, mqtt::properties props)
 {
     std::lock_guard<std::mutex> lock(mutex_);
     latest_msg_ = msg;

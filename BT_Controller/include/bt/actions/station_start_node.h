@@ -14,15 +14,30 @@ using nlohmann::json;
 class StationStartNode : public MqttActionNode
 {
 public:
-    StationStartNode(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client,
-                     const mqtt_utils::Topic &request_topic,
-                     const mqtt_utils::Topic &response_topic,
-                     const mqtt_utils::Topic &halt_topic)
-        : MqttActionNode(name, config, bt_mqtt_client,
-                         request_topic, response_topic, halt_topic)
+    StationStartNode(const std::string &name,
+                     const BT::NodeConfig &config,
+                     MqttClient &mqtt_client,
+                     const mqtt_utils::Topic &request_topic,  // This is a pattern
+                     const mqtt_utils::Topic &response_topic, // This is a pattern
+                     const mqtt_utils::Topic &halt_topic)     // This is a pattern
+        : MqttActionNode(name, config, mqtt_client,
+                         request_topic,  // Pass pattern to MqttActionNode
+                         response_topic, // Pass pattern to MqttActionNode
+                         halt_topic)     // Pass pattern to MqttActionNode
     {
-        response_topic_.setTopic(getFormattedTopic(response_topic.getPattern(), config));
-        request_topic_.setTopic(getFormattedTopic(request_topic_.getPattern(), config));
+        // Formatting happens here, in the most derived class with access to 'config'
+        // MqttPubBase::topics_ is inherited from MqttActionNode -> MqttPubBase
+        // MqttSubBase::topics_ is inherited from MqttActionNode -> MqttSubBase
+        for (auto &[key, topic_obj] : MqttPubBase::topics_)
+        {
+            topic_obj.setTopic(getFormattedTopic(topic_obj.getPattern()));
+        }
+        // For SubBase topics
+        for (auto &[key, topic_obj] : MqttSubBase::topics_)
+        {
+            topic_obj.setTopic(getFormattedTopic(topic_obj.getPattern()));
+        }
+
         if (MqttSubBase::node_message_distributor_)
         {
             MqttSubBase::node_message_distributor_->registerDerivedInstance(this);
@@ -62,7 +77,7 @@ public:
         return json();
     }
 
-    std::string getFormattedTopic(const std::string &pattern, const BT::NodeConfig &config)
+    std::string getFormattedTopic(const std::string &pattern)
     {
         BT::Expected<std::string> station = getInput<std::string>("Station");
         if (station.has_value())
@@ -76,9 +91,9 @@ public:
     {
         json message;
         message["Uuid"] = current_uuid_;
-        publishHalt(message);
+        MqttPubBase::publish("halt", message); // Use the "halt" key
     }
-    void callback(const json &msg, mqtt::properties props) override
+    void callback(const std::string &topic_key, const json &msg, mqtt::properties props) override
     {
         // Use mutex to protect shared state
         {

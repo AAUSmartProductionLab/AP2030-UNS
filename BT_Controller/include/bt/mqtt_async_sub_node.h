@@ -26,7 +26,7 @@ public:
     static BT::PortsList providedPorts();
 
     // Override the virtual callback method from base class
-    virtual void callback(const json &msg, mqtt::properties props) override;
+    virtual void callback(const std::string &topic_key, const json &msg, mqtt::properties props) override;
 
     // BT::StatefulActionNode interface implementation
     BT::NodeStatus onStart() override;

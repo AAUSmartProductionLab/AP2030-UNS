@@ -75,6 +75,8 @@ RUN apt-get update && apt-get install -y \
     libxcursor1 libxdamage1 libxfixes3 libxi6 libxrandr2 libxtst6 libfontconfig1 \
     libopengl0 libglu1 mesa-utils \
     libyaml-cpp-dev ffmpeg libsm6 libxext6 \
+    gdb \
+    gdbserver \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 

@@ -42,7 +42,7 @@ json OmronArclRequest::createMessage()
     return message;
 }
 
-void OmronArclRequest::callback(const json &msg, mqtt::properties props)
+void OmronArclRequest::callback(const std::string &topic_key, const json &msg, mqtt::properties props)
 {
     {
         // Todo implment state management

@@ -6,7 +6,10 @@ GenericConditionNode::GenericConditionNode(const std::string &name, const BT::No
                                            const mqtt_utils::Topic &response_topic)
     : MqttSyncSubNode(name, config, bt_mqtt_client, response_topic)
 {
-    response_topic_.setTopic(getFormattedTopic(response_topic.getPattern(), config));
+    for (auto &[key, topic_obj] : MqttSubBase::topics_)
+    {
+        topic_obj.setTopic(getFormattedTopic(topic_obj.getPattern()));
+    }
     if (MqttSubBase::node_message_distributor_)
     {
         MqttSubBase::node_message_distributor_->registerDerivedInstance(this);
@@ -34,7 +37,7 @@ BT::PortsList GenericConditionNode::providedPorts()
         BT::InputPort<std::string>("comparison_type", "Type of comparison: equal, not_equal, greater, less, contains"),
         BT::InputPort<std::string>("expected_value", "Value to compare against")};
 }
-std::string GenericConditionNode::getFormattedTopic(const std::string &pattern, const BT::NodeConfig &config)
+std::string GenericConditionNode::getFormattedTopic(const std::string &pattern)
 {
     std::vector<std::string> replacements;
     BT::Expected<std::string> station = getInput<std::string>("Station");
@@ -72,7 +75,7 @@ BT::NodeStatus GenericConditionNode::tick()
     return BT::NodeStatus::FAILURE;
 }
 
-void GenericConditionNode::callback(const json &msg, mqtt::properties props)
+void GenericConditionNode::callback(const std::string &topic_key, const json &msg, mqtt::properties props)
 {
     BT::Expected<std::string> field_name_res = getInput<std::string>("Field");
     if (field_name_res && msg.contains(field_name_res.value()))
