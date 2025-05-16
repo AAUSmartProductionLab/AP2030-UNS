@@ -9,23 +9,6 @@ BASE_TOPIC = "NN/Nybrovej/InnoLab/Load"
 def load_process(duration=2.0):
     time.sleep(duration)
 
-def start_callback(topic, client, message, properties):
-    """Callback handler for registering commands without executing them"""
-    try:  
-        # Register the command without executing
-        state_machine.start_command(message)
-        
-    except Exception as e:
-        print(f"Error in register_callback: {e}")
-
-def complete_callback(topic, client, message, properties):
-    """Callback handler for unregistering commands by removing them from the queue"""
-    try:  
-        # Unregister/remove the command from the queue if it's not being processed
-        state_machine.complete_command(message)
-        
-    except Exception as e:
-        print(f"Error in unregister_callback: {e}")
 
 def load_callback(topic, client, message, properties):
     """Callback handler for stopper commands"""
@@ -35,18 +18,6 @@ def load_callback(topic, client, message, properties):
         print(f"Error in dispense_callback: {e}")
 
 
-start = Subscriber(
-    BASE_TOPIC+"/CMD/Start",
-    "./schemas/command.schema.json", 
-    2, 
-    start_callback
-)
-complete = Subscriber(
-    BASE_TOPIC+"/CMD/Complete",
-    "./schemas/command.schema.json", 
-    2, 
-    complete_callback
-)
 
 state = Publisher(
     BASE_TOPIC+"/DATA/State", 
@@ -68,10 +39,10 @@ loadProxy = Proxy(
     BROKER_ADDRESS, 
     BROKER_PORT,
     "LoadingProxy", 
-    [load, start, complete]
+    [load]
 )
 
-state_machine = PackMLStateMachine(state, loadProxy, None)
+state_machine = PackMLStateMachine(BASE_TOPIC, loadProxy, None)
 
 def main():
     loadProxy.loop_forever()

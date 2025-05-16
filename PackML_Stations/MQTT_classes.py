@@ -189,5 +189,11 @@ class Proxy(mqtt.Client):
 
         print("Connected to Broker with result code " + str(rc))
 
+    def register_topic(self, topic: Topic):
+        # Register a new topic to the client
+        self.topics.append(topic)
+        topic.registerCallback(self)
+        topic.subscribe(self)
+
     def on_disconnect_callback(self, client, userdata, flags, rc, properties):
         print(f"Disconnected with result code {rc}")

@@ -1,4 +1,4 @@
-from MQTT_classes import Proxy, Publisher, ResponseAsync, Subscriber
+from MQTT_classes import Proxy, Publisher, ResponseAsync
 import time
 import numpy as np
 from PackMLSimulator import PackMLStateMachine
@@ -41,7 +41,7 @@ def dispense_process(mean_duration=2.0, mean_weight=2.0, start_weight=0.0):
         current_weight = start_weight + (pt1_value * target_weight)
         publish_weight(current_weight)
 
-def tare_process(duration=2.0, state_machine=None):
+def tare_process(duration=2.0):
     time.sleep(duration)
     publish_weight(0.0,reset=True)
 
@@ -58,33 +58,6 @@ def publish_weight(weight, reset=False):
         "TimeStamp": timestamp
     }
     weigh_publisher.publish(response, fillProxy, True)
-
-def start_callback(topic, client, message, properties):
-    """Callback handler for registering commands without executing them"""
-    try:  
-        # Register the command without executing
-        state_machine.start_command(message)
-        
-    except Exception as e:
-        print(f"Error in register_callback: {e}")
-
-def complete_callback(topic, client, message, properties):
-    """Callback handler for unregistering commands by removing them from the queue"""
-    try:  
-        # Unregister/remove the command from the queue if it's not being processed
-        state_machine.complete_command(message)
-        
-    except Exception as e:
-        print(f"Error in unregister_callback: {e}")
-
-def abort_callback(topic, client, message, properties):
-    """Callback handler for unregistering commands by removing them from the queue"""
-    try:  
-        # Unregister/remove the command from the queue if it's not being processed
-        state_machine.abort_command(message)
-        
-    except Exception as e:
-        print(f"Error in unregister_callback: {e}")
 
 def dispense_callback(topic, client, message, properties):
     """Callback handler for dispense commands"""
@@ -151,31 +124,6 @@ tare = ResponseAsync(
     tare_callback
 )
 
-start = Subscriber(
-    BASE_TOPIC+"/CMD/Start",
-    "./schemas/command.schema.json", 
-    2, 
-    start_callback
-)
-complete = Subscriber(
-    BASE_TOPIC+"/CMD/Complete",
-    "./schemas/command.schema.json", 
-    2, 
-    complete_callback
-)
-abort = Subscriber(
-    BASE_TOPIC+"/CMD/Abort",
-    "./schemas/command.schema.json", 
-    2, 
-    abort_callback
-)
-
-
-state = Publisher(
-    BASE_TOPIC+"/DATA/State", 
-    "./schemas/stationState.schema.json",
-    2
-)
 
 weigh_publisher = Publisher(
         BASE_TOPIC + "/DATA/Weight",
@@ -187,9 +135,9 @@ fillProxy = Proxy(
     BROKER_ADDRESS, 
     BROKER_PORT,
     "FillingProxy", 
-    [dispense, start, complete, abort, weigh_publisher, tare, refill]
+    [dispense, weigh_publisher, tare, refill]
 )
-state_machine = PackMLStateMachine(state, fillProxy, None)
+state_machine = PackMLStateMachine(BASE_TOPIC,fillProxy, None)
 
 
 def main():
