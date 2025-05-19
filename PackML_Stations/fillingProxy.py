@@ -30,7 +30,8 @@ def dispense_process(mean_duration=2.0, mean_weight=2.0, start_weight=0.0):
     
     # Generate random target weight with normal distribution
     # Scale up to compensate for PT1 not reaching 100%
-    target_weight = np.random.normal(mean_weight-start_weight, 0.05) / expected_completion
+    # Ensure the actual dispensed amount is not negative
+    target_weight = abs(np.random.normal(mean_weight - start_weight, 0.05)) / expected_completion
     publish_weight(start_weight)
 
     for i in range(steps):
