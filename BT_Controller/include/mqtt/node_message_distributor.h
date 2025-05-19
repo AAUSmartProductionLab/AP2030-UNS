@@ -7,10 +7,10 @@
 #include <typeindex>
 #include <algorithm>
 #include <functional>
-#include "mqtt/async_client.h" // Assuming this is your MqttClient's base or actual client
+#include "mqtt/async_client.h"
 #include "mqtt/mqtt_sub_base.h"
 #include <behaviortree_cpp/bt_factory.h>
-#include <set> // For std::set to ensure unique topics
+#include <set>
 
 using json = nlohmann::json;
 
@@ -36,10 +36,8 @@ public:
     void registerNodeType(const std::string &response_topic)
     {
         auto type_index = std::type_index(typeid(T));
-        // Note: The 'topic' field in NodeTypeSubscription seems unused if instances store their own topics.
-        // Consider if node_subscriptions_ structure needs adjustment or if this template is still primary way.
         node_subscriptions_[type_index] = {
-            response_topic, // This might be a default or pattern, actual topics come from instances
+            response_topic,
             {}};
     }
 
@@ -57,22 +55,18 @@ private:
     // Modified structure to track subscription status
     struct TopicHandler
     {
-        std::string topic; // The actual topic string subscribed to
+        std::string topic;
         std::function<void(const std::string &, const json &, mqtt::properties)> callback;
         int qos;
-        bool subscribed; // Indicates if this handler's topic is currently subscribed
+        bool subscribed;
     };
     struct NodeTypeSubscription
     {
-        std::string topic_pattern; // Perhaps this is a pattern for the node type
+        std::string topic_pattern;
         std::vector<MqttSubBase *> instances;
     };
 
     MqttClient &mqtt_client_;
-    std::vector<TopicHandler> topic_handlers_; // Stores active subscriptions and their handlers
-    // Stores MqttSubBase instances, grouped by their C++ type.
-    // Instances themselves hold their specific topic information via MqttSubBase::response_topic_
+    std::vector<TopicHandler> topic_handlers_;
     std::map<std::type_index, NodeTypeSubscription> node_subscriptions_;
-
-    // bool topicMatches(const std::string &pattern, const std::string &topic); // Already in utils.h
 };

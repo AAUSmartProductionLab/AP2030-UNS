@@ -23,22 +23,16 @@ public:
     UseStation(const std::string &name,
                const BT::NodeConfig &config,
                MqttClient &mqtt_client,
-               // Topics for MqttPubBase
-               const mqtt_utils::Topic &raw_register_topic,   // Renamed for clarity, this is the pattern
-               const mqtt_utils::Topic &raw_unregister_topic, // Renamed for clarity, this is the pattern
+               const mqtt_utils::Topic &raw_register_topic,
+               const mqtt_utils::Topic &raw_unregister_topic,
                // Topics for MqttSubBase
-               const mqtt_utils::Topic &raw_register_response_topic,  // Renamed for clarity
-               const mqtt_utils::Topic &raw_unregister_response_topic // Renamed for clarity
-               )
+               const mqtt_utils::Topic &raw_register_response_topic,
+               const mqtt_utils::Topic &raw_unregister_response_topic)
         : DecoratorNode(name, config),
-          MqttPubBase(mqtt_client, {
-                                       {"register", raw_register_topic},    // Key "register"
-                                       {"unregister", raw_unregister_topic} // Key "unregister"
-                                   }),
-          MqttSubBase(mqtt_client, {
-                                       {"register_response", raw_register_response_topic},    // Key "register_response"
-                                       {"unregister_response", raw_unregister_response_topic} // Key "unregister_response"
-                                   })
+          MqttPubBase(mqtt_client, {{"register", raw_register_topic},
+                                    {"unregister", raw_unregister_topic}}),
+          MqttSubBase(mqtt_client, {{"register_response", raw_register_response_topic},
+                                    {"unregister_response", raw_unregister_response_topic}})
     {
         for (auto &[key, topic_obj] : MqttPubBase::topics_)
         {

@@ -10,24 +10,22 @@
 class MqttClient;
 using nlohmann::json;
 
-// MoveShuttleToPosition class declaration
-class StationCompleteNode : public MqttActionNode // Assuming MqttActionNode is the base
+class StationCompleteNode : public MqttActionNode
 {
 public:
     StationCompleteNode(const std::string &name,
                         const BT::NodeConfig &config,
                         MqttClient &mqtt_client,
-                        const mqtt_utils::Topic &request_topic,  // This is a pattern
-                        const mqtt_utils::Topic &response_topic) // This is a pattern
+                        const mqtt_utils::Topic &request_topic,
+                        const mqtt_utils::Topic &response_topic)
         : MqttActionNode(name, config, mqtt_client,
-                         request_topic,  // Pass pattern to MqttActionNode
-                         response_topic) // Sub topics
+                         request_topic,
+                         response_topic)
     {
         for (auto &[key, topic_obj] : MqttPubBase::topics_)
         {
             topic_obj.setTopic(getFormattedTopic(topic_obj.getPattern()));
         }
-        // For SubBase topics
         for (auto &[key, topic_obj] : MqttSubBase::topics_)
         {
             topic_obj.setTopic(getFormattedTopic(topic_obj.getPattern()));
@@ -84,13 +82,10 @@ public:
 
     void callback(const std::string &topic_key, const json &msg, mqtt::properties props) override
     {
-        // Use mutex to protect shared state
         {
             std::lock_guard<std::mutex> lock(mutex_);
-            // Update state based on message content
             if (status() == BT::NodeStatus::RUNNING)
             {
-                // such that we can unregister evwen when it is not our turn
                 if (std::find(msg["ProcessQueue"].begin(),
                               msg["ProcessQueue"].end(),
                               current_uuid_) != msg["ProcessQueue"].end())

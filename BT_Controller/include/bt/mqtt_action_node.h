@@ -18,36 +18,30 @@ protected:
     std::string current_uuid_;
 
 public:
-    // Constructor for nodes WITHOUT a separate halt topic (uses "request" and "response" keys)
     MqttActionNode(const std::string &name,
                    const BT::NodeConfig &config,
                    MqttClient &mqtt_client,
-                   const mqtt_utils::Topic &request_topic_pattern,  // Pattern for publishing requests
-                   const mqtt_utils::Topic &response_topic_pattern) // Pattern for subscribing to responses
+                   const mqtt_utils::Topic &request_topic_pattern,
+                   const mqtt_utils::Topic &response_topic_pattern)
         : BT::StatefulActionNode(name, config),
           MqttPubBase(mqtt_client, {{"request", request_topic_pattern}}),
           MqttSubBase(mqtt_client, {{"response", response_topic_pattern}})
     {
-        // Initialize node_message_distributor_ if not already done by MqttSubBase static setter
-        // MqttSubBase::setNodeMessageDistributor(distributor); // If passed in
         if (MqttSubBase::node_message_distributor_)
         {
             MqttSubBase::node_message_distributor_->registerDerivedInstance(this);
         }
     }
-
-    // Constructor for nodes WITH a separate halt topic (uses "request", "halt", and "response" keys)
     MqttActionNode(const std::string &name, const BT::NodeConfig &config,
                    MqttClient &mqtt_client,
-                   const mqtt_utils::Topic &request_topic_pattern,  // Pattern for publishing requests
-                   const mqtt_utils::Topic &response_topic_pattern, // Pattern for subscribing to responses
-                   const mqtt_utils::Topic &halt_topic_pattern)     // Pattern for publishing halt messages
+                   const mqtt_utils::Topic &request_topic_pattern,
+                   const mqtt_utils::Topic &response_topic_pattern,
+                   const mqtt_utils::Topic &halt_topic_pattern)
         : BT::StatefulActionNode(name, config),
           MqttPubBase(mqtt_client, {{"request", request_topic_pattern},
                                     {"halt", halt_topic_pattern}}),
           MqttSubBase(mqtt_client, {{"response", response_topic_pattern}})
     {
-        // MqttSubBase::setNodeMessageDistributor(distributor); // If passed in
         if (MqttSubBase::node_message_distributor_)
         {
             MqttSubBase::node_message_distributor_->registerDerivedInstance(this);
@@ -62,16 +56,10 @@ public:
         }
     }
 
-    // Default ports implementation
     static BT::PortsList providedPorts();
-
-    // Create message to be implemented by derived classes
     virtual json createMessage() = 0;
-
-    // Override the virtual callback method from base class
     virtual void callback(const std::string &topic_key, const json &msg, mqtt::properties props) override; // Make it pure virtual if MqttActionNode itself doesn't provide a generic implementation
 
-    // BT::StatefulActionNode interface implementation
     BT::NodeStatus onStart() override;
     BT::NodeStatus onRunning() override;
     void onHalted() override;
@@ -79,13 +67,13 @@ public:
     template <typename DerivedNode>
     static void registerNodeType(
         BT::BehaviorTreeFactory &factory,
-        NodeMessageDistributor &distributor, // Keep if used
+        NodeMessageDistributor &distributor,
         MqttClient &mqtt_client,
         const std::string &node_name,
         const mqtt_utils::Topic &request_topic,
         const mqtt_utils::Topic &response_topic)
     {
-        MqttSubBase::setNodeMessageDistributor(&distributor); // Ensure distributor is set before node creation
+        MqttSubBase::setNodeMessageDistributor(&distributor);
         factory.registerBuilder<DerivedNode>(
             node_name,
             [&mqtt_client, request_topic, response_topic](const std::string &name, const BT::NodeConfig &config)
@@ -97,14 +85,14 @@ public:
     template <typename DerivedNode>
     static void registerNodeTypeWithHalt(
         BT::BehaviorTreeFactory &factory,
-        NodeMessageDistributor &distributor, // Keep if used
+        NodeMessageDistributor &distributor,
         MqttClient &mqtt_client,
         const std::string &node_name,
         const mqtt_utils::Topic &request_topic,
         const mqtt_utils::Topic &response_topic,
         const mqtt_utils::Topic &halt_topic)
     {
-        MqttSubBase::setNodeMessageDistributor(&distributor); // Ensure distributor is set before node creation
+        MqttSubBase::setNodeMessageDistributor(&distributor);
         factory.registerBuilder<DerivedNode>(
             node_name,
             [&mqtt_client, request_topic, response_topic, halt_topic](const std::string &name, const BT::NodeConfig &config)

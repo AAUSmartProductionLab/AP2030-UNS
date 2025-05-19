@@ -2,13 +2,13 @@
 
 #include <string>
 #include <atomic>
-#include <memory>   // For std::unique_ptr
-#include <optional> // For std::optional
+#include <memory>
+#include <optional>
 
-#include <behaviortree_cpp/bt_factory.h>  // For BT::BehaviorTreeFactory, BT::Tree
-#include <behaviortree_cpp/basic_types.h> // For BT::NodeStatus
+#include <behaviortree_cpp/bt_factory.h>
+#include <behaviortree_cpp/basic_types.h>
 
-#include "utils.h" // For PackML::State and mqtt_utils::Topic
+#include "utils.h"
 
 // Forward declarations for types used as pointers or in unique_ptr
 class MqttClient;

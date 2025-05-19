@@ -5,6 +5,8 @@
 #include <memory>
 #include <uuid/uuid.h>
 #include <nlohmann/json-schema.hpp>
+#include <fmt/chrono.h>
+#include <chrono>
 namespace fs = std::filesystem;
 
 namespace bt_utils
@@ -12,12 +14,12 @@ namespace bt_utils
     std::string getCurrentTimestampISO()
     {
         auto now = std::chrono::system_clock::now();
-        auto itt = std::chrono::system_clock::to_time_t(now);
-        std::ostringstream ss;
-        // Use gmtime_r for thread-safety if available and needed, otherwise gmtime
-        // For simplicity here, using gmtime. Ensure it's appropriate for your threading model.
-        ss << std::put_time(std::gmtime(&itt), "%FT%TZ"); // UTC time
-        return ss.str();
+        auto time_point_ms = std::chrono::floor<std::chrono::milliseconds>(now);
+        auto time_point_s = std::chrono::time_point_cast<std::chrono::seconds>(time_point_ms);
+        auto fraction_ms = time_point_ms - time_point_s;
+        return fmt::format("{:%Y-%m-%dT%H:%M:%S}.{:03}Z",
+                           time_point_s,
+                           fraction_ms.count());
     }
     int saveXmlToFile(const std::string &xml_content, const std::string &filename)
     {

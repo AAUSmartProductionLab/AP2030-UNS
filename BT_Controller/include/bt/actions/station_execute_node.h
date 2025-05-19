@@ -10,24 +10,22 @@
 class MqttClient;
 using nlohmann::json;
 
-// MoveShuttleToPosition class declaration
-class StationExecuteNode : public MqttActionNode // Assuming MqttActionNode is the base
+class StationExecuteNode : public MqttActionNode
 {
 public:
     StationExecuteNode(const std::string &name,
                        const BT::NodeConfig &config,
                        MqttClient &mqtt_client,
-                       const mqtt_utils::Topic &request_topic,  // This is a pattern
-                       const mqtt_utils::Topic &response_topic) // This is a pattern
+                       const mqtt_utils::Topic &request_topic,
+                       const mqtt_utils::Topic &response_topic)
         : MqttActionNode(name, config, mqtt_client,
-                         request_topic,  // Pass pattern to MqttActionNode
-                         response_topic) // Sub topics
+                         request_topic,
+                         response_topic)
     {
         for (auto &[key, topic_obj] : MqttPubBase::topics_)
         {
             topic_obj.setTopic(getFormattedTopic(topic_obj.getPattern()));
         }
-        // For SubBase topics
         for (auto &[key, topic_obj] : MqttSubBase::topics_)
         {
             topic_obj.setTopic(getFormattedTopic(topic_obj.getPattern()));
@@ -73,11 +71,9 @@ public:
         }
         else
         {
-            // Handle the error - Uuid is missing
             std::cerr << "Error: Uuid not provided to StationExecuteNode. Error: "
                       << uuid_result.error() << std::endl;
 
-            // Generate a new UUID as fallback or set empty
             current_uuid_ = mqtt_utils::generate_uuid();
             std::cerr << "Using generated UUID instead: " << current_uuid_ << std::endl;
         }

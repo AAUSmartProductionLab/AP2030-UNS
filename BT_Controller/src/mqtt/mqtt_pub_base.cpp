@@ -69,8 +69,6 @@ void MqttPubBase::publish(const std::string &topic_key, const std::string &messa
   }
 }
 
-// If you still need a way to add or update topics after construction,
-// you can provide a method for it.
 void MqttPubBase::setTopic(const std::string &topic_key, const mqtt_utils::Topic &topic_object)
 {
   topics_[topic_key] = topic_object;
@@ -85,7 +83,6 @@ void MqttPubBase::setFormattedTopic(const std::string &topic_key, const std::str
   }
   else
   {
-    // Or handle error: topic key not found to set formatted string
     std::cerr << "MqttPubBase: Cannot set formatted topic for unknown key '" << topic_key << "'" << std::endl;
   }
 }

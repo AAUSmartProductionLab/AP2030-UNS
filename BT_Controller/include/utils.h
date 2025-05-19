@@ -87,6 +87,7 @@ namespace mqtt_utils
               qos_(qos),
               retain_(retain)
         {
+            initValidator();
         }
 
         // Copy Constructor
@@ -94,16 +95,11 @@ namespace mqtt_utils
             : topic_(other.topic_),
               pattern_(other.pattern_),
               schema_path_(other.schema_path_),
-              schema_validator_(nullptr), // New validator must be initialized via initValidator()
+              schema_validator_(nullptr),
               qos_(other.qos_),
               retain_(other.retain_)
         {
-            // If you want the copied Topic to also have a validator immediately,
-            // you might call initValidator() here.
-            // Or, if the validator itself can be "cloned" (if json_validator supports it):
-            // if (other.schema_validator_) {
-            //    schema_validator_ = std::make_unique<nlohmann::json_schema::json_validator>(*other.schema_validator_); // Requires validator to be copyable
-            // }
+            initValidator();
         }
 
         // Move Constructor
@@ -117,14 +113,6 @@ namespace mqtt_utils
         {
         }
 
-        // Copy Assignment Operator
-        // If you need copy assignment, implement it carefully.
-        // A simple member-wise copy is problematic with unique_ptr.
-        // You'd need to decide how to handle schema_validator_.
-        // Option 1: Delete it (prevents copy assignment)
-        // Topic& operator=(const Topic& other) = delete;
-
-        // Option 2: Implement it (example, similar to copy constructor)
         Topic &operator=(const Topic &other)
         {
             if (this != &other)
@@ -132,13 +120,8 @@ namespace mqtt_utils
                 topic_ = other.topic_;
                 pattern_ = other.pattern_;
                 schema_path_ = other.schema_path_;
-                // Handle schema_validator_ (e.g., reset and optionally re-init or clone)
-                schema_validator_.reset(); // Reset current validator
-                // if (other.schema_validator_) { // If you want to clone
-                //    schema_validator_ = std::make_unique<nlohmann::json_schema::json_validator>(*other.schema_validator_);
-                // } else if (!schema_path_.empty()) { // Or re-initialize if path exists
-                //    initValidator();
-                // }
+                schema_validator_.reset();
+                initValidator();
                 qos_ = other.qos_;
                 retain_ = other.retain_;
             }
@@ -182,29 +165,11 @@ namespace mqtt_utils
         void setSchemaPath(const std::string &schema_path)
         {
             schema_path_ = schema_path;
-            schema_validator_.reset(); // Reset existing validator
-            // Consider calling initValidator() here if a new path means a new validator should be immediately ready
-            // initValidator();
+            schema_validator_.reset();
+            initValidator();
         }
         void setQos(int qos) { qos_ = qos; }
         void setRetain(bool retain) { retain_ = retain; }
-
-        // Update topic using wildcards
-        void applyPattern(const std::string &replacement)
-        {
-            if (!pattern_.empty())
-            {
-                topic_ = formatWildcardTopic(pattern_, replacement);
-            }
-        }
-
-        void applyPattern(const std::vector<std::string> &replacements)
-        {
-            if (!pattern_.empty())
-            {
-                topic_ = formatWildcardTopic(pattern_, replacements);
-            }
-        }
 
         // Validate message against schema
         bool validateMessage(const nlohmann::json &message) const // Added const
@@ -219,18 +184,10 @@ namespace mqtt_utils
                 catch (const std::exception &e)
                 {
                     std::cerr << "JSON validation failed for topic '" << topic_ << "': " << e.what() << std::endl;
-                    // You might want to log the message itself for debugging:
-                    // std::cerr << "Message: " << message.dump(2) << std::endl;
                     return false;
                 }
             }
-            // If there's no schema path, and thus no validator, consider it valid or invalid based on requirements.
-            // Current: if no validator, it's not validated, so effectively "passes" this check if not strict.
-            // If a schema_path is provided but validator creation failed, schema_validator_ would be null.
-            // If strict validation is required even if schema_path is empty, this logic might change.
-            // For now, if no validator, it returns false. If you want it to be true:
-            return schema_path_.empty(); // Returns true if no schema path was ever set, false otherwise if validator is null.
-                                         // Or simply: return true; // if no validator means "don't care, it's valid"
+            return false;
         }
 
     private:

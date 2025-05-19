@@ -4,23 +4,21 @@
 #include <string>
 #include "mqtt/mqtt_pub_base.h"
 #include <nlohmann/json.hpp>
-#include <fmt/chrono.h>
-#include <chrono>
 
 // Forward declaration
 class MqttClient;
 
 using nlohmann::json;
 
-class PopElementNode : public BT::SyncActionNode, public MqttPubBase // Assuming no MqttSubBase
+class PopElementNode : public BT::SyncActionNode, public MqttPubBase
 {
 public:
     PopElementNode(const std::string &name,
                    const BT::NodeConfig &config,
                    MqttClient &mqtt_client,
-                   const mqtt_utils::Topic &request_topic) // This is a pattern
+                   const mqtt_utils::Topic &request_topic)
         : BT::SyncActionNode(name, config),
-          MqttPubBase(mqtt_client, {{"request", request_topic}}) // Pass as a map
+          MqttPubBase(mqtt_client, {{"request", request_topic}})
     {
         for (auto &[key, topic_obj] : MqttPubBase::topics_)
         {
@@ -58,7 +56,7 @@ public:
             }
 
             BT::SharedQueue<std::string> queue_ptr = queue_expected.value();
-            if (!queue_ptr) // Check if the shared_ptr itself is null
+            if (!queue_ptr)
             {
                 return status_if_queue_empty_or_invalid;
             }
@@ -74,11 +72,8 @@ public:
 
         json message;
         message["ProductId"] = product_id_to_publish;
-        auto now = std::chrono::system_clock::now();
-        message["TimeStamp"] = fmt::format("{:%FT%T}Z",
-                                           std::chrono::floor<std::chrono::milliseconds>(now));
-        MqttPubBase::publish("request", message); // Use the "request" key
-
+        message["TimeStamp"] = bt_utils::getCurrentTimestampISO();
+        MqttPubBase::publish("request", message);
         setOutput("ProductID", product_id_to_publish);
         return BT::NodeStatus::SUCCESS;
     }

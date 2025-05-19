@@ -6,9 +6,6 @@
 class KeepRunningUntilEmpty : public BT::DecoratorNode
 {
 private:
-    // This member is assigned within the tick's lock scope for checking emptiness.
-    // It's not strictly necessary as a member if queue_expected.value() is used directly,
-    // but can be kept for clarity if preferred.
     BT::SharedQueue<std::string> queue_ptr_from_bb_;
 
 public:
@@ -61,7 +58,7 @@ public:
             }
 
             should_tick_child = !queue_ptr_from_bb_->empty();
-        } // Lock on "Queue" is released here.
+        } // Lock on "Queue" is released here. This is a must so parallel branches and sub nodes can access it
 
         if (!should_tick_child)
         {
@@ -91,7 +88,7 @@ public:
 
         default: // SKIPPED or IDLE
             resetChild();
-            return BT::NodeStatus::FAILURE; // Or handle as appropriate
+            return BT::NodeStatus::FAILURE;
         }
     }
 

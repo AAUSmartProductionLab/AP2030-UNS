@@ -12,10 +12,6 @@ MqttSubBase::MqttSubBase(MqttClient &mqtt_client,
     : mqtt_client_(mqtt_client),
       topics_(topics)
 {
-    for (auto &pair : topics_)
-    {
-        pair.second.initValidator(); // Initialize validator for each topic
-    }
 }
 
 void MqttSubBase::processMessage(const std::string &actual_topic_str, const json &msg, mqtt::properties props)

@@ -9,7 +9,6 @@
 class MqttClient;
 using nlohmann::json;
 
-// MoveShuttleToPosition class declaration
 class GenericActionNode : public MqttActionNode
 {
 public:

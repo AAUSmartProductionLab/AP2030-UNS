@@ -10,7 +10,6 @@
 class MqttClient;
 using nlohmann::json;
 
-// MoveShuttleToPosition class declaration
 class ConfigurationNode : public MqttAsyncSubNode
 {
 

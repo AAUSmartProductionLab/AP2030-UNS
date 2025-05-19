@@ -5,12 +5,10 @@
 #include <nlohmann/json.hpp>
 #include <string>
 #include "mqtt/mqtt_pub_base.h"
-#include <fmt/chrono.h>
-#include <chrono>
 class MqttClient;
 using nlohmann::json;
 
-class GetProductFromQueue : public BT::DecoratorNode, public MqttPubBase // Assuming no MqttSubBase here
+class GetProductFromQueue : public BT::DecoratorNode, public MqttPubBase
 {
 private:
     bool child_running_ = false;
@@ -20,9 +18,9 @@ public:
     GetProductFromQueue(const std::string &name,
                         const BT::NodeConfig &config,
                         MqttClient &mqtt_client,
-                        const mqtt_utils::Topic &request_topic) // This is a pattern
+                        const mqtt_utils::Topic &request_topic)
         : BT::DecoratorNode(name, config),
-          MqttPubBase(mqtt_client, {{"request", request_topic}}) // Pass as a map
+          MqttPubBase(mqtt_client, {{"request", request_topic}})
     {
         for (auto &[key, topic_obj] : MqttPubBase::topics_)
         {
@@ -31,7 +29,7 @@ public:
     }
     std::string getFormattedTopic(const std::string &pattern, const BT::NodeConfig &config)
     {
-        BT::Expected<std::string> id = config.blackboard->get<std::string>("XbotTopic"); // hacky way of getting the ID from the subtree parameter
+        BT::Expected<std::string> id = config.blackboard->get<std::string>("XbotTopic");
         if (id.has_value())
         {
             std::string formatted = mqtt_utils::formatWildcardTopic(pattern, id.value());
@@ -66,9 +64,7 @@ public:
                 // Publish the product ID to the MQTT topic
                 json message;
                 message["ProductId"] = value;
-                auto now = std::chrono::system_clock::now();
-                message["TimeStamp"] = fmt::format("{:%FT%T}Z",
-                                                   std::chrono::floor<std::chrono::milliseconds>(now));
+                message["TimeStamp"] = bt_utils::getCurrentTimestampISO();
                 MqttPubBase::publish("request", message); // Use the "request" key
 
                 setOutput("ProductID", value);

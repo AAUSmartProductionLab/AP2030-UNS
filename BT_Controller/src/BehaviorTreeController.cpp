@@ -65,8 +65,6 @@ BehaviorTreeController::~BehaviorTreeController()
         }
     }
 
-    // Removed explicit mqtt_client_->disconnect() call.
-    // MqttClient's destructor will handle disconnection.
     g_controller_instance = nullptr;
 }
 
