@@ -21,8 +21,8 @@ public:
                 const std::map<std::string, mqtt_utils::Topic> &topics);
     virtual ~MqttPubBase();
 
-    virtual void publish(const std::string &topic_key, const json &message, bool retain = false, int qos = 1);
-    virtual void publish(const std::string &topic_key, const std::string &message, bool retain = false, int qos = 1);
+    virtual void publish(const std::string &topic_key, const json &message);
+    virtual void publish(const std::string &topic_key, const std::string &message);
 
     // Optional: Method to set/update a topic pattern after construction if needed
     void setTopic(const std::string &topic_key, const mqtt_utils::Topic &topic_object);

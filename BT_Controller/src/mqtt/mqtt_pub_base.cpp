@@ -4,24 +4,6 @@
 
 namespace fs = std::filesystem;
 
-// MqttPubBase::MqttPubBase(MqttClient &mqtt_client,
-//                          const mqtt_utils::Topic &request_topic)
-//     : mqtt_client_(mqtt_client),
-//       request_topic_(request_topic),
-//       halt_topic_(mqtt_utils::Topic())
-// {
-//   request_topic_.initValidator();
-// }
-// MqttPubBase::MqttPubBase(MqttClient &mqtt_client,
-//                          const mqtt_utils::Topic &request_topic, const mqtt_utils::Topic &halt_topic)
-//     : mqtt_client_(mqtt_client),
-//       request_topic_(request_topic),
-//       halt_topic_(halt_topic)
-// {
-//   request_topic_.initValidator();
-//   halt_topic_.initValidator();
-// }
-// Constructor that accepts a map of topics
 MqttPubBase::MqttPubBase(MqttClient &mqtt_client,
                          const std::map<std::string, mqtt_utils::Topic> &topics)
     : mqtt_client_(&mqtt_client), topics_(topics) // Initialize members
@@ -37,7 +19,7 @@ MqttPubBase::~MqttPubBase()
   // Destructor logic if any
 }
 
-void MqttPubBase::publish(const std::string &topic_key, const json &message, bool retain, int qos)
+void MqttPubBase::publish(const std::string &topic_key, const json &message)
 {
   if (!mqtt_client_)
   {
@@ -54,7 +36,7 @@ void MqttPubBase::publish(const std::string &topic_key, const json &message, boo
       std::cerr << "MqttPubBase: Topic for key '" << topic_key << "' is not fully formatted or is empty: " << topic_str << std::endl;
       return;
     }
-    mqtt_client_->publish(topic_str, message.dump(), retain, qos);
+    mqtt_client_->publish(topic_str, message.dump(), it->second.getRetain(), it->second.getQos());
   }
   else
   {
@@ -62,7 +44,7 @@ void MqttPubBase::publish(const std::string &topic_key, const json &message, boo
   }
 }
 
-void MqttPubBase::publish(const std::string &topic_key, const std::string &message, bool retain, int qos)
+void MqttPubBase::publish(const std::string &topic_key, const std::string &message)
 {
   if (!mqtt_client_)
   {
@@ -79,7 +61,7 @@ void MqttPubBase::publish(const std::string &topic_key, const std::string &messa
       std::cerr << "MqttPubBase: Topic for key '" << topic_key << "' is not fully formatted or is empty: " << topic_str << std::endl;
       return;
     }
-    mqtt_client_->publish(topic_str, message, retain, qos);
+    mqtt_client_->publish(topic_str, message, it->second.getRetain(), it->second.getQos());
   }
   else
   {
