@@ -18,6 +18,7 @@
 #include "bt/controls/bc_fallback_node.h"
 #include "bt/decorators/keep_running_until_empty.h"
 #include "bt/actions/pop_element_node.h"
+#include "bt/actions/refill_node.h"
 
 void registerAllNodes(
     BT::BehaviorTreeFactory &factory,
@@ -66,6 +67,10 @@ void registerAllNodes(
     mqtt_utils::Topic StateData(
         unsTopicPrefix + "/+/DATA/State",
         "../../schemas/state.schema.json",
+        2);
+    mqtt_utils::Topic WeightData(
+        unsTopicPrefix + "/+/DATA/Weight",
+        "../../schemas/data.schema.json",
         2);
     mqtt_utils::Topic GenericConditonDATA(
         unsTopicPrefix + "/+/DATA/+",
@@ -121,6 +126,15 @@ void registerAllNodes(
         "Station_Execution",
         StationExecuteCMD,
         StationCommandResponse);
+
+    RefillNode::registerNodeType<RefillNode>(
+        factory,
+        node_message_distributor,
+        bt_mqtt_client,
+        "Refill_Node",
+        StationExecuteCMD,
+        StationCommandResponse,
+        WeightData);
 
     MqttSyncSubNode::registerNodeType<GenericConditionNode>(
         factory,

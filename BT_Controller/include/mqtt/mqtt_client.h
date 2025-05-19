@@ -26,7 +26,7 @@ public:
     void delivery_complete(mqtt::delivery_token_ptr token) override;
 
     // --- Topic Subscription Management ---
-    bool subscribe_topic(const std::string &topic, int qos);
+    mqtt::token_ptr subscribe_topic(const std::string &topic, int qos);
     bool unsubscribe_topic(const std::string &topic);
     void resubscribe_all_topics();
 

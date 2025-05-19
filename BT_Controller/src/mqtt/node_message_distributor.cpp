@@ -24,15 +24,22 @@ std::vector<std::string> NodeMessageDistributor::getActiveTopicPatterns() const
     return std::vector<std::string>(unique_topics.begin(), unique_topics.end());
 }
 
-void NodeMessageDistributor::subscribeToActiveNodes(const BT::Tree &tree)
+// MODIFIED: Method signature and implementation
+bool NodeMessageDistributor::subscribeToActiveNodes(const BT::Tree &tree, std::chrono::milliseconds timeout_per_subscription)
 {
-    std::set<std::string> active_node_registration_names;
+    if (!tree.rootNode())
+    {
+        std::cerr << "NodeMessageDistributor: Cannot subscribe, behavior tree has no root node." << std::endl;
+        return true; // Or false, depending on desired behavior for an empty/invalid tree
+    }
+
+    std::set<std::string> active_node_instance_names;
     BT::applyRecursiveVisitor(tree.rootNode(),
-                              [&active_node_registration_names](const BT::TreeNode *node)
+                              [&active_node_instance_names](const BT::TreeNode *node)
                               {
                                   if (node)
                                   {
-                                      active_node_registration_names.insert(node->registrationName());
+                                      active_node_instance_names.insert(node->name()); // Get instance name
                                   }
                               });
 
@@ -46,9 +53,18 @@ void NodeMessageDistributor::subscribeToActiveNodes(const BT::Tree &tree)
             if (!instance)
                 continue;
 
-            for (const auto &[key, topic_obj] : instance->topics_) // Accessing public topics_
+            // Only consider instances whose BTNodeName is present in the active tree
+            if (active_node_instance_names.find(instance->getBTNodeName()) == active_node_instance_names.end())
             {
-                const std::string &topic_str = topic_obj.getTopic(); // This is the fully formatted topic string
+                // Optional: Log that this instance is skipped
+                // std::cout << "Skipping subscriptions for BT node instance '" << instance->getBTNodeName()
+                //           << "' as it's not in the active tree." << std::endl;
+                continue;
+            }
+
+            for (const auto &[key, topic_obj] : instance->topics_)
+            {
+                const std::string &topic_str = topic_obj.getTopic();
                 if (topic_str.empty())
                     continue;
 
@@ -64,35 +80,84 @@ void NodeMessageDistributor::subscribeToActiveNodes(const BT::Tree &tree)
     }
 
     topic_handlers_.clear();
-    int subscribed_count = 0;
+    std::vector<std::pair<mqtt::token_ptr, std::string>> subscription_tokens_with_topic;
+    int attempted_subscriptions = 0;
 
     for (const auto &[topic_str, instances_for_topic] : topic_to_instances_map)
     {
         if (instances_for_topic.empty())
             continue;
 
+        attempted_subscriptions++;
         auto callback = [this, instances_copy = instances_for_topic](
                             const std::string &msg_topic, const json &msg, mqtt::properties props)
         {
             for (MqttSubBase *instance : instances_copy)
             {
-                // MqttSubBase::processMessage will internally find the matching logical topic (key)
                 instance->processMessage(msg_topic, msg, props);
             }
         };
-
         int qos = topic_to_max_qos[topic_str];
-        if (mqtt_client_.subscribe_topic(topic_str, qos))
+
+        topic_handlers_.push_back({topic_str, callback, qos, false});
+
+        mqtt::token_ptr token = mqtt_client_.subscribe_topic(topic_str, qos); // Ensure this returns mqtt::token_ptr
+        if (token)
         {
-            topic_handlers_.push_back({topic_str, callback, qos, true});
-            subscribed_count++;
+            subscription_tokens_with_topic.emplace_back(token, topic_str);
         }
         else
         {
-            topic_handlers_.push_back({topic_str, callback, qos, false});
-            std::cerr << "NodeMessageDistributor: Failed to subscribe to topic '" << topic_str << "'" << std::endl;
+            std::cerr << "NodeMessageDistributor: Failed to initiate subscription to topic '" << topic_str << "'" << std::endl;
         }
     }
+
+    if (attempted_subscriptions == 0)
+    {
+        std::cout << "NodeMessageDistributor: No topics to subscribe to for active nodes." << std::endl;
+        return true;
+    }
+
+    std::cout << "NodeMessageDistributor: Waiting for " << subscription_tokens_with_topic.size() << " MQTT subscription initiations to complete..." << std::endl;
+
+    for (auto &token_pair : subscription_tokens_with_topic)
+    {
+        auto &token = token_pair.first;
+        const std::string &topic_str = token_pair.second;
+
+        auto handler_it = std::find_if(topic_handlers_.begin(), topic_handlers_.end(),
+                                       [&](const TopicHandler &h)
+                                       { return h.topic == topic_str; });
+
+        if (handler_it == topic_handlers_.end())
+        {
+            std::cerr << "NodeMessageDistributor: Internal error, could not find handler for topic " << topic_str << " while waiting for token." << std::endl;
+            continue;
+        }
+
+        if (token->wait_for(timeout_per_subscription))
+        {
+            if (token->get_return_code() == mqtt::SUCCESS)
+            {
+                handler_it->subscribed = true;
+            }
+            else
+            {
+                std::cerr << "NodeMessageDistributor: Subscription failed for topic '" << handler_it->topic
+                          << "'. MQTT Reason Code: " << token->get_return_code() << ". Error message:" << token->get_error_message() << std::endl;
+            }
+        }
+        else
+        {
+            std::cerr << "NodeMessageDistributor: Subscription timed out for topic '" << handler_it->topic << "'" << std::endl;
+        }
+    }
+
+    long actual_subscribed_count = std::count_if(topic_handlers_.begin(), topic_handlers_.end(), [](const TopicHandler &h)
+                                                 { return h.subscribed; });
+    std::cout << "NodeMessageDistributor: " << actual_subscribed_count << " of " << attempted_subscriptions << " topic subscriptions are now active." << std::endl;
+
+    return actual_subscribed_count == attempted_subscriptions;
 }
 
 void NodeMessageDistributor::handle_incoming_message(const std::string &msg_topic,

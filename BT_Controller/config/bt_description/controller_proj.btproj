@@ -43,6 +43,14 @@
             <input_port name="if_empty" default="SUCCESS" type="BT::NodeStatus">Status to return if the queue is empty (SUCCESS, FAILURE, SKIPPED).</input_port>
             <input_port name="Queue" default="{ProductIDs}" type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;">The shared queue of product IDs. An element will be popped from it.</input_port>
         </Action>
+        <Action ID="Refill_Node">
+            <input_port name="Uuid" default="{ID}" type="std::string">UUID for the command to execute</input_port>
+            <input_port name="Command" default="Refill" type="std::string">The command to execute on the station</input_port>
+            <input_port name="Station" default="{Station}" type="std::string">The station to register with</input_port>
+        </Action>
+        <SubTree ID="Scrap" editable="true">
+            <input_port name="Station" default="Scrap"/>
+        </SubTree>
         <SubTree ID="StationProcess" editable="true">
             <input_port name="Station" default="Stoppering"/>
         </SubTree>

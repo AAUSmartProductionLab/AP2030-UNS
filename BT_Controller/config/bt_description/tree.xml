@@ -19,7 +19,7 @@
                              Command="Tare"
                              Station="{Station}"/>
           <BC_Fallback>
-            <Data_Condition expected_value="1.9;2.2"
+            <Data_Condition expected_value="2.0;2.2"
                             comparison_type="inside"
                             Field="Weight"
                             Message="Weight"
@@ -41,9 +41,9 @@
                               Message="Weight"
                               Station="{Station}"/>
               <RetryUntilSuccessful num_attempts="2">
-                <Station_Execution Uuid="{ProductID}"
-                                   Command="Refill"
-                                   Station="{Station}"/>
+                <Refill_Node Uuid="{ProductID}"
+                             Command="Refill"
+                             Station="{Station}"/>
               </RetryUntilSuccessful>
             </Sequence>
           </BC_Fallback>
@@ -85,13 +85,17 @@
       <Configure StationMap="{StationMap}"
                  ProductIDs="{ProductIDs}"/>
       <Parallel failure_count="-1"
-                success_count="-1">
+                success_count="1">
         <SubTree ID="Xbot_Production"
                  XbotTopic="Planar/Xbot1"
                  ProductID=""
                  _autoremap="true"/>
         <SubTree ID="Xbot_Production"
                  XbotTopic="Planar/Xbot2"
+                 ProductID=""
+                 _autoremap="true"/>
+        <SubTree ID="Xbot_Production"
+                 XbotTopic="Planar/Xbot3"
                  ProductID=""
                  _autoremap="true"/>
       </Parallel>
@@ -115,6 +119,29 @@
                        TargetPosition="{Station}"/>
           <Station_Execution Uuid="{ProductID}"
                              Command="Capture"
+                             Station="{Station}"/>
+        </Sequence>
+      </ReactiveSequence>
+    </UseStation>
+  </BehaviorTree>
+
+  <BehaviorTree ID="Scrap">
+    <UseStation Uuid="{ProductID}"
+                Station="{Station}">
+      <ReactiveSequence>
+        <ReactiveFallback>
+          <Data_Condition expected_value="operational"
+                          comparison_type="equal"
+                          Field="State"
+                          Message="State"
+                          Station="{Station}"/>
+          <Sleep msec="10000"/>
+        </ReactiveFallback>
+        <Sequence>
+          <MoveShuttle Uuid="{ProductID}"
+                       TargetPosition="{Station}"/>
+          <Station_Execution Uuid="{ProductID}"
+                             Command="Scrap"
                              Station="{Station}"/>
         </Sequence>
       </ReactiveSequence>
@@ -179,23 +206,28 @@
                           Station="{XbotTopic}"/>
           <Sleep msec="10000"/>
         </ReactiveFallback>
-        <SequenceWithMemory>
-          <SubTree ID="Load"
-                   Station="Load"
+        <Fallback>
+          <SequenceWithMemory>
+            <SubTree ID="Load"
+                     Station="Load"
+                     _autoremap="true"/>
+            <SubTree ID="Filling"
+                     Station="Filling"
+                     _autoremap="true"/>
+            <SubTree ID="Stoppering"
+                     Station="Stoppering"
+                     _autoremap="true"/>
+            <SubTree ID="QualityControl"
+                     Station="Camera"
+                     _autoremap="true"/>
+            <SubTree ID="Unload"
+                     Station="Unload"
+                     _autoremap="true"/>
+          </SequenceWithMemory>
+          <SubTree ID="Scrap"
+                   Station="Scrap"
                    _autoremap="true"/>
-          <SubTree ID="Filling"
-                   Station="Filling"
-                   _autoremap="true"/>
-          <SubTree ID="Stoppering"
-                   Station="Stoppering"
-                   _autoremap="true"/>
-          <SubTree ID="QualityControl"
-                   Station="Camera"
-                   _autoremap="true"/>
-          <SubTree ID="Unload"
-                   Station="Unload"
-                   _autoremap="true"/>
-        </SequenceWithMemory>
+        </Fallback>
       </ReactiveSequence>
     </KeepRunningUntilEmpty>
   </BehaviorTree>
@@ -261,6 +293,22 @@
                   default="{ProductIDs}"
                   type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;">The shared queue of product IDs. An element will be popped from it.</input_port>
     </Action>
+    <Action ID="Refill_Node">
+      <input_port name="Uuid"
+                  default="{ID}"
+                  type="std::string">UUID for the command to execute</input_port>
+      <input_port name="Command"
+                  default="Refill"
+                  type="std::string">The command to execute on the station</input_port>
+      <input_port name="Station"
+                  default="{Station}"
+                  type="std::string">The station to register with</input_port>
+    </Action>
+    <SubTree ID="Scrap"
+             editable="true">
+      <input_port name="Station"
+                  default="Scrap"/>
+    </SubTree>
     <Action ID="Station_Execution">
       <input_port name="Uuid"
                   default="{ID}"

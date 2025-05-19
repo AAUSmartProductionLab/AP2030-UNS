@@ -295,30 +295,77 @@ void BehaviorTreeController::processBehaviorTreeStart()
         return;
     }
 
-    if (mqtt_client_)
+    // Define the main MQTT message handler
+    auto main_mqtt_message_handler =
+        [this](const std::string &topic, const json &payload, mqtt::properties props)
     {
-        mqtt_client_->set_message_handler(nullptr);
-    }
+        if (topic == this->app_params_.start_topic)
+        {
+            if (!this->sigint_received_.load())
+            {
+                this->shutdown_flag_ = false;
+                this->mqtt_halt_bt_flag_ = false;
+                this->mqtt_start_bt_flag_ = true;
+            }
+        }
+        else if (topic == this->app_params_.stop_topic)
+        {
+            this->requestShutdown();
+        }
+        else if (topic == this->app_params_.halt_topic)
+        {
+            this->mqtt_halt_bt_flag_ = true;
+        }
+        else
+        {
+            if (this->node_message_distributor_)
+            {
+                this->node_message_distributor_->handle_incoming_message(topic, payload, props);
+            }
+            else
+            {
+                std::cerr << "MQTT message for NMD, but NodeMessageDistributor is null. Topic: " << topic << std::endl;
+            }
+        }
+    };
 
     if (current_packml_state_ == PackML::State::SUSPENDED && bt_tree_.rootNode())
     {
+        // Resuming a suspended tree.
+        std::cout << "Resuming suspended behavior tree." << std::endl;
+        // Ensure the main handler is active for resumption.
+        if (mqtt_client_)
+        {
+            mqtt_client_->set_message_handler(main_mqtt_message_handler);
+        }
     }
-    else
+    else // Full start or restart
     {
+        // Temporarily remove any existing message handler during cleanup and reconfiguration.
+        if (mqtt_client_)
+        {
+            mqtt_client_->set_message_handler(nullptr);
+        }
+
+        // Clean up previous subscriptions and tree instance
         if (node_message_distributor_ && mqtt_client_)
         {
             std::vector<std::string> old_topics = node_message_distributor_->getActiveTopicPatterns();
             if (!old_topics.empty())
             {
-                for (const auto &topic : old_topics)
+                std::cout << "Unsubscribing from " << old_topics.size() << " old topics..." << std::endl;
+                for (const auto &topic_str : old_topics) // Renamed 'topic' to 'topic_str' to avoid conflict
                 {
                     try
                     {
-                        mqtt_client_->unsubscribe_topic(topic);
+                        if (!mqtt_client_->unsubscribe_topic(topic_str))
+                        {
+                            // std::cerr << "Failed to initiate unsubscription for topic: " << topic_str << std::endl;
+                        }
                     }
                     catch (const std::exception &e)
                     {
-                        std::cerr << "Exception during unsubscribe in processBehaviorTreeStart for topic " << topic << ": " << e.what() << std::endl;
+                        std::cerr << "Exception during unsubscribe in processBehaviorTreeStart for topic " << topic_str << ": " << e.what() << std::endl;
                     }
                 }
             }
@@ -333,50 +380,69 @@ void BehaviorTreeController::processBehaviorTreeStart()
         node_message_distributor_ = std::make_unique<NodeMessageDistributor>(*mqtt_client_);
         MqttSubBase::setNodeMessageDistributor(node_message_distributor_.get());
 
-        bt_factory_.registerBehaviorTreeFromFile(app_params_.bt_description_path);
-        bt_tree_ = bt_factory_.createTree("MainTree");
-
-        if (node_message_distributor_)
+        try
         {
-            node_message_distributor_->subscribeToActiveNodes(bt_tree_);
+            bt_factory_.registerBehaviorTreeFromFile(app_params_.bt_description_path);
+            bt_tree_ = bt_factory_.createTree("MainTree");
+        }
+        catch (const BT::RuntimeError &e)
+        {
+            std::cerr << "BT Runtime Error during tree creation: " << e.what() << std::endl;
+            if (mqtt_client_)
+            {
+                // Restore a handler that can process control commands if tree creation fails
+                initializeMqttControlInterface();
+            }
+            setStateAndPublish(PackML::State::ABORTED);
+            mqtt_start_bt_flag_ = false;
+            return;
         }
 
+        if (mqtt_client_)
+        {
+            mqtt_client_->set_message_handler(main_mqtt_message_handler);
+        }
+
+        bool subscriptions_successful = false;
+        if (node_message_distributor_ && bt_tree_.rootNode())
+        {
+            std::cout << "Attempting to subscribe to active node topics..." << std::endl;
+            subscriptions_successful = node_message_distributor_->subscribeToActiveNodes(bt_tree_, std::chrono::seconds(5)); // Default timeout
+        }
+        else if (!bt_tree_.rootNode())
+        {
+            std::cerr << "Error: Behavior tree could not be created. Cannot subscribe to active nodes." << std::endl;
+        }
+        else
+        {
+            std::cerr << "Error: NodeMessageDistributor is null before subscribing to active nodes." << std::endl;
+        }
+
+        if (!subscriptions_successful)
+        {
+            std::cerr << "Failed to establish all necessary MQTT subscriptions for the behavior tree. Aborting start." << std::endl;
+            if (mqtt_client_)
+            {
+                // Clear the full handler and restore a control-only command handler.
+                mqtt_client_->set_message_handler(nullptr);
+                initializeMqttControlInterface();
+            }
+            if (bt_tree_.rootNode())
+            {
+                bt_tree_.haltTree();
+            }
+            bt_publisher_.reset();
+            mqtt_start_bt_flag_ = false;
+            setStateAndPublish(PackML::State::ABORTED);
+            return;
+        }
+        std::cout << "All MQTT subscriptions for active nodes established." << std::endl;
+
+        // Create Groot2 publisher for the new tree
         bt_publisher_ = std::make_unique<BT::Groot2Publisher>(bt_tree_, app_params_.groot2_port);
     }
 
-    if (mqtt_client_)
-    {
-        auto main_mqtt_message_handler =
-            [this](const std::string &topic, const json &payload, mqtt::properties props)
-        {
-            if (topic == this->app_params_.start_topic)
-            {
-                if (!this->sigint_received_.load())
-                {
-                    this->shutdown_flag_ = false;
-                    this->mqtt_halt_bt_flag_ = false;
-                    this->mqtt_start_bt_flag_ = true;
-                }
-            }
-            else if (topic == this->app_params_.stop_topic)
-            {
-                this->requestShutdown();
-            }
-            else if (topic == this->app_params_.halt_topic)
-            {
-                this->mqtt_halt_bt_flag_ = true;
-            }
-            else
-            {
-                if (this->node_message_distributor_)
-                {
-                    this->node_message_distributor_->handle_incoming_message(topic, payload, props);
-                }
-            }
-        };
-        mqtt_client_->set_message_handler(main_mqtt_message_handler);
-    }
-
+    // Common logic to proceed to EXECUTE state
     shutdown_flag_ = false;
     mqtt_halt_bt_flag_ = false;
     std::cout << "====== Behavior tree starting/resuming... ======" << std::endl;

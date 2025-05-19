@@ -39,8 +39,6 @@ BT::NodeStatus ConfigurationNode::onStart()
 {
     if (!shared_queue->empty() && !stationMap.empty())
     {
-        // setOutput("ProductIDs", shared_queue);
-        // setOutput("StationMap", stationMap);
         config().blackboard->set("ProductIDs", shared_queue);
         config().blackboard->set("StationMap", stationMap);
 
@@ -54,7 +52,6 @@ void ConfigurationNode::callback(const std::string &topic_key, const json &msg, 
     // Use mutex to protect shared state
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        // Update state based on message content
 
         if (msg.contains("Units"))
         {
@@ -70,7 +67,7 @@ void ConfigurationNode::callback(const std::string &topic_key, const json &msg, 
             }
         }
         if (msg.contains("Stations"))
-        { // Clear existing station map
+        {
             stationMap.clear();
             for (const auto &station : msg["Stations"])
             {
@@ -84,8 +81,6 @@ void ConfigurationNode::callback(const std::string &topic_key, const json &msg, 
         }
         if (status() == BT::NodeStatus::RUNNING && !shared_queue->empty() && !stationMap.empty())
         {
-            // setOutput("ProductIDs", shared_queue);
-            // setOutput("StationMap", stationMap);
             config().blackboard->set("ProductIDs", shared_queue);
             config().blackboard->set("StationMap", stationMap);
 

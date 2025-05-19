@@ -28,11 +28,17 @@ namespace BT
     {
         const size_t children_count = children_nodes_.size();
 
+        if (children_nodes_.empty())
+        {
+            throw LogicError("[", name(), "]: Has no children");
+        }
+
         if (status() == NodeStatus::IDLE)
         {
             skipped_count_ = 0;
             checking_post_cond_ = false;
             saved_child_idx_ = 0;
+            current_child_idx_ = 0;
         }
         TreeNode *post_cond_ = children_nodes_[0];
         setStatus(NodeStatus::RUNNING);

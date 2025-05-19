@@ -6,12 +6,8 @@ namespace fs = std::filesystem;
 
 MqttPubBase::MqttPubBase(MqttClient &mqtt_client,
                          const std::map<std::string, mqtt_utils::Topic> &topics)
-    : mqtt_client_(&mqtt_client), topics_(topics) // Initialize members
+    : mqtt_client_(&mqtt_client), topics_(topics)
 {
-  // The actual topic string formatting (e.g., replacing placeholders)
-  // should ideally happen in the derived node's constructor,
-  // as it has access to the BT::NodeConfig.
-  // Here, we just store the topic patterns.
 }
 
 MqttPubBase::~MqttPubBase()
@@ -36,7 +32,7 @@ void MqttPubBase::publish(const std::string &topic_key, const json &message)
       std::cerr << "MqttPubBase: Topic for key '" << topic_key << "' is not fully formatted or is empty: " << topic_str << std::endl;
       return;
     }
-    mqtt_client_->publish(topic_str, message.dump(), it->second.getRetain(), it->second.getQos());
+    mqtt_client_->publish(topic_str, message.dump(), it->second.getQos(), it->second.getRetain());
   }
   else
   {
@@ -61,7 +57,7 @@ void MqttPubBase::publish(const std::string &topic_key, const std::string &messa
       std::cerr << "MqttPubBase: Topic for key '" << topic_key << "' is not fully formatted or is empty: " << topic_str << std::endl;
       return;
     }
-    mqtt_client_->publish(topic_str, message, it->second.getRetain(), it->second.getQos());
+    mqtt_client_->publish(topic_str, message, it->second.getQos(), it->second.getRetain());
   }
   else
   {

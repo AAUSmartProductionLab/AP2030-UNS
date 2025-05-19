@@ -171,7 +171,14 @@ public:
             {
                 if (msg.at("State") == "SUCCESS")
                 {
-                    current_phase_ = PackML::State::COMPLETE;
+                    if (current_phase_ == PackML::State::COMPLETING)
+                    {
+                        current_phase_ = PackML::State::COMPLETE;
+                    }
+                    else if (current_phase_ == PackML::State::STOPPING)
+                    {
+                        current_phase_ = PackML::State::STOPPED;
+                    }
                 }
                 else if (msg.at("State") == "FAILURE")
                 {

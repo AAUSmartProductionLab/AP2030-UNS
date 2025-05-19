@@ -113,18 +113,18 @@ void MqttClient::delivery_complete(mqtt::delivery_token_ptr token)
     // }
 }
 
-bool MqttClient::subscribe_topic(const std::string &topic, int qos)
+mqtt::token_ptr MqttClient::subscribe_topic(const std::string &topic, int qos) // MODIFIED: Return token_ptr
 {
     if (!is_connected())
     {
-        // std::cerr << "Cannot subscribe to topic '" << topic << "', MQTT client not connected." << std::endl; // MODIFIED
+        // std::cerr << "Cannot subscribe to topic '" << topic << "', MQTT client not connected." << std::endl;
         if (std::find_if(tracked_subscriptions_.begin(), tracked_subscriptions_.end(),
                          [&](const TopicSubscriptionInfo &tsi)
                          { return tsi.topic == topic; }) == tracked_subscriptions_.end())
         {
             tracked_subscriptions_.push_back({topic, qos});
         }
-        return false;
+        return nullptr; // MODIFIED: Indicate failure to initiate
     }
 
     auto it = std::find_if(tracked_subscriptions_.begin(), tracked_subscriptions_.end(),
@@ -138,19 +138,18 @@ bool MqttClient::subscribe_topic(const std::string &topic, int qos)
     else if (it->qos != qos)
     {
         it->qos = qos;
-        // std::cout << "QoS for tracked subscription '" << topic << "' updated to " << qos << ". Re-subscription needed to apply." << std::endl; // MODIFIED
+        // std::cout << "QoS for tracked subscription '" << topic << "' updated to " << qos << ". Re-subscription needed to apply." << std::endl;
     }
 
     try
     {
-        auto listener = new subscription_listener(topic);
-        subscribe(topic, qos, nullptr, *listener);
-        return true;
+        auto listener = new subscription_listener(topic); // Paho MQTT library takes ownership
+        return subscribe(topic, qos, nullptr, *listener); // MODIFIED: Return the token
     }
-    catch (const mqtt::exception &) // MODIFIED
+    catch (const mqtt::exception &exc)
     {
-        // std::cerr << "Subscription to topic '" << topic << "' failed: " << exc.what() << std::endl; // MODIFIED
-        return false;
+        std::cerr << "Subscription to topic '" << topic << "' failed to initiate: " << exc.what() << std::endl;
+        return nullptr; // MODIFIED: Indicate failure to initiate
     }
 }
 

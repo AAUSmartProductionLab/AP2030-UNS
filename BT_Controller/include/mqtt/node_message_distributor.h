@@ -46,7 +46,8 @@ public:
     void unregisterInstance(MqttSubBase *instance);
 
     // New method to subscribe only to topics for nodes in the active tree
-    void subscribeToActiveNodes(const BT::Tree &tree);
+    // MODIFIED: Added timeout parameter and changed return type
+    bool subscribeToActiveNodes(const BT::Tree &tree, std::chrono::milliseconds timeout_per_subscription = std::chrono::seconds(5));
 
     // Method to get all currently subscribed topic patterns
     std::vector<std::string> getActiveTopicPatterns() const; // New method
