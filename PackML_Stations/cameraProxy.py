@@ -8,7 +8,7 @@ import base64
 BROKER_ADDRESS = "192.168.0.104"
 BROKER_PORT = 1883
 BASE_TOPIC = "NN/Nybrovej/InnoLab/Camera"
-
+uuid=""
 
 image_publisher = Publisher(
         BASE_TOPIC + "/DATA/Image",
@@ -16,7 +16,7 @@ image_publisher = Publisher(
         2)
 
 
-def capture_process(duration=0.5, state_machine=None):
+def capture_process(duration=0.5):
     time.sleep(duration)
     webcam = None
     try:
@@ -37,7 +37,8 @@ def capture_process(duration=0.5, state_machine=None):
         response = {
             "Image": img_bytes,
             "TimeStamp": timestamp,
-            "Format": "base64_jpeg"
+            "Format": "base64_jpeg",
+            "Uuid": uuid,
         }
         image_publisher.publish(response, cameraProxy, True)
     except Exception as e:
@@ -49,6 +50,8 @@ def capture_process(duration=0.5, state_machine=None):
 
 def capture_callback(topic, client, message, properties):
     """Callback handler for capture commands"""
+    global uuid
+    uuid =message.get("Uuid")
     try:
         state_machine.execute_command(message, capture, capture_process)
     except Exception as e:

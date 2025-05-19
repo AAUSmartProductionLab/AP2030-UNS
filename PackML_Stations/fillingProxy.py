@@ -7,7 +7,7 @@ BROKER_ADDRESS = "192.168.0.104"
 BROKER_PORT = 1883
 BASE_TOPIC = "NN/Nybrovej/InnoLab/Filling"
 
-
+uuid=""
 
 def dispense_process(mean_duration=2.0, mean_weight=2.0, start_weight=0.0):
     """
@@ -52,10 +52,11 @@ def publish_weight(weight, reset=False):
 
     # Generate ISO 8601 timestamp with Z suffix for UTC
     timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
-    
+    global uuid
     response = {
         "Weight": weight,
-        "TimeStamp": timestamp
+        "TimeStamp": timestamp,
+        "Uuid": uuid
     }
     weigh_publisher.publish(response, fillProxy, True)
 
@@ -64,6 +65,8 @@ def dispense_callback(topic, client, message, properties):
     try:
         duration = 2.0
         weight=2.0
+        global uuid
+        uuid = message.get("Uuid")
         state_machine.execute_command(message,dispense, dispense_process, duration, weight)
     except Exception as e:
         print(f"Error in dispense_callback: {e}")
@@ -81,6 +84,8 @@ def refill_callback(topic, client, message, properties):
         duration = 2.0
         weight=2.0
         start_weight_raw = message.get("StartWeight")
+        print(f"Start weight raw: {start_weight_raw}")
+        global uuid
         uuid = message.get("Uuid")
         start_weight = float(start_weight_raw)
         if (start_weight > weight):
