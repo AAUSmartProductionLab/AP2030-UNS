@@ -173,6 +173,15 @@ class PackMLStateMachine:
                 reg_cmd_uuid = self.pending_registrations.pop(uuid_to_unregister)
                 self._publish_command_status(self.register_topic, reg_cmd_uuid, "FAILURE") # Reason: Interrupted
 
+
+            self.uuids.pop(0) # Remove from queue
+
+            if not self.uuids: # Queue is now empty
+                self.transition_to(PackMLState.COMPLETING, "#") # Signal to go to IDLE
+            else: # More items in queue
+                self.transition_to(PackMLState.STARTING)
+            
+
         # Case 2: Command is at head of queue AND not currently processing.
         elif self.uuids and uuid_to_unregister == self.uuids[0] and not self.is_processing:
             removed_uuid = self.uuids.pop(0)
@@ -348,72 +357,56 @@ class PackMLStateMachine:
 
 
     def idle_state(self):
-        self.Uuid = None # Ensure Uuid is None in IDLE if no tasks
+        self.Uuid = None
         self.current_processing_uuid = None
         self.is_processing = False
-        if self.uuids: # If there are any uuids, try to start processing
+        if self.uuids:
             self.transition_to(PackMLState.STARTING)
 
     def starting_state(self):
         if not self.uuids:
-            self.transition_to(PackMLState.IDLE) # Should not happen if called correctly, but safeguard
+            self.transition_to(PackMLState.IDLE)
             return
 
-        self.Uuid = self.uuids[0] # Set the active Uuid for this cycle
-        
-        # If this Uuid had a pending registration, mark it as SUCCESS now
+        self.Uuid = self.uuids[0]
         if self.Uuid in self.pending_registrations:
             original_reg_cmd_uuid = self.pending_registrations.pop(self.Uuid)
             self._publish_command_status(self.register_topic, original_reg_cmd_uuid, "SUCCESS")
             
         self.transition_to(PackMLState.EXECUTE)
 
-    def completing_state(self, uuid_completed): # uuid_completed is the Uuid of the task that just finished or was cancelled
-        # Remove the completed/cancelled UUID from the queue
-        if uuid_completed == "#": # Special marker to clear all (e.g. queue empty after abort)
-            # This case might be used by abort logic if it clears the queue then calls completing
-            # However, current aborting_state clears uuids directly.
-            # If an abort happens, current_processing_uuid might be the one passed here.
-            pass # Queue already cleared or handled by aborting_state if applicable
+    def completing_state(self, uuid_completed):
+        if uuid_completed == "#":
+            self.uuids.clear()
         elif uuid_completed in self.uuids:
             try:
-                self.uuids.pop(0) # Assuming the completed UUID is always at the head
+                self.uuids.pop(0)
             except IndexError:
                 print(f"Warning: Tried to pop from empty uuids list in completing_state for {uuid_completed}")
 
-        # If it was the one being processed, clear current_processing_uuid and is_processing
         if self.current_processing_uuid == uuid_completed:
             self.current_processing_uuid = None
             self.is_processing = False 
 
-        self.Uuid = None # The machine's active Uuid for the cycle is done
-        self.publish_state() # Publish state after removal/update
+        self.Uuid = None
+        self.publish_state()
         self.transition_to(PackMLState.COMPLETE)        
         
-    def aborting_state(self, aborted_task_uuid): # uuid of task that was active, or "#"
+    def aborting_state(self, aborted_task_uuid):
         """State entered when an abort is initiated."""
         print(f"Entering ABORTING state. Task (if any) that was active: {aborted_task_uuid}")
         
-        # Fail all pending registrations because their tasks won't run
         for uuid, reg_cmd_uuid in list(self.pending_registrations.items()):
             self._publish_command_status(self.register_topic, reg_cmd_uuid, "FAILURE")
         self.pending_registrations.clear()
 
-        # Clear the entire command queue
         self.uuids.clear()
-        self.Uuid = None # No active Uuid for the machine cycle as queue is cleared
-
-        # If a task was processing, its thread will eventually call _handle_process_completion.
-        # That will try to transition to COMPLETING.
-        # However, an ABORT should take precedence.
-        # We ensure is_processing and current_processing_uuid are cleared here
-        # if they weren't already by an interrupted thread.
-        # This is important because the aborted task's _handle_process_completion might run later.
+        self.Uuid = None 
         self.current_processing_uuid = None 
         self.is_processing = False
 
-        self.publish_state() # Publish state with empty queue reflecting the abort
-        self.transition_to(PackMLState.ABORTED) # Transition to the ABORTED steady state
+        self.publish_state()
+        self.transition_to(PackMLState.ABORTED)
 
     def resetting_state(self):
         self.Uuid = None
@@ -429,42 +422,22 @@ class PackMLStateMachine:
 
     def transition_to(self, new_state, uuid_param=None):  
         """Transition to a new state and publish it"""
-        previous_state = self.state
         self.state = new_state
-        # report the state change
         self.publish_state()
 
-        # Handle state-specific logic after transition
         if new_state == PackMLState.IDLE:
             self.idle_state()
         elif new_state == PackMLState.STARTING:
-            # Only call starting_state if there are UUIDs, otherwise it might loop from IDLE
             if self.uuids:
                 self.starting_state()
-            elif previous_state != PackMLState.IDLE : # If came from somewhere else to STARTING with no uuids
-                self.transition_to(PackMLState.IDLE) # Go back to IDLE
-        elif new_state == PackMLState.EXECUTE:
-            # EXECUTE state is primarily entered from STARTING.
-            # The execute_command method is called by an external trigger (MQTT message)
-            # when the state is EXECUTE and the conditions are met.
-            pass
         elif new_state == PackMLState.COMPLETING:
-            self.completing_state(uuid_param) # uuid_param is the Uuid that completed/cancelled
+            self.completing_state(uuid_param)
         elif new_state == PackMLState.COMPLETE:
-            # COMPLETE is a transient state, automatically move to RESETTING
             self.transition_to(PackMLState.RESETTING)
         elif new_state == PackMLState.RESETTING:
             self.resetting_state()
         elif new_state == PackMLState.ABORTING:
-            self.aborting_state(uuid_param) # uuid_param here is the Uuid to abort
-        elif new_state == PackMLState.ABORTED:
-            # ABORTED is a steady state. PackML typically requires a CLEAR command
-            # to move from ABORTED. For auto-sequence, you could add:
-            # print("Entered ABORTED state. Auto-transitioning to CLEARING for cleanup.")
-            # self.transition_to(PackMLState.CLEARING)
-            # For now, it will stay in ABORTED until another command (e.g. CLEAR, then RESET)
-            print("Entered ABORTED state.")
-            pass # Remains in ABORTED
+            self.aborting_state(uuid_param)
         elif new_state == PackMLState.CLEARING:
             self.clearing_state() # Renamed from self.clearing() for consistency
 
