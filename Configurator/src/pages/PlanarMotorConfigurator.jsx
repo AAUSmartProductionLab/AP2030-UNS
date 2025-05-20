@@ -348,49 +348,31 @@ export default function PlanarMotorConfigurator() {
     setPlacedNodes(prev => prev.filter(node => node.id !== nodeId));
   };
 
-  const handleSubmit = (showNotification = true) => {
+  const handleSubmit = async () => {
     const layoutData = prepareLayoutData();
-    const success = mqttService.publishLayout(layoutData);
-    
-    if (showNotification) {
-      if (success) {
-        toast.success("Stations published successfully!", { autoClose: 3000 });
-      } else {
-        toast.error("Failed to publish stations", { autoClose: 5000 });
-      }
-    }
-    
+    const success = await mqttService.publishLayout(layoutData);
+
     return success;
   };
   
   // Replace the handleSubmitLowest function
-  const handleSubmitLowest = () => {
-    const success = mqttService.publishLimits(motorConfig);
-    
-    if (success) {
-      toast.success("Limits published successfully!", { autoClose: 3000 });
-    } else {
-      toast.error("Failed to publish limits", { autoClose: 5000 });
-    }
-    
+  const handleSubmitLowest = async () => {
+    const success = await mqttService.publishLimits(motorConfig);
+     
     return success;
   };
   
   // Replace the handlePublishConfig function
-  const handlePublishConfig = () => {
-    // Call both publish functions but suppress their individual notifications
-    const stationsSuccess = handleSubmit(false);
-    const limitsSuccess = mqttService.publishLimits(motorConfig);
+  const handlePublishConfig = async () => {
+    // Prepare the layout configuration data
+    const layoutData = prepareLayoutData();
+    // Call both publish functions
+    const stationsSuccess = await mqttService.publishLayout(layoutData);
+    const limitsSuccess = await mqttService.publishLimits(motorConfig);
     
     // Show a single consolidated notification based on results
     if (stationsSuccess && limitsSuccess) {
       toast.success("Complete configuration published successfully!", { autoClose: 3000 });
-    } else if (!stationsSuccess && !limitsSuccess) {
-      toast.error("Failed to publish configuration", { autoClose: 5000 });
-    } else if (!stationsSuccess) {
-      toast.warning("Published limits but failed to publish stations", { autoClose: 4000 });
-    } else {
-      toast.warning("Published stations but failed to publish limits", { autoClose: 4000 });
     }
   };
   

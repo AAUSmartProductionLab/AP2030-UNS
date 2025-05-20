@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, NavLink, useLocation } from "react-router-dom";
 import { PersistentRouter } from "./components/PersistenRouter/PersistentRouter";
+import { PlanarMotorProvider } from "./contexts/PlanarMotorContext";
 import PlanarMotorConfigurator from "./pages/PlanarMotorConfigurator";
 import BatchConfigurator from "./pages/BatchConfigurator";
 import Homepage from "./pages/Homepage";
 import Settings from "./pages/Settings";
+import XbotTracker from "./pages/XbotTracker"; // Import the XbotTracker page
 import mqttService from "./services/MqttService";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -16,7 +18,6 @@ const TitleUpdater = () => {
   useEffect(() => {
     const baseTitle = "AMX-OUT";
     
-    // Update title mappings for new route structure
     switch(location.pathname) {
       case '/':
         document.title = `${baseTitle} | Home`;
@@ -26,6 +27,9 @@ const TitleUpdater = () => {
         break;
       case '/planar-motor':
         document.title = `${baseTitle} | Planar Motor`;
+        break;
+      case '/xbot-tracker': // Add case for Xbot Tracker
+        document.title = `${baseTitle} | Xbot Tracker`;
         break;
       case '/settings':
         document.title = `${baseTitle} | Settings`;
@@ -41,32 +45,24 @@ const TitleUpdater = () => {
 export default function App() {
   const [globalMqttConnected, setGlobalMqttConnected] = useState(false);
 
-  // Initialize MQTT connection once at application level
   useEffect(() => {
-    // Connect to MQTT broker
     mqttService.connect();
     
-    // Define topics we want to subscribe to
     const requiredTopics = [
       'NN/Nybrovej/InnoLab/Configuration/CMD/Order/Done',
       'NN/Nybrovej/InnoLab/Configuration/CMD/Order/Acknowledge'
     ];
     
-    // Track connection status
     const unsubscribe = mqttService.onConnectionChange(isConnected => {
       setGlobalMqttConnected(isConnected);
-      console.log("MQTT connection status:", isConnected ? "Connected" : "Disconnected");
+      console.log("App.jsx: MQTT connection status:", isConnected ? "Connected" : "Disconnected");
       
-      // Show toast notifications for MQTT connection status changes
+      // MqttService now handles its own connect/disconnect toasts.
+      // We only subscribe to app-level topics here if connected.
       if (isConnected) {
-        toast.success("MQTT Connected");
-        
-        // Subscribe to all required topics when connection is established
         requiredTopics.forEach(topic => {
           mqttService.subscribe(topic);
         });
-      } else {
-        toast.error("MQTT Disconnected");
       }
     });
     
@@ -96,6 +92,12 @@ export default function App() {
               <i className="nav-icon config-icon"></i>
               <span>Planar Motor</span>
             </NavLink>
+            {/* Add NavLink for Xbot Tracker */}
+            <NavLink to="/xbot-tracker" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
+              {/* Use an appropriate icon class for xbot-tracker, e.g., 'robot-icon' or similar */}
+              <i className="nav-icon robot-icon"></i> 
+              <span>Production Live View</span>
+            </NavLink>
             <NavLink to="/settings" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
               <i className="nav-icon settings-icon"></i>
               <span>Settings</span>
@@ -107,17 +109,20 @@ export default function App() {
           </div>
           <div className="amx-header">
             <h3>AMX-OUT Project</h3>
-            <h4>Application Version 0.3</h4>
+            <h4>Application Version 0.5</h4>
           </div>
         </div>
         
         <div className="app-content">
-          <PersistentRouter>
-            <Route path="/" element={<Homepage />} />
-            <Route path="/batches" element={<BatchConfigurator />} />
-            <Route path="/planar-motor" element={<PlanarMotorConfigurator />} />
-            <Route path="/settings" element={<Settings />} />
-          </PersistentRouter>
+        <PlanarMotorProvider> 
+            <PersistentRouter>
+              <Route path="/" element={<Homepage />} />
+              <Route path="/batches" element={<BatchConfigurator />} />
+              <Route path="/planar-motor" element={<PlanarMotorConfigurator />} />
+              <Route path="/xbot-tracker" element={<XbotTracker />} /> {/* Add Route for Xbot Tracker */}
+              <Route path="/settings" element={<Settings />} />
+            </PersistentRouter>
+        </PlanarMotorProvider> 
         </div>
         <ToastContainer
           position="top-right"
