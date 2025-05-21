@@ -1,37 +1,15 @@
 cmake_minimum_required(VERSION 3.22.1)
 project(bt_controller C CXX)
 
-# Set C++ standard early
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_BUILD_TYPE Debug) # Note: Consider not forcing build type directly in CMakeLists
 
-# Add JSON library (header-only)
-add_library(json INTERFACE)
-target_include_directories(json INTERFACE 
-    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/json/include
-)
+add_subdirectory(third_party/json)
+add_subdirectory(third_party/magic_enum)
+add_subdirectory(third_party/json-schema-validator)
 
-# Add Magic Enum library (header-only)
-add_library(magic_enum INTERFACE)
-target_include_directories(magic_enum INTERFACE 
-    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/magic_enum/include
-)
-
-# Add JSON schema validator
-add_library(json_schema_validator STATIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/json-schema-validator/src/json-schema-draft7.json.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/json-schema-validator/src/json-uri.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/json-schema-validator/src/json-validator.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/json-schema-validator/src/json-patch.cpp
-)
-target_include_directories(json_schema_validator PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/json-schema-validator/src
-    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/json/include
-)
-target_link_libraries(json_schema_validator PUBLIC json)
-
-# Other packages
+# Find external packages
 find_package(PkgConfig REQUIRED)
 find_package(Threads REQUIRED)
 find_package(PahoMqttCpp REQUIRED)
@@ -41,16 +19,9 @@ find_package(fmt REQUIRED)
 pkg_check_modules(UUID REQUIRED uuid)
 
 
-include_directories(
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${PahoMqttCpp_INCLUDE_DIRS}
-)
-
-# Create common library with shared source files
 add_library(bt_controller_common STATIC
-    src/BehaviorTreeController.cpp
     src/utils.cpp
-    src/mqtt/node_message_distributor.cpp 
+    src/mqtt/node_message_distributor.cpp
     src/mqtt/mqtt_client.cpp
     src/mqtt/mqtt_sub_base.cpp
     src/mqtt/mqtt_pub_base.cpp
@@ -68,35 +39,37 @@ add_library(bt_controller_common STATIC
 target_include_directories(bt_controller_common
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${YAML_CPP_INCLUDE_DIRS}
     PRIVATE
         /usr/local/include
+        ${UUID_INCLUDE_DIRS}
 )
 
 target_link_libraries(bt_controller_common
     PUBLIC
-        json_schema_validator
-        behaviortree_cpp
-        PahoMqttCpp::paho-mqttpp3
-        PahoMqttCpp::paho-mqtt3as
-        ${UUID_LDFLAGS}
-        ${YAML_CPP_LIBRARIES}
-        fmt::fmt
-        magic_enum
+        nlohmann_json_schema_validator::validator
+        behaviortree_cpp                          
+        PahoMqttCpp::paho-mqttpp3                 
+        PahoMqttCpp::paho-mqtt3as                 
+        Threads::Threads                          
+        ${YAML_CPP_LIBRARIES}                     
+        fmt::fmt                                  
+        magic_enum::magic_enum                    
+        ${UUID_LIBRARIES}                         
 )
 
 add_executable(bt_controller
     src/BehaviorTreeController.cpp
 )
 
-target_include_directories(${PROJECT_NAME} 
-    PUBLIC   
+target_include_directories(bt_controller
+    PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
-    PRIVATE 
+    PRIVATE
         /usr/local/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/third_party/json/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/third_party/json-schema-validator/src
 )
 
-target_link_libraries(${PROJECT_NAME} 
+target_link_libraries(bt_controller
+    PRIVATE
     bt_controller_common
 )
