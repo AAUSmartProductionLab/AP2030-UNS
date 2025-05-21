@@ -333,23 +333,23 @@ class MqttService {
   }
 
   startSystem() {
-    this.sendCommand('start');
+    this.sendCommand('Start');
   }
 
   stopSystem() {
-    this.sendCommand('stop');
+    this.sendCommand('Stop');
   }
 
   resetSystem() {
-    this.sendCommand('clear');
+    this.sendCommand('Clear');
   }
 
   holdSystem() {
-    this.sendCommand('suspend');
+    this.sendCommand('Suspend');
   }
 
   unholdSystem() {
-    this.sendCommand('unsuspend');
+    this.sendCommand('Unsuspend');
   }
 }
 
