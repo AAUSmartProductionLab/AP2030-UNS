@@ -146,7 +146,6 @@ export default function Homepage() {
             <p>Configure and manage production batches</p>
           </div>
         </Link>
-        
         {/* Planar Motor */}
         <Link to="/planar-motor" className="service-card with-bg-image">
           <img src="/planarconfig.png" alt="" className="card-image-bg" />
@@ -156,7 +155,15 @@ export default function Homepage() {
             <p>Configure planar motor layouts and settings</p>
           </div>
         </Link>
-        
+        {/* Live View (Xbot Tracker) */}
+        <Link to="/xbot-tracker" className="service-card with-bg-image">
+          <img src="/liveview.png" alt="" className="card-image-bg" />
+          <div className="card-content">
+            <div className="card-icon"></div> {/* You might want a specific icon class here */}
+            <h2>Live View</h2>
+            <p>Control and observe the production in real time</p>
+          </div>
+        </Link>
         {/* Settings */}
         <Link to="/settings" className="service-card with-bg-image">
           <img src="/settings.png" alt="" className="card-image-bg" />
