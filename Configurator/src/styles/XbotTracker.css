@@ -181,9 +181,10 @@ xbot-tracker-page {
   }
   
   .xbot-controls h2 {
+    font-weight: 600;
     margin-top: 0;
     color: #0033A0;
-    font-size: 1.5rem;
+    font-size: 1.4rem;
     border-bottom: 1px solid #e0e0e0;
     padding-bottom: 10px;
   }
@@ -340,4 +341,134 @@ xbot-tracker-page {
   
   .reset-button:hover {
     background-color: #e0e0e0;
+  }
+
+  
+  .system-state-display-container {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    padding: 10px;
+    background-color: #f0f0f0;
+    border-bottom: 1px solid #ddd;
+    margin-bottom: 10px;
+  }
+  
+  .system-state-item {
+    font-size: 1rem;
+    color: #333;
+  }
+  
+  .system-state-item span {
+    text-transform: capitalize;
+  }
+  
+  .main-layout-container {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+    flex: 1; /* Allow this container to fill available space if xbot-tracker-page is flex column */
+    overflow: hidden; /* Prevent content overflow issues */
+  }
+  
+  .control-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    width: 250px; /* Fixed width for the sidebar */
+    height: fit-content; /* Adjust height to content */
+  }
+  
+  .control-sidebar h2 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-weight: 500;
+    font-size: 1.4rem;
+    color: #0033A0; /* Novo Nordisk Blue */
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 10px;
+  }
+  
+  .control-button {
+    padding: 12px 15px;
+    font-size: 1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    color: white;
+    text-align: center;
+  }
+  
+  .control-button:hover {
+    opacity: 0.9;
+  }
+  
+  .control-button:active {
+    transform: translateY(1px);
+  }
+  
+  .start-button {
+    background-color: #929292; /* Green */
+  }
+  .start-button:hover {
+    background-color: #218838;
+  }
+  
+  .stop-button {
+    background-color: #929292; /* Red */
+  }
+  .stop-button:hover {
+    background-color: #c82333;
+  }
+  
+  .reset-button-system { /* Differentiate from the xbot reset button */
+    background-color: #929292; /* Yellow */
+  }
+  .reset-button-system:hover {
+    background-color: #e0a800;
+  }
+  
+  .hold-button {
+    background-color: #929292; /* Teal */
+  }
+  .hold-button:hover {
+    background-color: #138496;
+  }
+  
+  .hold-button.hold-active {
+    background-color: #929292; /* Teal for 'Hold System' */
+  }
+  .hold-button.unhold-active {
+    background-color: #fd7e14; /* Orange for 'Unhold System' */
+  }
+  
+  
+  .tracker-main-area {
+    flex: 1; /* Allow this area to take remaining space */
+    display: flex; /* To make tracker-content fill this area if needed */
+    flex-direction: column; /* If tracker-content needs to stack or manage its own height */
+    overflow: hidden; /* Important for nested scroll/flex layouts */
+  }
+  
+  /* Ensure existing tracker-content still behaves as expected
+  .tracker-content {
+    /* display: flex; /* This should already be there */
+    /* flex: 1; /* This should already be there */
+    /* overflow: hidden; /* This should already be there */
+    /* padding: 0 20px 20px 20px; /* This was the original padding, adjust if needed */
+    /* The new parent .tracker-main-area might handle some padding now or this can be kept */
+  /*} */
+  
+  /* Adjust xbot-tracker-page if it's not already a flex column */
+  .xbot-tracker-page {
+    display: flex;
+    flex-direction: column;
+    height: 100vh; /* Or appropriate height */
+    overflow: hidden;
   }

@@ -22,34 +22,34 @@ const XbotTracker = () => {
   const xbotStates = {
     "idle": { color: "#FFD700", label: "Idle" },
     "stopped": { color: "#FF4D4D", label: "Stopped" },
-    "executing": { color: "#3478F6", label: "Executing" }, // Already present, ensure "execute" from MQTT maps to this
-    "execute": { color: "#3478F6", label: "Execute" }, // Explicitly adding "execute" if it comes as such
+    "executing": { color: "#3478F6", label: "Executing" },
+    "execute": { color: "#3478F6", label: "Execute" },
     "complete": { color: "#4CD964", label: "Complete" },
     "resetting": { color: "#FF9500", label: "Resetting" },
     "error": { color: "#FF3B30", label: "Error" },
     "waiting": { color: "#8E8E93", label: "Waiting" },
-    "starting": { color: "#5AC8FA", label: "Starting" }, // New
-    "stopping": { color: "#FFBF00", label: "Stopping" }  // New
-    // Add any other states that might come from MQTT if they differ
+    "starting": { color: "#5AC8FA", label: "Starting" },
+    "stopping": { color: "#FFBF00", label: "Stopping" }
   };
   
-  // Define Station states (used for UI mapping)
+  // Define Station states (also used for system states like BT Controller and Planar)
   const stationDisplayStates = {
     "idle": { color: "#FFD700", label: "Idle" },
     "stopped": { color: "#FF4D4D", label: "Stopped" },
-    "executing": { color: "#3478F6", label: "Executing" }, // Already present
-    "execute": { color: "#3478F6", label: "Execute" }, // Explicitly adding "execute"
+    "executing": { color: "#3478F6", label: "Executing" },
+    "execute": { color: "#3478F6", label: "Execute" },
     "complete": { color: "#4CD964", label: "Complete" },
     "resetting": { color: "#FF9500", label: "Resetting" },
     "error": { color: "#FF3B30", label: "Error" },
     "waiting": { color: "#8E8E93", label: "Waiting" },
-    "starting": { color: "#5AC8FA", label: "Starting" }, // New
-    "stopping": { color: "#FFBF00", label: "Stopping" }  // New
+    "starting": { color: "#5AC8FA", label: "Starting" },
+    "stopping": { color: "#FFBF00", label: "Stopping" }
   };
+
   // Default state for Xbots before MQTT update
   const getXbotDefaultState = (xbotId) => {
     const states = Object.keys(xbotStates);
-    return states[xbotId % states.length]; 
+    return states[0]; 
   };
 
   const getStationId = (position, index) => {
@@ -123,6 +123,10 @@ const XbotTracker = () => {
 
   const [mqttConnected, setMqttConnected] = useState(mqttService.isConnected);
   const [stationLiveStates, setStationLiveStates] = useState({});
+  const [btControllerState, setBtControllerState] = useState(null);
+  const [planarSystemState, setPlanarSystemState] = useState(null);
+  const [isHolding, setIsHolding] = useState(false);
+
   const animationFrameId = useRef(null);
   const xbotsRef = useRef(xbots); 
 
@@ -147,6 +151,59 @@ const XbotTracker = () => {
     return () => unsubscribeConnection();
   }, []);
 
+  // MQTT Subscription for BT Controller State
+  useEffect(() => {
+    if (!mqttConnected) return;
+    const topic = "NN/Nybrovej/InnoLab/bt_controller/DATA/State";
+    const unsubscribe = mqttService.onMessage(topic, (message) => {
+      try {
+        const data = typeof message === 'string' ? JSON.parse(message) : message;
+        const stateKey = data.State?.toLowerCase();
+        if (stateKey && stationDisplayStates[stateKey]) {
+          setBtControllerState(stateKey);
+        } else {
+          console.warn(`BTControllerState: Received unknown state "${data.State}" from topic ${topic}`);
+          setBtControllerState(data.State || 'unknown'); 
+        }
+      } catch (error) {
+        console.error(`Error processing BT Controller State message from topic ${topic}:`, error, "Raw message:", message);
+        setBtControllerState('error');
+      }
+    });
+    // console.log(`XbotTracker: Subscribing to ${topic} for BT Controller State`);
+    return () => {
+      // console.log(`XbotTracker: Unsubscribing from ${topic} for BT Controller State`);
+      unsubscribe();
+    };
+  }, [mqttConnected]); // Removed stationDisplayStates from deps as it's constant
+
+  // MQTT Subscription for Planar System State
+  useEffect(() => {
+    if (!mqttConnected) return;
+    const topic = "NN/Nybrovej/InnoLab/Planar/DATA/State"; // Corrected topic
+    const unsubscribe = mqttService.onMessage(topic, (message) => {
+      try {
+        const data = typeof message === 'string' ? JSON.parse(message) : message;
+        const stateKey = data.State?.toLowerCase();
+        if (stateKey && stationDisplayStates[stateKey]) {
+          setPlanarSystemState(stateKey);
+        } else {
+          console.warn(`PlanarSystemState: Received unknown state "${data.State}" from topic ${topic}`);
+          setPlanarSystemState(data.State || 'unknown');
+        }
+      } catch (error) {
+        console.error(`Error processing Planar System State message from topic ${topic}:`, error, "Raw message:", message);
+        setPlanarSystemState('error');
+      }
+    });
+    // console.log(`XbotTracker: Subscribing to ${topic} for Planar System State`);
+    return () => {
+      // console.log(`XbotTracker: Unsubscribing from ${topic} for Planar System State`);
+      unsubscribe();
+    };
+  }, [mqttConnected]); // Removed stationDisplayStates from deps as it's constant
+
+
   const xbotIdSignature = useMemo(() => {
     return xbots.map(x => x.id).sort((a, b) => a - b).join(',');
   }, [xbots]); 
@@ -164,9 +221,7 @@ const XbotTracker = () => {
     xbotsRef.current.forEach(xbotSubConfig => {
       const xbotMqttId = `Xbot${xbotSubConfig.id}`;
       
-      // Pose Subscription
       const poseTopic = `NN/Nybrovej/InnoLab/Planar/${xbotMqttId}/DATA/Pose`;
-      // console.log(`XbotTracker: Subscribing to ${poseTopic} for Xbot ID ${xbotSubConfig.id}`);
       const unsubscribePose = mqttService.onMessage(poseTopic, (message) => {
         try {
           const poseData = typeof message === 'string' ? JSON.parse(message) : message;
@@ -188,9 +243,7 @@ const XbotTracker = () => {
       });
       allUnsubscribes.push(unsubscribePose);
 
-      // State Subscription
       const stateTopic = `NN/Nybrovej/InnoLab/Planar/${xbotMqttId}/DATA/State`;
-      // console.log(`XbotTracker: Subscribing to ${stateTopic} for Xbot ID ${xbotSubConfig.id}`);
       const unsubscribeState = mqttService.onMessage(stateTopic, (message) => {
         try {
           const stateData = typeof message === 'string' ? JSON.parse(message) : message;
@@ -214,7 +267,6 @@ const XbotTracker = () => {
     });
 
     return () => {
-      // console.log(`XbotTracker: Cleaning up Xbot MQTT subscriptions for ID signature: "${xbotIdSignature}"`);
       allUnsubscribes.forEach(unsubscribe => unsubscribe());
     };
   }, [xbotIdSignature, mqttConnected]);
@@ -244,30 +296,22 @@ const XbotTracker = () => {
   // MQTT Subscriptions for Station States
   useEffect(() => {
     if (!mqttConnected || !configuredStations || configuredStations.length === 0) {
-      // if (!mqttConnected) console.log("StationTracker: MQTT not connected, skipping station subscriptions.");
       return;
     }
-    // console.log(`StationTracker: (Re)Setting Station MQTT subscriptions. Count: ${configuredStations.length}`);
-
     const stationUnsubscribes = [];
-
     configuredStations.forEach(station => {
       if (!station.abstractId) {
         console.warn(`StationTracker: Station ${station.id} (Pos: ${station.position}-${station.index}) is missing abstractId, cannot subscribe to state topic.`);
         return;
       }
-      // Correctly capitalize the abstractId for the topic
       const stationTypeForTopic = station.abstractId.charAt(0).toUpperCase() + station.abstractId.slice(1).toLowerCase();
       const topic = `NN/Nybrovej/InnoLab/${stationTypeForTopic}/DATA/State`;
       const stationNumericId = getStationId(station.position, station.index);
-
-      // console.log(`StationTracker: Subscribing to ${topic} for Station ID ${station.id} (Numeric: ${stationNumericId})`);
       
       const unsubscribe = mqttService.onMessage(topic, (message) => {
         try {
           const stateData = typeof message === 'string' ? JSON.parse(message) : message;
           const newStateKey = stateData.State?.toLowerCase();
-
           if (newStateKey && stationDisplayStates[newStateKey]) { 
             setStationLiveStates(prevStates => ({
               ...prevStates,
@@ -282,9 +326,7 @@ const XbotTracker = () => {
       });
       stationUnsubscribes.push(unsubscribe);
     });
-
     return () => {
-      // console.log("StationTracker: Cleaning up Station MQTT subscriptions.");
       stationUnsubscribes.forEach(unsubscribe => unsubscribe());
     };
   }, [configuredStations, mqttConnected]);
@@ -293,13 +335,10 @@ const XbotTracker = () => {
   // Animation Loop Effect
   useEffect(() => {
     let isActive = true;
-
     const animate = () => {
       if (!isActive) return;
-
       let needsAnotherFrame = false;
       const currentBotsSnapshot = xbotsRef.current; 
-
       const newAnimatedBots = currentBotsSnapshot.map(bot => {
         let newX = bot.x;
         let newY = bot.y;
@@ -309,59 +348,43 @@ const XbotTracker = () => {
         if (Math.abs(bot.targetX - bot.x) > SNAP_THRESHOLD) {
           newX = bot.x + (bot.targetX - bot.x) * LERP_FACTOR;
           botMovedThisFrame = true;
-        } else {
-          newX = bot.targetX; 
-        }
-
+        } else { newX = bot.targetX; }
         if (Math.abs(bot.targetY - bot.y) > SNAP_THRESHOLD) {
           newY = bot.y + (bot.targetY - bot.y) * LERP_FACTOR;
           botMovedThisFrame = true;
-        } else {
-          newY = bot.targetY; 
-        }
-        
+        } else { newY = bot.targetY; }
         let yawDiff = bot.targetYaw - bot.yaw;
-        if (Math.abs(yawDiff) > 180) { 
-          yawDiff = yawDiff > 0 ? yawDiff - 360 : yawDiff + 360;
-        }
+        if (Math.abs(yawDiff) > 180) { yawDiff = yawDiff > 0 ? yawDiff - 360 : yawDiff + 360; }
         if (Math.abs(yawDiff) > SNAP_THRESHOLD) { 
             newYaw = bot.yaw + yawDiff * LERP_FACTOR;
             botMovedThisFrame = true;
-        } else {
-            newYaw = bot.targetYaw; 
-        }
-        newYaw = (newYaw % 360 + 360) % 360; // Normalize yaw
+        } else { newYaw = bot.targetYaw; }
+        newYaw = (newYaw % 360 + 360) % 360;
 
         if (botMovedThisFrame || newX !== bot.targetX || newY !== bot.targetY || newYaw !== bot.targetYaw) {
           if (Math.abs(bot.targetX - newX) > 0.01 || Math.abs(bot.targetY - newY) > 0.01 || Math.abs(bot.targetYaw - newYaw) > 0.01) {
              needsAnotherFrame = true;
           }
         }
-        
         return { ...bot, x: newX, y: newY, yaw: newYaw };
       });
-
       if (newAnimatedBots.some((b, i) => b.x !== currentBotsSnapshot[i].x || b.y !== currentBotsSnapshot[i].y || b.yaw !== currentBotsSnapshot[i].yaw)) {
         setXbots(newAnimatedBots);
       }
-
       if (needsAnotherFrame) {
         animationFrameId.current = requestAnimationFrame(animate);
       } else {
         animationFrameId.current = null; 
       }
     };
-
     const shouldStartAnimation = xbotsRef.current.some(b => 
         Math.abs(b.targetX - b.x) > SNAP_THRESHOLD || 
         Math.abs(b.targetY - b.y) > SNAP_THRESHOLD ||
         Math.abs(b.targetYaw - b.yaw) > SNAP_THRESHOLD
     );
-
     if (shouldStartAnimation && animationFrameId.current === null) { 
         animationFrameId.current = requestAnimationFrame(animate);
     }
-    
     return () => {
       isActive = false;
       if (animationFrameId.current) {
@@ -370,7 +393,19 @@ const XbotTracker = () => {
       }
     };
   }, [xbots]); 
-  
+
+  const handleStartSystem = () => mqttService.startSystem();
+  const handleStopSystem = () => mqttService.stopSystem();
+  const handleResetSystem = () => mqttService.resetSystem();
+  const handleToggleHoldSystem = () => {
+    if (isHolding) {
+      mqttService.unholdSystem();
+    } else {
+      mqttService.holdSystem();
+    }
+    setIsHolding(!isHolding); // This local state update remains
+  };
+
   const handleAddXbot = () => {
     const nextId = xbots.length > 0 ? Math.max(...xbots.map(xbot => xbot.id)) + 1 : 1;
     let newX, newY;
@@ -378,7 +413,6 @@ const XbotTracker = () => {
     const holeXMax = 3 * FLYWAY_SIZE;
     const holeYMin_newSystem = 1 * FLYWAY_SIZE; 
     const holeYMax_newSystem = 2 * FLYWAY_SIZE;
-
     do {
       newX = Math.random() * (totalWidth - XBOT_SIZE) + XBOT_SIZE / 2; 
       newY = Math.random() * (totalHeight - XBOT_SIZE) + XBOT_SIZE / 2; 
@@ -386,10 +420,8 @@ const XbotTracker = () => {
       (newX > holeXMin && newX < holeXMax) &&
       (newY > holeYMin_newSystem && newY < holeYMax_newSystem)
     );
-    
     const colorsForSelector = ["#0033A0", "#00A0AF", "#FF6B45", "#7C35B1", "#00B388", "#FFB819"];
     const randomColorForSelector = colorsForSelector[Math.floor(Math.random() * colorsForSelector.length)];
-    
     const newXbot = { 
         id: nextId, x: newX, y: newY, yaw: 0, 
         color: randomColorForSelector, 
@@ -434,12 +466,10 @@ const XbotTracker = () => {
 
   const renderStations = () => {
     const stationElements = [];
-
     configuredStations.forEach(station => {
       const stationNumericId = getStationId(station.position, station.index);
       const currentLiveStateKey = stationLiveStates[stationNumericId];
       const stateInfo = currentLiveStateKey ? stationDisplayStates[currentLiveStateKey] : null; 
-
       let style = {};
       switch (station.position) {
         case "top": style = { left: FLYWAY_SIZE + station.index * FLYWAY_SIZE, top: 0 }; break;
@@ -449,7 +479,6 @@ const XbotTracker = () => {
         case "middle": style = { left: FLYWAY_SIZE + 2 * FLYWAY_SIZE, top: FLYWAY_SIZE + 1 * FLYWAY_SIZE }; break;
         default: break;
       }
-
       stationElements.push(
         <div
           key={`station-${station.position}-${station.index}`}
@@ -477,169 +506,207 @@ const XbotTracker = () => {
 
   const selectedXbotData = xbots.find(xbot => xbot.id === selectedXbot) || (xbots.length > 0 ? xbots[0] : null);
 
+  const renderSystemState = (stateKey, label) => {
+    if (!stateKey && stateKey !== null) return <div className="system-state-item">{label}: Loading...</div>;
+    if (stateKey === null) return <div className="system-state-item">{label}: Not Available</div>;
+    
+    const displayInfo = stationDisplayStates[stateKey.toLowerCase()] || { label: stateKey, color: '#888'};
+    return (
+      <div className="system-state-item">
+        {label}: <span style={{ color: displayInfo.color, fontWeight: 'bold', border: `1px solid ${displayInfo.color}`, padding: '2px 5px', borderRadius: '4px', backgroundColor: `${displayInfo.color}20` }}>{displayInfo.label}</span>
+      </div>
+    );
+  };
+
   return (
     <div className="xbot-tracker-page">
+      <div className="system-state-display-container">
+        {renderSystemState(btControllerState, "BT Controller")}
+        {renderSystemState(planarSystemState, "Planar System")}
+      </div>
       <h1>Production Live View & Control</h1>
-      {!mqttConnected && <p style={{color: 'red', textAlign: 'center', fontWeight: 'bold'}}>MQTT Disconnected - Xbot positions may not be live.</p>}
-      <div className="tracker-content">
-        <div 
-          className="xbot-grid-container"
-          style={{ width: containerWidth, height: containerHeight }}
-        >
-          <div className="grid-actual" style={{
-            position: "absolute", left: FLYWAY_SIZE, top: FLYWAY_SIZE,
-            width: totalWidth, height: totalHeight
-          }}>
-            {renderGridCells()}
-          </div>
-          {renderStations()}
-          {xbots.map(xbot => {
-            const xbotStateDetails = xbotStates[xbot.currentState];
-            return (
-              <div 
-                key={xbot.id}
-                className={`xbot-container ${xbot.id === selectedXbot ? 'selected' : ''}`}
-                style={{
-                  width: XBOT_SIZE,
-                  height: XBOT_SIZE,
-                  left: FLYWAY_SIZE + xbot.x - XBOT_SIZE / 2,
-                  top: FLYWAY_SIZE + (totalHeight - xbot.y) - XBOT_SIZE / 2,
-                  position: 'absolute',
-                  cursor: 'pointer',
-                }}
-                onClick={() => setSelectedXbot(xbot.id)}
-                title={`Xbot ${xbot.id}: X=${xbot.x?.toFixed(1)}, Y=${xbot.y?.toFixed(1)}, Yaw=${xbot.yaw?.toFixed(1)}°`}
-              >
-                <div
-                  className="xbot-body" 
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    backgroundColor: '#aaaaaa',
-                    border: '4px solid black',
-                    borderRadius: '10px',
-                    transform: `rotate(${xbot.yaw}deg)`,
-                    boxSizing: 'border-box',
-                    position: 'relative', 
-                    boxShadow: '5px 5px 15px rgba(0, 0, 0, 0.3)', 
-                  }}
-                >
-                  <div style={{
-                    position: 'absolute',
-                    top: '5px', 
-                    left: '5px', 
-                    fontSize: '14px', 
-                    color: 'black',
-                    backgroundColor: 'rgba(255, 255, 255, 0.7)', 
-                    padding: '2px 4px',
-                    borderRadius: '3px',
-                    zIndex: 1, 
-                    whiteSpace: 'nowrap',
-                  }}>
-                    Xbot {xbot.id}
-                  </div>
-                  {xbotStateDetails && (
-                    <div style={{
-                      position: 'absolute',
-                      bottom: '5px', 
-                      left: '5px',   
-                      padding: '2px 4px', 
-                      backgroundColor: xbotStateDetails.color,
-                      color: 'white', 
-                      fontSize: '12px', 
-                      fontWeight: 'bold',
-                      borderRadius: '3px',
-                      textAlign: 'center',
-                      zIndex: 1, 
-                      lineHeight: '1.2',
-                      minWidth: '40px', 
-                    }}>
-                      {xbotStateDetails.label}
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+      {!mqttConnected && <p style={{color: 'red', textAlign: 'center', fontWeight: 'bold'}}>MQTT Disconnected - Data may not be live.</p>}
+      
+      <div className="main-layout-container">
+        <div className="control-sidebar">
+          <h2>System Controls</h2>
+          <button className="control-button start-button" onClick={handleStartSystem}>Start</button>
+          <button className="control-button stop-button" onClick={handleStopSystem}>Stop</button>
+          <button className="control-button reset-button-system" onClick={handleResetSystem}>Clear</button>
+          <button 
+            className={`control-button hold-button ${isHolding ? 'unhold-active' : 'hold-active'}`} 
+            onClick={handleToggleHoldSystem}
+          >
+            {isHolding ? 'Unsuspend' : 'Suspend'}
+          </button>
         </div>
         
-        <div className="xbot-controls">
-          <h2>Xbot Controls</h2>
-          <div className="xbot-selector">
-            <label>Select Xbot:</label>
-            <div className="selector-buttons">
-              {xbots.map(xbot => (
-                <button 
-                  key={xbot.id}
-                  className={`select-button ${xbot.id === selectedXbot ? 'active' : ''}`}
-                  style={{backgroundColor: xbot.id === selectedXbot ? xbot.color : '#f0f0f0', color: xbot.id === selectedXbot ? 'white' : 'black'}}
-                  onClick={() => setSelectedXbot(xbot.id)}
-                >
-                  Xbot {xbot.id}
-                </button>
-              ))}
+        <div className="tracker-main-area">
+          <div className="tracker-content"> {/* This was the original main content wrapper */}
+            <div 
+              className="xbot-grid-container"
+              style={{ width: containerWidth, height: containerHeight }}
+            >
+              <div className="grid-actual" style={{
+                position: "absolute", left: FLYWAY_SIZE, top: FLYWAY_SIZE,
+                width: totalWidth, height: totalHeight
+              }}>
+                {renderGridCells()}
+              </div>
+              {renderStations()}
+              {xbots.map(xbot => {
+                const xbotStateDetails = xbotStates[xbot.currentState];
+                return (
+                  <div 
+                    key={xbot.id}
+                    className={`xbot-container ${xbot.id === selectedXbot ? 'selected' : ''}`}
+                    style={{
+                      width: XBOT_SIZE,
+                      height: XBOT_SIZE,
+                      left: FLYWAY_SIZE + xbot.x - XBOT_SIZE / 2,
+                      top: FLYWAY_SIZE + (totalHeight - xbot.y) - XBOT_SIZE / 2,
+                      position: 'absolute',
+                      cursor: 'pointer',
+                    }}
+                    onClick={() => setSelectedXbot(xbot.id)}
+                    title={`Xbot ${xbot.id}: X=${xbot.x?.toFixed(1)}, Y=${xbot.y?.toFixed(1)}, Yaw=${xbot.yaw?.toFixed(1)}°`}
+                  >
+                    <div
+                      className="xbot-body" 
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        backgroundColor: '#aaaaaa',
+                        border: '4px solid black',
+                        borderRadius: '10px',
+                        transform: `rotate(${xbot.yaw}deg)`,
+                        boxSizing: 'border-box',
+                        position: 'relative', 
+                        boxShadow: '5px 5px 15px rgba(0, 0, 0, 0.3)', 
+                      }}
+                    >
+                      <div style={{
+                        position: 'absolute',
+                        top: '5px', 
+                        left: '5px', 
+                        fontSize: '14px', 
+                        color: 'black',
+                        backgroundColor: 'rgba(255, 255, 255, 0.7)', 
+                        padding: '2px 4px',
+                        borderRadius: '3px',
+                        zIndex: 1, 
+                        whiteSpace: 'nowrap',
+                      }}>
+                        Xbot {xbot.id}
+                      </div>
+                      {xbotStateDetails && (
+                        <div style={{
+                          position: 'absolute',
+                          bottom: '5px', 
+                          left: '5px',   
+                          padding: '2px 4px', 
+                          backgroundColor: xbotStateDetails.color,
+                          color: 'white', 
+                          fontSize: '12px', 
+                          fontWeight: 'bold',
+                          borderRadius: '3px',
+                          textAlign: 'center',
+                          zIndex: 1, 
+                          lineHeight: '1.2',
+                          minWidth: '40px', 
+                        }}>
+                          {xbotStateDetails.label}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
             
-            <div className="xbot-management-buttons">
-              <button className="add-xbot-button" onClick={handleAddXbot}>+ Add Xbot</button>
-              <button className="remove-xbot-button" onClick={handleRemoveXbot} disabled={xbots.length <= 1}>- Remove Xbot</button>
-            </div>
-          </div>
-          
-          {selectedXbotData && (
-            <div className="xbot-current-pose">
-              <h3>Selected: Xbot {selectedXbotData.id}</h3>
-              <p>X Position: {selectedXbotData.x?.toFixed(2)} mm</p>
-              <p>Y Position: {selectedXbotData.y?.toFixed(2)} mm</p>
-              <p>Rotation: {selectedXbotData.yaw?.toFixed(2)}°</p>
-              {xbotStates[selectedXbotData.currentState] && (
-                <p>State: {xbotStates[selectedXbotData.currentState].label}</p>
-              )}
-            </div>
-          )}
-          
-          <div className="xbot-list">
-            <h3>All Xbot Positions</h3>
-            {xbots.map(xbot => (
-              <div 
-                key={xbot.id} 
-                className={`xbot-info ${xbot.id === selectedXbot ? 'selected' : ''}`} 
-                style={{borderLeftColor: xbot.color}}
-                onClick={() => setSelectedXbot(xbot.id)}
-              >
-                <h3>Xbot {xbot.id}</h3>
-                <p>Position: X={xbot.x?.toFixed(1)}mm, Y={xbot.y?.toFixed(1)}mm</p>
-                <p>Flyway: Col={Math.ceil(xbot.x/FLYWAY_SIZE)}, Row={Math.ceil(xbot.y/FLYWAY_SIZE)}</p>
-                <p>Rotation: {xbot.yaw?.toFixed(1)}°</p>
-                {xbotStates[xbot.currentState] && (
-                  <p>State: {xbotStates[xbot.currentState].label}</p>
-                )}
+            <div className="xbot-controls"> {/* This is the original right-side controls for Xbots */}
+              <h2>Xbot Controls</h2>
+              <div className="xbot-selector">
+                <label>Select Xbot:</label>
+                <div className="selector-buttons">
+                  {xbots.map(xbot => (
+                    <button 
+                      key={xbot.id}
+                      className={`select-button ${xbot.id === selectedXbot ? 'active' : ''}`}
+                      style={{backgroundColor: xbot.id === selectedXbot ? xbot.color : '#f0f0f0', color: xbot.id === selectedXbot ? 'white' : 'black'}}
+                      onClick={() => setSelectedXbot(xbot.id)}
+                    >
+                      Xbot {xbot.id}
+                    </button>
+                  ))}
+                </div>
+                
+                <div className="xbot-management-buttons">
+                  <button className="add-xbot-button" onClick={handleAddXbot}>+ Add Xbot</button>
+                  <button className="remove-xbot-button" onClick={handleRemoveXbot} disabled={xbots.length <= 1}>- Remove Xbot</button>
+                </div>
               </div>
-            ))}
-          </div>
-          
-          <div className="reset-controls">
-          <button 
-              className="reset-button"
-              onClick={() => {
-                localStorage.removeItem('xbotPositions');
-                localStorage.removeItem('selectedXbot');
-                const defaultXbotsRaw = [
-                    { id: 1, x: 360, y: totalHeight - 600, yaw: 270, color: "#0033A0" },
-                    { id: 2, x: 600, y: totalHeight - 600, yaw: 270, color: "#00A0AF" }
-                ];
-                const defaultXbotsWithDetails = defaultXbotsRaw.map(bot => ({
-                    ...bot,
-                    targetX: bot.x, targetY: bot.y, targetYaw: bot.yaw,
-                    currentState: getXbotDefaultState(bot.id)
-                }));
-                setXbots(defaultXbotsWithDetails);
-                setSelectedXbot(defaultXbotsWithDetails.length > 0 ? defaultXbotsWithDetails[0].id : null);
-                setStationLiveStates({}); 
-              }}
-            >
-              Reset to Default
-            </button>
+              
+              {selectedXbotData && (
+                <div className="xbot-current-pose">
+                  <h3>Selected: Xbot {selectedXbotData.id}</h3>
+                  <p>X Position: {selectedXbotData.x?.toFixed(2)} mm</p>
+                  <p>Y Position: {selectedXbotData.y?.toFixed(2)} mm</p>
+                  <p>Rotation: {selectedXbotData.yaw?.toFixed(2)}°</p>
+                  {xbotStates[selectedXbotData.currentState] && (
+                    <p>State: {xbotStates[selectedXbotData.currentState].label}</p>
+                  )}
+                </div>
+              )}
+              
+              <div className="xbot-list">
+                <h3>All Xbot Positions</h3>
+                {xbots.map(xbot => (
+                  <div 
+                    key={xbot.id} 
+                    className={`xbot-info ${xbot.id === selectedXbot ? 'selected' : ''}`} 
+                    style={{borderLeftColor: xbot.color}}
+                    onClick={() => setSelectedXbot(xbot.id)}
+                  >
+                    <h3>Xbot {xbot.id}</h3>
+                    <p>Position: X={xbot.x?.toFixed(1)}mm, Y={xbot.y?.toFixed(1)}mm</p>
+                    <p>Flyway: Col={Math.ceil(xbot.x/FLYWAY_SIZE)}, Row={Math.ceil(xbot.y/FLYWAY_SIZE)}</p>
+                    <p>Rotation: {xbot.yaw?.toFixed(1)}°</p>
+                    {xbotStates[xbot.currentState] && (
+                      <p>State: {xbotStates[xbot.currentState].label}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+              
+              <div className="reset-controls">
+              <button 
+                  className="reset-button"
+                  onClick={() => {
+                    localStorage.removeItem('xbotPositions');
+                    localStorage.removeItem('selectedXbot');
+                    const defaultXbotsRaw = [
+                        { id: 1, x: 360, y: totalHeight - 600, yaw: 270, color: "#0033A0" },
+                        { id: 2, x: 600, y: totalHeight - 600, yaw: 270, color: "#00A0AF" },
+                        { id: 3, x: 840, y: totalHeight - 600, yaw: 270, color: "#00A0AF" },
+                    ];
+                    const defaultXbotsWithDetails = defaultXbotsRaw.map(bot => ({
+                        ...bot,
+                        targetX: bot.x, targetY: bot.y, targetYaw: bot.yaw,
+                        currentState: getXbotDefaultState(bot.id)
+                    }));
+                    setXbots(defaultXbotsWithDetails);
+                    setSelectedXbot(defaultXbotsWithDetails.length > 0 ? defaultXbotsWithDetails[0].id : null);
+                    //setStationLiveStates({}); 
+                    setBtControllerState(null); // Reset system states as well
+                    setPlanarSystemState(null);
+                    setIsHolding(false);
+                  }}
+                >
+                  Reset Xbots & View
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
