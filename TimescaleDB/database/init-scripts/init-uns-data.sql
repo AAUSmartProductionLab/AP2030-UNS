@@ -31,6 +31,12 @@ CREATE TABLE IF NOT EXISTS filling_state (
     process_queue JSONB NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS filling_weight (
+    weight FLOAT NOT NULL,
+    timestamp_utc TIMESTAMPTZ NOT NULL,
+    uuid UUID NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS stoppering_state (
     state VARCHAR(255) NOT NULL,
     timestamp_utc TIMESTAMPTZ NOT NULL,

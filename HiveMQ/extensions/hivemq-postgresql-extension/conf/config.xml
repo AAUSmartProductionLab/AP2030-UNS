@@ -92,6 +92,16 @@
             </processor>
         </mqtt-to-postgresql-route>
         <mqtt-to-postgresql-route>
+            <id>filling-weight-route</id>
+            <postgresql-id>order-data-postgresql</postgresql-id>
+            <mqtt-topic-filters>
+                <mqtt-topic-filter>NN/Nybrovej/InnoLab/Filling/DATA/Weight</mqtt-topic-filter>
+            </mqtt-topic-filters>
+            <processor> 
+                <statement-template>sql-template-statements/stations/filling-weight-insert.sql</statement-template>
+            </processor>
+        </mqtt-to-postgresql-route>
+        <mqtt-to-postgresql-route>
             <id>stoppering-state-route</id>
             <postgresql-id>order-data-postgresql</postgresql-id>
             <mqtt-topic-filters>
@@ -99,6 +109,16 @@
             </mqtt-topic-filters>
             <processor> 
                 <statement-template>sql-template-statements/stations/stoppering-state-insert.sql</statement-template>
+            </processor>
+        </mqtt-to-postgresql-route>
+        <mqtt-to-postgresql-route>
+            <id>camera-state-route</id>
+            <postgresql-id>order-data-postgresql</postgresql-id>
+            <mqtt-topic-filters>
+                <mqtt-topic-filter>NN/Nybrovej/InnoLab/Camera/DATA/State</mqtt-topic-filter>
+            </mqtt-topic-filters>
+            <processor> 
+                <statement-template>sql-template-statements/stations/camera-state-insert.sql</statement-template>
             </processor>
         </mqtt-to-postgresql-route>
         <mqtt-to-postgresql-route>
