@@ -74,8 +74,7 @@ target_link_libraries(bt_controller_common
         fmt::fmt
         magic_enum::magic_enum
         ${UUID_LIBRARIES}
-        ${CMAKE_CURRENT_BINARY_DIR}/third_party/paho.mqtt.cpp/externals/paho-mqtt-c/src
-)
+        )
 
 add_executable(bt_controller
     src/BehaviorTreeController.cpp
@@ -87,7 +86,7 @@ target_include_directories(bt_controller
 )
 
 target_link_directories(bt_controller PRIVATE
-    "${CMAKE_CURRENT_BINARY_DIR}/third_party/paho.mqtt.cpp/src"
+    ${CMAKE_CURRENT_BINARY_DIR}/third_party/paho.mqtt.cpp/src
 )
 
 target_link_libraries(bt_controller
