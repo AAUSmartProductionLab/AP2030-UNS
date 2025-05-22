@@ -46,28 +46,18 @@ RUN mkdir build && cd build && \
     make install
 
     
-# Clone third-party dependencies
-WORKDIR /src
-RUN mkdir -p /src/planar-motors-experiments/third_party
-WORKDIR /src/planar-motors-experiments/third_party
-RUN git clone https://github.com/nlohmann/json.git
-RUN cd json && git checkout v3.11.3
 
-WORKDIR /src/planar-motors-experiments/third_party
-RUN git clone https://github.com/pboettch/json-schema-validator.git
-RUN cd json-schema-validator && git checkout 2.3.0
 
-# Copy the repository content from the host (excluding build directories)
+# Clone AP2030UNS repo and build BT_Controller
 WORKDIR /src
-RUN mkdir -p /src/planar-motors-experiments/BT_Controller
-COPY BT_Controller/*.* /src/planar-motors-experiments/BT_Controller/
-COPY BT_Controller/include /src/planar-motors-experiments/BT_Controller/include
-COPY BT_Controller/src /src/planar-motors-experiments/BT_Controller/src
-# Build the project (the code will be copied during build with Docker context)
-WORKDIR /src/planar-motors-experiments/BT_Controller
+RUN git clone git@github.com:AAUSmartProductionLab/AP2030-UNS.git
+WORKDIR /src/AP2030-UNS
+RUN git submodule update --init --recursive
+
+WORKDIR /src/AP2030-UNS/BT_Controller
 RUN mkdir -p build && cd build && \
     cmake .. && \
     make -j$(nproc)
 
-WORKDIR /src/planar-motors-experiments/BT_Controller/build
+WORKDIR /src/AP2030-UNS/BT_Controller/build
 CMD ["./bt_controller"]
