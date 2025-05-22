@@ -15,14 +15,14 @@ add_subdirectory(third_party/json-schema-validator)
 
 # Paho.mqtt.cpp options (check Paho's CMakeLists.txt for exact option names)
 set(PAHO_WITH_MQTT_C ON CACHE BOOL "Build Paho with MQTT C library")
-set(PAHO_BUILD_STATIC OFF CACHE BOOL "Build Paho libraries as static") # Prefer static
+set(PAHO_BUILD_STATIC OFF CACHE BOOL "Build Paho libraries as static")
 set(PAHO_BUILD_SHARED ON CACHE BOOL "Build Paho libraries as shared")
 set(PAHO_BUILD_SAMPLES OFF CACHE BOOL "Do not build Paho samples")
 set(PAHO_BUILD_EXAMPLES OFF CACHE BOOL "Do not build Paho examples") # If 'examples' is the correct option name
 add_subdirectory(third_party/paho.mqtt.cpp)
 
 # BehaviorTree.CPP options (check BehaviorTree.CPP's CMakeLists.txt for exact option names)
-set(BTCPP_SHARED_LIBS OFF CACHE BOOL "Build BehaviorTree.CPP as a static library") # Prefer static
+set(BTCPP_SHARED_LIBS OFF CACHE BOOL "Build BehaviorTree.CPP as a static library")
 set(BTCPP_EXAMPLES OFF CACHE BOOL "Do not build BehaviorTree.CPP examples")
 set(BUILD_TESTING OFF CACHE BOOL "Do not build BehaviorTree.CPP examples")
 set(ENABLE_COROUTINES ON CACHE BOOL "Enable coroutines if your C++ version supports it") # Example option
@@ -58,10 +58,8 @@ target_include_directories(bt_controller_common
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${YAML_CPP_INCLUDE_DIRS}
-        # The include directories for paho and bt.cpp should be handled by target_link_libraries
-        # if their CMake targets are set up correctly with PUBLIC/INTERFACE include directories.
+        ${CMAKE_CURRENT_SOURCE_DIR}/third_party/paho.mqtt.cpp/include
     PRIVATE
-        /usr/local/include # This might not be needed if all deps are handled via CMake targets
         ${UUID_INCLUDE_DIRS}
 )
 
@@ -76,6 +74,7 @@ target_link_libraries(bt_controller_common
         fmt::fmt
         magic_enum::magic_enum
         ${UUID_LIBRARIES}
+        ${CMAKE_CURRENT_BINARY_DIR}/third_party/paho.mqtt.cpp/externals/paho-mqtt-c/src
 )
 
 add_executable(bt_controller
@@ -85,8 +84,10 @@ add_executable(bt_controller
 target_include_directories(bt_controller
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
-    PRIVATE
-        /usr/local/include # This might not be needed
+)
+
+target_link_directories(bt_controller PRIVATE
+    "${CMAKE_CURRENT_BINARY_DIR}/third_party/paho.mqtt.cpp/src"
 )
 
 target_link_libraries(bt_controller
