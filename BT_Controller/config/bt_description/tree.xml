@@ -40,11 +40,9 @@
                               Field="Weight"
                               Message="Weight"
                               Station="{Station}"/>
-              <RetryUntilSuccessful num_attempts="2">
-                <Refill_Node Uuid="{ProductID}"
-                             Command="Refill"
-                             Station="{Station}"/>
-              </RetryUntilSuccessful>
+              <Refill_Node Uuid="{ProductID}"
+                           Command="Refill"
+                           Station="{Station}"/>
             </Sequence>
           </BC_Fallback>
         </Sequence>
@@ -92,10 +90,6 @@
                  _autoremap="true"/>
         <SubTree ID="Xbot_Production"
                  XbotTopic="Planar/Xbot2"
-                 ProductID=""
-                 _autoremap="true"/>
-        <SubTree ID="Xbot_Production"
-                 XbotTopic="Planar/Xbot3"
                  ProductID=""
                  _autoremap="true"/>
       </Parallel>
