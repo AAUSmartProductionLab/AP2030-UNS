@@ -22,6 +22,16 @@
             </processor>
         </mqtt-to-postgresql-route>
         <mqtt-to-postgresql-route>
+            <id>planar-system-state-route</id>
+            <postgresql-id>order-data-postgresql</postgresql-id>
+            <mqtt-topic-filters>
+                <mqtt-topic-filter>NN/Nybrovej/InnoLab/Planar/DATA/State</mqtt-topic-filter>
+            </mqtt-topic-filters>
+            <processor>
+                <statement-template>sql-template-statements/planar/planar-state-insert.sql</statement-template>
+            </processor>
+        </mqtt-to-postgresql-route>
+        <mqtt-to-postgresql-route>
             <id>order-done-template-route</id>
             <postgresql-id>order-data-postgresql</postgresql-id>
             <mqtt-topic-filters>
@@ -51,5 +61,67 @@
                 <statement-template>sql-template-statements/planar/xbot-state-insert.sql</statement-template>
             </processor>
         </mqtt-to-postgresql-route>
+        <mqtt-to-postgresql-route>
+            <id>station-configurations-route</id>
+            <postgresql-id>order-data-postgresql</postgresql-id> <!-- Use your relevant postgresql-id -->
+            <mqtt-topic-filters>
+                <mqtt-topic-filter>NN/Nybrovej/InnoLab/Configuration/DATA/Planar/Stations</mqtt-topic-filter>
+            </mqtt-topic-filters>
+            <processor>
+                <statement-template>sql-template-statements/config/station-configurations-log-insert.sql</statement-template>
+            </processor>
+        </mqtt-to-postgresql-route>
+        <mqtt-to-postgresql-route>
+            <id>planar-limits-config-route</id>
+            <postgresql-id>order-data-postgresql</postgresql-id> <!-- Ensure this matches your <postgresql-id> -->
+            <mqtt-topic-filters>
+                <mqtt-topic-filter>NN/Nybrovej/InnoLab/Configuration/DATA/Planar/Limits</mqtt-topic-filter>
+            </mqtt-topic-filters>
+            <processor>
+                <statement-template>sql-template-statements/config/limit-configurations-log-insert.sql</statement-template>
+            </processor>
+        </mqtt-to-postgresql-route>
+        <mqtt-to-postgresql-route>
+            <id>filling-state-route</id>
+            <postgresql-id>order-data-postgresql</postgresql-id>
+            <mqtt-topic-filters>
+                <mqtt-topic-filter>NN/Nybrovej/InnoLab/Filling/DATA/State</mqtt-topic-filter>
+            </mqtt-topic-filters>
+            <processor> 
+                <statement-template>sql-template-statements/stations/filling-state-insert.sql</statement-template>
+            </processor>
+        </mqtt-to-postgresql-route>
+        <mqtt-to-postgresql-route>
+            <id>stoppering-state-route</id>
+            <postgresql-id>order-data-postgresql</postgresql-id>
+            <mqtt-topic-filters>
+                <mqtt-topic-filter>NN/Nybrovej/InnoLab/Stoppering/DATA/State</mqtt-topic-filter>
+            </mqtt-topic-filters>
+            <processor> 
+                <statement-template>sql-template-statements/stations/stoppering-state-insert.sql</statement-template>
+            </processor>
+        </mqtt-to-postgresql-route>
+        <mqtt-to-postgresql-route>
+            <id>unload-state-route</id>
+            <postgresql-id>order-data-postgresql</postgresql-id>
+            <mqtt-topic-filters>
+                <mqtt-topic-filter>NN/Nybrovej/InnoLab/Unload/DATA/State</mqtt-topic-filter>
+            </mqtt-topic-filters>
+            <processor> 
+                <statement-template>sql-template-statements/stations/unload-state-insert.sql</statement-template>
+            </processor>
+        </mqtt-to-postgresql-route>
+        <mqtt-to-postgresql-route>
+            <id>load-state-route</id>
+            <postgresql-id>order-data-postgresql</postgresql-id>
+            <mqtt-topic-filters>
+                <mqtt-topic-filter>NN/Nybrovej/InnoLab/Load/DATA/State</mqtt-topic-filter>
+            </mqtt-topic-filters>
+            <processor> 
+                <statement-template>sql-template-statements/stations/load-state-insert.sql</statement-template>
+            </processor>
+        </mqtt-to-postgresql-route>
     </mqtt-to-postgresql-routes>
+
+
 </hivemq-postgresql-extension>

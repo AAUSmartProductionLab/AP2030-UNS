@@ -1,0 +1,1 @@
+SELECT log_planar_limits(${mqtt-payload-utf8}::JSONB);
