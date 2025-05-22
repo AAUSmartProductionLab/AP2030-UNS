@@ -107,6 +107,17 @@ services:
       - hivemq-network
     restart: unless-stopped
 
+  bt_controller:
+    build:
+      context: .
+      dockerfile: BT_Controller/dockerfile
+    container_name: bt_controller
+    networks:
+      - hivemq-network
+    depends_on:
+      - hivemq-broker
+
+
   filling_station:
     extends:
       file: ./PackML_Stations/stations-compose.yml

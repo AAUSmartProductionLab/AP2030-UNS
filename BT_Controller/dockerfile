@@ -21,16 +21,14 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Clone AP2030UNS repo and build BT_Controller
+# Copy local AP2030UNS repo content and build
 WORKDIR /src
-RUN git clone https://github.com/AAUSmartProductionLab/AP2030-UNS.git
-WORKDIR /src/AP2030-UNS
-RUN git submodule update --init --recursive
-
+COPY ./BT_Controller /src/AP2030-UNS/BT_Controller
+COPY ./schemas /src/AP2030-UNS/schemas
 WORKDIR /src/AP2030-UNS/BT_Controller
 RUN mkdir -p build && cd build && \
     cmake .. && \
-    make -j$(nproc)
+    make VERBOSE=1 -j$(nproc)
 
 WORKDIR /src/AP2030-UNS/BT_Controller/build
 CMD ["./bt_controller"]

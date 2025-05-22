@@ -70,12 +70,8 @@ target_include_directories(bt_controller_common
 target_link_libraries(bt_controller_common
     PUBLIC
         nlohmann_json_schema_validator::validator
-        # behaviortree_cpp # Old target from find_package
-        behaviortree_cpp # New target from BehaviorTree.CPP submodule
-        # PahoMqttCpp::paho-mqttpp3 # Old target from find_package
-        # PahoMqttCpp::paho-mqtt3as # Old target from find_package
-        paho-mqttpp3 # New target from Paho submodule (exact name might vary, check Paho's CMake)
-        paho-mqtt3as # New target from Paho submodule (exact name might vary, check Paho's CMake)
+        behaviortree_cpp
+        paho-mqttpp3-static
         Threads::Threads
         ${YAML_CPP_LIBRARIES}
         fmt::fmt
