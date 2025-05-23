@@ -25,6 +25,11 @@ CREATE TABLE IF NOT EXISTS order_done (
     timestamp_utc TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS controller_state (
+    state VARCHAR(255) NOT NULL,
+    timestamp_utc TIMESTAMPTZ NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS filling_state (
     state VARCHAR(255) NOT NULL,
     timestamp_utc TIMESTAMPTZ NOT NULL,

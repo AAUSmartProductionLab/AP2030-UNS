@@ -141,6 +141,16 @@
                 <statement-template>sql-template-statements/stations/load-state-insert.sql</statement-template>
             </processor>
         </mqtt-to-postgresql-route>
+        <mqtt-to-postgresql-route>
+            <id>controller-state-route</id>
+            <postgresql-id>order-data-postgresql</postgresql-id>
+            <mqtt-topic-filters>
+                <mqtt-topic-filter>NN/Nybrovej/InnoLab/bt_controller/DATA/State</mqtt-topic-filter>
+            </mqtt-topic-filters>
+            <processor> 
+                <statement-template>sql-template-statements/controller/state-insert.sql</statement-template>
+            </processor>
+        </mqtt-to-postgresql-route>
     </mqtt-to-postgresql-routes>
 
 
