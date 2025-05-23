@@ -13,8 +13,9 @@
           <Sleep msec="10000"/>
         </ReactiveFallback>
         <Sequence>
-          <MoveShuttle Uuid="{ProductID}"
-                       TargetPosition="{Station}"/>
+          <MoveToPosition Topic="{XbotTopic}"
+                          Uuid="{ProductID}"
+                          TargetPosition="{Station}"/>
           <Station_Execution Uuid="{ProductID}"
                              Command="Tare"
                              Station="{Station}"/>
@@ -67,8 +68,9 @@
             <Sleep msec="10000"/>
           </ReactiveFallback>
           <Sequence>
-            <MoveShuttle Uuid="{ProductID}"
-                         TargetPosition="{Station}"/>
+            <MoveToPosition Topic="{XbotTopic}"
+                            Uuid="{ProductID}"
+                            TargetPosition="{Station}"/>
             <Station_Execution Uuid="{ProductID}"
                                Command="Load"
                                Station="{Station}"/>
@@ -109,8 +111,9 @@
           <Sleep msec="10000"/>
         </ReactiveFallback>
         <Sequence>
-          <MoveShuttle Uuid="{ProductID}"
-                       TargetPosition="{Station}"/>
+          <MoveToPosition Topic="{XbotTopic}"
+                          Uuid="{ProductID}"
+                          TargetPosition="{Station}"/>
           <Station_Execution Uuid="{ProductID}"
                              Command="Capture"
                              Station="{Station}"/>
@@ -132,8 +135,9 @@
           <Sleep msec="10000"/>
         </ReactiveFallback>
         <Sequence>
-          <MoveShuttle Uuid="{ProductID}"
-                       TargetPosition="{Station}"/>
+          <MoveToPosition Topic="{XbotTopic}"
+                          Uuid="{ProductID}"
+                          TargetPosition="{Station}"/>
           <Station_Execution Uuid="{ProductID}"
                              Command="Scrap"
                              Station="{Station}"/>
@@ -155,8 +159,9 @@
           <Sleep msec="10000"/>
         </ReactiveFallback>
         <Sequence>
-          <MoveShuttle Uuid="{ProductID}"
-                       TargetPosition="{Station}"/>
+          <MoveToPosition Topic="{XbotTopic}"
+                          Uuid="{ProductID}"
+                          TargetPosition="{Station}"/>
           <Station_Execution Uuid="{ProductID}"
                              Command="Stopper"
                              Station="{Station}"/>
@@ -178,8 +183,9 @@
           <Sleep msec="10000"/>
         </ReactiveFallback>
         <Sequence>
-          <MoveShuttle Uuid="{ProductID}"
-                       TargetPosition="{Station}"/>
+          <MoveToPosition Topic="{XbotTopic}"
+                          Uuid="{ProductID}"
+                          TargetPosition="{Station}"/>
           <Station_Execution Uuid="{ProductID}"
                              Command="Unload"
                              Station="{Station}"/>
@@ -268,7 +274,10 @@
       <input_port name="Station"
                   default="Load"/>
     </SubTree>
-    <Action ID="MoveShuttle">
+    <Action ID="MoveToPosition">
+      <input_port name="Topic"
+                  default="{Topic}"
+                  type="std::string">Topic to which we want to send the request</input_port>
       <input_port name="Uuid"
                   default="{ProductID}"
                   type="std::string">UUID for the command to execute</input_port>

@@ -32,6 +32,12 @@
             <input_port name="Station" default="Load"/>
         </SubTree>
         <Action ID="MoveShuttle">
+            <input_port name="Topic" default="{Topic}" type="std::string">Topic to which we want to send the request</input_port>
+            <input_port name="Uuid" default="{ProductID}" type="std::string">UUID for the command to execute</input_port>
+            <input_port name="TargetPosition" default="{Station}" type="std::string">The name of the station to move to</input_port>
+        </Action>
+        <Action ID="MoveToPosition">
+            <input_port name="Topic" default="{Topic}" type="std::string">Topic to which we want to send the request</input_port>
             <input_port name="Uuid" default="{ProductID}" type="std::string">UUID for the command to execute</input_port>
             <input_port name="TargetPosition" default="{Station}" type="std::string">The name of the station to move to</input_port>
         </Action>

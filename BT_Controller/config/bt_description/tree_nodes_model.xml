@@ -22,7 +22,8 @@
             <input_port name="if_empty" type="BT::NodeStatus" default="SUCCESS">Status to return if queue is empty: SUCCESS, FAILURE, SKIPPED</input_port>
             <input_port name="Queue" type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;" default="{ProductIDs}">The queue to monitor. Node runs child while this queue is not empty.</input_port>
         </Decorator>
-        <Action ID="MoveShuttle">
+        <Action ID="MoveToPosition">
+            <input_port name="Topic" type="std::string" default="{Topic}">Topic to which we want to send the request</input_port>
             <input_port name="Uuid" type="std::string" default="{ProductID}">UUID for the command to execute</input_port>
             <input_port name="TargetPosition" type="std::string" default="{Station}">The name of the station to move to</input_port>
         </Action>

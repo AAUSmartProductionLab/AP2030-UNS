@@ -5,7 +5,7 @@
 #include "utils.h"
 #include "mqtt/node_message_distributor.h"
 #include "bt/mqtt_action_node.h"
-#include "bt/actions/move_shuttle_to_position.h"
+#include "bt/actions/move_to_position.h"
 #include "bt/actions/generic_action_node.h"
 #include "bt/actions/omron_arcl_request_node.h"
 #include "bt/actions/station_start_node.h"
@@ -87,11 +87,11 @@ void registerAllNodes(
         true);
 
     // Register the nodes with the behavior tree and the mqtt client
-    MqttActionNode::registerNodeTypeWithHalt<MoveShuttleToPosition>(
+    MqttActionNode::registerNodeTypeWithHalt<MoveToPosition>(
         factory,
         node_message_distributor,
         bt_mqtt_client,
-        "MoveShuttle",
+        "MoveToPosition",
         XYMotionCMD, StateData, XYMotionCMD);
 
     MqttActionNode::registerNodeType<OmronArclRequest>(

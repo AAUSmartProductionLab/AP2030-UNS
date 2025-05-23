@@ -1,8 +1,8 @@
-#include "bt/actions/move_shuttle_to_position.h"
+#include "bt/actions/move_to_position.h"
 #include "utils.h"
 #include "mqtt/node_message_distributor.h"
 
-MoveShuttleToPosition::MoveShuttleToPosition(
+MoveToPosition::MoveToPosition(
     const std::string &name,
     const BT::NodeConfig &config,
     MqttClient &bt_mqtt_client,
@@ -26,7 +26,7 @@ MoveShuttleToPosition::MoveShuttleToPosition(
     }
 }
 
-MoveShuttleToPosition::~MoveShuttleToPosition()
+MoveToPosition::~MoveToPosition()
 {
     if (MqttSubBase::node_message_distributor_)
     {
@@ -34,18 +34,18 @@ MoveShuttleToPosition::~MoveShuttleToPosition()
     }
 }
 
-std::string MoveShuttleToPosition::getFormattedTopic(const std::string &pattern, const BT::NodeConfig &config)
+std::string MoveToPosition::getFormattedTopic(const std::string &pattern, const BT::NodeConfig &config)
 {
-    BT::Expected<std::string> id = config.blackboard->get<std::string>("XbotTopic"); // hacky way of getting the ID from the subtree parameter
-    if (id.has_value())
+    BT::Expected<std::string> topic = getInput<std::string>("Topic");
+    if (topic.has_value())
     {
-        std::string formatted = mqtt_utils::formatWildcardTopic(pattern, id.value());
+        std::string formatted = mqtt_utils::formatWildcardTopic(pattern, topic.value());
         return formatted;
     }
     return pattern;
 }
 
-BT::PortsList MoveShuttleToPosition::providedPorts()
+BT::PortsList MoveToPosition::providedPorts()
 {
     return {BT::details::PortWithDefault<std::string>(
                 BT::PortDirection::INPUT,
@@ -56,13 +56,18 @@ BT::PortsList MoveShuttleToPosition::providedPorts()
                 BT::PortDirection::INPUT,
                 "Uuid",
                 "{ProductID}",
-                "UUID for the command to execute")};
+                "UUID for the command to execute"),
+            BT::details::PortWithDefault<std::string>(
+                BT::PortDirection::INPUT,
+                "Topic",
+                "{Topic}",
+                "Topic to which we want to send the request")};
 }
 
-void MoveShuttleToPosition::onHalted()
+void MoveToPosition::onHalted()
 {
     // Clean up when the node is halted
-    std::cout << "MQTT action node halted" << std::endl;
+    std::cout << name() << " node halted" << std::endl;
     // Additional cleanup as needed
     json message;
     message["TargetPosition"] = 0;
@@ -70,7 +75,7 @@ void MoveShuttleToPosition::onHalted()
     publish("halt", message);
 }
 
-json MoveShuttleToPosition::createMessage()
+json MoveToPosition::createMessage()
 {
     BT::Expected<std::string> TargetPosition = getInput<std::string>("TargetPosition");
     BT::Expected<std::string> Uuid = getInput<std::string>("Uuid");
