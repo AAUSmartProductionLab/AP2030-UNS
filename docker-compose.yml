@@ -112,6 +112,8 @@ services:
       context: .
       dockerfile: BT_Controller/dockerfile
     container_name: bt_controller
+    volumes:
+      - ./BT_Controller/config:/src/AP2030-UNS/BT_Controller/config
     ports:
     - "1667:1667"
     networks:
