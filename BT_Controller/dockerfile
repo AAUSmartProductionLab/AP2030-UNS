@@ -108,14 +108,22 @@ COPY ./BT_Controller/include ./BT_Controller/include/
 
 WORKDIR /src/AP2030-UNS/BT_Controller
 RUN mkdir -p build
+# The WORKDIR for cmake and make should be the build directory
 WORKDIR /src/AP2030-UNS/BT_Controller/build
 
-RUN cmake .. \
-    -DCMAKE_BUILD_TYPE=Debug \
-    -DCMAKE_PREFIX_PATH=/usr/local \
-    -Dbehaviourtree_cpp_DIR=/usr/local/lib/cmake/behaviortree_cpp
-RUN make VERBOSE=1 -j$(nproc)
+RUN --mount=type=cache,target=/src/AP2030-UNS/BT_Controller/build \
+    cmake ..
 
+# Create a directory where artifacts will be copied to become part of the layer
+RUN mkdir -p /opt/app_artifacts
+
+RUN --mount=type=cache,target=/src/AP2030-UNS/BT_Controller/build \
+    sh -c "make VERBOSE=1 -j$(nproc) && cp /src/AP2030-UNS/BT_Controller/build/bt_controller /opt/app_artifacts/"
+
+# For debugging: This ls will show the build directory as it appears in the layer (likely empty or minimal)
+RUN ls -l /src/AP2030-UNS/BT_Controller/build/
+# For debugging: This ls should show your copied artifact
+RUN ls -l /opt/app_artifacts/
 
 FROM ubuntu:jammy
 
@@ -137,9 +145,10 @@ RUN ldconfig
 
 WORKDIR /app
 
-COPY --from=app_builder /src/AP2030-UNS/BT_Controller/build/bt_controller /app/bt_controller
+# Copy the artifact from the location where it was placed in the layer
+COPY --from=app_builder /opt/app_artifacts/bt_controller /app/bt_controller
 COPY --from=app_builder /src/AP2030-UNS/schemas /app/schemas
 
-WORKDIR /src/AP2030-UNS/BT_Controller/build
+WORKDIR /app # Set WORKDIR to where the app and its resources are
 # Command to run the application
 CMD ["./bt_controller"]
