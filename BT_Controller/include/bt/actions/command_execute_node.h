@@ -10,10 +10,10 @@
 class MqttClient;
 using nlohmann::json;
 
-class StationExecuteNode : public MqttActionNode
+class CommandExecuteNode : public MqttActionNode
 {
 public:
-    StationExecuteNode(const std::string &name,
+    CommandExecuteNode(const std::string &name,
                        const BT::NodeConfig &config,
                        MqttClient &mqtt_client,
                        const mqtt_utils::Topic &request_topic,
@@ -35,7 +35,7 @@ public:
             MqttSubBase::node_message_distributor_->registerDerivedInstance(this);
         }
     }
-    ~StationExecuteNode()
+    ~CommandExecuteNode()
     {
         if (MqttSubBase::node_message_distributor_)
         {
@@ -46,7 +46,7 @@ public:
     {
         return {BT::details::PortWithDefault<std::string>(
                     BT::PortDirection::INPUT,
-                    "Station",
+                    "Entity",
                     "{Station}",
                     "The station to register with"),
                 BT::details::PortWithDefault<std::string>(
@@ -63,19 +63,14 @@ public:
     json createMessage() override
     {
         json message;
-        auto uuid_result = getInput<std::string>("Uuid");
-
-        if (uuid_result)
+        if (uuid_result && uuid_result.has_value())
         {
             current_uuid_ = uuid_result.value();
         }
         else
         {
-            std::cerr << "Error: Uuid not provided to StationExecuteNode. Error: "
-                      << uuid_result.error() << std::endl;
-
+            std::cout << "Error: Uuid not provided to CommandExecuteNode. Generating and using random UUID." << std::endl;
             current_uuid_ = mqtt_utils::generate_uuid();
-            std::cerr << "Using generated UUID instead: " << current_uuid_ << std::endl;
         }
         message["Uuid"] = current_uuid_;
         return message;

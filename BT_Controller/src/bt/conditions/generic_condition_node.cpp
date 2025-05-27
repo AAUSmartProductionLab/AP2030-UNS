@@ -110,13 +110,7 @@ bool GenericConditionNode::compare(const json &msg, const std::string &field_nam
                           state == "EXECUTE" ||
                           state == "COMPLETING" ||
                           state == "COMPLETE" ||
-                          state == "RESETTING" ||
-                          state == "HOLDING" ||
-                          state == "HELD" ||
-                          state == "UNHOLDING" ||
-                          state == "SUSPENDING" ||
-                          state == "SUSPENDED" ||
-                          state == "UNSUSPENDING");
+                          state == "RESETTING");
             }
             else
             {

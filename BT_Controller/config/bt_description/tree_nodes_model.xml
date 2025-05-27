@@ -2,6 +2,11 @@
     <TreeNodesModel>
         <Control ID="BC_Fallback"/>
         <Control ID="BC_Fallback_Async"/>
+        <Action ID="Command_Execution">
+            <input_port name="Uuid" type="std::string" default="{ID}">UUID for the command to execute</input_port>
+            <input_port name="Command" type="std::string" default="Command">The command to execute on the station</input_port>
+            <input_port name="Station" type="std::string" default="{Station}">The station to register with</input_port>
+        </Action>
         <Action ID="Configure">
             <output_port name="StationMap" type="std::map&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, int, std::less&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt;, std::allocator&lt;std::pair&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; const, int&gt; &gt; &gt;" default="{StationMap}">The StationMap of the system for this batch</output_port>
             <output_port name="ProductIDs" type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;" default="{ProductIDs}">List of product IDs to produce</output_port>
@@ -43,11 +48,6 @@
         <Action ID="Station_Complete">
             <input_port name="Uuid" type="std::string" default="{ID}">UUID for the command to execute</input_port>
             <input_port name="Station" type="std::string" default="{Station}">The station to unregister from</input_port>
-        </Action>
-        <Action ID="Station_Execution">
-            <input_port name="Uuid" type="std::string" default="{ID}">UUID for the command to execute</input_port>
-            <input_port name="Command" type="std::string" default="Command">The command to execute on the station</input_port>
-            <input_port name="Station" type="std::string" default="{Station}">The station to register with</input_port>
         </Action>
         <Action ID="Station_Start">
             <input_port name="Uuid" type="std::string" default="{ID}">UUID for the command to execute</input_port>

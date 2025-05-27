@@ -10,7 +10,7 @@
 #include "bt/actions/omron_arcl_request_node.h"
 #include "bt/actions/station_start_node.h"
 #include "bt/actions/station_complete_node.h"
-#include "bt/actions/station_execute_node.h"
+#include "bt/actions/command_execute_node.h"
 #include "bt/actions/configuration_node.h"
 #include "bt/conditions/generic_condition_node.h"
 #include "bt/decorators/get_product_from_queue_node.h"
@@ -47,7 +47,7 @@ void registerAllNodes(
         "../../schemas/command.schema.json",
         2,
         false);
-    mqtt_utils::Topic StationExecuteCMD(
+    mqtt_utils::Topic ExecuteCMD(
         unsTopicPrefix + "/+/CMD/+",
         "../../schemas/command.schema.json",
         2,
@@ -60,7 +60,7 @@ void registerAllNodes(
         unsTopicPrefix + "/+/DATA/State",
         "../../schemas/stationState.schema.json",
         2);
-    mqtt_utils::Topic StationCommandResponse(
+    mqtt_utils::Topic CommandResponse(
         unsTopicPrefix + "/+/DATA/+",
         "../../schemas/commandResponse.schema.json",
         2);
@@ -119,21 +119,21 @@ void registerAllNodes(
         StationUnregistrationCMD,
         StationState);
 
-    MqttActionNode::registerNodeType<StationExecuteNode>(
+    MqttActionNode::registerNodeType<CommandExecuteNode>(
         factory,
         node_message_distributor,
         bt_mqtt_client,
-        "Station_Execution",
-        StationExecuteCMD,
-        StationCommandResponse);
+        "Command_Execution",
+        ExecuteCMD,
+        CommandResponse);
 
     RefillNode::registerNodeType<RefillNode>(
         factory,
         node_message_distributor,
         bt_mqtt_client,
         "Refill_Node",
-        StationExecuteCMD,
-        StationCommandResponse,
+        ExecuteCMD,
+        CommandResponse,
         WeightData);
 
     MqttSyncSubNode::registerNodeType<GenericConditionNode>(
@@ -162,8 +162,8 @@ void registerAllNodes(
         "UseStation",
         StationRegistrationCMD,
         StationUnregistrationCMD,
-        StationCommandResponse,
-        StationCommandResponse);
+        CommandResponse,
+        CommandResponse);
 
     KeepRunningUntilEmpty::registerNodeType<KeepRunningUntilEmpty>(
         factory,

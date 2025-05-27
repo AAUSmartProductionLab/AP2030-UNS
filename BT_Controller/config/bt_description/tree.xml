@@ -16,7 +16,7 @@
           <MoveToPosition Topic="{XbotTopic}"
                           Uuid="{ProductID}"
                           TargetPosition="{Station}"/>
-          <Station_Execution Uuid="{ProductID}"
+          <Command_Execution Uuid="{ProductID}"
                              Command="Tare"
                              Station="{Station}"/>
           <BC_Fallback>
@@ -31,7 +31,7 @@
                               Field="Weight"
                               Message="Weight"
                               Station="{Station}"/>
-              <Station_Execution Uuid="{ProductID}"
+              <Command_Execution Uuid="{ProductID}"
                                  Command="Dispense"
                                  Station="{Station}"/>
             </Sequence>
@@ -71,7 +71,7 @@
             <MoveToPosition Topic="{XbotTopic}"
                             Uuid="{ProductID}"
                             TargetPosition="{Station}"/>
-            <Station_Execution Uuid="{ProductID}"
+            <Command_Execution Uuid="{ProductID}"
                                Command="Load"
                                Station="{Station}"/>
           </Sequence>
@@ -84,17 +84,33 @@
     <Sequence>
       <Configure StationMap="{StationMap}"
                  ProductIDs="{ProductIDs}"/>
-      <Parallel failure_count="-1"
-                success_count="1">
-        <SubTree ID="Xbot_Production"
-                 XbotTopic="Planar/Xbot1"
-                 ProductID=""
-                 _autoremap="true"/>
-        <SubTree ID="Xbot_Production"
-                 XbotTopic="Planar/Xbot2"
-                 ProductID=""
-                 _autoremap="true"/>
-      </Parallel>
+      <ReactiveSequence>
+        <Fallback>
+          <Data_Condition expected_value="operational"
+                          comparison_type="equal"
+                          Field="State"
+                          Message="State"
+                          Station="Planar"/>
+          <Command_Execution Uuid="123"
+                             Command="Help"
+                             Station="Martin"/>
+        </Fallback>
+        <Parallel failure_count="-1"
+                  success_count="1">
+          <SubTree ID="Xbot_Production"
+                   XbotTopic="Planar/Xbot1"
+                   ProductID=""
+                   _autoremap="true"/>
+          <SubTree ID="Xbot_Production"
+                   XbotTopic="Planar/Xbot2"
+                   ProductID=""
+                   _autoremap="true"/>
+          <SubTree ID="Xbot_Production"
+                   XbotTopic="Planar/Xbot3"
+                   ProductID=""
+                   _autoremap="true"/>
+        </Parallel>
+      </ReactiveSequence>
     </Sequence>
   </BehaviorTree>
 
@@ -114,7 +130,7 @@
           <MoveToPosition Topic="{XbotTopic}"
                           Uuid="{ProductID}"
                           TargetPosition="{Station}"/>
-          <Station_Execution Uuid="{ProductID}"
+          <Command_Execution Uuid="{ProductID}"
                              Command="Capture"
                              Station="{Station}"/>
         </Sequence>
@@ -138,8 +154,8 @@
           <MoveToPosition Topic="{XbotTopic}"
                           Uuid="{ProductID}"
                           TargetPosition="{Station}"/>
-          <Station_Execution Uuid="{ProductID}"
-                             Command="Scrap"
+          <Command_Execution Uuid="{ProductID}"
+                             Command="Unload"
                              Station="{Station}"/>
         </Sequence>
       </ReactiveSequence>
@@ -162,7 +178,7 @@
           <MoveToPosition Topic="{XbotTopic}"
                           Uuid="{ProductID}"
                           TargetPosition="{Station}"/>
-          <Station_Execution Uuid="{ProductID}"
+          <Command_Execution Uuid="{ProductID}"
                              Command="Stopper"
                              Station="{Station}"/>
         </Sequence>
@@ -186,7 +202,7 @@
           <MoveToPosition Topic="{XbotTopic}"
                           Uuid="{ProductID}"
                           TargetPosition="{Station}"/>
-          <Station_Execution Uuid="{ProductID}"
+          <Command_Execution Uuid="{ProductID}"
                              Command="Unload"
                              Station="{Station}"/>
         </Sequence>
@@ -224,9 +240,11 @@
                      Station="Unload"
                      _autoremap="true"/>
           </SequenceWithMemory>
-          <SubTree ID="Scrap"
-                   Station="Scrap"
-                   _autoremap="true"/>
+          <ForceFailure>
+            <SubTree ID="Scrap"
+                     Station="Unload"
+                     _autoremap="true"/>
+          </ForceFailure>
         </Fallback>
       </ReactiveSequence>
     </KeepRunningUntilEmpty>
@@ -235,6 +253,17 @@
   <!-- Description of Node Models (used by Groot) -->
   <TreeNodesModel>
     <Control ID="BC_Fallback"/>
+    <Action ID="Command_Execution">
+      <input_port name="Uuid"
+                  default="{ID}"
+                  type="std::string">UUID for the command to execute</input_port>
+      <input_port name="Command"
+                  default="Command"
+                  type="std::string">The command to execute on the station</input_port>
+      <input_port name="Station"
+                  default="{Station}"
+                  type="std::string">The station to register with</input_port>
+    </Action>
     <Action ID="Configure">
       <output_port name="StationMap"
                    default="{StationMap}"
@@ -312,17 +341,6 @@
       <input_port name="Station"
                   default="Scrap"/>
     </SubTree>
-    <Action ID="Station_Execution">
-      <input_port name="Uuid"
-                  default="{ID}"
-                  type="std::string">UUID for the command to execute</input_port>
-      <input_port name="Command"
-                  default="Command"
-                  type="std::string">The command to execute on the station</input_port>
-      <input_port name="Station"
-                  default="{Station}"
-                  type="std::string">The station to register with</input_port>
-    </Action>
     <SubTree ID="Stoppering"
              editable="true">
       <input_port name="Station"
