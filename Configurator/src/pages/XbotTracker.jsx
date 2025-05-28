@@ -246,7 +246,18 @@ const XbotTracker = () => {
   const [stationLiveStates, setStationLiveStates] = useState({});
   const [btControllerState, setBtControllerState] = useState(null);
   const [planarSystemState, setPlanarSystemState] = useState(null);
-  const [isHolding, setIsHolding] = useState(false);
+  const [isBtHolding, setIsBtHolding] = useState(false);
+  const [isPlanarHolding, setIsPlanarHolding] = useState(false);
+
+  // Add new state for Planar button states
+  const [planarButtonStates, setPlanarButtonStates] = useState({
+    Clear: true,
+    Reset: true,
+    Start: true,
+    Stop: true,
+    Hold: true,
+    UnHold: true
+  });
 
   const animationFrameId = useRef(null);
   const xbotsRef = useRef(xbots); 
@@ -315,6 +326,26 @@ const XbotTracker = () => {
     });
     return () => unsubscribe();
   }, [mqttConnected, stationDisplayStates]);
+
+  // MQTT Subscription for Planar Button States
+  useEffect(() => {
+    if (!mqttConnected) return;
+    const topic = "NN/Nybrovej/InnoLab/Planar/DATA/ButtonStates";
+    const unsubscribe = mqttService.onMessage(topic, (message) => {
+      try {
+        const data = typeof message === 'string' ? JSON.parse(message) : message;
+        if (data.States) {
+          setPlanarButtonStates(data.States);
+          console.log('Planar Button States updated:', data.States);
+        } else {
+          console.warn(`PlanarButtonStates: Received message without States from topic ${topic}:`, data);
+        }
+      } catch (error) {
+        console.error(`Error processing Planar Button States message from topic ${topic}:`, error, "Raw message:", message);
+      }
+    });
+    return () => unsubscribe();
+  }, [mqttConnected]);
 
   const xbotIdSignature = useMemo(() => {
     return xbots.map(x => x.id).sort((a, b) => a - b).join(',');
@@ -543,17 +574,44 @@ const XbotTracker = () => {
     };
   }, [xbots, LERP_FACTOR, SNAP_THRESHOLD]);
 
-  const handleStartSystem = useCallback(() => mqttService.startSystem(), []);
-  const handleStopSystem = useCallback(() => mqttService.stopSystem(), []);
-  const handleResetSystem = useCallback(() => mqttService.resetSystem(), []);
-  const handleToggleHoldSystem = useCallback(() => {
-    if (isHolding) {
+  // Behavior Tree Control Handlers
+  const handleBtStartSystem = useCallback(() => mqttService.startSystem(), []);
+  const handleBtStopSystem = useCallback(() => mqttService.stopSystem(), []);
+  const handleBtResetSystem = useCallback(() => mqttService.resetSystem(), []);
+  const handleBtToggleHoldSystem = useCallback(() => {
+    if (isBtHolding) {
       mqttService.unholdSystem();
     } else {
       mqttService.holdSystem();
     }
-    setIsHolding(!isHolding);
-  }, [isHolding]);
+    setIsBtHolding(!isBtHolding);
+  }, [isBtHolding]);
+
+  // Planar Control Handlers
+  const handlePlanarStartSystem = useCallback(() => {
+    mqttService.publishPlanarCommand("Start");
+  }, []);
+
+  const handlePlanarStopSystem = useCallback(() => {
+    mqttService.publishPlanarCommand("Stop");
+  }, []);
+
+  const handlePlanarClearSystem = useCallback(() => {
+    mqttService.publishPlanarCommand("Clear");
+  }, []);
+
+  const handlePlanarResetSystem = useCallback(() => {
+    mqttService.publishPlanarCommand("Reset");
+  }, []);
+
+  const handlePlanarToggleHoldSystem = useCallback(() => {
+    if (isPlanarHolding) {
+      mqttService.publishPlanarCommand("UnHold");
+    } else {
+      mqttService.publishPlanarCommand("Hold");
+    }
+    setIsPlanarHolding(!isPlanarHolding);
+  }, [isPlanarHolding]);
 
   const handleAddXbot = useCallback(() => {
     const nextId = xbots.length > 0 ? Math.max(...xbots.map(xbot => xbot.id)) + 1 : 1;
@@ -681,16 +739,57 @@ const XbotTracker = () => {
       
       <div className="main-layout-container">
         <div className="control-sidebar">
-          <h2>System Controls</h2>
-          <button className="control-button start-button" onClick={handleStartSystem}>Start</button>
-          <button className="control-button stop-button" onClick={handleStopSystem}>Stop</button>
-          <button className="control-button reset-button-system" onClick={handleResetSystem}>Clear</button>
-          <button 
-            className={`control-button hold-button ${isHolding ? 'unhold-active' : 'hold-active'}`} 
-            onClick={handleToggleHoldSystem}
-          >
-            {isHolding ? 'Unsuspend' : 'Suspend'}
-          </button>
+          <div className="control-section">
+            <h3>Behavior Tree Controls</h3>
+            <button className="control-button start-button" onClick={handleBtStartSystem}>Start</button>
+            <button className="control-button stop-button" onClick={handleBtStopSystem}>Stop</button>
+            <button className="control-button reset-button-system" onClick={handleBtResetSystem}>Clear</button>
+            <button 
+              className={`control-button hold-button ${isBtHolding ? 'unhold-active' : 'hold-active'}`} 
+              onClick={handleBtToggleHoldSystem}
+            >
+              {isBtHolding ? 'Unsuspend' : 'Suspend'}
+            </button>
+          </div>
+
+          <div className="control-section">
+            <h3>Planar Controls</h3>
+            <button 
+              className="control-button start-button" 
+              onClick={handlePlanarStartSystem}
+              disabled={!planarButtonStates.Start}
+            >
+              Start
+            </button>
+            <button 
+              className="control-button stop-button" 
+              onClick={handlePlanarStopSystem}
+              disabled={!planarButtonStates.Stop}
+            >
+              Stop
+            </button>
+            <button 
+              className="control-button reset-button-system" 
+              onClick={handlePlanarResetSystem}
+              disabled={!planarButtonStates.Reset}
+            >
+              Reset
+            </button>
+            <button 
+              className="control-button reset-button-system" 
+              onClick={handlePlanarClearSystem}
+              disabled={!planarButtonStates.Clear}
+            >
+              Clear
+            </button>
+            <button 
+              className={`control-button hold-button ${isPlanarHolding ? 'unhold-active' : 'hold-active'}`} 
+              onClick={handlePlanarToggleHoldSystem}
+              disabled={isPlanarHolding ? !planarButtonStates.UnHold : !planarButtonStates.Hold}
+            >
+              {isPlanarHolding ? 'Unsuspend' : 'Suspend'}
+            </button>
+          </div>
         </div>
         
         <div className="tracker-main-area">
@@ -776,7 +875,7 @@ const XbotTracker = () => {
               </div>
               
               <div className="reset-controls">
-              <button 
+                <button 
                   className="reset-button"
                   onClick={() => {
                     localStorage.removeItem('xbotPositions');
@@ -796,7 +895,16 @@ const XbotTracker = () => {
                     setStationLiveStates({}); 
                     setBtControllerState(null);
                     setPlanarSystemState(null);
-                    setIsHolding(false);
+                    setIsBtHolding(false);
+                    setIsPlanarHolding(false);
+                    setPlanarButtonStates({
+                      Clear: true,
+                      Reset: true,
+                      Start: true,
+                      Stop: true,
+                      Hold: true,
+                      UnHold: true
+                    });
                   }}
                 >
                   Reset Xbots & View

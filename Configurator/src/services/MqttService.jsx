@@ -362,7 +362,25 @@ class MqttService {
     const message = JSON.stringify({ Command: "Unhold", Timestamp: new Date().toISOString() });
     this.publish(topic, message, { qos: 1, retain: false });
   }
+
+  publishPlanarCommand(buttonId) {
+    const topic = "NN/Nybrovej/InnoLab/Planar/CMD/Command";
+    const message = JSON.stringify({
+      ButtonId: buttonId,
+      TimeStamp: new Date().toISOString()
+    });
+    
+    this.publish(topic, message, { qos: 2, retain: false }, (error) => {
+      if (error) {
+        console.error(`MqttService: Failed to publish Planar command ${buttonId}:`, error);
+      } else {
+        console.log(`MqttService: Successfully published Planar command: ${buttonId}`);
+      }
+    });
+  }
 }
+
+
 
 // Export singleton instance
 const mqttService = new MqttService();
