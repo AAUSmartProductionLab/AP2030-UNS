@@ -8,8 +8,12 @@ class MqttService {
   connectionChangeHandlers = [];
   messageHandlers = {};
   pendingOrderData = null;
+  connectionInProgress = false;
+  
+  // Message caching to prevent duplicate processing
+  messageCache = new Map();
+  cacheTimeout = 50; // ms
 
-  // ... (onMessage, onConnectionChange, subscribe, notifyConnectionChange, disconnect, connect methods remain the same) ...
   onMessage(topic, handler) {
     if (!this.messageHandlers[topic]) {
       this.messageHandlers[topic] = [];
@@ -18,7 +22,7 @@ class MqttService {
     console.log(`MqttService: Registered handler for topic: ${topic}`);
 
     if (this.client && this.isConnected) {
-      this.client.subscribe(topic, (err) => {
+      this.client.subscribe(topic, { qos: 1 }, (err) => { // Use QoS 1 instead of 2 for better performance
         if (err) {
           console.error(`MqttService: Failed to subscribe to ${topic} for new handler`, err);
         } else {
@@ -29,12 +33,10 @@ class MqttService {
 
     return () => {
       this.messageHandlers[topic] = this.messageHandlers[topic].filter(h => h !== handler);
-      // Consider unsubscribing if no handlers left, if necessary for your use case
       if (this.client && this.isConnected && this.messageHandlers[topic] && this.messageHandlers[topic].length === 0) {
-        // console.log(`MqttService: Unsubscribing from ${topic} as no handlers are left.`);
-        // this.client.unsubscribe(topic, (err) => {
-        //   if (err) console.error(`MqttService: Failed to unsubscribe from ${topic}`, err);
-        // });
+        this.client.unsubscribe(topic, (err) => {
+          if (err) console.error(`MqttService: Failed to unsubscribe from ${topic}`, err);
+        });
       }
     };
   }
@@ -49,7 +51,7 @@ class MqttService {
 
   subscribe(topic) {
     if (this.client && this.isConnected) {
-      this.client.subscribe(topic, (err) => {
+      this.client.subscribe(topic, { qos: 1 }, (err) => {
         if (err) {
           console.error(`MqttService: Failed to subscribe to ${topic}`, err);
         } else {
@@ -81,18 +83,72 @@ class MqttService {
   disconnect() {
     if (this.client) {
       console.log('MqttService: Disconnecting...');
-      this.client.end(true); // Force close, stop auto-reconnect for this instance
-      // Set client to null *after* events related to disconnection might have fired or been handled.
-      // The 'close' event handler will manage notifying connection change.
-      // this.client = null; // Moved to 'close' handler or ensure it's robustly handled
+      this.connectionInProgress = false;
+      this.client.end(true);
+      this.client = null; // Set to null immediately
+    }
+  }
+
+  // Optimized message handling with caching
+  setupMessageHandler() {
+    this.client.on('message', (topic, payload) => {
+      const message = payload.toString();
+      const now = Date.now();
+      const cacheKey = `${topic}:${message}`;
+      
+      // Skip duplicate messages within cache timeout
+      if (this.messageCache.has(cacheKey)) {
+        const lastTime = this.messageCache.get(cacheKey);
+        if (now - lastTime < this.cacheTimeout) {
+          return;
+        }
+      }
+      this.messageCache.set(cacheKey, now);
+      
+      // Clean old cache entries
+      if (this.messageCache.size > 1000) {
+        const entries = Array.from(this.messageCache.entries());
+        entries.slice(0, 500).forEach(([key]) => this.messageCache.delete(key));
+      }
+
+      if (this.messageHandlers[topic]) {
+        this.messageHandlers[topic].forEach(handler => {
+          try {
+            let parsedMessage;
+            try { 
+              parsedMessage = JSON.parse(message); 
+            } catch (e) { 
+              parsedMessage = message; 
+            }
+            handler(parsedMessage);
+          } catch (e) {
+            console.error(`MqttService: Error in message handler for ${topic}`, e);
+          }
+        });
+      }
+    });
+  }
+
+  // Add a method to ensure single instance
+  ensureConnection() {
+    if (!this.client || (!this.client.connected && !this.client.connecting && !this.connectionInProgress)) {
+      this.connect();
     }
   }
 
   connect() {
-    if (this.client && (this.client.connected || this.client.connecting)) {
-        console.log('MqttService: Already connected or connecting.');
-        return;
+    // Prevent multiple simultaneous connection attempts
+    if (this.connectionInProgress) {
+      console.log('MqttService: Connection already in progress.');
+      return;
     }
+
+    if (this.client && (this.client.connected || this.client.connecting)) {
+      console.log('MqttService: Already connected or connecting.');
+      return;
+    }
+
+    this.connectionInProgress = true;
     this.disconnect(); // Ensure any old client is properly ended.
 
     console.log('MqttService: Attempting to connect...');
@@ -100,17 +156,20 @@ class MqttService {
     
     let brokerHost = "192.168.0.104"; 
     let brokerPort = "8000";       
-    let clientId = "configurator-" + Math.random().toString(16).substring(2, 8);
+    // Use more specific client IDs to avoid conflicts
+    let clientId = `configurator-${window.location.hostname}-${Date.now()}-${Math.random().toString(16).substring(2, 8)}`;
 
     if (savedSettings) {
       try {
         const settings = JSON.parse(savedSettings);
         brokerHost = settings.mqttBrokerHost || brokerHost;
         brokerPort = settings.mqttBrokerPort || brokerPort;
-        clientId = settings.clientId || clientId;
+        // Don't use saved clientId to avoid conflicts
+        clientId = `configurator-${settings.sessionId || 'session'}-${Date.now()}-${Math.random().toString(16).substring(2, 8)}`;
       } catch (e) {
         console.error("MqttService: Error parsing appSettings", e);
         this.notifyConnectionChange(false, 'Failed to parse settings', 'error');
+        this.connectionInProgress = false;
         return; 
       }
     }
@@ -122,12 +181,21 @@ class MqttService {
     try {
       this.client = mqtt.connect(brokerUrl, { 
         clientId: clientId,
-        reconnectPeriod: 5000, // ms
-        connectTimeout: 10000, // ms
-        clean: true, // false to receive QoS 1 and 2 messages published while disconnected
+        reconnectPeriod: 5000,
+        connectTimeout: 10000,
+        clean: true, // Use clean sessions for better performance
+        keepalive: 30,
+        protocolVersion: 4,
+        // Add these for better performance
+        properties: {
+          maximumPacketSize: 65536,
+          receiveMaximum: 100,
+          topicAliasMaximum: 10
+        }
       });
 
       this.client.on('connect', () => {
+        this.connectionInProgress = false;
         console.log('MqttService: Connected!');
         this.notifyConnectionChange(true, 'MQTT Connected Successfully!', 'success');
         
@@ -142,7 +210,7 @@ class MqttService {
 
         if (this.pendingOrderData) {
           console.log("MqttService: Publishing pending order data.");
-          this.client.publish(this.pendingOrderData.topic, this.pendingOrderData.message, { qos: 2, retain: true }, (error) => {
+          this.client.publish(this.pendingOrderData.topic, this.pendingOrderData.message, { qos: 1, retain: true }, (error) => {
             if (error) {
                 console.error('MqttService: Error publishing pending order:', error);
                 toast.error('Failed to send queued order.');
@@ -166,7 +234,6 @@ class MqttService {
         if (this.client) { 
             this.notifyConnectionChange(false, 'MQTT Connection Closed', 'warn');
         }
-        // this.client = null; // Client is ended, can be set to null here.
       });
 
       this.client.on('offline', () => {
@@ -175,28 +242,16 @@ class MqttService {
       });
 
       this.client.on('error', (err) => {
+        this.connectionInProgress = false;
         console.error('MqttService: Connection error:', err.message);
-        // Avoid disconnecting here as the client might attempt to reconnect based on reconnectPeriod
         this.notifyConnectionChange(false, `MQTT Error: ${err.message}`, 'error');
       });
 
-      this.client.on('message', (topic, payload) => {
-        const message = payload.toString();
-        if (this.messageHandlers[topic]) {
-          this.messageHandlers[topic].forEach(handler => {
-            try {
-              let parsedMessage;
-              try { parsedMessage = JSON.parse(message); } 
-              catch (e) { parsedMessage = message; } // If not JSON, pass as string
-              handler(parsedMessage);
-            } catch (e) {
-              console.error(`MqttService: Error in message handler for ${topic}`, e);
-            }
-          });
-        }
-      });
+      // Replace the existing message handler setup
+      this.setupMessageHandler();
 
     } catch (error) {
+      this.connectionInProgress = false;
       console.error('MqttService: Error during MQTT client setup:', error);
       this.notifyConnectionChange(false, 'MQTT Setup Error', 'error');
     }
@@ -209,16 +264,18 @@ class MqttService {
    * @param {object} [options] Optional MQTT publish options (e.g., qos, retain).
    * @param {function} [callback] Optional callback.
    */
-  publish(topic, message, options, callback) {
+  publish(topic, message, options = {}, callback) {
+    const defaultOptions = { qos: 1, retain: false };
+    const publishOptions = { ...defaultOptions, ...options };
+
     if (this.client && this.isConnected) {
-      this.client.publish(topic, message, options, (error) => {
+      this.client.publish(topic, message, publishOptions, (error) => {
         if (error) {
           console.error('MqttService: MQTT publish error:', error, 'Topic:', topic);
-          if (callback) callback(error);
         } else {
-          // console.log(`MqttService: Message published to ${topic}`);
-          if (callback) callback(null);
+          console.log(`MqttService: Successfully published to ${topic}`);
         }
+        if (callback) callback(error);
       });
     } else {
       const errorMsg = `MQTT client not connected. Cannot publish to topic: ${topic}`;
@@ -228,130 +285,85 @@ class MqttService {
     }
   }
 
-  _publishHelper(topic, data, qos, retain, successMessage, errorMessage) {
-    // This can now use the generic publish method or keep its promise structure
+  _publishHelper(topic, data, qos = 1, retain = false, successMessage, errorMessage) {
     return new Promise((resolve) => {
       try {
-        const message = JSON.stringify(data);
-        this.publish(topic, message, { qos, retain }, (error) => {
+        const jsonData = JSON.stringify(data);
+        this.publish(topic, jsonData, { qos, retain }, (error) => {
           if (error) {
-            console.error(`${errorMessage} to ${topic}:`, error.message);
-            toast.error(`${errorMessage} failed.`);
+            console.error(`MqttService: ${errorMessage}:`, error);
+            toast.error(errorMessage);
             resolve(false);
           } else {
-            console.log(`${successMessage} to ${topic}`);
+            console.log(`MqttService: ${successMessage}`);
             toast.success(successMessage);
             resolve(true);
           }
         });
       } catch (e) {
-        console.error(`MqttService: Error preparing publish to ${topic}:`, e);
-        toast.error('Error preparing message for publish.');
+        console.error(`MqttService: JSON serialization error for ${topic}:`, e);
+        toast.error('Failed to serialize data for publishing.');
         resolve(false);
       }
     });
   }
 
   publishLayout(layoutData) {
+    const topic = "NN/Nybrovej/InnoLab/Configurator/CMD/Layout";
     return this._publishHelper(
-      'NN/Nybrovej/InnoLab/Configuration/DATA/Planar/Stations',
-      layoutData, 2, true,
-      'Layout published successfully', 'Error publishing layout'
+      topic, 
+      layoutData, 
+      1, 
+      true, 
+      'Layout published successfully!', 
+      'Failed to publish layout'
     );
   }
 
   publishLimits(limitsData) {
+    const topic = "NN/Nybrovej/InnoLab/Configurator/CMD/Limits";
     return this._publishHelper(
-      'NN/Nybrovej/InnoLab/Configuration/DATA/Planar/Limits',
-      limitsData, 2, true,
-      'Limits published successfully', 'Error publishing limits'
+      topic, 
+      limitsData, 
+      1, 
+      true, 
+      'Limits published successfully!', 
+      'Failed to publish limits'
     );
   }
 
-  publishOrders(queueData) {
-    if (!queueData || queueData.length === 0) {
-      console.warn('MqttService: Queue is empty, nothing to publish for orders.');
-      return;
-    }
-    
-    try {
-      const topic = 'NN/Nybrovej/InnoLab/Configuration/DATA/Order';
-      const firstBatch = { ...queueData[0] }; 
-
-      if (!firstBatch.uuid) {
-        firstBatch.uuid = uuidv4();
-      }
-      
-      const formattedOrder = {
-          UUID: firstBatch.uuid,
-          ProductId: `${firstBatch.product}${firstBatch.packaging?.match(/\(([^)]+)\)/)?.at(1).replace(/\s/g, '') || ''}`,
-          Format: firstBatch.packaging?.match(/\(([^)]+)\)/)?.at(1) || '',
-          Units: parseInt(firstBatch.volume?.replace(/[^\d]/g, '') || 0, 10),
-          IPCw: firstBatch.ipcWeighing || 0,
-          IPCi: firstBatch.ipcInspection || 0,
-          "QC-samples": parseInt(firstBatch.qcCount || 0, 10)
-      };
-  
-      const message = JSON.stringify(formattedOrder);
-      
-      if (!this.client || !this.isConnected) {
-        console.warn('MqttService: MQTT not connected. Order will be published upon connection.');
-        this.pendingOrderData = { topic, message, uuid: firstBatch.uuid };
-        toast.info('Order queued, will send when MQTT connects.');
-        return;
-      }
-      
-      // Using the generic publish method here for consistency
-      this.publish(topic, message, { qos: 2, retain: true }, (error) => {
-        if (error) {
-          console.error('MqttService: Error publishing order:', error);
-          toast.error('Failed to publish order.');
-        } else {
-          console.log(`MqttService: Order published successfully to ${topic} with UUID: ${firstBatch.uuid}`);
-          toast.success('Order published successfully.');
-        }
-      });
-    } catch (error) {
-      console.error('MqttService: Error in publishOrders operation:', error);
-      toast.error('Error processing order for publish.');
-    }
-  }
-
-  sendCommand(command) {
-    const topic = `NN/Nybrovej/InnoLab/bt_controller/CMD/${command}`;
-    const payload = JSON.stringify({}); // Standard empty JSON payload
-    // Using the generic publish method
-    this.publish(topic, payload, { qos: 2, retain: false }, (error) => { // Using QoS 1 and no retain for commands
-      if (error) {
-        // Error already logged by publish method and toast shown
-        console.warn(`MqttService: Failed to send command '${command}'.`);
-      } else {
-        console.log(`MqttService: Command '${command}' published to ${topic}`);
-         toast.info(`Command '${command}' sent.`); // Optional: toast for command sent
-      }
-    });
-  }
-
+  // System control methods
   startSystem() {
-    this.sendCommand('Start');
+    const topic = "NN/Nybrovej/InnoLab/bt_controller/CMD/Start";
+    const message = JSON.stringify({ Command: "Start", Timestamp: new Date().toISOString() });
+    this.publish(topic, message, { qos: 1, retain: false });
   }
 
   stopSystem() {
-    this.sendCommand('Stop');
+    const topic = "NN/Nybrovej/InnoLab/bt_controller/CMD/Stop";
+    const message = JSON.stringify({ Command: "Stop", Timestamp: new Date().toISOString() });
+    this.publish(topic, message, { qos: 1, retain: false });
   }
 
   resetSystem() {
-    this.sendCommand('Clear');
+    const topic = "NN/Nybrovej/InnoLab/bt_controller/CMD/Reset";
+    const message = JSON.stringify({ Command: "Reset", Timestamp: new Date().toISOString() });
+    this.publish(topic, message, { qos: 1, retain: false });
   }
 
   holdSystem() {
-    this.sendCommand('Suspend');
+    const topic = "NN/Nybrovej/InnoLab/bt_controller/CMD/Hold";
+    const message = JSON.stringify({ Command: "Hold", Timestamp: new Date().toISOString() });
+    this.publish(topic, message, { qos: 1, retain: false });
   }
 
   unholdSystem() {
-    this.sendCommand('Unsuspend');
+    const topic = "NN/Nybrovej/InnoLab/bt_controller/CMD/Unhold";
+    const message = JSON.stringify({ Command: "Unhold", Timestamp: new Date().toISOString() });
+    this.publish(topic, message, { qos: 1, retain: false });
   }
 }
 
-const mqttServiceInstance = new MqttService();
-export default mqttServiceInstance;
+// Export singleton instance
+const mqttService = new MqttService();
+export default mqttService;

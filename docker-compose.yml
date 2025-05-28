@@ -5,7 +5,8 @@ services:
     container_name: hivemq-broker
     volumes:
       - ./HiveMQ/conf:/opt/hivemq/conf
-      - ./HiveMQ/extensions:/opt/hivemq/extensions  
+      - ./HiveMQ/extensions:/opt/hivemq/extensions
+    restart: unless-stopped
     ports:
       - "1883:1883"
       - "8080:8080"
