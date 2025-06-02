@@ -6,7 +6,7 @@
         <Control ID="BC_Fallback"/>
         <Control ID="BC_Fallback_Async"/>
         <Action ID="Command_Execution">
-            <input_port name="Uuid" default="{Uuid}" type="std::string">UUID for the command to execute</input_port>
+            <input_port name="Uuid" type="std::string">UUID for the command to execute</input_port>
             <input_port name="Command" default="Command" type="std::string">The command to execute on the station</input_port>
             <input_port name="Entity" default="{Station}" type="std::string">The station to register with</input_port>
         </Action>
@@ -85,7 +85,7 @@
             <input_port name="Station" default="Unload"/>
         </SubTree>
         <Decorator ID="UseResource">
-            <input_port name="Context" default="-1" type="int">The Context on how the station should be used</input_port>
+            <input_port name="Context" type="int">The Context on how the station should be used</input_port>
             <inout_port name="Uuid" default="{Uuid}" type="std::string">UUID Used for registration</inout_port>
             <input_port name="Station" default="{Station}" type="std::string">The station to register with</input_port>
         </Decorator>

@@ -57,20 +57,19 @@ public:
                 BT::details::PortWithDefault<std::string>(
                     BT::PortDirection::INPUT,
                     "Uuid",
-                    "{ID}",
+                    "{Uuid}",
                     "UUID for the command to execute")};
     }
     json createMessage() override
     {
         json message;
         BT::Expected<std::string> uuid = getInput<std::string>("Uuid");
-        if (uuid && uuid.has_value())
+        if (uuid && uuid.has_value() && !uuid.value().empty())
         {
             current_uuid_ = uuid.value();
         }
         else
         {
-            std::cout << "Error: Uuid not provided to CommandExecuteNode. Generating and using random UUID." << std::endl;
             current_uuid_ = mqtt_utils::generate_uuid();
         }
         message["Uuid"] = current_uuid_;
@@ -79,13 +78,14 @@ public:
     std::string getFormattedTopic(const std::string &pattern)
     {
         std::vector<std::string> replacements;
-        BT::Expected<std::string> station = getInput<std::string>("Station");
+        BT::Expected<std::string> station = getInput<std::string>("Entity");
         BT::Expected<std::string> command = getInput<std::string>("Command");
         if (station.has_value() && command.has_value())
         {
             replacements.push_back(station.value());
             replacements.push_back(command.value());
-            return mqtt_utils::formatWildcardTopic(pattern, replacements);
+            std::string formatted_topic = mqtt_utils::formatWildcardTopic(pattern, replacements);
+            return formatted_topic;
         }
         return pattern;
     }

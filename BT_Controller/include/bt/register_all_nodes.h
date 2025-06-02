@@ -14,7 +14,7 @@
 #include "bt/actions/configuration_node.h"
 #include "bt/conditions/generic_condition_node.h"
 #include "bt/decorators/get_product_from_queue_node.h"
-#include "bt/decorators/use_station.h"
+#include "bt/decorators/use_resource.h"
 #include "bt/controls/bc_fallback_node.h"
 #include "bt/decorators/keep_running_until_empty.h"
 #include "bt/actions/pop_element_node.h"
@@ -77,7 +77,7 @@ void registerAllNodes(
         "../../schemas/data.schema.json",
         2);
     mqtt_utils::Topic ConfigurationDATA(
-        unsTopicPrefix + "/Configuration/DATA/#",
+        unsTopicPrefix + "/Configurator/DATA/#",
         "../../schemas/config.schema.json",
         2);
     mqtt_utils::Topic ProductAssociation(
@@ -156,10 +156,10 @@ void registerAllNodes(
         "GetProductFromQueue",
         ProductAssociation);
 
-    UseStation::registerNodeType<UseStation>(
+    UseResource::registerNodeType<UseResource>(
         factory,
         bt_mqtt_client,
-        "UseStation",
+        "UseResource",
         StationRegistrationCMD,
         StationUnregistrationCMD,
         CommandResponse,

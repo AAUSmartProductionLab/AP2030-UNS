@@ -11,7 +11,7 @@
 class MqttClient;
 using nlohmann::json;
 
-class UseStation : public BT::DecoratorNode, public MqttPubBase, public MqttSubBase
+class UseResource : public BT::DecoratorNode, public MqttPubBase, public MqttSubBase
 {
 private:
     std::string current_uuid_;
@@ -20,14 +20,14 @@ private:
     PackML::State current_phase_ = PackML::State::IDLE;
 
 public:
-    UseStation(const std::string &name,
-               const BT::NodeConfig &config,
-               MqttClient &mqtt_client,
-               const mqtt_utils::Topic &raw_register_topic,
-               const mqtt_utils::Topic &raw_unregister_topic,
-               // Topics for MqttSubBase
-               const mqtt_utils::Topic &raw_register_response_topic,
-               const mqtt_utils::Topic &raw_unregister_response_topic)
+    UseResource(const std::string &name,
+                const BT::NodeConfig &config,
+                MqttClient &mqtt_client,
+                const mqtt_utils::Topic &raw_register_topic,
+                const mqtt_utils::Topic &raw_unregister_topic,
+                // Topics for MqttSubBase
+                const mqtt_utils::Topic &raw_register_response_topic,
+                const mqtt_utils::Topic &raw_unregister_response_topic)
         : DecoratorNode(name, config),
           MqttPubBase(mqtt_client, {{"register", raw_register_topic},
                                     {"unregister", raw_unregister_topic}}),
@@ -51,7 +51,7 @@ public:
         }
     }
 
-    ~UseStation()
+    ~UseResource()
     {
         if (MqttSubBase::node_message_distributor_)
         {
@@ -85,11 +85,6 @@ public:
 
         if (status() == BT::NodeStatus::IDLE)
         {
-            BT::Expected<std::string> uuid = getInput<std::string>("Uuid");
-            if (uuid.has_value())
-            {
-                current_uuid_ = uuid.value();
-            }
             current_phase_ = PackML::State::STARTING;
             sendRegisterCommand();
             return BT::NodeStatus::RUNNING;
@@ -139,6 +134,21 @@ public:
     void sendRegisterCommand()
     {
         json message;
+        BT::Expected<std::string> uuid = getInput<std::string>("Uuid");
+        BT::Expected<int> context = getInput<int>("Context");
+        if (uuid && uuid.has_value() && !uuid.value().empty())
+        {
+            current_uuid_ = uuid.value();
+        }
+        else
+        {
+            current_uuid_ = mqtt_utils::generate_uuid();
+            setOutput("Uuid", current_uuid_);
+        }
+        if (context && context.has_value() && context.value() >= 0)
+        {
+            message["Context"] = context.value();
+        }
         message["Uuid"] = current_uuid_;
         MqttPubBase::publish("register", message);
     }
@@ -198,10 +208,15 @@ public:
                 "{Station}",
                 "The station to register with"),
             BT::details::PortWithDefault<std::string>(
-                BT::PortDirection::INPUT,
+                BT::PortDirection::INOUT,
                 "Uuid",
-                "{ID}",
-                "UUID Used for registration")};
+                "{Uuid}",
+                "UUID Used for registration"),
+            BT::details::PortWithDefault<int>(
+                BT::PortDirection::INPUT,
+                "Context",
+                -1,
+                "The Context on how the station should be used")};
     }
 
     template <typename DerivedNode>
