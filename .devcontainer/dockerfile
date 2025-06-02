@@ -16,6 +16,8 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     uuid-dev \
     wget \
+    libzmq3-dev \
+    libsqlite3-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -24,27 +26,77 @@ RUN python3 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 RUN pip install --no-cache-dir paho-mqtt jsonschema conan
 
-# Build Paho MQTT C++
-WORKDIR /src
-RUN git clone https://github.com/eclipse-paho/paho.mqtt.cpp.git && \
-    cd paho.mqtt.cpp && \
-    git checkout v1.5.2 && \
-    git submodule update --init && \
-    cmake -Bbuild -H. -DPAHO_WITH_MQTT_C=ON -DPAHO_BUILD_EXAMPLES=ON && \
-    cmake --build build/ --target install && \
-    ldconfig
+# Build third-party libraries from BT_Controller/third_party
+WORKDIR /tmp/build_tp_devcontainer
 
-# Build BehaviorTree.CPP
-RUN git clone https://github.com/BehaviorTree/BehaviorTree.CPP.git && \
-    cd BehaviorTree.CPP && \
-    conan profile detect && \
-    mkdir build && cd build && \
-    conan install .. --output-folder=. --build=missing && \
-    cmake .. -DCMAKE_TOOLCHAIN_FILE="conan_toolchain.cmake" && \
-    cmake --build . --parallel && \
-    make install
+# Copy local third_party sources (assuming Docker build context is workspace root)
+COPY ./BT_Controller/third_party ./third_party
+
+# Paho.mqtt.cpp
+RUN mkdir paho_build && cd paho_build && \
+    cmake ../third_party/paho.mqtt.cpp \
+          -DCMAKE_INSTALL_PREFIX=/usr/local \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DPAHO_WITH_MQTT_C=ON \
+          -DPAHO_BUILD_STATIC=OFF \
+          -DPAHO_BUILD_SHARED=ON \
+          -DPAHO_WITH_SSL=ON \
+          -DPAHO_BUILD_SAMPLES=OFF \
+          -DPAHO_BUILD_EXAMPLES=OFF && \
+    make -j$(nproc) && \
+    make install && \
+    cd .. && rm -rf paho_build
+
+# BehaviorTree.CPP
+RUN mkdir btcpp_build && cd btcpp_build && \
+    cmake ../third_party/BehaviorTree.CPP \
+          -DCMAKE_INSTALL_PREFIX=/usr/local \
+          -DCMAKE_BUILD_TYPE=Debug \
+          -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+          -DBTCPP_SHARED_LIBS=ON \
+          -DBTCPP_BUILD_TOOLS=ON \
+          -DBTCPP_EXAMPLES=OFF \
+          -DBUILD_TESTING=OFF \
+          -DBTCPP_GROOT_INTERFACE=ON \
+          -DBTCPP_SQLITE_LOGGING=ON \
+          -DENABLE_DEBUG=ON && \
+    make -j$(nproc) && \
+    make install && \
+    cd .. && rm -rf btcpp_build
+
+# nlohmann/json
+RUN mkdir json_build && cd json_build && \
+    cmake ../third_party/json \
+          -DCMAKE_INSTALL_PREFIX=/usr/local \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DJSON_BuildTests=OFF && \
+    make install && \
+    cd .. && rm -rf json_build
+
+# magic_enum
+RUN mkdir magic_enum_build && cd magic_enum_build && \
+    cmake ../third_party/magic_enum \
+          -DCMAKE_INSTALL_PREFIX=/usr/local \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DMAGIC_ENUM_OPT_BUILD_EXAMPLES=OFF \
+          -DMAGIC_ENUM_OPT_BUILD_TESTS=OFF && \
+    make install && \
+    cd .. && rm -rf magic_enum_build
+
+# json-schema-validator
+RUN mkdir json_validator_build && cd json_validator_build && \
+    cmake ../third_party/json-schema-validator \
+          -DCMAKE_INSTALL_PREFIX=/usr/local \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DJSON_VALIDATOR_BUILD_EXAMPLES=OFF \
+          -DJSON_VALIDATOR_BUILD_TESTS=OFF && \
+    make -j$(nproc) && \
+    make install && \
+    cd .. && rm -rf json_validator_build
+RUN ldconfig
 
 # Download and extract Groot2
+WORKDIR /src
 RUN wget https://s3.us-west-1.amazonaws.com/download.behaviortree.dev/groot2_linux_installer/Groot2-v1.6.1-x86_64.AppImage && \
     chmod +x Groot2-v1.6.1-x86_64.AppImage && \
     ./Groot2-v1.6.1-x86_64.AppImage --appimage-extract && \
