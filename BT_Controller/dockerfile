@@ -149,6 +149,6 @@ WORKDIR /app
 COPY --from=app_builder /opt/app_artifacts/bt_controller /app/bt_controller
 COPY --from=app_builder /src/AP2030-UNS/schemas /app/schemas
 
-WORKDIR /app # Set WORKDIR to where the app and its resources are
+WORKDIR /app
 # Command to run the application
 CMD ["./bt_controller"]
