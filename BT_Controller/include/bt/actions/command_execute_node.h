@@ -63,9 +63,10 @@ public:
     json createMessage() override
     {
         json message;
-        if (uuid_result && uuid_result.has_value())
+        BT::Expected<std::string> uuid = getInput<std::string>("Uuid");
+        if (uuid && uuid.has_value())
         {
-            current_uuid_ = uuid_result.value();
+            current_uuid_ = uuid.value();
         }
         else
         {
