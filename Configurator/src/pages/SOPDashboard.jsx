@@ -361,7 +361,7 @@ export default function SOPDashboard() {
                 className="demo-button"
                 onClick={() => handleTaskReceived({
                   Uuid: `demo-filling-${Date.now()}`,
-                  sopId: 10
+                  SopId: 10
                 })}
               >
                 Add Demo Filling Session
@@ -370,7 +370,7 @@ export default function SOPDashboard() {
                 className="demo-button"
                 onClick={() => handleTaskReceived({
                   Uuid: `demo-stoppering-${Date.now()}`,
-                  sopId: 20
+                  SopId: 20
                 })}
               >
                 Add Demo Stoppering Session
@@ -379,7 +379,7 @@ export default function SOPDashboard() {
                 className="demo-button"
                 onClick={() => handleTaskReceived({
                   Uuid: `demo-subtask-${Date.now()}`,
-                  sopId: 11
+                  SopId: 11
                 })}
               >
                 Add Demo Subtask (will be rejected - no session)
@@ -396,7 +396,7 @@ export default function SOPDashboard() {
                   const baseId = activeSession.sessionStarterId;
                   handleTaskReceived({
                     Uuid: `demo-instruction-${Date.now()}`,
-                    sopId: baseId + 1
+                    SopId: baseId + 1
                   });
                 }}
               >
@@ -408,7 +408,7 @@ export default function SOPDashboard() {
                   const baseId = activeSession.sessionStarterId;
                   handleTaskReceived({
                     Uuid: `demo-instruction-${Date.now()}`,
-                    sopId: baseId + 2
+                    SopId: baseId + 2
                   });
                 }}
               >
@@ -418,16 +418,16 @@ export default function SOPDashboard() {
                 className="demo-button"
                 onClick={() => handleTaskReceived({
                   Uuid: `demo-complete-${Date.now()}`,
-                  sopId: 0
+                  SopId: 0
                 })}
               >
-                Send Demo Complete (sopId 0)
+                Send Demo Complete (SopId 0)
               </button>
               <button 
                 className="demo-button"
                 onClick={() => handleTaskReceived({
                   Uuid: `demo-wrong-task-${Date.now()}`,
-                  sopId: 21
+                  SopId: 21
                 })}
               >
                 Add Wrong Session Task (will be rejected)

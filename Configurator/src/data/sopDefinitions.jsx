@@ -232,33 +232,33 @@ export const sopDefinitions = {
 
 // Helper functions for SOP operations
 export const sopHelpers = {
-  isSessionStarter: (sopId) => {
-    return sopId % 10 === 0 && sopId >= 10 && sopId <= 90;
+  isSessionStarter: (SopId) => {
+    return SopId % 10 === 0 && SopId >= 10 && SopId <= 90;
   },
 
-  isSessionCompleter: (sopId) => {
-    return sopId === 0;
+  isSessionCompleter: (SopId) => {
+    return SopId === 0;
   },
 
-  getSessionType: (sopId) => {
-    const sessionStarter = Math.floor(sopId / 10) * 10;
+  getSessionType: (SopId) => {
+    const sessionStarter = Math.floor(SopId / 10) * 10;
     const sessionDef = sopDefinitions[sessionStarter];
     return sessionDef ? sessionDef.sessionType : 'unknown';
   },
 
-  isSubtaskOf: (sopId, sessionStarterId) => {
-    return Math.floor(sopId / 10) === Math.floor(sessionStarterId / 10) && sopId !== sessionStarterId;
+  isSubtaskOf: (SopId, sessionStarterId) => {
+    return Math.floor(SopId / 10) === Math.floor(sessionStarterId / 10) && SopId !== sessionStarterId;
   },
 
-  getSessionStarter: (sopId) => {
-    return Math.floor(sopId / 10) * 10;
+  getSessionStarter: (SopId) => {
+    return Math.floor(SopId / 10) * 10;
   },
 
   getSubtasks: (sessionStarterId) => {
     const subtasks = [];
     for (let i = sessionStarterId + 1; i < sessionStarterId + 10; i++) {
       if (sopDefinitions[i]) {
-        subtasks.push({ sopId: i, ...sopDefinitions[i] });
+        subtasks.push({ SopId: i, ...sopDefinitions[i] });
       }
     }
     return subtasks;
@@ -267,8 +267,8 @@ export const sopHelpers = {
   getAllSessionStarters: () => {
     return Object.keys(sopDefinitions)
       .map(Number)
-      .filter(sopId => sopHelpers.isSessionStarter(sopId))
-      .map(sopId => ({ sopId, ...sopDefinitions[sopId] }));
+      .filter(SopId => sopHelpers.isSessionStarter(SopId))
+      .map(SopId => ({ SopId, ...sopDefinitions[SopId] }));
   },
 
   getSessionTypeColor: (sessionType) => {
