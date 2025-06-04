@@ -24,7 +24,7 @@ public:
     struct BtControllerParameters
     {
         std::string configFile = "../config/controller_config.yaml";
-        std::string serverURI = "192.168.0.140:1883";
+        std::string serverURI = "192.168.0.104:1883";
         std::string clientId = "bt";
         std::string unsTopicPrefix = "NN/nybrovej/InnoLab";
         std::string bt_description_path = "../config/bt_description/tree.xml";
