@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root BTCPP_format="4">
   <BehaviorTree ID="Filling">
-    <UseResource Uuid="{ProductID}"
+    <UseResource Context="-1"
+                 Uuid="{ProductID}"
                  Station="{Station}">
       <ReactiveSequence>
         <ReactiveFallback>
@@ -16,7 +17,8 @@
           <MoveToPosition Topic="{XbotTopic}"
                           Uuid="{ProductID}"
                           TargetPosition="{Station}"/>
-          <Command_Execution Uuid="{ProductID}"
+          <Command_Execution Parameters="&apos;{}&apos;"
+                             Uuid="{ProductID}"
                              Command="Tare"
                              Entity="{Station}"/>
           <BC_Fallback>
@@ -31,7 +33,8 @@
                               Field="Weight"
                               Message="Weight"
                               Station="{Station}"/>
-              <Command_Execution Uuid="{ProductID}"
+              <Command_Execution Parameters="&apos;{}&apos;"
+                                 Uuid="{ProductID}"
                                  Command="Dispense"
                                  Entity="{Station}"/>
             </Sequence>
@@ -56,7 +59,8 @@
       <PopElement ProductID="{ProductID}"
                   if_empty="SUCCESS"
                   Queue="{ProductIDs}"/>
-      <UseResource Uuid="{ProductID}"
+      <UseResource Context="-1"
+                   Uuid="{ProductID}"
                    Station="{Station}">
         <ReactiveSequence>
           <ReactiveFallback>
@@ -71,7 +75,8 @@
             <MoveToPosition Topic="{XbotTopic}"
                             Uuid="{ProductID}"
                             TargetPosition="{Station}"/>
-            <Command_Execution Uuid="{ProductID}"
+            <Command_Execution Parameters="&apos;{}&apos;"
+                               Uuid="{ProductID}"
                                Command="Load"
                                Entity="{Station}"/>
           </Sequence>
@@ -91,21 +96,24 @@
                           Field="State"
                           Message="State"
                           Station="Planar"/>
-          <UseResource Context="10"
-                       Uuid="{Uuid}"
-                       Station="Intervention">
-            <Sequence>
-              <Command_Execution Uuid="{Uuid}"
-                                 Command="Moin"
-                                 Entity="Intervention"/>
-              <Command_Execution Uuid="{Uuid}"
-                                 Command="Moin"
-                                 Entity="Intervention"/>
-              <Command_Execution Uuid="{Uuid}"
-                                 Command="Moin"
-                                 Entity="Intervention"/>
-            </Sequence>
-          </UseResource>
+          <Sequence>
+            <Command_Execution Parameters="&apos;{ &quot;SopId&quot;: 10 }&apos;"
+                               Uuid="{Uuid}"
+                               Command="Task"
+                               Entity="Intervention"/>
+            <Command_Execution Parameters="&apos;{ &quot;SopId&quot;: 11 }&apos;"
+                               Uuid="{Uuid}"
+                               Command="Task"
+                               Entity="Intervention"/>
+            <Command_Execution Parameters="&apos;{ &quot;SopId&quot;: 12 }&apos;"
+                               Uuid="{Uuid}"
+                               Command="Task"
+                               Entity="Intervention"/>
+            <Command_Execution Parameters="&apos;{ &quot;SopId&quot;: 13 }&apos;"
+                               Uuid="{Uuid}"
+                               Command="Task"
+                               Entity="Intervention"/>
+          </Sequence>
         </Fallback>
         <Parallel failure_count="-1"
                   success_count="1">
@@ -127,7 +135,8 @@
   </BehaviorTree>
 
   <BehaviorTree ID="QualityControl">
-    <UseResource Uuid="{ProductID}"
+    <UseResource Context="-1"
+                 Uuid="{ProductID}"
                  Station="{Station}">
       <ReactiveSequence>
         <ReactiveFallback>
@@ -142,7 +151,8 @@
           <MoveToPosition Topic="{XbotTopic}"
                           Uuid="{ProductID}"
                           TargetPosition="{Station}"/>
-          <Command_Execution Uuid="{ProductID}"
+          <Command_Execution Parameters="&apos;{}&apos;"
+                             Uuid="{ProductID}"
                              Command="Capture"
                              Entity="{Station}"/>
         </Sequence>
@@ -151,7 +161,8 @@
   </BehaviorTree>
 
   <BehaviorTree ID="Scrap">
-    <UseResource Uuid="{ProductID}"
+    <UseResource Context="-1"
+                 Uuid="{ProductID}"
                  Station="{Station}">
       <ReactiveSequence>
         <ReactiveFallback>
@@ -166,7 +177,8 @@
           <MoveToPosition Topic="{XbotTopic}"
                           Uuid="{ProductID}"
                           TargetPosition="{Station}"/>
-          <Command_Execution Uuid="{ProductID}"
+          <Command_Execution Parameters="&apos;{}&apos;"
+                             Uuid="{ProductID}"
                              Command="Unload"
                              Entity="{Station}"/>
         </Sequence>
@@ -175,7 +187,8 @@
   </BehaviorTree>
 
   <BehaviorTree ID="Stoppering">
-    <UseResource Uuid="{ProductID}"
+    <UseResource Context="-1"
+                 Uuid="{ProductID}"
                  Station="{Station}">
       <ReactiveSequence>
         <ReactiveFallback>
@@ -190,7 +203,8 @@
           <MoveToPosition Topic="{XbotTopic}"
                           Uuid="{ProductID}"
                           TargetPosition="{Station}"/>
-          <Command_Execution Uuid="{ProductID}"
+          <Command_Execution Parameters="&apos;{}&apos;"
+                             Uuid="{ProductID}"
                              Command="Stopper"
                              Entity="{Station}"/>
         </Sequence>
@@ -199,7 +213,8 @@
   </BehaviorTree>
 
   <BehaviorTree ID="Unload">
-    <UseResource Uuid="{ProductID}"
+    <UseResource Context="-1"
+                 Uuid="{ProductID}"
                  Station="{Station}">
       <ReactiveSequence>
         <ReactiveFallback>
@@ -214,7 +229,8 @@
           <MoveToPosition Topic="{XbotTopic}"
                           Uuid="{ProductID}"
                           TargetPosition="{Station}"/>
-          <Command_Execution Uuid="{ProductID}"
+          <Command_Execution Parameters="&apos;{}&apos;"
+                             Uuid="{ProductID}"
                              Command="Unload"
                              Entity="{Station}"/>
         </Sequence>
@@ -266,6 +282,9 @@
   <TreeNodesModel>
     <Control ID="BC_Fallback"/>
     <Action ID="Command_Execution">
+      <input_port name="Parameters"
+                  default="&apos;{}&apos;"
+                  type="nlohmann::json_abi_v3_11_3::basic_json&lt;std::map, std::vector, std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, bool, long, unsigned long, double, std::allocator, nlohmann::json_abi_v3_11_3::adl_serializer, std::vector&lt;unsigned char, std::allocator&lt;unsigned char&gt; &gt;, void&gt;">The weight to refill, if not provided it will be set to 0.0</input_port>
       <input_port name="Uuid"
                   default="{Uuid}"
                   type="std::string">UUID for the command to execute</input_port>
