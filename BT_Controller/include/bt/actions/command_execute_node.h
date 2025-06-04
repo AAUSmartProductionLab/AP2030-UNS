@@ -163,8 +163,6 @@ public:
     // Standard implementation based on PackML override this if needed
     void callback(const std::string &topic_key, const json &msg, mqtt::properties props) override
     {
-        std::cout << "CommandExecuteNode callback for topic: " << topic_key << std::endl;
-        std::cout << "Message content: " << msg.dump(4) << std::endl;
         // Check if the message is valid
         // Use mutex to protect shared state
         {
