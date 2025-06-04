@@ -1,6 +1,7 @@
 FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
+ENV LANG=C.UTF-8
 
 # Install Groot2 dependencies, and VNC components
 RUN apt-get update && apt-get install -y \
@@ -58,12 +59,11 @@ RUN echo '#!/bin/bash' > /usr/local/bin/start-vnc && \
     echo 'websockify -D --web=/usr/share/novnc/ 6080 localhost:5901' >> /usr/local/bin/start-vnc && \
     chmod +x /usr/local/bin/start-vnc
 
-# Create Groot2 script with VNC display and auto-maximize
+# Create Groot2 script with VNC display
 RUN echo '#!/bin/bash' > /usr/local/bin/groot2 && \
     echo 'export DISPLAY=:1' >> /usr/local/bin/groot2 && \
     echo 'cd /opt/groot && ./AppRun "$@" &' >> /usr/local/bin/groot2 && \
     echo 'sleep 2' >> /usr/local/bin/groot2 && \
-    echo 'xdotool search --class "Groot2" windowactivate %@ windowmaximize %@' >> /usr/local/bin/groot2 && \
     chmod +x /usr/local/bin/groot2
 
 # Create entrypoint script with proper startup sequencing
