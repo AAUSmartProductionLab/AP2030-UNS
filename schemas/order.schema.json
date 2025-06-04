@@ -4,7 +4,7 @@
     "description": "JSON Schema for an order",
     "type": "object",
     "properties": {
-        "ProductId": {"type":"string"},
+        "Uuid": {"type":"string"},
         "Format": {"type":"string"},
         "Units": {
             "type": "integer",
@@ -23,5 +23,5 @@
             "description": "In percent how many units should go to QC"
         }
     },
-    "required": ["ProductId","Format","Units","IPCw","IPCi","QC-samples"]
+    "required": ["Uuid","Format","Units","IPCw","IPCi","QC-samples"]
 }

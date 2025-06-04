@@ -5,10 +5,63 @@
 #include <nlohmann/json.hpp>
 #include "utils.h"
 #include <string>
+#include <cctype> // For std::isspace
 
 // Forward declarations
 class MqttClient;
 using nlohmann::json;
+
+namespace BT
+{
+    inline StringView trim_string_view(StringView sv)
+    {
+        if (sv.empty())
+        {
+            return sv;
+        }
+        size_t first = 0;
+        while (first < sv.size() && std::isspace(static_cast<unsigned char>(sv[first])))
+        {
+            ++first;
+        }
+        if (first == sv.size()) // All whitespace
+        {
+            return StringView(sv.data() + first, 0);
+        }
+
+        size_t last = sv.size() - 1;
+        while (last > first && std::isspace(static_cast<unsigned char>(sv[last])))
+        {
+            --last;
+        }
+        return sv.substr(first, (last - first) + 1);
+    }
+
+    template <>
+    inline json convertFromString(StringView str_param)
+    {
+        StringView s = trim_string_view(str_param);
+        if (s.size() >= 2 && s.front() == '\'' && s.back() == '\'')
+        {
+            StringView inner_content = s.substr(1, s.size() - 2);
+            try
+            {
+                return json::parse(inner_content);
+            }
+            catch (const json::parse_error &e)
+            {
+                std::string error_message = "Failed to parse JSON from single-quoted string. Inner content: '";
+                error_message.append(inner_content);
+                error_message += "'. Details: ";
+                error_message += e.what();
+                throw RuntimeError(error_message);
+            }
+        }
+        else
+            throw RuntimeError(
+                "Invalid Parameter format. Expected single-quoted json string like '\"{\\\"key\\\": \\\"value\\\"}\"'");
+    }
+};
 
 class CommandExecuteNode : public MqttActionNode
 {
@@ -58,7 +111,12 @@ public:
                     BT::PortDirection::INPUT,
                     "Uuid",
                     "{Uuid}",
-                    "UUID for the command to execute")};
+                    "UUID for the command to execute"),
+                BT::details::PortWithDefault<json>(
+                    BT::PortDirection::INPUT,
+                    "Parameters",
+                    "'{}'",
+                    "The weight to refill, if not provided it will be set to 0.0")};
     }
     json createMessage() override
     {
@@ -72,6 +130,21 @@ public:
         {
             current_uuid_ = mqtt_utils::generate_uuid();
         }
+        BT::Expected<json> params = getInput<json>("Parameters");
+
+        if (params)
+        {
+            std::cout << "Parameters from input: " << params.value().dump(4) << std::endl;
+            if (!params.value().empty() && params.value().is_object())
+            {
+                message.update(params.value());
+            }
+        }
+        else
+        {
+            std::cerr << "Warning: Could not get or parse 'Parameters' port. Error: " << params.error() << std::endl;
+        }
+
         message["Uuid"] = current_uuid_;
         return message;
     }
@@ -85,6 +158,7 @@ public:
             replacements.push_back(station.value());
             replacements.push_back(command.value());
             std::string formatted_topic = mqtt_utils::formatWildcardTopic(pattern, replacements);
+            std::cout << "Formatted topic: " << formatted_topic << std::endl;
             return formatted_topic;
         }
         return pattern;
@@ -92,6 +166,9 @@ public:
     // Standard implementation based on PackML override this if needed
     void callback(const std::string &topic_key, const json &msg, mqtt::properties props) override
     {
+        std::cout << "CommandExecuteNode callback for topic: " << topic_key << std::endl;
+        std::cout << "Message content: " << msg.dump(4) << std::endl;
+        // Check if the message is valid
         // Use mutex to protect shared state
         {
             std::lock_guard<std::mutex> lock(mutex_);

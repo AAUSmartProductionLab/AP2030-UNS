@@ -77,7 +77,7 @@ void registerAllNodes(
         "../../schemas/data.schema.json",
         2);
     mqtt_utils::Topic ConfigurationDATA(
-        unsTopicPrefix + "/Configurator/DATA/#",
+        unsTopicPrefix + "/Configuration/DATA/#",
         "../../schemas/config.schema.json",
         2);
     mqtt_utils::Topic ProductAssociation(
