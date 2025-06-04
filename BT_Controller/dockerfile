@@ -120,11 +120,6 @@ RUN mkdir -p /opt/app_artifacts
 RUN --mount=type=cache,target=/src/AP2030-UNS/BT_Controller/build \
     sh -c "make VERBOSE=1 -j$(nproc) && cp /src/AP2030-UNS/BT_Controller/build/bt_controller /opt/app_artifacts/"
 
-# For debugging: This ls will show the build directory as it appears in the layer (likely empty or minimal)
-RUN ls -l /src/AP2030-UNS/BT_Controller/build/
-# For debugging: This ls should show your copied artifact
-RUN ls -l /opt/app_artifacts/
-
 FROM ubuntu:jammy
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -143,12 +138,11 @@ COPY --from=third_party_builder /opt/third_party_install/lib/libbehaviortree_cpp
 COPY --from=third_party_builder /opt/third_party_install/lib/libjson-schema-validator.so* /usr/local/lib/
 RUN ldconfig
 
-WORKDIR /app
+WORKDIR /AP2030-UNS
 
 # Copy the artifact from the location where it was placed in the layer
-COPY --from=app_builder /opt/app_artifacts/bt_controller /app/bt_controller
-COPY --from=app_builder /src/AP2030-UNS/schemas /app/schemas
+COPY --from=app_builder /opt/app_artifacts/bt_controller /AP2030-UNS/BT_Controller/build/bt_controller
 
-WORKDIR /app
+WORKDIR /AP2030-UNS/BT_Controller/build
 # Command to run the application
 CMD ["./bt_controller"]
