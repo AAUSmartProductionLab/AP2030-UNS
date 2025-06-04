@@ -134,7 +134,6 @@ public:
 
         if (params)
         {
-            std::cout << "Parameters from input: " << params.value().dump(4) << std::endl;
             if (!params.value().empty() && params.value().is_object())
             {
                 message.update(params.value());
@@ -157,9 +156,7 @@ public:
         {
             replacements.push_back(station.value());
             replacements.push_back(command.value());
-            std::string formatted_topic = mqtt_utils::formatWildcardTopic(pattern, replacements);
-            std::cout << "Formatted topic: " << formatted_topic << std::endl;
-            return formatted_topic;
+            return mqtt_utils::formatWildcardTopic(pattern, replacements);
         }
         return pattern;
     }
