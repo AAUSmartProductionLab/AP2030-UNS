@@ -307,12 +307,56 @@ class MqttService {
       }
     });
   }
+  /**Temporary Implementation, SORRY Martin**/
+  publishOrders(queueData) {
+    const topic = "NN/Nybrovej/InnoLab/Configuration/DATA/Order"; 
+    const firstOrder = (queueData && queueData.length > 0) ? queueData[0] : {};
+
+    const dataToPublish = {
+      "Uuid": firstOrder.Uuid,
+      "ProductId": firstOrder.ProductId,
+      "Format": firstOrder.packaging,
+      "Units": parseInt(firstOrder.volume, 10),
+      "IPCw": firstOrder.ipcWeighing,
+      "IPCi": firstOrder.ipcInspection,
+      "QC-samples": parseInt(firstOrder.qcCount, 10),
+      "TimeStamp": new Date().toISOString() 
+    };
+    
+    return this._publishHelper(
+      topic,
+      dataToPublish,
+      1,
+      true,
+      'Production order published successfully!',
+      'Failed to publish production order');
+  }
+
+  publishTaskRepsonse(response) {
+    const topic = 'NN/Nybrovej/InnoLab/Intervention/DATA/Task';
+    const dataWithTimestamp = {
+      ...response,
+      TimeStamp: new Date().toISOString()
+    };
+    return this._publishHelper(
+      topic,
+      dataWithTimestamp,
+      2,
+      false,
+      'Task response sent',
+      'Failed to send task response'
+    );
+  }
 
   publishLayout(layoutData) {
-    const topic = "NN/Nybrovej/InnoLab/Configurator/CMD/Layout";
+    const topic = "NN/Nybrovej/InnoLab/Configuration/DATA/Layout";
+    const dataWithTimestamp = {
+      ...layoutData,
+      TimeStamp: new Date().toISOString()
+    };
     return this._publishHelper(
       topic, 
-      layoutData, 
+      dataWithTimestamp, 
       1, 
       true, 
       'Layout published successfully!', 
@@ -321,10 +365,14 @@ class MqttService {
   }
 
   publishLimits(limitsData) {
-    const topic = "NN/Nybrovej/InnoLab/Configurator/CMD/Limits";
+    const topic = "NN/Nybrovej/InnoLab/Configuration/DATA/Limits";
+    const dataWithTimestamp = {
+      ...limitsData,
+      TimeStamp: new Date().toISOString()
+    };
     return this._publishHelper(
       topic, 
-      limitsData, 
+      dataWithTimestamp, 
       1, 
       true, 
       'Limits published successfully!', 

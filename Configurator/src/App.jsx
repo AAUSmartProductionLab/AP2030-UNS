@@ -6,7 +6,8 @@ import PlanarMotorConfigurator from "./pages/PlanarMotorConfigurator";
 import BatchConfigurator from "./pages/BatchConfigurator";
 import Homepage from "./pages/Homepage";
 import Settings from "./pages/Settings";
-import XbotTracker from "./pages/XbotTracker"; // Import the XbotTracker page
+import XbotTracker from "./pages/XbotTracker";
+import SOPDashboard from "./pages/SOPDashboard"; // Add this import
 import mqttService from "./services/MqttService";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -28,8 +29,11 @@ const TitleUpdater = () => {
       case '/planar-motor':
         document.title = `${baseTitle} | Planar Motor`;
         break;
-      case '/xbot-tracker': // Add case for Xbot Tracker
+      case '/xbot-tracker':
         document.title = `${baseTitle} | Xbot Tracker`;
+        break;
+      case '/sop-dashboard': // Add this case
+        document.title = `${baseTitle} | SOP Dashboard`;
         break;
       case '/settings':
         document.title = `${baseTitle} | Settings`;
@@ -57,8 +61,6 @@ export default function App() {
       setGlobalMqttConnected(isConnected);
       console.log("App.jsx: MQTT connection status:", isConnected ? "Connected" : "Disconnected");
       
-      // MqttService now handles its own connect/disconnect toasts.
-      // We only subscribe to app-level topics here if connected.
       if (isConnected) {
         requiredTopics.forEach(topic => {
           mqttService.subscribe(topic);
@@ -92,11 +94,14 @@ export default function App() {
               <i className="nav-icon config-icon"></i>
               <span>Planar Motor</span>
             </NavLink>
-            {/* Add NavLink for Xbot Tracker */}
             <NavLink to="/xbot-tracker" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
-              {/* Use an appropriate icon class for xbot-tracker, e.g., 'robot-icon' or similar */}
               <i className="nav-icon robot-icon"></i> 
               <span>Production Live View</span>
+            </NavLink>
+            {/* Add NavLink for SOP Dashboard */}
+            <NavLink to="/sop-dashboard" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
+              <i className="nav-icon checklist-icon"></i>
+              <span>SOP Dashboard</span>
             </NavLink>
             <NavLink to="/settings" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
               <i className="nav-icon settings-icon"></i>
@@ -119,7 +124,8 @@ export default function App() {
               <Route path="/" element={<Homepage />} />
               <Route path="/batches" element={<BatchConfigurator />} />
               <Route path="/planar-motor" element={<PlanarMotorConfigurator />} />
-              <Route path="/xbot-tracker" element={<XbotTracker />} /> {/* Add Route for Xbot Tracker */}
+              <Route path="/xbot-tracker" element={<XbotTracker />} />
+              <Route path="/sop-dashboard" element={<SOPDashboard />} /> {/* Add this route */}
               <Route path="/settings" element={<Settings />} />
             </PersistentRouter>
         </PlanarMotorProvider> 

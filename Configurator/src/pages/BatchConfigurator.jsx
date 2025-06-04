@@ -261,7 +261,7 @@ export default function BatchConfigurator() {
 
     const newBatch = {
       id: `batch-${Date.now()}`,
-      uuid: uuidv4(),
+      Uuid: uuidv4(),
       name: `${batchData.product} (${batchData.volume} units)`,
       product: batchData.product,
       volume: `${batchData.volume} units`,
@@ -332,7 +332,7 @@ export default function BatchConfigurator() {
         if (currentQueue.length === 0) return currentQueue;
         
         // Find batch with matching UUID
-        const batchIndex = currentQueue.findIndex(batch => batch.uuid === message.UUID);
+        const batchIndex = currentQueue.findIndex(batch => batch.Uuid === message.UUID);
         
         if (batchIndex !== -1) {
           // Get the batch name for the notification
@@ -381,7 +381,7 @@ export default function BatchConfigurator() {
         }
         
         // Find batch with matching UUID
-        const batchIndex = currentQueue.findIndex(batch => batch.uuid === message.UUID);
+        const batchIndex = currentQueue.findIndex(batch => batch.Uuid === message.UUID);
         
         if (batchIndex !== -1) {
           const completedBatch = currentQueue[batchIndex];
@@ -405,7 +405,7 @@ export default function BatchConfigurator() {
           setLog(prevLog => [...prevLog, logEntry]);
           
           // Remove from queue
-          return currentQueue.filter(batch => batch.uuid !== message.UUID);
+          return currentQueue.filter(batch => batch.Uuid !== message.UUID);
         } else {
           toast.warning(`Received completion for unknown batch UUID: ${message.UUID}`);
         }

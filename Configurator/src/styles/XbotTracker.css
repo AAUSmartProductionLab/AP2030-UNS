@@ -6,12 +6,10 @@
 }
 
 .xbot-tracker-page h1 {
-  text-align: center;
-  margin: 20px 0;
-  font-size: 28px;
-  font-weight: 700;
+  margin: 20px;
+  font-size: 1.75rem;
+  font-weight: 600;
   color: #0033A0; /* Novo Nordisk Blue */
-  letter-spacing: 1px;
 }
 
 .tracker-content {
@@ -393,14 +391,12 @@
 }
 
 .control-section h3 {
-  margin: 0 0 20px 0;
-  font-size: 18px;
   font-weight: 600;
-  color: #0033A0; /* Novo Nordisk Blue */
-  text-align: center;
+  margin-top: 0;
+  color: #0033A0;
+  font-size: 1.4rem;
+  border-bottom: 1px solid #e0e0e0;
   padding-bottom: 10px;
-  border-bottom: 2px solid #e9ecef;
-  letter-spacing: 0.5px;
 }
 
 /* Control Button Styling - Made Bigger and Vertical */
