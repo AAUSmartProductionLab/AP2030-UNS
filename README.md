@@ -10,7 +10,7 @@
 The DevContainer is configured such that it compiles and build all libraries needed for the development and building the project.
 Open the project in VSCode
 ```bash
-    cd planar-motors-experiments
+    cd AP2030
     code .
 ```
 Navigate to the devcontainer.json file in the .devcontainer folder.
@@ -20,9 +20,11 @@ Select `Dev Containers: Rebuild and Reopen in Container`
 This installs all dependencies and opens the project as a devcontainer.
 
 # Run
-The stack can be run with the following command:
+The stack can be first build and then run with the following commands:
 ```bash
-    sudo docker compose -f UNS-compose.yml up -d
+    cd AP2030
+    docker compose build --parallel
+    docker compose up -d
 ```
 This starts the following applications:
 - HiveMQ Mqtt Broker
