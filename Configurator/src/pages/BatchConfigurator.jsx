@@ -11,13 +11,13 @@ export default function BatchConfigurator() {
   
   // State to track form inputs
   const initialState = {
-    product: '',
-    volume: '',
-    primaryPackaging: '',
-    qcCount: '',
-    selectedRecipe: '',
-    ipcWeighing: 100, // Default value for In-Process Control Weighing
-    ipcInspection: 100 // Default value for In-Process Control Inspection
+  "Uuid": "545e033e-a9a2-41fe-b920-dfbc64bd93bc",
+  "Format": "Cartridge (1mL)",
+  "Units": 40000,
+  "IPCw": 90,
+  "IPCi": 85,
+  "QC-samples": 100,
+  "TimeStamp": "2025-06-06T13:14:03.746Z"
   };
 
   // Use the initial state object for useState
