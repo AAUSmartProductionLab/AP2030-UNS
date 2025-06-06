@@ -3,7 +3,8 @@
   <BehaviorTree ID="Filling">
     <UseResource Context="-1"
                  Uuid="{ProductID}"
-                 Station="{Station}">
+                 Station="{Station}"
+                 _skipIf="scrap == true">
       <ReactiveSequence>
         <ReactiveFallback>
           <Data_Condition expected_value="operational"
@@ -21,7 +22,7 @@
                              Uuid="{ProductID}"
                              Command="Tare"
                              Entity="{Station}"/>
-          <BC_Fallback>
+          <BC_Fallback _onFailure="scrap:= true">
             <Data_Condition expected_value="2.0;2.2"
                             comparison_type="inside"
                             Field="Weight"
@@ -58,10 +59,13 @@
     <SequenceWithMemory>
       <PopElement ProductID="{ProductID}"
                   if_empty="SUCCESS"
-                  Queue="{ProductIDs}"/>
+                  Queue="{ProductIDs}"
+                  _onSuccess="scrap:= false"
+                  _onFailure="scrap:= true"/>
       <UseResource Context="-1"
                    Uuid="{ProductID}"
-                   Station="{Station}">
+                   Station="{Station}"
+                   _skipIf="scrap == true">
         <ReactiveSequence>
           <ReactiveFallback>
             <Data_Condition expected_value="operational"
@@ -96,24 +100,8 @@
                           Field="State"
                           Message="State"
                           Station="Planar"/>
-          <Sequence>
-            <Command_Execution Parameters="&apos;{ &quot;SopId&quot;: 10 }&apos;"
-                               Uuid="{Uuid}"
-                               Command="Task"
-                               Entity="Intervention"/>
-            <Command_Execution Parameters="&apos;{ &quot;SopId&quot;: 11 }&apos;"
-                               Uuid="{Uuid}"
-                               Command="Task"
-                               Entity="Intervention"/>
-            <Command_Execution Parameters="&apos;{ &quot;SopId&quot;: 12 }&apos;"
-                               Uuid="{Uuid}"
-                               Command="Task"
-                               Entity="Intervention"/>
-            <Command_Execution Parameters="&apos;{ &quot;SopId&quot;: 13 }&apos;"
-                               Uuid="{Uuid}"
-                               Command="Task"
-                               Entity="Intervention"/>
-          </Sequence>
+          <SubTree ID="Planar SOP"
+                   _autoremap="true"/>
         </Fallback>
         <Parallel failure_count="-1"
                   success_count="1">
@@ -134,10 +122,36 @@
     </Sequence>
   </BehaviorTree>
 
+  <BehaviorTree ID="Planar SOP">
+    <Sequence>
+      <Command_Execution Parameters="&apos;{ &quot;SopId&quot;: 10 }&apos;"
+                         Uuid="{Uuid}"
+                         Command="Task"
+                         Entity="Intervention"/>
+      <Command_Execution Parameters="&apos;{ &quot;SopId&quot;: 11 }&apos;"
+                         Uuid="{Uuid}"
+                         Command="Task"
+                         Entity="Intervention"/>
+      <Command_Execution Parameters="&apos;{ &quot;SopId&quot;: 12 }&apos;"
+                         Uuid="{Uuid}"
+                         Command="Task"
+                         Entity="Intervention"/>
+      <Command_Execution Parameters="&apos;{ &quot;SopId&quot;: 13 }&apos;"
+                         Uuid="{Uuid}"
+                         Command="Task"
+                         Entity="Intervention"/>
+      <Command_Execution Parameters="&apos;{ &quot;SopId&quot;: 0 }&apos;"
+                         Uuid="{Uuid}"
+                         Command="Task"
+                         Entity="Intervention"/>
+    </Sequence>
+  </BehaviorTree>
+
   <BehaviorTree ID="QualityControl">
     <UseResource Context="-1"
                  Uuid="{ProductID}"
-                 Station="{Station}">
+                 Station="{Station}"
+                 _skipIf="scrap == true">
       <ReactiveSequence>
         <ReactiveFallback>
           <Data_Condition expected_value="operational"
@@ -180,7 +194,8 @@
           <Command_Execution Parameters="&apos;{}&apos;"
                              Uuid="{ProductID}"
                              Command="Unload"
-                             Entity="{Station}"/>
+                             Entity="{Station}"
+                             _onSuccess="scrap:=false"/>
         </Sequence>
       </ReactiveSequence>
     </UseResource>
@@ -189,7 +204,8 @@
   <BehaviorTree ID="Stoppering">
     <UseResource Context="-1"
                  Uuid="{ProductID}"
-                 Station="{Station}">
+                 Station="{Station}"
+                 _skipIf="scrap == true">
       <ReactiveSequence>
         <ReactiveFallback>
           <Data_Condition expected_value="operational"
@@ -215,7 +231,8 @@
   <BehaviorTree ID="Unload">
     <UseResource Context="-1"
                  Uuid="{ProductID}"
-                 Station="{Station}">
+                 Station="{Station}"
+                 _skipIf="scrap == true">
       <ReactiveSequence>
         <ReactiveFallback>
           <Data_Condition expected_value="operational"
@@ -268,11 +285,9 @@
                      Station="Unload"
                      _autoremap="true"/>
           </SequenceWithMemory>
-          <ForceFailure>
-            <SubTree ID="Scrap"
-                     Station="Unload"
-                     _autoremap="true"/>
-          </ForceFailure>
+          <SubTree ID="Scrap"
+                   Station="Unload"
+                   _autoremap="true"/>
         </Fallback>
       </ReactiveSequence>
     </KeepRunningUntilEmpty>
