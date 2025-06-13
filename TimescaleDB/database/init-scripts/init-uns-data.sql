@@ -170,7 +170,6 @@ $$ LANGUAGE plpgsql;
 
 -- Create indexes for all tables
 CREATE INDEX IF NOT EXISTS idx_order_data_uuid ON order_data(uuid);
-CREATE INDEX IF NOT EXISTS idx_order_data_product_id ON order_data(product_id);
 CREATE INDEX IF NOT EXISTS idx_order_ack_uuid ON order_ack(uuid);
 CREATE INDEX IF NOT EXISTS idx_order_done_uuid ON order_done(uuid);
 CREATE INDEX IF NOT EXISTS idx_planar_state_timestamp_utc ON planar_state(timestamp_utc);
@@ -236,5 +235,97 @@ BEGIN
         ) VALUES ($1, $2, $3, $4)',
         table_name)
     USING station_id, state, timestamp_value, uuid;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION calculate_station_utilization_metrics(
+    p_station_prefix TEXT,      -- e.g., 'filling', 'stoppering'
+    p_time_from TIMESTAMPTZ,    -- Grafana's $__timeFrom()
+    p_time_to TIMESTAMPTZ       -- Grafana's $__timeTo()
+)
+RETURNS TABLE (
+    station_name TEXT,
+    total_station_time_seconds NUMERIC, -- Total duration of all states for this station in the window
+    active_time_seconds NUMERIC,        -- Time in 'EXECUTE' or 'STARTING'
+    utilization_percentage NUMERIC
+)
+AS $$
+DECLARE
+    v_query TEXT;
+    v_table_name TEXT;
+BEGIN
+    -- Construct the full table name safely, e.g., public.filling_state
+    -- Assumes tables are in the 'public' schema. Adjust if different.
+    v_table_name := format('public.%I_state', p_station_prefix);
+
+    v_query := format(
+        $QUERY_BODY$
+        WITH AllStatesWithNext AS (
+            SELECT
+                id, -- Assuming an 'id' column for ordering, as in planar_state
+                state,
+                timestamp_utc,
+                LEAD(timestamp_utc, 1, %L::TIMESTAMPTZ) OVER (ORDER BY timestamp_utc, id) as next_timestamp_utc
+            FROM
+                %s -- Dynamic table name placeholder
+            WHERE
+                timestamp_utc < %L::TIMESTAMPTZ -- State must start before the window ends
+        ),
+        RelevantStates AS (
+            SELECT
+                id,
+                state,
+                timestamp_utc,
+                next_timestamp_utc
+            FROM
+                AllStatesWithNext
+            WHERE
+                next_timestamp_utc > %L::TIMESTAMPTZ -- State's interval must end after the window starts
+        ),
+        EffectiveDurations AS (
+            SELECT
+                rs.state,
+                GREATEST(rs.timestamp_utc, %L::TIMESTAMPTZ) AS effective_state_start,
+                LEAST(rs.next_timestamp_utc, %L::TIMESTAMPTZ) AS effective_state_end
+            FROM
+                RelevantStates rs
+        ),
+        CalculatedDurations AS (
+            SELECT
+                state,
+                EXTRACT(EPOCH FROM (effective_state_end - effective_state_start)) AS duration_seconds
+            FROM
+                EffectiveDurations
+            WHERE
+                effective_state_end > effective_state_start -- Only positive durations
+        ),
+        AggregatedDurations AS (
+            SELECT
+                COALESCE(SUM(CASE WHEN state IN ('EXECUTE', 'STARTING') THEN duration_seconds ELSE 0 END), 0) AS calculated_active_time,
+                COALESCE(SUM(duration_seconds), 0) AS calculated_total_station_time -- Sum of all state durations for this station
+            FROM
+                CalculatedDurations
+        )
+        SELECT
+            %L AS station_name_out,
+            ad.calculated_total_station_time AS total_station_time_seconds_out,
+            ad.calculated_active_time AS active_time_seconds_out,
+            (ad.calculated_active_time / NULLIF(ad.calculated_total_station_time, 0)) * 100 AS utilization_percentage_out
+        FROM
+            AggregatedDurations ad;
+        $QUERY_BODY$,
+        p_time_to,      -- For LEAD default value
+        v_table_name,   -- For FROM clause
+        p_time_to,      -- For AllStatesWithNext WHERE clause
+        p_time_from,    -- For RelevantStates WHERE clause
+        p_time_from,    -- For GREATEST in EffectiveDurations
+        p_time_to,      -- For LEAST in EffectiveDurations
+        p_station_prefix -- For the output station_name
+    );
+
+    -- For debugging, you can uncomment the next line to see the generated query in PostgreSQL logs
+    -- RAISE NOTICE 'Generated query for %: %', p_station_prefix, v_query;
+
+    RETURN QUERY EXECUTE v_query;
 END;
 $$ LANGUAGE plpgsql;
