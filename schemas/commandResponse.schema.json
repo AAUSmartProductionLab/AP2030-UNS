@@ -17,7 +17,7 @@
             "State": {
                     "type": "string",
                     "description": "The state of the command being executed",
-                    "enum": ["RUNNING","SUCCESSFUL","FAILURE"]
+                    "enum": ["RUNNING","SUCCESS","FAILURE"]
                 },
         "required": ["Uuid", "State"]
         }

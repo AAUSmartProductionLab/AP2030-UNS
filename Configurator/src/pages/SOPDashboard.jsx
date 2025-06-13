@@ -144,7 +144,7 @@ export default function SOPDashboard() {
     if (!task || !task.Acknowledged) return;
 
     // Send task response when starting session
-    sendTaskResponse(taskUuid, 'SUCCESSFUL', 'Session started by operator');
+    sendTaskResponse(taskUuid, 'SUCCESS', 'Session started by operator');
 
     // Remove task from active tasks
     setActiveTasks(prev => prev.filter(t => t.Uuid !== taskUuid));
@@ -198,7 +198,7 @@ export default function SOPDashboard() {
     if (!task) return;
 
     // Send response
-    sendTaskResponse(taskUuid, success ? 'SUCCESSFUL' : 'FAILURE', notes);
+    sendTaskResponse(taskUuid, success ? 'SUCCESS' : 'FAILURE', notes);
 
     // Remove task from active tasks
     setActiveTasks(prev => prev.filter(t => t.Uuid !== taskUuid));
@@ -210,7 +210,7 @@ export default function SOPDashboard() {
     if (!activeSession) return;
 
     // Send response for the instruction
-    sendTaskResponse(instructionUuid, success ? 'SUCCESSFUL' : 'FAILURE', notes);
+    sendTaskResponse(instructionUuid, success ? 'SUCCESS' : 'FAILURE', notes);
 
     // Mark instruction as completed
     setActiveSession(prev => {
@@ -246,7 +246,7 @@ export default function SOPDashboard() {
 
     // Send session completion response for the sopId 0 message
     if (activeSession.completionMessage) {
-      sendTaskResponse(activeSession.completionMessage.Uuid, 'SUCCESSFUL', 'Session completed by operator');
+      sendTaskResponse(activeSession.completionMessage.Uuid, 'SUCCESS', 'Session completed by operator');
     }
 
     // Clear session
