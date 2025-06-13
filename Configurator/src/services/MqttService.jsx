@@ -349,7 +349,7 @@ class MqttService {
   }
 
   publishLayout(layoutData) {
-    const topic = "NN/Nybrovej/InnoLab/Configuration/DATA/Layout";
+    const topic = "NN/Nybrovej/InnoLab/Configuration/DATA/Planar/Stations";
     const dataWithTimestamp = {
       ...layoutData,
       TimeStamp: new Date().toISOString()
@@ -365,7 +365,7 @@ class MqttService {
   }
 
   publishLimits(limitsData) {
-    const topic = "NN/Nybrovej/InnoLab/Configuration/DATA/Limits";
+    const topic = "NN/Nybrovej/InnoLab/Configuration/DATA/Planar/Limits";
     const dataWithTimestamp = {
       ...limitsData,
       TimeStamp: new Date().toISOString()

@@ -80,7 +80,7 @@ export default function SOPDashboard() {
         toast.success('Session ready for completion!');
       } else {
         console.warn('Received session completion signal but no active session');
-        sendTaskResponse(message.Uuid, 'FAILURE', 'No active session to complete');
+        //sendTaskResponse(message.Uuid, 'FAILURE', 'No active session to complete');
       }
     } else if (activeSession && sopHelpers.isSubtaskOf(message.SopId, activeSession.sessionStarterId)) {
       // During active session - add as instruction if it's a subtask of current session

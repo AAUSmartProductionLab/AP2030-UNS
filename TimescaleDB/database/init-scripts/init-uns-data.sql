@@ -2,7 +2,6 @@
 CREATE TABLE IF NOT EXISTS order_data (
     id SERIAL PRIMARY KEY,
     uuid UUID NOT NULL,
-    product_id VARCHAR(50) NOT NULL,
     format VARCHAR(50) NOT NULL,
     units INTEGER NOT NULL,
     ipcw INTEGER NOT NULL,

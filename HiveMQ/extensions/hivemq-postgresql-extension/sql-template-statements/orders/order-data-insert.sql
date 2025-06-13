@@ -1,6 +1,5 @@
 INSERT INTO order_data (
     uuid,
-    product_id,
     format,
     units,
     ipcw,
@@ -9,8 +8,7 @@ INSERT INTO order_data (
     timestamp_utc
 )
 VALUES (
-    CAST(json_extract_path_text(${mqtt-payload-utf8}::json, 'UUID') AS UUID),
-    json_extract_path_text(${mqtt-payload-utf8}::json, 'ProductId'),
+    CAST(json_extract_path_text(${mqtt-payload-utf8}::json, 'Uuid') AS UUID),
     json_extract_path_text(${mqtt-payload-utf8}::json, 'Format'),
     CAST(json_extract_path_text(${mqtt-payload-utf8}::json, 'Units') AS INTEGER),
     CAST(json_extract_path_text(${mqtt-payload-utf8}::json, 'IPCw') AS INTEGER),

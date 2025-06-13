@@ -180,7 +180,9 @@ class Proxy(mqtt.Client):
         self.on_connect = self.on_connect_callback
         self.on_disconnect = self.on_disconnect_callback
 
-        self.connect(self.address, self.port)
+        # self.connect(self.address, self.port)
+        
+        self.connect("hivemq-broker")
 
     def on_connect_callback(self, client, userdata, flags, rc, properties):
         for topic in self.topics:
