@@ -178,7 +178,7 @@ public:
                         current_uuid_ = "";
                         setStatus(BT::NodeStatus::FAILURE);
                     }
-                    else if (msg["State"] == "SUCCESSFUL")
+                    else if (msg["State"] == "SUCCESS")
                     {
                         current_uuid_ = "";
                         setStatus(BT::NodeStatus::SUCCESS);
