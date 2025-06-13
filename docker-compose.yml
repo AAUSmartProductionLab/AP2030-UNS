@@ -38,7 +38,7 @@ services:
     image: timescale/timescaledb:latest-pg14
     container_name: timescaledb
     volumes:
-      - ./TimescaleDB/timescaledb-data:/var/lib/postgresql/data
+      # - ./TimescaleDB/timescaledb-data:/var/lib/postgresql/data
       - ./TimescaleDB/database/init-scripts:/docker-entrypoint-initdb.d
     environment:
       - POSTGRES_PASSWORD=admin
@@ -58,7 +58,7 @@ services:
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_USERS_ALLOW_SIGN_UP=false
-      - GF_PLUGINS_PREINSTALL=grafana-clock-panel,grafana-simple-json-datasource
+      - GF_PLUGINS_PREINSTALL=grafana-clock-panel,grafana-simple-json-datasource, volkovlabs-image-panel
     ports:
       - "3000:3000"
     networks:
@@ -134,6 +134,15 @@ services:
     depends_on:
       - hivemq-broker
 
+  camera_station:
+    extends:
+      file: ./PackML_Stations/stations-compose.yml
+      service: camera_station
+    networks:
+      - hivemq-network
+    depends_on:
+      - hivemq-broker
+      
   stoppering_station:
     extends:
       file: ./PackML_Stations/stations-compose.yml
