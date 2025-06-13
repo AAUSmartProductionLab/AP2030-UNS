@@ -301,7 +301,7 @@ class PackMLStateMachine:
                     event_for_thread, 
                     *process_func_args):
                     """Target function for the processing thread."""
-                    final_state_thread = "SUCCESSFUL"
+                    final_state_thread = "SUCCESS"
                     try:
                         if can_interrupt:
                             func_for_thread(event_for_thread, *process_func_args)

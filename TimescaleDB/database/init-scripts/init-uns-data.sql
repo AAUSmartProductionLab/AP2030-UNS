@@ -10,7 +10,15 @@ CREATE TABLE IF NOT EXISTS order_data (
     timestamp_utc TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create order_ack table
+-- Create QCImage table to store image data and associated metadata
+CREATE TABLE IF NOT EXISTS qc_image (
+    id SERIAL PRIMARY KEY,
+    uuid UUID NOT NULL,
+    timestamp_utc TIMESTAMPTZ NOT NULL, -- Stores the timestamp from the message
+    image_base64 TEXT NOT NULL,         -- Stores the base64 encoded image string
+    image_format VARCHAR(50) NOT NULL   -- Stores the image format, e.g., "base64_jpeg"
+);
+
 CREATE TABLE IF NOT EXISTS order_ack (
     id SERIAL PRIMARY KEY,
     uuid UUID NOT NULL,
