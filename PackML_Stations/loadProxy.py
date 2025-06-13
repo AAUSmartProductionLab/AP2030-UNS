@@ -2,7 +2,7 @@ from MQTT_classes import Proxy, ResponseAsync, Publisher, Subscriber
 import time
 from PackMLSimulator import PackMLStateMachine
 
-BROKER_ADDRESS = "192.168.0.104"
+BROKER_ADDRESS = "172.18.0.1"
 BROKER_PORT = 1883
 BASE_TOPIC = "NN/Nybrovej/InnoLab/Load"
 
