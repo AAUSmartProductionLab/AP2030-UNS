@@ -49,7 +49,6 @@ services:
     networks:
       - hivemq-network
     restart: unless-stopped
-    
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
@@ -134,14 +133,14 @@ services:
     depends_on:
       - hivemq-broker
 
-  camera_station:
-    extends:
-      file: ./PackML_Stations/stations-compose.yml
-      service: camera_station
-    networks:
-      - hivemq-network
-    depends_on:
-      - hivemq-broker
+  # camera_station:
+  #   extends:
+  #     file: ./PackML_Stations/stations-compose.yml
+  #     service: camera_station
+  #   networks:
+  #     - hivemq-network
+  #   depends_on:
+  #     - hivemq-broker
       
   stoppering_station:
     extends:

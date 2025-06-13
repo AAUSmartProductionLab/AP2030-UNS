@@ -1,0 +1,48 @@
+services:
+  
+  restore_db:
+    image: timescale/timescaledb:latest-pg14
+    container_name: restore_db
+    volumes:
+      - ./db_backups/UNS_data_backup.sql:/restore_backup.sql # Changed volume source and target filename
+    environment:
+      - PGPASSWORD=admin
+      - POSTGRES_USER=admin
+      - POSTGRES_DB=uns_data # Ensures the database exists or psql connects to it
+      - POSTGRES_HOST_AUTH_METHOD=trust # For the timescaledb server, if restore_db needs to create/drop DBs
+    command: >
+      bash -c "
+        echo 'Attempting to drop database uns_data...';
+        psql -v ON_ERROR_STOP=1 -h timescaledb -U admin -d postgres -c 'DROP DATABASE IF EXISTS uns_data WITH (FORCE);' && \
+        echo 'Attempting to create database uns_data...';
+        psql -v ON_ERROR_STOP=1 -h timescaledb -U admin -d postgres -c 'CREATE DATABASE uns_data OWNER admin;' && \
+        echo 'Restoring database uns_data from /restore_backup.sql...';
+        psql -v ON_ERROR_STOP=1 -h timescaledb -U admin -d uns_data -f /restore_backup.sql && \
+        echo 'Restore process completed.'
+      "
+    networks:
+      - hivemq-network
+    restart: "no"
+
+  backup_db:
+    image: timescale/timescaledb:latest-pg14
+    container_name: backup_db
+    volumes:
+      - ./db_backups:/export_target # Mount a host directory to a container directory
+    environment:
+      - PGPASSWORD=admin    # Password for the 'admin' user on timescaledb
+      - POSTGRES_USER=admin # Username to connect to timescaledb
+      # POSTGRES_HOST_AUTH_METHOD=trust # This is for the server, not client pg_dump file operations
+    command: >
+      bash -c "
+        mkdir -p /export_target && \
+        echo 'Starting database backup of uns_data from timescaledb...';
+        pg_dump -h timescaledb -U admin -d uns_data -Fp --no-owner --no-privileges -f /export_target/UNS_data_backup_output.sql && \
+        echo 'Database backup completed. Saved to /export_target/UNS_data_backup_output.sql in container, which is mapped to ./db_backups/UNS_data_backup_output.sql on your host.'
+      "
+    networks:
+      - hivemq-network
+    restart: "no"
+networks:
+  hivemq-network:
+    driver: bridge
