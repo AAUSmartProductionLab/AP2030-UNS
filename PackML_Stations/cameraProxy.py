@@ -5,7 +5,7 @@ import datetime
 import cv2
 import base64
 
-BROKER_ADDRESS = "192.168.0.104"
+BROKER_ADDRESS = "172.18.0.1"
 BROKER_PORT = 1883
 BASE_TOPIC = "NN/Nybrovej/InnoLab/Camera"
 uuid=""

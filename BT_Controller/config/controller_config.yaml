@@ -1,4 +1,4 @@
-broker_uri: "192.168.0.104:1883"
+broker_uri: "172.18.0.1:1883"
 client_id: "bt_controller"
 
 uns_topic: "NN/Nybrovej/InnoLab"
