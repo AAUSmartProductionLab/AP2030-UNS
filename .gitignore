@@ -162,7 +162,8 @@ cython_debug/
 #.idea/
 *.db
 Portainer/data
-Grafana/grafana-data
+Grafana/grafana-data/*
+!Grafana/grafana-data/grafana.db
 Configurator/node_modules
 # Database data
 TimescaleDB/timescaledb-data
