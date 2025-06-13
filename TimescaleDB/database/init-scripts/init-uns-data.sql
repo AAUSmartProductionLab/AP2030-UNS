@@ -255,17 +255,16 @@ DECLARE
     v_table_name TEXT;
 BEGIN
     -- Construct the full table name safely, e.g., public.filling_state
-    -- Assumes tables are in the 'public' schema. Adjust if different.
+    -- Assumes tables are in the 'public' schema. Adjust if different.                 id, -- Assuming an 'id' column for ordering, as in planar_state
     v_table_name := format('public.%I_state', p_station_prefix);
 
     v_query := format(
         $QUERY_BODY$
         WITH AllStatesWithNext AS (
             SELECT
-                id, -- Assuming an 'id' column for ordering, as in planar_state
                 state,
                 timestamp_utc,
-                LEAD(timestamp_utc, 1, %L::TIMESTAMPTZ) OVER (ORDER BY timestamp_utc, id) as next_timestamp_utc
+                LEAD(timestamp_utc, 1, %L::TIMESTAMPTZ) OVER (ORDER BY timestamp_utc) as next_timestamp_utc
             FROM
                 %s -- Dynamic table name placeholder
             WHERE
@@ -273,7 +272,6 @@ BEGIN
         ),
         RelevantStates AS (
             SELECT
-                id,
                 state,
                 timestamp_utc,
                 next_timestamp_utc
