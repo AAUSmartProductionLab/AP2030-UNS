@@ -5,7 +5,7 @@ import mqttService from '../services/MqttService';
 export default function Settings() {
   // Default values
   const defaultSettings = {
-    mqttBrokerHost: "192.168.0.104",
+    mqttBrokerHost: "172.18.0.1",
     mqttBrokerPort: "8000",
     clientId: "configurator-" + Math.random().toString(16).substring(2, 8),
     autoSaveInterval: 5,
@@ -108,7 +108,7 @@ export default function Settings() {
                     name="mqttBrokerHost"
                     value={settings.mqttBrokerHost} 
                     onChange={handleChange}
-                    placeholder="e.g., 192.168.0.104"
+                    placeholder="e.g., 172.18.0.1"
                   />
                 </div>
                 

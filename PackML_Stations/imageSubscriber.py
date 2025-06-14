@@ -5,7 +5,7 @@ from PIL import Image
 import paho.mqtt.client as mqtt
 
 # MQTT broker settings
-MQTT_BROKER = "192.168.0.104"  # Change to your broker address if needed
+MQTT_BROKER = "172.18.0.1"  # Change to your broker address if needed
 MQTT_PORT = 1883
 MQTT_TOPIC = "NN/Nybrovej/InnoLab/Camera/DATA/Image"
 
