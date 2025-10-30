@@ -13,7 +13,7 @@ BT::PortsList ConfigurationNode::providedPorts()
 
 BT::NodeStatus ConfigurationNode::onStart()
 {
-    if (!shared_queue->empty() && !stationMap.empty())
+    if (!shared_queue->empty())
     {
         config().blackboard->set("ProductIDs", shared_queue);
 
@@ -55,7 +55,7 @@ void ConfigurationNode::initializeTopicsFromAAS()
 {
     try
     {
-        std::string asset_id = station_config_.at(getInput<std::string>("Asset").value());
+        std::string asset_id = aas_client_.getInstanceNameByAssetName(getInput<std::string>("Asset").value());
         // Create Topic objects
         mqtt_utils::Topic response = aas_client_.fetchInterface(asset_id, getInput<std::string>("Command").value(), "response").value();
         MqttSubBase::setTopic("response", response);

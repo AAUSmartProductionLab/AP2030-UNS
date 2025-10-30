@@ -15,18 +15,15 @@ protected:
     std::string current_uuid_;
 
     AASClient &aas_client_;
-    nlohmann::json station_config_;
 
 public:
     MqttActionNode(const std::string &name,
                    const BT::NodeConfig &config,
                    MqttClient &mqtt_client,
-                   AASClient &aas_client,
-                   const nlohmann::json &station_config) : BT::StatefulActionNode(name, config),
+                   AASClient &aas_client) : BT::StatefulActionNode(name, config),
                                                            MqttPubBase(mqtt_client),
                                                            MqttSubBase(mqtt_client),
-                                                           aas_client_(aas_client),
-                                                           station_config_(station_config)
+                                                           aas_client_(aas_client)
     {
     }
 
@@ -49,15 +46,14 @@ public:
         NodeMessageDistributor &distributor,
         MqttClient &mqtt_client,
         AASClient &aas_client,
-        const nlohmann::json &station_config,
         const std::string &node_name)
     {
         MqttSubBase::setNodeMessageDistributor(&distributor);
         factory.registerBuilder<DerivedNode>(
             node_name,
-            [&mqtt_client, &aas_client, &station_config](const std::string &name, const BT::NodeConfig &config)
+            [&mqtt_client, &aas_client](const std::string &name, const BT::NodeConfig &config)
             {
-                auto node = std::make_unique<DerivedNode>(name, config, mqtt_client, aas_client, station_config);
+                auto node = std::make_unique<DerivedNode>(name, config, mqtt_client, aas_client);
                 node->initialize(); // Call after construction is complete
                 return node;
             });

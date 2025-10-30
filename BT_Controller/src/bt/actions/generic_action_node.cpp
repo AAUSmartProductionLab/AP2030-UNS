@@ -7,9 +7,8 @@ GenericActionNode::GenericActionNode(
     const std::string &name,
     const BT::NodeConfig &config,
     MqttClient &bt_mqtt_client,
-    AASClient &aas_client,
-    const json &station_config)
-    : MqttActionNode(name, config, bt_mqtt_client, aas_client, station_config)
+    AASClient &aas_client)
+    : MqttActionNode(name, config, bt_mqtt_client, aas_client)
 {
 }
 

@@ -13,14 +13,12 @@ class MqttSyncConditionNode : public BT::ConditionNode, public MqttSubBase
 protected:
     json latest_msg_;
     AASClient &aas_client_;
-    json station_config_;
 
 public:
     MqttSyncConditionNode(const std::string &name,
                           const BT::NodeConfig &config,
                           MqttClient &mqtt_client,
-                          AASClient &aas_client,
-                          const json &station_config);
+                          AASClient &aas_client);
 
     ~MqttSyncConditionNode() override;
     void initialize();
@@ -38,15 +36,14 @@ public:
         NodeMessageDistributor &distributor,
         MqttClient &mqtt_client,
         AASClient &aas_client,
-        const json &station_config,
         const std::string &node_name)
     {
         MqttSubBase::setNodeMessageDistributor(&distributor);
         factory.registerBuilder<DerivedNode>(
             node_name,
-            [&mqtt_client, &aas_client, &station_config](const std::string &name, const BT::NodeConfig &config)
+            [&mqtt_client, &aas_client](const std::string &name, const BT::NodeConfig &config)
             {
-                auto node = std::make_unique<DerivedNode>(name, config, mqtt_client, aas_client, station_config);
+                auto node = std::make_unique<DerivedNode>(name, config, mqtt_client, aas_client);
                 node->initialize(); // Call after construction is complete
                 return node;
             });

@@ -14,14 +14,12 @@ public:
         const std::string &name,
         const BT::NodeConfig &config,
         MqttClient &mqtt_client,
-        AASClient &aas_client,
-        const nlohmann::json &station_config)
-        : MqttActionNode(name, config, mqtt_client, aas_client, station_config) {}
+        AASClient &aas_client)
+        : MqttActionNode(name, config, mqtt_client, aas_client) {}
     static BT::PortsList providedPorts();
     BT::NodeStatus onStart();
 
     void initializeTopicsFromAAS() override;
     void callback(const std::string &topic_key, const nlohmann::json &msg, mqtt::properties props) override;
     std::shared_ptr<std::deque<std::string>> shared_queue = std::make_shared<std::deque<std::string>>();
-    std::map<std::string, int> stationMap;
 };

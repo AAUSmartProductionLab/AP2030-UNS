@@ -2,7 +2,9 @@
 #include <stdexcept>
 #include <iostream>
 #include <sstream>
+#include <algorithm>
 #include "utils.h"
+
 static size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *userp)
 {
     ((std::string *)userp)->append((char *)contents, size * nmemb);
@@ -139,5 +141,91 @@ std::optional<mqtt_utils::Topic> AASClient::fetchInterface(const std::string &as
         std::cerr << "Failed to fetch command topic for " << asset_id
                   << ": " << e.what() << std::endl;
         return std::nullopt;
+    }
+}
+
+std::string AASClient::getInstanceNameByAssetName(const std::string &asset_name)
+{
+    try
+    {
+        // Check if Stations array exists
+        if (!station_config.contains("Stations") || !station_config["Stations"].is_array())
+        {
+            throw std::runtime_error("Station configuration does not contain 'Stations' array");
+        }
+
+        const auto &stations = station_config["Stations"];
+
+        // Use std::find_if to search for the station
+        auto it = std::find_if(stations.begin(), stations.end(),
+                               [&asset_name](const nlohmann::json &station)
+                               {
+                                   return station.contains("Name") && station["Name"] == asset_name;
+                               });
+
+        // Check if station was found
+        if (it != stations.end())
+        {
+            // Check if InstanceName exists
+            if (it->contains("InstanceName") && (*it)["InstanceName"].is_string())
+            {
+                return (*it)["InstanceName"].get<std::string>();
+            }
+            else
+            {
+                throw std::runtime_error("Station '" + asset_name + "' found but has no valid InstanceName");
+            }
+        }
+
+        // Asset name not found
+        throw std::runtime_error("Asset '" + asset_name + "' not found in station configuration");
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Error in getInstanceNameByAssetName: " << e.what() << std::endl;
+        throw; // Re-throw to allow caller to handle
+    }
+}
+
+std::string AASClient::getStationIdByAssetName(const std::string &asset_name)
+{
+    try
+    {
+        // Check if Stations array exists
+        if (!station_config.contains("Stations") || !station_config["Stations"].is_array())
+        {
+            throw std::runtime_error("Station configuration does not contain 'Stations' array");
+        }
+
+        const auto &stations = station_config["Stations"];
+
+        // Use std::find_if to search for the station
+        auto it = std::find_if(stations.begin(), stations.end(),
+                               [&asset_name](const nlohmann::json &station)
+                               {
+                                   return station.contains("Name") && station["Name"] == asset_name;
+                               });
+
+        // Check if station was found
+        if (it != stations.end())
+        {
+            // Check if InstanceName exists
+            if (it->contains("StationId") && (*it)["StationId"].is_string())
+            {
+                return (*it)["StationId"].get<std::string>();
+            }
+            else
+            {
+                throw std::runtime_error("Station '" + asset_name + "' found but has no valid StationId");
+            }
+        }
+
+        // Asset name not found
+        throw std::runtime_error("Asset '" + asset_name + "' not found in station configuration");
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Error in getStationIdByAssetName: " << e.what() << std::endl;
+        throw; // Re-throw to allow caller to handle
     }
 }

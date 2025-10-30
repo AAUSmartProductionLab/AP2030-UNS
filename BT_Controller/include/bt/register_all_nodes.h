@@ -92,7 +92,6 @@ void registerAllNodes(
         node_message_distributor,
         mqtt_client,
         aas_client,
-        station_config,
         "MoveToPosition");
 
     MqttActionNode::registerNodeType<CommandExecuteNode>(
@@ -100,7 +99,6 @@ void registerAllNodes(
         node_message_distributor,
         mqtt_client,
         aas_client,
-        station_config,
         "Command_Execution");
 
     RefillNode::registerNodeType<RefillNode>(
@@ -108,7 +106,6 @@ void registerAllNodes(
         node_message_distributor,
         mqtt_client,
         aas_client,
-        station_config,
         "Refill_Node");
 
     MqttActionNode::registerNodeType<GenericConditionNode>(
@@ -116,7 +113,6 @@ void registerAllNodes(
         node_message_distributor,
         mqtt_client,
         aas_client,
-        station_config,
         "Data_Condition");
 
     MqttActionNode::registerNodeType<ConfigurationNode>(
@@ -124,7 +120,6 @@ void registerAllNodes(
         node_message_distributor,
         mqtt_client,
         aas_client,
-        station_config,
         "Configure");
 
     MqttDecorator::registerNodeType<GetProductFromQueue>(
@@ -132,7 +127,6 @@ void registerAllNodes(
         node_message_distributor,
         mqtt_client,
         aas_client,
-        station_config,
         "GetProductFromQueue");
 
     MqttDecorator::registerNodeType<Occupy>(
@@ -140,7 +134,6 @@ void registerAllNodes(
         node_message_distributor,
         mqtt_client,
         aas_client,
-        station_config,
         "Occupy");
 
     MqttDecorator::registerNodeType<KeepRunningUntilEmpty>(
@@ -148,7 +141,6 @@ void registerAllNodes(
         node_message_distributor,
         mqtt_client,
         aas_client,
-        station_config,
         "KeepRunningUntilEmpty");
 
     MqttSyncActionNode::registerNodeType<PopElementNode>(
@@ -156,7 +148,6 @@ void registerAllNodes(
         node_message_distributor,
         mqtt_client,
         aas_client,
-        station_config,
         "PopElement");
 
     factory.registerNodeType<BT::BC_FallbackNode>("BC_Fallback");

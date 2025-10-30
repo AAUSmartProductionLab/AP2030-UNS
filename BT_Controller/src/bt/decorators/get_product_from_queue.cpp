@@ -9,7 +9,7 @@ void GetProductFromQueue::initializeTopicsFromAAS()
 {
     try
     {
-        std::string asset_id = station_config_.at(this->config().blackboard->get<std::string>("XbotTopic")); // Check action:asset association in json message
+        std::string asset_id = aas_client_.getInstanceNameByAssetName(this->config().blackboard->get<std::string>("XbotTopic"));
         // Create Topic objects
         mqtt_utils::Topic request_topic = aas_client_.fetchInterface(asset_id, this->name(), "ProductID").value();
 
