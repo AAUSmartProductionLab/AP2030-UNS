@@ -11,5 +11,5 @@ groot2:
 
 behavior_tree:
   generate_xml_models: false
-  description_path: "../bt_description/config/tree.xml"
+  description_path: "../config/tree.xml"
   nodes_path: "../config/bt_description/tree_nodes_model.xml"
