@@ -13,7 +13,7 @@ MqttDecorator::MqttDecorator(
     const BT::NodeConfig &config,
     MqttClient &mqtt_client,
     AASClient &aas_client,
-    const json &station_config)
+    const nlohmann::json &station_config)
     : DecoratorNode(name, config),
       MqttPubBase(mqtt_client),
       MqttSubBase(mqtt_client),
@@ -79,7 +79,7 @@ BT::PortsList MqttDecorator::providedPorts()
             "UUID Used for registration")};
 }
 
-void MqttDecorator::callback(const std::string &topic_key, const json &msg, mqtt::properties props)
+void MqttDecorator::callback(const std::string &topic_key, const nlohmann::json &msg, mqtt::properties props)
 {
     // Use mutex to protect shared state
     {

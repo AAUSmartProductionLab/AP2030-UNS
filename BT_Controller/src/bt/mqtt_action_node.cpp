@@ -6,20 +6,6 @@
 #include <condition_variable>
 #include <mutex>
 
-MqttActionNode::MqttActionNode(
-    const std::string &name,
-    const BT::NodeConfig &config,
-    MqttClient &mqtt_client,
-    AASClient &aas_client,
-    const json &station_config)
-    : BT::StatefulActionNode(name, config),
-      MqttPubBase(mqtt_client),
-      MqttSubBase(mqtt_client),
-      aas_client_(aas_client),
-      station_config_(station_config)
-{
-}
-
 void MqttActionNode::initialize()
 {
     // Call the virtual function - safe because construction is complete
@@ -52,10 +38,10 @@ BT::NodeStatus MqttActionNode::onRunning()
     return status();
 }
 
-json MqttActionNode::createMessage()
+nlohmann::json MqttActionNode::createMessage()
 {
     // Default implementation
-    json message;
+    nlohmann::json message;
     BT::Expected<std::string> uuid = this->getInput<std::string>("Uuid");
     if (uuid.has_value())
     {
@@ -63,7 +49,7 @@ json MqttActionNode::createMessage()
         message["Uuid"] = current_uuid_;
         return message;
     }
-    return json();
+    return nlohmann::json();
 }
 
 void MqttActionNode::onHalted()
@@ -74,7 +60,7 @@ void MqttActionNode::onHalted()
 }
 
 // Standard implementation based on PackML override this if needed
-void MqttActionNode::callback(const std::string &topic_key, const json &msg, mqtt::properties props)
+void MqttActionNode::callback(const std::string &topic_key, const nlohmann::json &msg, mqtt::properties props)
 {
     // Check if the message is valid
     // Use mutex to protect shared state
