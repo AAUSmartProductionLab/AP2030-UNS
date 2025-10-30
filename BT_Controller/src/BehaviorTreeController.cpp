@@ -41,6 +41,9 @@ BehaviorTreeController::BehaviorTreeController(int argc, char *argv[])
     // Initialize AAS client
     aas_client_ = std::make_unique<AASClient>(app_params_.aasServerUrl);
 
+    // Initialize BehaviorTreeFactory
+    bt_factory_ = std::make_unique<BT::BehaviorTreeFactory>();
+
     // Don't register nodes yet - wait for station config
     std::signal(SIGINT, signalHandler);
 }
@@ -103,12 +106,12 @@ void BehaviorTreeController::handleStationConfigUpdate(const nlohmann::json &new
         std::lock_guard<std::mutex> lock(station_config_mutex_);
 
         // Check if configuration actually changed
-        if (station_config_received_ && station_config_ == new_config)
+        if (station_config_received_ && aas_client_->station_config == new_config)
         {
             return;
         }
         // Store the new configuration
-        station_config_ = new_config;
+        aas_client_->station_config = new_config;
         station_config_received_ = true;
     }
 
@@ -138,14 +141,11 @@ bool BehaviorTreeController::registerNodesWithStationConfig()
         nlohmann::json config_copy;
         {
             std::lock_guard<std::mutex> lock(station_config_mutex_);
-            config_copy = station_config_;
+            config_copy = aas_client_->station_config;
         }
 
-        // Clear the factory to remove old node registrations
-        bt_factory_.clearRegisteredBehaviorTrees();
-
         // Register all nodes with the current station configuration
-        registerAllNodes(bt_factory_, *node_message_distributor_, *mqtt_client_,
+        registerAllNodes(*bt_factory_, *node_message_distributor_, *mqtt_client_,
                          *aas_client_, config_copy);
 
         // Set the node message distributor for base classes
@@ -162,8 +162,14 @@ bool BehaviorTreeController::registerNodesWithStationConfig()
 
 void BehaviorTreeController::unregisterAllNodes()
 {
-    // Clear all registered behavior trees and node types
-    bt_factory_.clearRegisteredBehaviorTrees();
+    // Halt any running tree before unregistering
+    if (bt_tree_.rootNode())
+    {
+        bt_tree_.haltTree();
+    }
+
+    // Reset Groot2 publisher
+    bt_publisher_.reset();
 
     // Reset node message distributor
     if (node_message_distributor_ && mqtt_client_)
@@ -186,6 +192,10 @@ void BehaviorTreeController::unregisterAllNodes()
 
     // Recreate node message distributor to clear all registrations
     node_message_distributor_ = std::make_unique<NodeMessageDistributor>(*mqtt_client_);
+
+    // Create a new BehaviorTreeFactory to completely clear all node registrations
+    // This is necessary because BT factory doesn't provide a way to unregister individual nodes
+    bt_factory_ = std::make_unique<BT::BehaviorTreeFactory>();
 
     nodes_registered_ = false;
     std::cout << "All nodes unregistered." << std::endl;
@@ -375,8 +385,8 @@ bool BehaviorTreeController::handleGenerateXmlModelsOption()
         {
             std::cerr << "Warning: No station configuration available for XML generation." << std::endl;
             std::cerr << "Using empty configuration." << std::endl;
-            station_config_ = nlohmann::json::object();
-            station_config_["Stations"] = nlohmann::json::object();
+            aas_client_->station_config = nlohmann::json::object();
+            aas_client_->station_config["Stations"] = nlohmann::json::object();
         }
 
         if (!nodes_registered_)
@@ -384,7 +394,7 @@ bool BehaviorTreeController::handleGenerateXmlModelsOption()
             registerNodesWithStationConfig();
         }
 
-        std::string xml_models = BT::writeTreeNodesModelXML(bt_factory_);
+        std::string xml_models = BT::writeTreeNodesModelXML(*bt_factory_);
         bt_utils::saveXmlToFile(xml_models, app_params_.bt_nodes_path);
         std::cout << "XML models saved to: " << app_params_.bt_nodes_path << std::endl;
         return true;
@@ -517,8 +527,8 @@ void BehaviorTreeController::processBehaviorTreeStart()
 
         try
         {
-            bt_factory_.registerBehaviorTreeFromFile(app_params_.bt_description_path);
-            bt_tree_ = bt_factory_.createTree("MainTree");
+            bt_factory_->registerBehaviorTreeFromFile(app_params_.bt_description_path);
+            bt_tree_ = bt_factory_->createTree("MainTree");
         }
         catch (const BT::RuntimeError &e)
         {

@@ -6,7 +6,7 @@ void MoveToPosition::initializeTopicsFromAAS()
 {
     try
     {
-        std::string asset_id = station_config_.at(getInput<std::string>("Asset").value());
+        std::string asset_id = aas_client_.getInstanceNameByAssetName(getInput<std::string>("Asset").value());
         // Create Topic objects
         mqtt_utils::Topic request = aas_client_.fetchInterface(asset_id, this->name(), "request").value();
         mqtt_utils::Topic halt = aas_client_.fetchInterface(asset_id, this->name(), "halt").value();
@@ -48,40 +48,26 @@ void MoveToPosition::onHalted()
     // Clean up when the node is halted
     std::cout << name() << " node halted" << std::endl;
     // Additional cleanup as needed
-    json message;
+    nlohmann::json message;
     message["TargetPosition"] = 0;
     message["Uuid"] = current_uuid_;
     publish("halt", message);
 }
 
-json MoveToPosition::createMessage()
+nlohmann::json MoveToPosition::createMessage()
 {
     BT::Expected<std::string> TargetPosition = getInput<std::string>("TargetPosition");
     BT::Expected<std::string> Uuid = getInput<std::string>("Uuid");
 
-    json message;
+    nlohmann::json message;
     if (TargetPosition.has_value() && Uuid.has_value())
     {
-        std::string targetStation = TargetPosition.value();
-
-        // Use std::find_if to search for the station
-        auto it = std::find_if(
-            station_config_["Stations"].begin(),
-            station_config_["Stations"].end(),
-            [&targetStation](const json &station)
-            {
-                return station.contains("Name") && station["Name"] == targetStation;
-            });
-
-        if (it != station_config_["Stations"].end() && it->contains("StationId"))
-        {
-            current_uuid_ = Uuid.value();
-            message["TargetPosition"] = (*it)["StationId"];
-            message["Uuid"] = current_uuid_;
-            return message;
-        }
-
-        std::cerr << "Station '" << targetStation << "' not found in configuration" << std::endl;
+        std::string stationId = aas_client_.getStationIdByAssetName(TargetPosition.value());
+        current_uuid_ = Uuid.value();
+        message["TargetPosition"] = stationId;
+        message["Uuid"] = current_uuid_;
+        return message;
     }
-    return json();
+
+    return nlohmann::json();
 }

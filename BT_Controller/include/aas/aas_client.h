@@ -19,6 +19,12 @@ public:
         const std::string &skill,
         const std::string &interfaceProp);
 
+    nlohmann::json station_config;
+
+    // Helper function to search station config for InstanceName by asset name
+    std::string getInstanceNameByAssetName(const std::string &asset_name);
+    std::string getStationIdByAssetName(const std::string &asset_name);
+
 private:
     std::string aas_server_url_;
     CURL *curl_;

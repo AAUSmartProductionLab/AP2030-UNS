@@ -9,7 +9,7 @@ void CommandExecuteNode::initializeTopicsFromAAS()
 {
     try
     {
-        std::string asset_id = station_config_.at(getInput<std::string>("Asset").value());
+        std::string asset_id = aas_client_.getInstanceNameByAssetName(getInput<std::string>("Asset").value());
         // Create Topic objects
         mqtt_utils::Topic request = aas_client_.fetchInterface(asset_id, getInput<std::string>("Operation").value(), "request").value();
         mqtt_utils::Topic response = aas_client_.fetchInterface(asset_id, getInput<std::string>("Operation").value(), "response").value();
@@ -46,9 +46,9 @@ BT::PortsList CommandExecuteNode::providedPorts()
                 "The parameters for the operation")};
 }
 
-json CommandExecuteNode::createMessage()
+nlohmann::json CommandExecuteNode::createMessage()
 {
-    json message;
+    nlohmann::json message;
     BT::Expected<std::string> uuid = getInput<std::string>("Uuid");
     if (uuid && uuid.has_value() && !uuid.value().empty())
     {

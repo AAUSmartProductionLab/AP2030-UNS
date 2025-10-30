@@ -9,7 +9,7 @@ void RefillNode::initializeTopicsFromAAS()
 {
     try
     {
-        std::string asset_id = station_config_.at(getInput<std::string>("Asset").value()); // Check action:asset association in json message
+        std::string asset_id = aas_client_.getInstanceNameByAssetName(getInput<std::string>("Asset").value());
         // Create Topic objects
         mqtt_utils::Topic request_topic = aas_client_.fetchInterface(asset_id, this->name(), "request").value();
         mqtt_utils::Topic response_topic = aas_client_.fetchInterface(asset_id, this->name(), "response").value();
@@ -39,9 +39,9 @@ BT::PortsList RefillNode::providedPorts()
                 "UUID for the command to execute")};
 }
 
-json RefillNode::createMessage()
+nlohmann::json RefillNode::createMessage()
 {
-    json message;
+    nlohmann::json message;
     BT::Expected<std::string> uuid = getInput<std::string>("Uuid");
     if (uuid)
     {
@@ -62,7 +62,7 @@ json RefillNode::createMessage()
 }
 
 // Standard implementation based on PackML override this if needed
-void RefillNode::callback(const std::string &topic_key, const json &msg, mqtt::properties props)
+void RefillNode::callback(const std::string &topic_key, const nlohmann::json &msg, mqtt::properties props)
 {
     // Use mutex to protect shared state
     {

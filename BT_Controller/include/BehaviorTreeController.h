@@ -56,7 +56,7 @@ private:
     std::function<void(const std::string &, const nlohmann::json &, mqtt::properties)> main_mqtt_message_handler_;
 
     std::unique_ptr<AASClient> aas_client_;
-    BT::BehaviorTreeFactory bt_factory_;
+    std::unique_ptr<BT::BehaviorTreeFactory> bt_factory_;
     BT::Tree bt_tree_;
     std::unique_ptr<BT::Groot2Publisher> bt_publisher_;
 
@@ -70,7 +70,6 @@ private:
     PackML::State current_packml_state_;
     BT::NodeStatus current_bt_tick_status_;
 
-    nlohmann::json station_config_;
     std::mutex station_config_mutex_;
     mqtt_utils::Topic station_config_topic_;
 

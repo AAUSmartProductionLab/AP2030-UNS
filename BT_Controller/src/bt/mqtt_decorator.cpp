@@ -12,13 +12,11 @@ MqttDecorator::MqttDecorator(
     const std::string &name,
     const BT::NodeConfig &config,
     MqttClient &mqtt_client,
-    AASClient &aas_client,
-    const nlohmann::json &station_config)
+    AASClient &aas_client)
     : DecoratorNode(name, config),
       MqttPubBase(mqtt_client),
       MqttSubBase(mqtt_client),
-      aas_client_(aas_client),
-      station_config_(station_config)
+      aas_client_(aas_client)
 {
 }
 
@@ -45,7 +43,7 @@ void MqttDecorator::initializeTopicsFromAAS()
 {
     try
     {
-        std::string asset_id = station_config_.at(getInput<std::string>("Station").value());
+        std::string asset_id = aas_client_.getInstanceNameByAssetName(getInput<std::string>("Asset").value());
         // Create Topic objects
         mqtt_utils::Topic request = aas_client_.fetchInterface(asset_id, this->name(), "request").value();
         mqtt_utils::Topic response = aas_client_.fetchInterface(asset_id, this->name(), "response").value();
@@ -69,9 +67,9 @@ BT::PortsList MqttDecorator::providedPorts()
     return {
         BT::details::PortWithDefault<std::string>(
             BT::PortDirection::INPUT,
-            "Station",
-            "{Station}",
-            "The station to register with"),
+            "Asset",
+            "{Asset}",
+            "The asset to register with"),
         BT::details::PortWithDefault<std::string>(
             BT::PortDirection::INOUT,
             "Uuid",

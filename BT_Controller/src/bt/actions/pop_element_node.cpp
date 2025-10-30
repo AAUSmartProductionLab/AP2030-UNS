@@ -9,7 +9,7 @@ void PopElementNode::initializeTopicsFromAAS()
 {
     try
     {
-        std::string asset_id = station_config_.at(this->config().blackboard->get<std::string>("XbotTopic"));
+        std::string asset_id = aas_client_.getInstanceNameByAssetName(this->config().blackboard->get<std::string>("XbotTopic"));
         // Create Topic objects
         mqtt_utils::Topic product_association = aas_client_.fetchInterface(asset_id, this->name(), "product_association").value();
         MqttPubBase::setTopic("request", product_association);

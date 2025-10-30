@@ -11,7 +11,7 @@ void Occupy::initializeTopicsFromAAS()
 {
     try
     {
-        std::string asset_id = station_config_.at(getInput<std::string>("Station").value()); // Check action:asset association in json message
+        std::string asset_id = aas_client_.getInstanceNameByAssetName(getInput<std::string>("Asset").value());
         // Create Topic objects
         mqtt_utils::Topic raw_register_topic = aas_client_.fetchInterface(asset_id, this->name(), "register").value();
         mqtt_utils::Topic raw_unregister_topic = aas_client_.fetchInterface(asset_id, this->name(), "unregister").value();
@@ -147,9 +147,9 @@ BT::PortsList Occupy::providedPorts()
     return {
         BT::details::PortWithDefault<std::string>(
             BT::PortDirection::INPUT,
-            "Station",
-            "{Station}",
-            "The station to register with"),
+            "Asset",
+            "{Asset}",
+            "The Asset to register with"),
         BT::details::PortWithDefault<std::string>(
             BT::PortDirection::INOUT,
             "Uuid",

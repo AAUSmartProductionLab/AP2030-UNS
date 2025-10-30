@@ -12,9 +12,8 @@ public:
         const std::string &name,
         const BT::NodeConfig &config,
         MqttClient &mqtt_client,
-        AASClient &aas_client,
-        const nlohmann::json &station_config)
-        : MqttActionNode(name, config, mqtt_client, aas_client, station_config) {}
+        AASClient &aas_client)
+        : MqttActionNode(name, config, mqtt_client, aas_client) {}
 
     static BT::PortsList providedPorts();
     nlohmann::json createMessage() override;

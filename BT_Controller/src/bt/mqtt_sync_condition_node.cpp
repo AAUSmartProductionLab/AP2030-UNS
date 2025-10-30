@@ -6,12 +6,10 @@ MqttSyncConditionNode::MqttSyncConditionNode(
     const std::string &name,
     const BT::NodeConfig &config,
     MqttClient &mqtt_client,
-    AASClient &aas_client,
-    const json &station_config)
+    AASClient &aas_client)
     : BT::ConditionNode(name, config),
       MqttSubBase(mqtt_client),
-      aas_client_(aas_client),
-      station_config_(station_config)
+      aas_client_(aas_client)
 {
 }
 
@@ -38,7 +36,7 @@ void MqttSyncConditionNode::initializeTopicsFromAAS()
 {
     try
     {
-        std::string asset_id = station_config_.at(getInput<std::string>("Station").value()); // Check action:asset association in json message
+        std::string asset_id = aas_client_.getInstanceNameByAssetName(getInput<std::string>("Asset").value());
         // Create Topic objects
         mqtt_utils::Topic response_topic = aas_client_.fetchInterface(asset_id, this->name(), "response").value();
         MqttSubBase::setTopic("response", response_topic);

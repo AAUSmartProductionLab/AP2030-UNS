@@ -12,8 +12,7 @@ public:
         const std::string &name,
         const BT::NodeConfig &config,
         MqttClient &bt_mqtt_client,
-        AASClient &aas_client,
-        const json &station_config);
+        AASClient &aas_client);
     json createMessage() override;
 
     void initializeTopicsFromAAS() override;
