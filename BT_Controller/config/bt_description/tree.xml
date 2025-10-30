@@ -2,51 +2,50 @@
 <root BTCPP_format="4">
   <BehaviorTree ID="Filling">
     <Occupy Uuid="{ProductID}"
-                 Station="{Station}"
-                 _skipIf="scrap == true">
+            Asset="{Asset}"
+            _skipIf="scrap == true">
       <ReactiveSequence>
         <ReactiveFallback>
           <Data_Condition expected_value="operational"
                           comparison_type="equal"
                           Field="State"
                           Message="State"
-                          Station="{Station}"/>
+                          Asset="{Asset}"/>
           <Sleep msec="10000"/>
         </ReactiveFallback>
         <Sequence>
-          <MoveToPosition Topic="{XbotTopic}"
-                          Uuid="{ProductID}"
-                          TargetPosition="{Station}"/>
+          <MoveToPosition Uuid="{ProductID}"
+                          TargetPosition="{Station}"
+                          Asset="{Asset}"/>
           <Command_Execution Parameters="&apos;{}&apos;"
                              Uuid="{ProductID}"
-                             Command="Tare"
-                             Entity="{Station}"/>
+                             Operation="Tare"
+                             Asset="{Asset}"/>
           <BC_Fallback _onFailure="scrap:= true">
             <Data_Condition expected_value="2.0;2.2"
                             comparison_type="inside"
                             Field="Weight"
                             Message="Weight"
-                            Station="{Station}"/>
+                            Asset="{Asset}"/>
             <Sequence>
               <Data_Condition expected_value="0"
                               comparison_type="equal"
                               Field="Weight"
                               Message="Weight"
-                              Station="{Station}"/>
+                              Asset="{Asset}"/>
               <Command_Execution Parameters="&apos;{}&apos;"
                                  Uuid="{ProductID}"
-                                 Command="Dispense"
-                                 Entity="{Station}"/>
+                                 Operation="Dispense"
+                                 Asset="{Asset}"/>
             </Sequence>
             <Sequence>
               <Data_Condition expected_value="0"
                               comparison_type="greater"
                               Field="Weight"
                               Message="Weight"
-                              Station="{Station}"/>
+                              Asset="{Asset}"/>
               <Refill_Node Uuid="{ProductID}"
-                           Command="Refill"
-                           Station="{Station}"/>
+                           Asset="{Asset}"/>
             </Sequence>
           </BC_Fallback>
         </Sequence>
@@ -62,25 +61,25 @@
                   _onSuccess="scrap:= false"
                   _onFailure="scrap:= true"/>
       <Occupy Uuid="{ProductID}"
-                   Station="{Station}"
-                   _skipIf="scrap == true">
+              Asset="{Asset}"
+              _skipIf="scrap == true">
         <ReactiveSequence>
           <ReactiveFallback>
             <Data_Condition expected_value="operational"
                             comparison_type="equal"
                             Field="State"
                             Message="State"
-                            Station="{Station}"/>
+                            Asset="{Asset}"/>
             <Sleep msec="10000"/>
           </ReactiveFallback>
           <Sequence>
-            <MoveToPosition Topic="{XbotTopic}"
-                            Uuid="{ProductID}"
-                            TargetPosition="{Station}"/>
+            <MoveToPosition Uuid="{ProductID}"
+                            TargetPosition="{Station}"
+                            Asset="{Asset}"/>
             <Command_Execution Parameters="&apos;{}&apos;"
                                Uuid="{ProductID}"
-                               Command="Load"
-                               Entity="{Station}"/>
+                               Operation="Load"
+                               Asset="{Asset}"/>
           </Sequence>
         </ReactiveSequence>
       </Occupy>
@@ -89,15 +88,14 @@
 
   <BehaviorTree ID="MainTree">
     <Sequence>
-      <Configure StationMap="{StationMap}"
-                 ProductIDs="{ProductIDs}"/>
+      <Configure ProductIDs="{ProductIDs}"/>
       <ReactiveSequence>
         <Fallback>
           <Data_Condition expected_value="operational"
                           comparison_type="equal"
                           Field="State"
                           Message="State"
-                          Station="Planar"/>
+                          Asset="{Asset}"/>
           <SubTree ID="Planar SOP"
                    _autoremap="true"/>
         </Fallback>
@@ -124,48 +122,48 @@
     <Sequence>
       <Command_Execution Parameters="&apos;{ &quot;SopId&quot;: 10 }&apos;"
                          Uuid="{Uuid}"
-                         Command="Task"
-                         Entity="Intervention"/>
+                         Operation="Operation"
+                         Asset="{Asset}"/>
       <Command_Execution Parameters="&apos;{ &quot;SopId&quot;: 11 }&apos;"
                          Uuid="{Uuid}"
-                         Command="Task"
-                         Entity="Intervention"/>
+                         Operation="Operation"
+                         Asset="{Asset}"/>
       <Command_Execution Parameters="&apos;{ &quot;SopId&quot;: 12 }&apos;"
                          Uuid="{Uuid}"
-                         Command="Task"
-                         Entity="Intervention"/>
+                         Operation="Operation"
+                         Asset="{Asset}"/>
       <Command_Execution Parameters="&apos;{ &quot;SopId&quot;: 13 }&apos;"
                          Uuid="{Uuid}"
-                         Command="Task"
-                         Entity="Intervention"/>
+                         Operation="Operation"
+                         Asset="{Asset}"/>
       <Command_Execution Parameters="&apos;{ &quot;SopId&quot;: 0 }&apos;"
                          Uuid="{Uuid}"
-                         Command="Task"
-                         Entity="Intervention"/>
+                         Operation="Operation"
+                         Asset="{Asset}"/>
     </Sequence>
   </BehaviorTree>
 
   <BehaviorTree ID="QualityControl">
     <Occupy Uuid="{ProductID}"
-                 Station="{Station}"
-                 _skipIf="scrap == true">
+            Asset="{Asset}"
+            _skipIf="scrap == true">
       <ReactiveSequence>
         <ReactiveFallback>
           <Data_Condition expected_value="operational"
                           comparison_type="equal"
                           Field="State"
                           Message="State"
-                          Station="{Station}"/>
+                          Asset="{Asset}"/>
           <Sleep msec="10000"/>
         </ReactiveFallback>
         <Sequence>
-          <MoveToPosition Topic="{XbotTopic}"
-                          Uuid="{ProductID}"
-                          TargetPosition="{Station}"/>
+          <MoveToPosition Uuid="{ProductID}"
+                          TargetPosition="{Station}"
+                          Asset="{Asset}"/>
           <Command_Execution Parameters="&apos;{}&apos;"
                              Uuid="{ProductID}"
-                             Command="Capture"
-                             Entity="{Station}"/>
+                             Operation="Capture"
+                             Asset="{Asset}"/>
         </Sequence>
       </ReactiveSequence>
     </Occupy>
@@ -173,24 +171,24 @@
 
   <BehaviorTree ID="Scrap">
     <Occupy Uuid="{ProductID}"
-                 Station="{Station}">
+            Asset="{Asset}">
       <ReactiveSequence>
         <ReactiveFallback>
           <Data_Condition expected_value="operational"
                           comparison_type="equal"
                           Field="State"
                           Message="State"
-                          Station="{Station}"/>
+                          Asset="{Asset}"/>
           <Sleep msec="10000"/>
         </ReactiveFallback>
         <Sequence>
-          <MoveToPosition Topic="{XbotTopic}"
-                          Uuid="{ProductID}"
-                          TargetPosition="{Station}"/>
+          <MoveToPosition Uuid="{ProductID}"
+                          TargetPosition="{Station}"
+                          Asset="{Asset}"/>
           <Command_Execution Parameters="&apos;{}&apos;"
                              Uuid="{ProductID}"
-                             Command="Unload"
-                             Entity="{Station}"
+                             Operation="Unload"
+                             Asset="{Asset}"
                              _onSuccess="scrap:=false"/>
         </Sequence>
       </ReactiveSequence>
@@ -199,25 +197,25 @@
 
   <BehaviorTree ID="Stoppering">
     <Occupy Uuid="{ProductID}"
-                 Station="{Station}"
-                 _skipIf="scrap == true">
+            Asset="{Asset}"
+            _skipIf="scrap == true">
       <ReactiveSequence>
         <ReactiveFallback>
           <Data_Condition expected_value="operational"
                           comparison_type="equal"
                           Field="State"
                           Message="State"
-                          Station="{Station}"/>
+                          Asset="{Asset}"/>
           <Sleep msec="10000"/>
         </ReactiveFallback>
         <Sequence>
-          <MoveToPosition Topic="{XbotTopic}"
-                          Uuid="{ProductID}"
-                          TargetPosition="{Station}"/>
+          <MoveToPosition Uuid="{ProductID}"
+                          TargetPosition="{Station}"
+                          Asset="{Asset}"/>
           <Command_Execution Parameters="&apos;{}&apos;"
                              Uuid="{ProductID}"
-                             Command="Stopper"
-                             Entity="{Station}"/>
+                             Operation="Stopper"
+                             Asset="{Asset}"/>
         </Sequence>
       </ReactiveSequence>
     </Occupy>
@@ -225,25 +223,25 @@
 
   <BehaviorTree ID="Unload">
     <Occupy Uuid="{ProductID}"
-                 Station="{Station}"
-                 _skipIf="scrap == true">
+            Asset="{Asset}"
+            _skipIf="scrap == true">
       <ReactiveSequence>
         <ReactiveFallback>
           <Data_Condition expected_value="operational"
                           comparison_type="equal"
                           Field="State"
                           Message="State"
-                          Station="{Station}"/>
+                          Asset="{Asset}"/>
           <Sleep msec="10000"/>
         </ReactiveFallback>
         <Sequence>
-          <MoveToPosition Topic="{XbotTopic}"
-                          Uuid="{ProductID}"
-                          TargetPosition="{Station}"/>
+          <MoveToPosition Uuid="{ProductID}"
+                          TargetPosition="{Station}"
+                          Asset="{Asset}"/>
           <Command_Execution Parameters="&apos;{}&apos;"
                              Uuid="{ProductID}"
-                             Command="Unload"
-                             Entity="{Station}"/>
+                             Operation="Unload"
+                             Asset="{Asset}"/>
         </Sequence>
       </ReactiveSequence>
     </Occupy>
@@ -258,7 +256,7 @@
                           comparison_type="equal"
                           Field="State"
                           Message="State"
-                          Station="{XbotTopic}"/>
+                          Asset="{Asset}"/>
           <Sleep msec="10000"/>
         </ReactiveFallback>
         <Fallback>
@@ -293,21 +291,18 @@
     <Action ID="Command_Execution">
       <input_port name="Parameters"
                   default="&apos;{}&apos;"
-                  type="nlohmann::json_abi_v3_11_3::basic_json&lt;std::map, std::vector, std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, bool, long, unsigned long, double, std::allocator, nlohmann::json_abi_v3_11_3::adl_serializer, std::vector&lt;unsigned char, std::allocator&lt;unsigned char&gt; &gt;, void&gt;">The weight to refill, if not provided it will be set to 0.0</input_port>
+                  type="nlohmann::json_abi_v3_11_3::basic_json&lt;std::map, std::vector, std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, bool, long, unsigned long, double, std::allocator, nlohmann::json_abi_v3_11_3::adl_serializer, std::vector&lt;unsigned char, std::allocator&lt;unsigned char&gt; &gt;, void&gt;">The parameters for the operation</input_port>
       <input_port name="Uuid"
                   default="{Uuid}"
-                  type="std::string">UUID for the command to execute</input_port>
-      <input_port name="Command"
-                  default="Command"
-                  type="std::string">The command to execute on the station</input_port>
-      <input_port name="Entity"
-                  default="{Station}"
-                  type="std::string">The station to register with</input_port>
+                  type="std::string">UUID for the operation to execute</input_port>
+      <input_port name="Operation"
+                  default="Operation"
+                  type="std::string">The operation to execute on the asset</input_port>
+      <input_port name="Asset"
+                  default="{Asset}"
+                  type="std::string">The asset used for execution</input_port>
     </Action>
     <Action ID="Configure">
-      <output_port name="StationMap"
-                   default="{StationMap}"
-                   type="std::map&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, int, std::less&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt;, std::allocator&lt;std::pair&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; const, int&gt; &gt; &gt;">The StationMap of the system for this batch</output_port>
       <output_port name="ProductIDs"
                    default="{ProductIDs}"
                    type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;">List of product IDs to produce</output_port>
@@ -320,10 +315,10 @@
       <input_port name="Field"
                   type="std::string">Name of the field to monitor in the MQTT message</input_port>
       <input_port name="Message"
-                  type="std::string">The message from the station</input_port>
-      <input_port name="Station"
-                  default="{Station}"
-                  type="std::string">The station from which to receive a message</input_port>
+                  type="std::string">The message from the Asset</input_port>
+      <input_port name="Asset"
+                  default="{Asset}"
+                  type="std::string">The Asset from which to receive a message</input_port>
     </Condition>
     <SubTree ID="Filling"
              editable="true">
@@ -344,16 +339,24 @@
                   default="Load"/>
     </SubTree>
     <Action ID="MoveToPosition">
-      <input_port name="Topic"
-                  default="{Topic}"
-                  type="std::string">Topic to which we want to send the request</input_port>
       <input_port name="Uuid"
                   default="{ProductID}"
                   type="std::string">UUID for the command to execute</input_port>
       <input_port name="TargetPosition"
                   default="{Station}"
                   type="std::string">The name of the station to move to</input_port>
+      <input_port name="Asset"
+                  default="{Asset}"
+                  type="std::string">The Asset to execute the movement</input_port>
     </Action>
+    <Decorator ID="Occupy">
+      <inout_port name="Uuid"
+                  default="{Uuid}"
+                  type="std::string">UUID Used for registration</inout_port>
+      <input_port name="Asset"
+                  default="{Asset}"
+                  type="std::string">The Asset to register with</input_port>
+    </Decorator>
     <Action ID="PopElement">
       <output_port name="ProductID"
                    default="{ProductID}"
@@ -369,12 +372,9 @@
       <input_port name="Uuid"
                   default="{ID}"
                   type="std::string">UUID for the command to execute</input_port>
-      <input_port name="Command"
-                  default="Refill"
-                  type="std::string">The command to execute on the station</input_port>
-      <input_port name="Station"
-                  default="{Station}"
-                  type="std::string">The station to register with</input_port>
+      <input_port name="Asset"
+                  default="{Asset}"
+                  type="std::string">The asset used for refilling</input_port>
     </Action>
     <SubTree ID="Scrap"
              editable="true">
@@ -391,14 +391,6 @@
       <input_port name="Station"
                   default="Unload"/>
     </SubTree>
-    <Decorator ID="Occupy">
-      <inout_port name="Uuid"
-                  default="{Uuid}"
-                  type="std::string">UUID Used for registration</inout_port>
-      <input_port name="Station"
-                  default="{Station}"
-                  type="std::string">The station to register with</input_port>
-    </Decorator>
     <SubTree ID="Xbot_Production"
              editable="true">
       <input_port name="XbotTopic"
