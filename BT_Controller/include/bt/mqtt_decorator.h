@@ -1,41 +1,37 @@
 #pragma once
 
-#include <behaviortree_cpp/action_node.h>
+#include "bt/mqtt_action_node.h"
 #include <behaviortree_cpp/bt_factory.h>
 #include <nlohmann/json.hpp>
-#include "mqtt/mqtt_sub_base.h"
+#include <string>
 #include "mqtt/mqtt_pub_base.h"
-#include "mqtt/node_message_distributor.h"
-#include "aas/aas_client.h"
-#include <map> 
+#include <fmt/chrono.h>
+#include <chrono>
+#include <utils.h>
 
-class MqttActionNode : public BT::StatefulActionNode, public MqttPubBase, public MqttSubBase
+class MqttDecorator : public BT::DecoratorNode, public MqttPubBase, public MqttSubBase
 {
 protected:
-    std::string current_uuid_;
-
     AASClient &aas_client_;
     json station_config_;
 
 public:
-    MqttActionNode(const std::string &name,
-                   const BT::NodeConfig &config,
-                   MqttClient &mqtt_client,
-                   AASClient &aas_client,
-                   const json &station_config);
+    MqttDecorator(
+        const std::string &name,
+        const BT::NodeConfig &config,
+        MqttClient &mqtt_client,
+        AASClient &aas_client,
+        const json &station_config);
 
-    virtual ~MqttActionNode();
+    virtual ~MqttDecorator();
     void initialize();
 
     // Mqtt AAS Stuff
-    virtual void initializeTopicsFromAAS() {};
-    virtual json createMessage();
+    virtual void initializeTopicsFromAAS();
     virtual void callback(const std::string &topic_key, const json &msg, mqtt::properties props) override;
     // BT Stuff
-    static BT::PortsList providedPorts() { return {}; };
-    BT::NodeStatus onStart() override;
-    BT::NodeStatus onRunning() override;
-    void onHalted() override;
+    static BT::PortsList providedPorts();
+    virtual void halt() override;
 
     template <typename DerivedNode>
     static void registerNodeType(
@@ -56,6 +52,7 @@ public:
                 return node;
             });
     }
+
     virtual std::string getBTNodeName() const override
     {
         return this->name();

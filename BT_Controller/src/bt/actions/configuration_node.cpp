@@ -2,25 +2,6 @@
 #include "utils.h"
 #include "mqtt/node_message_distributor.h"
 
-ConfigurationNode::ConfigurationNode(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client, const mqtt_utils::Topic &response_topic)
-    : MqttAsyncSubNode(name, config, bt_mqtt_client,
-                       response_topic)
-{
-
-    if (MqttSubBase::node_message_distributor_)
-    {
-        MqttSubBase::node_message_distributor_->registerDerivedInstance(this);
-    }
-}
-
-ConfigurationNode::~ConfigurationNode()
-{
-    if (MqttSubBase::node_message_distributor_)
-    {
-        MqttSubBase::node_message_distributor_->unregisterInstance(this);
-    }
-}
-
 BT::PortsList ConfigurationNode::providedPorts()
 {
     return {
@@ -87,5 +68,20 @@ void ConfigurationNode::callback(const std::string &topic_key, const json &msg, 
             setStatus(BT::NodeStatus::SUCCESS);
         }
         emitWakeUpSignal();
+    }
+}
+
+void ConfigurationNode::initializeTopicsFromAAS()
+{
+    try
+    {
+        std::string asset_id = station_config_.at(getInput<std::string>("Asset").value());
+        // Create Topic objects
+        mqtt_utils::Topic response = aas_client_.fetchInterface(asset_id, getInput<std::string>("Command").value(), "response").value();
+        MqttSubBase::setTopic("response", response);
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Exception initializing topics from AAS: " << e.what() << std::endl;
     }
 }

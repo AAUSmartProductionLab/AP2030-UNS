@@ -2,47 +2,25 @@
 #include "utils.h"
 #include "mqtt/node_message_distributor.h"
 
-MoveToPosition::MoveToPosition(
-    const std::string &name,
-    const BT::NodeConfig &config,
-    MqttClient &bt_mqtt_client,
-    const mqtt_utils::Topic &request_topic,
-    const mqtt_utils::Topic &response_topic,
-    const mqtt_utils::Topic &halt_topic) : MqttActionNode(name, config, bt_mqtt_client, request_topic, response_topic, halt_topic)
-{
-    // Replace the wildcard in the request and response topics with the XbotId of this node instance
-    for (auto &[key, topic_obj] : MqttPubBase::topics_)
-    {
-        topic_obj.setTopic(getFormattedTopic(topic_obj.getPattern(), config));
-    }
-    // For SubBase topics
-    for (auto &[key, topic_obj] : MqttSubBase::topics_)
-    {
-        topic_obj.setTopic(getFormattedTopic(topic_obj.getPattern(), config));
-    }
-    if (MqttSubBase::node_message_distributor_)
-    {
-        MqttSubBase::node_message_distributor_->registerDerivedInstance(this);
-    }
-}
 
-MoveToPosition::~MoveToPosition()
+void MoveToPosition::initializeTopicsFromAAS()
 {
-    if (MqttSubBase::node_message_distributor_)
+    try
     {
-        MqttSubBase::node_message_distributor_->unregisterInstance(this);
-    }
-}
+        std::string asset_id = station_config_.at(getInput<std::string>("Station").value());
+        // Create Topic objects
+        mqtt_utils::Topic request = aas_client_.fetchInterface(asset_id, this->name(), "request").value();
+        mqtt_utils::Topic halt = aas_client_.fetchInterface(asset_id, this->name(), "halt").value();
+        mqtt_utils::Topic response = aas_client_.fetchInterface(asset_id, this->name(), "response").value();
 
-std::string MoveToPosition::getFormattedTopic(const std::string &pattern, const BT::NodeConfig &config)
-{
-    BT::Expected<std::string> topic = getInput<std::string>("Topic");
-    if (topic.has_value())
-    {
-        std::string formatted = mqtt_utils::formatWildcardTopic(pattern, topic.value());
-        return formatted;
+        MqttPubBase::setTopic("request", request);
+        MqttPubBase::setTopic("halt", halt);
+        MqttSubBase::setTopic("response", response);
     }
-    return pattern;
+    catch (const std::exception &e)
+    {
+        std::cerr << "Exception initializing topics from AAS: " << e.what() << std::endl;
+    }
 }
 
 BT::PortsList MoveToPosition::providedPorts()

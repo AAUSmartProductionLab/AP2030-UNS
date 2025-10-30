@@ -7,10 +7,8 @@ namespace fs = std::filesystem;
 // Initialize the static member
 NodeMessageDistributor *MqttSubBase::node_message_distributor_ = nullptr;
 
-MqttSubBase::MqttSubBase(MqttClient &mqtt_client,
-                         const std::map<std::string, mqtt_utils::Topic> &topics)
-    : mqtt_client_(mqtt_client),
-      topics_(topics)
+MqttSubBase::MqttSubBase(MqttClient &mqtt_client)
+    : mqtt_client_(mqtt_client)
 {
 }
 
@@ -41,4 +39,9 @@ void MqttSubBase::processMessage(const std::string &actual_topic_str, const json
 void MqttSubBase::setNodeMessageDistributor(NodeMessageDistributor *manager)
 {
     node_message_distributor_ = manager;
+}
+
+void MqttSubBase::setTopic(const std::string &topic_key, const mqtt_utils::Topic &topic_object)
+{
+    topics_[topic_key] = topic_object;
 }

@@ -4,110 +4,20 @@
 #include <string>
 #include "mqtt/mqtt_pub_base.h"
 #include <nlohmann/json.hpp>
+#include "aas/aas_client.h"
+#include "bt/mqtt_sync_action_node.h"
+#include "mqtt/node_message_distributor.h"
 
-// Forward declaration
-class MqttClient;
-
-using nlohmann::json;
-
-class PopElementNode : public BT::SyncActionNode, public MqttPubBase
+class PopElementNode : public MqttSyncActionNode
 {
 public:
     PopElementNode(const std::string &name,
                    const BT::NodeConfig &config,
                    MqttClient &mqtt_client,
-                   const mqtt_utils::Topic &request_topic)
-        : BT::SyncActionNode(name, config),
-          MqttPubBase(mqtt_client, {{"request", request_topic}})
-    {
-        for (auto &[key, topic_obj] : MqttPubBase::topics_)
-        {
-            topic_obj.setTopic(getFormattedTopic(topic_obj.getPattern(), config));
-        }
-    }
+                   AASClient &aas_client,
+                   const json &station_config) : MqttSyncActionNode(name, config, mqtt_client, aas_client, station_config) {}
 
-    std::string getFormattedTopic(const std::string &pattern, const BT::NodeConfig &config)
-    {
-        BT::Expected<std::string> id = config.blackboard->get<std::string>("XbotTopic");
-        if (id.has_value())
-        {
-            std::string formatted = mqtt_utils::formatWildcardTopic(pattern, id.value());
-            return formatted;
-        }
-        return pattern;
-    }
-
-    BT::NodeStatus tick() override
-    {
-        std::string product_id_to_publish;
-        BT::NodeStatus status_if_queue_empty_or_invalid = getInput<BT::NodeStatus>("if_empty").value_or(BT::NodeStatus::FAILURE);
-        {
-            BT::AnyPtrLocked any_ref = getLockedPortContent("Queue");
-
-            if (!any_ref)
-            {
-                return status_if_queue_empty_or_invalid;
-            }
-
-            BT::Expected<BT::SharedQueue<std::string>> queue_expected = any_ref.get()->cast<BT::SharedQueue<std::string>>();
-            if (!queue_expected)
-            {
-                return status_if_queue_empty_or_invalid;
-            }
-
-            BT::SharedQueue<std::string> queue_ptr = queue_expected.value();
-            if (!queue_ptr)
-            {
-                return status_if_queue_empty_or_invalid;
-            }
-
-            if (queue_ptr->empty())
-            {
-                return status_if_queue_empty_or_invalid;
-            }
-
-            product_id_to_publish = std::move(queue_ptr->front());
-            queue_ptr->pop_front();
-        }
-
-        json message;
-        message["ProductId"] = product_id_to_publish;
-        message["TimeStamp"] = bt_utils::getCurrentTimestampISO();
-        MqttPubBase::publish("request", message);
-        setOutput("ProductID", product_id_to_publish);
-        return BT::NodeStatus::SUCCESS;
-    }
-
-    static BT::PortsList providedPorts()
-    {
-        return {
-            BT::InputPort<BT::SharedQueue<std::string>>(
-                "Queue",
-                "{ProductIDs}",
-                "The shared queue of product IDs. An element will be popped from it."),
-            BT::InputPort<BT::NodeStatus>("if_empty", BT::NodeStatus::SUCCESS,
-                                          "Status to return if the queue is empty or invalid (SUCCESS, FAILURE, SKIPPED)."),
-            BT::OutputPort<std::string>(
-                "ProductID",
-                "{ProductID}",
-                "The product ID popped from the queue.")};
-    }
-
-    template <typename DerivedNode>
-    static void registerNodeType(
-        BT::BehaviorTreeFactory &factory,
-        MqttClient &mqtt_client,
-        const std::string &node_name,
-        const mqtt_utils::Topic &request_topic)
-    {
-        factory.registerBuilder<DerivedNode>(
-            node_name,
-            [mqtt_client_ptr = &mqtt_client,
-             request_topic_copy = request_topic](const std::string &name, const BT::NodeConfig &config)
-            {
-                return std::make_unique<DerivedNode>(
-                    name, config, *mqtt_client_ptr,
-                    request_topic_copy);
-            });
-    }
+    void initializeTopicsFromAAS() override;
+    static BT::PortsList providedPorts();
+    nlohmann::json createMessage() override;
 };

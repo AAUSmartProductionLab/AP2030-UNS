@@ -2,26 +2,18 @@
 #include "mqtt/node_message_distributor.h"
 #include "utils.h"
 
-GenericConditionNode::GenericConditionNode(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client,
-                                           const mqtt_utils::Topic &response_topic)
-    : MqttSyncSubNode(name, config, bt_mqtt_client, response_topic)
+GenericConditionNode::GenericConditionNode(
+    const std::string &name,
+    const BT::NodeConfig &config,
+    MqttClient &mqtt_client,
+    AASClient &aas_client,
+    const json &station_config)
+    : MqttSyncConditionNode(name,
+                            config,
+                            mqtt_client,
+                            aas_client,
+                            station_config)
 {
-    for (auto &[key, topic_obj] : MqttSubBase::topics_)
-    {
-        topic_obj.setTopic(getFormattedTopic(topic_obj.getPattern()));
-    }
-    if (MqttSubBase::node_message_distributor_)
-    {
-        MqttSubBase::node_message_distributor_->registerDerivedInstance(this);
-    }
-}
-
-GenericConditionNode::~GenericConditionNode()
-{
-    if (MqttSubBase::node_message_distributor_)
-    {
-        MqttSubBase::node_message_distributor_->unregisterInstance(this);
-    }
 }
 
 BT::PortsList GenericConditionNode::providedPorts()
@@ -37,6 +29,22 @@ BT::PortsList GenericConditionNode::providedPorts()
         BT::InputPort<std::string>("comparison_type", "Type of comparison: equal, not_equal, greater, less, contains"),
         BT::InputPort<std::string>("expected_value", "Value to compare against")};
 }
+
+void GenericConditionNode::initializeTopicsFromAAS()
+{
+    try
+    {
+        std::string asset_id = station_config_.at(getInput<std::string>("Station").value()); // Check action:asset association in json message
+        // Create Topic objects
+        mqtt_utils::Topic condition_topic = aas_client_.fetchInterface(asset_id, this->name(), "response").value();
+        MqttSubBase::setTopic("response", condition_topic);
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Exception initializing topics from AAS: " << e.what() << std::endl;
+    }
+}
+
 std::string GenericConditionNode::getFormattedTopic(const std::string &pattern)
 {
     std::vector<std::string> replacements;

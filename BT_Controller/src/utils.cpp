@@ -45,6 +45,7 @@ namespace bt_utils
                             std::string &serverURI,
                             std::string &clientId,
                             std::string &unsTopicPrefix,
+                            std::string &aasServerUri,
                             int &groot2_port,
                             std::string &bt_description_path,
                             std::string &bt_nodes_path)
@@ -59,35 +60,82 @@ namespace bt_utils
 
             YAML::Node config = YAML::LoadFile(filename);
 
-            if (config["broker_uri"])
+            // Parse MQTT section
+            if (config["mqtt"])
             {
-                serverURI = config["broker_uri"].as<std::string>();
+                auto mqtt = config["mqtt"];
+
+                if (mqtt["broker_uri"])
+                {
+                    serverURI = mqtt["broker_uri"].as<std::string>();
+                    // Add "tcp://" prefix if not present
+                    if (serverURI.find("://") == std::string::npos)
+                    {
+                        serverURI = "tcp://" + serverURI;
+                    }
+                }
+
+                if (mqtt["client_id"])
+                {
+                    clientId = mqtt["client_id"].as<std::string>();
+                }
+
+                if (mqtt["uns_topic"])
+                {
+                    unsTopicPrefix = mqtt["uns_topic"].as<std::string>();
+                }
             }
-            if (config["client_id"])
+
+            // Parse AAS section
+            if (config["aas"])
             {
-                clientId = config["client_id"].as<std::string>();
+                auto aas = config["aas"];
+
+                if (aas["server_url"])
+                {
+                    aasServerUri = aas["server_url"].as<std::string>();
+                }
             }
-            if (config["uns_topic"])
+
+            // Parse Groot2 section
+            if (config["groot2"])
             {
-                unsTopicPrefix = config["uns_topic"].as<std::string>();
+                auto groot2 = config["groot2"];
+
+                if (groot2["port"])
+                {
+                    groot2_port = groot2["port"].as<int>();
+                }
             }
-            if (config["generate_xml_models"])
+
+            // Parse Behavior Tree section
+            if (config["behavior_tree"])
             {
-                generate_xml_models = config["generate_xml_models"].as<bool>();
+                auto bt = config["behavior_tree"];
+
+                if (bt["generate_xml_models"])
+                {
+                    generate_xml_models = bt["generate_xml_models"].as<bool>();
+                }
+
+                if (bt["description_path"])
+                {
+                    bt_description_path = bt["description_path"].as<std::string>();
+                }
+
+                if (bt["nodes_path"])
+                {
+                    bt_nodes_path = bt["nodes_path"].as<std::string>();
+                }
             }
-            if (config["groot2_port"])
-            {
-                groot2_port = config["groot2_port"].as<int>();
-            }
-            if (config["bt_description_path"])
-            {
-                bt_description_path = config["bt_description_path"].as<std::string>();
-            }
-            if (config["bt_nodes_path"])
-            {
-                bt_nodes_path = config["bt_nodes_path"].as<std::string>();
-            }
+
             std::cout << "Configuration loaded from: " << filename << std::endl;
+            std::cout << "  MQTT Broker: " << serverURI << std::endl;
+            std::cout << "  Client ID: " << clientId << std::endl;
+            std::cout << "  UNS Topic Prefix: " << unsTopicPrefix << std::endl;
+            std::cout << "  AAS Server: " << aasServerUri << std::endl;
+            std::cout << "  Groot2 Port: " << groot2_port << std::endl;
+
             return true;
         }
         catch (const YAML::Exception &e)
@@ -152,6 +200,8 @@ namespace mqtt_utils
 
         return formatted_topic;
     }
+
+    // generates a  schema with respect to references within schemas.
     std::unique_ptr<nlohmann::json_schema::json_validator> createSchemaValidator(const std::string &schema_path)
     {
         if (schema_path.empty())
@@ -228,3 +278,31 @@ namespace mqtt_utils
         return patternDone && topicDone;
     }
 } // namespace mqtt_utils
+
+namespace BT
+{
+    // Define here instead
+    StringView trim_string_view(StringView sv)
+    {
+        if (sv.empty())
+        {
+            return sv;
+        }
+        size_t first = 0;
+        while (first < sv.size() && std::isspace(static_cast<unsigned char>(sv[first])))
+        {
+            ++first;
+        }
+        if (first == sv.size()) // All whitespace
+        {
+            return StringView(sv.data() + first, 0);
+        }
+
+        size_t last = sv.size() - 1;
+        while (last > first && std::isspace(static_cast<unsigned char>(sv[last])))
+        {
+            --last;
+        }
+        return sv.substr(first, (last - first) + 1);
+    }
+}
