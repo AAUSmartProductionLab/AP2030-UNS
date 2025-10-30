@@ -90,5 +90,4 @@ private:
     void handleStationConfigUpdate(const nlohmann::json &new_config);
     bool registerNodesWithStationConfig();
     void unregisterAllNodes();
-    bool isStationConfigValid(const nlohmann::json &config);
 };

@@ -82,19 +82,6 @@ void BehaviorTreeController::onSigint()
     sigint_received_ = true;
 }
 
-bool BehaviorTreeController::isStationConfigValid(const nlohmann::json &config)
-{
-    // Use the Topic's built-in validation
-    if (!station_config_topic_.validateMessage(config))
-    {
-        std::cerr << "Station config validation failed against schema." << std::endl;
-        return false;
-    }
-
-    std::cout << "Station configuration validated successfully against schema." << std::endl;
-    return true;
-}
-
 void BehaviorTreeController::handleStationConfigUpdate(const nlohmann::json &new_config)
 {
     // Only allow configuration updates when in IDLE state
@@ -108,7 +95,7 @@ void BehaviorTreeController::handleStationConfigUpdate(const nlohmann::json &new
     std::cout << "Received station configuration update..." << std::endl;
 
     // Validate the new configuration
-    if (!isStationConfigValid(new_config))
+    if (!station_config_topic_.validateMessage(new_config))
     {
         std::cerr << "Invalid station configuration received. Update rejected." << std::endl;
         return;
