@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root BTCPP_format="4">
   <BehaviorTree ID="Filling">
-    <UseResource Context=""
-                 Uuid="{ProductID}"
+    <Occupy      Uuid="{ProductID}"
                  Station="{Station}">
       <ReactiveSequence>
         <ReactiveFallback>
@@ -49,7 +48,7 @@
           </BC_Fallback>
         </Sequence>
       </ReactiveSequence>
-    </UseResource>
+    </Occupy>
   </BehaviorTree>
 
   <BehaviorTree ID="Load">
@@ -57,8 +56,7 @@
       <PopElement ProductID="{ProductID}"
                   if_empty="SUCCESS"
                   Queue="{ProductIDs}"/>
-      <UseResource Context=""
-                   Uuid="{ProductID}"
+      <Occupy Uuid="{ProductID}"
                    Station="{Station}">
         <ReactiveSequence>
           <ReactiveFallback>
@@ -78,7 +76,7 @@
                                Entity="{Station}"/>
           </Sequence>
         </ReactiveSequence>
-      </UseResource>
+      </Occupy>
     </SequenceWithMemory>
   </BehaviorTree>
 
@@ -93,8 +91,7 @@
                           Field="State"
                           Message="State"
                           Station="Planar"/>
-          <UseResource Context="10"
-                       Station="Intervention">
+          <Occupy Station="Intervention">
             <Sequence>
               <Command_Execution Uuid=""
                                  Command="11"
@@ -106,7 +103,7 @@
                                  Command="13"
                                  Entity="Intervention"/>
             </Sequence>
-          </UseResource>
+          </Occupy>
         </Fallback>
         <Parallel failure_count="-1"
                   success_count="1">
@@ -128,8 +125,7 @@
   </BehaviorTree>
 
   <BehaviorTree ID="QualityControl">
-    <UseResource Context=""
-                 Uuid="{ProductID}"
+    <Occupy Uuid="{ProductID}"
                  Station="{Station}">
       <ReactiveSequence>
         <ReactiveFallback>
@@ -149,12 +145,11 @@
                              Entity="{Station}"/>
         </Sequence>
       </ReactiveSequence>
-    </UseResource>
+    </Occupy>
   </BehaviorTree>
 
   <BehaviorTree ID="Scrap">
-    <UseResource Context=""
-                 Uuid="{ProductID}"
+    <Occupy Uuid="{ProductID}"
                  Station="{Station}">
       <ReactiveSequence>
         <ReactiveFallback>
@@ -174,12 +169,11 @@
                              Entity="{Station}"/>
         </Sequence>
       </ReactiveSequence>
-    </UseResource>
+    </Occupy>
   </BehaviorTree>
 
   <BehaviorTree ID="Stoppering">
-    <UseResource Context=""
-                 Uuid="{ProductID}"
+    <Occupy Uuid="{ProductID}"
                  Station="{Station}">
       <ReactiveSequence>
         <ReactiveFallback>
@@ -199,12 +193,11 @@
                              Entity="{Station}"/>
         </Sequence>
       </ReactiveSequence>
-    </UseResource>
+    </Occupy>
   </BehaviorTree>
 
   <BehaviorTree ID="Unload">
-    <UseResource Context=""
-                 Uuid="{ProductID}"
+    <Occupy Uuid="{ProductID}"
                  Station="{Station}">
       <ReactiveSequence>
         <ReactiveFallback>
@@ -224,7 +217,7 @@
                              Entity="{Station}"/>
         </Sequence>
       </ReactiveSequence>
-    </UseResource>
+    </Occupy>
   </BehaviorTree>
 
   <BehaviorTree ID="Xbot_Production">
@@ -367,9 +360,7 @@
       <input_port name="Station"
                   default="Unload"/>
     </SubTree>
-    <Decorator ID="UseResource">
-      <input_port name="Context"
-                  type="int">The Context on how the station should be used</input_port>
+    <Decorator ID="Occupy">
       <inout_port name="Uuid"
                   default="{Uuid}"
                   type="std::string">UUID Used for registration</inout_port>

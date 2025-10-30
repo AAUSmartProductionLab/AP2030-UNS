@@ -54,8 +54,7 @@
             <input_port name="Uuid" type="std::string" default="{ID}">UUID for the command to execute</input_port>
             <input_port name="Station" type="std::string" default="{Station}">The station to register with</input_port>
         </Action>
-        <Decorator ID="UseResource">
-            <input_port name="Context" type="int" default="-1">The Context on how the station should be used</input_port>
+        <Decorator ID="Occupy">
             <inout_port name="Uuid" type="std::string" default="{Uuid}">UUID Used for registration</inout_port>
             <input_port name="Station" type="std::string" default="{Station}">The station to register with</input_port>
         </Decorator>

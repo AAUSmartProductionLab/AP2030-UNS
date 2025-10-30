@@ -85,13 +85,11 @@
         <SubTree ID="Unload" editable="true">
             <input_port name="Station" default="Unload"/>
         </SubTree>
-        <Decorator ID="UseResource">
-            <input_port name="Context" default="-1" type="int">The Context on how the station should be used</input_port>
+        <Decorator ID="Occupy">
             <inout_port name="Uuid" default="{Uuid}" type="std::string">UUID Used for registration</inout_port>
             <input_port name="Station" default="{Station}" type="std::string">The station to register with</input_port>
         </Decorator>
         <Decorator ID="UseStation">
-            <input_port name="Context" type="int">The Context on how the station should be used</input_port>
             <input_port name="Uuid" default="{ID}" type="std::string">UUID Used for registration</input_port>
             <input_port name="Station" default="{Station}" type="std::string">The station to register with</input_port>
         </Decorator>

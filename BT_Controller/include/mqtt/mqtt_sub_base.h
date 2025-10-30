@@ -22,7 +22,6 @@ namespace mqtt
     struct properties;
 }
 
-using json = nlohmann::json;
 using json_uri = nlohmann::json_uri;
 
 class MqttSubBase
@@ -33,13 +32,13 @@ protected:
     static NodeMessageDistributor *node_message_distributor_;
 
 public:
-    MqttSubBase(MqttClient &mqtt_client,
-                const std::map<std::string, mqtt_utils::Topic> &topics);
+    MqttSubBase(MqttClient &mqtt_client);
 
     virtual ~MqttSubBase() = default;
 
-    void processMessage(const std::string &actual_topic_str, const json &msg, mqtt::properties props);
-    virtual void callback(const std::string &topic_key, const json &msg, mqtt::properties props) = 0;
+    void processMessage(const std::string &actual_topic_str, const nlohmann::json &msg, mqtt::properties props);
+    void setTopic(const std::string &topic_key, const mqtt_utils::Topic &topic_object);
+    virtual void callback(const std::string &topic_key, const nlohmann::json &msg, mqtt::properties props) = 0;
 
     static void setNodeMessageDistributor(NodeMessageDistributor *manager);
 

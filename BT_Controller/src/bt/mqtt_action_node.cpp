@@ -6,10 +6,37 @@
 #include <condition_variable>
 #include <mutex>
 
-// Default implementation of providedPorts - derived classes should override
-BT::PortsList MqttActionNode::providedPorts()
+MqttActionNode::MqttActionNode(
+    const std::string &name,
+    const BT::NodeConfig &config,
+    MqttClient &mqtt_client,
+    AASClient &aas_client,
+    const json &station_config)
+    : BT::StatefulActionNode(name, config),
+      MqttPubBase(mqtt_client),
+      MqttSubBase(mqtt_client),
+      aas_client_(aas_client),
+      station_config_(station_config)
 {
-    return {};
+}
+
+void MqttActionNode::initialize()
+{
+    // Call the virtual function - safe because construction is complete
+    initializeTopicsFromAAS();
+
+    if (MqttSubBase::node_message_distributor_)
+    {
+        MqttSubBase::node_message_distributor_->registerDerivedInstance(this);
+    }
+}
+
+MqttActionNode::~MqttActionNode()
+{
+    if (MqttSubBase::node_message_distributor_)
+    {
+        MqttSubBase::node_message_distributor_->unregisterInstance(this);
+    }
 }
 
 BT::NodeStatus MqttActionNode::onStart()
@@ -25,6 +52,20 @@ BT::NodeStatus MqttActionNode::onRunning()
     return status();
 }
 
+json MqttActionNode::createMessage()
+{
+    // Default implementation
+    json message;
+    BT::Expected<std::string> uuid = this->getInput<std::string>("Uuid");
+    if (uuid.has_value())
+    {
+        current_uuid_ = uuid.value();
+        message["Uuid"] = current_uuid_;
+        return message;
+    }
+    return json();
+}
+
 void MqttActionNode::onHalted()
 {
     // Clean up when the node is halted
@@ -35,31 +76,32 @@ void MqttActionNode::onHalted()
 // Standard implementation based on PackML override this if needed
 void MqttActionNode::callback(const std::string &topic_key, const json &msg, mqtt::properties props)
 {
+    // Check if the message is valid
     // Use mutex to protect shared state
     {
         std::lock_guard<std::mutex> lock(mutex_);
         // Update state based on message content
-        if (status() == BT::NodeStatus::RUNNING && msg.contains("Uuid") && msg["Uuid"] == current_uuid_)
+        if (status() == BT::NodeStatus::RUNNING)
         {
-            if (msg["State"] == "ABORTED" || msg["State"] == "STOPPED")
+            if (msg["Uuid"] == current_uuid_)
             {
-                current_uuid_ = "";
-                // Change from setting internal state to updating node status
-                setStatus(BT::NodeStatus::FAILURE);
+
+                if (msg["State"] == "FAILURE")
+                {
+                    current_uuid_ = "";
+                    setStatus(BT::NodeStatus::FAILURE);
+                }
+                else if (msg["State"] == "SUCCESS")
+                {
+                    current_uuid_ = "";
+                    setStatus(BT::NodeStatus::SUCCESS);
+                }
+                else if (msg["State"] == "RUNNING")
+                {
+                    setStatus(BT::NodeStatus::RUNNING);
+                }
             }
-            else if (msg["State"] == "COMPLETE")
-            {
-                std::cout << "State is COMPLETE" << std::endl;
-                current_uuid_ = "";
-                // Change from setting internal state to updating node status
-                setStatus(BT::NodeStatus::SUCCESS);
-            }
-            else if (msg["State"] == "HELD" || msg["State"] == "SUSPENDED" || msg["State"] == "EXECUTED")
-            {
-                std::cout << "State is HELD, SUSPENDED or Executing" << std::endl;
-                // No need to set RUNNING again if already running
-            }
+            emitWakeUpSignal();
         }
-        emitWakeUpSignal();
     }
 }
