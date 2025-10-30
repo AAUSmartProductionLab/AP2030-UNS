@@ -3,21 +3,20 @@
         <Control ID="BC_Fallback"/>
         <Control ID="BC_Fallback_Async"/>
         <Action ID="Command_Execution">
-            <input_port name="Parameters" type="nlohmann::json_abi_v3_11_3::basic_json&lt;std::map, std::vector, std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, bool, long, unsigned long, double, std::allocator, nlohmann::json_abi_v3_11_3::adl_serializer, std::vector&lt;unsigned char, std::allocator&lt;unsigned char&gt; &gt;, void&gt;" default="&apos;{}&apos;">The weight to refill, if not provided it will be set to 0.0</input_port>
-            <input_port name="Uuid" type="std::string" default="{Uuid}">UUID for the command to execute</input_port>
-            <input_port name="Command" type="std::string" default="Command">The command to execute on the station</input_port>
-            <input_port name="Entity" type="std::string" default="{Station}">The station to register with</input_port>
+            <input_port name="Parameters" type="nlohmann::json_abi_v3_11_3::basic_json&lt;std::map, std::vector, std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, bool, long, unsigned long, double, std::allocator, nlohmann::json_abi_v3_11_3::adl_serializer, std::vector&lt;unsigned char, std::allocator&lt;unsigned char&gt; &gt;, void&gt;" default="&apos;{}&apos;">The parameters for the operation</input_port>
+            <input_port name="Uuid" type="std::string" default="{Uuid}">UUID for the operation to execute</input_port>
+            <input_port name="Operation" type="std::string" default="Operation">The operation to execute on the asset</input_port>
+            <input_port name="Asset" type="std::string" default="{Asset}">The asset used for execution</input_port>
         </Action>
         <Action ID="Configure">
-            <output_port name="StationMap" type="std::map&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, int, std::less&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt;, std::allocator&lt;std::pair&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; const, int&gt; &gt; &gt;" default="{StationMap}">The StationMap of the system for this batch</output_port>
             <output_port name="ProductIDs" type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;" default="{ProductIDs}">List of product IDs to produce</output_port>
         </Action>
         <Condition ID="Data_Condition">
             <input_port name="expected_value" type="std::string">Value to compare against</input_port>
             <input_port name="comparison_type" type="std::string">Type of comparison: equal, not_equal, greater, less, contains</input_port>
             <input_port name="Field" type="std::string">Name of the field to monitor in the MQTT message</input_port>
-            <input_port name="Message" type="std::string">The message from the station</input_port>
-            <input_port name="Station" type="std::string" default="{Station}">The station from which to receive a message</input_port>
+            <input_port name="Message" type="std::string">The message from the Asset</input_port>
+            <input_port name="Asset" type="std::string" default="{Asset}">The Asset from which to receive a message</input_port>
         </Condition>
         <Decorator ID="GetProductFromQueue">
             <output_port name="ProductID" type="std::string" default="{ProductID}">The product ID of the current product</output_port>
@@ -29,13 +28,14 @@
             <input_port name="Queue" type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;" default="{ProductIDs}">The queue to monitor. Node runs child while this queue is not empty.</input_port>
         </Decorator>
         <Action ID="MoveToPosition">
-            <input_port name="Topic" type="std::string" default="{Topic}">Topic to which we want to send the request</input_port>
             <input_port name="Uuid" type="std::string" default="{ProductID}">UUID for the command to execute</input_port>
             <input_port name="TargetPosition" type="std::string" default="{Station}">The name of the station to move to</input_port>
+            <input_port name="Asset" type="std::string" default="{Asset}">The Asset to execute the movement</input_port>
         </Action>
-        <Action ID="OmronArclRequest">
-            <input_port name="command" type="BT::AnyTypeAllowed"/>
-        </Action>
+        <Decorator ID="Occupy">
+            <inout_port name="Uuid" type="std::string" default="{Uuid}">UUID Used for registration</inout_port>
+            <input_port name="Asset" type="std::string" default="{Asset}">The Asset to register with</input_port>
+        </Decorator>
         <Action ID="PopElement">
             <output_port name="ProductID" type="std::string" default="{ProductID}">The product ID popped from the queue.</output_port>
             <input_port name="if_empty" type="BT::NodeStatus" default="SUCCESS">Status to return if the queue is empty or invalid (SUCCESS, FAILURE, SKIPPED).</input_port>
@@ -43,20 +43,7 @@
         </Action>
         <Action ID="Refill_Node">
             <input_port name="Uuid" type="std::string" default="{ID}">UUID for the command to execute</input_port>
-            <input_port name="Command" type="std::string" default="Refill">The command to execute on the station</input_port>
-            <input_port name="Station" type="std::string" default="{Station}">The station to register with</input_port>
+            <input_port name="Asset" type="std::string" default="{Asset}">The asset used for refilling</input_port>
         </Action>
-        <Action ID="Station_Complete">
-            <input_port name="Uuid" type="std::string" default="{ID}">UUID for the command to execute</input_port>
-            <input_port name="Station" type="std::string" default="{Station}">The station to unregister from</input_port>
-        </Action>
-        <Action ID="Station_Start">
-            <input_port name="Uuid" type="std::string" default="{ID}">UUID for the command to execute</input_port>
-            <input_port name="Station" type="std::string" default="{Station}">The station to register with</input_port>
-        </Action>
-        <Decorator ID="Occupy">
-            <inout_port name="Uuid" type="std::string" default="{Uuid}">UUID Used for registration</inout_port>
-            <input_port name="Station" type="std::string" default="{Station}">The station to register with</input_port>
-        </Decorator>
     </TreeNodesModel>
 </root>
