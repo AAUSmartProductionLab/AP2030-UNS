@@ -116,116 +116,27 @@ namespace mqtt_utils
         Topic(const std::string &topic = "",
               const nlohmann::json &schema = nlohmann::json(),
               int qos = 0,
-              bool retain = false)
-            : topic_(topic),
-              pattern_(topic),
-              schema_(schema),
-              schema_validator_(nullptr),
-              qos_(qos),
-              retain_(retain)
-        {
-            initValidator();
-        }
-
+              bool retain = false);
         // Constructor that loads schema from file path
         static Topic fromSchemaPath(const std::string &topic,
                                     const std::string &schema_path,
                                     int qos = 0,
-                                    bool retain = false)
-        {
-            nlohmann::json schema = load_schema(schema_path);
-            return Topic(topic, schema, qos, retain);
-        }
+                                    bool retain = false);
 
         // Copy Constructor
-        Topic(const Topic &other)
-            : topic_(other.topic_),
-              pattern_(other.pattern_),
-              schema_(other.schema_),
-              schema_validator_(nullptr),
-              qos_(other.qos_),
-              retain_(other.retain_)
-        {
-            initValidator();
-        }
+        Topic(const Topic &other);
 
         // Move Constructor
-        Topic(Topic &&other) noexcept
-            : topic_(std::move(other.topic_)),
-              pattern_(std::move(other.pattern_)),
-              schema_(std::move(other.schema_)),
-              schema_validator_(std::move(other.schema_validator_)),
-              qos_(other.qos_),
-              retain_(other.retain_)
-        {
-        }
+        Topic(Topic &&other) noexcept;
 
-        Topic &operator=(const Topic &other)
-        {
-            if (this != &other)
-            {
-                topic_ = other.topic_;
-                pattern_ = other.pattern_;
-                schema_ = other.schema_;
-                schema_validator_.reset();
-                initValidator();
-                qos_ = other.qos_;
-                retain_ = other.retain_;
-            }
-            return *this;
-        }
+        // Copy Assignment Operator
+        Topic &operator=(const Topic &other);
 
         // Move Assignment Operator
-        Topic &operator=(Topic &&other) noexcept
-        {
-            if (this != &other)
-            {
-                topic_ = std::move(other.topic_);
-                pattern_ = std::move(other.pattern_);
-                schema_ = std::move(other.schema_);
-                schema_validator_ = std::move(other.schema_validator_);
-                qos_ = other.qos_;
-                retain_ = other.retain_;
-            }
-            return *this;
-        }
+        Topic &operator=(Topic &&other) noexcept;
 
         // Initialize schema validator
-        void initValidator()
-        {
-            if (!schema_.is_null() && !schema_.empty())
-            {
-                try
-                {
-                    auto validator = std::make_unique<nlohmann::json_schema::json_validator>(
-                        [](const nlohmann::json_uri &uri, nlohmann::json &schema)
-                        {
-                            // Extract the file name from the URI
-                            std::string schema_file = uri.path();
-
-                            // Remove leading slash if present
-                            if (!schema_file.empty() && schema_file[0] == '/')
-                            {
-                                schema_file = schema_file.substr(1);
-                            }
-
-                            // Build the full path relative to the schemas directory
-                            std::string schema_path = "../../schemas/" + schema_file;
-
-                            // Load the referenced schema
-                            schema = load_schema(schema_path);
-                        },
-                        nlohmann::json_schema::default_string_format_check);
-                    validator->set_root_schema(schema_);
-                    schema_validator_ = std::move(validator);
-                }
-                catch (const std::exception &e)
-                {
-                    std::cerr << "Error creating schema validator for topic '" << topic_ << "': " << e.what() << std::endl;
-                    schema_validator_.reset();
-                }
-            }
-        }
+        void initValidator();
 
         // Getters
         const std::string &getTopic() const { return topic_; }
@@ -237,39 +148,13 @@ namespace mqtt_utils
         // Setters
         void setTopic(const std::string &topic) { topic_ = topic; }
         void setPattern(const std::string &pattern) { pattern_ = pattern; }
-        void setSchema(const nlohmann::json &schema)
-        {
-            schema_ = schema;
-            schema_validator_.reset();
-            initValidator();
-        }
-        void setSchemaFromPath(const std::string &schema_path)
-        {
-            schema_ = load_schema(schema_path);
-            schema_validator_.reset();
-            initValidator();
-        }
+        void setSchema(const nlohmann::json &schema);
+        void setSchemaFromPath(const std::string &schema_path);
         void setQos(int qos) { qos_ = qos; }
         void setRetain(bool retain) { retain_ = retain; }
 
         // Validate message against schema
-        bool validateMessage(const nlohmann::json &message) const
-        {
-            if (schema_validator_)
-            {
-                try
-                {
-                    schema_validator_->validate(message);
-                    return true;
-                }
-                catch (const std::exception &e)
-                {
-                    std::cerr << "JSON validation failed for topic '" << topic_ << "': " << e.what() << std::endl;
-                    return false;
-                }
-            }
-            return false;
-        }
+        bool validateMessage(const nlohmann::json &message) const;
 
     private:
         std::string topic_;
