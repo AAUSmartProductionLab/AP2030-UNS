@@ -8,12 +8,7 @@ BT::PortsList ConfigurationNode::providedPorts()
         BT::details::PortWithDefault<BT::SharedQueue<std::string>>(BT::PortDirection::OUTPUT,
                                                                    "ProductIDs",
                                                                    "{ProductIDs}",
-                                                                   "List of product IDs to produce"),
-
-        BT::details::PortWithDefault<std::map<std::string, int>>(BT::PortDirection::OUTPUT,
-                                                                 "StationMap",
-                                                                 "{StationMap}",
-                                                                 "The StationMap of the system for this batch")};
+                                                                   "List of product IDs to produce")};
 }
 
 BT::NodeStatus ConfigurationNode::onStart()
@@ -21,7 +16,6 @@ BT::NodeStatus ConfigurationNode::onStart()
     if (!shared_queue->empty() && !stationMap.empty())
     {
         config().blackboard->set("ProductIDs", shared_queue);
-        config().blackboard->set("StationMap", stationMap);
 
         return BT::NodeStatus::SUCCESS;
     }
@@ -47,23 +41,9 @@ void ConfigurationNode::callback(const std::string &topic_key, const json &msg, 
                 }
             }
         }
-        if (msg.contains("Stations"))
-        {
-            stationMap.clear();
-            for (const auto &station : msg["Stations"])
-            {
-                if (station.contains("Name") && station.contains("StationId"))
-                {
-                    std::string name = station["Name"];
-                    int id = station["StationId"];
-                    stationMap[name] = id;
-                }
-            }
-        }
-        if (status() == BT::NodeStatus::RUNNING && !shared_queue->empty() && !stationMap.empty())
+        if (status() == BT::NodeStatus::RUNNING && !shared_queue->empty())
         {
             config().blackboard->set("ProductIDs", shared_queue);
-            config().blackboard->set("StationMap", stationMap);
 
             setStatus(BT::NodeStatus::SUCCESS);
         }

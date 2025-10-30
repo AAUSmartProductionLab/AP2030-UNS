@@ -9,9 +9,9 @@ void RefillNode::initializeTopicsFromAAS()
 {
     try
     {
-        std::string asset_id = station_config_.at(getInput<std::string>("Station").value()); // Check action:asset association in json message
+        std::string asset_id = station_config_.at(getInput<std::string>("Asset").value()); // Check action:asset association in json message
         // Create Topic objects
-        mqtt_utils::Topic request_topic = aas_client_.fetchInterface(asset_id, getInput<std::string>("Command").value(), "request").value();
+        mqtt_utils::Topic request_topic = aas_client_.fetchInterface(asset_id, this->name(), "request").value();
         mqtt_utils::Topic response_topic = aas_client_.fetchInterface(asset_id, this->name(), "response").value();
         mqtt_utils::Topic weight_topic = aas_client_.fetchInterface(asset_id, this->name(), "weight").value();
 
@@ -29,32 +29,28 @@ BT::PortsList RefillNode::providedPorts()
 {
     return {BT::details::PortWithDefault<std::string>(
                 BT::PortDirection::INPUT,
-                "Station",
-                "{Station}",
-                "The station to register with"),
-            BT::details::PortWithDefault<std::string>(
-                BT::PortDirection::INPUT,
-                "Command",
-                "Refill",
-                "The command to execute on the station"),
+                "Asset",
+                "{Asset}",
+                "The asset used for refilling"),
             BT::details::PortWithDefault<std::string>(
                 BT::PortDirection::INPUT,
                 "Uuid",
                 "{ID}",
                 "UUID for the command to execute")};
 }
+
 json RefillNode::createMessage()
 {
     json message;
-    BT::Expected<std::string> uuid_result = getInput<std::string>("Uuid");
-    if (uuid_result)
+    BT::Expected<std::string> uuid = getInput<std::string>("Uuid");
+    if (uuid)
     {
-        current_uuid_ = uuid_result.value();
+        current_uuid_ = uuid.value();
     }
     else
     {
         std::cerr << "Error: Uuid not provided to StationExecuteNode. Error: "
-                  << uuid_result.error() << std::endl;
+                  << uuid.error() << std::endl;
 
         current_uuid_ = mqtt_utils::generate_uuid();
         std::cerr << "Using generated UUID instead: " << current_uuid_ << std::endl;
@@ -64,19 +60,7 @@ json RefillNode::createMessage()
 
     return message;
 }
-std::string RefillNode::getFormattedTopic(const std::string &pattern)
-{
-    std::vector<std::string> replacements;
-    BT::Expected<std::string> station = getInput<std::string>("Station");
-    BT::Expected<std::string> command = getInput<std::string>("Command");
-    if (station.has_value() && command.has_value())
-    {
-        replacements.push_back(station.value());
-        replacements.push_back(command.value());
-        return mqtt_utils::formatWildcardTopic(pattern, replacements);
-    }
-    return pattern;
-}
+
 // Standard implementation based on PackML override this if needed
 void RefillNode::callback(const std::string &topic_key, const json &msg, mqtt::properties props)
 {
