@@ -13,7 +13,7 @@ class MqttDecorator : public BT::DecoratorNode, public MqttPubBase, public MqttS
 {
 protected:
     AASClient &aas_client_;
-    json station_config_;
+    nlohmann::json station_config_;
 
 public:
     MqttDecorator(
@@ -21,14 +21,14 @@ public:
         const BT::NodeConfig &config,
         MqttClient &mqtt_client,
         AASClient &aas_client,
-        const json &station_config);
+        const nlohmann::json &station_config);
 
     virtual ~MqttDecorator();
     void initialize();
 
     // Mqtt AAS Stuff
     virtual void initializeTopicsFromAAS();
-    virtual void callback(const std::string &topic_key, const json &msg, mqtt::properties props) override;
+    virtual void callback(const std::string &topic_key, const nlohmann::json &msg, mqtt::properties props) override;
     // BT Stuff
     static BT::PortsList providedPorts();
     virtual void halt() override;
@@ -39,7 +39,7 @@ public:
         NodeMessageDistributor &distributor,
         MqttClient &mqtt_client,
         AASClient &aas_client,
-        const json &station_config,
+        const nlohmann::json &station_config,
         const std::string &node_name)
     {
         MqttSubBase::setNodeMessageDistributor(&distributor);

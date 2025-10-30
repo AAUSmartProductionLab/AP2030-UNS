@@ -82,29 +82,20 @@ void BehaviorTreeController::onSigint()
     sigint_received_ = true;
 }
 
-bool BehaviorTreeController::isStationConfigValid(const json &config)
+bool BehaviorTreeController::isStationConfigValid(const nlohmann::json &config)
 {
-    // Validate the station configuration structure
-    if (!config.contains("Stations") || !config["Stations"].is_object())
+    // Use the Topic's built-in validation
+    if (!station_config_topic_.validateMessage(config))
     {
-        std::cerr << "Invalid station config: missing 'Stations' object" << std::endl;
+        std::cerr << "Station config validation failed against schema." << std::endl;
         return false;
     }
 
-    // Additional validation can be added here
-    const auto &stations = config["Stations"];
-    if (stations.empty())
-    {
-        std::cerr << "Invalid station config: no stations defined" << std::endl;
-        return false;
-    }
-
-    std::cout << "Station config validation passed. Found "
-              << stations.size() << " stations." << std::endl;
+    std::cout << "Station configuration validated successfully against schema." << std::endl;
     return true;
 }
 
-void BehaviorTreeController::handleStationConfigUpdate(const json &new_config)
+void BehaviorTreeController::handleStationConfigUpdate(const nlohmann::json &new_config)
 {
     // Only allow configuration updates when in IDLE state
     if (current_packml_state_ != PackML::State::IDLE)
@@ -138,9 +129,6 @@ void BehaviorTreeController::handleStationConfigUpdate(const json &new_config)
         station_config_received_ = true;
     }
 
-    std::cout << "New station configuration accepted:" << std::endl;
-    std::cout << new_config.dump(2) << std::endl;
-
     // Unregister existing nodes if any
     if (nodes_registered_)
     {
@@ -166,7 +154,7 @@ bool BehaviorTreeController::registerNodesWithStationConfig()
 {
     try
     {
-        json config_copy;
+        nlohmann::json config_copy;
         {
             std::lock_guard<std::mutex> lock(station_config_mutex_);
             config_copy = station_config_;
@@ -312,24 +300,21 @@ void BehaviorTreeController::loadAppConfiguration(int argc, char *argv[])
     app_params_.start_topic = app_params_.unsTopicPrefix + "/" + app_params_.clientId + "/CMD/Start";
     app_params_.stop_topic = app_params_.unsTopicPrefix + "/" + app_params_.clientId + "/CMD/Stop";
     app_params_.halt_topic = app_params_.unsTopicPrefix + "/" + app_params_.clientId + "/CMD/Suspend";
-    app_params_.config_topic = app_params_.unsTopicPrefix + "/Planar/Stations";
+    app_params_.config_topic = app_params_.unsTopicPrefix + "/Configuration/DATA/Planar/Stations";
 
     std::string state_topic_str = app_params_.unsTopicPrefix + "/" + app_params_.clientId + "/DATA/State";
-    std::string schema_path = "../../schemas/state.schema.json";
-    app_params_.state_publication_config = mqtt_utils::Topic(state_topic_str, schema_path, 2, true);
-    app_params_.state_publication_config.initValidator();
+    std::string state_schema_path = "../../schemas/state.schema.json";
+    app_params_.state_publication_config = mqtt_utils::Topic::fromSchemaPath(state_topic_str, state_schema_path, 2, true);
+
+    // Initialize station config topic with schema for validation
+    std::string station_schema_path = "../../schemas/planarStations.schema.json";
+    station_config_topic_ = mqtt_utils::Topic::fromSchemaPath(app_params_.config_topic, station_schema_path, 2, false);
 }
 
-void BehaviorTreeController::initializeMqttControlInterface()
+void BehaviorTreeController::setupMainMqttMessageHandler()
 {
-    if (!mqtt_client_)
-    {
-        std::cerr << "Error: mqtt_client_ is null in initializeMqttControlInterface." << std::endl;
-        return;
-    }
-
-    auto main_mqtt_message_handler =
-        [this](const std::string &topic, const json &payload, mqtt::properties props)
+    main_mqtt_message_handler_ =
+        [this](const std::string &topic, const nlohmann::json &payload, mqtt::properties props)
     {
         if (topic == this->app_params_.start_topic)
         {
@@ -373,8 +358,18 @@ void BehaviorTreeController::initializeMqttControlInterface()
             }
         }
     };
+}
 
-    mqtt_client_->set_message_handler(main_mqtt_message_handler);
+void BehaviorTreeController::initializeMqttControlInterface()
+{
+    if (!mqtt_client_)
+    {
+        std::cerr << "Error: mqtt_client_ is null in initializeMqttControlInterface." << std::endl;
+        return;
+    }
+
+    setupMainMqttMessageHandler();
+    mqtt_client_->set_message_handler(main_mqtt_message_handler_);
 
     mqtt_client_->subscribe_topic(app_params_.start_topic, 2);
     mqtt_client_->subscribe_topic(app_params_.stop_topic, 2);
@@ -399,8 +394,8 @@ bool BehaviorTreeController::handleGenerateXmlModelsOption()
         {
             std::cerr << "Warning: No station configuration available for XML generation." << std::endl;
             std::cerr << "Using empty configuration." << std::endl;
-            station_config_ = json::object();
-            station_config_["Stations"] = json::object();
+            station_config_ = nlohmann::json::object();
+            station_config_["Stations"] = nlohmann::json::object();
         }
 
         if (!nodes_registered_)
@@ -457,7 +452,7 @@ void BehaviorTreeController::publishCurrentState()
     {
         return;
     }
-    json state_json;
+    nlohmann::json state_json;
     state_json["State"] = PackML::stateToString(current_packml_state_);
     state_json["TimeStamp"] = bt_utils::getCurrentTimestampISO();
 
@@ -494,45 +489,12 @@ void BehaviorTreeController::processBehaviorTreeStart()
         return;
     }
 
-    auto main_mqtt_message_handler =
-        [this](const std::string &topic, const json &payload, mqtt::properties props)
-    {
-        if (topic == this->app_params_.start_topic)
-        {
-            if (!this->sigint_received_.load() && this->nodes_registered_.load())
-            {
-                this->shutdown_flag_ = false;
-                this->mqtt_halt_bt_flag_ = false;
-                this->mqtt_start_bt_flag_ = true;
-            }
-        }
-        else if (topic == this->app_params_.stop_topic)
-        {
-            this->requestShutdown();
-        }
-        else if (topic == this->app_params_.halt_topic)
-        {
-            this->mqtt_halt_bt_flag_ = true;
-        }
-        else if (topic == this->app_params_.config_topic)
-        {
-            this->handleStationConfigUpdate(payload);
-        }
-        else
-        {
-            if (this->node_message_distributor_)
-            {
-                this->node_message_distributor_->handle_incoming_message(topic, payload, props);
-            }
-        }
-    };
-
     if (current_packml_state_ == PackML::State::SUSPENDED && bt_tree_.rootNode())
     {
         std::cout << "Resuming suspended behavior tree." << std::endl;
         if (mqtt_client_)
         {
-            mqtt_client_->set_message_handler(main_mqtt_message_handler);
+            mqtt_client_->set_message_handler(main_mqtt_message_handler_);
         }
     }
     else
@@ -591,7 +553,7 @@ void BehaviorTreeController::processBehaviorTreeStart()
 
         if (mqtt_client_)
         {
-            mqtt_client_->set_message_handler(main_mqtt_message_handler);
+            mqtt_client_->set_message_handler(main_mqtt_message_handler_);
         }
 
         bool subscriptions_successful = false;

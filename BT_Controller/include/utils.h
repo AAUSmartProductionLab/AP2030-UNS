@@ -197,7 +197,25 @@ namespace mqtt_utils
             {
                 try
                 {
-                    auto validator = std::make_unique<nlohmann::json_schema::json_validator>();
+                    auto validator = std::make_unique<nlohmann::json_schema::json_validator>(
+                        [](const nlohmann::json_uri &uri, nlohmann::json &schema)
+                        {
+                            // Extract the file name from the URI
+                            std::string schema_file = uri.path();
+
+                            // Remove leading slash if present
+                            if (!schema_file.empty() && schema_file[0] == '/')
+                            {
+                                schema_file = schema_file.substr(1);
+                            }
+
+                            // Build the full path relative to the schemas directory
+                            std::string schema_path = "../../schemas/" + schema_file;
+
+                            // Load the referenced schema
+                            schema = load_schema(schema_path);
+                        },
+                        nlohmann::json_schema::default_string_format_check);
                     validator->set_root_schema(schema_);
                     schema_validator_ = std::move(validator);
                 }

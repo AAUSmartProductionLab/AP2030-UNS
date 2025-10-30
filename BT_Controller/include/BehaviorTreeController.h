@@ -53,6 +53,8 @@ private:
     BtControllerParameters app_params_;
     std::unique_ptr<MqttClient> mqtt_client_;
     std::unique_ptr<NodeMessageDistributor> node_message_distributor_;
+    std::function<void(const std::string &, const nlohmann::json &, mqtt::properties)> main_mqtt_message_handler_;
+
     std::unique_ptr<AASClient> aas_client_;
     BT::BehaviorTreeFactory bt_factory_;
     BT::Tree bt_tree_;
@@ -68,8 +70,11 @@ private:
     PackML::State current_packml_state_;
     BT::NodeStatus current_bt_tick_status_;
 
-    json station_config_;
+    nlohmann::json station_config_;
     std::mutex station_config_mutex_;
+    mqtt_utils::Topic station_config_topic_;
+
+    void setupMainMqttMessageHandler();
 
     void loadAppConfiguration(int argc, char *argv[]);
     void initializeMqttControlInterface();
@@ -82,8 +87,8 @@ private:
     void manageRunningBehaviorTree();
 
     // New methods for station configuration management
-    void handleStationConfigUpdate(const json &new_config);
+    void handleStationConfigUpdate(const nlohmann::json &new_config);
     bool registerNodesWithStationConfig();
     void unregisterAllNodes();
-    bool isStationConfigValid(const json &config);
+    bool isStationConfigValid(const nlohmann::json &config);
 };

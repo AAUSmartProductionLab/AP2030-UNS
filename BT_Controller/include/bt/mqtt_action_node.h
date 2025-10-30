@@ -7,7 +7,7 @@
 #include "mqtt/mqtt_pub_base.h"
 #include "mqtt/node_message_distributor.h"
 #include "aas/aas_client.h"
-#include <map> 
+#include <map>
 
 class MqttActionNode : public BT::StatefulActionNode, public MqttPubBase, public MqttSubBase
 {
@@ -15,22 +15,28 @@ protected:
     std::string current_uuid_;
 
     AASClient &aas_client_;
-    json station_config_;
+    nlohmann::json station_config_;
 
 public:
     MqttActionNode(const std::string &name,
                    const BT::NodeConfig &config,
                    MqttClient &mqtt_client,
                    AASClient &aas_client,
-                   const json &station_config);
+                   const nlohmann::json &station_config) : BT::StatefulActionNode(name, config),
+                                                           MqttPubBase(mqtt_client),
+                                                           MqttSubBase(mqtt_client),
+                                                           aas_client_(aas_client),
+                                                           station_config_(station_config)
+    {
+    }
 
     virtual ~MqttActionNode();
     void initialize();
 
     // Mqtt AAS Stuff
     virtual void initializeTopicsFromAAS() {};
-    virtual json createMessage();
-    virtual void callback(const std::string &topic_key, const json &msg, mqtt::properties props) override;
+    virtual nlohmann::json createMessage();
+    virtual void callback(const std::string &topic_key, const nlohmann::json &msg, mqtt::properties props) override;
     // BT Stuff
     static BT::PortsList providedPorts() { return {}; };
     BT::NodeStatus onStart() override;
@@ -43,7 +49,7 @@ public:
         NodeMessageDistributor &distributor,
         MqttClient &mqtt_client,
         AASClient &aas_client,
-        const json &station_config,
+        const nlohmann::json &station_config,
         const std::string &node_name)
     {
         MqttSubBase::setNodeMessageDistributor(&distributor);
