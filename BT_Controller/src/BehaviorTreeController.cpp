@@ -92,8 +92,6 @@ void BehaviorTreeController::handleStationConfigUpdate(const nlohmann::json &new
         return;
     }
 
-    std::cout << "Received station configuration update..." << std::endl;
-
     // Validate the new configuration
     if (!station_config_topic_.validateMessage(new_config))
     {
@@ -107,10 +105,8 @@ void BehaviorTreeController::handleStationConfigUpdate(const nlohmann::json &new
         // Check if configuration actually changed
         if (station_config_received_ && station_config_ == new_config)
         {
-            std::cout << "Station configuration unchanged. No update needed." << std::endl;
             return;
         }
-
         // Store the new configuration
         station_config_ = new_config;
         station_config_received_ = true;
@@ -123,8 +119,6 @@ void BehaviorTreeController::handleStationConfigUpdate(const nlohmann::json &new
         unregisterAllNodes();
     }
 
-    // Register nodes with the new configuration
-    std::cout << "Registering nodes with new station configuration..." << std::endl;
     if (registerNodesWithStationConfig())
     {
         std::cout << "Nodes successfully registered with new configuration." << std::endl;

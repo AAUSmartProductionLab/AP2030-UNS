@@ -2,12 +2,11 @@
 #include "utils.h"
 #include "mqtt/node_message_distributor.h"
 
-
 void MoveToPosition::initializeTopicsFromAAS()
 {
     try
     {
-        std::string asset_id = station_config_.at(getInput<std::string>("Station").value());
+        std::string asset_id = station_config_.at(getInput<std::string>("Asset").value());
         // Create Topic objects
         mqtt_utils::Topic request = aas_client_.fetchInterface(asset_id, this->name(), "request").value();
         mqtt_utils::Topic halt = aas_client_.fetchInterface(asset_id, this->name(), "halt").value();
@@ -25,21 +24,23 @@ void MoveToPosition::initializeTopicsFromAAS()
 
 BT::PortsList MoveToPosition::providedPorts()
 {
-    return {BT::details::PortWithDefault<std::string>(
-                BT::PortDirection::INPUT,
-                "TargetPosition",
-                "{Station}",
-                "The name of the station to move to"),
-            BT::details::PortWithDefault<std::string>(
-                BT::PortDirection::INPUT,
-                "Uuid",
-                "{ProductID}",
-                "UUID for the command to execute"),
-            BT::details::PortWithDefault<std::string>(
-                BT::PortDirection::INPUT,
-                "Topic",
-                "{Topic}",
-                "Topic to which we want to send the request")};
+    return {
+        BT::details::PortWithDefault<std::string>(
+            BT::PortDirection::INPUT,
+            "Asset",
+            "{Asset}",
+            "The Asset to execute the movement"),
+        BT::details::PortWithDefault<std::string>(
+            BT::PortDirection::INPUT,
+            "TargetPosition",
+            "{Station}",
+            "The name of the station to move to"),
+        BT::details::PortWithDefault<std::string>(
+            BT::PortDirection::INPUT,
+            "Uuid",
+            "{ProductID}",
+            "UUID for the command to execute"),
+    };
 }
 
 void MoveToPosition::onHalted()
@@ -57,18 +58,30 @@ json MoveToPosition::createMessage()
 {
     BT::Expected<std::string> TargetPosition = getInput<std::string>("TargetPosition");
     BT::Expected<std::string> Uuid = getInput<std::string>("Uuid");
-    BT::Expected<std::map<std::string, int>> stationMap = config().blackboard->get<std::map<std::string, int>>("StationMap"); // hacky way of getting the ID from the subtree parameter
+
     json message;
     if (TargetPosition.has_value() && Uuid.has_value())
     {
-        std::string station = TargetPosition.value();
-        if (stationMap.value().find(station) != stationMap.value().end())
+        std::string targetStation = TargetPosition.value();
+
+        // Use std::find_if to search for the station
+        auto it = std::find_if(
+            station_config_["Stations"].begin(),
+            station_config_["Stations"].end(),
+            [&targetStation](const json &station)
+            {
+                return station.contains("Name") && station["Name"] == targetStation;
+            });
+
+        if (it != station_config_["Stations"].end() && it->contains("StationId"))
         {
             current_uuid_ = Uuid.value();
-            message["TargetPosition"] = stationMap.value()[station];
+            message["TargetPosition"] = (*it)["StationId"];
             message["Uuid"] = current_uuid_;
             return message;
         }
+
+        std::cerr << "Station '" << targetStation << "' not found in configuration" << std::endl;
     }
     return json();
 }

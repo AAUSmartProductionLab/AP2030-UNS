@@ -4,31 +4,48 @@
 #include <nlohmann/json.hpp>
 #include "utils.h"
 #include <string>
-#include <cctype>
+
+void CommandExecuteNode::initializeTopicsFromAAS()
+{
+    try
+    {
+        std::string asset_id = station_config_.at(getInput<std::string>("Asset").value());
+        // Create Topic objects
+        mqtt_utils::Topic request = aas_client_.fetchInterface(asset_id, getInput<std::string>("Operation").value(), "request").value();
+        mqtt_utils::Topic response = aas_client_.fetchInterface(asset_id, getInput<std::string>("Operation").value(), "response").value();
+        MqttPubBase::setTopic("request", request);
+        MqttSubBase::setTopic("response", response);
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Exception initializing topics from AAS: " << e.what() << std::endl;
+    }
+}
 
 BT::PortsList CommandExecuteNode::providedPorts()
 {
     return {BT::details::PortWithDefault<std::string>(
                 BT::PortDirection::INPUT,
                 "Asset",
-                "{Station}",
-                "The station to register with"),
+                "{Asset}",
+                "The asset used for execution"),
             BT::details::PortWithDefault<std::string>(
                 BT::PortDirection::INPUT,
-                "Command",
-                "Command",
-                "The command to execute on the station"),
+                "Operation",
+                "Operation",
+                "The operation to execute on the asset"),
             BT::details::PortWithDefault<std::string>(
                 BT::PortDirection::INPUT,
                 "Uuid",
                 "{Uuid}",
-                "UUID for the command to execute"),
+                "UUID for the operation to execute"),
             BT::details::PortWithDefault<nlohmann::json>(
                 BT::PortDirection::INPUT,
                 "Parameters",
                 "'{}'",
-                "The weight to refill, if not provided it will be set to 0.0")};
+                "The parameters for the operation")};
 }
+
 json CommandExecuteNode::createMessage()
 {
     json message;
@@ -57,21 +74,4 @@ json CommandExecuteNode::createMessage()
 
     message["Uuid"] = current_uuid_;
     return message;
-}
-
-void CommandExecuteNode::initializeTopicsFromAAS()
-{
-    try
-    {
-        std::string asset_id = station_config_.at(getInput<std::string>("Asset").value());
-        // Create Topic objects
-        mqtt_utils::Topic request = aas_client_.fetchInterface(asset_id, getInput<std::string>("Command").value(), "request").value();
-        mqtt_utils::Topic response = aas_client_.fetchInterface(asset_id, getInput<std::string>("Command").value(), "response").value();
-        MqttPubBase::setTopic("request", request);
-        MqttSubBase::setTopic("response", response);
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << "Exception initializing topics from AAS: " << e.what() << std::endl;
-    }
 }
