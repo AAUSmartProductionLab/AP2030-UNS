@@ -19,6 +19,9 @@
                 "Name": {
                     "type": "string"
                 },
+                "Instance Name": {
+                    "type": "string"
+                },
                 "StationId": {
                     "type": "integer"
                 },
@@ -27,9 +30,15 @@
                 },
                 "Process Position": {
                     "$ref": "#/$defs/Position"
+                },
+                "Capabilities": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             },
-            "required": ["Name", "StationId", "Approach Position", "Process Position"]
+            "required": ["Name", "Instance Name", "StationId", "Approach Position", "Process Position", "Capabilities"]
         },
         "Position": {
             "type": "array",

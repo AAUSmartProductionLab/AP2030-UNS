@@ -167,9 +167,9 @@ std::string AASClient::getInstanceNameByAssetName(const std::string &asset_name)
         if (it != stations.end())
         {
             // Check if InstanceName exists
-            if (it->contains("InstanceName") && (*it)["InstanceName"].is_string())
+            if (it->contains("Instance Name") && (*it)["Instance Name"].is_string())
             {
-                return (*it)["InstanceName"].get<std::string>();
+                return (*it)["Instance Name"].get<std::string>();
             }
             else
             {
