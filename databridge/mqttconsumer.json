@@ -1,0 +1,134 @@
+[
+  {
+    "uniqueId": "Motion_XPosition_sensor",
+    "serverUrl": "mosquitto",
+    "serverPort": 1883,
+    "topic": "factory/line3/robot/position/x"
+  },
+  {
+    "uniqueId": "Motion_YPosition_sensor",
+    "serverUrl": "mosquitto",
+    "serverPort": 1883,
+    "topic": "factory/line3/robot/position/y"
+  },
+  {
+    "uniqueId": "Motion_ZPosition_sensor",
+    "serverUrl": "mosquitto",
+    "serverPort": 1883,
+    "topic": "factory/line3/robot/position/z"
+  },
+  {
+    "uniqueId": "Motion_Velocity_sensor",
+    "serverUrl": "mosquitto",
+    "serverPort": 1883,
+    "topic": "factory/line3/robot/velocity"
+  },
+  {
+    "uniqueId": "Safety_EmergencyStop_sensor",
+    "serverUrl": "mosquitto",
+    "serverPort": 1883,
+    "topic": "factory/line3/robot/safety/estop"
+  },
+  {
+    "uniqueId": "Safety_SafetyZoneStatus_sensor",
+    "serverUrl": "mosquitto",
+    "serverPort": 1883,
+    "topic": "factory/line3/robot/safety/zone"
+  },
+  {
+    "uniqueId": "Safety_ForceLimit_sensor",
+    "serverUrl": "mosquitto",
+    "serverPort": 1883,
+    "topic": "factory/line3/robot/safety/force"
+  },
+  {
+    "uniqueId": "Tooling_GripperStatus_sensor",
+    "serverUrl": "mosquitto",
+    "serverPort": 1883,
+    "topic": "factory/line3/robot/gripper/status"
+  },
+  {
+    "uniqueId": "Tooling_GripForce_sensor",
+    "serverUrl": "mosquitto",
+    "serverPort": 1883,
+    "topic": "factory/line3/robot/gripper/force"
+  },
+  {
+    "uniqueId": "Tooling_ToolTemperature_sensor",
+    "serverUrl": "mosquitto",
+    "serverPort": 1883,
+    "topic": "factory/line3/robot/tool/temperature"
+  },
+  {
+    "uniqueId": "Readings_Temperature_sensor",
+    "serverUrl": "mosquitto",
+    "serverPort": 1883,
+    "topic": "factory/sensors/th001/temperature"
+  },
+  {
+    "uniqueId": "Readings_Humidity_sensor",
+    "serverUrl": "mosquitto",
+    "serverPort": 1883,
+    "topic": "factory/sensors/th001/humidity"
+  },
+  {
+    "uniqueId": "Readings_BatteryLevel_sensor",
+    "serverUrl": "mosquitto",
+    "serverPort": 1883,
+    "topic": "factory/sensors/th001/battery"
+  },
+  {
+    "uniqueId": "FlowControl_FlowRate_sensor",
+    "serverUrl": "localhost",
+    "serverPort": 1883,
+    "topic": "sensors/flowcontrol/flowrate"
+  },
+  {
+    "uniqueId": "FlowControl_Pressure_sensor",
+    "serverUrl": "localhost",
+    "serverPort": 1883,
+    "topic": "sensors/flowcontrol/pressure"
+  },
+  {
+    "uniqueId": "FlowControl_ValvePosition_sensor",
+    "serverUrl": "localhost",
+    "serverPort": 1883,
+    "topic": "sensors/flowcontrol/valveposition"
+  },
+  {
+    "uniqueId": "MotorControl_MotorSpeed_sensor",
+    "serverUrl": "localhost",
+    "serverPort": 1883,
+    "topic": "sensors/motorcontrol/motorspeed"
+  },
+  {
+    "uniqueId": "MotorControl_PowerConsumption_sensor",
+    "serverUrl": "localhost",
+    "serverPort": 1883,
+    "topic": "sensors/motorcontrol/powerconsumption"
+  },
+  {
+    "uniqueId": "MotorControl_MotorTemperature_sensor",
+    "serverUrl": "localhost",
+    "serverPort": 1883,
+    "topic": "sensors/motorcontrol/motortemperature"
+  },
+  {
+    "uniqueId": "SystemStatus_OperationalState_sensor",
+    "serverUrl": "localhost",
+    "serverPort": 1883,
+    "topic": "sensors/systemstatus/operationalstate"
+  },
+  {
+    "uniqueId": "SystemStatus_MaintenanceDue_sensor",
+    "serverUrl": "localhost",
+    "serverPort": 1883,
+    "topic": "sensors/systemstatus/maintenancedue"
+  },
+  {
+    "uniqueId": "SystemStatus_RunHours_sensor",
+    "serverUrl": "localhost",
+    "serverPort": 1883,
+    "topic": "sensors/systemstatus/runhours"
+  }
+]

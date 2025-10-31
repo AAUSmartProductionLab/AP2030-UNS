@@ -12,7 +12,7 @@ services:
       - "8080:8080"
       - "8883:8883"
       - "8884:8884"
-      - "8081:8081"
+      - "8091:8081"
       - "8000:8000"
     networks:
       - hivemq-network
@@ -168,7 +168,126 @@ services:
       - hivemq-network
     depends_on:
       - hivemq-broker
-      
+
+
+
+################################### BASYX CONTAINERS ####################################
+  aas-env:
+    image: eclipsebasyx/aas-environment:2.0.0-SNAPSHOT
+    container_name: aas-env
+    environment:
+      - SERVER_PORT=8081
+    volumes:
+      - ./aas:/application/aas
+      - ./basyx/aas-env.properties:/application/application.properties
+    ports:
+      - '8081:8081'
+    restart: always
+    depends_on:
+      aas-registry:
+        condition: service_healthy
+      sm-registry:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+      hivemq-broker:
+        condition: service_started
+    networks:
+      - hivemq-network
+  aas-registry:
+    image: eclipsebasyx/aas-registry-log-mongodb:2.0.0-SNAPSHOT
+    container_name: aas-registry
+    ports:
+      - '8082:8080'
+    environment:
+      - SERVER_PORT=8080
+    volumes:
+      - ./basyx/aas-registry.yml:/workspace/config/application.yml
+    restart: always
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - hivemq-network
+  sm-registry:
+    image: eclipsebasyx/submodel-registry-log-mongodb:2.0.0-SNAPSHOT
+    container_name: sm-registry
+    ports:
+      - '8083:8080'
+    environment:
+      - SERVER_PORT=8080
+    volumes:
+      - ./basyx/sm-registry.yml:/workspace/config/application.yml
+    restart: always
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - hivemq-network
+  aas-discovery:
+    image: eclipsebasyx/aas-discovery:2.0.0-SNAPSHOT
+    container_name: aas-discovery
+    environment:
+      - SERVER_PORT=8081
+    volumes:
+      - ./basyx/aas-discovery.properties:/application/application.properties
+    ports:
+      - '8084:8081'
+    restart: always
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - hivemq-network
+  mongo:
+    image: mongo:5.0.10
+    container_name: mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mongoAdmin
+      MONGO_INITDB_ROOT_PASSWORD: mongoPassword
+    restart: always
+    healthcheck:
+      test: mongo
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - hivemq-network
+  aas-web-ui:
+    image: eclipsebasyx/aas-gui:SNAPSHOT
+    container_name: aas-ui
+    ports:
+      - '3001:3000'
+    environment:
+      AAS_REGISTRY_PATH: http://192.168.0.104:8082/shell-descriptors
+      SUBMODEL_REGISTRY_PATH: http://192.168.0.104:8083/submodel-descriptors
+      AAS_REPO_PATH: http://192.168.0.104:8081/shells
+      SUBMODEL_REPO_PATH: http://192.168.0.104:8081/submodels
+      CD_REPO_PATH: http://192.168.0.104:8081/concept-descriptions
+      AAS_DISCOVERY_PATH: http://192.168.0.104:8084/lookup/shells
+      PRIMARY_COLOR: '#0036AA'
+      DASHBOARD_SERVICE_PATH: http://192.168.0.104:8085/api/elements
+    restart: always
+    depends_on:
+      aas-env:
+        condition: service_started
+    networks:
+      - hivemq-network 
+  dashboard-api:
+    image: aaronzi/basyx-dashboard-api:SNAPSHOT_02
+    container_name: dashboard-api
+    ports:
+      - '8085:8085'
+    volumes:
+      - ./basyx/aas-dashboard.yml:/application.yml
+    restart: always
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - hivemq-network
+
+#################¤ NETWORKS AND VOLUMES ####################
 networks:
   hivemq-network:
     driver: bridge
