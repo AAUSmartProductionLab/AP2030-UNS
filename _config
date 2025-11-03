@@ -1,4 +1,5 @@
 # GitHub Pages / Jekyll Configuration
+theme: jekyll-theme-minimal
 title: AP2030-UNS
 description: Asset Administration Shell definitions and schemas
 
@@ -32,6 +33,3 @@ relative_links:
 
 # Serve JSON files with correct content type
 include: [".json"]
-
-# Minimal theme to avoid conflicts
-theme: null
