@@ -1,0 +1,9 @@
+exclude:
+  - BT_Controller/
+  - PackML_Stations/
+  - node_modules/
+  - vendor/
+  - LICENSE
+  - README.md
+include:
+  - schemas/
