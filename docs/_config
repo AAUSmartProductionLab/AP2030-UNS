@@ -1,54 +1,10 @@
-# GitHub Pages / Jekyll Configuration
+# GitHub Pages / Jekyll Configuration for docs folder
 theme: jekyll-theme-minimal
 title: AP2030-UNS
 description: Asset Administration Shell definitions and schemas
 
-# Only process files in these directories and the index
-exclude:
-  - README.md
-  - LICENSE
-  - "*.yml"
-  - "*.yaml"  
-  - "*.pyc"
-  - "*.py"
-  - "*.cpp"
-  - "*.h"
-  - "*.c"
-  - "*.cmake"
-  - "*.txt"
-  - "*.xml"
-  - "*.dockerfile"
-  - "*.sh"
-  - "*.bat"
-  - Dockerfile*
-  - BT_Controller/
-  - PackML_Stations/
-  - Portainer/
-  - TimescaleDB/
-  - Grafana/
-  - HiveMQ/
-  - MQTT-Explorer/
-  - MQTT-Recorder/
-  - Configurator/
-  - Groot2/
-  - databridge/
-  - databridge-build/
-  - basyx/
-  - production_run_backup/
-  - node_modules/
-  - vendor/
-  - .git/
-  - .gitignore
-  - .gitmodules
-  - .dockerignore
-  - .devcontainer/
-  - .vscode/
-  - offlineResponse_1656FB-A61627-4A4CB2-F0C0CA-8531ED-BD332C.dat/
-
-# Include these directories/files
+# Include JSON files
 include:
-  - schemas/
-  - aas/
   - ".json"
 
 # Disable relative links plugin behavior
