@@ -35,4 +35,7 @@ This starts the following applications:
 - Configurator
 - Groot2
 - Behaviour Tree Controller
+- Eclipse Basyx AAS Repository
+- Eclipse Basyx AAS Registry
+- Eclipse Basyx Databrigde
 - PackML stations (simulated as python ndoes) 
