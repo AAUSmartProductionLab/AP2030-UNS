@@ -1,9 +1,37 @@
+# GitHub Pages / Jekyll Configuration
+title: AP2030-UNS
+description: Asset Administration Shell definitions and schemas
+
+# Exclude files and directories from processing
 exclude:
-  - BT_Controller/
-  - PackML_Stations/
   - node_modules/
   - vendor/
+  - BT_Controller/build/
+  - BT_Controller/third_party/
+  - PackML_Stations/__pycache__/
+  - Portainer/
+  - TimescaleDB/
+  - Grafana/
+  - HiveMQ/
+  - databridge-build/
+  - production_run_backup/
   - LICENSE
-  - README.md
+  - docker-compose.yml
+  - db_utils.yml
+  - "*.pyc"
+  - "*.md"
+
+# Include these directories/files
 include:
   - schemas/
+  - aas/
+
+# Disable automatic URL processing
+relative_links:
+  enabled: false
+
+# Serve JSON files with correct content type
+include: [".json"]
+
+# Minimal theme to avoid conflicts
+theme: null
