@@ -5,7 +5,7 @@ title: AP2030-UNS Schemas
 
 # AP2030-UNS Asset Administration Shell Schemas
 
-This repository contains Asset Administration Shell (AAS) definitions and JSON schemas for the AP2030-UNS project.
+This repository contains Asset Administration Shell (AAS) definitions and JSON schemas for the AP2030-UNS project. Test.
 
 ## Available Schemas
 
