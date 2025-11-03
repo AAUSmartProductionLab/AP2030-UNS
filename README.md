@@ -37,5 +37,5 @@ This starts the following applications:
 - Behaviour Tree Controller
 - Eclipse Basyx AAS Repository
 - Eclipse Basyx AAS Registry
-- Eclipse Basyx Databrigde
+- Eclipse Basyx Databridge
 - PackML stations (simulated as python ndoes) 
