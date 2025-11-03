@@ -3,34 +3,55 @@ theme: jekyll-theme-minimal
 title: AP2030-UNS
 description: Asset Administration Shell definitions and schemas
 
-# Exclude files and directories from processing
+# Only process files in these directories and the index
 exclude:
-  - node_modules/
-  - vendor/
-  - BT_Controller/build/
-  - BT_Controller/third_party/
-  - PackML_Stations/__pycache__/
+  - README.md
+  - LICENSE
+  - "*.yml"
+  - "*.yaml"  
+  - "*.pyc"
+  - "*.py"
+  - "*.cpp"
+  - "*.h"
+  - "*.c"
+  - "*.cmake"
+  - "*.txt"
+  - "*.xml"
+  - "*.dockerfile"
+  - "*.sh"
+  - "*.bat"
+  - Dockerfile*
+  - BT_Controller/
+  - PackML_Stations/
   - Portainer/
   - TimescaleDB/
   - Grafana/
   - HiveMQ/
+  - MQTT-Explorer/
+  - MQTT-Recorder/
+  - Configurator/
+  - Groot2/
+  - databridge/
   - databridge-build/
+  - basyx/
   - production_run_backup/
-  - LICENSE
-  - docker-compose.yml
-  - db_utils.yml
-  - "*.pyc"
+  - node_modules/
+  - vendor/
+  - .git/
+  - .gitignore
+  - .gitmodules
+  - .dockerignore
+  - .devcontainer/
+  - .vscode/
+  - offlineResponse_1656FB-A61627-4A4CB2-F0C0CA-8531ED-BD332C.dat/
 
 # Include these directories/files
 include:
   - schemas/
   - aas/
-# Disable problematic plugins
-plugins:
-  - jekyll-relative-links
-# Disable automatic URL processing
+  - ".json"
+
+# Disable relative links plugin behavior
 relative_links:
   enabled: false
-
-# Serve JSON files with correct content type
-include: [".json"]
+  collections: false
