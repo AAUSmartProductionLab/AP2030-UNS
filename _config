@@ -25,7 +25,9 @@ exclude:
 include:
   - schemas/
   - aas/
-
+# Disable problematic plugins
+plugins:
+  - jekyll-relative-links
 # Disable automatic URL processing
 relative_links:
   enabled: false
