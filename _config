@@ -20,7 +20,6 @@ exclude:
   - docker-compose.yml
   - db_utils.yml
   - "*.pyc"
-  - "*.md"
 
 # Include these directories/files
 include:
