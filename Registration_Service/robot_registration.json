@@ -1,0 +1,171 @@
+{
+  "aas_data": {
+    "assetAdministrationShells": [
+      {
+        "idShort": "IndustrialRobot",
+        "id": "urn:example:robot:aas:001",
+        "assetInformation": {
+          "assetKind": "Instance",
+          "globalAssetId": "urn:example:robot:asset:001"
+        },
+        "submodels": [
+          {
+            "type": "ExternalReference",
+            "keys": [
+              {
+                "type": "Submodel",
+                "value": "urn:example:robot:submodel:motion:001"
+              }
+            ]
+          },
+          {
+            "type": "ExternalReference",
+            "keys": [
+              {
+                "type": "Submodel",
+                "value": "urn:example:robot:submodel:safety:001"
+              }
+            ]
+          },
+          {
+            "type": "ExternalReference",
+            "keys": [
+              {
+                "type": "Submodel",
+                "value": "urn:example:robot:submodel:tooling:001"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "submodels": [
+      {
+        "idShort": "Motion",
+        "id": "urn:example:robot:submodel:motion:001",
+        "semanticId": {
+          "type": "ExternalReference",
+          "keys": [
+            {
+              "type": "GlobalReference",
+              "value": "https://example.com/ids/cd/Motion"
+            }
+          ]
+        },
+        "submodelElements": [
+          {
+            "idShort": "XPosition",
+            "modelType": "Property",
+            "valueType": "xs:double",
+            "semanticId": {
+              "type": "ExternalReference",
+              "keys": [
+                {
+                  "type": "ConceptDescription",
+                  "value": "https://example.com/ids/cd/XCoordinate"
+                }
+              ]
+            },
+            "value": "0.0"
+          },
+          {
+            "idShort": "YPosition",
+            "modelType": "Property",
+            "valueType": "xs:double",
+            "value": "0.0"
+          },
+          {
+            "idShort": "ZPosition",
+            "modelType": "Property",
+            "valueType": "xs:double",
+            "value": "0.0"
+          },
+          {
+            "idShort": "Speed",
+            "modelType": "Property",
+            "valueType": "xs:double",
+            "value": "0.0"
+          }
+        ]
+      },
+      {
+        "idShort": "Safety",
+        "id": "urn:example:robot:submodel:safety:001",
+        "semanticId": {
+          "type": "ExternalReference",
+          "keys": [
+            {
+              "type": "GlobalReference",
+              "value": "https://example.com/ids/cd/Safety"
+            }
+          ]
+        },
+        "submodelElements": [
+          {
+            "idShort": "EmergencyStop",
+            "modelType": "Property",
+            "valueType": "xs:boolean",
+            "value": "false"
+          },
+          {
+            "idShort": "DoorOpen",
+            "modelType": "Property",
+            "valueType": "xs:boolean",
+            "value": "false"
+          },
+          {
+            "idShort": "ErrorCode",
+            "modelType": "Property",
+            "valueType": "xs:int",
+            "value": "0"
+          }
+        ]
+      },
+      {
+        "idShort": "Tooling",
+        "id": "urn:example:robot:submodel:tooling:001",
+        "semanticId": {
+          "type": "ExternalReference",
+          "keys": [
+            {
+              "type": "GlobalReference",
+              "value": "https://example.com/ids/cd/Tooling"
+            }
+          ]
+        },
+        "submodelElements": [
+          {
+            "idShort": "GripperState",
+            "modelType": "Property",
+            "valueType": "xs:string",
+            "value": "open"
+          },
+          {
+            "idShort": "ToolId",
+            "modelType": "Property",
+            "valueType": "xs:string",
+            "value": "GRIPPER_01"
+          },
+          {
+            "idShort": "Pressure",
+            "modelType": "Property",
+            "valueType": "xs:double",
+            "value": "0.0"
+          }
+        ]
+      }
+    ]
+  },
+  "topic_mappings": {
+    "factory/line3/robot/position/x": "Motion/XPosition",
+    "factory/line3/robot/position/y": "Motion/YPosition",
+    "factory/line3/robot/position/z": "Motion/ZPosition",
+    "factory/line3/robot/motion/speed": "Motion/Speed",
+    "factory/line3/robot/safety/emergency_stop": "Safety/EmergencyStop",
+    "factory/line3/robot/safety/door": "Safety/DoorOpen",
+    "factory/line3/robot/safety/error": "Safety/ErrorCode",
+    "factory/line3/robot/tool/gripper_state": "Tooling/GripperState",
+    "factory/line3/robot/tool/id": "Tooling/ToolId",
+    "factory/line3/robot/tool/pressure": "Tooling/Pressure"
+  }
+}
