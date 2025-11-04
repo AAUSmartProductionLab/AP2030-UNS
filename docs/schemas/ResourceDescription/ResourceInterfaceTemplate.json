@@ -512,6 +512,66 @@
           ],
           "modelType": "Property",
           "valueType": "xs:double"
+        },
+        {
+          "idShort": "examplePropertyWithInterface",
+          "description": [
+            {
+              "language": "en",
+              "text": "Example property that has an associated interface definition. Use SubmodelElementCollection to group the value with its interface reference."
+            }
+          ],
+          "modelType": "SubmodelElementCollection",
+          "value": [
+            {
+              "idShort": "Value",
+              "description": [{"language": "en", "text": "The actual runtime value of the property"}],
+              "modelType": "Property",
+              "valueType": "xs:double"
+            },
+            {
+              "idShort": "InterfaceReference",
+              "semanticId": {
+                "type": "ExternalReference",
+                "keys": [{
+                  "type": "GlobalReference",
+                  "value": "https://admin-shell.io/idta/AssetInterfacesDescription/1/0/InterfaceReference"
+                }]
+              },
+              "description": [
+                {
+                  "language": "en",
+                  "text": "Reference to the property's interface definition in AssetInterfacesDescription. This links the runtime value to its access protocol/API."
+                }
+              ],
+              "modelType": "ReferenceElement",
+              "value": {
+                "type": "ModelReference",
+                "keys": [
+                  {
+                    "type": "Submodel",
+                    "value": "https://smartproductionlab.aau.dk/submodels/instances/{resourceId}/AssetInterfacesDescription"
+                  },
+                  {
+                    "type": "SubmodelElementCollection",
+                    "value": "Interface{ProtocolName}"
+                  },
+                  {
+                    "type": "SubmodelElementCollection",
+                    "value": "InteractionMetadata"
+                  },
+                  {
+                    "type": "SubmodelElementCollection",
+                    "value": "properties"
+                  },
+                  {
+                    "type": "SubmodelElementCollection",
+                    "value": "{propertyName}"
+                  }
+                ]
+              }
+            }
+          ]
         }
       ],
       "modelType": "Submodel"
