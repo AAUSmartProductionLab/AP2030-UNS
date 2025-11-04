@@ -46,6 +46,7 @@ namespace bt_utils
                             std::string &clientId,
                             std::string &unsTopicPrefix,
                             std::string &aasServerUri,
+                            std::string &aasRegistryUrl,
                             int &groot2_port,
                             std::string &bt_description_path,
                             std::string &bt_nodes_path)
@@ -94,6 +95,11 @@ namespace bt_utils
                 if (aas["server_url"])
                 {
                     aasServerUri = aas["server_url"].as<std::string>();
+                }
+
+                if (aas["registry_url"])
+                {
+                    aasRegistryUrl = aas["registry_url"].as<std::string>();
                 }
             }
 

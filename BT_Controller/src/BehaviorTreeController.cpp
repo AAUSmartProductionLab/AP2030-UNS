@@ -39,7 +39,7 @@ BehaviorTreeController::BehaviorTreeController(int argc, char *argv[])
     node_message_distributor_ = std::make_unique<NodeMessageDistributor>(*mqtt_client_);
 
     // Initialize AAS client
-    aas_client_ = std::make_unique<AASClient>(app_params_.aasServerUrl);
+    aas_client_ = std::make_unique<AASClient>(app_params_.aasServerUrl, app_params_.aasRegistryUrl);
 
     // Initialize BehaviorTreeFactory
     bt_factory_ = std::make_unique<BT::BehaviorTreeFactory>();
@@ -275,6 +275,7 @@ void BehaviorTreeController::loadAppConfiguration(int argc, char *argv[])
         app_params_.clientId,
         app_params_.unsTopicPrefix,
         app_params_.aasServerUrl,
+        app_params_.aasRegistryUrl,
         app_params_.groot2_port,
         app_params_.bt_description_path,
         app_params_.bt_nodes_path);

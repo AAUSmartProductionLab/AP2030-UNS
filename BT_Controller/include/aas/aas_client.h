@@ -9,7 +9,8 @@
 class AASClient
 {
 public:
-    AASClient(const std::string &aas_server_url);
+    AASClient(const std::string &aas_server_url,
+              const std::string &registry_url = "");
     ~AASClient();
 
     // Fetch topic configuration for a specific node type and instance
@@ -27,10 +28,11 @@ public:
 
 private:
     std::string aas_server_url_;
+    std::string registry_url_;
     CURL *curl_;
 
     // Helper to make HTTP GET requests
-    nlohmann::json makeGetRequest(const std::string &endpoint);
+    nlohmann::json makeGetRequest(const std::string &endpoint, bool use_registry = false);
 
     // Helper to substitute parameters in topic patterns
     std::string substituteParams(const std::string &pattern, const nlohmann::json &params);

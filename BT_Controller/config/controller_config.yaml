@@ -1,10 +1,11 @@
 mqtt:
-  broker_uri: "192.168.0.104:1883"
+  broker_uri: "tcp://192.168.0.104:1883"
   client_id: "bt_controller"
   uns_topic: "NN/Nybrovej/InnoLab"
 
 aas:
-  server_url: "http://localhost:4001"
+  server_url: "http://192.168.0.104:8081"
+  registry_url: "http://192.168.0.104:8082"
 
 groot2:
   port: 1667
