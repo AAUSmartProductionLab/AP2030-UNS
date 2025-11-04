@@ -5,6 +5,11 @@
     cd AP2030-UNS
     git submodule update --init --recursive
 ```
+# Schemas and AAS Templates
+
+All json schemas are hosted on github pages under the following link:
+https://aausmartproductionlab.github.io/AP2030-UNS/
+
 
 # BT_Controller DevContainer
 The DevContainer is configured such that it compiles and build all libraries needed for the development and building the project.
