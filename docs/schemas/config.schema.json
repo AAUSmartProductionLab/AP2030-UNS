@@ -1,0 +1,24 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "The configuration of the production system",
+    "description": "JSON Schema for a generic configuration. Matches any of the config schemas",
+    "type": "object",
+        "allOf": [
+            {
+                "$ref": "data.schema.json"
+            },
+            {
+                "anyOf": [
+                    {
+                        "$ref": "order.schema.json"
+                    },
+                    {
+                        "$ref": "planarStations.schema.json"
+                    },
+                    {
+                        "$ref": "planarLimits.schema.json"
+                    }
+                ]
+            }
+        ]
+}

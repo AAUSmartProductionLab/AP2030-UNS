@@ -1,0 +1,25 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Omron amr generic arcl response schema",
+    "subtopic": "/Omron/CMD/itk/Sim43/cmd/arcl/update", 
+    "type": "object",
+    "properties": {
+        "type": {
+            "type": "string",
+            "description": "Type of the request"
+        },
+        "id": {
+            "type": "string",
+            "description": "Unique identifier for the request"
+        },
+        "upd": {
+            "type": "string",
+            "description": "timestamp of the last update"
+        },
+        "message": {
+            "type": "string",
+            "description": "The message associated with the original request"
+        }
+    },
+    "required": ["type", "id", "upd", "message"]
+}

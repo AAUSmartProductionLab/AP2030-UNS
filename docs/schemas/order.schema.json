@@ -1,0 +1,27 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Order Schema",
+    "description": "JSON Schema for an order",
+    "type": "object",
+    "properties": {
+        "Uuid": {"type":"string"},
+        "Format": {"type":"string"},
+        "Units": {
+            "type": "integer",
+            "description": "The batch size of the order"
+        },
+        "IPCw": {
+            "type":"integer",
+            "description": "In percent how many weighing IPC samples should be colllected"
+        },
+        "IPCi": {
+            "type":"integer",
+            "description": "In percent how many inspection IPC samples should be colllected"
+        },
+        "QC-samples": {
+            "type":"integer",
+            "description": "In percent how many units should go to QC"
+        }
+    },
+    "required": ["Uuid","Format","Units","IPCw","IPCi","QC-samples"]
+}

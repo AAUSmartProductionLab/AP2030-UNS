@@ -1,0 +1,12 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Command Schema",
+    "description": "An arbitrary command",
+    "type": "object",
+    "properties": {
+        "Uuid": {
+            "type": "string"
+        }
+    },
+    "required": ["Uuid"]
+}
