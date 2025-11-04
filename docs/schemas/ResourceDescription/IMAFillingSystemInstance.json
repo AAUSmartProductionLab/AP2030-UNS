@@ -35,6 +35,14 @@
         {
           "type": "ModelReference",
           "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/imaFillingSystem/AssetInterfacesDescription"}]
+        },
+        {
+          "type": "ModelReference",
+          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/imaFillingSystem/Variables"}]
+        },
+        {
+          "type": "ModelReference",
+          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/imaFillingSystem/Parameters"}]
         }
       ],
       "derivedFrom": {
@@ -413,6 +421,86 @@
           ]
         }
       ],
+      "modelType": "Submodel"
+    },
+    {
+      "idShort": "Variables",
+      "id": "https://smartproductionlab.aau.dk/submodels/instances/imaFillingSystem/Variables",
+      "kind": "Instance",
+      "semanticId": {
+        "type": "ExternalReference",
+        "keys": [{"type": "GlobalReference", "value": "https://admin-shell.io/idta/Variables/1/0/Submodel"}]
+      },
+      "administration": {
+        "version": "1",
+        "revision": "0"
+      },
+      "submodelElements": [
+        {
+          "idShort": "PackMLState",
+          "semanticId": {
+            "type": "ExternalReference",
+            "keys": [{
+              "type": "GlobalReference",
+              "value": "https://www.omac.org/packml/state"
+            }]
+          },
+          "modelType": "Property",
+          "valueType": "xs:string",
+          "value": "Idle"
+        },
+        {
+          "idShort": "OccupationState",
+          "modelType": "SubmodelElementCollection",
+          "value": [
+            {
+              "idShort": "State",
+              "modelType": "Property",
+              "valueType": "xs:string",
+              "value": "Available"
+            },
+            {
+              "idShort": "Queue",
+              "modelType": "SubmodelElementList",
+              "typeValueListElement": "ReferenceElement",
+              "value": []
+            }
+          ]
+        },
+        {
+          "idShort": "ErrorState",
+          "modelType": "SubmodelElementCollection",
+          "value": [
+            {
+              "idShort": "State",
+              "modelType": "Property",
+              "valueType": "xs:string",
+              "value": "NoError"
+            },
+            {
+              "idShort": "ErrorMessage",
+              "modelType": "Property",
+              "valueType": "xs:string",
+              "value": ""
+            }
+          ]
+        }
+      ],
+      "modelType": "Submodel"
+    },
+    {
+      "idShort": "Parameters",
+      "id": "https://smartproductionlab.aau.dk/submodels/instances/imaFillingSystem/Parameters",
+      "kind": "Instance",
+      "semanticId": {
+        "type": "ExternalReference",
+        "keys": [{"type": "GlobalReference", "value": "https://admin-shell.io/idta/Parameters/1/0/Submodel"}]
+      },
+      "administration": {
+        "version": "1",
+        "revision": "0"
+      },
+      "submodelElements": [],
       "modelType": "Submodel"
     }
   ]

@@ -11,6 +11,14 @@
         {
           "type": "ModelReference",
           "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/templates/AssetInterfacesDescription"}]
+        },
+        {
+          "type": "ModelReference",
+          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/templates/Variables"}]
+        },
+        {
+          "type": "ModelReference",
+          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/templates/Parameters"}]
         }
       ],
       "modelType": "AssetAdministrationShell"
@@ -438,6 +446,135 @@
                   ]
                 }
               ]
+            }
+          ]
+        }
+      ],
+      "modelType": "Submodel"
+    },
+    {
+      "idShort": "Variables",
+      "id": "https://smartproductionlab.aau.dk/submodels/templates/Variables",
+      "kind": "Template",
+      "semanticId": {
+        "type": "ExternalReference",
+        "keys": [{"type": "GlobalReference", "value": "https://admin-shell.io/idta/Variables/1/0/Submodel"}]
+      },
+      "description": [
+        {
+          "language": "en",
+          "text": "Optional submodel for resource runtime variables and state information. Resource instances can add state variables, occupancy info, errors, etc."
+        }
+      ],
+      "submodelElements": [
+        {
+          "idShort": "exampleStateVariable",
+          "description": [
+            {
+              "language": "en",
+              "text": "Example state variable. Resource instances replace this with their actual state variables (e.g., PackMLState, OccupationState, ErrorState)"
+            }
+          ],
+          "modelType": "Property",
+          "valueType": "xs:string"
+        },
+        {
+          "idShort": "exampleStateCollection",
+          "description": [
+            {
+              "language": "en",
+              "text": "Example for grouped state information. Use SubmodelElementCollection for complex state structures"
+            }
+          ],
+          "modelType": "SubmodelElementCollection",
+          "value": [
+            {
+              "idShort": "State",
+              "description": [{"language": "en", "text": "State value or status"}],
+              "modelType": "Property",
+              "valueType": "xs:string"
+            },
+            {
+              "idShort": "Timestamp",
+              "description": [{"language": "en", "text": "When the state was last updated"}],
+              "modelType": "Property",
+              "valueType": "xs:dateTime"
+            }
+          ]
+        },
+        {
+          "idShort": "exampleMetricVariable",
+          "description": [
+            {
+              "language": "en",
+              "text": "Example numeric variable for measurements or metrics (e.g., PowerConsumption, Temperature, Pressure)"
+            }
+          ],
+          "modelType": "Property",
+          "valueType": "xs:double"
+        }
+      ],
+      "modelType": "Submodel"
+    },
+    {
+      "idShort": "Parameters",
+      "id": "https://smartproductionlab.aau.dk/submodels/templates/Parameters",
+      "kind": "Template",
+      "semanticId": {
+        "type": "ExternalReference",
+        "keys": [{"type": "GlobalReference", "value": "https://admin-shell.io/idta/Parameters/1/0/Submodel"}]
+      },
+      "description": [
+        {
+          "language": "en",
+          "text": "Optional submodel for resource configuration parameters. Resource instances can add tunable parameters, setpoints, limits, etc."
+        }
+      ],
+      "submodelElements": [
+        {
+          "idShort": "exampleParameter",
+          "description": [
+            {
+              "language": "en",
+              "text": "Example configuration parameter. Resource instances replace this with their actual parameters (e.g., MaxSpeed, TargetTemperature, FillingVolume)"
+            }
+          ],
+          "modelType": "Property",
+          "valueType": "xs:double"
+        },
+        {
+          "idShort": "exampleParameterWithLimits",
+          "description": [
+            {
+              "language": "en",
+              "text": "Example parameter with min/max constraints"
+            }
+          ],
+          "modelType": "SubmodelElementCollection",
+          "value": [
+            {
+              "idShort": "Value",
+              "description": [{"language": "en", "text": "Current parameter value"}],
+              "modelType": "Property",
+              "valueType": "xs:double"
+            },
+            {
+              "idShort": "Min",
+              "description": [{"language": "en", "text": "Minimum allowed value"}],
+              "modelType": "Property",
+              "valueType": "xs:double"
+            },
+            {
+              "idShort": "Max",
+              "description": [{"language": "en", "text": "Maximum allowed value"}],
+              "modelType": "Property",
+              "valueType": "xs:double"
+            },
+            {
+              "idShort": "Unit",
+              "description": [{"language": "en", "text": "Unit of measurement"}],
+              "modelType": "Property",
+              "valueType": "xs:string"
             }
           ]
         }
