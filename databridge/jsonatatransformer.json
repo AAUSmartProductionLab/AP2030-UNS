@@ -1,1 +1,7 @@
-[]
+[
+  {
+    "uniqueId": "AssetInterfacesDescription_InterfaceMQTT_transformer",
+    "queryLanguage": "JSONATA",
+    "query": "$string($)"
+  }
+]
