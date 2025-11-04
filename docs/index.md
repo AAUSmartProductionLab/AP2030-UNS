@@ -10,13 +10,13 @@ This repository contains Asset Administration Shell (AAS) definitions and JSON s
 ## Available Schemas
 
 ### Command Schemas
-- [command.schema.json](schemas/command.schema.json)
-- [commandResponse.schema.json](schemas/commandResponse.schema.json)
+- [command.schema.json](../schemas/command.schema.json)
+- [commandResponse.schema.json](../schemas/commandResponse.schema.json)
 
 ### Data Schemas
-- [data.schema.json](schemas/data.schema.json)
-- [state.schema.json](schemas/state.schema.json)
-- [weight.schema.json](schemas/weight.schema.json)
+- [data.schema.json](../schemas/data.schema.json)
+- [state.schema.json](../schemas/state.schema.json)
+- [weight.schema.json](../schemas/weight.schema.json)
 
 ## Usage
 
