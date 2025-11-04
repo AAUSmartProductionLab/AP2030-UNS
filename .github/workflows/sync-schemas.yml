@@ -21,13 +21,22 @@ jobs:
         run: |
           rm -rf docs/schemas
           cp -r schemas docs/schemas
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      
+      - name: Generate schema links
+        run: |
+          python .github/scripts/generate-schema-links.py
           
       - name: Commit changes
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add docs/schemas
-          git diff --quiet && git diff --staged --quiet || git commit -m "Auto-sync schemas to docs folder"
+          git add docs/schemas docs/index.md
+          git diff --quiet && git diff --staged --quiet || git commit -m "Auto-sync schemas to docs folder and update schema links"
           
       - name: Push changes
         uses: ad-m/github-push-action@master
