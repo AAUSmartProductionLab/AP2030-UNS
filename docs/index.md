@@ -98,6 +98,10 @@ All schemas are automatically synchronized from the `schemas/` directory. Click 
   - The station configuration of the production line
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/schemas/planarStations.schema.json)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/schemas/planarStations.schema.json)
+- **[stationOccupation.schema.json](schemas/stationOccupation.schema.json)**
+  - JSON Schema for the status of a module. The current Uuid is expected when the module is not in a IDLE or RESETTING state
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/schemas/stationOccupation.schema.json)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/schemas/stationOccupation.schema.json)
 
 <!-- AUTO-GENERATED-SCHEMAS-END -->
 
