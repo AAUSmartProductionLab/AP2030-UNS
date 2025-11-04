@@ -1,0 +1,25 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Command Schema",
+    "description": "An arbitrary command",
+    "type": "object",
+    "allOf": [
+        {
+            "$ref": "data.schema.json"
+        },
+        {
+            "type": "object",
+            "properties": {
+                "Uuid": {
+                    "type": "string"
+                }
+            },
+            "State": {
+                    "type": "string",
+                    "description": "The state of the command being executed",
+                    "enum": ["RUNNING","SUCCESS","FAILURE"]
+                },
+        "required": ["Uuid", "State"]
+        }
+    ]
+}

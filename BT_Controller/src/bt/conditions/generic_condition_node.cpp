@@ -2,53 +2,52 @@
 #include "mqtt/node_message_distributor.h"
 #include "utils.h"
 
-GenericConditionNode::GenericConditionNode(const std::string &name, const BT::NodeConfig &config, MqttClient &bt_mqtt_client,
-                                           const mqtt_utils::Topic &response_topic)
-    : MqttSyncSubNode(name, config, bt_mqtt_client, response_topic)
-{
-    for (auto &[key, topic_obj] : MqttSubBase::topics_)
-    {
-        topic_obj.setTopic(getFormattedTopic(topic_obj.getPattern()));
-    }
-    if (MqttSubBase::node_message_distributor_)
-    {
-        MqttSubBase::node_message_distributor_->registerDerivedInstance(this);
-    }
-}
-
-GenericConditionNode::~GenericConditionNode()
-{
-    if (MqttSubBase::node_message_distributor_)
-    {
-        MqttSubBase::node_message_distributor_->unregisterInstance(this);
-    }
-}
-
 BT::PortsList GenericConditionNode::providedPorts()
 {
     return {
         BT::details::PortWithDefault<std::string>(
             BT::PortDirection::INPUT,
-            "Station",
-            "{Station}",
-            "The station from which to receive a message"),
-        BT::InputPort<std::string>("Message", "The message from the station"),
+            "Asset",
+            "{Asset}",
+            "The Asset from which to receive a message"),
+        BT::InputPort<std::string>("Message", "The message from the Asset"),
         BT::InputPort<std::string>("Field", "Name of the field to monitor in the MQTT message"),
         BT::InputPort<std::string>("comparison_type", "Type of comparison: equal, not_equal, greater, less, contains"),
         BT::InputPort<std::string>("expected_value", "Value to compare against")};
 }
-std::string GenericConditionNode::getFormattedTopic(const std::string &pattern)
+
+void GenericConditionNode::initializeTopicsFromAAS()
 {
-    std::vector<std::string> replacements;
-    BT::Expected<std::string> station = getInput<std::string>("Station");
-    BT::Expected<std::string> message = getInput<std::string>("Message");
-    if (station.has_value() && message.has_value())
+    try
     {
-        replacements.push_back(station.value());
-        replacements.push_back(message.value());
-        return mqtt_utils::formatWildcardTopic(pattern, replacements);
+        auto asset_input = getInput<std::string>("Asset");
+        if (!asset_input.has_value())
+        {
+            std::cerr << "Node '" << this->name() << "' has no Asset input configured" << std::endl;
+            return;
+        }
+
+        std::string asset_name = asset_input.value();
+        std::cout << "Node '" << this->name() << "' initializing for Asset: " << asset_name << std::endl;
+
+        std::string asset_id = aas_client_.getInstanceNameByAssetName(asset_name);
+        std::cout << "Initializing MQTT topics for asset ID: " << asset_id << std::endl;
+
+        // Create Topic objects
+        auto condition_opt = aas_client_.fetchInterface(asset_id, this->name(), "response");
+
+        if (!condition_opt.has_value())
+        {
+            std::cerr << "Failed to fetch interface from AAS for node: " << this->name() << std::endl;
+            return;
+        }
+
+        MqttSubBase::setTopic("response", condition_opt.value());
     }
-    return pattern;
+    catch (const std::exception &e)
+    {
+        std::cerr << "Exception initializing topics from AAS: " << e.what() << std::endl;
+    }
 }
 
 BT::NodeStatus GenericConditionNode::tick()

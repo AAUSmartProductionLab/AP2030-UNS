@@ -1,0 +1,20 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "ProductId",
+    "description": "JSON Schema for the status the Id of a product. Usefull to associate stations with a product when they process it",
+    "type": "object",
+    "allOf": [
+        {
+            "$ref": "data.schema.json"
+        },
+        {
+            "type": "object",
+            "properties": {
+                "ProductId": {
+                    "type": "string",
+                    "description": "The Id of the Product"}
+            },
+            "required": ["ProductId"]
+        }
+    ]
+}

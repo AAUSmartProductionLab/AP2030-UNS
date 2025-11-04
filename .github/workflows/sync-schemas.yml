@@ -1,0 +1,36 @@
+name: Sync Schemas to Docs
+
+on:
+  push:
+    paths:
+      - 'schemas/**'
+    branches:
+      - main
+      - Topic-and-Schema-Fetching-from-AAS
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Sync schemas to docs
+        run: |
+          rm -rf docs/schemas
+          cp -r schemas docs/schemas
+          
+      - name: Commit changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add docs/schemas
+          git diff --quiet && git diff --staged --quiet || git commit -m "Auto-sync schemas to docs folder"
+          
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}

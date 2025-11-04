@@ -4,9 +4,8 @@
 
 namespace fs = std::filesystem;
 
-MqttPubBase::MqttPubBase(MqttClient &mqtt_client,
-                         const std::map<std::string, mqtt_utils::Topic> &topics)
-    : mqtt_client_(&mqtt_client), topics_(topics)
+MqttPubBase::MqttPubBase(MqttClient &mqtt_client)
+    : mqtt_client_(&mqtt_client)
 {
 }
 

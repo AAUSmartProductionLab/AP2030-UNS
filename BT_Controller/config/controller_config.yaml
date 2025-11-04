@@ -1,11 +1,15 @@
-broker_uri: "192.168.0.104:1883"
-client_id: "bt_controller"
+mqtt:
+  broker_uri: "192.168.0.104:1883"
+  client_id: "bt_controller"
+  uns_topic: "NN/Nybrovej/InnoLab"
 
-uns_topic: "NN/Nybrovej/InnoLab"
+aas:
+  server_url: "http://localhost:4001"
 
-generate_xml_models: false
+groot2:
+  port: 1667
 
-groot2_port: 1667
-
-bt_description_path: "../config/bt_description/tree.xml"
-bt_nodes_path: "../config/bt_description/tree_nodes_model.xml"
+behavior_tree:
+  generate_xml_models: false
+  description_path: "../config/tree.xml"
+  nodes_path: "../config/bt_description/tree_nodes_model.xml"

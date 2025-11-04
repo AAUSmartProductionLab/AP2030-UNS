@@ -34,19 +34,22 @@ export default function PlanarMotorConfigurator() {
           id: "ima-filling", 
           title: "IMA Filling System", 
           color: "#1E7D74", 
-          abstractId: "Filling" 
+          abstractId: "Filling",
+          capabilities: ["Dispense", "Weigh", "Refill"]
         },
         { 
           id: "syntegon-filling", 
           title: "Syntegon Filling System", 
           color: "#30A399", 
-          abstractId: "Filling" 
+          abstractId: "Filling",
+          capabilities: ["Dispense", "Weigh"]
         },
         { 
           id: "optima-filling", 
           title: "Optima Filling System", 
           color: "#136058", 
-          abstractId: "Filling" 
+          abstractId: "Filling",
+          capabilities: ["Dispense"]
         }
       ]
     },
@@ -58,19 +61,22 @@ export default function PlanarMotorConfigurator() {
           id: "ima-stoppering", 
           title: "IMA Stoppering System", 
           color: "#0087CD", 
-          abstractId: "Stoppering" 
+          abstractId: "Stoppering",
+          capabilities: ["Stopper"]
         },
         { 
           id: "syntegon-stoppering", 
           title: "Syntegon Stoppering System", 
           color: "#00A0F0", 
-          abstractId: "Stoppering" 
+          abstractId: "Stoppering",
+          capabilities: ["Stopper"]
         },
         { 
           id: "optima-stoppering", 
           title: "Optima Stoppering System", 
           color: "#006CA3", 
-          abstractId: "Stoppering" 
+          abstractId: "Stoppering",
+          capabilities: ["Stopper"]
         }
       ]
     },
@@ -82,19 +88,22 @@ export default function PlanarMotorConfigurator() {
           id: "ima-capping", 
           title: "IMA Capping System", 
           color: "#9B4DCA", 
-          abstractId: "Capping" 
+          abstractId: "Capping",
+          capabilities: ["Cap"]
         },
         { 
           id: "syntegon-capping", 
           title: "Syntegon Capping System", 
           color: "#B07EDE", 
-          abstractId: "Capping" 
+          abstractId: "Capping",
+          capabilities: ["Cap"]
         },
         { 
           id: "optima-capping", 
           title: "Optima Capping System", 
           color: "#7939A0", 
-          abstractId: "Capping" 
+          abstractId: "Capping",
+          capabilities: ["Cap"]
         }
       ]
     },
@@ -106,19 +115,22 @@ export default function PlanarMotorConfigurator() {
           id: "ima-loading", 
           title: "IMA Loading System", 
           color: "#FF8097", 
-          abstractId: "Load" 
+          abstractId: "Load",
+          capabilities: ["Load"]
         },
         { 
           id: "syntegon-loading", 
           title: "Syntegon Loading System", 
           color: "#FF9EB0", 
-          abstractId: "Load" 
+          abstractId: "Load",
+          capabilities: ["Load"]
         },
         { 
           id: "optima-loading", 
           title: "Optima Loading System", 
           color: "#FF6080", 
-          abstractId: "Load" 
+          abstractId: "Load",
+          capabilities: ["Load"]
         }
       ]
     },
@@ -130,19 +142,22 @@ export default function PlanarMotorConfigurator() {
           id: "ima-unloading", 
           title: "IMA Unloading System", 
           color: "#F39C12", 
-          abstractId: "Unload" 
+          abstractId: "Unload",
+          capabilities: ["Unload"]
         },
         { 
           id: "syntegon-unloading", 
           title: "Syntegon Unloading System", 
           color: "#FFB142", 
-          abstractId: "Unload" 
+          abstractId: "Unload",
+          capabilities: ["Unload"]
         },
         { 
           id: "optima-unloading", 
           title: "Optima Unloading System", 
           color: "#E67E22", 
-          abstractId: "Unload" 
+          abstractId: "Unload",
+          capabilities: ["Unload"]
         }
       ]
     },
@@ -154,25 +169,29 @@ export default function PlanarMotorConfigurator() {
           id: "omron-camera", 
           title: "Omron Camera", 
           color: "#2ECC71", 
-          abstractId: "Camera" 
+          abstractId: "Camera",
+          capabilities: ["Capture"]
         },
         { 
           id: "omron-linetracker", 
           title: "Omron LineTracker", 
           color: "#27AE60", 
-          abstractId: "LineTracker" 
+          abstractId: "LineTracker",
+          capabilities: ["FillLevel"]
         },
         { 
           id: "quality-sensor", 
           title: "Quality Control Sensor", 
           color: "#1BBC9B", 
-          abstractId: "QualitySensor" 
+          abstractId: "QualitySensor",
+          capabilities: ["CheckQuality"]
         },
         { 
           id: "weight-sensor", 
           title: "Weight Verification", 
           color: "#16A085", 
-          abstractId: "WeightSensor" 
+          abstractId: "WeightSensor",
+          capabilities: ["Weigh"]
         }
       ]
     }
@@ -659,6 +678,7 @@ export default function PlanarMotorConfigurator() {
           color: draggedNode.color,
           sourceNode: draggedNode.id,
           abstractId: draggedNode.abstractId,
+          capabilities: draggedNode.capabilities, // Preserve capabilities
           isNew: true // Add isNew flag to trigger animation
         }
       ]);
@@ -730,7 +750,7 @@ export default function PlanarMotorConfigurator() {
       const stationId = MappingService.nameToId(containerName);
       const positions = MappingService.getPositions(stationId);
       
-      // Find the source node to get the abstractId if not directly on placed node
+      // Find the source node to get the abstractId and capabilities if not directly on placed node
       const sourceNode = node.abstractId ? 
         null : 
         allNodes.find(n => n.id === node.sourceNode);
@@ -738,11 +758,20 @@ export default function PlanarMotorConfigurator() {
       const abstractId = node.abstractId || 
         (sourceNode ? sourceNode.abstractId : "Unknown");
       
+      // Get capabilities from the node or its source
+      const capabilities = node.capabilities || 
+        (sourceNode ? sourceNode.capabilities : []);
+      
+      // Get instance name (the title of the module)
+      const instanceName = node.title || "Unknown System";
+      
       return {
         Name: abstractId, // Use the abstractId as the Name
+        "Instance Name": instanceName, // The specific module instance (e.g., "Syntegon Filling System")
         StationId: stationId,
         "Approach Position": positions.approach,
         "Process Position": positions.process,
+        "Capabilities": capabilities
       };
     });
     

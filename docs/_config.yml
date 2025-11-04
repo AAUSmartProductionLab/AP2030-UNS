@@ -1,0 +1,13 @@
+# GitHub Pages / Jekyll Configuration for docs folder
+theme: jekyll-theme-minimal
+title: AP2030-UNS
+description: Asset Administration Shell definitions and schemas
+
+# Include JSON files
+include:
+  - ".json"
+
+# Disable relative links plugin behavior
+relative_links:
+  enabled: false
+  collections: false

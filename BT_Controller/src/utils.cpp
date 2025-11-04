@@ -45,6 +45,7 @@ namespace bt_utils
                             std::string &serverURI,
                             std::string &clientId,
                             std::string &unsTopicPrefix,
+                            std::string &aasServerUri,
                             int &groot2_port,
                             std::string &bt_description_path,
                             std::string &bt_nodes_path)
@@ -59,35 +60,82 @@ namespace bt_utils
 
             YAML::Node config = YAML::LoadFile(filename);
 
-            if (config["broker_uri"])
+            // Parse MQTT section
+            if (config["mqtt"])
             {
-                serverURI = config["broker_uri"].as<std::string>();
+                auto mqtt = config["mqtt"];
+
+                if (mqtt["broker_uri"])
+                {
+                    serverURI = mqtt["broker_uri"].as<std::string>();
+                    // Add "tcp://" prefix if not present
+                    if (serverURI.find("://") == std::string::npos)
+                    {
+                        serverURI = "tcp://" + serverURI;
+                    }
+                }
+
+                if (mqtt["client_id"])
+                {
+                    clientId = mqtt["client_id"].as<std::string>();
+                }
+
+                if (mqtt["uns_topic"])
+                {
+                    unsTopicPrefix = mqtt["uns_topic"].as<std::string>();
+                }
             }
-            if (config["client_id"])
+
+            // Parse AAS section
+            if (config["aas"])
             {
-                clientId = config["client_id"].as<std::string>();
+                auto aas = config["aas"];
+
+                if (aas["server_url"])
+                {
+                    aasServerUri = aas["server_url"].as<std::string>();
+                }
             }
-            if (config["uns_topic"])
+
+            // Parse Groot2 section
+            if (config["groot2"])
             {
-                unsTopicPrefix = config["uns_topic"].as<std::string>();
+                auto groot2 = config["groot2"];
+
+                if (groot2["port"])
+                {
+                    groot2_port = groot2["port"].as<int>();
+                }
             }
-            if (config["generate_xml_models"])
+
+            // Parse Behavior Tree section
+            if (config["behavior_tree"])
             {
-                generate_xml_models = config["generate_xml_models"].as<bool>();
+                auto bt = config["behavior_tree"];
+
+                if (bt["generate_xml_models"])
+                {
+                    generate_xml_models = bt["generate_xml_models"].as<bool>();
+                }
+
+                if (bt["description_path"])
+                {
+                    bt_description_path = bt["description_path"].as<std::string>();
+                }
+
+                if (bt["nodes_path"])
+                {
+                    bt_nodes_path = bt["nodes_path"].as<std::string>();
+                }
             }
-            if (config["groot2_port"])
-            {
-                groot2_port = config["groot2_port"].as<int>();
-            }
-            if (config["bt_description_path"])
-            {
-                bt_description_path = config["bt_description_path"].as<std::string>();
-            }
-            if (config["bt_nodes_path"])
-            {
-                bt_nodes_path = config["bt_nodes_path"].as<std::string>();
-            }
+
             std::cout << "Configuration loaded from: " << filename << std::endl;
+            std::cout << "  MQTT Broker: " << serverURI << std::endl;
+            std::cout << "  Client ID: " << clientId << std::endl;
+            std::cout << "  UNS Topic Prefix: " << unsTopicPrefix << std::endl;
+            std::cout << "  AAS Server: " << aasServerUri << std::endl;
+            std::cout << "  Groot2 Port: " << groot2_port << std::endl;
+
             return true;
         }
         catch (const YAML::Exception &e)
@@ -152,6 +200,8 @@ namespace mqtt_utils
 
         return formatted_topic;
     }
+
+    // generates a  schema with respect to references within schemas.
     std::unique_ptr<nlohmann::json_schema::json_validator> createSchemaValidator(const std::string &schema_path)
     {
         if (schema_path.empty())
@@ -227,4 +277,180 @@ namespace mqtt_utils
 
         return patternDone && topicDone;
     }
+
+    // Constructor with JSON schema directly
+    Topic::Topic(const std::string &topic,
+                 const nlohmann::json &schema,
+                 int qos,
+                 bool retain)
+        : topic_(topic),
+          pattern_(topic),
+          schema_(schema),
+          schema_validator_(nullptr),
+          qos_(qos),
+          retain_(retain)
+    {
+        initValidator();
+    }
+
+    // Constructor that loads schema from file path
+    Topic Topic::fromSchemaPath(const std::string &topic,
+                                const std::string &schema_path,
+                                int qos,
+                                bool retain)
+    {
+        nlohmann::json schema = load_schema(schema_path);
+        return Topic(topic, schema, qos, retain);
+    }
+
+    // Copy Constructor
+    Topic::Topic(const Topic &other)
+        : topic_(other.topic_),
+          pattern_(other.pattern_),
+          schema_(other.schema_),
+          schema_validator_(nullptr),
+          qos_(other.qos_),
+          retain_(other.retain_)
+    {
+        initValidator();
+    }
+
+    // Move Constructor
+    Topic::Topic(Topic &&other) noexcept
+        : topic_(std::move(other.topic_)),
+          pattern_(std::move(other.pattern_)),
+          schema_(std::move(other.schema_)),
+          schema_validator_(std::move(other.schema_validator_)),
+          qos_(other.qos_),
+          retain_(other.retain_)
+    {
+    }
+
+    // Copy Assignment Operator
+    Topic &Topic::operator=(const Topic &other)
+    {
+        if (this != &other)
+        {
+            topic_ = other.topic_;
+            pattern_ = other.pattern_;
+            schema_ = other.schema_;
+            schema_validator_.reset();
+            initValidator();
+            qos_ = other.qos_;
+            retain_ = other.retain_;
+        }
+        return *this;
+    }
+
+    // Move Assignment Operator
+    Topic &Topic::operator=(Topic &&other) noexcept
+    {
+        if (this != &other)
+        {
+            topic_ = std::move(other.topic_);
+            pattern_ = std::move(other.pattern_);
+            schema_ = std::move(other.schema_);
+            schema_validator_ = std::move(other.schema_validator_);
+            qos_ = other.qos_;
+            retain_ = other.retain_;
+        }
+        return *this;
+    }
+
+    // Initialize schema validator
+    void Topic::initValidator()
+    {
+        if (!schema_.is_null() && !schema_.empty())
+        {
+            try
+            {
+                auto validator = std::make_unique<nlohmann::json_schema::json_validator>(
+                    [](const nlohmann::json_uri &uri, nlohmann::json &schema)
+                    {
+                        // Extract the file name from the URI
+                        std::string schema_file = uri.path();
+
+                        // Remove leading slash if present
+                        if (!schema_file.empty() && schema_file[0] == '/')
+                        {
+                            schema_file = schema_file.substr(1);
+                        }
+
+                        // Build the full path relative to the schemas directory
+                        std::string schema_path = "../../schemas/" + schema_file;
+
+                        // Load the referenced schema
+                        schema = load_schema(schema_path);
+                    },
+                    nlohmann::json_schema::default_string_format_check);
+                validator->set_root_schema(schema_);
+                schema_validator_ = std::move(validator);
+            }
+            catch (const std::exception &e)
+            {
+                std::cerr << "Error creating schema validator for topic '" << topic_ << "': " << e.what() << std::endl;
+                schema_validator_.reset();
+            }
+        }
+    }
+
+    void Topic::setSchema(const nlohmann::json &schema)
+    {
+        schema_ = schema;
+        schema_validator_.reset();
+        initValidator();
+    }
+    void Topic::setSchemaFromPath(const std::string &schema_path)
+    {
+        schema_ = load_schema(schema_path);
+        schema_validator_.reset();
+        initValidator();
+    }
+
+    // Validate message against schema
+    bool Topic::validateMessage(const nlohmann::json &message) const
+    {
+        if (schema_validator_)
+        {
+            try
+            {
+                schema_validator_->validate(message);
+                return true;
+            }
+            catch (const std::exception &e)
+            {
+                std::cerr << "JSON validation failed for topic '" << topic_ << "': " << e.what() << std::endl;
+                return false;
+            }
+        }
+        return false;
+    }
 } // namespace mqtt_utils
+
+namespace BT
+{
+    // Define here instead
+    StringView trim_string_view(StringView sv)
+    {
+        if (sv.empty())
+        {
+            return sv;
+        }
+        size_t first = 0;
+        while (first < sv.size() && std::isspace(static_cast<unsigned char>(sv[first])))
+        {
+            ++first;
+        }
+        if (first == sv.size()) // All whitespace
+        {
+            return StringView(sv.data() + first, 0);
+        }
+
+        size_t last = sv.size() - 1;
+        while (last > first && std::isspace(static_cast<unsigned char>(sv[last])))
+        {
+            --last;
+        }
+        return sv.substr(first, (last - first) + 1);
+    }
+}

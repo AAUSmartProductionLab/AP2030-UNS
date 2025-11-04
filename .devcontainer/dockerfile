@@ -1,5 +1,5 @@
 # Build stage
-FROM mcr.microsoft.com/devcontainers/base:jammy AS builder
+FROM mcr.microsoft.com/devcontainers/cpp:ubuntu-24.04 AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y \
     libssl-dev \
     python3-pip \
     python3-venv \
-    pkg-config \
+    pkgconf \
     uuid-dev \
     wget \
     libzmq3-dev \
@@ -104,11 +104,11 @@ RUN wget https://s3.us-west-1.amazonaws.com/download.behaviortree.dev/groot2_lin
     mv squashfs-root/* /opt/groot/
 
 # Final stage
-FROM mcr.microsoft.com/devcontainers/base:jammy
+FROM mcr.microsoft.com/devcontainers/cpp:ubuntu-24.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install runtime dependencies and minimal dev tools
+# IMPORTANT: Update apt package lists first in the final stage
 RUN apt-get update && apt-get install -y \
     build-essential \
     cmake \
@@ -119,13 +119,13 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     python3-venv \
     sudo \
-    pkg-config \
+    pkgconf \
     uuid-dev \
     libfmt-dev \
     # Groot2 dependencies - add missing OpenGL libraries
     libglvnd0 libgl1 libglx0 libegl1 libxkbcommon0 libxcomposite1 \
     libxcursor1 libxdamage1 libxfixes3 libxi6 libxrandr2 libxtst6 libfontconfig1 \
-    libopengl0 libglu1 mesa-utils \
+    libopengl0 libglu1-mesa mesa-utils \
     libyaml-cpp-dev ffmpeg libsm6 libxext6 \
     gdb \
     gdbserver \
@@ -139,6 +139,7 @@ RUN apt-get update && apt-get install -y \
 RUN python3 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 RUN pip install --no-cache-dir paho-mqtt jsonschema conan numpy opencv-python pillow
+
 # Copy installed libraries from builder
 COPY --from=builder /usr/local/lib/ /usr/local/lib/
 COPY --from=builder /usr/local/include/ /usr/local/include/
