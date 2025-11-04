@@ -740,7 +740,7 @@
                   },
                   {
                     "type": "SubmodelElementCollection",
-                    "value": "state"
+                    "value": "PackMLState"
                   }
                 ]
               }
@@ -794,7 +794,7 @@
                   },
                   {
                     "type": "SubmodelElementCollection",
-                    "value": "occupation"
+                    "value": "occupationState"
                   }
                 ]
               }
