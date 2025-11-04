@@ -9,10 +9,29 @@ void PopElementNode::initializeTopicsFromAAS()
 {
     try
     {
-        std::string asset_id = aas_client_.getInstanceNameByAssetName(this->config().blackboard->get<std::string>("XbotTopic"));
+        auto xbot_topic_opt = this->config().blackboard->getAny("XbotTopic");
+        if (!xbot_topic_opt)
+        {
+            std::cerr << "Node '" << this->name() << "' cannot access XbotTopic from blackboard" << std::endl;
+            return;
+        }
+
+        std::string xbot_topic = xbot_topic_opt->cast<std::string>();
+        std::cout << "Node '" << this->name() << "' initializing for XbotTopic: " << xbot_topic << std::endl;
+
+        std::string asset_id = aas_client_.getInstanceNameByAssetName(xbot_topic);
+        std::cout << "Initializing MQTT topics for asset ID: " << asset_id << std::endl;
+
         // Create Topic objects
-        mqtt_utils::Topic product_association = aas_client_.fetchInterface(asset_id, this->name(), "product_association").value();
-        MqttPubBase::setTopic("request", product_association);
+        auto product_association_opt = aas_client_.fetchInterface(asset_id, this->name(), "product_association");
+
+        if (!product_association_opt.has_value())
+        {
+            std::cerr << "Failed to fetch interface from AAS for node: " << this->name() << std::endl;
+            return;
+        }
+
+        MqttPubBase::setTopic("request", product_association_opt.value());
     }
     catch (const std::exception &e)
     {

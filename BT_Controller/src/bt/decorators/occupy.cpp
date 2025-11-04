@@ -11,17 +11,36 @@ void Occupy::initializeTopicsFromAAS()
 {
     try
     {
-        std::string asset_id = aas_client_.getInstanceNameByAssetName(getInput<std::string>("Asset").value());
-        // Create Topic objects
-        mqtt_utils::Topic raw_register_topic = aas_client_.fetchInterface(asset_id, this->name(), "register").value();
-        mqtt_utils::Topic raw_unregister_topic = aas_client_.fetchInterface(asset_id, this->name(), "unregister").value();
-        mqtt_utils::Topic raw_register_response_topic = aas_client_.fetchInterface(asset_id, this->name(), "register_response").value();
-        mqtt_utils::Topic raw_unregister_response_topic = aas_client_.fetchInterface(asset_id, this->name(), "unregister_response").value();
+        auto asset_input = getInput<std::string>("Asset");
+        if (!asset_input.has_value())
+        {
+            std::cerr << "Node '" << this->name() << "' has no Asset input configured" << std::endl;
+            return;
+        }
 
-        MqttPubBase::setTopic("register", raw_register_topic);
-        MqttPubBase::setTopic("unregister", raw_unregister_topic);
-        MqttSubBase::setTopic("register_response", raw_register_response_topic);
-        MqttSubBase::setTopic("unregister_response", raw_unregister_response_topic);
+        std::string asset_name = asset_input.value();
+        std::cout << "Node '" << this->name() << "' initializing for Asset: " << asset_name << std::endl;
+
+        std::string asset_id = aas_client_.getInstanceNameByAssetName(asset_name);
+        std::cout << "Initializing MQTT topics for asset ID: " << asset_id << std::endl;
+
+        // Create Topic objects
+        auto register_opt = aas_client_.fetchInterface(asset_id, this->name(), "register");
+        auto unregister_opt = aas_client_.fetchInterface(asset_id, this->name(), "unregister");
+        auto register_response_opt = aas_client_.fetchInterface(asset_id, this->name(), "register_response");
+        auto unregister_response_opt = aas_client_.fetchInterface(asset_id, this->name(), "unregister_response");
+
+        if (!register_opt.has_value() || !unregister_opt.has_value() ||
+            !register_response_opt.has_value() || !unregister_response_opt.has_value())
+        {
+            std::cerr << "Failed to fetch interfaces from AAS for node: " << this->name() << std::endl;
+            return;
+        }
+
+        MqttPubBase::setTopic("register", register_opt.value());
+        MqttPubBase::setTopic("unregister", unregister_opt.value());
+        MqttSubBase::setTopic("register_response", register_response_opt.value());
+        MqttSubBase::setTopic("unregister_response", unregister_response_opt.value());
     }
     catch (const std::exception &e)
     {

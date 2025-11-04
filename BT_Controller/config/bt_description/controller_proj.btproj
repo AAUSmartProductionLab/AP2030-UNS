@@ -22,7 +22,7 @@
             <input_port name="Asset" default="{Asset}" type="std::string">The Asset from which to receive a message</input_port>
         </Condition>
         <SubTree ID="Filling" editable="true">
-            <input_port name="Station" default="Filling"/>
+            <input_port name="Asset" default="Filling"/>
         </SubTree>
         <Decorator ID="GetProductFromQueue">
             <output_port name="ProductID" default="{ProductID}" type="std::string">The product ID of the current product</output_port>
@@ -34,7 +34,7 @@
             <input_port name="Queue" default="{ProductIDs}" type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;">The queue to monitor. Node runs child while this queue is not empty.</input_port>
         </Decorator>
         <SubTree ID="Load" editable="true">
-            <input_port name="Station" default="Load"/>
+            <input_port name="Asset" default="Load"/>
         </SubTree>
         <Action ID="MoveShuttle">
             <input_port name="Topic" default="{Topic}" type="std::string">Topic to which we want to send the request</input_port>
@@ -58,6 +58,9 @@
             <input_port name="if_empty" default="SUCCESS" type="BT::NodeStatus">Status to return if the queue is empty (SUCCESS, FAILURE, SKIPPED).</input_port>
             <input_port name="Queue" default="{ProductIDs}" type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;">The shared queue of product IDs. An element will be popped from it.</input_port>
         </Action>
+        <SubTree ID="QualityControl" editable="true">
+            <input_port name="Asset" default="Camera"/>
+        </SubTree>
         <Action ID="Refill_Node">
             <input_port name="Uuid" default="{ID}" type="std::string">UUID for the command to execute</input_port>
             <input_port name="Asset" default="{Asset}" type="std::string">The asset used for refilling</input_port>
@@ -82,10 +85,10 @@
             <input_port name="Station" default="{Station}" type="std::string">The station to register with</input_port>
         </Action>
         <SubTree ID="Stoppering" editable="true">
-            <input_port name="Station" default="Stoppering"/>
+            <input_port name="Asset" default="Stoppering"/>
         </SubTree>
         <SubTree ID="Unload" editable="true">
-            <input_port name="Station" default="Unload"/>
+            <input_port name="Asset" default="Unload"/>
         </SubTree>
         <Decorator ID="UseStation">
             <input_port name="Uuid" default="{ID}" type="std::string">UUID Used for registration</input_port>

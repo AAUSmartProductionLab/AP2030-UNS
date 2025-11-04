@@ -9,15 +9,33 @@ void RefillNode::initializeTopicsFromAAS()
 {
     try
     {
-        std::string asset_id = aas_client_.getInstanceNameByAssetName(getInput<std::string>("Asset").value());
-        // Create Topic objects
-        mqtt_utils::Topic request_topic = aas_client_.fetchInterface(asset_id, this->name(), "request").value();
-        mqtt_utils::Topic response_topic = aas_client_.fetchInterface(asset_id, this->name(), "response").value();
-        mqtt_utils::Topic weight_topic = aas_client_.fetchInterface(asset_id, this->name(), "weight").value();
+        auto asset_input = getInput<std::string>("Asset");
+        if (!asset_input.has_value())
+        {
+            std::cerr << "Node '" << this->name() << "' has no Asset input configured" << std::endl;
+            return;
+        }
 
-        MqttPubBase::setTopic("request", request_topic);
-        MqttSubBase::setTopic("response", response_topic);
-        MqttSubBase::setTopic("weight", weight_topic);
+        std::string asset_name = asset_input.value();
+        std::cout << "Node '" << this->name() << "' initializing for Asset: " << asset_name << std::endl;
+
+        std::string asset_id = aas_client_.getInstanceNameByAssetName(asset_name);
+        std::cout << "Initializing MQTT topics for asset ID: " << asset_id << std::endl;
+
+        // Create Topic objects
+        auto request_opt = aas_client_.fetchInterface(asset_id, this->name(), "request");
+        auto response_opt = aas_client_.fetchInterface(asset_id, this->name(), "response");
+        auto weight_opt = aas_client_.fetchInterface(asset_id, this->name(), "weight");
+
+        if (!request_opt.has_value() || !response_opt.has_value() || !weight_opt.has_value())
+        {
+            std::cerr << "Failed to fetch interfaces from AAS for node: " << this->name() << std::endl;
+            return;
+        }
+
+        MqttPubBase::setTopic("request", request_opt.value());
+        MqttSubBase::setTopic("response", response_opt.value());
+        MqttSubBase::setTopic("weight", weight_opt.value());
     }
     catch (const std::exception &e)
     {

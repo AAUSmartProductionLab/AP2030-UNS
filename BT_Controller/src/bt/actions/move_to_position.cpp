@@ -6,15 +6,33 @@ void MoveToPosition::initializeTopicsFromAAS()
 {
     try
     {
-        std::string asset_id = aas_client_.getInstanceNameByAssetName(getInput<std::string>("Asset").value());
-        // Create Topic objects
-        mqtt_utils::Topic request = aas_client_.fetchInterface(asset_id, this->name(), "request").value();
-        mqtt_utils::Topic halt = aas_client_.fetchInterface(asset_id, this->name(), "halt").value();
-        mqtt_utils::Topic response = aas_client_.fetchInterface(asset_id, this->name(), "response").value();
+        auto asset_input = getInput<std::string>("Asset");
+        if (!asset_input.has_value())
+        {
+            std::cerr << "Node '" << this->name() << "' has no Asset input configured" << std::endl;
+            return;
+        }
 
-        MqttPubBase::setTopic("request", request);
-        MqttPubBase::setTopic("halt", halt);
-        MqttSubBase::setTopic("response", response);
+        std::string asset_name = asset_input.value();
+        std::cout << "Node '" << this->name() << "' initializing for Asset: " << asset_name << std::endl;
+
+        std::string asset_id = aas_client_.getInstanceNameByAssetName(asset_name);
+        std::cout << "Initializing MQTT topics for asset ID: " << asset_id << std::endl;
+
+        // Create Topic objects
+        auto request_opt = aas_client_.fetchInterface(asset_id, this->name(), "request");
+        auto halt_opt = aas_client_.fetchInterface(asset_id, this->name(), "halt");
+        auto response_opt = aas_client_.fetchInterface(asset_id, this->name(), "response");
+
+        if (!request_opt.has_value() || !halt_opt.has_value() || !response_opt.has_value())
+        {
+            std::cerr << "Failed to fetch interfaces from AAS for node: " << this->name() << std::endl;
+            return;
+        }
+
+        MqttPubBase::setTopic("request", request_opt.value());
+        MqttPubBase::setTopic("halt", halt_opt.value());
+        MqttSubBase::setTopic("response", response_opt.value());
     }
     catch (const std::exception &e)
     {

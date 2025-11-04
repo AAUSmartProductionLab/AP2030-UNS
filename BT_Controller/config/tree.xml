@@ -262,19 +262,19 @@
         <Fallback>
           <SequenceWithMemory>
             <SubTree ID="Load"
-                     Station="Load"
+                     Asset="Load"
                      _autoremap="true"/>
             <SubTree ID="Filling"
-                     Station="Filling"
+                     Asset="Filling"
                      _autoremap="true"/>
             <SubTree ID="Stoppering"
-                     Station="Stoppering"
+                     Asset="Stoppering"
                      _autoremap="true"/>
             <SubTree ID="QualityControl"
-                     Station="Camera"
+                     Asset="Camera"
                      _autoremap="true"/>
             <SubTree ID="Unload"
-                     Station="Unload"
+                     Asset="Unload"
                      _autoremap="true"/>
           </SequenceWithMemory>
           <SubTree ID="Scrap"
@@ -322,7 +322,7 @@
     </Condition>
     <SubTree ID="Filling"
              editable="true">
-      <input_port name="Station"
+      <input_port name="Asset"
                   default="Filling"/>
     </SubTree>
     <Decorator ID="KeepRunningUntilEmpty">
@@ -335,7 +335,7 @@
     </Decorator>
     <SubTree ID="Load"
              editable="true">
-      <input_port name="Station"
+      <input_port name="Asset"
                   default="Load"/>
     </SubTree>
     <Action ID="MoveToPosition">
@@ -368,6 +368,11 @@
                   default="{ProductIDs}"
                   type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;">The shared queue of product IDs. An element will be popped from it.</input_port>
     </Action>
+    <SubTree ID="QualityControl"
+             editable="true">
+      <input_port name="Asset"
+                  default="Camera"/>
+    </SubTree>
     <Action ID="Refill_Node">
       <input_port name="Uuid"
                   default="{ID}"
@@ -383,12 +388,12 @@
     </SubTree>
     <SubTree ID="Stoppering"
              editable="true">
-      <input_port name="Station"
+      <input_port name="Asset"
                   default="Stoppering"/>
     </SubTree>
     <SubTree ID="Unload"
              editable="true">
-      <input_port name="Station"
+      <input_port name="Asset"
                   default="Unload"/>
     </SubTree>
     <SubTree ID="Xbot_Production"

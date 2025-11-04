@@ -36,10 +36,28 @@ void MqttSyncConditionNode::initializeTopicsFromAAS()
 {
     try
     {
-        std::string asset_id = aas_client_.getInstanceNameByAssetName(getInput<std::string>("Asset").value());
+        auto asset_input = getInput<std::string>("Asset");
+        if (!asset_input.has_value())
+        {
+            std::cerr << "Node '" << this->name() << "' has no Asset input configured" << std::endl;
+            return;
+        }
+
+        std::string asset_name = asset_input.value();
+        std::cout << "Node '" << this->name() << "' initializing for Asset: " << asset_name << std::endl;
+
+        std::string asset_id = aas_client_.getInstanceNameByAssetName(asset_name);
+
         // Create Topic objects
-        mqtt_utils::Topic response_topic = aas_client_.fetchInterface(asset_id, this->name(), "response").value();
-        MqttSubBase::setTopic("response", response_topic);
+        auto response_opt = aas_client_.fetchInterface(asset_id, this->name(), "response");
+
+        if (!response_opt.has_value())
+        {
+            std::cerr << "Failed to fetch interface from AAS for node: " << this->name() << std::endl;
+            return;
+        }
+
+        MqttSubBase::setTopic("response", response_opt.value());
     }
     catch (const std::exception &e)
     {

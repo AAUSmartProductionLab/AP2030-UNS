@@ -94,6 +94,11 @@ std::optional<mqtt_utils::Topic> AASClient::fetchInterface(const std::string &as
         std::ostringstream url;
         url << "/" << asset_id << "/operations/" << operation << "/interface/" << endpoint;
 
+        std::cout << "Fetching interface from AAS - Asset: " << asset_id
+                  << ", Operation: " << operation
+                  << ", Endpoint: " << endpoint
+                  << ", URL: " << aas_server_url_ << url.str() << std::endl;
+
         nlohmann::json response = makeGetRequest(url.str());
 
         std::string topic_;
@@ -130,16 +135,21 @@ std::optional<mqtt_utils::Topic> AASClient::fetchInterface(const std::string &as
                     }
                 }
 
+                std::cout << "Successfully fetched interface - Topic: " << topic_ << std::endl;
                 return mqtt_utils::Topic(topic_, schema_, qos_, retain_);
             }
         }
 
+        std::cerr << "AAS response missing 'value' field or not an array for " << asset_id
+                  << ", operation: " << operation << ", endpoint: " << endpoint << std::endl;
         return std::nullopt;
     }
     catch (const std::exception &e)
     {
-        std::cerr << "Failed to fetch command topic for " << asset_id
-                  << ": " << e.what() << std::endl;
+        std::cerr << "Failed to fetch interface from AAS for asset: " << asset_id
+                  << ", operation: " << operation
+                  << ", endpoint: " << endpoint
+                  << " - Error: " << e.what() << std::endl;
         return std::nullopt;
     }
 }
@@ -169,7 +179,9 @@ std::string AASClient::getInstanceNameByAssetName(const std::string &asset_name)
             // Check if InstanceName exists
             if (it->contains("Instance Name") && (*it)["Instance Name"].is_string())
             {
-                return (*it)["Instance Name"].get<std::string>();
+                std::string instance_name = (*it)["Instance Name"].get<std::string>();
+                std::cout << "Found Instance Name: " << instance_name << " for Asset Name: " << asset_name << std::endl;
+                return instance_name;
             }
             else
             {

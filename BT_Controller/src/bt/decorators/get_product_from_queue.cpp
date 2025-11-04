@@ -9,11 +9,29 @@ void GetProductFromQueue::initializeTopicsFromAAS()
 {
     try
     {
-        std::string asset_id = aas_client_.getInstanceNameByAssetName(this->config().blackboard->get<std::string>("XbotTopic"));
-        // Create Topic objects
-        mqtt_utils::Topic request_topic = aas_client_.fetchInterface(asset_id, this->name(), "ProductID").value();
+        auto xbot_topic_opt = this->config().blackboard->getAny("XbotTopic");
+        if (!xbot_topic_opt)
+        {
+            std::cerr << "Node '" << this->name() << "' cannot access XbotTopic from blackboard" << std::endl;
+            return;
+        }
 
-        MqttPubBase::setTopic("ProductID", request_topic);
+        std::string xbot_topic = xbot_topic_opt->cast<std::string>();
+        std::cout << "Node '" << this->name() << "' initializing for XbotTopic: " << xbot_topic << std::endl;
+
+        std::string asset_id = aas_client_.getInstanceNameByAssetName(xbot_topic);
+        std::cout << "Initializing MQTT topics for asset ID: " << asset_id << std::endl;
+
+        // Create Topic objects
+        auto request_opt = aas_client_.fetchInterface(asset_id, this->name(), "ProductID");
+
+        if (!request_opt.has_value())
+        {
+            std::cerr << "Failed to fetch interface from AAS for node: " << this->name() << std::endl;
+            return;
+        }
+
+        MqttPubBase::setTopic("ProductID", request_opt.value());
     }
     catch (const std::exception &e)
     {
