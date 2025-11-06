@@ -543,7 +543,7 @@
                             "idShort": "output",
                             "modelType": "File",
                             "contentType": "application/schema+json",
-                            "value": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/data.schema.json"
+                            "value": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/count.schema.json"
                         },
                         {
                           "idShort": "forms",
