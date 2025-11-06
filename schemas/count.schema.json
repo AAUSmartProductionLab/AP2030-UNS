@@ -1,0 +1,22 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Count from IPC Counting of PPM",
+    "description": "JSON Schema for counting units in production processes",
+    "type": "object",
+    "allOf": [
+        {
+            "$ref": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/data.schema.json"
+        },
+        {
+            "type": "object",
+            "properties": {
+            "Count": {
+                "type": "integer",
+                "description": "The count of units processed",
+                "minimum": 0
+            }
+        },
+        "required": ["Count"]
+        }
+    ]
+}
