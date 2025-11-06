@@ -4,7 +4,7 @@
     "type": "object",
     "allOf": [
         {
-            "$ref": "command.schema.json"
+            "$ref": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/command.schema.json"
         },
         {
             "type": "object",
