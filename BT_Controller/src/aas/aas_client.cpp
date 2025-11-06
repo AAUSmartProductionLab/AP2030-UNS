@@ -108,14 +108,16 @@ std::optional<mqtt_utils::Topic> AASClient::fetchInterface(const std::string &as
         }
 
         // Find the AAS with matching idShort
+        std::string expected_id_short = asset_id + "AAS";
         std::string shell_endpoint;
         for (const auto &shell : registry_response["result"])
         {
-            if (shell.contains("idShort") && shell["idShort"] == asset_id)
+            if (shell.contains("idShort") && shell["idShort"] == expected_id_short)
             {
                 if (shell.contains("endpoints") && shell["endpoints"].is_array() && !shell["endpoints"].empty())
                 {
                     shell_endpoint = shell["endpoints"][0]["protocolInformation"]["href"];
+                    std::cout << "Found matching AAS with idShort: " << expected_id_short << std::endl;
                     break;
                 }
             }
