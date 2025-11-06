@@ -97,6 +97,22 @@ Examples:
     config_parser.add_argument('--databridge-name', type=str,
                                help='Name of databridge container')
 
+    # MQTT Listener command
+    listen_parser = subparsers.add_parser('listen',
+                                          help='Start MQTT listener for automatic registration')
+    listen_parser.add_argument('--mqtt-broker', type=str, default='192.168.0.104',
+                               help='MQTT broker hostname/IP (default: 192.168.0.104)')
+    listen_parser.add_argument('--mqtt-port', type=int, default=1883,
+                               help='MQTT broker port (default: 1883)')
+    listen_parser.add_argument('--registration-topic', type=str,
+                               default='NN/Nybrovej/InnoLab/Registration/Request',
+                               help='MQTT topic for registration requests')
+    listen_parser.add_argument('--response-topic', type=str,
+                               default='NN/Nybrovej/InnoLab/Registration/Response',
+                               help='MQTT topic for registration responses')
+    listen_parser.add_argument('--databridge-name', type=str, default='databridge',
+                               help='Name of databridge container (default: databridge)')
+
     args = parser.parse_args()
 
     # Set logging level
@@ -197,6 +213,56 @@ Examples:
 
             logger.info("✓ Configuration updated")
             sys.exit(0)
+
+        elif args.command == 'listen':
+            from src.mqtt_registration import MQTTRegistrationService
+            
+            logger.info("Starting MQTT registration listener...")
+            logger.info(f"MQTT Broker: {args.mqtt_broker}:{args.mqtt_port}")
+            logger.info(f"Registration Topic: {args.registration_topic}")
+            logger.info(f"Response Topic: {args.response_topic}")
+            
+            # Initialize MQTT registration service
+            mqtt_service = MQTTRegistrationService(
+                registration_service=service,
+                mqtt_broker=args.mqtt_broker,
+                mqtt_port=args.mqtt_port,
+                registration_topic=args.registration_topic,
+                response_topic=args.response_topic
+            )
+            
+            try:
+                mqtt_service.start()
+                logger.info("✓ MQTT listener started. Press Ctrl+C to stop.")
+                logger.info("\nMessage format:")
+                logger.info('{')
+                logger.info('  "requestId": "unique-id",')
+                logger.info('  "assetId": "asset-identifier",')
+                logger.info('  "aasData": {')
+                logger.info('    "assetAdministrationShells": [...],')
+                logger.info('    "submodels": [...]')
+                logger.info('  }')
+                logger.info('}\n')
+                
+                # Keep running until interrupted
+                while True:
+                    import time
+                    time.sleep(1)
+                    
+            except KeyboardInterrupt:
+                logger.info("\nShutting down MQTT listener...")
+                mqtt_service.stop()
+                logger.info("✓ MQTT listener stopped")
+                
+                # Print final statistics
+                stats = mqtt_service.get_stats()
+                logger.info(f"\nFinal Statistics:")
+                logger.info(f"  Received: {stats['received']}")
+                logger.info(f"  Processed: {stats['processed']}")
+                logger.info(f"  Failed: {stats['failed']}")
+                logger.info(f"  Queue size: {stats['queue_size']}")
+                
+                sys.exit(0)
 
         else:
             parser.print_help()
