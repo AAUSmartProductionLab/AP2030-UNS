@@ -5,18 +5,18 @@
     "type": "object",
         "allOf": [
             {
-                "$ref": "data.schema.json"
+                "$ref": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/data.schema.json"
             },
             {
                 "anyOf": [
                     {
-                        "$ref": "order.schema.json"
+                        "$ref": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/order.schema.json"
                     },
                     {
-                        "$ref": "planarStations.schema.json"
+                        "$ref": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/planarStations.schema.json"
                     },
                     {
-                        "$ref": "planarLimits.schema.json"
+                        "$ref": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/planarLimits.schema.json"
                     }
                 ]
             }
