@@ -1,7 +1,7 @@
 {
   "assetAdministrationShells": [
     {
-      "idShort": "ImaFillingSystemAAS",
+      "idShort": "imaFillingSystemAAS",
       "id": "https://smartproductionlab.aau.dk/aas/imaFillingSystem",
       "assetInformation": {
         "assetKind": "Instance",
@@ -759,9 +759,9 @@
             },
             {
               "idShort": "Queue",
-              "modelType": "SubmodelElementList",
-              "typeValueListElement": "ReferenceElement",
-              "value": []
+              "modelType": "Property",
+              "valueType": "xs:string",
+              "value": "[]"
             },
             {
               "idShort": "InterfaceReference",
