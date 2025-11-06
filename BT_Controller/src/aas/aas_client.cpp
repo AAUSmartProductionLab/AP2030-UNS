@@ -89,6 +89,107 @@ std::string AASClient::substituteParams(const std::string &pattern, const nlohma
     return result;
 }
 
+nlohmann::json AASClient::fetchSchemaFromUrl(const std::string &schema_url)
+{
+    // Check cache first
+    auto cache_it = schema_cache_.find(schema_url);
+    if (cache_it != schema_cache_.end())
+    {
+        std::cout << "Using cached schema for: " << schema_url << std::endl;
+        return cache_it->second;
+    }
+
+    std::cout << "Fetching schema from: " << schema_url << std::endl;
+
+    // Make HTTP request to fetch schema
+    CURL *schema_curl = curl_easy_init();
+    if (!schema_curl)
+    {
+        std::cerr << "Failed to initialize CURL for schema fetch" << std::endl;
+        return nlohmann::json();
+    }
+
+    std::string schema_buffer;
+    curl_easy_setopt(schema_curl, CURLOPT_URL, schema_url.c_str());
+    curl_easy_setopt(schema_curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+    curl_easy_setopt(schema_curl, CURLOPT_WRITEDATA, &schema_buffer);
+    curl_easy_setopt(schema_curl, CURLOPT_TIMEOUT, 10L);
+    curl_easy_setopt(schema_curl, CURLOPT_FOLLOWLOCATION, 1L);
+
+    struct curl_slist *headers = nullptr;
+    headers = curl_slist_append(headers, "Accept: application/json");
+    curl_easy_setopt(schema_curl, CURLOPT_HTTPHEADER, headers);
+
+    CURLcode res = curl_easy_perform(schema_curl);
+    curl_slist_free_all(headers);
+    curl_easy_cleanup(schema_curl);
+
+    if (res != CURLE_OK || schema_buffer.empty())
+    {
+        std::cerr << "Failed to fetch schema from URL: " << schema_url << std::endl;
+        return nlohmann::json();
+    }
+
+    nlohmann::json schema = nlohmann::json::parse(schema_buffer);
+    
+    // Store in cache
+    schema_cache_[schema_url] = schema;
+    
+    std::cout << "Successfully fetched and cached schema from: " << schema_url << std::endl;
+    
+    return schema;
+}
+
+void AASClient::resolveSchemaReferences(nlohmann::json &schema)
+{
+    if (schema.is_object())
+    {
+        // Check for $ref at this level
+        if (schema.contains("$ref") && schema["$ref"].is_string())
+        {
+            std::string ref_url = schema["$ref"];
+            
+            // Skip internal references (starting with #)
+            if (ref_url[0] == '#')
+            {
+                return; // Internal reference, no need to fetch
+            }
+            
+            // Fetch the referenced schema
+            nlohmann::json ref_schema = fetchSchemaFromUrl(ref_url);
+            
+            if (!ref_schema.empty())
+            {
+                // Recursively resolve references in the fetched schema
+                resolveSchemaReferences(ref_schema);
+                
+                // Store the resolved schema in a special field for later use
+                schema["_resolved_ref"] = ref_schema;
+            }
+        }
+        
+        // Recursively check all nested objects
+        for (auto &[key, value] : schema.items())
+        {
+            if (value.is_object() || value.is_array())
+            {
+                resolveSchemaReferences(value);
+            }
+        }
+    }
+    else if (schema.is_array())
+    {
+        // Recursively check all array elements
+        for (auto &element : schema)
+        {
+            if (element.is_object() || element.is_array())
+            {
+                resolveSchemaReferences(element);
+            }
+        }
+    }
+}
+
 std::optional<mqtt_utils::Topic> AASClient::fetchInterface(const std::string &asset_id, const std::string &skill, const std::string &endpoint)
 {
     try
