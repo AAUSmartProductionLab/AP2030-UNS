@@ -14,15 +14,39 @@ All schemas are automatically synchronized from the `schemas/` directory. Click 
 <!-- AUTO-GENERATED-SCHEMAS-START -->
 ### AAS Resource Descriptions
 
-- **[IMAFillingSystemInstance.json](schemas/ResourceDescription/IMAFillingSystemInstance.json)**
-  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/schemas/ResourceDescription/IMAFillingSystemInstance.json)
-  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/schemas/ResourceDescription/IMAFillingSystemInstance.json)
 - **[ResourceInterfaceTemplate.json](schemas/ResourceDescription/ResourceInterfaceTemplate.json)**
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/schemas/ResourceDescription/ResourceInterfaceTemplate.json)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/schemas/ResourceDescription/ResourceInterfaceTemplate.json)
 - **[SyntegonStopperingSystemInstance.json](schemas/ResourceDescription/SyntegonStopperingSystemInstance.json)**
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/schemas/ResourceDescription/SyntegonStopperingSystemInstance.json)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/schemas/ResourceDescription/SyntegonStopperingSystemInstance.json)
+- **[imaFillingSystem.json](schemas/ResourceDescription/imaFillingSystem.json)**
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/schemas/ResourceDescription/imaFillingSystem.json)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/schemas/ResourceDescription/imaFillingSystem.json)
+- **[imaLoadingSystem.json](schemas/ResourceDescription/imaLoadingSystem.json)**
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/schemas/ResourceDescription/imaLoadingSystem.json)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/schemas/ResourceDescription/imaLoadingSystem.json)
+- **[optimaUnloadingSystem.json](schemas/ResourceDescription/optimaUnloadingSystem.json)**
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/schemas/ResourceDescription/optimaUnloadingSystem.json)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/schemas/ResourceDescription/optimaUnloadingSystem.json)
+- **[planarShuttle1.json](schemas/ResourceDescription/planarShuttle1.json)**
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/schemas/ResourceDescription/planarShuttle1.json)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/schemas/ResourceDescription/planarShuttle1.json)
+- **[planarShuttle2.json](schemas/ResourceDescription/planarShuttle2.json)**
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/schemas/ResourceDescription/planarShuttle2.json)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/schemas/ResourceDescription/planarShuttle2.json)
+- **[planarShuttle3.json](schemas/ResourceDescription/planarShuttle3.json)**
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/schemas/ResourceDescription/planarShuttle3.json)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/schemas/ResourceDescription/planarShuttle3.json)
+- **[planarTable.json](schemas/ResourceDescription/planarTable.json)**
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/schemas/ResourceDescription/planarTable.json)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/schemas/ResourceDescription/planarTable.json)
+- **[syntegonStopperingSystem.json](schemas/ResourceDescription/syntegonStopperingSystem.json)**
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/schemas/ResourceDescription/syntegonStopperingSystem.json)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/schemas/ResourceDescription/syntegonStopperingSystem.json)
+- **[weightVerification.json](schemas/ResourceDescription/weightVerification.json)**
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/schemas/ResourceDescription/weightVerification.json)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/schemas/ResourceDescription/weightVerification.json)
 
 ### AMR (Mobile Robot)
 
