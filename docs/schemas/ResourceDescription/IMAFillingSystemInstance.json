@@ -277,13 +277,32 @@
                             },
                             {
                               "idShort": "additionalResponses",
-                              "modelType": "SubmodelElementCollection",
-                              "value": [
-                                {"idShort": "contentType", "modelType": "Property", "valueType": "xs:string", "value": "application/json"},
-                                {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/DATA/Weight"},
-                                {"idShort": "schema",  "modelType": "File", "valueType": "application/schema+json", "value": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/commandResponse.schema.json"},
-                                {"idShort": "mqv_controlPacket", "modelType": "Property", "valueType": "xs:string", "value": "publish"}
-                              ]
+                              "modelType": "ReferenceElement",
+                              "value": {
+                                "type": "ModelReference",
+                                "keys": [
+                                  {
+                                    "type": "Submodel",
+                                    "value": "https://smartproductionlab.aau.dk/submodels/instances/imaFillingSystem/AssetInterfacesDescription"
+                                  },
+                                  {
+                                    "type": "SubmodelElementCollection",
+                                    "value": "InterfaceMQTT"
+                                  },
+                                  {
+                                    "type": "SubmodelElementCollection",
+                                    "value": "InteractionMetadata"
+                                  },
+                                  {
+                                    "type": "SubmodelElementCollection",
+                                    "value": "properties"
+                                  },
+                                  {
+                                    "type": "SubmodelElementCollection",
+                                    "value": "weight"
+                                  }
+                                ]
+                              }
                             }
                           ]
                         }
@@ -521,6 +540,12 @@
                           "modelType": "Property"
                         },
                         {
+                            "idShort": "output",
+                            "modelType": "File",
+                            "contentType": "application/schema+json",
+                            "value": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/weight.schema.json"
+                        },
+                        {
                           "idShort": "forms",
                           "semanticId": {
                             "type": "ExternalReference",
@@ -585,6 +610,12 @@
                           "modelType": "Property"
                         },
                         {
+                            "idShort": "output",
+                            "modelType": "File",
+                            "contentType": "application/schema+json",
+                            "value": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/state.schema.json"
+                        },
+                        {
                           "idShort": "forms",
                           "semanticId": {
                             "type": "ExternalReference",
@@ -599,8 +630,7 @@
                             {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/DATA/State"},
                             {"idShort": "mqv_retain", "modelType": "Property", "valueType": "xs:boolean", "value": "false"},
                             {"idShort": "mqv_controlPacket", "modelType": "Property", "valueType": "xs:string", "value": "publish"},
-                            {"idShort": "mqv_qos", "modelType": "Property", "valueType": "xs:int", "value": "0"},
-                            {"idShort": "schema", "modelType": "File", "contentType": "application/schema+json", "value": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/state.schema.json"}
+                            {"idShort": "mqv_qos", "modelType": "Property", "valueType": "xs:int", "value": "0"}
                           ]
                         }
                       ]
@@ -650,6 +680,12 @@
                           "modelType": "Property"
                         },
                         {
+                            "idShort": "output",
+                            "modelType": "File",
+                            "contentType": "application/schema+json",
+                            "value": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/stationOccupation.schema.json"
+                        },
+                        {
                           "idShort": "forms",
                           "semanticId": {
                             "type": "ExternalReference",
@@ -664,8 +700,7 @@
                             {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/DATA/Occupation"},
                             {"idShort": "mqv_retain", "modelType": "Property", "valueType": "xs:boolean", "value": "false"},
                             {"idShort": "mqv_controlPacket", "modelType": "Property", "valueType": "xs:string", "value": "publish"},
-                            {"idShort": "mqv_qos", "modelType": "Property", "valueType": "xs:int", "value": "0"},
-                            {"idShort": "schema", "modelType": "File", "contentType": "application/schema+json", "value": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/stationOccupation.schema.json"}
+                            {"idShort": "mqv_qos", "modelType": "Property", "valueType": "xs:int", "value": "0"}
                           ]
                         }
                       ]
