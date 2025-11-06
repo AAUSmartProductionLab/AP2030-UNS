@@ -40,7 +40,7 @@ All schemas are automatically synchronized from the `schemas/` directory. Click 
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/schemas/command.schema.json)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/schemas/command.schema.json)
 - **[commandResponse.schema.json](schemas/commandResponse.schema.json)**
-  - An arbitrary command
+  - An arbitrary command response
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/schemas/commandResponse.schema.json)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/schemas/commandResponse.schema.json)
 - **[moveCommand.json](schemas/moveCommand.json)**
