@@ -32,21 +32,21 @@ export default function PlanarMotorConfigurator() {
       nodes: [
         { 
           id: "ima-filling", 
-          title: "IMA Filling System", 
+          title: "imaFillingSystem", 
           color: "#1E7D74", 
           abstractId: "Filling",
           capabilities: ["Dispense", "Weigh", "Refill"]
         },
         { 
           id: "syntegon-filling", 
-          title: "Syntegon Filling System", 
+          title: "syntegonFillingSystem", 
           color: "#30A399", 
           abstractId: "Filling",
           capabilities: ["Dispense", "Weigh"]
         },
         { 
           id: "optima-filling", 
-          title: "Optima Filling System", 
+          title: "optimaFillingSystem", 
           color: "#136058", 
           abstractId: "Filling",
           capabilities: ["Dispense"]
@@ -59,21 +59,21 @@ export default function PlanarMotorConfigurator() {
       nodes: [
         { 
           id: "ima-stoppering", 
-          title: "IMA Stoppering System", 
+          title: "imaStopperingSystem", 
           color: "#0087CD", 
           abstractId: "Stoppering",
           capabilities: ["Stopper"]
         },
         { 
           id: "syntegon-stoppering", 
-          title: "Syntegon Stoppering System", 
+          title: "syntegonStopperingSystem", 
           color: "#00A0F0", 
           abstractId: "Stoppering",
           capabilities: ["Stopper"]
         },
         { 
           id: "optima-stoppering", 
-          title: "Optima Stoppering System", 
+          title: "optimaStopperingSystem", 
           color: "#006CA3", 
           abstractId: "Stoppering",
           capabilities: ["Stopper"]
@@ -86,21 +86,21 @@ export default function PlanarMotorConfigurator() {
       nodes: [
         { 
           id: "ima-capping", 
-          title: "IMA Capping System", 
+          title: "imaCappingSystem", 
           color: "#9B4DCA", 
           abstractId: "Capping",
           capabilities: ["Cap"]
         },
         { 
           id: "syntegon-capping", 
-          title: "Syntegon Capping System", 
+          title: "syntegonCappingSystem", 
           color: "#B07EDE", 
           abstractId: "Capping",
           capabilities: ["Cap"]
         },
         { 
           id: "optima-capping", 
-          title: "Optima Capping System", 
+          title: "optimaCappingSystem", 
           color: "#7939A0", 
           abstractId: "Capping",
           capabilities: ["Cap"]
@@ -113,21 +113,21 @@ export default function PlanarMotorConfigurator() {
       nodes: [
         { 
           id: "ima-loading", 
-          title: "IMA Loading System", 
+          title: "imaLoadingSystem", 
           color: "#FF8097", 
           abstractId: "Load",
           capabilities: ["Load"]
         },
         { 
           id: "syntegon-loading", 
-          title: "Syntegon Loading System", 
+          title: "syntegonLoadingSystem", 
           color: "#FF9EB0", 
           abstractId: "Load",
           capabilities: ["Load"]
         },
         { 
           id: "optima-loading", 
-          title: "Optima Loading System", 
+          title: "optimaLoadingSystem", 
           color: "#FF6080", 
           abstractId: "Load",
           capabilities: ["Load"]
@@ -140,21 +140,21 @@ export default function PlanarMotorConfigurator() {
       nodes: [
         { 
           id: "ima-unloading", 
-          title: "IMA Unloading System", 
+          title: "imaUnloadingSystem", 
           color: "#F39C12", 
           abstractId: "Unload",
           capabilities: ["Unload"]
         },
         { 
           id: "syntegon-unloading", 
-          title: "Syntegon Unloading System", 
+          title: "syntegonUnloadingSystem", 
           color: "#FFB142", 
           abstractId: "Unload",
           capabilities: ["Unload"]
         },
         { 
           id: "optima-unloading", 
-          title: "Optima Unloading System", 
+          title: "optimaUnloadingSystem", 
           color: "#E67E22", 
           abstractId: "Unload",
           capabilities: ["Unload"]
@@ -167,28 +167,28 @@ export default function PlanarMotorConfigurator() {
       nodes: [
         { 
           id: "omron-camera", 
-          title: "Omron Camera", 
+          title: "omronCamera", 
           color: "#2ECC71", 
           abstractId: "Camera",
           capabilities: ["Capture"]
         },
         { 
           id: "omron-linetracker", 
-          title: "Omron LineTracker", 
+          title: "omronLineTracker", 
           color: "#27AE60", 
           abstractId: "LineTracker",
           capabilities: ["FillLevel"]
         },
         { 
           id: "quality-sensor", 
-          title: "Quality Control Sensor", 
+          title: "qualityControlSensor", 
           color: "#1BBC9B", 
           abstractId: "QualitySensor",
           capabilities: ["CheckQuality"]
         },
         { 
           id: "weight-sensor", 
-          title: "Weight Verification", 
+          title: "weightVerification", 
           color: "#16A085", 
           abstractId: "WeightSensor",
           capabilities: ["Weigh"]
@@ -487,7 +487,7 @@ export default function PlanarMotorConfigurator() {
       // Module Area 1: IMA Filling System (container3)
       { 
         id: `placed-default-1-${Date.now()}`, 
-        title: "IMA Filling System", 
+        title: "imaFillingSystem", 
         container: "container3",
         color: "#1E7D74",
         sourceNode: "ima-filling",
@@ -496,7 +496,7 @@ export default function PlanarMotorConfigurator() {
       // Module Area 2: IMA Stoppering System (container4)
       { 
         id: `placed-default-2-${Date.now()}`, 
-        title: "IMA Stoppering System", 
+        title: "imaStopperingSystem", 
         container: "container4",
         color: "#0087CD",
         sourceNode: "ima-stoppering",
@@ -505,7 +505,7 @@ export default function PlanarMotorConfigurator() {
       // Module Area 8: Omron Camera (container19)
       { 
         id: `placed-default-3-${Date.now()}`, 
-        title: "Omron Camera", 
+        title: "omronCamera", 
         container: "container18",
         color: "#2ECC71",
         sourceNode: "omron-camera",
@@ -514,7 +514,7 @@ export default function PlanarMotorConfigurator() {
       // Module Area 9: IMA Loading System (container23)
       { 
         id: `placed-default-4-${Date.now()}`, 
-        title: "IMA Loading System", 
+        title: "imaLoadingSystem", 
         container: "container19",
         color: "#FF8097",
         sourceNode: "ima-loading",
@@ -523,7 +523,7 @@ export default function PlanarMotorConfigurator() {
       // Module Area 10: IMA Unloading System (container25)
       { 
         id: `placed-default-5-${Date.now()}`, 
-        title: "IMA Unloading System", 
+        title: "imaUnloadingSystem", 
         container: "container24",
         color: "#F39C12",
         sourceNode: "ima-unloading",
