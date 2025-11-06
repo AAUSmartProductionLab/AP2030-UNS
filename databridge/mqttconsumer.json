@@ -1,26 +1,26 @@
 [
   {
-    "uniqueId": "action_dispense_request",
+    "uniqueId": "mqtt_consumer_1",
     "serverUrl": "192.168.0.104",
     "serverPort": 1883,
-    "topic": "NN/Nybrovej/InnoLab/Filling/CMD/Dispense/Request"
+    "topic": "NN/Nybrovej/InnoLab/Stoppering/DATA/Occupation"
   },
   {
-    "uniqueId": "action_weigh_request",
+    "uniqueId": "mqtt_consumer_2",
     "serverUrl": "192.168.0.104",
     "serverPort": 1883,
-    "topic": "NN/Nybrovej/InnoLab/Filling/CMD/Weigh/Request"
+    "topic": "NN/Nybrovej/InnoLab/Stoppering/DATA/QualityStatus"
   },
   {
-    "uniqueId": "action_weigh_additional_0",
+    "uniqueId": "mqtt_consumer_3",
     "serverUrl": "192.168.0.104",
     "serverPort": 1883,
-    "topic": "NN/Nybrovej/InnoLab/Filling/DATA/Weight"
+    "topic": "NN/Nybrovej/InnoLab/Stoppering/DATA/State"
   },
   {
-    "uniqueId": "action_halt_request",
+    "uniqueId": "mqtt_consumer_4",
     "serverUrl": "192.168.0.104",
     "serverPort": 1883,
-    "topic": "NN/Nybrovej/InnoLab/Filling/CMD/Halt/Request"
+    "topic": "NN/Nybrovej/InnoLab/Stoppering/DATA/StopperCount"
   }
 ]

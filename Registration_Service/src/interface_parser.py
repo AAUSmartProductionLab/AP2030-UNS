@@ -207,6 +207,7 @@ class MQTTInterfaceParser:
             prop_data = {
                 'topic': None,
                 'schema': None,
+                'schema_url': None,
                 'direction': 'subscribe',  # Default
                 'qos': 0
             }
@@ -215,6 +216,11 @@ class MQTTInterfaceParser:
             
             for item in prop_value:
                 id_short = item.get('idShort', '')
+                model_type = item.get('modelType', '')
+                
+                # Extract schema URL from File element
+                if id_short == 'output' and model_type == 'File':
+                    prop_data['schema_url'] = item.get('value', '')
                 
                 if id_short == 'forms':
                     forms_value = item.get('value', [])
@@ -232,12 +238,9 @@ class MQTTInterfaceParser:
                             
                         elif form_id == 'mqv_qos':
                             prop_data['qos'] = int(form_val) if form_val else 0
-                            
-                        elif form_id == 'schema':
-                            prop_data['schema'] = form_val
             
             interface_info['properties'][prop_name] = prop_data
-            logger.info(f"Parsed property '{prop_name}': topic={prop_data['topic']}, direction={prop_data['direction']}")
+            logger.info(f"Parsed property '{prop_name}': topic={prop_data['topic']}, schema={prop_data['schema_url']}, direction={prop_data['direction']}")
 
     def extract_topic_mappings(self, submodels: List[Dict[str, Any]]) -> Dict[str, str]:
         """
@@ -267,3 +270,145 @@ class MQTTInterfaceParser:
                 topic_mappings[prop_data['topic']] = f"Properties/{prop_name}"
         
         return topic_mappings
+    
+    def extract_interface_references(self, submodels: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
+        """
+        Extract InterfaceReference elements from Variables submodel and map them to InterfaceMQTT topics.
+        
+        Returns dict mapping Variable property paths to interface information:
+        {
+            'Variables/Weight.Value': {
+                'topic': 'NN/Nybrovej/InnoLab/Filling/DATA/Weight',
+                'interface_property': 'weight',
+                'direction': 'publish'
+            }
+        }
+        """
+        # First parse InterfaceMQTT to get topic mappings
+        interface_info = self.parse_interface_submodels(submodels)
+        
+        # Create lookup by interface property name
+        interface_lookup = {}
+        for prop_name, prop_data in interface_info.get('properties', {}).items():
+            interface_lookup[prop_name] = prop_data
+        
+        # Now find all InterfaceReferences in other submodels (only for properties, not actions)
+        variable_mappings = {}
+        
+        for submodel in submodels:
+            submodel_short = submodel.get('idShort', '')
+            
+            # Skip InterfaceMQTT itself
+            if 'Interface' in submodel_short:
+                continue
+            
+            # Recursively find all InterfaceReference elements
+            references = self._find_interface_references_recursive(
+                submodel.get('submodelElements', []),
+                submodel_short
+            )
+            
+            for var_path, interface_ref in references:
+                # Parse the reference to extract interface property name
+                interface_property_name = self._extract_interface_property_from_ref(interface_ref)
+                
+                if interface_property_name and interface_property_name in interface_lookup:
+                    interface_data = interface_lookup[interface_property_name]
+                    # Convert path format from "Variables.Weight.Value" to "Variables/Weight.Value"
+                    # Keep first dot as submodel separator, replace remaining dots with slashes
+                    path_parts = var_path.split('.', 1)
+                    if len(path_parts) == 2:
+                        formatted_path = f"{path_parts[0]}/{path_parts[1]}"
+                    else:
+                        formatted_path = var_path
+                    
+                    variable_mappings[formatted_path] = {
+                        'topic': interface_data['topic'],
+                        'interface_property': interface_property_name,
+                        'direction': interface_data.get('direction', 'subscribe'),
+                        'qos': interface_data.get('qos', 0),
+                        'schema': interface_data.get('schema'),
+                        'schema_url': interface_data.get('schema_url')
+                    }
+                    logger.info(f"Mapped {formatted_path} → {interface_data['topic']} (schema: {interface_data.get('schema_url', 'none')})")
+        
+        return variable_mappings
+    
+    def _find_interface_references_recursive(self, elements: List[Dict[str, Any]], parent_path: str = "") -> List[tuple]:
+        """
+        Recursively find all ReferenceElement elements with InterfaceReference semanticId.
+        
+        Returns list of (property_path, reference_value) tuples.
+        The property_path points to the parent Property that should receive data.
+        """
+        references = []
+        
+        for element in elements:
+            id_short = element.get('idShort', '')
+            model_type = element.get('modelType', '')
+            current_path = f"{parent_path}.{id_short}" if parent_path else id_short
+            
+            if model_type == 'SubmodelElementCollection':
+                # Check if this collection has an InterfaceReference child
+                nested_elements = element.get('value', [])
+                if isinstance(nested_elements, list):
+                    # Look for Property and InterfaceReference siblings
+                    # Note: We collect ALL properties, not just the first one, to handle cases
+                    # like OccupationState where there's both a State property and a Queue list
+                    # IMPORTANT: We skip SubmodelElementLists and SubmodelElementCollections as they
+                    # cannot be updated with simple value writes
+                    property_paths = []
+                    interface_ref = None
+                    
+                    for child in nested_elements:
+                        child_type = child.get('modelType', '')
+                        child_id = child.get('idShort', '')
+                        
+                        if child_type == 'Property':
+                            # This is a simple data property - add it to the list
+                            property_paths.append(f"{current_path}.{child_id}")
+                        elif child_type in ['SubmodelElementList', 'SubmodelElementCollection']:
+                            # Skip lists and nested collections - they cannot be updated via DataBridge
+                            logger.debug(f"Skipping {child_type} '{child_id}' - cannot update via simple value write")
+                        elif child_type == 'ReferenceElement' and child_id == 'InterfaceReference':
+                            # This is the interface reference
+                            interface_ref = child.get('value', {})
+                    
+                    # If we found an InterfaceReference and at least one Property, map ALL properties
+                    # This handles cases where a single MQTT message updates multiple properties
+                    # (e.g., OccupationState with both State and potentially other fields)
+                    if property_paths and interface_ref:
+                        for prop_path in property_paths:
+                            references.append((prop_path, interface_ref))
+                    elif interface_ref and not property_paths:
+                        logger.warning(f"Found InterfaceReference at '{current_path}' but no simple Properties to map (only lists/collections)")
+                    
+                    # Continue recursing into nested collections
+                    references.extend(self._find_interface_references_recursive(nested_elements, current_path))
+        
+        return references
+    
+    def _extract_interface_property_from_ref(self, reference: Dict[str, Any]) -> Optional[str]:
+        """
+        Extract the interface property name from a ModelReference.
+        
+        Example reference:
+        {
+          "keys": [
+            {"type": "Submodel", "value": "...AssetInterfacesDescription"},
+            {"type": "SubmodelElementCollection", "value": "InterfaceMQTT"},
+            {"type": "SubmodelElementCollection", "value": "InteractionMetadata"},
+            {"type": "SubmodelElementCollection", "value": "properties"},
+            {"type": "SubmodelElementCollection", "value": "weight"}  <-- This is what we want
+          ]
+        }
+        
+        Returns: "weight"
+        """
+        keys = reference.get('keys', [])
+        if not keys:
+            return None
+        
+        # The last key should be the property name
+        last_key = keys[-1]
+        return last_key.get('value')

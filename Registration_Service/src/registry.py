@@ -105,7 +105,10 @@ class BaSyxRegistrationService:
             interface_parser = MQTTInterfaceParser()
             interface_info = interface_parser.parse_interface_submodels(submodels)
             
-            # Extract topic mappings from interface
+            # Extract InterfaceReferences from Variables submodel (maps Variables to MQTT topics)
+            interface_references = interface_parser.extract_interface_references(submodels)
+            
+            # Extract topic mappings from interface (legacy format)
             auto_topic_mappings = interface_parser.extract_topic_mappings(submodels)
             
             # Update broker info if found in interface
@@ -117,7 +120,13 @@ class BaSyxRegistrationService:
             # Merge manual and auto-extracted topic mappings (manual takes precedence)
             topic_mappings = {**auto_topic_mappings, **manual_topic_mappings}
             
-            if auto_topic_mappings:
+            if interface_references:
+                logger.info(f"Extracted {len(interface_references)} InterfaceReference mappings from Variables submodel")
+                for var_path, mapping in list(interface_references.items())[:5]:  # Show first 5
+                    logger.info(f"  {var_path} ← {mapping['topic']}")
+                if len(interface_references) > 5:
+                    logger.info(f"  ... and {len(interface_references) - 5} more")
+            elif auto_topic_mappings:
                 logger.info(f"Extracted {len(auto_topic_mappings)} topic mappings from InterfaceMQTT")
                 for topic, path in list(auto_topic_mappings.items())[:5]:  # Show first 5
                     logger.info(f"  {topic} -> {path}")
@@ -136,9 +145,9 @@ class BaSyxRegistrationService:
                 if shell:
                     self._register_aas_shell_with_submodels(shell, submodels)
 
-            # Generate and save databridge configurations with topic mappings
+            # Generate and save databridge configurations with InterfaceReferences
             self._generate_databridge_configs(
-                submodels, self.mqtt_broker, topic_mappings, interface_info)
+                submodels, self.mqtt_broker, topic_mappings, interface_info, interface_references)
 
             # Restart databridge container
             self._restart_databridge()
@@ -334,6 +343,11 @@ class BaSyxRegistrationService:
             file_value = file_element.get('value', '')
             
             if not file_value:
+                continue
+            
+            # Skip if value is a URL (already converted to GitHub Pages or other URL)
+            if file_value.startswith('http://') or file_value.startswith('https://'):
+                logger.debug(f"Skipping upload for URL reference: {file_value}")
                 continue
             
             # Extract filename from path (e.g., /schemas/command.schema.json -> command.schema.json)
@@ -601,8 +615,8 @@ class BaSyxRegistrationService:
             logger.debug(f"Failed to register concept description {cd_data.get('idShort', 'unknown')}: {e}")
             return False
 
-    def _generate_databridge_configs(self, submodels: List[Dict[str, Any]], mqtt_broker: str, topic_mappings: Optional[Dict[str, str]] = None, interface_info: Optional[Dict[str, Any]] = None):
-        """Generate and save databridge configuration files with optional topic mappings and interface info"""
+    def _generate_databridge_configs(self, submodels: List[Dict[str, Any]], mqtt_broker: str, topic_mappings: Optional[Dict[str, str]] = None, interface_info: Optional[Dict[str, Any]] = None, interface_references: Optional[Dict[str, Dict[str, Any]]] = None):
+        """Generate and save databridge configuration files using new generator"""
         try:
             # Use broker port from interface_info if available
             mqtt_port = self.mqtt_port
@@ -611,39 +625,31 @@ class BaSyxRegistrationService:
             
             config_gen = DataBridgeConfigGenerator(mqtt_broker, mqtt_port)
 
-            # Generate configurations with custom topic mappings and interface info
-            mqtt_config = config_gen.generate_mqtt_consumer_config(submodels, topic_mappings, interface_info)
-            aas_config = config_gen.generate_aas_server_config(
-                submodels, self.basyx_config)
-            
-            # Generate JSONATA transformers based on AAS property types
-            transformers_config = config_gen.generate_jsonata_transformers(submodels)
-            
-            # Generate routes configuration (with transformer references)
-            routes_config = config_gen.generate_routes_config(submodels)
-
             # Use databridge directory in workspace root (parent of Registration_Service)
             script_dir = Path(__file__).resolve().parent.parent
             databridge_dir = script_dir.parent / 'databridge'
             databridge_dir.mkdir(exist_ok=True)
 
-            # Save configurations
-            self._save_json_config(
-                databridge_dir / 'mqttconsumer.json', mqtt_config)
-            self._save_json_config(
-                databridge_dir / 'aasserver.json', aas_config)
-            self._save_json_config(
-                databridge_dir / 'jsonatatransformer.json', transformers_config)
-            self._save_json_config(
-                databridge_dir / 'routes.json', routes_config)
+            # Generate all configurations in one call
+            # Extract port from base_url (e.g., "http://localhost:8081" -> 8081)
+            port = 8081
+            if ':' in self.basyx_config.base_url:
+                port = int(self.basyx_config.base_url.rsplit(':', 1)[1].rstrip('/'))
+            
+            counts = config_gen.generate_all_configs(
+                submodels=submodels,
+                output_dir=str(databridge_dir),
+                basyx_url=f"http://aas-env:{port}"
+            )
 
-            logger.info("Generated databridge configurations")
-            logger.info(f"Generated {len(transformers_config)} JSONATA transformers based on AAS types")
-            if topic_mappings:
-                logger.info(f"Applied {len(topic_mappings)} topic mappings from InterfaceMQTT")
+            logger.info("✓ Generated databridge configurations")
+            logger.info(f"  - {counts['consumers']} MQTT consumers")
+            logger.info(f"  - {counts['sinks']} AAS server endpoints")
+            logger.info(f"  - {counts['transformers']} JSONATA transformers (with query files)")
+            logger.info(f"  - {counts['routes']} routes")
 
         except Exception as e:
-            logger.error(f"Failed to generate databridge configs: {e}")
+            logger.error(f"Failed to generate databridge configs: {e}", exc_info=True)
             raise
 
     def _restart_databridge(self) -> bool:

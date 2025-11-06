@@ -286,6 +286,20 @@ services:
         condition: service_healthy
     networks:
       - hivemq-network
+  databridge:
+    image: eclipsebasyx/databridge:1.0.0-milestone-08
+    container_name: databridge
+    volumes:
+      - ./databridge:/usr/share/config
+    restart: always
+    depends_on:
+      aas-env:
+        condition: service_healthy
+      hivemq-broker:
+        condition: service_started
+    networks:
+      - hivemq-network
+
 
 #################¤ NETWORKS AND VOLUMES ####################
 networks:
