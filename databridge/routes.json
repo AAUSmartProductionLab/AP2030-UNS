@@ -1,11 +1,51 @@
 [
   {
-    "datasource": "AssetInterfacesDescription_InterfaceMQTT_sensor",
+    "datasource": "mqtt_consumer_1",
     "transformers": [
-      "AssetInterfacesDescription_InterfaceMQTT_transformer"
+      "variables_occupationstate_state_transformer",
+      "variables_occupationstate_queue_transformer"
     ],
     "datasinks": [
-      "AssetInterfacesDescription/InterfaceMQTT"
+      "Variables/OccupationState.State",
+      "Variables/OccupationState.Queue"
+    ],
+    "trigger": "event",
+    "datasinkMappingConfiguration": {
+      "Variables/OccupationState.State": [
+        "variables_occupationstate_state_transformer"
+      ],
+      "Variables/OccupationState.Queue": [
+        "variables_occupationstate_queue_transformer"
+      ]
+    }
+  },
+  {
+    "datasource": "mqtt_consumer_2",
+    "transformers": [
+      "variables_qualitystatus_value_transformer"
+    ],
+    "datasinks": [
+      "Variables/QualityStatus.Value"
+    ],
+    "trigger": "event"
+  },
+  {
+    "datasource": "mqtt_consumer_3",
+    "transformers": [
+      "variables_packmlstate_value_transformer"
+    ],
+    "datasinks": [
+      "Variables/PackMLState.Value"
+    ],
+    "trigger": "event"
+  },
+  {
+    "datasource": "mqtt_consumer_4",
+    "transformers": [
+      "variables_stoppercount_value_transformer"
+    ],
+    "datasinks": [
+      "Variables/StopperCount.Value"
     ],
     "trigger": "event"
   }

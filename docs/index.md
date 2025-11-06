@@ -20,6 +20,9 @@ All schemas are automatically synchronized from the `schemas/` directory. Click 
 - **[ResourceInterfaceTemplate.json](schemas/ResourceDescription/ResourceInterfaceTemplate.json)**
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/schemas/ResourceDescription/ResourceInterfaceTemplate.json)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/schemas/ResourceDescription/ResourceInterfaceTemplate.json)
+- **[SyntegonStopperingSystemInstance.json](schemas/ResourceDescription/SyntegonStopperingSystemInstance.json)**
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/schemas/ResourceDescription/SyntegonStopperingSystemInstance.json)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/schemas/ResourceDescription/SyntegonStopperingSystemInstance.json)
 
 ### AMR (Mobile Robot)
 
@@ -84,6 +87,13 @@ All schemas are automatically synchronized from the `schemas/` directory. Click 
   - JSON Schema for a IPC weighing using a scale
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/schemas/weight.schema.json)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/schemas/weight.schema.json)
+
+### Other
+
+- **[count.schema.json](schemas/count.schema.json)**
+  - JSON Schema for counting units in production processes
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/schemas/count.schema.json)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/schemas/count.schema.json)
 
 ### Station & Movement
 

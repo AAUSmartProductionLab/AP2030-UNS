@@ -169,6 +169,10 @@ Configurator/node_modules
 TimescaleDB/timescaledb-data
 MQTT-Explorer/config
 
+# DataBridge generated configuration files
+databridge/*.json
+databridge/queries/
+
 # Operating system files
 .DS_Store
 Thumbs.db

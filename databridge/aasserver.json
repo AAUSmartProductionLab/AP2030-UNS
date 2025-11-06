@@ -1,8 +1,32 @@
 [
   {
-    "uniqueId": "AssetInterfacesDescription/InterfaceMQTT",
-    "submodelEndpoint": "http://aas-env:8081/submodels/aHR0cHM6Ly9zbWFydHByb2R1Y3Rpb25sYWIuYWF1LmRrL3N1Ym1vZGVscy9Bc3NldEludGVyZmFjZXNEZXNjcmlwdGlvbg==",
-    "idShortPath": "InterfaceMQTT",
+    "uniqueId": "Variables/PackMLState.Value",
+    "submodelEndpoint": "http://aas-env:8081/submodels/aHR0cHM6Ly9zbWFydHByb2R1Y3Rpb25sYWIuYWF1LmRrL3N1Ym1vZGVscy9pbnN0YW5jZXMvc3ludGVnb25TdG9wcGVyaW5nU3lzdGVtL1ZhcmlhYmxlcw==",
+    "idShortPath": "PackMLState.Value",
+    "api": "DotAasV3"
+  },
+  {
+    "uniqueId": "Variables/OccupationState.State",
+    "submodelEndpoint": "http://aas-env:8081/submodels/aHR0cHM6Ly9zbWFydHByb2R1Y3Rpb25sYWIuYWF1LmRrL3N1Ym1vZGVscy9pbnN0YW5jZXMvc3ludGVnb25TdG9wcGVyaW5nU3lzdGVtL1ZhcmlhYmxlcw==",
+    "idShortPath": "OccupationState.State",
+    "api": "DotAasV3"
+  },
+  {
+    "uniqueId": "Variables/OccupationState.Queue",
+    "submodelEndpoint": "http://aas-env:8081/submodels/aHR0cHM6Ly9zbWFydHByb2R1Y3Rpb25sYWIuYWF1LmRrL3N1Ym1vZGVscy9pbnN0YW5jZXMvc3ludGVnb25TdG9wcGVyaW5nU3lzdGVtL1ZhcmlhYmxlcw==",
+    "idShortPath": "OccupationState.Queue",
+    "api": "DotAasV3"
+  },
+  {
+    "uniqueId": "Variables/StopperCount.Value",
+    "submodelEndpoint": "http://aas-env:8081/submodels/aHR0cHM6Ly9zbWFydHByb2R1Y3Rpb25sYWIuYWF1LmRrL3N1Ym1vZGVscy9pbnN0YW5jZXMvc3ludGVnb25TdG9wcGVyaW5nU3lzdGVtL1ZhcmlhYmxlcw==",
+    "idShortPath": "StopperCount.Value",
+    "api": "DotAasV3"
+  },
+  {
+    "uniqueId": "Variables/QualityStatus.Value",
+    "submodelEndpoint": "http://aas-env:8081/submodels/aHR0cHM6Ly9zbWFydHByb2R1Y3Rpb25sYWIuYWF1LmRrL3N1Ym1vZGVscy9pbnN0YW5jZXMvc3ludGVnb25TdG9wcGVyaW5nU3lzdGVtL1ZhcmlhYmxlcw==",
+    "idShortPath": "QualityStatus.Value",
     "api": "DotAasV3"
   }
 ]

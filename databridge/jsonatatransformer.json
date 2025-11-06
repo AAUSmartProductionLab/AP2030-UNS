@@ -1,7 +1,37 @@
 [
   {
-    "uniqueId": "AssetInterfacesDescription_InterfaceMQTT_transformer",
+    "uniqueId": "variables_packmlstate_value_transformer",
     "queryLanguage": "JSONATA",
-    "query": "$string($)"
+    "queryPath": "queries/variables_packmlstate_value_transformer.jsonata",
+    "inputType": "JsonString",
+    "outputType": "JsonString"
+  },
+  {
+    "uniqueId": "variables_occupationstate_state_transformer",
+    "queryLanguage": "JSONATA",
+    "queryPath": "queries/variables_occupationstate_state_transformer.jsonata",
+    "inputType": "JsonString",
+    "outputType": "JsonString"
+  },
+  {
+    "uniqueId": "variables_occupationstate_queue_transformer",
+    "queryLanguage": "JSONATA",
+    "queryPath": "queries/variables_occupationstate_queue_transformer.jsonata",
+    "inputType": "JsonString",
+    "outputType": "JsonString"
+  },
+  {
+    "uniqueId": "variables_stoppercount_value_transformer",
+    "queryLanguage": "JSONATA",
+    "queryPath": "queries/variables_stoppercount_value_transformer.jsonata",
+    "inputType": "JsonString",
+    "outputType": "JsonString"
+  },
+  {
+    "uniqueId": "variables_qualitystatus_value_transformer",
+    "queryLanguage": "JSONATA",
+    "queryPath": "queries/variables_qualitystatus_value_transformer.jsonata",
+    "inputType": "JsonString",
+    "outputType": "JsonString"
   }
 ]
