@@ -1,15 +1,15 @@
 {
   "assetAdministrationShells": [
     {
-      "idShort": "syntegonStopperingSystemAAS",
-      "id": "https://smartproductionlab.aau.dk/aas/syntegonStopperingSystem",
+      "idShort": "imaFillingSystemAAS",
+      "id": "https://smartproductionlab.aau.dk/aas/imaFillingSystem",
       "assetInformation": {
         "assetKind": "Instance",
-        "globalAssetId": "https://smartproductionlab.aau.dk/assets/syntegonStopperingSystem",
+        "globalAssetId": "https://smartproductionlab.aau.dk/assets/imaFillingSystem",
         "specificAssetIds": [
           {
             "name": "serialNumber",
-            "value": "SYNTEGON-STOP-2024-001",
+            "value": "IMA-FS-2024-001",
             "externalSubjectId": {
               "type": "ExternalReference",
               "keys": [{
@@ -34,15 +34,15 @@
       "submodels": [
         {
           "type": "ModelReference",
-          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/syntegonStopperingSystem/AssetInterfacesDescription"}]
+          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/imaFillingSystem/AssetInterfacesDescription"}]
         },
         {
           "type": "ModelReference",
-          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/syntegonStopperingSystem/Variables"}]
+          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/imaFillingSystem/Variables"}]
         },
         {
           "type": "ModelReference",
-          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/syntegonStopperingSystem/Parameters"}]
+          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/imaFillingSystem/Parameters"}]
         }
       ],
       "derivedFrom": {
@@ -55,7 +55,7 @@
   "submodels": [
     {
       "idShort": "AssetInterfacesDescription",
-      "id": "https://smartproductionlab.aau.dk/submodels/instances/syntegonStopperingSystem/AssetInterfacesDescription",
+      "id": "https://smartproductionlab.aau.dk/submodels/instances/imaFillingSystem/AssetInterfacesDescription",
       "kind": "Instance",
       "semanticId": {
         "type": "ExternalReference",
@@ -97,7 +97,7 @@
               "idShort": "title",
               "modelType": "Property",
               "valueType": "xs:string",
-              "value": "Syntegon Stoppering System"
+              "value": "IMA Filling System"
             },
             {
               "idShort": "EndpointMetadata",
@@ -114,7 +114,7 @@
                   "idShort": "base",
                   "modelType": "Property",
                   "valueType": "xs:string",
-                  "value": "mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/Stoppering"
+                  "value": "mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/Filling"
                 },
                 {
                   "idShort": "contentType",
@@ -154,7 +154,7 @@
                   "modelType": "SubmodelElementCollection",
                   "value": [
                     {
-                      "idShort": "stopper",
+                      "idShort": "dispense",
                       "semanticId": {
                         "type": "ExternalReference",
                         "keys": [{
@@ -171,8 +171,8 @@
                       }],
                       "modelType": "SubmodelElementCollection",
                       "value": [
-                        {"idShort": "key", "modelType": "Property", "valueType": "xs:string", "value": "stopper"},
-                        {"idShort": "title", "modelType": "Property", "valueType": "xs:string", "value": "Insert Stopper"},
+                        {"idShort": "key", "modelType": "Property", "valueType": "xs:string", "value": "dispense"},
+                        {"idShort": "title", "modelType": "Property", "valueType": "xs:string", "value": "dispense"},
                         {"idShort": "synchronous", "modelType": "Property", "valueType": "xs:boolean", "value": "true"},
                         {
                             "idShort": "input",
@@ -198,7 +198,7 @@
                           "modelType": "SubmodelElementCollection",
                           "value": [
                             {"idShort": "contentType", "modelType": "Property", "valueType": "xs:string", "value": "application/json"},
-                            {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/CMD/Stopper/Request"},
+                            {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/CMD/Dispense"},
                             {"idShort": "op", "modelType": "Property", "valueType": "xs:string", "value": "invokeAction"},
                             {"idShort": "mqv_retain", "modelType": "Property", "valueType": "xs:boolean", "value": "false"},
                             {"idShort": "mqv_controlPacket", "modelType": "Property", "valueType": "xs:string", "value": "subscribe"},
@@ -208,7 +208,7 @@
                               "modelType": "SubmodelElementCollection",
                               "value": [
                                 {"idShort": "contentType", "modelType": "Property", "valueType": "xs:string", "value": "application/json"},
-                                {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/CMD/Stopper/Response"},
+                                {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/DATA/Dispense"},
                                 {"idShort": "mqv_controlPacket", "modelType": "Property", "valueType": "xs:string", "value": "publish"}
                               ]
                             }
@@ -217,7 +217,7 @@
                       ]
                     },
                     {
-                      "idShort": "inspect",
+                      "idShort": "weigh",
                       "semanticId": {
                         "type": "ExternalReference",
                         "keys": [{
@@ -234,8 +234,8 @@
                       }],
                       "modelType": "SubmodelElementCollection",
                       "value": [
-                        {"idShort": "key", "modelType": "Property", "valueType": "xs:string", "value": "inspect"},
-                        {"idShort": "title", "modelType": "Property", "valueType": "xs:string", "value": "Inspect Stopper Quality"},
+                        {"idShort": "key", "modelType": "Property", "valueType": "xs:string", "value": "weigh"},
+                        {"idShort": "title", "modelType": "Property", "valueType": "xs:string", "value": "weigh"},
                         {"idShort": "synchronous", "modelType": "Property", "valueType": "xs:boolean", "value": "true"},
                         {
                             "idShort": "input",
@@ -261,7 +261,7 @@
                           "modelType": "SubmodelElementCollection",
                           "value": [
                             {"idShort": "contentType", "modelType": "Property", "valueType": "xs:string", "value": "application/json"},
-                            {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/CMD/Inspect/Request"},
+                            {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/CMD/Weigh"},
                             {"idShort": "op", "modelType": "Property", "valueType": "xs:string", "value": "invokeAction"},
                             {"idShort": "mqv_retain", "modelType": "Property", "valueType": "xs:boolean", "value": "false"},
                             {"idShort": "mqv_controlPacket", "modelType": "Property", "valueType": "xs:string", "value": "subscribe"},
@@ -271,7 +271,7 @@
                               "modelType": "SubmodelElementCollection",
                               "value": [
                                 {"idShort": "contentType", "modelType": "Property", "valueType": "xs:string", "value": "application/json"},
-                                {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/CMD/Inspect/Response"},
+                                {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/DATA/Weigh"},
                                 {"idShort": "mqv_controlPacket", "modelType": "Property", "valueType": "xs:string", "value": "publish"}
                               ]
                             },
@@ -283,7 +283,7 @@
                                 "keys": [
                                   {
                                     "type": "Submodel",
-                                    "value": "https://smartproductionlab.aau.dk/submodels/instances/syntegonStopperingSystem/AssetInterfacesDescription"
+                                    "value": "https://smartproductionlab.aau.dk/submodels/instances/imaFillingSystem/AssetInterfacesDescription"
                                   },
                                   {
                                     "type": "SubmodelElementCollection",
@@ -299,7 +299,7 @@
                                   },
                                   {
                                     "type": "SubmodelElementCollection",
-                                    "value": "qualityStatus"
+                                    "value": "weight"
                                   }
                                 ]
                               }
@@ -327,7 +327,7 @@
                       "modelType": "SubmodelElementCollection",
                       "value": [
                         {"idShort": "key", "modelType": "Property", "valueType": "xs:string", "value": "halt"},
-                        {"idShort": "title", "modelType": "Property", "valueType": "xs:string", "value": "Emergency Halt"},
+                        {"idShort": "title", "modelType": "Property", "valueType": "xs:string", "value": "halt"},
                         {"idShort": "synchronous", "modelType": "Property", "valueType": "xs:boolean", "value": "true"},
                         {
                             "idShort": "input",
@@ -347,7 +347,7 @@
                           "modelType": "SubmodelElementCollection",
                           "value": [
                             {"idShort": "contentType", "modelType": "Property", "valueType": "xs:string", "value": "application/json"},
-                            {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/CMD/Halt/Request"},
+                            {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/CMD/Halt"},
                             {"idShort": "op", "modelType": "Property", "valueType": "xs:string", "value": "invokeAction"},
                             {"idShort": "mqv_retain", "modelType": "Property", "valueType": "xs:boolean", "value": "false"},
                             {"idShort": "mqv_controlPacket", "modelType": "Property", "valueType": "xs:string", "value": "subscribe"},
@@ -375,7 +375,7 @@
                       "modelType": "SubmodelElementCollection",
                       "value": [
                         {"idShort": "key", "modelType": "Property", "valueType": "xs:string", "value": "occupy"},
-                        {"idShort": "title", "modelType": "Property", "valueType": "xs:string", "value": "Occupy Station"},
+                        {"idShort": "title", "modelType": "Property", "valueType": "xs:string", "value": "occupy"},
                         {"idShort": "synchronous", "modelType": "Property", "valueType": "xs:boolean", "value": "true"},
                         {
                             "idShort": "input",
@@ -401,7 +401,7 @@
                           "modelType": "SubmodelElementCollection",
                           "value": [
                             {"idShort": "contentType", "modelType": "Property", "valueType": "xs:string", "value": "application/json"},
-                            {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/CMD/Occupy/Request"},
+                            {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/CMD/Occupy"},
                             {"idShort": "op", "modelType": "Property", "valueType": "xs:string", "value": "invokeAction"},
                             {"idShort": "mqv_retain", "modelType": "Property", "valueType": "xs:boolean", "value": "false"},
                             {"idShort": "mqv_controlPacket", "modelType": "Property", "valueType": "xs:string", "value": "subscribe"},
@@ -411,7 +411,7 @@
                               "modelType": "SubmodelElementCollection",
                               "value": [
                                 {"idShort": "contentType", "modelType": "Property", "valueType": "xs:string", "value": "application/json"},
-                                {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/CMD/Occupy/Response"},
+                                {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/DATA/Occupy"},
                                 {"idShort": "mqv_controlPacket", "modelType": "Property", "valueType": "xs:string", "value": "publish"}
                               ]
                             }
@@ -438,7 +438,7 @@
                       "modelType": "SubmodelElementCollection",
                       "value": [
                         {"idShort": "key", "modelType": "Property", "valueType": "xs:string", "value": "release"},
-                        {"idShort": "title", "modelType": "Property", "valueType": "xs:string", "value": "Release Station"},
+                        {"idShort": "title", "modelType": "Property", "valueType": "xs:string", "value": "release"},
                         {"idShort": "synchronous", "modelType": "Property", "valueType": "xs:boolean", "value": "true"},
                         {
                             "idShort": "input",
@@ -464,7 +464,7 @@
                           "modelType": "SubmodelElementCollection",
                           "value": [
                             {"idShort": "contentType", "modelType": "Property", "valueType": "xs:string", "value": "application/json"},
-                            {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/CMD/Release/Request"},
+                            {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/CMD/Release"},
                             {"idShort": "op", "modelType": "Property", "valueType": "xs:string", "value": "invokeAction"},
                             {"idShort": "mqv_retain", "modelType": "Property", "valueType": "xs:boolean", "value": "false"},
                             {"idShort": "mqv_controlPacket", "modelType": "Property", "valueType": "xs:string", "value": "subscribe"},
@@ -474,7 +474,7 @@
                               "modelType": "SubmodelElementCollection",
                               "value": [
                                 {"idShort": "contentType", "modelType": "Property", "valueType": "xs:string", "value": "application/json"},
-                                {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/CMD/Release/Response"},
+                                {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/DATA/Release"},
                                 {"idShort": "mqv_controlPacket", "modelType": "Property", "valueType": "xs:string", "value": "publish"}
                               ]
                             }
@@ -496,7 +496,7 @@
                   "modelType": "SubmodelElementCollection",
                   "value": [
                     {
-                      "idShort": "stopperCount",
+                      "idShort": "weight",
                       "semanticId": {
                         "type": "ExternalReference",
                         "keys": [{
@@ -523,7 +523,7 @@
                             }]
                           },
                           "valueType": "xs:string",
-                          "value": "stopperCount",
+                          "value": "weight",
                           "modelType": "Property"
                         },
                         {
@@ -536,14 +536,14 @@
                             }]
                           },
                           "valueType": "xs:string",
-                          "value": "integer",
+                          "value": "number",
                           "modelType": "Property"
                         },
                         {
                             "idShort": "output",
                             "modelType": "File",
                             "contentType": "application/schema+json",
-                            "value": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/count.schema.json"
+                            "value": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/weight.schema.json"
                         },
                         {
                           "idShort": "forms",
@@ -557,77 +557,7 @@
                           "modelType": "SubmodelElementCollection",
                           "value": [
                             {"idShort": "contentType", "modelType": "Property", "valueType": "xs:string", "value": "application/json"},
-                            {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/DATA/StopperCount"},
-                            {"idShort": "mqv_retain", "modelType": "Property", "valueType": "xs:boolean", "value": "false"},
-                            {"idShort": "mqv_controlPacket", "modelType": "Property", "valueType": "xs:string", "value": "publish"},
-                            {"idShort": "mqv_qos", "modelType": "Property", "valueType": "xs:int", "value": "0"}
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "idShort": "qualityStatus",
-                      "semanticId": {
-                        "type": "ExternalReference",
-                        "keys": [{
-                          "type": "GlobalReference",
-                          "value": "https://admin-shell.io/idta/AssetInterfaceDescription/1/0/PropertyDefinition"
-                        }]
-                      },
-                      "supplementalSemanticIds": [{
-                        "type": "ExternalReference",
-                        "keys": [{
-                          "type": "GlobalReference",
-                          "value": "https://www.w3.org/2019/wot/td#name"
-                        }]
-                      }],
-                      "modelType": "SubmodelElementCollection",
-                      "value": [
-                        {
-                          "idShort": "key",
-                          "semanticId": {
-                            "type": "ExternalReference",
-                            "keys": [{
-                              "type": "GlobalReference",
-                              "value": "https://admin-shell.io/idta/AssetInterfacesDescription/1/0/key"
-                            }]
-                          },
-                          "valueType": "xs:string",
-                          "value": "qualityStatus",
-                          "modelType": "Property"
-                        },
-                        {
-                          "idShort": "type",
-                          "semanticId": {
-                            "type": "ExternalReference",
-                            "keys": [{
-                              "type": "GlobalReference",
-                              "value": "https://www.w3.org/1999/02/22-rdf-syntax-ns#type"
-                            }]
-                          },
-                          "valueType": "xs:string",
-                          "value": "string",
-                          "modelType": "Property"
-                        },
-                        {
-                            "idShort": "output",
-                            "modelType": "File",
-                            "contentType": "application/schema+json",
-                            "value": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/data.schema.json"
-                        },
-                        {
-                          "idShort": "forms",
-                          "semanticId": {
-                            "type": "ExternalReference",
-                            "keys": [{
-                              "type": "GlobalReference",
-                              "value": "https://www.w3.org/2019/wot/td#Form"
-                            }]
-                          },
-                          "modelType": "SubmodelElementCollection",
-                          "value": [
-                            {"idShort": "contentType", "modelType": "Property", "valueType": "xs:string", "value": "application/json"},
-                            {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/DATA/QualityStatus"},
+                            {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/DATA/Weight"},
                             {"idShort": "mqv_retain", "modelType": "Property", "valueType": "xs:boolean", "value": "false"},
                             {"idShort": "mqv_controlPacket", "modelType": "Property", "valueType": "xs:string", "value": "publish"},
                             {"idShort": "mqv_qos", "modelType": "Property", "valueType": "xs:int", "value": "0"}
@@ -786,7 +716,7 @@
     },
     {
       "idShort": "Variables",
-      "id": "https://smartproductionlab.aau.dk/submodels/instances/syntegonStopperingSystem/Variables",
+      "id": "https://smartproductionlab.aau.dk/submodels/instances/imaFillingSystem/Variables",
       "kind": "Instance",
       "semanticId": {
         "type": "ExternalReference",
@@ -829,7 +759,7 @@
                 "keys": [
                   {
                     "type": "Submodel",
-                    "value": "https://smartproductionlab.aau.dk/submodels/instances/syntegonStopperingSystem/AssetInterfacesDescription"
+                    "value": "https://smartproductionlab.aau.dk/submodels/instances/imaFillingSystem/AssetInterfacesDescription"
                   },
                   {
                     "type": "SubmodelElementCollection",
@@ -883,7 +813,7 @@
                 "keys": [
                   {
                     "type": "Submodel",
-                    "value": "https://smartproductionlab.aau.dk/submodels/instances/syntegonStopperingSystem/AssetInterfacesDescription"
+                    "value": "https://smartproductionlab.aau.dk/submodels/instances/imaFillingSystem/AssetInterfacesDescription"
                   },
                   {
                     "type": "SubmodelElementCollection",
@@ -907,12 +837,12 @@
           ]
         },
         {
-          "idShort": "StopperCount",
+          "idShort": "Weight",
           "semanticId": {
             "type": "ExternalReference",
             "keys": [{
               "type": "GlobalReference",
-              "value": "https://smartproductionlab.aau.dk/properties/stopperCount"
+              "value": "https://smartproductionlab.aau.dk/properties/weight"
             }]
           },
           "modelType": "SubmodelElementCollection",
@@ -920,8 +850,8 @@
             {
               "idShort": "Value",
               "modelType": "Property",
-              "valueType": "xs:integer",
-              "value": "0"
+              "valueType": "xs:double",
+              "value": "0.0"
             },
             {
               "idShort": "InterfaceReference",
@@ -938,7 +868,7 @@
                 "keys": [
                   {
                     "type": "Submodel",
-                    "value": "https://smartproductionlab.aau.dk/submodels/instances/syntegonStopperingSystem/AssetInterfacesDescription"
+                    "value": "https://smartproductionlab.aau.dk/submodels/instances/imaFillingSystem/AssetInterfacesDescription"
                   },
                   {
                     "type": "SubmodelElementCollection",
@@ -954,83 +884,10 @@
                   },
                   {
                     "type": "SubmodelElementCollection",
-                    "value": "stopperCount"
+                    "value": "weight"
                   }
                 ]
               }
-            }
-          ]
-        },
-        {
-          "idShort": "QualityStatus",
-          "semanticId": {
-            "type": "ExternalReference",
-            "keys": [{
-              "type": "GlobalReference",
-              "value": "https://smartproductionlab.aau.dk/properties/qualityStatus"
-            }]
-          },
-          "modelType": "SubmodelElementCollection",
-          "value": [
-            {
-              "idShort": "Value",
-              "modelType": "Property",
-              "valueType": "xs:string",
-              "value": "OK"
-            },
-            {
-              "idShort": "InterfaceReference",
-              "semanticId": {
-                "type": "ExternalReference",
-                "keys": [{
-                  "type": "GlobalReference",
-                  "value": "https://admin-shell.io/idta/AssetInterfacesDescription/1/0/InterfaceReference"
-                }]
-              },
-              "modelType": "ReferenceElement",
-              "value": {
-                "type": "ModelReference",
-                "keys": [
-                  {
-                    "type": "Submodel",
-                    "value": "https://smartproductionlab.aau.dk/submodels/instances/syntegonStopperingSystem/AssetInterfacesDescription"
-                  },
-                  {
-                    "type": "SubmodelElementCollection",
-                    "value": "InterfaceMQTT"
-                  },
-                  {
-                    "type": "SubmodelElementCollection",
-                    "value": "InteractionMetadata"
-                  },
-                  {
-                    "type": "SubmodelElementCollection",
-                    "value": "properties"
-                  },
-                  {
-                    "type": "SubmodelElementCollection",
-                    "value": "qualityStatus"
-                  }
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "idShort": "ErrorState",
-          "modelType": "SubmodelElementCollection",
-          "value": [
-            {
-              "idShort": "State",
-              "modelType": "Property",
-              "valueType": "xs:string",
-              "value": "NoError"
-            },
-            {
-              "idShort": "ErrorMessage",
-              "modelType": "Property",
-              "valueType": "xs:string",
-              "value": ""
             }
           ]
         }
@@ -1039,7 +896,7 @@
     },
     {
       "idShort": "Parameters",
-      "id": "https://smartproductionlab.aau.dk/submodels/instances/syntegonStopperingSystem/Parameters",
+      "id": "https://smartproductionlab.aau.dk/submodels/instances/imaFillingSystem/Parameters",
       "kind": "Instance",
       "semanticId": {
         "type": "ExternalReference",
