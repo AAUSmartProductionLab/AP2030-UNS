@@ -542,6 +542,76 @@
                           ]
                         }
                       ]
+                    },
+                    {
+                      "idShort": "Image",
+                      "semanticId": {
+                        "type": "ExternalReference",
+                        "keys": [{
+                          "type": "GlobalReference",
+                          "value": "https://admin-shell.io/idta/AssetInterfaceDescription/1/0/PropertyDefinition"
+                        }]
+                      },
+                      "supplementalSemanticIds": [{
+                        "type": "ExternalReference",
+                        "keys": [{
+                          "type": "GlobalReference",
+                          "value": "https://www.w3.org/2019/wot/td#name"
+                        }]
+                      }],
+                      "modelType": "SubmodelElementCollection",
+                      "value": [
+                        {
+                          "idShort": "key",
+                          "semanticId": {
+                            "type": "ExternalReference",
+                            "keys": [{
+                              "type": "GlobalReference",
+                              "value": "https://admin-shell.io/idta/AssetInterfacesDescription/1/0/key"
+                            }]
+                          },
+                          "valueType": "xs:string",
+                          "value": "Image",
+                          "modelType": "Property"
+                        },
+                        {
+                          "idShort": "type",
+                          "semanticId": {
+                            "type": "ExternalReference",
+                            "keys": [{
+                              "type": "GlobalReference",
+                              "value": "https://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+                            }]
+                          },
+                          "valueType": "xs:string",
+                          "value": "object",
+                          "modelType": "Property"
+                        },
+                        {
+                          "idShort": "output",
+                          "modelType": "File",
+                          "contentType": "application/schema+json",
+                          "value": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/image.schema.json"
+                        },
+                        {
+                          "idShort": "forms",
+                          "semanticId": {
+                            "type": "ExternalReference",
+                            "keys": [{
+                              "type": "GlobalReference",
+                              "value": "https://www.w3.org/2019/wot/td#Form"
+                            }]
+                          },
+                          "modelType": "SubmodelElementCollection",
+                          "value": [
+                            {"idShort": "contentType", "modelType": "Property", "valueType": "xs:string", "value": "application/json"},
+                            {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/DATA/Image"},
+                            {"idShort": "mqv_retain", "modelType": "Property", "valueType": "xs:boolean", "value": "true"},
+                            {"idShort": "mqv_controlPacket", "modelType": "Property", "valueType": "xs:string", "value": "publish"},
+                            {"idShort": "mqv_qos", "modelType": "Property", "valueType": "xs:int", "value": "0"}
+                          ]
+                        }
+                      ]
                     }
                   ]
                 }
@@ -668,6 +738,61 @@
                   {
                     "type": "SubmodelElementCollection",
                     "value": "occupationState"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "idShort": "Image",
+          "semanticId": {
+            "type": "ExternalReference",
+            "keys": [{
+              "type": "GlobalReference",
+              "value": "https://smartproductionlab.aau.dk/properties/image"
+            }]
+          },
+          "modelType": "SubmodelElementCollection",
+          "value": [
+            {
+              "idShort": "Value",
+              "modelType": "Property",
+              "valueType": "xs:string",
+              "value": ""
+            },
+            {
+              "idShort": "InterfaceReference",
+              "semanticId": {
+                "type": "ExternalReference",
+                "keys": [{
+                  "type": "GlobalReference",
+                  "value": "https://admin-shell.io/idta/AssetInterfacesDescription/1/0/InterfaceReference"
+                }]
+              },
+              "modelType": "ReferenceElement",
+              "value": {
+                "type": "ModelReference",
+                "keys": [
+                  {
+                    "type": "Submodel",
+                    "value": "https://smartproductionlab.aau.dk/submodels/instances/omronCamera/AssetInterfacesDescription"
+                  },
+                  {
+                    "type": "SubmodelElementCollection",
+                    "value": "InterfaceMQTT"
+                  },
+                  {
+                    "type": "SubmodelElementCollection",
+                    "value": "InteractionMetadata"
+                  },
+                  {
+                    "type": "SubmodelElementCollection",
+                    "value": "properties"
+                  },
+                  {
+                    "type": "SubmodelElementCollection",
+                    "value": "Image"
                   }
                 ]
               }
