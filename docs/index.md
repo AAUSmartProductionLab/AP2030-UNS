@@ -26,6 +26,9 @@ All schemas are automatically synchronized from the `schemas/` directory. Click 
 - **[imaLoadingSystem.json](schemas/ResourceDescription/imaLoadingSystem.json)**
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/schemas/ResourceDescription/imaLoadingSystem.json)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/schemas/ResourceDescription/imaLoadingSystem.json)
+- **[omronCamera.json](schemas/ResourceDescription/omronCamera.json)**
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/schemas/ResourceDescription/omronCamera.json)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/schemas/ResourceDescription/omronCamera.json)
 - **[optimaUnloadingSystem.json](schemas/ResourceDescription/optimaUnloadingSystem.json)**
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/schemas/ResourceDescription/optimaUnloadingSystem.json)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/schemas/ResourceDescription/optimaUnloadingSystem.json)
@@ -44,9 +47,6 @@ All schemas are automatically synchronized from the `schemas/` directory. Click 
 - **[syntegonStopperingSystem.json](schemas/ResourceDescription/syntegonStopperingSystem.json)**
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/schemas/ResourceDescription/syntegonStopperingSystem.json)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/schemas/ResourceDescription/syntegonStopperingSystem.json)
-- **[weightVerification.json](schemas/ResourceDescription/weightVerification.json)**
-  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/schemas/ResourceDescription/weightVerification.json)
-  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/schemas/ResourceDescription/weightVerification.json)
 
 ### AMR (Mobile Robot)
 

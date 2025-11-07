@@ -1,15 +1,15 @@
 {
   "assetAdministrationShells": [
     {
-      "idShort": "weightVerification",
-      "id": "https://smartproductionlab.aau.dk/aas/weightVerification",
+      "idShort": "omronCamera",
+      "id": "https://smartproductionlab.aau.dk/aas/omronCamera",
       "assetInformation": {
         "assetKind": "Instance",
-        "globalAssetId": "https://smartproductionlab.aau.dk/assets/weightVerification",
+        "globalAssetId": "https://smartproductionlab.aau.dk/assets/omronCamera",
         "specificAssetIds": [
           {
             "name": "serialNumber",
-            "value": "WV-2024-001",
+            "value": "OM-CA-2024-001",
             "externalSubjectId": {
               "type": "ExternalReference",
               "keys": [{
@@ -34,15 +34,15 @@
       "submodels": [
         {
           "type": "ModelReference",
-          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/weightVerification/AssetInterfacesDescription"}]
+          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/omronCamera/AssetInterfacesDescription"}]
         },
         {
           "type": "ModelReference",
-          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/weightVerification/Variables"}]
+          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/omronCamera/Variables"}]
         },
         {
           "type": "ModelReference",
-          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/weightVerification/Parameters"}]
+          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/omronCamera/Parameters"}]
         }
       ],
       "derivedFrom": {
@@ -55,7 +55,7 @@
   "submodels": [
     {
       "idShort": "AssetInterfacesDescription",
-      "id": "https://smartproductionlab.aau.dk/submodels/instances/weightVerification/AssetInterfacesDescription",
+      "id": "https://smartproductionlab.aau.dk/submodels/instances/omronCamera/AssetInterfacesDescription",
       "kind": "Instance",
       "semanticId": {
         "type": "ExternalReference",
@@ -97,7 +97,7 @@
               "idShort": "title",
               "modelType": "Property",
               "valueType": "xs:string",
-              "value": "Weight Verification"
+              "value": "Omron Camera"
             },
             {
               "idShort": "EndpointMetadata",
@@ -154,7 +154,7 @@
                   "modelType": "SubmodelElementCollection",
                   "value": [
                     {
-                      "idShort": "verify",
+                      "idShort": "capture",
                       "semanticId": {
                         "type": "ExternalReference",
                         "keys": [{
@@ -171,8 +171,8 @@
                       }],
                       "modelType": "SubmodelElementCollection",
                       "value": [
-                        {"idShort": "key", "modelType": "Property", "valueType": "xs:string", "value": "verify"},
-                        {"idShort": "title", "modelType": "Property", "valueType": "xs:string", "value": "verify"},
+                        {"idShort": "key", "modelType": "Property", "valueType": "xs:string", "value": "capture"},
+                        {"idShort": "title", "modelType": "Property", "valueType": "xs:string", "value": "capture"},
                         {"idShort": "synchronous", "modelType": "Property", "valueType": "xs:boolean", "value": "true"},
                         {
                             "idShort": "input",
@@ -198,7 +198,7 @@
                           "modelType": "SubmodelElementCollection",
                           "value": [
                             {"idShort": "contentType", "modelType": "Property", "valueType": "xs:string", "value": "application/json"},
-                            {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/CMD/Verify"},
+                            {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/CMD/Capture"},
                             {"idShort": "op", "modelType": "Property", "valueType": "xs:string", "value": "invokeAction"},
                             {"idShort": "mqv_retain", "modelType": "Property", "valueType": "xs:boolean", "value": "false"},
                             {"idShort": "mqv_controlPacket", "modelType": "Property", "valueType": "xs:string", "value": "subscribe"},
@@ -208,7 +208,7 @@
                               "modelType": "SubmodelElementCollection",
                               "value": [
                                 {"idShort": "contentType", "modelType": "Property", "valueType": "xs:string", "value": "application/json"},
-                                {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/DATA/Verify"},
+                                {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/DATA/Capture"},
                                 {"idShort": "mqv_controlPacket", "modelType": "Property", "valueType": "xs:string", "value": "publish"}
                               ]
                             }
@@ -554,7 +554,7 @@
     },
     {
       "idShort": "Variables",
-      "id": "https://smartproductionlab.aau.dk/submodels/instances/weightVerification/Variables",
+      "id": "https://smartproductionlab.aau.dk/submodels/instances/omronCamera/Variables",
       "kind": "Instance",
       "semanticId": {
         "type": "ExternalReference",
@@ -597,7 +597,7 @@
                 "keys": [
                   {
                     "type": "Submodel",
-                    "value": "https://smartproductionlab.aau.dk/submodels/instances/weightVerification/AssetInterfacesDescription"
+                    "value": "https://smartproductionlab.aau.dk/submodels/instances/omronCamera/AssetInterfacesDescription"
                   },
                   {
                     "type": "SubmodelElementCollection",
@@ -651,7 +651,7 @@
                 "keys": [
                   {
                     "type": "Submodel",
-                    "value": "https://smartproductionlab.aau.dk/submodels/instances/weightVerification/AssetInterfacesDescription"
+                    "value": "https://smartproductionlab.aau.dk/submodels/instances/omronCamera/AssetInterfacesDescription"
                   },
                   {
                     "type": "SubmodelElementCollection",
@@ -679,7 +679,7 @@
     },
     {
       "idShort": "Parameters",
-      "id": "https://smartproductionlab.aau.dk/submodels/instances/weightVerification/Parameters",
+      "id": "https://smartproductionlab.aau.dk/submodels/instances/omronCamera/Parameters",
       "kind": "Instance",
       "semanticId": {
         "type": "ExternalReference",
