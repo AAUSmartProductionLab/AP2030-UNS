@@ -9,6 +9,7 @@ from .parsers import AASXParser
 from .databridge import DataBridgeConfigGenerator
 from .registry import BaSyxRegistrationService
 from .interface_parser import MQTTInterfaceParser
+from .mqtt_registration import MQTTRegistrationService
 from .utils import save_json_file, load_json_file, ensure_directory
 
 __all__ = [
@@ -17,6 +18,7 @@ __all__ = [
     'DataBridgeConfigGenerator',
     'BaSyxRegistrationService',
     'MQTTInterfaceParser',
+    'MQTTRegistrationService',
     'save_json_file',
     'load_json_file',
     'ensure_directory'
