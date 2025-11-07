@@ -43,6 +43,10 @@
         {
           "type": "ModelReference",
           "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/planarTable/Parameters"}]
+        },
+        {
+          "type": "ModelReference",
+          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/planarTable/HierarchicalStructures"}]
         }
       ],
       "derivedFrom": {
@@ -682,6 +686,263 @@
         "revision": "0"
       },
       "submodelElements": [],
+      "modelType": "Submodel"
+    },
+    {
+      "idShort": "HierarchicalStructures",
+      "id": "https://smartproductionlab.aau.dk/submodels/instances/planarTable/HierarchicalStructures",
+      "kind": "Instance",
+      "semanticId": {
+        "type": "ExternalReference",
+        "keys": [{"type": "GlobalReference", "value": "https://admin-shell.io/idta/HierarchicalStructures/1/0/Submodel"}]
+      },
+      "administration": {
+        "version": "1",
+        "revision": "0"
+      },
+      "submodelElements": [
+        {
+          "idShort": "Archetype",
+          "semanticId": {
+            "type": "ExternalReference",
+            "keys": [{
+              "type": "GlobalReference",
+              "value": "https://admin-shell.io/idta/HierarchicalStructures/1/0/Archetype"
+            }]
+          },
+          "modelType": "Property",
+          "valueType": "xs:string",
+          "value": "OneDown"
+        },
+        {
+          "idShort": "EntryNode",
+          "semanticId": {
+            "type": "ExternalReference",
+            "keys": [{
+              "type": "GlobalReference",
+              "value": "https://admin-shell.io/idta/HierarchicalStructures/1/0/EntryNode"
+            }]
+          },
+          "modelType": "Entity",
+          "entityType": "SelfManagedEntity",
+          "globalAssetId": "https://smartproductionlab.aau.dk/assets/planarTable",
+          "statements": [
+            {
+              "idShort": "SameAs",
+              "semanticId": {
+                "type": "ExternalReference",
+                "keys": [{
+                  "type": "GlobalReference",
+                  "value": "https://admin-shell.io/idta/HierarchicalStructures/1/0/SameAs"
+                }]
+              },
+              "modelType": "ReferenceElement",
+              "value": {
+                "type": "ModelReference",
+                "keys": [{
+                  "type": "AssetAdministrationShell",
+                  "value": "https://smartproductionlab.aau.dk/aas/planarTable"
+                }]
+              }
+            },
+            {
+              "idShort": "Node",
+              "semanticId": {
+                "type": "ExternalReference",
+                "keys": [{
+                  "type": "GlobalReference",
+                  "value": "https://admin-shell.io/idta/HierarchicalStructures/1/0/Node"
+                }]
+              },
+              "modelType": "Entity",
+              "entityType": "SelfManagedEntity",
+              "globalAssetId": "https://smartproductionlab.aau.dk/assets/planarTable",
+              "statements": [
+                {
+                  "idShort": "HasPart",
+                  "semanticId": {
+                    "type": "ExternalReference",
+                    "keys": [{
+                      "type": "GlobalReference",
+                      "value": "https://admin-shell.io/idta/HierarchicalStructures/1/0/Relationship"
+                    }]
+                  },
+                  "supplementalSemanticIds": [{
+                    "type": "ExternalReference",
+                    "keys": [{
+                      "type": "GlobalReference",
+                      "value": "https://admin-shell.io/idta/HierarchicalStructures/1/0/HasPart"
+                    }]
+                  }],
+                  "modelType": "SubmodelElementList",
+                  "typeValueListElement": "Entity",
+                  "value": [
+                    {
+                      "modelType": "Entity",
+                      "entityType": "SelfManagedEntity",
+                      "globalAssetId": "https://smartproductionlab.aau.dk/assets/planarTableShuttle1",
+                      "statements": [
+                        {
+                          "idShort": "SameAs",
+                          "semanticId": {
+                            "type": "ExternalReference",
+                            "keys": [{
+                              "type": "GlobalReference",
+                              "value": "https://admin-shell.io/idta/HierarchicalStructures/1/0/SameAs"
+                            }]
+                          },
+                          "modelType": "ReferenceElement",
+                          "value": {
+                            "type": "ModelReference",
+                            "keys": [{
+                              "type": "AssetAdministrationShell",
+                              "value": "https://smartproductionlab.aau.dk/aas/planarTableShuttle1"
+                            }]
+                          }
+                        },
+                        {
+                          "idShort": "Node",
+                          "semanticId": {
+                            "type": "ExternalReference",
+                            "keys": [{
+                              "type": "GlobalReference",
+                              "value": "https://admin-shell.io/idta/HierarchicalStructures/1/0/Node"
+                            }]
+                          },
+                          "modelType": "Entity",
+                          "entityType": "SelfManagedEntity",
+                          "globalAssetId": "https://smartproductionlab.aau.dk/assets/planarTableShuttle1",
+                          "statements": [
+                            {
+                              "idShort": "BulkCount",
+                              "semanticId": {
+                                "type": "ExternalReference",
+                                "keys": [{
+                                  "type": "GlobalReference",
+                                  "value": "https://admin-shell.io/idta/HierarchicalStructures/1/0/BulkCount"
+                                }]
+                              },
+                              "modelType": "Property",
+                              "valueType": "xs:integer",
+                              "value": "1"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "modelType": "Entity",
+                      "entityType": "SelfManagedEntity",
+                      "globalAssetId": "https://smartproductionlab.aau.dk/assets/planarTableShuttle2",
+                      "statements": [
+                        {
+                          "idShort": "SameAs",
+                          "semanticId": {
+                            "type": "ExternalReference",
+                            "keys": [{
+                              "type": "GlobalReference",
+                              "value": "https://admin-shell.io/idta/HierarchicalStructures/1/0/SameAs"
+                            }]
+                          },
+                          "modelType": "ReferenceElement",
+                          "value": {
+                            "type": "ModelReference",
+                            "keys": [{
+                              "type": "AssetAdministrationShell",
+                              "value": "https://smartproductionlab.aau.dk/aas/planarTableShuttle2"
+                            }]
+                          }
+                        },
+                        {
+                          "idShort": "Node",
+                          "semanticId": {
+                            "type": "ExternalReference",
+                            "keys": [{
+                              "type": "GlobalReference",
+                              "value": "https://admin-shell.io/idta/HierarchicalStructures/1/0/Node"
+                            }]
+                          },
+                          "modelType": "Entity",
+                          "entityType": "SelfManagedEntity",
+                          "globalAssetId": "https://smartproductionlab.aau.dk/assets/planarTableShuttle2",
+                          "statements": [
+                            {
+                              "idShort": "BulkCount",
+                              "semanticId": {
+                                "type": "ExternalReference",
+                                "keys": [{
+                                  "type": "GlobalReference",
+                                  "value": "https://admin-shell.io/idta/HierarchicalStructures/1/0/BulkCount"
+                                }]
+                              },
+                              "modelType": "Property",
+                              "valueType": "xs:integer",
+                              "value": "1"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "modelType": "Entity",
+                      "entityType": "SelfManagedEntity",
+                      "globalAssetId": "https://smartproductionlab.aau.dk/assets/planarTableShuttle3",
+                      "statements": [
+                        {
+                          "idShort": "SameAs",
+                          "semanticId": {
+                            "type": "ExternalReference",
+                            "keys": [{
+                              "type": "GlobalReference",
+                              "value": "https://admin-shell.io/idta/HierarchicalStructures/1/0/SameAs"
+                            }]
+                          },
+                          "modelType": "ReferenceElement",
+                          "value": {
+                            "type": "ModelReference",
+                            "keys": [{
+                              "type": "AssetAdministrationShell",
+                              "value": "https://smartproductionlab.aau.dk/aas/planarTableShuttle3"
+                            }]
+                          }
+                        },
+                        {
+                          "idShort": "Node",
+                          "semanticId": {
+                            "type": "ExternalReference",
+                            "keys": [{
+                              "type": "GlobalReference",
+                              "value": "https://admin-shell.io/idta/HierarchicalStructures/1/0/Node"
+                            }]
+                          },
+                          "modelType": "Entity",
+                          "entityType": "SelfManagedEntity",
+                          "globalAssetId": "https://smartproductionlab.aau.dk/assets/planarTableShuttle3",
+                          "statements": [
+                            {
+                              "idShort": "BulkCount",
+                              "semanticId": {
+                                "type": "ExternalReference",
+                                "keys": [{
+                                  "type": "GlobalReference",
+                                  "value": "https://admin-shell.io/idta/HierarchicalStructures/1/0/BulkCount"
+                                }]
+                              },
+                              "modelType": "Property",
+                              "valueType": "xs:integer",
+                              "value": "1"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
       "modelType": "Submodel"
     }
   ]
