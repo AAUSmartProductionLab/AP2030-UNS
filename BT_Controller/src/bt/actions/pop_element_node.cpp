@@ -23,6 +23,7 @@ void PopElementNode::initializeTopicsFromAAS()
         std::cout << "Initializing MQTT topics for asset ID: " << asset_id << std::endl;
 
         // Create Topic objects
+        // TODO fix this
         auto product_association_opt = aas_client_.fetchInterface(asset_id, this->name(), "product_association");
 
         if (!product_association_opt.has_value())

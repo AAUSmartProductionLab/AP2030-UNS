@@ -21,7 +21,7 @@ void MoveToPosition::initializeTopicsFromAAS()
 
         // Create Topic objects
         auto request_opt = aas_client_.fetchInterface(asset_id, this->name(), "input");
-        auto halt_opt = aas_client_.fetchInterface(asset_id, this->name(), "halt");
+        auto halt_opt = aas_client_.fetchInterface(asset_id, "halt", "input");
         auto response_opt = aas_client_.fetchInterface(asset_id, this->name(), "output");
 
         if (!request_opt.has_value() || !halt_opt.has_value() || !response_opt.has_value())
@@ -46,7 +46,7 @@ BT::PortsList MoveToPosition::providedPorts()
         BT::details::PortWithDefault<std::string>(
             BT::PortDirection::INPUT,
             "Asset",
-            "{Asset}",
+            "{Xbot}",
             "The Asset to execute the movement"),
         BT::details::PortWithDefault<std::string>(
             BT::PortDirection::INPUT,

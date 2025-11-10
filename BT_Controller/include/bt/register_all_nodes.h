@@ -92,7 +92,7 @@ void registerAllNodes(
         node_message_distributor,
         mqtt_client,
         aas_client,
-        "MoveToPosition");
+        "moveToPosition");
 
     MqttActionNode::registerNodeType<CommandExecuteNode>(
         factory,
