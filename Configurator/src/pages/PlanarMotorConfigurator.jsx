@@ -744,7 +744,7 @@ export default function PlanarMotorConfigurator() {
 
 
   const prepareLayoutData = () => {
-    // Create the Stations array
+    // Create the Stations array from placed nodes
     const stationsArray = placedNodes.map(node => {
       const containerName = getContainerName(node.container);
       const stationId = MappingService.nameToId(containerName);
@@ -762,8 +762,10 @@ export default function PlanarMotorConfigurator() {
       const capabilities = node.capabilities || 
         (sourceNode ? sourceNode.capabilities : []);
       
-      // Get instance name (the title of the module)
-      const instanceName = node.title || "Unknown System";
+      // Get instance name - use mapping if available, otherwise use the title
+      const instanceName = MappingService.getInstanceName(abstractId) || 
+        node.title || 
+        "Unknown System";
       
       return {
         Name: abstractId, // Use the abstractId as the Name
@@ -775,9 +777,45 @@ export default function PlanarMotorConfigurator() {
       };
     });
     
-    // Return the properly formatted object
+    // Add fixed infrastructure (PlanarSystem and Xbots) that are always present
+    const fixedInfrastructure = [
+      {
+        Name: "PlanarSystem",
+        "Instance Name": "planarTable",
+        StationId: -1, // Special ID for planar table (not a module area)
+        "Approach Position": [0, 0, 0],
+        "Process Position": [0, 0, 0],
+        "Capabilities": []
+      },
+      {
+        Name: "Xbot1",
+        "Instance Name": "planarTableShuttle1",
+        StationId: -1, // Special ID for shuttles
+        "Approach Position": [0, 0, 0],
+        "Process Position": [0, 0, 0],
+        "Capabilities": ["Transport"]
+      },
+      {
+        Name: "Xbot2",
+        "Instance Name": "planarTableShuttle2",
+        StationId: -1,
+        "Approach Position": [0, 0, 0],
+        "Process Position": [0, 0, 0],
+        "Capabilities": ["Transport"]
+      },
+      {
+        Name: "Xbot3",
+        "Instance Name": "planarTableShuttle3",
+        StationId: -1,
+        "Approach Position": [0, 0, 0],
+        "Process Position": [0, 0, 0],
+        "Capabilities": ["Transport"]
+      }
+    ];
+    
+    // Return the properly formatted object with both placed stations and fixed infrastructure
     return {
-      Stations: stationsArray
+      Stations: [...stationsArray, ...fixedInfrastructure]
     };
   };
 

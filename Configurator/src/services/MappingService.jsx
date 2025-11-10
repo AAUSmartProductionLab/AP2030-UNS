@@ -94,6 +94,27 @@ class MappingService {
     static getPosition(containerIdOrName) {
       return this.getApproachPosition(containerIdOrName);
     }
+    
+    /**
+     * Map asset names to their AAS instance names
+     * This mapping is used by the behavior tree controller to find assets in the AAS registry
+     */
+    static assetNameToInstanceMap = {
+      'PlanarSystem': 'planarTable',
+      'Xbot1': 'planarTableShuttle1',
+      'Xbot2': 'planarTableShuttle2',
+      'Xbot3': 'planarTableShuttle3'
+    };
+    
+    /**
+     * Get the AAS instance name for an asset name
+     * @param {string} assetName - The asset name used in the behavior tree
+     * @returns {string} The AAS instance name (idShort without "AAS" suffix)
+     */
+    static getInstanceName(assetName) {
+      return this.assetNameToInstanceMap[assetName] || assetName;
+    }
+    
     // Mapping from grid container numbers to logical IDs
     static gridToIdMap = {
         // Top row (Module Areas)
