@@ -1,7 +1,7 @@
 {
   "assetAdministrationShells": [
     {
-      "idShort": "planarTable",
+      "idShort": "planarTableAAS",
       "id": "https://smartproductionlab.aau.dk/aas/planarTable",
       "assetInformation": {
         "assetKind": "Instance",
