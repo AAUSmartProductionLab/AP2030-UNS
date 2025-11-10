@@ -1,7 +1,7 @@
 {
   "assetAdministrationShells": [
     {
-      "idShort": "omronCamera",
+      "idShort": "omronCameraAAS",
       "id": "https://smartproductionlab.aau.dk/aas/omronCamera",
       "assetInformation": {
         "assetKind": "Instance",
