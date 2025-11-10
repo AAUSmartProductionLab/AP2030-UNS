@@ -95,7 +95,7 @@
                           Field="State"
                           expected_value="operational"
                           Property="PackMLState"
-                          Asset="{Asset}"/>
+                          Asset="PlanarSystem"/>
           <SubTree ID="PlanarSOP"
                    Asset="Operator"
                    _autoremap="true"/>
