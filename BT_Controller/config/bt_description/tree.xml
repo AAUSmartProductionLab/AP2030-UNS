@@ -14,8 +14,8 @@
           <Sleep msec="10000"/>
         </ReactiveFallback>
         <Sequence>
-          <MoveToPosition Uuid="{ProductID}"
-                          TargetPosition="{Asset}"
+          <moveToPosition Uuid="{ProductID}"
+                          TargetPosition="{Station}"
                           Asset="{Xbot}"/>
           <Command_Execution Parameters="&apos;{}&apos;"
                              Uuid="{ProductID}"
@@ -73,8 +73,8 @@
             <Sleep msec="10000"/>
           </ReactiveFallback>
           <Sequence>
-            <MoveToPosition Uuid="{ProductID}"
-                            TargetPosition="{Asset}"
+            <moveToPosition Uuid="{ProductID}"
+                            TargetPosition="{Station}"
                             Asset="{Xbot}"/>
             <Command_Execution Parameters="&apos;{}&apos;"
                                Uuid="{ProductID}"
@@ -95,9 +95,9 @@
                           Field="State"
                           expected_value="operational"
                           Property="PackMLState"
-                          Asset="PlanarSystem"/>
-          <SubTree ID="Planar SOP"
-                   Asset="PlanarSystem"
+                          Asset="{Asset}"/>
+          <SubTree ID="PlanarSOP"
+                   Asset="Operator"
                    _autoremap="true"/>
         </Fallback>
         <Parallel failure_count="-1"
@@ -119,7 +119,7 @@
     </Sequence>
   </BehaviorTree>
 
-  <BehaviorTree ID="Planar SOP">
+  <BehaviorTree ID="PlanarSOP">
     <Sequence>
       <Command_Execution Parameters="&apos;{ &quot;SopId&quot;: 10 }&apos;"
                          Uuid="{Uuid}"
@@ -158,8 +158,8 @@
           <Sleep msec="10000"/>
         </ReactiveFallback>
         <Sequence>
-          <MoveToPosition Uuid="{ProductID}"
-                          TargetPosition="{Asset}"
+          <moveToPosition Uuid="{ProductID}"
+                          TargetPosition="{Station}"
                           Asset="{Xbot}"/>
           <Command_Execution Parameters="&apos;{}&apos;"
                              Uuid="{ProductID}"
@@ -183,8 +183,8 @@
           <Sleep msec="10000"/>
         </ReactiveFallback>
         <Sequence>
-          <MoveToPosition Uuid="{ProductID}"
-                          TargetPosition="{Asset}"
+          <moveToPosition Uuid="{ProductID}"
+                          TargetPosition="{Station}"
                           Asset="{Xbot}"/>
           <Command_Execution Parameters="&apos;{}&apos;"
                              Uuid="{ProductID}"
@@ -210,8 +210,8 @@
           <Sleep msec="10000"/>
         </ReactiveFallback>
         <Sequence>
-          <MoveToPosition Uuid="{ProductID}"
-                          TargetPosition="{Asset}"
+          <moveToPosition Uuid="{ProductID}"
+                          TargetPosition="{Station}"
                           Asset="{Xbot}"/>
           <Command_Execution Parameters="&apos;{}&apos;"
                              Uuid="{ProductID}"
@@ -236,8 +236,8 @@
           <Sleep msec="10000"/>
         </ReactiveFallback>
         <Sequence>
-          <MoveToPosition Uuid="{ProductID}"
-                          TargetPosition="{Asset}"
+          <moveToPosition Uuid="{ProductID}"
+                          TargetPosition="{Station}"
                           Asset="{Xbot}"/>
           <Command_Execution Parameters="&apos;{}&apos;"
                              Uuid="{ProductID}"
@@ -342,17 +342,6 @@
       <input_port name="Asset"
                   default="Load"/>
     </SubTree>
-    <Action ID="MoveToPosition">
-      <input_port name="Uuid"
-                  default="{ProductID}"
-                  type="std::string">UUID for the command to execute</input_port>
-      <input_port name="TargetPosition"
-                  default="{Asset}"
-                  type="std::string">The name of the asset to move to</input_port>
-      <input_port name="Asset"
-                  default="{Asset}"
-                  type="std::string">The Asset to execute the movement</input_port>
-    </Action>
     <Decorator ID="Occupy">
       <inout_port name="Uuid"
                   default="{Uuid}"
@@ -361,6 +350,11 @@
                   default="{Asset}"
                   type="std::string">The Asset to register with</input_port>
     </Decorator>
+    <SubTree ID="PlanarSOP"
+             editable="true">
+      <input_port name="Asset"
+                  default="Operator"/>
+    </SubTree>
     <Action ID="PopElement">
       <output_port name="ProductID"
                    default="{ProductID}"
@@ -406,6 +400,17 @@
                   default="Xbot1"/>
       <output_port name="ProductID"/>
     </SubTree>
+    <Action ID="moveToPosition">
+      <input_port name="Uuid"
+                  default="{ProductID}"
+                  type="std::string">UUID for the command to execute</input_port>
+      <input_port name="TargetPosition"
+                  default="{Station}"
+                  type="std::string">The name of the station to move to</input_port>
+      <input_port name="Asset"
+                  default="{Xbot}"
+                  type="std::string">The Asset to execute the movement</input_port>
+    </Action>
   </TreeNodesModel>
 
 </root>

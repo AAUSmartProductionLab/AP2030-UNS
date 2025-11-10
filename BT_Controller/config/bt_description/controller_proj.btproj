@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root BTCPP_format="4" project_name="Project">
-    <include path="../../../../tree.xml"/>
+    <include path="tree.xml"/>
     <!-- Description of Node Models (used by Groot) -->
     <TreeNodesModel>
         <Control ID="BC_Fallback"/>
@@ -101,5 +101,10 @@
             <input_port name="Xbot" default="Xbot1"/>
             <output_port name="ProductID"/>
         </SubTree>
+        <Action ID="moveToPosition">
+            <input_port name="Uuid" default="{ProductID}" type="std::string">UUID for the command to execute</input_port>
+            <input_port name="TargetPosition" default="{Station}" type="std::string">The name of the station to move to</input_port>
+            <input_port name="Asset" default="{Xbot}" type="std::string">The Asset to execute the movement</input_port>
+        </Action>
     </TreeNodesModel>
 </root>
