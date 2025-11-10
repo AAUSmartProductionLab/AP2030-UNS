@@ -762,10 +762,9 @@ export default function PlanarMotorConfigurator() {
       const capabilities = node.capabilities || 
         (sourceNode ? sourceNode.capabilities : []);
       
-      // Get instance name - use mapping if available, otherwise use the title
-      const instanceName = MappingService.getInstanceName(abstractId) || 
-        node.title || 
-        "Unknown System";
+      // Get instance name - check if a specific mapping exists, otherwise use node.title
+      const mappedName = MappingService.assetNameToInstanceMap[abstractId];
+      const instanceName = mappedName || node.title || "Unknown System";
       
       return {
         Name: abstractId, // Use the abstractId as the Name
