@@ -178,7 +178,7 @@
                             "idShort": "input",
                             "modelType": "File",
                             "contentType": "application/schema+json",
-                            "value": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/moveCommand.schema.json"
+                            "value": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/moveToPosition.schema.json"
                         },
                         {
                             "idShort": "output",
