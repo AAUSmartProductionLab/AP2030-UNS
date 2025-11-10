@@ -18,7 +18,7 @@ public:
     // The node_params can contain parameters from the BT XML (e.g., station_id, device_name)
     std::optional<mqtt_utils::Topic> fetchInterface(
         const std::string &asset_id,
-        const std::string &skill,
+        const std::string &interaction,
         const std::string &interfaceProp);
 
     nlohmann::json station_config;
@@ -31,19 +31,19 @@ private:
     std::string aas_server_url_;
     std::string registry_url_;
     CURL *curl_;
-    
-    // Cache for fetched schemas to avoid redundant HTTP requests
-    std::map<std::string, nlohmann::json> schema_cache_;
 
     // Helper to make HTTP GET requests
     nlohmann::json makeGetRequest(const std::string &endpoint, bool use_registry = false);
 
     // Helper to substitute parameters in topic patterns
     std::string substituteParams(const std::string &pattern, const nlohmann::json &params);
-    
-    // Helper to fetch a schema from a URL (with caching)
+
+    // Helper to fetch a schema from a URL (delegates to schema_utils)
     nlohmann::json fetchSchemaFromUrl(const std::string &schema_url);
-    
-    // Helper to recursively resolve $ref in schemas
+
+    // Helper to recursively resolve $ref in schemas (delegates to schema_utils)
     void resolveSchemaReferences(nlohmann::json &schema);
+
+    // Helper to encode string to base64url format (RFC 4648)
+    static std::string base64url_encode(const std::string &input);
 };

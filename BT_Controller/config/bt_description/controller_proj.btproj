@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root BTCPP_format="4" project_name="Project">
-    <include path="tree.xml"/>
+    <include path="../../../../tree.xml"/>
     <!-- Description of Node Models (used by Groot) -->
     <TreeNodesModel>
         <Control ID="BC_Fallback"/>
@@ -15,10 +15,10 @@
             <output_port name="ProductIDs" default="{ProductIDs}" type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;">List of product IDs to produce</output_port>
         </Action>
         <Condition ID="Data_Condition">
-            <input_port name="expected_value" type="std::string">Value to compare against</input_port>
             <input_port name="comparison_type" type="std::string">Type of comparison: equal, not_equal, greater, less, contains</input_port>
             <input_port name="Field" type="std::string">Name of the field to monitor in the MQTT message</input_port>
-            <input_port name="Message" type="std::string">The message from the Asset</input_port>
+            <input_port name="expected_value" type="std::string">Value to compare against</input_port>
+            <input_port name="Property" type="std::string">The property interface from the Asset</input_port>
             <input_port name="Asset" default="{Asset}" type="std::string">The Asset from which to receive a message</input_port>
         </Condition>
         <SubTree ID="Filling" editable="true">
@@ -53,6 +53,9 @@
         <Action ID="OmronArclRequest">
             <input_port name="command" type="BT::AnyTypeAllowed"/>
         </Action>
+        <SubTree ID="PlanarSOP" editable="true">
+            <input_port name="Asset" default="Operator"/>
+        </SubTree>
         <Action ID="PopElement">
             <output_port name="ProductID" default="{ProductID}" type="std::string">The product ID popped from the queue.</output_port>
             <input_port name="if_empty" default="SUCCESS" type="BT::NodeStatus">Status to return if the queue is empty (SUCCESS, FAILURE, SKIPPED).</input_port>
@@ -66,7 +69,7 @@
             <input_port name="Asset" default="{Asset}" type="std::string">The asset used for refilling</input_port>
         </Action>
         <SubTree ID="Scrap" editable="true">
-            <input_port name="Station" default="Scrap"/>
+            <input_port name="Asset" default="Scrap"/>
         </SubTree>
         <SubTree ID="StationProcess" editable="true">
             <input_port name="Station" default="Stoppering"/>
@@ -95,7 +98,7 @@
             <input_port name="Station" default="{Station}" type="std::string">The station to register with</input_port>
         </Decorator>
         <SubTree ID="Xbot_Production" editable="true">
-            <input_port name="XbotTopic" default="Planar/Xbot1"/>
+            <input_port name="Xbot" default="Xbot1"/>
             <output_port name="ProductID"/>
         </SubTree>
     </TreeNodesModel>

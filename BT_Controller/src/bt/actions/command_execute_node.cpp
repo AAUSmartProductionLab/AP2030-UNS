@@ -32,8 +32,8 @@ void CommandExecuteNode::initializeTopicsFromAAS()
         std::cout << "Initializing MQTT topics for asset ID: " << asset_id << std::endl;
 
         // Create Topic objects
-        auto request_opt = aas_client_.fetchInterface(asset_id, operation, "request");
-        auto response_opt = aas_client_.fetchInterface(asset_id, operation, "response");
+        auto request_opt = aas_client_.fetchInterface(asset_id, operation, "input");
+        auto response_opt = aas_client_.fetchInterface(asset_id, operation, "output");
 
         if (!request_opt.has_value() || !response_opt.has_value())
         {
@@ -41,8 +41,8 @@ void CommandExecuteNode::initializeTopicsFromAAS()
             return;
         }
 
-        MqttPubBase::setTopic("request", request_opt.value());
-        MqttSubBase::setTopic("response", response_opt.value());
+        MqttPubBase::setTopic("input", request_opt.value());
+        MqttSubBase::setTopic("output", response_opt.value());
     }
     catch (const std::exception &e)
     {

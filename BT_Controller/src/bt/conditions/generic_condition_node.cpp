@@ -10,7 +10,7 @@ BT::PortsList GenericConditionNode::providedPorts()
             "Asset",
             "{Asset}",
             "The Asset from which to receive a message"),
-        BT::InputPort<std::string>("Message", "The message from the Asset"),
+        BT::InputPort<std::string>("Property", "The property interface from the Asset"),
         BT::InputPort<std::string>("Field", "Name of the field to monitor in the MQTT message"),
         BT::InputPort<std::string>("comparison_type", "Type of comparison: equal, not_equal, greater, less, contains"),
         BT::InputPort<std::string>("expected_value", "Value to compare against")};
@@ -33,8 +33,15 @@ void GenericConditionNode::initializeTopicsFromAAS()
         std::string asset_id = aas_client_.getInstanceNameByAssetName(asset_name);
         std::cout << "Initializing MQTT topics for asset ID: " << asset_id << std::endl;
 
+        auto property_name = getInput<std::string>("Property");
+
+        if (!property_name.has_value())
+        {
+            std::cerr << "Node '" << this->name() << "' has no Property input configured" << std::endl;
+            return;
+        }
         // Create Topic objects
-        auto condition_opt = aas_client_.fetchInterface(asset_id, this->name(), "response");
+        auto condition_opt = aas_client_.fetchInterface(asset_id, property_name.value(), "output");
 
         if (!condition_opt.has_value())
         {
@@ -42,7 +49,7 @@ void GenericConditionNode::initializeTopicsFromAAS()
             return;
         }
 
-        MqttSubBase::setTopic("response", condition_opt.value());
+        MqttSubBase::setTopic("output", condition_opt.value());
     }
     catch (const std::exception &e)
     {

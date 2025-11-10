@@ -3,12 +3,37 @@
 #include <iostream>
 #include <sstream>
 #include <algorithm>
+#include <openssl/evp.h>
 #include "utils.h"
 
 static size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *userp)
 {
     ((std::string *)userp)->append((char *)contents, size * nmemb);
     return size * nmemb;
+}
+
+// Base64url encoding helper using OpenSSL (RFC 4648)
+std::string AASClient::base64url_encode(const std::string &input)
+{
+    // Calculate the size needed for base64 encoding (including padding)
+    size_t encoded_length = 4 * ((input.length() + 2) / 3);
+    std::vector<unsigned char> encoded(encoded_length + 1); // +1 for null terminator
+
+    // Use OpenSSL's base64 encoding
+    int actual_length = EVP_EncodeBlock(encoded.data(),
+                                        reinterpret_cast<const unsigned char *>(input.data()),
+                                        input.length());
+
+    std::string result(reinterpret_cast<char *>(encoded.data()), actual_length);
+
+    // Convert to base64url by replacing + with - and / with _
+    std::replace(result.begin(), result.end(), '+', '-');
+    std::replace(result.begin(), result.end(), '/', '_');
+
+    // Remove padding for base64url
+    result.erase(std::find(result.begin(), result.end(), '='), result.end());
+
+    return result;
 }
 
 AASClient::AASClient(const std::string &aas_server_url, const std::string &registry_url)
@@ -62,7 +87,12 @@ nlohmann::json AASClient::makeGetRequest(const std::string &endpoint, bool use_r
 
     if (response_code != 200)
     {
-        throw std::runtime_error("HTTP error code: " + std::to_string(response_code));
+        std::string error_msg = "HTTP error code: " + std::to_string(response_code) + " for URL: " + full_url;
+        if (!readBuffer.empty())
+        {
+            error_msg += ", Response: " + readBuffer;
+        }
+        throw std::runtime_error(error_msg);
     }
 
     return nlohmann::json::parse(readBuffer);
@@ -91,112 +121,30 @@ std::string AASClient::substituteParams(const std::string &pattern, const nlohma
 
 nlohmann::json AASClient::fetchSchemaFromUrl(const std::string &schema_url)
 {
-    // Check cache first
-    auto cache_it = schema_cache_.find(schema_url);
-    if (cache_it != schema_cache_.end())
-    {
-        std::cout << "Using cached schema for: " << schema_url << std::endl;
-        return cache_it->second;
-    }
-
-    std::cout << "Fetching schema from: " << schema_url << std::endl;
-
-    // Make HTTP request to fetch schema
-    CURL *schema_curl = curl_easy_init();
-    if (!schema_curl)
-    {
-        std::cerr << "Failed to initialize CURL for schema fetch" << std::endl;
-        return nlohmann::json();
-    }
-
-    std::string schema_buffer;
-    curl_easy_setopt(schema_curl, CURLOPT_URL, schema_url.c_str());
-    curl_easy_setopt(schema_curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-    curl_easy_setopt(schema_curl, CURLOPT_WRITEDATA, &schema_buffer);
-    curl_easy_setopt(schema_curl, CURLOPT_TIMEOUT, 10L);
-    curl_easy_setopt(schema_curl, CURLOPT_FOLLOWLOCATION, 1L);
-
-    struct curl_slist *headers = nullptr;
-    headers = curl_slist_append(headers, "Accept: application/json");
-    curl_easy_setopt(schema_curl, CURLOPT_HTTPHEADER, headers);
-
-    CURLcode res = curl_easy_perform(schema_curl);
-    curl_slist_free_all(headers);
-    curl_easy_cleanup(schema_curl);
-
-    if (res != CURLE_OK || schema_buffer.empty())
-    {
-        std::cerr << "Failed to fetch schema from URL: " << schema_url << std::endl;
-        return nlohmann::json();
-    }
-
-    nlohmann::json schema = nlohmann::json::parse(schema_buffer);
-    
-    // Store in cache
-    schema_cache_[schema_url] = schema;
-    
-    std::cout << "Successfully fetched and cached schema from: " << schema_url << std::endl;
-    
-    return schema;
+    // Use the shared utility function
+    return schema_utils::fetchSchemaFromUrl(schema_url);
 }
 
 void AASClient::resolveSchemaReferences(nlohmann::json &schema)
 {
-    if (schema.is_object())
-    {
-        // Check for $ref at this level
-        if (schema.contains("$ref") && schema["$ref"].is_string())
-        {
-            std::string ref_url = schema["$ref"];
-            
-            // Skip internal references (starting with #)
-            if (ref_url[0] == '#')
-            {
-                return; // Internal reference, no need to fetch
-            }
-            
-            // Fetch the referenced schema
-            nlohmann::json ref_schema = fetchSchemaFromUrl(ref_url);
-            
-            if (!ref_schema.empty())
-            {
-                // Recursively resolve references in the fetched schema
-                resolveSchemaReferences(ref_schema);
-                
-                // Store the resolved schema in a special field for later use
-                schema["_resolved_ref"] = ref_schema;
-            }
-        }
-        
-        // Recursively check all nested objects
-        for (auto &[key, value] : schema.items())
-        {
-            if (value.is_object() || value.is_array())
-            {
-                resolveSchemaReferences(value);
-            }
-        }
-    }
-    else if (schema.is_array())
-    {
-        // Recursively check all array elements
-        for (auto &element : schema)
-        {
-            if (element.is_object() || element.is_array())
-            {
-                resolveSchemaReferences(element);
-            }
-        }
-    }
+    // Use the shared utility function
+    schema_utils::resolveSchemaReferences(schema);
 }
 
-std::optional<mqtt_utils::Topic> AASClient::fetchInterface(const std::string &asset_id, const std::string &skill, const std::string &endpoint)
+std::optional<mqtt_utils::Topic> AASClient::fetchInterface(const std::string &asset_id, const std::string &interaction, const std::string &endpoint)
 {
     try
     {
         std::cout << "Fetching interface from AAS - Asset: " << asset_id
-                  << ", Skill: " << skill
+                  << ", Interaction: " << interaction
                   << ", Endpoint: " << endpoint << std::endl;
+
+        // Validate endpoint parameter
+        if (endpoint != "input" && endpoint != "output")
+        {
+            std::cerr << "Invalid endpoint type: " << endpoint << ". Must be 'input' or 'output'" << std::endl;
+            return std::nullopt;
+        }
 
         // Step 1: Get the shell descriptor from registry to find the shell endpoint
         std::string registry_url = "/shell-descriptors";
@@ -270,15 +218,15 @@ std::optional<mqtt_utils::Topic> AASClient::fetchInterface(const std::string &as
             return std::nullopt;
         }
 
-        // Step 3: Fetch the submodel using base64-encoded ID
-        std::string submodel_id_b64;
-        CURL *temp_curl = curl_easy_init();
-        char *encoded = curl_easy_escape(temp_curl, submodel_id.c_str(), submodel_id.length());
-        submodel_id_b64 = std::string(encoded);
-        curl_free(encoded);
-        curl_easy_cleanup(temp_curl);
+        std::cout << "Found submodel ID: " << submodel_id << std::endl;
+
+        // Step 3: Fetch the submodel using base64url-encoded ID
+        // AAS specification requires base64url encoding for IDs in URLs
+        std::string submodel_id_b64 = base64url_encode(submodel_id);
 
         std::string submodel_url = "/submodels/" + submodel_id_b64;
+        std::cout << "Fetching submodel from URL: " << submodel_url << std::endl;
+
         nlohmann::json submodel_data = makeGetRequest(submodel_url);
 
         // Step 4: Navigate through the submodel structure
@@ -344,53 +292,74 @@ std::optional<mqtt_utils::Topic> AASClient::fetchInterface(const std::string &as
             }
         }
 
-        // Find InteractionMetadata → actions → [skill]
-        nlohmann::json action_data;
+        // Step 5: Find InteractionMetadata and locate the interaction (action or property)
+        nlohmann::json interaction_data;
+        bool is_action = false;
+
         for (const auto &elem : interface_mqtt["value"])
         {
             if (elem["idShort"] == "InteractionMetadata")
             {
-                for (const auto &interaction_elem : elem["value"])
+                // Search in actions first
+                for (const auto &interaction_type_elem : elem["value"])
                 {
-                    if (interaction_elem["idShort"] == "actions")
+                    if (interaction_type_elem["idShort"] == "actions")
                     {
-                        for (const auto &action : interaction_elem["value"])
+                        for (const auto &action : interaction_type_elem["value"])
                         {
-                            if (action["idShort"] == skill)
+                            if (action["idShort"] == interaction)
                             {
-                                action_data = action;
+                                interaction_data = action;
+                                is_action = true;
                                 break;
                             }
                         }
-                        break;
                     }
+                    else if (interaction_type_elem["idShort"] == "properties")
+                    {
+                        for (const auto &property : interaction_type_elem["value"])
+                        {
+                            if (property["idShort"] == interaction)
+                            {
+                                interaction_data = property;
+                                is_action = false;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!interaction_data.empty())
+                        break;
                 }
                 break;
             }
         }
 
-        if (action_data.empty())
+        if (interaction_data.empty())
         {
-            std::cerr << "Could not find action: " << skill << std::endl;
+            std::cerr << "Could not find interaction: " << interaction << std::endl;
             return std::nullopt;
         }
 
-        // Step 5: Extract interface details from forms
+        std::cout << "Found interaction: " << interaction << " (Type: "
+                  << (is_action ? "action" : "property") << ")" << std::endl;
+
+        // Step 6: Extract schema URL and forms data
         nlohmann::json forms_data;
         std::string schema_url;
 
-        for (const auto &elem : action_data["value"])
+        for (const auto &elem : interaction_data["value"])
         {
             if (elem["idShort"] == "forms")
             {
                 forms_data = elem;
             }
             // Get schema URL based on endpoint type
-            if (endpoint == "request" && elem["idShort"] == "input" && elem["modelType"] == "File")
+            else if (endpoint == "input" && elem["idShort"] == "input" && elem["modelType"] == "File")
             {
                 schema_url = elem["value"];
             }
-            else if (endpoint == "response" && elem["idShort"] == "output" && elem["modelType"] == "File")
+            else if (endpoint == "output" && elem["idShort"] == "output" && elem["modelType"] == "File")
             {
                 schema_url = elem["value"];
             }
@@ -398,82 +367,87 @@ std::optional<mqtt_utils::Topic> AASClient::fetchInterface(const std::string &as
 
         if (forms_data.empty())
         {
-            std::cerr << "Could not find forms in action" << std::endl;
+            std::cerr << "Could not find forms in interaction" << std::endl;
             return std::nullopt;
         }
 
-        // Step 6: Parse forms based on endpoint type
+        // Step 7: Parse forms to extract topic information
         std::string href;
         int qos = 0;
         bool retain = false;
-        std::string content_type;
 
-        if (endpoint == "request")
+        // First, extract default values from the main forms data
+        for (const auto &form_elem : forms_data["value"])
         {
-            // Get main form href
-            for (const auto &form_elem : forms_data["value"])
+            if (form_elem["idShort"] == "href")
             {
-                if (form_elem["idShort"] == "href")
+                href = form_elem["value"].get<std::string>();
+            }
+            else if (form_elem["idShort"] == "mqv_qos")
+            {
+                // Handle both int and string representations
+                if (form_elem["value"].is_number())
                 {
-                    href = form_elem["value"];
+                    qos = form_elem["value"].get<int>();
                 }
-                else if (form_elem["idShort"] == "mqv_qos")
+                else if (form_elem["value"].is_string())
                 {
-                    qos = form_elem["value"];
+                    qos = std::stoi(form_elem["value"].get<std::string>());
                 }
-                else if (form_elem["idShort"] == "mqv_retain")
+            }
+            else if (form_elem["idShort"] == "mqv_retain")
+            {
+                // Handle both bool and string representations
+                if (form_elem["value"].is_boolean())
                 {
-                    retain = form_elem["value"];
+                    retain = form_elem["value"].get<bool>();
+                }
+                else if (form_elem["value"].is_string())
+                {
+                    std::string val = form_elem["value"].get<std::string>();
+                    retain = (val == "true" || val == "True" || val == "TRUE" || val == "1");
                 }
             }
         }
-        else if (endpoint == "response")
+
+        // For actions with output endpoint, check if there's a specific response form
+        if (is_action && endpoint == "output")
         {
-            // Get response form
             for (const auto &form_elem : forms_data["value"])
             {
-                if (form_elem["idShort"] == "response")
+                if (form_elem["idShort"] == "response" && form_elem["modelType"] == "SubmodelElementCollection")
                 {
+                    std::cout << "Found specific response form, overriding default values" << std::endl;
+
+                    // Override with response-specific values
                     for (const auto &resp_elem : form_elem["value"])
                     {
                         if (resp_elem["idShort"] == "href")
                         {
-                            href = resp_elem["value"];
+                            href = resp_elem["value"].get<std::string>();
                         }
-                    }
-                    // QoS and retain from main form
-                    break;
-                }
-            }
-            // Get qos and retain from main form
-            for (const auto &form_elem : forms_data["value"])
-            {
-                if (form_elem["idShort"] == "mqv_qos")
-                {
-                    qos = form_elem["value"];
-                }
-                else if (form_elem["idShort"] == "mqv_retain")
-                {
-                    retain = form_elem["value"];
-                }
-            }
-        }
-        else
-        {
-            // Handle additionalResponses
-            for (const auto &form_elem : forms_data["value"])
-            {
-                if (form_elem["idShort"] == "additionalResponses")
-                {
-                    for (const auto &add_resp_elem : form_elem["value"])
-                    {
-                        if (add_resp_elem["idShort"] == "href")
+                        else if (resp_elem["idShort"] == "mqv_qos")
                         {
-                            href = add_resp_elem["value"];
+                            if (resp_elem["value"].is_number())
+                            {
+                                qos = resp_elem["value"].get<int>();
+                            }
+                            else if (resp_elem["value"].is_string())
+                            {
+                                qos = std::stoi(resp_elem["value"].get<std::string>());
+                            }
                         }
-                        else if (add_resp_elem["idShort"] == "schema")
+                        else if (resp_elem["idShort"] == "mqv_retain")
                         {
-                            schema_url = add_resp_elem["value"];
+                            if (resp_elem["value"].is_boolean())
+                            {
+                                retain = resp_elem["value"].get<bool>();
+                            }
+                            else if (resp_elem["value"].is_string())
+                            {
+                                std::string val = resp_elem["value"].get<std::string>();
+                                retain = (val == "true" || val == "True" || val == "TRUE" || val == "1");
+                            }
                         }
                     }
                     break;
@@ -490,40 +464,18 @@ std::optional<mqtt_utils::Topic> AASClient::fetchInterface(const std::string &as
         // Construct full topic path
         std::string full_topic = base_topic + href;
 
-        // Step 7: Fetch the JSON schema from URL
+        // Step 8: Fetch the JSON schema from URL
         nlohmann::json schema;
         if (!schema_url.empty())
         {
-            std::cout << "Fetching schema from: " << schema_url << std::endl;
+            // Use the cached fetchSchemaFromUrl method which already handles HTTP requests
+            schema = fetchSchemaFromUrl(schema_url);
 
-            // Make a direct HTTP request to fetch schema
-            CURL *schema_curl = curl_easy_init();
-            if (schema_curl)
+            if (!schema.empty())
             {
-                std::string schema_buffer;
-                curl_easy_setopt(schema_curl, CURLOPT_URL, schema_url.c_str());
-                curl_easy_setopt(schema_curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-                curl_easy_setopt(schema_curl, CURLOPT_WRITEDATA, &schema_buffer);
-                curl_easy_setopt(schema_curl, CURLOPT_TIMEOUT, 10L);
-                curl_easy_setopt(schema_curl, CURLOPT_FOLLOWLOCATION, 1L);
-
-                struct curl_slist *headers = nullptr;
-                headers = curl_slist_append(headers, "Accept: application/json");
-                curl_easy_setopt(schema_curl, CURLOPT_HTTPHEADER, headers);
-
-                CURLcode res = curl_easy_perform(schema_curl);
-                curl_slist_free_all(headers);
-                curl_easy_cleanup(schema_curl);
-
-                if (res == CURLE_OK && !schema_buffer.empty())
-                {
-                    schema = nlohmann::json::parse(schema_buffer);
-                    std::cout << "Successfully fetched schema" << std::endl;
-                }
-                else
-                {
-                    std::cerr << "Failed to fetch schema from URL: " << schema_url << std::endl;
-                }
+                // Resolve any $ref references in the schema
+                resolveSchemaReferences(schema);
+                std::cout << "Successfully fetched and resolved schema" << std::endl;
             }
         }
 
@@ -535,7 +487,7 @@ std::optional<mqtt_utils::Topic> AASClient::fetchInterface(const std::string &as
     catch (const std::exception &e)
     {
         std::cerr << "Failed to fetch interface from AAS for asset: " << asset_id
-                  << ", skill: " << skill
+                  << ", interaction: " << interaction
                   << ", endpoint: " << endpoint
                   << " - Error: " << e.what() << std::endl;
         return std::nullopt;

@@ -3,7 +3,9 @@
 #include <fstream>
 #include <filesystem>
 #include <memory>
+#include <map>
 #include <uuid/uuid.h>
+#include <curl/curl.h>
 #include <nlohmann/json-schema.hpp>
 #include <fmt/chrono.h>
 #include <chrono>
@@ -458,5 +460,129 @@ namespace BT
             --last;
         }
         return sv.substr(first, (last - first) + 1);
+    }
+}
+
+namespace schema_utils
+{
+    // Cache for fetched schemas to avoid redundant HTTP requests
+    static std::map<std::string, nlohmann::json> schema_cache;
+
+    // CURL write callback
+    static size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *userp)
+    {
+        ((std::string *)userp)->append((char *)contents, size * nmemb);
+        return size * nmemb;
+    }
+
+    nlohmann::json fetchSchemaFromUrl(const std::string &schema_url)
+    {
+        // Check cache first
+        auto cache_it = schema_cache.find(schema_url);
+        if (cache_it != schema_cache.end())
+        {
+            std::cout << "Using cached schema for: " << schema_url << std::endl;
+            return cache_it->second;
+        }
+
+        std::cout << "Fetching schema from: " << schema_url << std::endl;
+
+        // Make HTTP request to fetch schema
+        CURL *curl = curl_easy_init();
+        if (!curl)
+        {
+            std::cerr << "Failed to initialize CURL for schema fetch" << std::endl;
+            return nlohmann::json();
+        }
+
+        std::string schema_buffer;
+        curl_easy_setopt(curl, CURLOPT_URL, schema_url.c_str());
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &schema_buffer);
+        curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
+        curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+
+        struct curl_slist *headers = nullptr;
+        headers = curl_slist_append(headers, "Accept: application/json");
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+
+        CURLcode res = curl_easy_perform(curl);
+        curl_slist_free_all(headers);
+        curl_easy_cleanup(curl);
+
+        if (res != CURLE_OK || schema_buffer.empty())
+        {
+            std::cerr << "Failed to fetch schema from URL: " << schema_url << std::endl;
+            return nlohmann::json();
+        }
+
+        nlohmann::json schema = nlohmann::json::parse(schema_buffer);
+
+        // Store in cache
+        schema_cache[schema_url] = schema;
+
+        std::cout << "Successfully fetched and cached schema from: " << schema_url << std::endl;
+
+        return schema;
+    }
+
+    void resolveSchemaReferences(nlohmann::json &schema)
+    {
+        if (schema.is_object())
+        {
+            // Check for $ref at this level
+            if (schema.contains("$ref") && schema["$ref"].is_string())
+            {
+                std::string ref_url = schema["$ref"];
+
+                // Skip internal references (starting with #)
+                if (ref_url[0] == '#')
+                {
+                    return; // Internal reference, no need to fetch
+                }
+
+                // Fetch the referenced schema
+                nlohmann::json ref_schema = fetchSchemaFromUrl(ref_url);
+
+                if (!ref_schema.empty())
+                {
+                    // Recursively resolve references in the fetched schema
+                    resolveSchemaReferences(ref_schema);
+
+                    // Remove the $ref and merge in the referenced schema
+                    schema.erase("$ref");
+
+                    // Merge the fetched schema into the current schema
+                    for (auto &[key, value] : ref_schema.items())
+                    {
+                        // Don't overwrite existing keys, but add new ones
+                        if (!schema.contains(key))
+                        {
+                            schema[key] = value;
+                        }
+                    }
+                }
+            }
+
+            // Recursively check all nested objects
+            for (auto &[key, value] : schema.items())
+            {
+                if (value.is_object() || value.is_array())
+                {
+                    resolveSchemaReferences(value);
+                }
+            }
+        }
+        else if (schema.is_array())
+        {
+            // Recursively check all array elements
+            for (auto &element : schema)
+            {
+                if (element.is_object() || element.is_array())
+                {
+                    resolveSchemaReferences(element);
+                }
+            }
+        }
     }
 }

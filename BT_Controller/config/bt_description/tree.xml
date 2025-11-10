@@ -6,43 +6,43 @@
             _skipIf="scrap == true">
       <ReactiveSequence>
         <ReactiveFallback>
-          <Data_Condition expected_value="operational"
-                          comparison_type="equal"
+          <Data_Condition comparison_type="equal"
                           Field="State"
-                          Message="State"
+                          expected_value="operational"
+                          Property="PackMLState"
                           Asset="{Asset}"/>
           <Sleep msec="10000"/>
         </ReactiveFallback>
         <Sequence>
           <MoveToPosition Uuid="{ProductID}"
-                          TargetPosition="{Station}"
-                          Asset="{Asset}"/>
+                          TargetPosition="{Asset}"
+                          Asset="{Xbot}"/>
           <Command_Execution Parameters="&apos;{}&apos;"
                              Uuid="{ProductID}"
-                             Operation="Tare"
+                             Operation="tare"
                              Asset="{Asset}"/>
           <BC_Fallback _onFailure="scrap:= true">
-            <Data_Condition expected_value="2.0;2.2"
-                            comparison_type="inside"
+            <Data_Condition comparison_type="inside"
                             Field="Weight"
-                            Message="Weight"
+                            expected_value="2.0;2.2"
+                            Property="weight"
                             Asset="{Asset}"/>
             <Sequence>
-              <Data_Condition expected_value="0"
-                              comparison_type="equal"
+              <Data_Condition comparison_type="equal"
                               Field="Weight"
-                              Message="Weight"
+                              expected_value="0"
+                              Property="weight"
                               Asset="{Asset}"/>
               <Command_Execution Parameters="&apos;{}&apos;"
                                  Uuid="{ProductID}"
-                                 Operation="Dispense"
+                                 Operation="dispense"
                                  Asset="{Asset}"/>
             </Sequence>
             <Sequence>
-              <Data_Condition expected_value="0"
-                              comparison_type="greater"
+              <Data_Condition comparison_type="greater"
                               Field="Weight"
-                              Message="Weight"
+                              expected_value="0"
+                              Property="weight"
                               Asset="{Asset}"/>
               <Refill_Node Uuid="{ProductID}"
                            Asset="{Asset}"/>
@@ -65,20 +65,20 @@
               _skipIf="scrap == true">
         <ReactiveSequence>
           <ReactiveFallback>
-            <Data_Condition expected_value="operational"
-                            comparison_type="equal"
+            <Data_Condition comparison_type="equal"
                             Field="State"
-                            Message="State"
+                            expected_value="operational"
+                            Property="PackMLState"
                             Asset="{Asset}"/>
             <Sleep msec="10000"/>
           </ReactiveFallback>
           <Sequence>
             <MoveToPosition Uuid="{ProductID}"
-                            TargetPosition="{Station}"
-                            Asset="{Asset}"/>
+                            TargetPosition="{Asset}"
+                            Asset="{Xbot}"/>
             <Command_Execution Parameters="&apos;{}&apos;"
                                Uuid="{ProductID}"
-                               Operation="Load"
+                               Operation="load"
                                Asset="{Asset}"/>
           </Sequence>
         </ReactiveSequence>
@@ -91,26 +91,27 @@
       <Configure ProductIDs="{ProductIDs}"/>
       <ReactiveSequence>
         <Fallback>
-          <Data_Condition expected_value="operational"
-                          comparison_type="equal"
+          <Data_Condition comparison_type="equal"
                           Field="State"
-                          Message="State"
-                          Asset="{Asset}"/>
+                          expected_value="operational"
+                          Property="PackMLState"
+                          Asset="PlanarSystem"/>
           <SubTree ID="Planar SOP"
+                   Asset="PlanarSystem"
                    _autoremap="true"/>
         </Fallback>
         <Parallel failure_count="-1"
                   success_count="1">
           <SubTree ID="Xbot_Production"
-                   XbotTopic="Planar/Xbot1"
+                   Xbot="Xbot1"
                    ProductID=""
                    _autoremap="true"/>
           <SubTree ID="Xbot_Production"
-                   XbotTopic="Planar/Xbot2"
+                   Xbot="Xbot2"
                    ProductID=""
                    _autoremap="true"/>
           <SubTree ID="Xbot_Production"
-                   XbotTopic="Planar/Xbot3"
+                   Xbot="Xbot3"
                    ProductID=""
                    _autoremap="true"/>
         </Parallel>
@@ -122,23 +123,23 @@
     <Sequence>
       <Command_Execution Parameters="&apos;{ &quot;SopId&quot;: 10 }&apos;"
                          Uuid="{Uuid}"
-                         Operation="Operation"
+                         Operation="operation"
                          Asset="{Asset}"/>
       <Command_Execution Parameters="&apos;{ &quot;SopId&quot;: 11 }&apos;"
                          Uuid="{Uuid}"
-                         Operation="Operation"
+                         Operation="operation"
                          Asset="{Asset}"/>
       <Command_Execution Parameters="&apos;{ &quot;SopId&quot;: 12 }&apos;"
                          Uuid="{Uuid}"
-                         Operation="Operation"
+                         Operation="operation"
                          Asset="{Asset}"/>
       <Command_Execution Parameters="&apos;{ &quot;SopId&quot;: 13 }&apos;"
                          Uuid="{Uuid}"
-                         Operation="Operation"
+                         Operation="operation"
                          Asset="{Asset}"/>
       <Command_Execution Parameters="&apos;{ &quot;SopId&quot;: 0 }&apos;"
                          Uuid="{Uuid}"
-                         Operation="Operation"
+                         Operation="operation"
                          Asset="{Asset}"/>
     </Sequence>
   </BehaviorTree>
@@ -149,20 +150,20 @@
             _skipIf="scrap == true">
       <ReactiveSequence>
         <ReactiveFallback>
-          <Data_Condition expected_value="operational"
-                          comparison_type="equal"
+          <Data_Condition comparison_type="equal"
                           Field="State"
-                          Message="State"
+                          expected_value="operational"
+                          Property="PackMLState"
                           Asset="{Asset}"/>
           <Sleep msec="10000"/>
         </ReactiveFallback>
         <Sequence>
           <MoveToPosition Uuid="{ProductID}"
-                          TargetPosition="{Station}"
-                          Asset="{Asset}"/>
+                          TargetPosition="{Asset}"
+                          Asset="{Xbot}"/>
           <Command_Execution Parameters="&apos;{}&apos;"
                              Uuid="{ProductID}"
-                             Operation="Capture"
+                             Operation="capture"
                              Asset="{Asset}"/>
         </Sequence>
       </ReactiveSequence>
@@ -174,20 +175,20 @@
             Asset="{Asset}">
       <ReactiveSequence>
         <ReactiveFallback>
-          <Data_Condition expected_value="operational"
-                          comparison_type="equal"
+          <Data_Condition comparison_type="equal"
                           Field="State"
-                          Message="State"
+                          expected_value="operational"
+                          Property="PackMLState"
                           Asset="{Asset}"/>
           <Sleep msec="10000"/>
         </ReactiveFallback>
         <Sequence>
           <MoveToPosition Uuid="{ProductID}"
-                          TargetPosition="{Station}"
-                          Asset="{Asset}"/>
+                          TargetPosition="{Asset}"
+                          Asset="{Xbot}"/>
           <Command_Execution Parameters="&apos;{}&apos;"
                              Uuid="{ProductID}"
-                             Operation="Unload"
+                             Operation="unload"
                              Asset="{Asset}"
                              _onSuccess="scrap:=false"/>
         </Sequence>
@@ -201,20 +202,20 @@
             _skipIf="scrap == true">
       <ReactiveSequence>
         <ReactiveFallback>
-          <Data_Condition expected_value="operational"
-                          comparison_type="equal"
+          <Data_Condition comparison_type="equal"
                           Field="State"
-                          Message="State"
+                          expected_value="operational"
+                          Property="PackMLState"
                           Asset="{Asset}"/>
           <Sleep msec="10000"/>
         </ReactiveFallback>
         <Sequence>
           <MoveToPosition Uuid="{ProductID}"
-                          TargetPosition="{Station}"
-                          Asset="{Asset}"/>
+                          TargetPosition="{Asset}"
+                          Asset="{Xbot}"/>
           <Command_Execution Parameters="&apos;{}&apos;"
                              Uuid="{ProductID}"
-                             Operation="Stopper"
+                             Operation="stopper"
                              Asset="{Asset}"/>
         </Sequence>
       </ReactiveSequence>
@@ -227,20 +228,20 @@
             _skipIf="scrap == true">
       <ReactiveSequence>
         <ReactiveFallback>
-          <Data_Condition expected_value="operational"
-                          comparison_type="equal"
+          <Data_Condition comparison_type="equal"
                           Field="State"
-                          Message="State"
+                          expected_value="operational"
+                          Property="PackMLState"
                           Asset="{Asset}"/>
           <Sleep msec="10000"/>
         </ReactiveFallback>
         <Sequence>
           <MoveToPosition Uuid="{ProductID}"
-                          TargetPosition="{Station}"
-                          Asset="{Asset}"/>
+                          TargetPosition="{Asset}"
+                          Asset="{Xbot}"/>
           <Command_Execution Parameters="&apos;{}&apos;"
                              Uuid="{ProductID}"
-                             Operation="Unload"
+                             Operation="unload"
                              Asset="{Asset}"/>
         </Sequence>
       </ReactiveSequence>
@@ -248,41 +249,44 @@
   </BehaviorTree>
 
   <BehaviorTree ID="Xbot_Production">
-    <KeepRunningUntilEmpty if_empty="SUCCESS"
-                           Queue="{ProductIDs}">
-      <ReactiveSequence>
-        <ReactiveFallback>
-          <Data_Condition expected_value="operational"
-                          comparison_type="equal"
-                          Field="State"
-                          Message="State"
-                          Asset="{Asset}"/>
-          <Sleep msec="10000"/>
-        </ReactiveFallback>
-        <Fallback>
-          <SequenceWithMemory>
-            <SubTree ID="Load"
-                     Asset="Load"
-                     _autoremap="true"/>
-            <SubTree ID="Filling"
-                     Asset="Filling"
-                     _autoremap="true"/>
-            <SubTree ID="Stoppering"
-                     Asset="Stoppering"
-                     _autoremap="true"/>
-            <SubTree ID="QualityControl"
-                     Asset="Camera"
-                     _autoremap="true"/>
-            <SubTree ID="Unload"
+    <Occupy Uuid="{Uuid}"
+            Asset="{Xbot}">
+      <KeepRunningUntilEmpty if_empty="SUCCESS"
+                             Queue="{ProductIDs}">
+        <ReactiveSequence>
+          <ReactiveFallback>
+            <Data_Condition comparison_type="equal"
+                            Field="State"
+                            expected_value="operational"
+                            Property="PackMLState"
+                            Asset="{Xbot}"/>
+            <Sleep msec="10000"/>
+          </ReactiveFallback>
+          <Fallback>
+            <SequenceWithMemory>
+              <SubTree ID="Load"
+                       Asset="Load"
+                       _autoremap="true"/>
+              <SubTree ID="Filling"
+                       Asset="Filling"
+                       _autoremap="true"/>
+              <SubTree ID="Stoppering"
+                       Asset="Stoppering"
+                       _autoremap="true"/>
+              <SubTree ID="QualityControl"
+                       Asset="Camera"
+                       _autoremap="true"/>
+              <SubTree ID="Unload"
+                       Asset="Unload"
+                       _autoremap="true"/>
+            </SequenceWithMemory>
+            <SubTree ID="Scrap"
                      Asset="Unload"
                      _autoremap="true"/>
-          </SequenceWithMemory>
-          <SubTree ID="Scrap"
-                   Station="Unload"
-                   _autoremap="true"/>
-        </Fallback>
-      </ReactiveSequence>
-    </KeepRunningUntilEmpty>
+          </Fallback>
+        </ReactiveSequence>
+      </KeepRunningUntilEmpty>
+    </Occupy>
   </BehaviorTree>
 
   <!-- Description of Node Models (used by Groot) -->
@@ -308,14 +312,14 @@
                    type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;">List of product IDs to produce</output_port>
     </Action>
     <Condition ID="Data_Condition">
-      <input_port name="expected_value"
-                  type="std::string">Value to compare against</input_port>
       <input_port name="comparison_type"
                   type="std::string">Type of comparison: equal, not_equal, greater, less, contains</input_port>
       <input_port name="Field"
                   type="std::string">Name of the field to monitor in the MQTT message</input_port>
-      <input_port name="Message"
-                  type="std::string">The message from the Asset</input_port>
+      <input_port name="expected_value"
+                  type="std::string">Value to compare against</input_port>
+      <input_port name="Property"
+                  type="std::string">The property interface from the Asset</input_port>
       <input_port name="Asset"
                   default="{Asset}"
                   type="std::string">The Asset from which to receive a message</input_port>
@@ -343,8 +347,8 @@
                   default="{ProductID}"
                   type="std::string">UUID for the command to execute</input_port>
       <input_port name="TargetPosition"
-                  default="{Station}"
-                  type="std::string">The name of the station to move to</input_port>
+                  default="{Asset}"
+                  type="std::string">The name of the asset to move to</input_port>
       <input_port name="Asset"
                   default="{Asset}"
                   type="std::string">The Asset to execute the movement</input_port>
@@ -383,7 +387,7 @@
     </Action>
     <SubTree ID="Scrap"
              editable="true">
-      <input_port name="Station"
+      <input_port name="Asset"
                   default="Scrap"/>
     </SubTree>
     <SubTree ID="Stoppering"
@@ -398,8 +402,8 @@
     </SubTree>
     <SubTree ID="Xbot_Production"
              editable="true">
-      <input_port name="XbotTopic"
-                  default="Planar/Xbot1"/>
+      <input_port name="Xbot"
+                  default="Xbot1"/>
       <output_port name="ProductID"/>
     </SubTree>
   </TreeNodesModel>

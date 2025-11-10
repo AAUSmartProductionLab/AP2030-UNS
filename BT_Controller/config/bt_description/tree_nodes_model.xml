@@ -12,10 +12,10 @@
             <output_port name="ProductIDs" type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;" default="{ProductIDs}">List of product IDs to produce</output_port>
         </Action>
         <Condition ID="Data_Condition">
-            <input_port name="expected_value" type="std::string">Value to compare against</input_port>
             <input_port name="comparison_type" type="std::string">Type of comparison: equal, not_equal, greater, less, contains</input_port>
             <input_port name="Field" type="std::string">Name of the field to monitor in the MQTT message</input_port>
-            <input_port name="Message" type="std::string">The message from the Asset</input_port>
+            <input_port name="expected_value" type="std::string">Value to compare against</input_port>
+            <input_port name="Property" type="std::string">The property interface from the Asset</input_port>
             <input_port name="Asset" type="std::string" default="{Asset}">The Asset from which to receive a message</input_port>
         </Condition>
         <Decorator ID="GetProductFromQueue">

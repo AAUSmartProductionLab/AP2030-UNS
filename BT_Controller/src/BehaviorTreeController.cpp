@@ -295,12 +295,36 @@ void BehaviorTreeController::loadAppConfiguration(int argc, char *argv[])
     app_params_.config_topic = app_params_.unsTopicPrefix + "/Configuration/DATA/Planar/Stations";
 
     std::string state_topic_str = app_params_.unsTopicPrefix + "/" + app_params_.clientId + "/DATA/State";
-    std::string state_schema_path = "../../schemas/state.schema.json";
-    app_params_.state_publication_config = mqtt_utils::Topic::fromSchemaPath(state_topic_str, state_schema_path, 2, true);
+    std::string state_schema_url = "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/state.schema.json";
+
+    // Fetch and resolve the state schema
+    nlohmann::json state_schema = schema_utils::fetchSchemaFromUrl(state_schema_url);
+    if (!state_schema.empty())
+    {
+        schema_utils::resolveSchemaReferences(state_schema);
+        app_params_.state_publication_config = mqtt_utils::Topic(state_topic_str, state_schema, 2, true);
+    }
+    else
+    {
+        std::cerr << "Warning: Failed to fetch state schema, creating topic without schema validation" << std::endl;
+        app_params_.state_publication_config = mqtt_utils::Topic(state_topic_str, nlohmann::json(), 2, true);
+    }
 
     // Initialize station config topic with schema for validation
-    std::string station_schema_path = "../../schemas/planarStations.schema.json";
-    station_config_topic_ = mqtt_utils::Topic::fromSchemaPath(app_params_.config_topic, station_schema_path, 2, false);
+    std::string station_schema_url = "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/planarStations.schema.json";
+
+    // Fetch and resolve the station schema
+    nlohmann::json station_schema = schema_utils::fetchSchemaFromUrl(station_schema_url);
+    if (!station_schema.empty())
+    {
+        schema_utils::resolveSchemaReferences(station_schema);
+        station_config_topic_ = mqtt_utils::Topic(app_params_.config_topic, station_schema, 2, false);
+    }
+    else
+    {
+        std::cerr << "Warning: Failed to fetch station schema, creating topic without schema validation" << std::endl;
+        station_config_topic_ = mqtt_utils::Topic(app_params_.config_topic, nlohmann::json(), 2, false);
+    }
 }
 
 void BehaviorTreeController::setupMainMqttMessageHandler()

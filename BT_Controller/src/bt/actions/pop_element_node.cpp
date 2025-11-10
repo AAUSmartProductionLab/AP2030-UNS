@@ -9,7 +9,7 @@ void PopElementNode::initializeTopicsFromAAS()
 {
     try
     {
-        auto xbot_topic_opt = this->config().blackboard->getAny("XbotTopic");
+        auto xbot_topic_opt = this->config().blackboard->getAnyLocked("Xbot");
         if (!xbot_topic_opt)
         {
             std::cerr << "Node '" << this->name() << "' cannot access XbotTopic from blackboard" << std::endl;
@@ -31,7 +31,7 @@ void PopElementNode::initializeTopicsFromAAS()
             return;
         }
 
-        MqttPubBase::setTopic("request", product_association_opt.value());
+        MqttPubBase::setTopic("input", product_association_opt.value());
     }
     catch (const std::exception &e)
     {

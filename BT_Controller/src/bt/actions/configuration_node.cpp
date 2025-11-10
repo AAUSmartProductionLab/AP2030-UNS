@@ -55,30 +55,12 @@ void ConfigurationNode::initializeTopicsFromAAS()
 {
     try
     {
-        auto asset_input = getInput<std::string>("Asset");
-        auto command_input = getInput<std::string>("Command");
 
-        if (!asset_input.has_value())
-        {
-            std::cerr << "Node '" << this->name() << "' has no Asset input configured" << std::endl;
-            return;
-        }
-
-        if (!command_input.has_value())
-        {
-            std::cerr << "Node '" << this->name() << "' has no Command input configured" << std::endl;
-            return;
-        }
-
-        std::string asset_name = asset_input.value();
-        std::string command = command_input.value();
-        std::cout << "Node '" << this->name() << "' initializing for Asset: " << asset_name << ", Command: " << command << std::endl;
-
-        std::string asset_id = aas_client_.getInstanceNameByAssetName(asset_name);
+        std::string asset_id = aas_client_.getInstanceNameByAssetName("product");
         std::cout << "Initializing MQTT topics for asset ID: " << asset_id << std::endl;
 
         // Create Topic objects
-        auto response_opt = aas_client_.fetchInterface(asset_id, command, "response");
+        auto response_opt = aas_client_.fetchInterface(asset_id, "config", "output");
 
         if (!response_opt.has_value())
         {
@@ -86,7 +68,7 @@ void ConfigurationNode::initializeTopicsFromAAS()
             return;
         }
 
-        MqttSubBase::setTopic("response", response_opt.value());
+        MqttSubBase::setTopic("output", response_opt.value());
     }
     catch (const std::exception &e)
     {

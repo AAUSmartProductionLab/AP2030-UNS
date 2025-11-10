@@ -66,6 +66,22 @@ namespace bt_utils
                             std::string &bt_nodes_path);
 }
 
+namespace schema_utils
+{
+    /**
+     * Fetch a JSON schema from a URL using CURL
+     * @param schema_url The full URL to the schema (e.g., https://example.com/schema.json)
+     * @return The parsed JSON schema, or empty JSON object on failure
+     */
+    nlohmann::json fetchSchemaFromUrl(const std::string &schema_url);
+
+    /**
+     * Resolve $ref references in a schema by fetching and inlining them
+     * @param schema The schema to resolve (modified in place)
+     */
+    void resolveSchemaReferences(nlohmann::json &schema);
+}
+
 namespace BT
 {
     // Declare only, don't define

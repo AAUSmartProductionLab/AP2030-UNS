@@ -49,7 +49,7 @@ void MqttSyncConditionNode::initializeTopicsFromAAS()
         std::string asset_id = aas_client_.getInstanceNameByAssetName(asset_name);
 
         // Create Topic objects
-        auto response_opt = aas_client_.fetchInterface(asset_id, this->name(), "response");
+        auto response_opt = aas_client_.fetchInterface(asset_id, this->name(), "output");
 
         if (!response_opt.has_value())
         {
@@ -57,7 +57,7 @@ void MqttSyncConditionNode::initializeTopicsFromAAS()
             return;
         }
 
-        MqttSubBase::setTopic("response", response_opt.value());
+        MqttSubBase::setTopic("output", response_opt.value());
     }
     catch (const std::exception &e)
     {

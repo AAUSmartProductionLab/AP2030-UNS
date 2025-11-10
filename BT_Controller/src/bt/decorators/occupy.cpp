@@ -25,10 +25,11 @@ void Occupy::initializeTopicsFromAAS()
         std::cout << "Initializing MQTT topics for asset ID: " << asset_id << std::endl;
 
         // Create Topic objects
-        auto register_opt = aas_client_.fetchInterface(asset_id, this->name(), "register");
-        auto unregister_opt = aas_client_.fetchInterface(asset_id, this->name(), "unregister");
-        auto register_response_opt = aas_client_.fetchInterface(asset_id, this->name(), "register_response");
-        auto unregister_response_opt = aas_client_.fetchInterface(asset_id, this->name(), "unregister_response");
+        auto register_opt = aas_client_.fetchInterface(asset_id, "occupy", "input");
+        auto register_response_opt = aas_client_.fetchInterface(asset_id, "occupy", "output");
+
+        auto unregister_opt = aas_client_.fetchInterface(asset_id, "release", "input");
+        auto unregister_response_opt = aas_client_.fetchInterface(asset_id, "release", "output");
 
         if (!register_opt.has_value() || !unregister_opt.has_value() ||
             !register_response_opt.has_value() || !unregister_response_opt.has_value())
@@ -37,10 +38,10 @@ void Occupy::initializeTopicsFromAAS()
             return;
         }
 
-        MqttPubBase::setTopic("register", register_opt.value());
-        MqttPubBase::setTopic("unregister", unregister_opt.value());
-        MqttSubBase::setTopic("register_response", register_response_opt.value());
-        MqttSubBase::setTopic("unregister_response", unregister_response_opt.value());
+        MqttPubBase::setTopic("occupyRequest", register_opt.value());
+        MqttPubBase::setTopic("releaseRequest", unregister_opt.value());
+        MqttSubBase::setTopic("occupyRespose", register_response_opt.value());
+        MqttSubBase::setTopic("releaseResponse", unregister_response_opt.value());
     }
     catch (const std::exception &e)
     {
@@ -112,13 +113,13 @@ void Occupy::sendRegisterCommand()
         setOutput("Uuid", current_uuid_);
     }
     message["Uuid"] = current_uuid_;
-    MqttPubBase::publish("register", message);
+    MqttPubBase::publish("occupyRequest", message);
 }
 void Occupy::sendUnregisterCommand()
 {
     json message;
     message["Uuid"] = current_uuid_;
-    MqttPubBase::publish("unregister", message);
+    MqttPubBase::publish("releaseRequest", message);
 }
 
 void Occupy::callback(const std::string &topic_key, const json &msg, mqtt::properties props)
@@ -128,7 +129,7 @@ void Occupy::callback(const std::string &topic_key, const json &msg, mqtt::prope
     if (status() == BT::NodeStatus::RUNNING && msg.at("Uuid") == current_uuid_)
     {
         std::string state = msg.at("State");
-        if (topic_key == "register_response")
+        if (topic_key == "occupyResponse")
         {
             if (msg.at("State") == "SUCCESS")
             {
@@ -139,7 +140,7 @@ void Occupy::callback(const std::string &topic_key, const json &msg, mqtt::prope
                 current_phase_ = PackML::State::STOPPED;
             }
         }
-        else if (topic_key == "unregister_response")
+        else if (topic_key == "releaseResponse")
         {
             if (msg.at("State") == "SUCCESS")
             {

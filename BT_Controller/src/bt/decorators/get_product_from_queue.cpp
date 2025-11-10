@@ -9,7 +9,7 @@ void GetProductFromQueue::initializeTopicsFromAAS()
 {
     try
     {
-        auto xbot_topic_opt = this->config().blackboard->getAny("XbotTopic");
+        auto xbot_topic_opt = this->config().blackboard->getAnyLocked("XbotTopic");
         if (!xbot_topic_opt)
         {
             std::cerr << "Node '" << this->name() << "' cannot access XbotTopic from blackboard" << std::endl;

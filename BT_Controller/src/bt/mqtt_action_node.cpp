@@ -28,7 +28,7 @@ MqttActionNode::~MqttActionNode()
 BT::NodeStatus MqttActionNode::onStart()
 {
     // Create the message to send
-    publish("request", createMessage());
+    publish("input", createMessage());
 
     return BT::NodeStatus::RUNNING;
 }
