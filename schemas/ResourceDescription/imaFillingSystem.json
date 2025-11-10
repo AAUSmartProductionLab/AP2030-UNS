@@ -308,6 +308,69 @@
                         }
                       ]
                     },
+                                        {
+                      "idShort": "tare",
+                      "semanticId": {
+                        "type": "ExternalReference",
+                        "keys": [{
+                          "type": "GlobalReference",
+                          "value": "https://admin-shell.io/idta/AssetInterfaceDescription/1/0/ActionDefinition"
+                        }]
+                      },
+                      "supplementalSemanticIds": [{
+                        "type": "ExternalReference",
+                        "keys": [{
+                          "type": "GlobalReference",
+                          "value": "https://www.w3.org/2019/wot/td#name"
+                        }]
+                      }],
+                      "modelType": "SubmodelElementCollection",
+                      "value": [
+                        {"idShort": "key", "modelType": "Property", "valueType": "xs:string", "value": "tare"},
+                        {"idShort": "title", "modelType": "Property", "valueType": "xs:string", "value": "tare"},
+                        {"idShort": "synchronous", "modelType": "Property", "valueType": "xs:boolean", "value": "true"},
+                        {
+                            "idShort": "input",
+                            "modelType": "File",
+                            "contentType": "application/schema+json",
+                            "value": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/command.schema.json"
+                        },
+                        {
+                            "idShort": "output",
+                            "modelType": "File",
+                            "contentType": "application/schema+json",
+                            "value": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/commandResponse.schema.json"
+                        },
+                        {
+                          "idShort": "forms",
+                          "semanticId": {
+                            "type": "ExternalReference",
+                            "keys": [{
+                              "type": "GlobalReference",
+                              "value": "https://www.w3.org/2019/wot/td#Form"
+                            }]
+                          },
+                          "modelType": "SubmodelElementCollection",
+                          "value": [
+                            {"idShort": "contentType", "modelType": "Property", "valueType": "xs:string", "value": "application/json"},
+                            {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/CMD/Tare"},
+                            {"idShort": "op", "modelType": "Property", "valueType": "xs:string", "value": "invokeAction"},
+                            {"idShort": "mqv_retain", "modelType": "Property", "valueType": "xs:boolean", "value": "false"},
+                            {"idShort": "mqv_controlPacket", "modelType": "Property", "valueType": "xs:string", "value": "subscribe"},
+                            {"idShort": "mqv_qos", "modelType": "Property", "valueType": "xs:int", "value": "2"},
+                            {
+                              "idShort": "response",
+                              "modelType": "SubmodelElementCollection",
+                              "value": [
+                                {"idShort": "contentType", "modelType": "Property", "valueType": "xs:string", "value": "application/json"},
+                                {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/DATA/Tare"},
+                                {"idShort": "mqv_controlPacket", "modelType": "Property", "valueType": "xs:string", "value": "publish"}
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
                     {
                       "idShort": "halt",
                       "semanticId": {
