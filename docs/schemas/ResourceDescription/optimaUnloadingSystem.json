@@ -1,7 +1,7 @@
 {
   "assetAdministrationShells": [
     {
-      "idShort": "optimaUnloadingSystem",
+      "idShort": "optimaUnloadingSystemAAS",
       "id": "https://smartproductionlab.aau.dk/aas/optimaUnloadingSystem",
       "assetInformation": {
         "assetKind": "Instance",
