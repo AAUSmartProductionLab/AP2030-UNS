@@ -7,6 +7,9 @@
 
 extern PubSubClient client;
 
+// Forward declaration for reconnect function (defined in MQTT_Stoppering.cpp)
+extern void reconnect();
+
 #define servoPWM 2
 
 #define buttonPin 4
@@ -163,7 +166,6 @@ void DCUp()
 
 void StopperingRunning()
 { // This is the full execution
-  SendMQTTMessage(commandUuid, "Executing", topic_pub_status);
   DCDown();
   delay(100);
 
@@ -176,7 +178,6 @@ void StopperingRunning()
   DCUp();
   delay(500);
   reconnect(); // Had some problems with it disconnecting after these longer delays, so we just make sure to reconnect
-  SendMQTTMessage(commandUuid, "Idle", topic_pub_status);
 }
 
 #endif
