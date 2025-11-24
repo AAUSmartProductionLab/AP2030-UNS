@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include "StationModule.h"
+#include "ESP32Module.h"
 
 #ifdef FILLING_STATION
 #include "FillingModule.h"
@@ -22,5 +22,5 @@ void setup()
 
 void loop()
 {
-    StationModule::loop();
+    ESP32Module::loop();
 }

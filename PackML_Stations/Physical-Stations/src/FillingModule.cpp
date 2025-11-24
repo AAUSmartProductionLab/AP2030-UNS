@@ -1,4 +1,6 @@
 #include "FillingModule.h"
+#include "ESP32Module.h"
+#include "PackMLStateMachine.h"
 
 // MQTT topic definitions
 const String FillingModule::TOPIC_PUB_STATUS = "/DATA/State";
@@ -8,27 +10,26 @@ const String FillingModule::TOPIC_SUB_NEEDLE_CMD = "/CMD/Needle";
 const String FillingModule::TOPIC_PUB_NEEDLE_DATA = "/DATA/Needle";
 const String FillingModule::TOPIC_SUB_TARE_CMD = "/CMD/Tare";
 const String FillingModule::TOPIC_PUB_TARE_DATA = "/DATA/Tare";
-const String FillingModule::TOPIC_PUB_CYCLE_TIME = "/DATA/CycleTime";
 const String FillingModule::TOPIC_PUB_WEIGHT = "/DATA/Weight";
 
-// FillingStateMachine implementation
-FillingModule::FillingStateMachine::FillingStateMachine(const String &baseTopic, PubSubClient *mqttClient, WiFiClient *wifiClient)
-    : BaseStateMachine(baseTopic, mqttClient, wifiClient)
-{
-}
+// Static member initialization
+PackMLStateMachine *FillingModule::stateMachine = nullptr;
 
-void FillingModule::FillingStateMachine::initStationHardware()
-{
-    FillingModule::initHardware();
-}
-
-// Public interface
 void FillingModule::begin()
 {
-    initializeStation("NN/Nybrovej/InnoLab/Filling");
+    const String baseTopic = "NN/Nybrovej/InnoLab/Filling";
 
-    stateMachine = new FillingStateMachine("NN/Nybrovej/InnoLab/Filling", &client, &espClient);
-    client.setCallback(mqttCallback);
+    // Initialize ESP32 (WiFi, MQTT, Time)
+    ESP32Module::begin(baseTopic);
+
+    // Initialize filling hardware
+    initHardware();
+
+    // Create PackML state machine with MQTT client from ESP32Module
+    stateMachine = new PackMLStateMachine(baseTopic, ESP32Module::getMqttClient());
+
+    // Register state machine with ESP32Module for message routing
+    ESP32Module::setStateMachine(stateMachine);
 
     // Register command handlers for device primitives
     stateMachine->registerCommandHandler(
@@ -58,7 +59,10 @@ void FillingModule::begin()
         },
         tareScale);
 
+    // Start the state machine
     stateMachine->begin();
+
+    Serial.println("🎯 Filling Module ready!\n");
 }
 
 // Hardware control methods
@@ -95,8 +99,8 @@ void FillingModule::runFillingCycle()
     // Move back up to stop position
     moveToTop();
 
-    // Generate and publish random weight (25.000 - 26.000 kg)
-    long weightInt = random(25000, 26000);
+    // Generate and publish random weight (1.8 - 2.2 g)
+    long weightInt = random(1800, 2200);
     float weight = weightInt / 1000.0;
     publishWeight(weight);
 
@@ -206,10 +210,13 @@ void FillingModule::stopMotor()
 
 void FillingModule::publishWeight(double weight)
 {
+    PubSubClient *client = ESP32Module::getMqttClient();
+    String commandUuid = ESP32Module::getCommandUuid();
+
     struct tm timeinfo;
     if (!getLocalTime(&timeinfo))
     {
-        Serial.println("Error getting time for weight publication");
+        Serial.println("⚠️ Error getting time for weight publication");
         return;
     }
 
@@ -228,11 +235,12 @@ void FillingModule::publishWeight(double weight)
     char output[256];
     serializeJson(doc, output);
 
-    client.publish(TOPIC_PUB_WEIGHT.c_str(), output, true);
+    String fullTopic = "NN/Nybrovej/InnoLab/Filling" + TOPIC_PUB_WEIGHT;
+    client->publish(fullTopic.c_str(), output, true);
 
-    Serial.print("Published weight: ");
+    Serial.print("⚖️  Published weight: ");
     Serial.print(weight);
-    Serial.println(" kg");
+    Serial.println(" g");
 }
 
 bool FillingModule::waitForButton(int buttonPin, unsigned long timeoutMs)

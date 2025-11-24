@@ -1,9 +1,8 @@
 #include "PackMLStateMachine.h"
-// Implementation
 
-PackMLStateMachine::PackMLStateMachine(const String &baseTopic, PubSubClient *mqttClient, WiFiClient *wifiClient)
-    : state(PackMLState::RESETTING), baseTopic(baseTopic), client(mqttClient), wifiClient(wifiClient),
-      isProcessing(false), currentProcessingUuid(""), currentUuid(""), subscriptionsInitialized(false), wifiMqttInitialized(false)
+PackMLStateMachine::PackMLStateMachine(const String &baseTopic, PubSubClient *mqttClient)
+    : state(PackMLState::RESETTING), baseTopic(baseTopic), client(mqttClient),
+      isProcessing(false), currentProcessingUuid(""), currentUuid(""), subscriptionsInitialized(false)
 {
     occupyCmdTopic = baseTopic + "/CMD/Occupy";
     occupyDataTopic = baseTopic + "/DATA/Occupy";
@@ -12,18 +11,14 @@ PackMLStateMachine::PackMLStateMachine(const String &baseTopic, PubSubClient *mq
     stateDataTopic = baseTopic + "/DATA/State";
 }
 
-void PackMLStateMachine::initWiFiAndMQTT()
+void PackMLStateMachine::begin()
 {
-    WiFi.begin(config.ssid, config.password);
-    while (WiFi.status() != WL_CONNECTED)
-    {
-        delay(500);
-        Serial.print(".");
-    }
-    Serial.println("WiFi Connected");
+    Serial.println("📋 PackML State Machine initialized");
+    Serial.print("Base topic: ");
+    Serial.println(baseTopic);
 
-    client->setServer(config.mqttServer, config.mqttPort);
-    wifiMqttInitialized = true;
+    // Trigger the initial state transition from RESETTING
+    resettingState();
 }
 
 void PackMLStateMachine::subscribeToTopics()
@@ -33,76 +28,26 @@ void PackMLStateMachine::subscribeToTopics()
         return; // Already subscribed
     }
 
+    Serial.println("📡 Subscribing to MQTT topics...");
+
     // Subscribe to occupy and release topics
     client->subscribe(occupyCmdTopic.c_str());
     client->subscribe(releaseCmdTopic.c_str());
-    Serial.println("Subscribed to Occupy/Release topics");
+    Serial.print("  ✓ ");
+    Serial.println(occupyCmdTopic);
+    Serial.print("  ✓ ");
+    Serial.println(releaseCmdTopic);
 
     // Subscribe to all registered command handler topics
     for (const auto &handler : commandHandlers)
     {
         client->subscribe(handler.cmdTopic.c_str());
-        Serial.print("Subscribed to: ");
+        Serial.print("  ✓ ");
         Serial.println(handler.cmdTopic);
     }
 
     subscriptionsInitialized = true;
-}
-
-void PackMLStateMachine::reconnect()
-{
-    // Don't attempt reconnection if WiFi/MQTT haven't been initialized yet
-    if (!wifiMqttInitialized)
-    {
-        return;
-    }
-
-    while (!client->connected())
-    {
-        String clientId = "ESP32Client-" + String(random(0xffff), HEX);
-        JsonDocument doc;
-        doc["clientId"] = clientId;
-        char output[100];
-
-        if (client->connect(clientId.c_str()))
-        {
-            subscribeToTopics();
-            publishState();
-        }
-        else
-        {
-            delay(5000);
-        }
-    }
-}
-
-void PackMLStateMachine::initializeTime()
-{
-    // Set Danish time with automatic daylight saving
-    configTzTime("CET-1CEST,M3.5.0/02,M10.5.0/03", "pool.ntp.org", "time.nist.gov");
-
-    struct tm timeinfo;
-    Serial.print("Waiting for NTP time");
-    for (int i = 0; i < 10; i++)
-    {
-        if (getLocalTime(&timeinfo))
-        {
-            Serial.println(" → Time OK");
-            return;
-        }
-        Serial.print(".");
-        delay(1000);
-    }
-    Serial.println("\n⚠️ Could not get time from NTP server");
-}
-
-void PackMLStateMachine::begin()
-{
-    // Note: Subscriptions and initial state publishing will be done after WiFi/MQTT initialization
-    Serial.println("PackML State Machine beginning initialization");
-
-    // Trigger the initial state transition from RESETTING
-    resettingState();
+    Serial.println("✅ All subscriptions complete");
 }
 
 void PackMLStateMachine::registerCommandHandler(const String &cmdTopic, const String &dataTopic,
@@ -115,13 +60,13 @@ void PackMLStateMachine::registerCommandHandler(const String &cmdTopic, const St
     handler.processFunction = processFunc;
     commandHandlers.push_back(handler);
 
-    Serial.print("Registered command handler for: ");
+    Serial.print("✓ Registered: ");
     Serial.println(handler.cmdTopic);
 }
 
 void PackMLStateMachine::handleMessage(const String &topic, const JsonDocument &message)
 {
-    // Check if it's aoccupy/release command
+    // Check if it's an occupy/release command
     if (topic == occupyCmdTopic)
     {
         occupyCallback(this, message);
@@ -150,45 +95,85 @@ void PackMLStateMachine::handleMessage(const String &topic, const JsonDocument &
 void PackMLStateMachine::executeCommand(const JsonDocument &message, const String &dataTopic,
                                         void (*processFunction)())
 {
-    if (state == PackMLState::EXECUTE)
+    String commandUuid = message["Uuid"].as<String>();
+    String topic = baseTopic + String(dataTopic);
+
+    // Condition 1: Not in EXECUTE state
+    if (state != PackMLState::EXECUTE)
     {
-        String commandUuid = message["Uuid"].as<String>();
-        String topic = baseTopic + String(dataTopic);
-        // Check if this command is at the front of the queue
-        if (uuids.empty() || uuids[0] != commandUuid)
-        {
-            Serial.print("Command UUID ");
-            Serial.print(commandUuid);
-            Serial.println(" not at front of queue. Ignoring.");
-            return;
-        }
+        Serial.print("❌ Execute command rejected for UUID '");
+        Serial.print(commandUuid);
+        Serial.print("'. Machine not in EXECUTE state (current: ");
+        Serial.print(stateToString(state).c_str());
+        Serial.println(").");
 
-        // Mark as processing
-        isProcessing = true;
-        currentProcessingUuid = commandUuid;
-
-        // Publish RUNNING status
-        publishCommandStatus(topic, commandUuid, "RUNNING");
-
-        // Execute the process function
-        if (processFunction)
-        {
-            processFunction();
-        }
-
-        // Mark completion
-        publishCommandStatus(topic, commandUuid, "SUCCESS");
-        isProcessing = false;
-        currentProcessingUuid = "";
-
-        // // Transition to completing state
-        // transitionTo(PackMLState::COMPLETING, commandUuid);
+        publishCommandStatus(topic, commandUuid, "FAILURE");
+        return;
     }
-    else
+
+    // Condition 2: Queue is empty
+    if (uuids.empty())
     {
-        Serial.print("Not in EXECUTE state. Current state: ");
-        Serial.println(stateToString(state).c_str());
+        Serial.print("❌ Execute command rejected for UUID '");
+        Serial.print(commandUuid);
+        Serial.println("'. Queue is empty.");
+
+        publishCommandStatus(topic, commandUuid, "FAILURE");
+        return;
     }
+
+    // Condition 3: UUID not at front of queue
+    if (uuids[0] != commandUuid)
+    {
+        Serial.print("❌ Execute command rejected for UUID '");
+        Serial.print(commandUuid);
+        Serial.print("'. Expected head: '");
+        Serial.print(uuids[0]);
+        Serial.print("', Queue: [");
+        for (size_t i = 0; i < uuids.size(); i++)
+        {
+            Serial.print(uuids[i]);
+            if (i < uuids.size() - 1)
+                Serial.print(", ");
+        }
+        Serial.println("]");
+
+        publishCommandStatus(topic, commandUuid, "FAILURE");
+        return;
+    }
+
+    // Condition 4: Already processing another command
+    if (isProcessing)
+    {
+        Serial.print("❌ Execute command rejected for UUID '");
+        Serial.print(commandUuid);
+        Serial.print("'. Already processing: ");
+        Serial.println(currentProcessingUuid);
+
+        publishCommandStatus(topic, commandUuid, "FAILURE");
+        return;
+    }
+
+    // All conditions met - execute the command
+    isProcessing = true;
+    currentProcessingUuid = commandUuid;
+
+    // Publish RUNNING status
+    publishCommandStatus(topic, commandUuid, "RUNNING");
+
+    // Execute the process function
+    if (processFunction)
+    {
+        processFunction();
+    }
+
+    // Mark completion
+    publishCommandStatus(topic, commandUuid, "SUCCESS");
+    isProcessing = false;
+    currentProcessingUuid = "";
+
+    // // Transition to completing state
+    // transitionTo(PackMLState::COMPLETING, commandUuid);
 }
 
 void PackMLStateMachine::occupyCommand(const String &uuid)

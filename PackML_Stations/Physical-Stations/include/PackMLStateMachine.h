@@ -4,18 +4,8 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include <PubSubClient.h>
-#include <WiFi.h>
 #include <vector>
 #include <time.h>
-
-// WiFi and MQTT Configuration
-struct WiFiMQTTConfig
-{
-    const char *ssid = "AP2030";
-    const char *password = "NovoNordisk";
-    const char *mqttServer = "192.168.0.104";
-    int mqttPort = 1883;
-};
 
 // PackML State Enumeration
 enum class PackMLState
@@ -58,8 +48,6 @@ private:
     PackMLState state;
     String baseTopic;
     PubSubClient *client;
-    WiFiClient *wifiClient;
-    WiFiMQTTConfig config;
 
     // Process queue
     std::vector<String> uuids;
@@ -71,7 +59,6 @@ private:
     // Command handlers
     std::vector<CommandHandler> commandHandlers;
     bool subscriptionsInitialized;
-    bool wifiMqttInitialized;
 
     // Topics
     String occupyCmdTopic;
@@ -81,7 +68,6 @@ private:
     String stateDataTopic;
 
     // Helper methods
-    void publishState();
     void publishCommandStatus(const String &topic, const String &uuid, const char *stateValue);
     String stateToString(PackMLState state);
 
@@ -102,18 +88,16 @@ protected:
     virtual void onIdle() {}       // Called when entering IDLE state
 
 public:
-    PackMLStateMachine(const String &baseTopic, PubSubClient *mqttClient, WiFiClient *wifiClient);
+    PackMLStateMachine(const String &baseTopic, PubSubClient *mqttClient);
     virtual ~PackMLStateMachine() {}
 
     // Setup and loop
     void begin();
     void loop();
 
-    // WiFi and MQTT management
-    void initWiFiAndMQTT();
-    void reconnect();
+    // Public methods that can be called by ESP32Module
     void subscribeToTopics();
-    void initializeTime();
+    void publishState();
     String getTimestamp();
 
     // Command registration
@@ -137,10 +121,9 @@ public:
     String getCurrentUuid() const { return currentUuid; }
     bool isIdle() const { return state == PackMLState::IDLE; }
 
-    // Callbacks foroccupy/release
+    // Callbacks for occupy/release
     static void occupyCallback(PackMLStateMachine *sm, const JsonDocument &message);
     static void releaseCallback(PackMLStateMachine *sm, const JsonDocument &message);
 };
 
-
-#endif
+#endif // PACKML_STATE_MACHINE_H

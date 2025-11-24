@@ -3,18 +3,22 @@
 
 #include <Arduino.h>
 #include <ESP32Servo.h>
-#include "StationModule.h"
+
+// Forward declarations
+class PackMLStateMachine;
 
 /**
  * @class StopperingModule
- * @brief Stoppering station module with hardware control and device primitives
+ * @brief Stoppering station hardware control and device primitives
  *
- * This module encapsulates stoppering station-specific functionality:
- * - Servo motor, DC motor, and linear actuator control
- * - Sensor reading
- * - Device primitives (plunging operation)
+ * This module handles:
+ * - Servo motor control
+ * - DC motor control
+ * - Linear actuator control
+ * - Limit switch reading
+ * - Plunging operation sequence
  */
-class StopperingModule : public StationModule
+class StopperingModule
 {
 public:
     /**
@@ -24,21 +28,23 @@ public:
     static void begin();
 
     /**
-     * @brief Main loop - must be called continuously in Arduino loop()
+     * @brief Initialize all hardware pins
      */
-    static void loop();
+    static void initHardware();
 
 private:
-    // Pin definitions
+    // Pin definitions - Servo
     static const int SERVO_PIN = 2;
+
+    // Pin definitions - Limit Switch
     static const int BUTTON_PIN = 4;
 
-    // DC Motor pins
+    // Pin definitions - DC Motor
     static const int DC_ENB = 41;
     static const int DC_IN3 = 39;
     static const int DC_IN4 = 40;
 
-    // Linear Actuator pins
+    // Pin definitions - Linear Actuator
     static const int LA_ENA = 18;
     static const int LA_IN1 = 17;
     static const int LA_IN2 = 16;
@@ -51,19 +57,18 @@ private:
     static const int DC_PWM_FREQ = 1000;
     static const int DC_PWM_RES = 8;
 
+    // Motor timing settings
+    static const unsigned long SERVO_MOVE_TIME = 2000;
+    static const unsigned long LA_DOWN_TIME = 10000;
+    static const unsigned long LA_UP_TIME = 6500;
+    static const unsigned long DC_UP_TIME = 2000;
+    static const unsigned long DC_INIT_UP_TIME = 1500;
+    static const unsigned long MOTION_TIMEOUT = 10000; // 10 seconds
+
     // MQTT topics
     static const String TOPIC_PUB_STATUS;
     static const String TOPIC_SUB_STOPPERING_CMD;
     static const String TOPIC_PUB_STOPPERING_DATA;
-    static const String TOPIC_PUB_CYCLE_TIME;
-
-    // Station-specific members
-    static Servo servo;
-
-    /**
-     * @brief Initialize all hardware pins
-     */
-    static void initHardware();
 
     /**
      * @brief Initialize servo motor to home position
@@ -97,8 +102,9 @@ private:
 
     /**
      * @brief Move DC motor down until limit switch
+     * @return true if successful, false if timeout
      */
-    static void moveDCDown();
+    static bool moveDCDown();
 
     /**
      * @brief Move DC motor up for clearance
@@ -106,16 +112,26 @@ private:
     static void moveDCUp();
 
     /**
-     * @brief Custom PackML state machine with stoppering-specific initialization
+     * @brief Stop DC motor
      */
-    class StopperingStateMachine : public BaseStateMachine
-    {
-    public:
-        StopperingStateMachine(const String &baseTopic, PubSubClient *mqttClient, WiFiClient *wifiClient);
+    static void stopDCMotor();
 
-    protected:
-        void initStationHardware() override;
-    };
+    /**
+     * @brief Stop linear actuator
+     */
+    static void stopLinearActuator();
+
+    /**
+     * @brief Wait for limit switch with timeout
+     * @param buttonPin Pin number of button to monitor
+     * @param timeoutMs Timeout in milliseconds
+     * @return true if button pressed, false if timeout
+     */
+    static bool waitForButton(int buttonPin, unsigned long timeoutMs);
+
+    // Static members
+    static Servo servo;
+    static PackMLStateMachine *stateMachine;
 };
 
 #endif // STOPPERING_MODULE_H

@@ -1,34 +1,33 @@
 #include "StopperingModule.h"
+#include "ESP32Module.h"
+#include "PackMLStateMachine.h"
 
 // Static member initialization
 Servo StopperingModule::servo;
+PackMLStateMachine *StopperingModule::stateMachine = nullptr;
 
 // MQTT topic definitions
 const String StopperingModule::TOPIC_PUB_STATUS = "/DATA/State";
-const String StopperingModule::TOPIC_SUB_STOPPERING_CMD = "/CMD/Plunge";
-const String StopperingModule::TOPIC_PUB_STOPPERING_DATA = "/DATA/Plunge";
-const String StopperingModule::TOPIC_PUB_CYCLE_TIME = "/DATA/CycleTime";
+const String StopperingModule::TOPIC_SUB_STOPPERING_CMD = "/CMD/Stopper";
+const String StopperingModule::TOPIC_PUB_STOPPERING_DATA = "/DATA/Stopper";
 
-// StopperingStateMachine implementation
-StopperingModule::StopperingStateMachine::StopperingStateMachine(const String &baseTopic, PubSubClient *mqttClient, WiFiClient *wifiClient)
-    : BaseStateMachine(baseTopic, mqttClient, wifiClient)
-{
-}
-
-void StopperingModule::StopperingStateMachine::initStationHardware()
-{
-    StopperingModule::initHardware();
-}
-
-// Public interface
 void StopperingModule::begin()
 {
-    initializeStation("NN/Nybrovej/InnoLab/Stoppering");
+    const String baseTopic = "NN/Nybrovej/InnoLab/Stoppering";
 
-    stateMachine = new StopperingStateMachine("NN/Nybrovej/InnoLab/Stoppering", &client, &espClient);
-    client.setCallback(mqttCallback);
+    // Initialize ESP32 (WiFi, MQTT, Time)
+    ESP32Module::begin(baseTopic);
 
-    // Register command handler for stoppering operation
+    // Initialize stoppering hardware
+    initHardware();
+
+    // Create PackML state machine with MQTT client from ESP32Module
+    stateMachine = new PackMLStateMachine(baseTopic, ESP32Module::getMqttClient());
+
+    // Register state machine with ESP32Module for message routing
+    ESP32Module::setStateMachine(stateMachine);
+
+    // Register command handler for device primitive
     stateMachine->registerCommandHandler(
         TOPIC_SUB_STOPPERING_CMD,
         TOPIC_PUB_STOPPERING_DATA,
@@ -38,13 +37,15 @@ void StopperingModule::begin()
         },
         runStopperingCycle);
 
+    // Start the state machine
     stateMachine->begin();
+
+    Serial.println("🎯 Stoppering Module ready!\n");
 }
 
-// Hardware control methods
 void StopperingModule::initHardware()
 {
-    // Configure servo
+    // Configure servo motor
     servo.attach(SERVO_PIN);
     delay(100);
 
@@ -54,12 +55,13 @@ void StopperingModule::initHardware()
     pinMode(LA_IN2, OUTPUT);
     delay(10);
 
+    // Setup PWM for linear actuator
     ledcSetup(LA_PWM_CHANNEL, LA_PWM_FREQ, LA_PWM_RES);
     ledcAttachPin(LA_ENA, LA_PWM_CHANNEL);
     ledcWrite(LA_PWM_CHANNEL, 200);
     delay(10);
 
-    // Configure button pin
+    // Configure limit switch pin
     pinMode(BUTTON_PIN, INPUT_PULLUP);
     delay(10);
 
@@ -69,6 +71,7 @@ void StopperingModule::initHardware()
     pinMode(DC_IN4, OUTPUT);
     delay(10);
 
+    // Setup PWM for DC motor
     ledcSetup(DC_PWM_CHANNEL, DC_PWM_FREQ, DC_PWM_RES);
     ledcAttachPin(DC_ENB, DC_PWM_CHANNEL);
     ledcWrite(DC_PWM_CHANNEL, 200);
@@ -89,111 +92,169 @@ void StopperingModule::initHardware()
 
 void StopperingModule::initServo()
 {
+    Serial.println("Initializing servo to home position");
+
+    // Move to intermediate position
     servo.write(90);
-    delay(2000);
+    delay(SERVO_MOVE_TIME);
+
+    // Move to home position (outer)
     servo.write(120);
-    delay(2000);
+    delay(SERVO_MOVE_TIME);
 }
 
 void StopperingModule::initLinearActuator()
 {
+    Serial.println("Initializing linear actuator to home position");
+
+    // Move actuator up to home position
     digitalWrite(LA_IN1, HIGH);
     digitalWrite(LA_IN2, LOW);
-    delay(6500);
+    delay(LA_UP_TIME);
 
-    digitalWrite(LA_IN1, LOW);
-    digitalWrite(LA_IN2, LOW);
-    delay(10);
+    // Stop actuator
+    stopLinearActuator();
 }
 
 void StopperingModule::initDCMotor()
 {
+    Serial.println("Initializing DC motor to home position");
+
+    // Move down until limit switch
     digitalWrite(DC_IN3, LOW);
     digitalWrite(DC_IN4, HIGH);
 
-    while (digitalRead(BUTTON_PIN) == LOW)
+    if (!waitForButton(BUTTON_PIN, MOTION_TIMEOUT))
     {
-        // Wait for limit switch
+        Serial.println("Motion Error: DC motor initialization timeout");
     }
 
+    // Move up for clearance
     digitalWrite(DC_IN3, HIGH);
     digitalWrite(DC_IN4, LOW);
-    delay(1500);
+    delay(DC_INIT_UP_TIME);
 
-    digitalWrite(DC_IN3, LOW);
-    digitalWrite(DC_IN4, LOW);
+    // Stop motor
+    stopDCMotor();
 }
 
 void StopperingModule::runStopperingCycle()
 {
     Serial.println("Starting stoppering cycle");
 
-    moveDCDown();
+    // Position DC motor down to working position
+    if (!moveDCDown())
+    {
+        Serial.println("Error: Failed to move DC motor down");
+        return;
+    }
     delay(100);
 
+    // Move servo to position stopper
     runServo();
     delay(100);
 
+    // Execute plunging operation
     runLinearActuator();
     delay(100);
 
+    // Return DC motor to home position
     moveDCUp();
     delay(500);
-
-    // Reconnect if needed after long delays
-    if (!client.connected())
-    {
-        stateMachine->reconnect();
-    }
 
     Serial.println("Stoppering cycle completed");
 }
 
 void StopperingModule::runLinearActuator()
 {
+    Serial.println("Running linear actuator cycle");
+
     // Move actuator down to push plunger
     digitalWrite(LA_IN1, LOW);
     digitalWrite(LA_IN2, HIGH);
-    delay(10000); // Extra time to let gravity help push the plunger
+    delay(LA_DOWN_TIME); // Extra time to let gravity help push the plunger
 
-    // Move actuator back up
+    // Move actuator back up to home position
     digitalWrite(LA_IN1, HIGH);
     digitalWrite(LA_IN2, LOW);
-    delay(6500);
+    delay(LA_UP_TIME);
+
+    // Stop actuator
+    stopLinearActuator();
 }
 
 void StopperingModule::runServo()
 {
-    // Move from inner position to outer position
-    servo.write(0);
-    delay(2000);
+    Serial.println("Moving servo to position stopper");
 
+    // Move from outer position to inner position
+    servo.write(0);
+    delay(SERVO_MOVE_TIME);
+
+    // Return to home position (outer)
     servo.write(120);
-    delay(2000);
+    delay(SERVO_MOVE_TIME);
 }
 
-void StopperingModule::moveDCDown()
+bool StopperingModule::moveDCDown()
 {
+    Serial.println("Moving DC motor down to working position");
+
     // Run piston down until it hits the limit switch
     digitalWrite(DC_IN3, LOW);
     digitalWrite(DC_IN4, HIGH);
 
-    while (digitalRead(BUTTON_PIN) == LOW)
+    if (!waitForButton(BUTTON_PIN, MOTION_TIMEOUT))
     {
-        // Wait for limit switch
+        Serial.println("Motion Error: Move DC down timeout");
+        stopDCMotor();
+        return false;
     }
 
-    digitalWrite(DC_IN3, LOW);
-    digitalWrite(DC_IN4, LOW);
+    // Stop motor
+    stopDCMotor();
+    return true;
 }
 
 void StopperingModule::moveDCUp()
 {
+    Serial.println("Moving DC motor up to home position");
+
     // Run piston up for clearance
     digitalWrite(DC_IN3, HIGH);
     digitalWrite(DC_IN4, LOW);
-    delay(2000);
+    delay(DC_UP_TIME);
 
+    // Stop motor
+    stopDCMotor();
+}
+
+void StopperingModule::stopDCMotor()
+{
     digitalWrite(DC_IN3, LOW);
     digitalWrite(DC_IN4, LOW);
+}
+
+void StopperingModule::stopLinearActuator()
+{
+    digitalWrite(LA_IN1, LOW);
+    digitalWrite(LA_IN2, LOW);
+    delay(10);
+}
+
+bool StopperingModule::waitForButton(int buttonPin, unsigned long timeoutMs)
+{
+    unsigned long startTime = millis();
+
+    // Wait for button to be pressed (HIGH when pressed due to logic)
+    while (digitalRead(buttonPin) == LOW)
+    {
+        if (millis() - startTime >= timeoutMs)
+        {
+            return false; // Timeout
+        }
+        delay(10); // Small delay to avoid tight loop
+    }
+
+    return true; // Button pressed
 }

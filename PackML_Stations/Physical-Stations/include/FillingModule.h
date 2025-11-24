@@ -2,18 +2,22 @@
 #define FILLING_MODULE_H
 
 #include <Arduino.h>
-#include "StationModule.h"
+#include <ArduinoJson.h>
+
+// Forward declarations
+class PackMLStateMachine;
 
 /**
  * @class FillingModule
- * @brief Filling station module with hardware control and device primitives
+ * @brief Filling station hardware control and device primitives
  *
- * This module encapsulates filling station-specific functionality:
- * - Motor control and sensor reading
+ * This module handles:
+ * - Motor control for needle movement
+ * - Limit switch reading
  * - Device primitives (filling, needle attachment, tare)
  * - Weight measurement and publishing
  */
-class FillingModule : public StationModule
+class FillingModule
 {
 public:
     /**
@@ -23,9 +27,9 @@ public:
     static void begin();
 
     /**
-     * @brief Main loop - must be called continuously in Arduino loop()
+     * @brief Initialize hardware pins and move to home position
      */
-    static void loop();
+    static void initHardware();
 
 private:
     // Pin definitions
@@ -48,13 +52,7 @@ private:
     static const String TOPIC_PUB_NEEDLE_DATA;
     static const String TOPIC_SUB_TARE_CMD;
     static const String TOPIC_PUB_TARE_DATA;
-    static const String TOPIC_PUB_CYCLE_TIME;
     static const String TOPIC_PUB_WEIGHT;
-
-    /**
-     * @brief Initialize hardware pins and move to home position
-     */
-    static void initHardware();
 
     /**
      * @brief Execute complete filling cycle
@@ -100,17 +98,8 @@ private:
      */
     static bool waitForButton(int buttonPin, unsigned long timeoutMs);
 
-    /**
-     * @brief Custom PackML state machine with filling-specific initialization
-     */
-    class FillingStateMachine : public BaseStateMachine
-    {
-    public:
-        FillingStateMachine(const String &baseTopic, PubSubClient *mqttClient, WiFiClient *wifiClient);
-
-    protected:
-        void initStationHardware() override;
-    };
+    // Static members
+    static PackMLStateMachine *stateMachine;
 };
 
 #endif // FILLING_MODULE_H
