@@ -25,7 +25,7 @@ public:
      * Must be called once in Arduino setup()
      */
     static void begin();
-
+    
     /**
      * @brief Initialize hardware pins and move to home position
      */
@@ -53,6 +53,7 @@ private:
     static const String TOPIC_SUB_TARE_CMD;
     static const String TOPIC_PUB_TARE_DATA;
     static const String TOPIC_PUB_WEIGHT;
+    static const String TOPIC_PUB_DESCRIPTION;
 
     /**
      * @brief Execute complete filling cycle

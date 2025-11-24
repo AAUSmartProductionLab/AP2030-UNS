@@ -10,6 +10,7 @@ PackMLStateMachine *StopperingModule::stateMachine = nullptr;
 const String StopperingModule::TOPIC_PUB_STATUS = "/DATA/State";
 const String StopperingModule::TOPIC_SUB_STOPPERING_CMD = "/CMD/Stopper";
 const String StopperingModule::TOPIC_PUB_STOPPERING_DATA = "/DATA/Stopper";
+const String StopperingModule::TOPIC_PUB_DESCRIPTION = "/Registration/Request";
 
 void StopperingModule::begin()
 {
@@ -39,6 +40,9 @@ void StopperingModule::begin()
 
     // Start the state machine
     stateMachine->begin();
+
+    // Publish module description
+    ESP32Module::publishDescription("PLACEHOLDER_FOR_STOPPERING_MODULE_AAS_DESCRIPTION");
 
     Serial.println("🎯 Stoppering Module ready!\n");
 }

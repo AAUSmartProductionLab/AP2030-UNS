@@ -53,6 +53,7 @@ public:
      * @param sm Pointer to PackMLStateMachine
      */
     static void setStateMachine(PackMLStateMachine *sm);
+    static void publishDescription(const String &moduleDescription);
 
 private:
     // WiFi and MQTT Configuration
@@ -97,6 +98,7 @@ private:
      * @brief MQTT message callback - handles command UUID extraction and routing
      */
     static void mqttCallback(char *topic, byte *payload, unsigned int length);
+
 };
 
 #endif // ESP32_MODULE_H

@@ -200,3 +200,14 @@ void ESP32Module::setStateMachine(PackMLStateMachine *sm)
 {
     stateMachine = sm;
 }
+
+void ESP32Module::publishDescription(const String &moduleDescription)
+{
+    PubSubClient *client = ESP32Module::getMqttClient();
+    String fullTopic = baseTopic + "/Registration/Request";
+
+    // Publish the description
+    client->publish(fullTopic.c_str(), moduleDescription.c_str(), true);
+
+    Serial.println("📄 Published Module AAS description to: " + fullTopic);
+}

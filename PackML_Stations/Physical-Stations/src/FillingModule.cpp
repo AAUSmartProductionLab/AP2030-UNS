@@ -11,6 +11,7 @@ const String FillingModule::TOPIC_PUB_NEEDLE_DATA = "/DATA/Needle";
 const String FillingModule::TOPIC_SUB_TARE_CMD = "/CMD/Tare";
 const String FillingModule::TOPIC_PUB_TARE_DATA = "/DATA/Tare";
 const String FillingModule::TOPIC_PUB_WEIGHT = "/DATA/Weight";
+const String FillingModule::TOPIC_PUB_DESCRIPTION = "/Registration/Request";
 
 // Static member initialization
 PackMLStateMachine *FillingModule::stateMachine = nullptr;
@@ -61,6 +62,9 @@ void FillingModule::begin()
 
     // Start the state machine
     stateMachine->begin();
+
+    // Publish module description
+    ESP32Module::publishDescription("PLACEHOLDER_FOR_FILLING_MODULE_AAS_DESCRIPTION");
 
     Serial.println("🎯 Filling Module ready!\n");
 }

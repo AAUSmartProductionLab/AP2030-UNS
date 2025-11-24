@@ -69,6 +69,7 @@ private:
     static const String TOPIC_PUB_STATUS;
     static const String TOPIC_SUB_STOPPERING_CMD;
     static const String TOPIC_PUB_STOPPERING_DATA;
+    static const String TOPIC_PUB_DESCRIPTION;
 
     /**
      * @brief Initialize servo motor to home position
