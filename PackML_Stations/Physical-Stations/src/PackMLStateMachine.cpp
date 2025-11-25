@@ -1,6 +1,6 @@
 #include "PackMLStateMachine.h"
 
-PackMLStateMachine::PackMLStateMachine(const String &baseTopic, PubSubClient *mqttClient)
+PackMLStateMachine::PackMLStateMachine(const String &baseTopic, esp_mqtt_client_handle_t mqttClient)
     : state(PackMLState::RESETTING), baseTopic(baseTopic), client(mqttClient),
       isProcessing(false), currentProcessingUuid(""), currentUuid(""), subscriptionsInitialized(false)
 {
@@ -31,8 +31,8 @@ void PackMLStateMachine::subscribeToTopics()
     Serial.println("📡 Subscribing to MQTT topics...");
 
     // Subscribe to occupy and release topics
-    client->subscribe(occupyCmdTopic.c_str());
-    client->subscribe(releaseCmdTopic.c_str());
+    esp_mqtt_client_subscribe(client, occupyCmdTopic.c_str(), 2);
+    esp_mqtt_client_subscribe(client, releaseCmdTopic.c_str(), 2);
     Serial.print("  ✓ ");
     Serial.println(occupyCmdTopic);
     Serial.print("  ✓ ");
@@ -41,7 +41,7 @@ void PackMLStateMachine::subscribeToTopics()
     // Subscribe to all registered command handler topics
     for (const auto &handler : commandHandlers)
     {
-        client->subscribe(handler.cmdTopic.c_str());
+        esp_mqtt_client_subscribe(client, handler.cmdTopic.c_str(), 2);
         Serial.print("  ✓ ");
         Serial.println(handler.cmdTopic);
     }
@@ -489,8 +489,8 @@ void PackMLStateMachine::publishState()
     }
 
     char output[512];
-    serializeJson(doc, output);
-    client->publish(stateDataTopic.c_str(), output, true);
+    size_t len = serializeJson(doc, output);
+    esp_mqtt_client_publish(client, stateDataTopic.c_str(), output, len, 1, 1);
 }
 
 void PackMLStateMachine::publishCommandStatus(const String &topic, const String &uuid, const char *stateValue)
@@ -501,8 +501,8 @@ void PackMLStateMachine::publishCommandStatus(const String &topic, const String 
     doc["Uuid"] = uuid;
 
     char output[256];
-    serializeJson(doc, output);
-    client->publish(topic.c_str(), output, false);
+    size_t len = serializeJson(doc, output);
+    esp_mqtt_client_publish(client, topic.c_str(), output, len, 1, 0);
 }
 
 String PackMLStateMachine::getTimestamp()

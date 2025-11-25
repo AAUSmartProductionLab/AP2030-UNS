@@ -1,14 +1,15 @@
 #include "ESP32Module.h"
 #include "PackMLStateMachine.h"
+#include <FS.h>
 
 // Static member initialization
-WiFiClient ESP32Module::espClient;
-PubSubClient ESP32Module::client(espClient);
+esp_mqtt_client_handle_t ESP32Module::client = nullptr;
 PackMLStateMachine *ESP32Module::stateMachine = nullptr;
 String ESP32Module::commandUuid = "";
 ESP32Module::WiFiMQTTConfig ESP32Module::config;
 String ESP32Module::baseTopic = "";
 bool ESP32Module::initialized = false;
+const char *ESP32Module::configFilePath = "/config.json";
 
 void ESP32Module::begin(const String &topic, unsigned long baudRate)
 {
@@ -22,6 +23,16 @@ void ESP32Module::begin(const String &topic, unsigned long baudRate)
     Serial.println("\n=== Initializing ESP32 Module ===");
 
     baseTopic = topic;
+
+    // Mount LittleFS to allow storing large JSON files persistently
+    if (!LittleFS.begin())
+    {
+        Serial.println("⚠️ LittleFS mount failed - configuration file unavailable");
+    }
+    else
+    {
+        Serial.println("✔ LittleFS mounted");
+    }
 
     initWiFi();
     initMQTT();
@@ -65,10 +76,36 @@ void ESP32Module::initMQTT()
     Serial.print(":");
     Serial.println(config.mqttPort);
 
-    client.setServer(config.mqttServer, config.mqttPort);
-    client.setCallback(mqttCallback);
+    // Configure MQTT client using older API structure
+    esp_mqtt_client_config_t mqtt_cfg = {};
+    
+    // Build URI string that persists beyond this function
+    static String mqtt_uri = String("mqtt://") + config.mqttServer + ":" + config.mqttPort;
+    mqtt_cfg.uri = mqtt_uri.c_str();
+    
+    // Use MQTT v3.1.1 (v5 requires newer ESP-IDF)
+    // mqtt_cfg.protocol_ver = MQTT_PROTOCOL_V_3_1_1;
+    
+    // Buffer settings for large payloads
+    mqtt_cfg.buffer_size = 40960; // 40KB buffer for large JSON files
+    mqtt_cfg.out_buffer_size = 40960;
+    
+    // Create and configure client
+    client = esp_mqtt_client_init(&mqtt_cfg);
+    
+    if (client == nullptr)
+    {
+        Serial.println("❌ Failed to initialize MQTT client");
+        return;
+    }
+    
+    // Register event handler
+    esp_mqtt_client_register_event(client, (esp_mqtt_event_id_t)ESP_EVENT_ANY_ID, mqttEventHandler, nullptr);
+    
+    // Start the client
+    esp_mqtt_client_start(client);
 
-    Serial.println("MQTT Client configured");
+    Serial.println("MQTT Client configured and started");
 }
 
 void ESP32Module::initializeTime()
@@ -97,37 +134,88 @@ void ESP32Module::initializeTime()
     Serial.println("\n⚠️ Could not synchronize time from NTP server");
 }
 
-void ESP32Module::reconnect()
+void ESP32Module::mqttEventHandler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data)
 {
-    if (!initialized)
+    esp_mqtt_event_handle_t event = (esp_mqtt_event_handle_t)event_data;
+    
+    switch ((esp_mqtt_event_id_t)event_id)
     {
-        return;
-    }
-
-    while (!client.connected())
-    {
-        Serial.print("Attempting MQTT connection...");
-
-        String clientId = "ESP32Client-" + String(random(0xffff), HEX);
-
-        if (client.connect(clientId.c_str()))
-        {
-            Serial.println(" connected!");
-
+        case MQTT_EVENT_CONNECTED:
+            Serial.println("✔ MQTT Connected!");
+            
             // Let state machine subscribe to its topics
             if (stateMachine)
             {
                 stateMachine->subscribeToTopics();
                 stateMachine->publishState();
             }
-        }
-        else
+            break;
+            
+        case MQTT_EVENT_DISCONNECTED:
+            Serial.println("⚠️ MQTT Disconnected");
+            break;
+            
+        case MQTT_EVENT_SUBSCRIBED:
+            Serial.print("📥 Subscribed to topic, msg_id=");
+            Serial.println(event->msg_id);
+            break;
+            
+        case MQTT_EVENT_UNSUBSCRIBED:
+            Serial.print("📤 Unsubscribed from topic, msg_id=");
+            Serial.println(event->msg_id);
+            break;
+            
+        case MQTT_EVENT_PUBLISHED:
+            Serial.print("📨 Published message, msg_id=");
+            Serial.println(event->msg_id);
+            break;
+            
+        case MQTT_EVENT_DATA:
         {
-            Serial.print(" failed, rc=");
-            Serial.print(client.state());
-            Serial.println(" retrying in 5 seconds...");
-            delay(5000);
+            // Convert topic and payload to strings
+            String topic = String(event->topic).substring(0, event->topic_len);
+            String message;
+            message.reserve(event->data_len);
+            for (int i = 0; i < event->data_len; i++)
+            {
+                message += (char)event->data[i];
+            }
+            
+            // Parse JSON message
+            JsonDocument doc;
+            DeserializationError error = deserializeJson(doc, message);
+            
+            if (error)
+            {
+                Serial.print("❌ JSON parse error: ");
+                Serial.println(error.c_str());
+                return;
+            }
+            
+            // Extract and store command UUID
+            if (doc["Uuid"].is<String>())
+            {
+                commandUuid = doc["Uuid"].as<String>();
+            }
+            
+            // Route message to PackML state machine
+            if (stateMachine)
+            {
+                stateMachine->handleMessage(topic, doc);
+            }
+            break;
         }
+            
+        case MQTT_EVENT_ERROR:
+            Serial.println("❌ MQTT Error occurred");
+            if (event->error_handle->error_type == MQTT_ERROR_TYPE_TCP_TRANSPORT)
+            {
+                Serial.println("  Transport error");
+            }
+            break;
+            
+        default:
+            break;
     }
 }
 
@@ -138,12 +226,8 @@ void ESP32Module::loop()
         return;
     }
 
-    // Maintain MQTT connection
-    if (!client.connected())
-    {
-        reconnect();
-    }
-    client.loop();
+    // esp-mqtt handles connection automatically in background
+    // No need to call client.loop() or reconnect()
 
     // Update state machine
     if (stateMachine)
@@ -152,43 +236,9 @@ void ESP32Module::loop()
     }
 }
 
-void ESP32Module::mqttCallback(char *topic, byte *payload, unsigned int length)
+esp_mqtt_client_handle_t ESP32Module::getMqttClient()
 {
-    // Convert payload to string
-    String message;
-    message.reserve(length);
-    for (unsigned int i = 0; i < length; i++)
-    {
-        message += (char)payload[i];
-    }
-
-    // Parse JSON message
-    JsonDocument doc;
-    DeserializationError error = deserializeJson(doc, message);
-
-    if (error)
-    {
-        Serial.print("❌ JSON parse error: ");
-        Serial.println(error.c_str());
-        return;
-    }
-
-    // Extract and store command UUID
-    if (doc["Uuid"].is<String>())
-    {
-        commandUuid = doc["Uuid"].as<String>();
-    }
-
-    // Route message to PackML state machine
-    if (stateMachine)
-    {
-        stateMachine->handleMessage(String(topic), doc);
-    }
-}
-
-PubSubClient *ESP32Module::getMqttClient()
-{
-    return &client;
+    return client;
 }
 
 String ESP32Module::getCommandUuid()
@@ -203,11 +253,111 @@ void ESP32Module::setStateMachine(PackMLStateMachine *sm)
 
 void ESP32Module::publishDescription(const String &moduleDescription)
 {
-    PubSubClient *client = ESP32Module::getMqttClient();
+    esp_mqtt_client_handle_t mqttClient = ESP32Module::getMqttClient();
     String fullTopic = baseTopic + "/Registration/Request";
 
-    // Publish the description
-    client->publish(fullTopic.c_str(), moduleDescription.c_str(), true);
+    // Publish the description with QoS 1 and retain flag
+    int msg_id = esp_mqtt_client_publish(mqttClient, fullTopic.c_str(), moduleDescription.c_str(), 
+                                          moduleDescription.length(), 1, 1);
 
-    Serial.println("📄 Published Module AAS description to: " + fullTopic);
+    if (msg_id >= 0)
+    {
+        Serial.println("📄 Published Module AAS description to: " + fullTopic);
+    }
+    else
+    {
+        Serial.println("❌ Failed to publish Module AAS description");
+    }
+}
+
+void ESP32Module::publishDescriptionFromFile()
+{
+    String content = readConfig(configFilePath);
+    if (content.length() == 0)
+    {
+        Serial.println("⚠️ No configuration JSON found to publish");
+        return;
+    }
+
+    Serial.print("📦 Publishing configuration file (");
+    Serial.print(content.length());
+    Serial.println(" bytes)");
+
+    esp_mqtt_client_handle_t mqttClient = ESP32Module::getMqttClient();
+    String fullTopic = baseTopic + "/Registration/Request";
+    
+    // esp-mqtt can handle large payloads (40KB buffer configured)
+    int msg_id = esp_mqtt_client_publish(mqttClient, fullTopic.c_str(), content.c_str(), 
+                                          content.length(), 1, 1);
+    
+    if (msg_id >= 0)
+    {
+        Serial.println("📄 Published Module AAS description from file to: " + fullTopic);
+    }
+    else
+    {
+        Serial.println("❌ Failed to publish config from file");
+    }
+}
+
+bool ESP32Module::saveConfig(const String &json, const char *path)
+{
+    if (!LittleFS.begin())
+    {
+        // Try to mount again in case not mounted earlier
+        if (!LittleFS.begin())
+        {
+            Serial.println("⚠️ LittleFS mount failed - cannot save config");
+            return false;
+        }
+    }
+
+    File file = LittleFS.open(path, FILE_WRITE);
+    if (!file)
+    {
+        Serial.println("❌ Failed to open config file for writing");
+        return false;
+    }
+
+    size_t written = file.print(json);
+    file.close();
+    Serial.print("💾 Saved config bytes: ");
+    Serial.println(written);
+    return written > 0;
+}
+
+String ESP32Module::readConfig(const char *path)
+{
+    if (!LittleFS.begin())
+    {
+        if (!LittleFS.begin())
+        {
+            Serial.println("⚠️ LittleFS mount failed - cannot read config");
+            return String("");
+        }
+    }
+
+    if (!LittleFS.exists(path))
+    {
+        Serial.println("ℹ️ Config file does not exist: " + String(path));
+        return String("");
+    }
+
+    File file = LittleFS.open(path, FILE_READ);
+    if (!file)
+    {
+        Serial.println("❌ Failed to open config file for reading");
+        return String("");
+    }
+
+    String content;
+    content.reserve(file.size());
+    while (file.available())
+    {
+        content += (char)file.read();
+    }
+    file.close();
+    Serial.print("📖 Read config bytes: ");
+    Serial.println(content.length());
+    return content;
 }

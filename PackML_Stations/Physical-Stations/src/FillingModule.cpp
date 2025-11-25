@@ -214,7 +214,7 @@ void FillingModule::stopMotor()
 
 void FillingModule::publishWeight(double weight)
 {
-    PubSubClient *client = ESP32Module::getMqttClient();
+    esp_mqtt_client_handle_t client = ESP32Module::getMqttClient();
     String commandUuid = ESP32Module::getCommandUuid();
 
     struct tm timeinfo;
@@ -237,10 +237,10 @@ void FillingModule::publishWeight(double weight)
 
     // Serialize and publish
     char output[256];
-    serializeJson(doc, output);
+    size_t len = serializeJson(doc, output);
 
     String fullTopic = "NN/Nybrovej/InnoLab/Filling" + TOPIC_PUB_WEIGHT;
-    client->publish(fullTopic.c_str(), output, true);
+    esp_mqtt_client_publish(client, fullTopic.c_str(), output, len, 1, 1);
 
     Serial.print("⚖️  Published weight: ");
     Serial.print(weight);

@@ -3,8 +3,9 @@
 
 #include <Arduino.h>
 #include <WiFi.h>
-#include <PubSubClient.h>
+#include <mqtt_client.h>
 #include <ArduinoJson.h>
+#include <LittleFS.h>
 
 // Forward declaration
 class PackMLStateMachine;
@@ -38,9 +39,9 @@ public:
 
     /**
      * @brief Get the MQTT client instance
-     * @return Pointer to PubSubClient for publishing messages
+     * @return ESP-MQTT client handle for publishing messages
      */
-    static PubSubClient *getMqttClient();
+    static esp_mqtt_client_handle_t getMqttClient();
 
     /**
      * @brief Get the current command UUID
@@ -54,6 +55,25 @@ public:
      */
     static void setStateMachine(PackMLStateMachine *sm);
     static void publishDescription(const String &moduleDescription);
+    /**
+     * @brief Publish the stored configuration JSON (from filesystem) to MQTT
+     */
+    static void publishDescriptionFromFile();
+
+    /**
+     * @brief Save configuration JSON to filesystem (LittleFS)
+     * @param json The JSON string to save
+     * @param path Optional path (default: "/config.json")
+     * @return true if saved successfully
+     */
+    static bool saveConfig(const String &json, const char *path = "/config.json");
+
+    /**
+     * @brief Read configuration JSON from filesystem (LittleFS)
+     * @param path Optional path (default: "/config.json")
+     * @return The JSON string, or empty String if failed
+     */
+    static String readConfig(const char *path = "/config.json");
 
 private:
     // WiFi and MQTT Configuration
@@ -66,13 +86,13 @@ private:
     };
 
     // Static members
-    static WiFiClient espClient;
-    static PubSubClient client;
+    static esp_mqtt_client_handle_t client;
     static PackMLStateMachine *stateMachine;
     static String commandUuid;
     static WiFiMQTTConfig config;
     static String baseTopic;
     static bool initialized;
+    static const char *configFilePath;
 
     /**
      * @brief Initialize WiFi connection
@@ -90,15 +110,9 @@ private:
     static void initializeTime();
 
     /**
-     * @brief Reconnect to MQTT broker if connection is lost
+     * @brief MQTT event handler - handles connection, disconnection, and messages
      */
-    static void reconnect();
-
-    /**
-     * @brief MQTT message callback - handles command UUID extraction and routing
-     */
-    static void mqttCallback(char *topic, byte *payload, unsigned int length);
-
+    static void mqttEventHandler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data);
 };
 
 #endif // ESP32_MODULE_H

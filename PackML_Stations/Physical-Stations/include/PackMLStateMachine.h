@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 #include <ArduinoJson.h>
-#include <PubSubClient.h>
+#include <mqtt_client.h>
 #include <vector>
 #include <time.h>
 
@@ -47,7 +47,7 @@ class PackMLStateMachine
 private:
     PackMLState state;
     String baseTopic;
-    PubSubClient *client;
+    esp_mqtt_client_handle_t client;
 
     // Process queue
     std::vector<String> uuids;
@@ -88,7 +88,7 @@ protected:
     virtual void onIdle() {}       // Called when entering IDLE state
 
 public:
-    PackMLStateMachine(const String &baseTopic, PubSubClient *mqttClient);
+    PackMLStateMachine(const String &baseTopic, esp_mqtt_client_handle_t mqttClient);
     virtual ~PackMLStateMachine() {}
 
     // Setup and loop
