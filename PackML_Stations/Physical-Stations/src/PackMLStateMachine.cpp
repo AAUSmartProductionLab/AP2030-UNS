@@ -1,23 +1,14 @@
 #include "PackMLStateMachine.h"
 
-PackMLStateMachine::PackMLStateMachine(const String &baseTopic, esp_mqtt_client_handle_t mqttClient)
-    : state(PackMLState::RESETTING), baseTopic(baseTopic), client(mqttClient),
+PackMLStateMachine::PackMLStateMachine(const String &baseTopic, const String &moduleName, esp_mqtt_client_handle_t mqttClient)
+    : state(PackMLState::RESETTING), baseTopic(baseTopic), moduleName(moduleName), client(mqttClient),
       isProcessing(false), currentProcessingUuid(""), currentUuid(""), subscriptionsInitialized(false)
 {
-    occupyCmdTopic = baseTopic + "/CMD/Occupy";
-    occupyDataTopic = baseTopic + "/DATA/Occupy";
-    releaseCmdTopic = baseTopic + "/CMD/Release";
-    releaseDataTopic = baseTopic + "/DATA/Release";
-    stateDataTopic = baseTopic + "/DATA/State";
-}
-
-void PackMLStateMachine::begin()
-{
-    Serial.println("📋 PackML State Machine initialized");
-    Serial.print("Base topic: ");
-    Serial.println(baseTopic);
-
-    // Trigger the initial state transition from RESETTING
+    occupyCmdTopic = baseTopic + "/" + moduleName + "/CMD/Occupy";
+    occupyDataTopic = baseTopic + "/" + moduleName + "/DATA/Occupy";
+    releaseCmdTopic = baseTopic + "/" + moduleName + "/CMD/Release";
+    releaseDataTopic = baseTopic + "/" + moduleName + "/DATA/Release";
+    stateDataTopic = baseTopic + "/" + moduleName + "/DATA/State";
     resettingState();
 }
 
@@ -28,26 +19,23 @@ void PackMLStateMachine::subscribeToTopics()
         return; // Already subscribed
     }
 
-    Serial.println("📡 Subscribing to MQTT topics...");
+    Serial.println("Subscribing to MQTT topics...");
 
     // Subscribe to occupy and release topics
     esp_mqtt_client_subscribe(client, occupyCmdTopic.c_str(), 2);
     esp_mqtt_client_subscribe(client, releaseCmdTopic.c_str(), 2);
-    Serial.print("  ✓ ");
     Serial.println(occupyCmdTopic);
-    Serial.print("  ✓ ");
     Serial.println(releaseCmdTopic);
 
     // Subscribe to all registered command handler topics
     for (const auto &handler : commandHandlers)
     {
         esp_mqtt_client_subscribe(client, handler.cmdTopic.c_str(), 2);
-        Serial.print("  ✓ ");
         Serial.println(handler.cmdTopic);
     }
 
     subscriptionsInitialized = true;
-    Serial.println("✅ All subscriptions complete");
+    Serial.println("All subscriptions complete");
 }
 
 void PackMLStateMachine::registerCommandHandler(const String &cmdTopic, const String &dataTopic,
@@ -60,7 +48,7 @@ void PackMLStateMachine::registerCommandHandler(const String &cmdTopic, const St
     handler.processFunction = processFunc;
     commandHandlers.push_back(handler);
 
-    Serial.print("✓ Registered: ");
+    Serial.print("Registered: ");
     Serial.println(handler.cmdTopic);
 }
 
@@ -101,7 +89,7 @@ void PackMLStateMachine::executeCommand(const JsonDocument &message, const Strin
     // Condition 1: Not in EXECUTE state
     if (state != PackMLState::EXECUTE)
     {
-        Serial.print("❌ Execute command rejected for UUID '");
+        Serial.print("Execute command rejected for UUID '");
         Serial.print(commandUuid);
         Serial.print("'. Machine not in EXECUTE state (current: ");
         Serial.print(stateToString(state).c_str());
@@ -114,7 +102,7 @@ void PackMLStateMachine::executeCommand(const JsonDocument &message, const Strin
     // Condition 2: Queue is empty
     if (uuids.empty())
     {
-        Serial.print("❌ Execute command rejected for UUID '");
+        Serial.print("Execute command rejected for UUID '");
         Serial.print(commandUuid);
         Serial.println("'. Queue is empty.");
 
@@ -125,7 +113,7 @@ void PackMLStateMachine::executeCommand(const JsonDocument &message, const Strin
     // Condition 3: UUID not at front of queue
     if (uuids[0] != commandUuid)
     {
-        Serial.print("❌ Execute command rejected for UUID '");
+        Serial.print("Execute command rejected for UUID '");
         Serial.print(commandUuid);
         Serial.print("'. Expected head: '");
         Serial.print(uuids[0]);
@@ -145,7 +133,7 @@ void PackMLStateMachine::executeCommand(const JsonDocument &message, const Strin
     // Condition 4: Already processing another command
     if (isProcessing)
     {
-        Serial.print("❌ Execute command rejected for UUID '");
+        Serial.print("Execute command rejected for UUID '");
         Serial.print(commandUuid);
         Serial.print("'. Already processing: ");
         Serial.println(currentProcessingUuid);
@@ -313,12 +301,6 @@ void PackMLStateMachine::releaseCallback(PackMLStateMachine *sm, const JsonDocum
         return;
     }
     sm->releaseCommand(commandUuid);
-}
-
-void PackMLStateMachine::loop()
-{
-    // State machine doesn't need continuous loop processing
-    // All state transitions are event-driven through callbacks
 }
 
 // State transition methods
@@ -490,7 +472,7 @@ void PackMLStateMachine::publishState()
 
     char output[512];
     size_t len = serializeJson(doc, output);
-    esp_mqtt_client_publish(client, stateDataTopic.c_str(), output, len, 1, 1);
+    esp_mqtt_client_publish(client, stateDataTopic.c_str(), output, len, 2, 1);
 }
 
 void PackMLStateMachine::publishCommandStatus(const String &topic, const String &uuid, const char *stateValue)
@@ -502,7 +484,7 @@ void PackMLStateMachine::publishCommandStatus(const String &topic, const String 
 
     char output[256];
     size_t len = serializeJson(doc, output);
-    esp_mqtt_client_publish(client, topic.c_str(), output, len, 1, 0);
+    esp_mqtt_client_publish(client, topic.c_str(), output, len, 2, 1);
 }
 
 String PackMLStateMachine::getTimestamp()

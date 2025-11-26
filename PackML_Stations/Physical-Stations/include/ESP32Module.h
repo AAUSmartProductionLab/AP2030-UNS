@@ -25,55 +25,45 @@ class ESP32Module
 {
 public:
     /**
+     * @brief Constructor - creates an uninitialized ESP32Module instance
+     */
+    ESP32Module();
+
+    /**
      * @brief Initialize ESP32 module with WiFi, MQTT, and time sync
      * @param baseTopic MQTT base topic for the station
      * @param baudRate Serial baud rate (default 115200)
      */
-    static void begin(const String &baseTopic, unsigned long baudRate = 115200);
-
-    /**
-     * @brief Main loop - handles MQTT connection and state machine updates
-     * Must be called continuously in Arduino loop()
-     */
-    static void loop();
+    void setup(const String &baseTopic, const String &moduleName, unsigned long baudRate = 115200);
 
     /**
      * @brief Get the MQTT client instance
      * @return ESP-MQTT client handle for publishing messages
      */
-    static esp_mqtt_client_handle_t getMqttClient();
+    esp_mqtt_client_handle_t getMqttClient();
 
     /**
      * @brief Get the current command UUID
      * @return Current command UUID string
      */
-    static String getCommandUuid();
+    String getCommandUuid();
 
     /**
      * @brief Set the PackML state machine instance
      * @param sm Pointer to PackMLStateMachine
      */
-    static void setStateMachine(PackMLStateMachine *sm);
-    static void publishDescription(const String &moduleDescription);
+    void setStateMachine(PackMLStateMachine *sm);
     /**
      * @brief Publish the stored configuration JSON (from filesystem) to MQTT
      */
-    static void publishDescriptionFromFile();
-
-    /**
-     * @brief Save configuration JSON to filesystem (LittleFS)
-     * @param json The JSON string to save
-     * @param path Optional path (default: "/config.json")
-     * @return true if saved successfully
-     */
-    static bool saveConfig(const String &json, const char *path = "/config.json");
+    void publishDescriptionFromFile();
 
     /**
      * @brief Read configuration JSON from filesystem (LittleFS)
      * @param path Optional path (default: "/config.json")
      * @return The JSON string, or empty String if failed
      */
-    static String readConfig(const char *path = "/config.json");
+    String readConfig(const char *path = "/config.json");
 
 private:
     // WiFi and MQTT Configuration
@@ -85,29 +75,30 @@ private:
         int mqttPort = 1883;
     };
 
-    // Static members
-    static esp_mqtt_client_handle_t client;
-    static PackMLStateMachine *stateMachine;
-    static String commandUuid;
-    static WiFiMQTTConfig config;
-    static String baseTopic;
-    static bool initialized;
-    static const char *configFilePath;
+    // Instance members
+    esp_mqtt_client_handle_t client;
+    PackMLStateMachine *stateMachine;
+    String commandUuid;
+    WiFiMQTTConfig config;
+    String baseTopic;
+    String moduleName;
+    bool initialized;
+    const char *configFilePath;
 
     /**
      * @brief Initialize WiFi connection
      */
-    static void initWiFi();
+    void initWiFi();
 
     /**
      * @brief Initialize MQTT client
      */
-    static void initMQTT();
+    void initMQTT();
 
     /**
      * @brief Initialize NTP time synchronization
      */
-    static void initializeTime();
+    void initializeTime();
 
     /**
      * @brief MQTT event handler - handles connection, disconnection, and messages

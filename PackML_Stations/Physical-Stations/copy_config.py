@@ -19,7 +19,7 @@ config_files = {
 }
 
 # Source config file path (relative to project root)
-source_config = os.path.join(project_dir, "..", "..", "..", "schemas", "ResourceDescription", 
+source_config = os.path.join(project_dir, "..", "..", "schemas", "ResourceDescription", 
                               config_files[build_env])
 source_config = os.path.abspath(source_config)
 

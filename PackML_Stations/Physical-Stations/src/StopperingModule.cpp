@@ -3,30 +3,32 @@
 #include "PackMLStateMachine.h"
 
 // Static member initialization
+ESP32Module *StopperingModule::esp32Module = nullptr;
 Servo StopperingModule::servo;
 PackMLStateMachine *StopperingModule::stateMachine = nullptr;
 
 // MQTT topic definitions
-const String StopperingModule::TOPIC_PUB_STATUS = "/DATA/State";
+
+const String baseTopic = "NN/Nybrovej/InnoLab";
+const String moduleName = "Stoppering";
 const String StopperingModule::TOPIC_SUB_STOPPERING_CMD = "/CMD/Stopper";
 const String StopperingModule::TOPIC_PUB_STOPPERING_DATA = "/DATA/Stopper";
-const String StopperingModule::TOPIC_PUB_DESCRIPTION = "/Registration/Request";
 
-void StopperingModule::begin()
+void StopperingModule::setup(ESP32Module *moduleInstance)
 {
-    const String baseTopic = "NN/Nybrovej/InnoLab/Stoppering";
+    esp32Module = moduleInstance;
 
     // Initialize ESP32 (WiFi, MQTT, Time)
-    ESP32Module::begin(baseTopic);
+    esp32Module->setup(baseTopic, moduleName);
 
     // Initialize stoppering hardware
     initHardware();
 
     // Create PackML state machine with MQTT client from ESP32Module
-    stateMachine = new PackMLStateMachine(baseTopic, ESP32Module::getMqttClient());
+    stateMachine = new PackMLStateMachine(baseTopic, esp32Module->getMqttClient());
 
     // Register state machine with ESP32Module for message routing
-    ESP32Module::setStateMachine(stateMachine);
+    esp32Module->setStateMachine(stateMachine);
 
     // Register command handler for device primitive
     stateMachine->registerCommandHandler(
@@ -38,13 +40,7 @@ void StopperingModule::begin()
         },
         runStopperingCycle);
 
-    // Start the state machine
-    stateMachine->begin();
-
-    // Publish module description
-    ESP32Module::publishDescription("PLACEHOLDER_FOR_STOPPERING_MODULE_AAS_DESCRIPTION");
-
-    Serial.println("🎯 Stoppering Module ready!\n");
+    Serial.println("Stoppering Module ready!\n");
 }
 
 void StopperingModule::initHardware()

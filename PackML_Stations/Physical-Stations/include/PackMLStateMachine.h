@@ -47,6 +47,7 @@ class PackMLStateMachine
 private:
     PackMLState state;
     String baseTopic;
+    String moduleName;
     esp_mqtt_client_handle_t client;
 
     // Process queue
@@ -88,12 +89,11 @@ protected:
     virtual void onIdle() {}       // Called when entering IDLE state
 
 public:
-    PackMLStateMachine(const String &baseTopic, esp_mqtt_client_handle_t mqttClient);
+    PackMLStateMachine(const String &baseTopic, const String &moduleName, esp_mqtt_client_handle_t mqttClient);
     virtual ~PackMLStateMachine() {}
 
-    // Setup and loop
-    void begin();
-    void loop();
+    // Setup
+    void setup();
 
     // Public methods that can be called by ESP32Module
     void subscribeToTopics();

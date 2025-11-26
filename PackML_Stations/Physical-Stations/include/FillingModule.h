@@ -5,6 +5,7 @@
 #include <ArduinoJson.h>
 
 // Forward declarations
+class ESP32Module;
 class PackMLStateMachine;
 
 /**
@@ -22,10 +23,11 @@ class FillingModule
 public:
     /**
      * @brief Initialize and start the filling module
+     * @param esp32Module Pointer to initialized ESP32Module instance
      * Must be called once in Arduino setup()
      */
-    static void begin();
-    
+    static void setup(ESP32Module *esp32Module);
+
     /**
      * @brief Initialize hardware pins and move to home position
      */
@@ -44,8 +46,7 @@ private:
     static const int MOTOR_SPEED_BOOST = 50;
     static const unsigned long MOTION_TIMEOUT = 8000; // 8 seconds
 
-    // MQTT topics
-    static const String TOPIC_PUB_STATUS;
+    // Custom MQTT action/data topics
     static const String TOPIC_SUB_FILLING_CMD;
     static const String TOPIC_PUB_FILLING_DATA;
     static const String TOPIC_SUB_NEEDLE_CMD;
@@ -53,7 +54,6 @@ private:
     static const String TOPIC_SUB_TARE_CMD;
     static const String TOPIC_PUB_TARE_DATA;
     static const String TOPIC_PUB_WEIGHT;
-    static const String TOPIC_PUB_DESCRIPTION;
 
     /**
      * @brief Execute complete filling cycle
@@ -100,6 +100,7 @@ private:
     static bool waitForButton(int buttonPin, unsigned long timeoutMs);
 
     // Static members
+    static ESP32Module *esp32Module;
     static PackMLStateMachine *stateMachine;
 };
 

@@ -5,6 +5,7 @@
 #include <ESP32Servo.h>
 
 // Forward declarations
+class ESP32Module;
 class PackMLStateMachine;
 
 /**
@@ -23,9 +24,10 @@ class StopperingModule
 public:
     /**
      * @brief Initialize and start the stoppering module
+     * @param esp32Module Pointer to initialized ESP32Module instance
      * Must be called once in Arduino setup()
      */
-    static void begin();
+    static void setup(ESP32Module *esp32Module);
 
     /**
      * @brief Initialize all hardware pins
@@ -65,12 +67,9 @@ private:
     static const unsigned long DC_INIT_UP_TIME = 1500;
     static const unsigned long MOTION_TIMEOUT = 10000; // 10 seconds
 
-    // MQTT topics
-    static const String TOPIC_PUB_STATUS;
+    // Custom MQTT action/data topics
     static const String TOPIC_SUB_STOPPERING_CMD;
     static const String TOPIC_PUB_STOPPERING_DATA;
-    static const String TOPIC_PUB_DESCRIPTION;
-
     /**
      * @brief Initialize servo motor to home position
      */
@@ -131,6 +130,7 @@ private:
     static bool waitForButton(int buttonPin, unsigned long timeoutMs);
 
     // Static members
+    static ESP32Module *esp32Module;
     static Servo servo;
     static PackMLStateMachine *stateMachine;
 };

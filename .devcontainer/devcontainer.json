@@ -7,7 +7,12 @@
         "runArgs": [
                 "--network=host",
                 "--device=/dev/ttyUSB0:/dev/ttyUSB0",
+                "--device=/dev/ttyACM0:/dev/ttyACM0",
                 "--privileged"
+        ],
+        "containerUser": "vscode",
+        "mounts": [
+                "type=bind,source=/dev,target=/dev"
         ],
         "features": {
                 "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
@@ -22,6 +27,6 @@
                                 "platformio.platformio-ide"
                         ]
                 }
-        }
-
+        },
+        "postCreateCommand": "sudo usermod -aG dialout $USER"
 }

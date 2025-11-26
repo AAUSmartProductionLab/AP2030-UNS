@@ -3,7 +3,8 @@
 #include "PackMLStateMachine.h"
 
 // MQTT topic definitions
-const String FillingModule::TOPIC_PUB_STATUS = "/DATA/State";
+const String baseTopic = "NN/Nybrovej/InnoLab";
+const String moduleName = "Filling";
 const String FillingModule::TOPIC_SUB_FILLING_CMD = "/CMD/Dispense";
 const String FillingModule::TOPIC_PUB_FILLING_DATA = "/DATA/Dispense";
 const String FillingModule::TOPIC_SUB_NEEDLE_CMD = "/CMD/Needle";
@@ -11,26 +12,26 @@ const String FillingModule::TOPIC_PUB_NEEDLE_DATA = "/DATA/Needle";
 const String FillingModule::TOPIC_SUB_TARE_CMD = "/CMD/Tare";
 const String FillingModule::TOPIC_PUB_TARE_DATA = "/DATA/Tare";
 const String FillingModule::TOPIC_PUB_WEIGHT = "/DATA/Weight";
-const String FillingModule::TOPIC_PUB_DESCRIPTION = "/Registration/Request";
 
 // Static member initialization
+ESP32Module *FillingModule::esp32Module = nullptr;
 PackMLStateMachine *FillingModule::stateMachine = nullptr;
 
-void FillingModule::begin()
+void FillingModule::setup(ESP32Module *moduleInstance)
 {
-    const String baseTopic = "NN/Nybrovej/InnoLab/Filling";
+    esp32Module = moduleInstance;
 
-    // Initialize ESP32 (WiFi, MQTT, Time)
-    ESP32Module::begin(baseTopic);
+    // Initialize ESP32 (WiFi, MQTT, Time) first to get valid MQTT client
+    esp32Module->setup(baseTopic, moduleName);
 
     // Initialize filling hardware
     initHardware();
 
     // Create PackML state machine with MQTT client from ESP32Module
-    stateMachine = new PackMLStateMachine(baseTopic, ESP32Module::getMqttClient());
+    stateMachine = new PackMLStateMachine(baseTopic, moduleName, esp32Module->getMqttClient());
 
     // Register state machine with ESP32Module for message routing
-    ESP32Module::setStateMachine(stateMachine);
+    esp32Module->setStateMachine(stateMachine);
 
     // Register command handlers for device primitives
     stateMachine->registerCommandHandler(
@@ -60,13 +61,11 @@ void FillingModule::begin()
         },
         tareScale);
 
-    // Start the state machine
-    stateMachine->begin();
+    // Subscribe to MQTT topics now that state machine is fully configured
+    stateMachine->subscribeToTopics();
+    stateMachine->publishState();
 
-    // Publish module description
-    ESP32Module::publishDescription("PLACEHOLDER_FOR_FILLING_MODULE_AAS_DESCRIPTION");
-
-    Serial.println("🎯 Filling Module ready!\n");
+    Serial.println("Filling Module ready!\n");
 }
 
 // Hardware control methods
@@ -214,8 +213,8 @@ void FillingModule::stopMotor()
 
 void FillingModule::publishWeight(double weight)
 {
-    esp_mqtt_client_handle_t client = ESP32Module::getMqttClient();
-    String commandUuid = ESP32Module::getCommandUuid();
+    esp_mqtt_client_handle_t client = esp32Module->getMqttClient();
+    String commandUuid = esp32Module->getCommandUuid();
 
     struct tm timeinfo;
     if (!getLocalTime(&timeinfo))
@@ -240,7 +239,7 @@ void FillingModule::publishWeight(double weight)
     size_t len = serializeJson(doc, output);
 
     String fullTopic = "NN/Nybrovej/InnoLab/Filling" + TOPIC_PUB_WEIGHT;
-    esp_mqtt_client_publish(client, fullTopic.c_str(), output, len, 1, 1);
+    esp_mqtt_client_publish(client, fullTopic.c_str(), output, len, 2, 1);
 
     Serial.print("⚖️  Published weight: ");
     Serial.print(weight);
