@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 #include <WiFi.h>
-#include <mqtt_client.h>
+#include <AsyncMqttClient.h>
 #include <ArduinoJson.h>
 #include <LittleFS.h>
 
@@ -38,9 +38,9 @@ public:
 
     /**
      * @brief Get the MQTT client instance
-     * @return ESP-MQTT client handle for publishing messages
+     * @return AsyncMqttClient reference for publishing messages
      */
-    esp_mqtt_client_handle_t getMqttClient();
+    AsyncMqttClient &getMqttClient();
 
     /**
      * @brief Get the current command UUID
@@ -76,7 +76,7 @@ private:
     };
 
     // Instance members
-    esp_mqtt_client_handle_t client;
+    AsyncMqttClient mqttClient;
     PackMLStateMachine *stateMachine;
     String commandUuid;
     WiFiMQTTConfig config;
@@ -101,9 +101,11 @@ private:
     void initializeTime();
 
     /**
-     * @brief MQTT event handler - handles connection, disconnection, and messages
+     * @brief MQTT event handlers
      */
-    static void mqttEventHandler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data);
+    void onMqttConnect(bool sessionPresent);
+    void onMqttDisconnect(AsyncMqttClientDisconnectReason reason);
+    void onMqttMessage(char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total);
 };
 
 #endif // ESP32_MODULE_H

@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 #include <ArduinoJson.h>
-#include <mqtt_client.h>
+#include <AsyncMqttClient.h>
 #include <vector>
 #include <time.h>
 
@@ -39,7 +39,6 @@ struct CommandHandler
     String cmdTopic;
     String dataTopic;
     CommandCallback callback;
-    void (*processFunction)();
 };
 
 class PackMLStateMachine
@@ -48,7 +47,7 @@ private:
     PackMLState state;
     String baseTopic;
     String moduleName;
-    esp_mqtt_client_handle_t client;
+    AsyncMqttClient *client;
 
     // Process queue
     std::vector<String> uuids;
@@ -89,7 +88,7 @@ protected:
     virtual void onIdle() {}       // Called when entering IDLE state
 
 public:
-    PackMLStateMachine(const String &baseTopic, const String &moduleName, esp_mqtt_client_handle_t mqttClient);
+    PackMLStateMachine(const String &baseTopic, const String &moduleName, AsyncMqttClient *mqttClient);
     virtual ~PackMLStateMachine() {}
 
     // Setup
@@ -102,7 +101,7 @@ public:
 
     // Command registration
     void registerCommandHandler(const String &cmdTopic, const String &dataTopic,
-                                CommandCallback callback, void (*processFunc)());
+                                CommandCallback callback);
 
     // Message handling
     void handleMessage(const String &topic, const JsonDocument &message);
@@ -110,6 +109,8 @@ public:
     // Command execution
     void executeCommand(const JsonDocument &message, const String &topic,
                         void (*processFunction)());
+    void executeCommand(const JsonDocument &message, const String &topic,
+                        bool (*processFunction)());
 
     // Queue management
     void occupyCommand(const String &uuid);

@@ -57,8 +57,9 @@ private:
 
     /**
      * @brief Execute complete filling cycle
+     * @return true if successful, false if motion error occurred
      */
-    static void runFillingCycle();
+    static bool runFillingCycle();
 
     /**
      * @brief Move needle down to attachment position
@@ -72,13 +73,15 @@ private:
 
     /**
      * @brief Move needle to top position
+     * @return true if successful, false if motion error occurred
      */
-    static void moveToTop();
+    static bool moveToTop();
 
     /**
      * @brief Move needle to bottom position
+     * @return true if successful, false if motion error occurred
      */
-    static void moveToBottom();
+    static bool moveToBottom();
 
     /**
      * @brief Stop motor movement

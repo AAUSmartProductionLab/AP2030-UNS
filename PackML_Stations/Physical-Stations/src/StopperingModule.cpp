@@ -1,6 +1,7 @@
 #include "StopperingModule.h"
 #include "ESP32Module.h"
 #include "PackMLStateMachine.h"
+#include <esp_task_wdt.h>
 
 // Static member initialization
 ESP32Module *StopperingModule::esp32Module = nullptr;
@@ -25,7 +26,7 @@ void StopperingModule::setup(ESP32Module *moduleInstance)
     initHardware();
 
     // Create PackML state machine with MQTT client from ESP32Module
-    stateMachine = new PackMLStateMachine(baseTopic, esp32Module->getMqttClient());
+    stateMachine = new PackMLStateMachine(baseTopic, moduleName, &(esp32Module->getMqttClient()));
 
     // Register state machine with ESP32Module for message routing
     esp32Module->setStateMachine(stateMachine);
@@ -37,8 +38,7 @@ void StopperingModule::setup(ESP32Module *moduleInstance)
         [](PackMLStateMachine *sm, const JsonDocument &msg)
         {
             sm->executeCommand(msg, TOPIC_PUB_STOPPERING_DATA, runStopperingCycle);
-        },
-        runStopperingCycle);
+        });
 
     Serial.println("Stoppering Module ready!\n");
 }
@@ -253,7 +253,8 @@ bool StopperingModule::waitForButton(int buttonPin, unsigned long timeoutMs)
         {
             return false; // Timeout
         }
-        delay(10); // Small delay to avoid tight loop
+        delay(5); //Sample the endswitch at 200Hz
+        esp_task_wdt_reset();
     }
 
     return true; // Button pressed

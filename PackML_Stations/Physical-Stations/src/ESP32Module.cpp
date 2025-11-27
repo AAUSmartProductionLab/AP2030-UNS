@@ -4,7 +4,7 @@
 
 // Constructor
 ESP32Module::ESP32Module()
-    : client(nullptr),
+    : mqttClient(),
       stateMachine(nullptr),
       commandUuid(""),
       config(),
@@ -69,36 +69,21 @@ void ESP32Module::initMQTT()
     Serial.print(":");
     Serial.println(config.mqttPort);
 
-    // Configure MQTT client using older API structure
-    esp_mqtt_client_config_t mqtt_cfg = {};
+    // Configure AsyncMqttClient callbacks using lambda to capture 'this'
+    mqttClient.onConnect([this](bool sessionPresent)
+                         { this->onMqttConnect(sessionPresent); });
+    mqttClient.onDisconnect([this](AsyncMqttClientDisconnectReason reason)
+                            { this->onMqttDisconnect(reason); });
+    mqttClient.onMessage([this](char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total)
+                         { this->onMqttMessage(topic, payload, properties, len, index, total); });
 
-    // Build URI string that persists beyond this function
-    static String mqtt_uri = String("mqtt://") + config.mqttServer + ":" + config.mqttPort;
-    mqtt_cfg.uri = mqtt_uri.c_str();
+    // Set server and credentials
+    mqttClient.setServer(config.mqttServer, config.mqttPort);
 
-    // Buffer settings for large payloads (60KB to handle 47KB config file with overhead)
-    mqtt_cfg.buffer_size = 61440;     // 60KB receive buffer
-    mqtt_cfg.out_buffer_size = 61440; // 60KB transmit buffer
+    // Connect to MQTT broker
+    mqttClient.connect();
 
-    // Increase task stack for QoS 2 support (outbox memory comes from task stack)
-    mqtt_cfg.task_stack = 16384; // 16KB stack (default is 6KB, need more for QoS 2 with large messages)
-
-    // Create and configure client
-    client = esp_mqtt_client_init(&mqtt_cfg);
-
-    if (client == nullptr)
-    {
-        Serial.println("Failed to initialize MQTT client");
-        return;
-    }
-
-    // Register event handler with 'this' pointer
-    esp_mqtt_client_register_event(client, (esp_mqtt_event_id_t)ESP_EVENT_ANY_ID, mqttEventHandler, this);
-
-    // Start the client
-    esp_mqtt_client_start(client);
-
-    Serial.println("MQTT Client configured and started");
+    Serial.println("MQTT Client configured and connecting...");
 }
 
 void ESP32Module::initializeTime()
@@ -143,16 +128,14 @@ void ESP32Module::publishDescriptionFromFile()
     // Wait briefly to ensure MQTT connection is stable
     delay(500);
 
-    esp_mqtt_client_handle_t mqttClient = client;
     String fullTopic = baseTopic + "/Registration/Request";
 
-    // With 60KB buffer, we can send the 47KB config in one message with QoS 0
-    int msg_id = esp_mqtt_client_publish(mqttClient, fullTopic.c_str(), content.c_str(),
-                                         content.length(), 0, 0);
+    // AsyncMqttClient can handle large payloads without QoS issues
+    uint16_t packetId = mqttClient.publish(fullTopic.c_str(), 2, false, content.c_str(), content.length());
 
-    if (msg_id >= 0)
+    if (packetId > 0)
     {
-        Serial.println("Published Module AAS description" + fullTopic);
+        Serial.println("Published Module AAS description to " + fullTopic);
     }
     else
     {
@@ -208,99 +191,76 @@ String ESP32Module::readConfig(const char *path)
     return content;
 }
 
-void ESP32Module::mqttEventHandler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data)
+void ESP32Module::onMqttConnect(bool sessionPresent)
 {
-    // Recover instance pointer from handler_args
-    ESP32Module *instance = static_cast<ESP32Module *>(handler_args);
-    if (!instance)
-        return;
+    Serial.println("MQTT Connected!");
 
-    esp_mqtt_event_handle_t event = (esp_mqtt_event_handle_t)event_data;
-
-    switch ((esp_mqtt_event_id_t)event_id)
+    // Let state machine subscribe to its topics
+    if (stateMachine)
     {
-    case MQTT_EVENT_CONNECTED:
-        Serial.println("MQTT Connected!");
-
-        // Let state machine subscribe to its topics
-        if (instance->stateMachine)
-        {
-            instance->stateMachine->subscribeToTopics();
-            instance->stateMachine->publishState();
-        }
-        break;
-
-    case MQTT_EVENT_DISCONNECTED:
-        Serial.println("MQTT Disconnected");
-        break;
-
-    case MQTT_EVENT_SUBSCRIBED:
-        Serial.print("Subscribed to topic:");
-        Serial.println(event->topic);
-        break;
-
-    case MQTT_EVENT_UNSUBSCRIBED:
-        Serial.print("Unsubscribed from topic:");
-        Serial.println(event->topic);
-        break;
-
-    case MQTT_EVENT_PUBLISHED:
-        Serial.print("Published message, msg_id=");
-        Serial.println(event->msg_id);
-        break;
-
-    case MQTT_EVENT_DATA:
-    {
-        // Convert topic and payload to strings
-        String topic = String(event->topic).substring(0, event->topic_len);
-        String message;
-        message.reserve(event->data_len);
-        for (int i = 0; i < event->data_len; i++)
-        {
-            message += (char)event->data[i];
-        }
-
-        // Parse JSON message
-        JsonDocument doc;
-        DeserializationError error = deserializeJson(doc, message);
-
-        if (error)
-        {
-            Serial.print("JSON parse error: ");
-            Serial.println(error.c_str());
-            return;
-        }
-
-        // Extract and store command UUID
-        if (doc["Uuid"].is<String>())
-        {
-            instance->commandUuid = doc["Uuid"].as<String>();
-        }
-
-        // Route message to PackML state machine
-        if (instance->stateMachine)
-        {
-            instance->stateMachine->handleMessage(topic, doc);
-        }
-        break;
-    }
-
-    case MQTT_EVENT_ERROR:
-        Serial.println("MQTT Error occurred");
-        if (event->error_handle->error_type == MQTT_ERROR_TYPE_TCP_TRANSPORT)
-        {
-            Serial.println("Transport error");
-        }
-        break;
-
-    default:
-        break;
+        stateMachine->subscribeToTopics();
+        stateMachine->publishState();
     }
 }
 
-esp_mqtt_client_handle_t ESP32Module::getMqttClient()
+void ESP32Module::onMqttDisconnect(AsyncMqttClientDisconnectReason reason)
 {
-    return client;
+    Serial.println("MQTT Disconnected");
+}
+
+void ESP32Module::onMqttMessage(char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total)
+{
+    // Debug: Print received message info
+    Serial.print("📨 MQTT Message received on topic: ");
+    Serial.println(topic);
+    Serial.print("   Payload length: ");
+    Serial.println(len);
+
+    // Convert topic and payload to strings
+    String topicStr = String(topic);
+    String message;
+    message.reserve(len);
+    for (size_t i = 0; i < len; i++)
+    {
+        message += (char)payload[i];
+    }
+
+    Serial.print("   Payload: ");
+    Serial.println(message);
+
+    // Parse JSON message
+    JsonDocument doc;
+    DeserializationError error = deserializeJson(doc, message);
+
+    if (error)
+    {
+        Serial.print("❌ JSON parse error: ");
+        Serial.println(error.c_str());
+        return;
+    }
+
+    // Extract and store command UUID
+    if (doc["Uuid"].is<String>())
+    {
+        commandUuid = doc["Uuid"].as<String>();
+        Serial.print("   UUID: ");
+        Serial.println(commandUuid);
+    }
+
+    // Route message to PackML state machine
+    if (stateMachine)
+    {
+        stateMachine->handleMessage(topicStr, doc);
+    }
+    else
+    {
+        Serial.println("⚠️  No state machine to handle message");
+    }
+}
+
+AsyncMqttClient &ESP32Module::getMqttClient()
+{
+    return mqttClient;
 }
 
 String ESP32Module::getCommandUuid()
