@@ -41,6 +41,16 @@ struct CommandHandler
     CommandCallback callback;
 };
 
+// Task data structure for async execution
+struct TaskData {
+    PackMLStateMachine* sm;
+    String topic;
+    String uuid;
+    void (*voidFunc)();
+    bool (*boolFunc)();
+    bool isBoolFunc;
+};
+
 class PackMLStateMachine
 {
 private:
@@ -55,6 +65,9 @@ private:
     bool isProcessing;
     String currentProcessingUuid;
     String currentUuid;
+    
+    // Task handle for async execution
+    TaskHandle_t processTaskHandle;
 
     // Command handlers
     std::vector<CommandHandler> commandHandlers;
@@ -70,6 +83,7 @@ private:
     // Helper methods
     void publishCommandStatus(const String &topic, const String &uuid, const char *stateValue);
     String stateToString(PackMLState state);
+    static void processTask(void* parameter);
 
     // State transition methods
     void transitionTo(PackMLState newState, const String &uuidParam = "");

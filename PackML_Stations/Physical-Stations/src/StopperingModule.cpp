@@ -39,7 +39,8 @@ void StopperingModule::setup(ESP32Module *moduleInstance)
         {
             sm->executeCommand(msg, TOPIC_PUB_STOPPERING_DATA, runStopperingCycle);
         });
-
+    stateMachine->subscribeToTopics();
+    stateMachine->publishState();
     Serial.println("Stoppering Module ready!\n");
 }
 
@@ -138,7 +139,7 @@ void StopperingModule::initDCMotor()
     stopDCMotor();
 }
 
-void StopperingModule::runStopperingCycle()
+bool StopperingModule::runStopperingCycle()
 {
     Serial.println("Starting stoppering cycle");
 
@@ -146,7 +147,7 @@ void StopperingModule::runStopperingCycle()
     if (!moveDCDown())
     {
         Serial.println("Error: Failed to move DC motor down");
-        return;
+        return false;
     }
     delay(100);
 
@@ -162,7 +163,8 @@ void StopperingModule::runStopperingCycle()
     moveDCUp();
     delay(500);
 
-    Serial.println("Stoppering cycle completed");
+    Serial.println("Stoppering cycle completed successfully");
+    return true;
 }
 
 void StopperingModule::runLinearActuator()
@@ -172,7 +174,7 @@ void StopperingModule::runLinearActuator()
     // Move actuator down to push plunger
     digitalWrite(LA_IN1, LOW);
     digitalWrite(LA_IN2, HIGH);
-    delay(LA_DOWN_TIME); // Extra time to let gravity help push the plunger
+    delay(LA_DOWN_TIME);
 
     // Move actuator back up to home position
     digitalWrite(LA_IN1, HIGH);
@@ -253,8 +255,7 @@ bool StopperingModule::waitForButton(int buttonPin, unsigned long timeoutMs)
         {
             return false; // Timeout
         }
-        delay(5); //Sample the endswitch at 200Hz
-        esp_task_wdt_reset();
+        delay(5); // Sample the endswitch at 200Hz
     }
 
     return true; // Button pressed

@@ -1,6 +1,7 @@
 #include "ESP32Module.h"
 #include "PackMLStateMachine.h"
 #include <FS.h>
+#include <esp_task_wdt.h>
 
 // Constructor
 ESP32Module::ESP32Module()
@@ -48,6 +49,7 @@ void ESP32Module::initWiFi()
         delay(500);
         Serial.print(".");
         attempts++;
+        esp_task_wdt_reset();
     }
 
     if (WiFi.status() == WL_CONNECTED)
@@ -83,6 +85,21 @@ void ESP32Module::initMQTT()
     // Connect to MQTT broker
     mqttClient.connect();
 
+// For ESP32-S3: Wait for async_tcp task to be created, then add it to watchdog
+#if CONFIG_IDF_TARGET_ESP32S3
+    delay(500); // Give time for async_tcp task to be created
+    TaskHandle_t asyncTcpTask = xTaskGetHandle("async_tcp");
+    if (asyncTcpTask != NULL)
+    {
+        esp_task_wdt_add(asyncTcpTask);
+        Serial.println("Added async_tcp task to watchdog (ESP32-S3)");
+    }
+    else
+    {
+        Serial.println("Warning: async_tcp task not found");
+    }
+#endif
+
     Serial.println("MQTT Client configured and connecting...");
 }
 
@@ -107,6 +124,7 @@ void ESP32Module::initializeTime()
         }
         Serial.print(".");
         delay(1000);
+        esp_task_wdt_reset();
     }
 
     Serial.println("\n⚠️ Could not synchronize time from NTP server");
@@ -127,6 +145,7 @@ void ESP32Module::publishDescriptionFromFile()
 
     // Wait briefly to ensure MQTT connection is stable
     delay(500);
+    esp_task_wdt_reset();
 
     String fullTopic = baseTopic + "/Registration/Request";
 
@@ -186,6 +205,7 @@ String ESP32Module::readConfig(const char *path)
         content += (char)file.read();
     }
     file.close();
+    esp_task_wdt_reset();
     Serial.print("📖 Read config bytes: ");
     Serial.println(content.length());
     return content;

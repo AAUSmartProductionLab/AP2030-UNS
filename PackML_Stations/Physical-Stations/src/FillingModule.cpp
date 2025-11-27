@@ -174,7 +174,6 @@ bool FillingModule::waitForButton(int buttonPin, unsigned long timeoutMs)
             return false; // Timeout
         }
         delay(5); // Sample the endswitch at 200Hz
-        esp_task_wdt_reset();
     }
 
     Serial.print("  Button pressed after ");

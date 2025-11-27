@@ -87,8 +87,9 @@ private:
 
     /**
      * @brief Execute complete stoppering cycle
+     * @return true if successful, false if motion error occurred
      */
-    static void runStopperingCycle();
+    static bool runStopperingCycle();
 
     /**
      * @brief Move linear actuator down and up

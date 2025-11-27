@@ -2,7 +2,8 @@
 
 PackMLStateMachine::PackMLStateMachine(const String &baseTopic, const String &moduleName, AsyncMqttClient *mqttClient)
     : state(PackMLState::RESETTING), baseTopic(baseTopic), moduleName(moduleName), client(mqttClient),
-      isProcessing(false), currentProcessingUuid(""), currentUuid(""), subscriptionsInitialized(false)
+      isProcessing(false), currentProcessingUuid(""), currentUuid(""), subscriptionsInitialized(false),
+      processTaskHandle(nullptr)
 {
     occupyCmdTopic = baseTopic + "/" + moduleName + "/CMD/Occupy";
     occupyDataTopic = baseTopic + "/" + moduleName + "/DATA/Occupy";
@@ -154,26 +155,31 @@ void PackMLStateMachine::executeCommand(const JsonDocument &message, const Strin
         return;
     }
 
-    // All conditions met - execute the command
+    // All conditions met - execute the command asynchronously
     isProcessing = true;
     currentProcessingUuid = commandUuid;
 
     // Publish RUNNING status
     publishCommandStatus(topic, commandUuid, "RUNNING");
 
-    // Execute the process function
-    if (processFunction)
-    {
-        processFunction();
-    }
+    // Create task data
+    TaskData* taskData = new TaskData();
+    taskData->sm = this;
+    taskData->topic = topic;
+    taskData->uuid = commandUuid;
+    taskData->voidFunc = processFunction;
+    taskData->boolFunc = nullptr;
+    taskData->isBoolFunc = false;
 
-    // Mark completion
-    publishCommandStatus(topic, commandUuid, "SUCCESS");
-    isProcessing = false;
-    currentProcessingUuid = "";
-
-    // // Transition to completing state
-    // transitionTo(PackMLState::COMPLETING, commandUuid);
+    // Execute the process function in a separate task
+    xTaskCreate(
+        processTask,
+        "ProcessTask",
+        8192,  // Stack size
+        (void*)taskData,
+        1,     // Priority
+        &processTaskHandle
+    );
 }
 
 void PackMLStateMachine::executeCommand(const JsonDocument &message, const String &dataTopic,
@@ -238,35 +244,31 @@ void PackMLStateMachine::executeCommand(const JsonDocument &message, const Strin
         return;
     }
 
-    // All conditions met - execute the command
+    // All conditions met - execute the command asynchronously
     isProcessing = true;
     currentProcessingUuid = commandUuid;
 
     // Publish RUNNING status
     publishCommandStatus(topic, commandUuid, "RUNNING");
 
-    // Execute the process function and check result
-    bool success = true;
-    if (processFunction)
-    {
-        success = processFunction();
-    }
+    // Create task data
+    TaskData* taskData = new TaskData();
+    taskData->sm = this;
+    taskData->topic = topic;
+    taskData->uuid = commandUuid;
+    taskData->voidFunc = nullptr;
+    taskData->boolFunc = processFunction;
+    taskData->isBoolFunc = true;
 
-    // Mark completion with appropriate status
-    if (success)
-    {
-        publishCommandStatus(topic, commandUuid, "SUCCESS");
-    }
-    else
-    {
-        publishCommandStatus(topic, commandUuid, "FAILURE");
-    }
-
-    isProcessing = false;
-    currentProcessingUuid = "";
-
-    // // Transition to completing state
-    // transitionTo(PackMLState::COMPLETING, commandUuid);
+    // Execute the process function in a separate task
+    xTaskCreate(
+        processTask,
+        "ProcessTask",
+        8192,  // Stack size
+        (void*)taskData,
+        1,     // Priority
+        &processTaskHandle
+    );
 }
 
 void PackMLStateMachine::occupyCommand(const String &uuid)
@@ -646,4 +648,42 @@ String PackMLStateMachine::stateToString(PackMLState state)
     default:
         return "UNKNOWN";
     }
+}
+
+void PackMLStateMachine::processTask(void* parameter)
+{
+    TaskData* data = (TaskData*)parameter;
+    bool success = true;
+    
+    // Execute the function in this separate task
+    if (data->isBoolFunc && data->boolFunc)
+    {
+        success = data->boolFunc();
+    }
+    else if (!data->isBoolFunc && data->voidFunc)
+    {
+        data->voidFunc();
+        success = true;
+    }
+    
+    // Publish completion status
+    if (success)
+    {
+        data->sm->publishCommandStatus(data->topic, data->uuid, "SUCCESS");
+    }
+    else
+    {
+        data->sm->publishCommandStatus(data->topic, data->uuid, "FAILURE");
+    }
+    
+    // Mark processing as complete
+    data->sm->isProcessing = false;
+    data->sm->currentProcessingUuid = "";
+    data->sm->processTaskHandle = nullptr;
+    
+    // Clean up
+    delete data;
+    
+    // Delete this task
+    vTaskDelete(NULL);
 }
