@@ -43,6 +43,10 @@
         {
           "type": "ModelReference",
           "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/syntegonStopperingSystem/Parameters"}]
+        },
+        {
+          "type": "ModelReference",
+          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/syntegonStopperingSystem/HierarchicalStructures"}]
         }
       ],
       "derivedFrom": {
@@ -690,6 +694,130 @@
         "revision": "0"
       },
       "submodelElements": [],
+      "modelType": "Submodel"
+    },
+    {
+      "idShort": "HierarchicalStructures",
+      "id": "https://smartproductionlab.aau.dk/submodels/instances/syntegonStopperingSystem/HierarchicalStructures",
+      "kind": "Instance",
+      "semanticId": {
+        "type": "ExternalReference",
+        "keys": [{"type": "GlobalReference", "value": "https://admin-shell.io/idta/HierarchicalStructures/1/0/Submodel"}]
+      },
+      "administration": {
+        "version": "1",
+        "revision": "0"
+      },
+      "submodelElements": [
+        {
+          "idShort": "Archetype",
+          "semanticId": {
+            "type": "ExternalReference",
+            "keys": [{
+              "type": "GlobalReference",
+              "value": "https://admin-shell.io/idta/HierarchicalStructures/1/0/Archetype"
+            }]
+          },
+          "modelType": "Property",
+          "valueType": "xs:string",
+          "value": "OneUp"
+        },
+        {
+          "idShort": "EntryNode",
+          "semanticId": {
+            "type": "ExternalReference",
+            "keys": [{
+              "type": "GlobalReference",
+              "value": "https://admin-shell.io/idta/HierarchicalStructures/1/0/EntryNode"
+            }]
+          },
+          "modelType": "Entity",
+          "entityType": "SelfManagedEntity",
+          "globalAssetId": "https://smartproductionlab.aau.dk/assets/syntegonStopperingSystem",
+          "statements": [
+            {
+              "idShort": "PlanarTable",
+              "semanticId": {
+                "type": "ExternalReference",
+                "keys": [{
+                  "type": "GlobalReference",
+                  "value": "https://admin-shell.io/idta/HierarchicalStructures/1/0/Node"
+                }]
+              },
+              "modelType": "Entity",
+              "entityType": "SelfManagedEntity",
+              "globalAssetId": "https://smartproductionlab.aau.dk/assets/planarTable",
+              "statements": [
+                {
+                  "idShort": "SameAs",
+                  "semanticId": {
+                    "type": "ExternalReference",
+                    "keys": [{
+                      "type": "GlobalReference",
+                      "value": "https://admin-shell.io/idta/HierarchicalStructures/1/0/SameAs"
+                    }]
+                  },
+                  "modelType": "ReferenceElement",
+                  "value": {
+                    "type": "ModelReference",
+                    "keys": [
+                      {
+                        "type": "Submodel",
+                        "value": "https://smartproductionlab.aau.dk/submodels/instances/planarTable/HierarchicalStructures"
+                      },
+                      {
+                        "type": "Entity",
+                        "value": "EntryNode"
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "idShort": "IsPartOf",
+              "semanticId": {
+                "type": "ExternalReference",
+                "keys": [{
+                  "type": "GlobalReference",
+                  "value": "https://admin-shell.io/idta/HierarchicalStructures/1/0/Relationship"
+                }]
+              },
+              "modelType": "RelationshipElement",
+              "first": {
+                "type": "ModelReference",
+                "keys": [
+                  {
+                    "type": "Submodel",
+                    "value": "https://smartproductionlab.aau.dk/submodels/instances/syntegonStopperingSystem/HierarchicalStructures"
+                  },
+                  {
+                    "type": "Entity",
+                    "value": "EntryNode"
+                  }
+                ]
+              },
+              "second": {
+                "type": "ModelReference",
+                "keys": [
+                  {
+                    "type": "Submodel",
+                    "value": "https://smartproductionlab.aau.dk/submodels/instances/syntegonStopperingSystem/HierarchicalStructures"
+                  },
+                  {
+                    "type": "Entity",
+                    "value": "EntryNode"
+                  },
+                  {
+                    "type": "Entity",
+                    "value": "PlanarTable"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ],
       "modelType": "Submodel"
     }
   ]
