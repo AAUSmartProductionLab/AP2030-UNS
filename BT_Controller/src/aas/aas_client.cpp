@@ -581,3 +581,233 @@ std::string AASClient::getStationIdByAssetName(const std::string &asset_name)
         throw; // Re-throw to allow caller to handle
     }
 }
+
+std::optional<nlohmann::json> AASClient::fetchPropertyValue(
+    const std::string &asset_id,
+    const std::string &submodel_id_short,
+    const std::string &property_id_short)
+{
+    // Simple version: delegate to path-based version with single-element vector
+    return fetchPropertyValue(asset_id, submodel_id_short, std::vector<std::string>{property_id_short});
+}
+
+std::optional<nlohmann::json> AASClient::fetchPropertyValue(
+    const std::string &asset_id,
+    const std::string &submodel_id_short,
+    const std::vector<std::string> &property_path)
+{
+    try
+    {
+        std::cout << "Fetching property value from AAS with path - Asset: " << asset_id
+                  << ", Submodel: " << submodel_id_short
+                  << ", Path: [";
+        for (size_t i = 0; i < property_path.size(); ++i)
+        {
+            std::cout << property_path[i];
+            if (i < property_path.size() - 1)
+                std::cout << " -> ";
+        }
+        std::cout << "]" << std::endl;
+
+        // Fetch the submodel data using common helper
+        auto submodel_data = fetchSubmodelData(asset_id, submodel_id_short);
+        if (!submodel_data.has_value())
+        {
+            return std::nullopt;
+        }
+
+        // Navigate through the path to find the target property
+        if (!submodel_data->contains("submodelElements") || !(*submodel_data)["submodelElements"].is_array())
+        {
+            std::cerr << "Submodel missing submodelElements array" << std::endl;
+            return std::nullopt;
+        }
+
+        // Use the extracted recursive search method
+        auto result = searchPropertyInElements((*submodel_data)["submodelElements"], property_path, 0);
+        if (result.has_value())
+        {
+            return result;
+        }
+
+        std::cerr << "Could not find property path" << std::endl;
+        return std::nullopt;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Exception fetching property value with path from AAS: " << e.what() << std::endl;
+        return std::nullopt;
+    }
+}
+
+std::optional<nlohmann::json> AASClient::fetchSubmodelData(
+    const std::string &asset_id,
+    const std::string &submodel_id_short)
+{
+    try
+    {
+        // Step 1: Get the shell descriptor from registry
+        std::string registry_url = "/shell-descriptors";
+        nlohmann::json registry_response = makeGetRequest(registry_url, true);
+
+        if (!registry_response.contains("result") || !registry_response["result"].is_array())
+        {
+            std::cerr << "Invalid registry response structure" << std::endl;
+            return std::nullopt;
+        }
+
+        // Find the AAS with matching idShort
+        std::string expected_id_short = asset_id + "AAS";
+        std::string shell_endpoint;
+        for (const auto &shell : registry_response["result"])
+        {
+            if (shell.contains("idShort") && shell["idShort"] == expected_id_short)
+            {
+                if (shell.contains("endpoints") && shell["endpoints"].is_array() && !shell["endpoints"].empty())
+                {
+                    shell_endpoint = shell["endpoints"][0]["protocolInformation"]["href"];
+                    break;
+                }
+            }
+        }
+
+        if (shell_endpoint.empty())
+        {
+            std::cerr << "Could not find shell endpoint for asset: " << asset_id << std::endl;
+            return std::nullopt;
+        }
+
+        // Extract the relative path from the full URL
+        size_t pos = shell_endpoint.find("/shells/");
+        if (pos == std::string::npos)
+        {
+            std::cerr << "Invalid shell endpoint format: " << shell_endpoint << std::endl;
+            return std::nullopt;
+        }
+        std::string shell_path = shell_endpoint.substr(pos);
+
+        // Step 2: Get the shell to find submodel references
+        nlohmann::json shell_data = makeGetRequest(shell_path);
+
+        if (!shell_data.contains("submodels") || !shell_data["submodels"].is_array())
+        {
+            std::cerr << "Shell missing submodels array" << std::endl;
+            return std::nullopt;
+        }
+
+        // Find the submodel reference matching the submodel_id_short
+        std::string submodel_id;
+        for (const auto &submodel_ref : shell_data["submodels"])
+        {
+            if (submodel_ref.contains("keys") && submodel_ref["keys"].is_array())
+            {
+                std::string ref_value = submodel_ref["keys"][0]["value"];
+                if (ref_value.find(submodel_id_short) != std::string::npos)
+                {
+                    submodel_id = ref_value;
+                    break;
+                }
+            }
+        }
+
+        if (submodel_id.empty())
+        {
+            std::cerr << "Could not find submodel with idShort: " << submodel_id_short << std::endl;
+            return std::nullopt;
+        }
+
+        // Step 3: Fetch the submodel using base64url-encoded ID
+        std::string submodel_id_b64 = base64url_encode(submodel_id);
+        std::string submodel_url = "/submodels/" + submodel_id_b64;
+
+        return makeGetRequest(submodel_url);
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Exception fetching submodel data: " << e.what() << std::endl;
+        return std::nullopt;
+    }
+}
+
+std::optional<nlohmann::json> AASClient::searchPropertyInElements(
+    const nlohmann::json &elements,
+    const std::vector<std::string> &property_path,
+    size_t path_idx)
+{
+    if (path_idx >= property_path.size())
+    {
+        return std::nullopt;
+    }
+
+    const std::string &target_id_short = property_path[path_idx];
+    bool is_last_element = (path_idx == property_path.size() - 1);
+
+    // Search at current level
+    for (const auto &elem : elements)
+    {
+        if (elem.contains("idShort") && elem["idShort"] == target_id_short)
+        {
+            // Found matching element
+            if (is_last_element)
+            {
+                // This is the target property - return its value
+                if (elem.contains("value") && !elem["value"].is_array())
+                {
+                    std::cout << "Found property at path end, value: " << elem["value"].dump() << std::endl;
+                    return elem["value"];
+                }
+                else if (elem.contains("valueId"))
+                {
+                    std::cout << "Found property at path end, valueId: " << elem["valueId"].dump() << std::endl;
+                    return elem["valueId"];
+                }
+                else if (elem.contains("value") && elem["value"].is_array())
+                {
+                    // Return the whole collection/element if it's an array
+                    std::cout << "Found collection at path end" << std::endl;
+                    return elem["value"];
+                }
+                else
+                {
+                    std::cerr << "Found element but it has no value or valueId" << std::endl;
+                    return std::nullopt;
+                }
+            }
+            else
+            {
+                // Not the last element - descend into nested structure
+                if (elem.contains("value") && elem["value"].is_array())
+                {
+                    auto result = searchPropertyInElements(elem["value"], property_path, path_idx + 1);
+                    if (result.has_value())
+                        return result;
+                }
+                else if (elem.contains("statements") && elem["statements"].is_array())
+                {
+                    auto result = searchPropertyInElements(elem["statements"], property_path, path_idx + 1);
+                    if (result.has_value())
+                        return result;
+                }
+            }
+        }
+    }
+
+    // Not found at this level - search recursively in nested structures
+    for (const auto &elem : elements)
+    {
+        if (elem.contains("value") && elem["value"].is_array())
+        {
+            auto result = searchPropertyInElements(elem["value"], property_path, path_idx);
+            if (result.has_value())
+                return result;
+        }
+        else if (elem.contains("statements") && elem["statements"].is_array())
+        {
+            auto result = searchPropertyInElements(elem["statements"], property_path, path_idx);
+            if (result.has_value())
+                return result;
+        }
+    }
+
+    return std::nullopt;
+}

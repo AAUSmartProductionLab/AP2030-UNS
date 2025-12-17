@@ -27,6 +27,21 @@ public:
     std::string getInstanceNameByAssetName(const std::string &asset_name);
     std::string getStationIdByAssetName(const std::string &asset_name);
 
+    // Fetch a property value directly from the AAS
+    // Simple version: searches recursively for first match
+    std::optional<nlohmann::json> fetchPropertyValue(
+        const std::string &asset_id,
+        const std::string &submodel_id_short,
+        const std::string &property_id_short);
+
+    // Path-based version: navigates through specific hierarchy path
+    // Example path: {"EntryNode", "Loading", "Location", "x"}
+    // This allows targeting specific nested properties when multiple properties share the same idShort
+    std::optional<nlohmann::json> fetchPropertyValue(
+        const std::string &asset_id,
+        const std::string &submodel_id_short,
+        const std::vector<std::string> &property_path);
+
 private:
     std::string aas_server_url_;
     std::string registry_url_;
@@ -46,4 +61,15 @@ private:
 
     // Helper to encode string to base64url format (RFC 4648)
     static std::string base64url_encode(const std::string &input);
+
+    // Helper to fetch submodel data from AAS (common logic for fetchPropertyValue overloads)
+    std::optional<nlohmann::json> fetchSubmodelData(
+        const std::string &asset_id,
+        const std::string &submodel_id_short);
+
+    // Recursive helper to search for property path in submodel elements
+    std::optional<nlohmann::json> searchPropertyInElements(
+        const nlohmann::json &elements,
+        const std::vector<std::string> &property_path,
+        size_t path_idx);
 };
