@@ -155,6 +155,37 @@
               "globalAssetId": "https://smartproductionlab.aau.dk/assets/planarTable",
               "statements": [
                 {
+                  "idShort": "Location",
+                  "semanticId": {
+                    "type": "ExternalReference",
+                    "keys": [{
+                      "type": "GlobalReference",
+                      "value": "https://smartproductionlab.aau.dk/semantics/Location"
+                    }]
+                  },
+                  "modelType": "SubmodelElementCollection",
+                  "value": [
+                    {
+                      "idShort": "x",
+                      "modelType": "Property",
+                      "valueType": "xs:float",
+                      "value": "0.0"
+                    },
+                    {
+                      "idShort": "y",
+                      "modelType": "Property",
+                      "valueType": "xs:float",
+                      "value": "0.0"
+                    },
+                    {
+                      "idShort": "yaw",
+                      "modelType": "Property",
+                      "valueType": "xs:float",
+                      "value": "0.0"
+                    }
+                  ]
+                },
+                {
                   "idShort": "SameAs",
                   "semanticId": {
                     "type": "ExternalReference",
@@ -193,6 +224,37 @@
               "entityType": "SelfManagedEntity",
               "globalAssetId": "https://smartproductionlab.aau.dk/assets/imaLoadingSystem",
               "statements": [
+                {
+                  "idShort": "Location",
+                  "semanticId": {
+                    "type": "ExternalReference",
+                    "keys": [{
+                      "type": "GlobalReference",
+                      "value": "https://smartproductionlab.aau.dk/semantics/Location"
+                    }]
+                  },
+                  "modelType": "SubmodelElementCollection",
+                  "value": [
+                    {
+                      "idShort": "x",
+                      "modelType": "Property",
+                      "valueType": "xs:float",
+                      "value": "120.0"
+                    },
+                    {
+                      "idShort": "y",
+                      "modelType": "Property",
+                      "valueType": "xs:float",
+                      "value": "120.0"
+                    },
+                    {
+                      "idShort": "yaw",
+                      "modelType": "Property",
+                      "valueType": "xs:float",
+                      "value": "180.0"
+                    }
+                  ]
+                },
                 {
                   "idShort": "SameAs",
                   "semanticId": {
@@ -233,6 +295,37 @@
               "globalAssetId": "https://smartproductionlab.aau.dk/assets/omronCamera",
               "statements": [
                 {
+                  "idShort": "Location",
+                  "semanticId": {
+                    "type": "ExternalReference",
+                    "keys": [{
+                      "type": "GlobalReference",
+                      "value": "https://smartproductionlab.aau.dk/semantics/Location"
+                    }]
+                  },
+                  "modelType": "SubmodelElementCollection",
+                  "value": [
+                    {
+                      "idShort": "x",
+                      "modelType": "Property",
+                      "valueType": "xs:float",
+                      "value": "600.0"
+                    },
+                    {
+                      "idShort": "y",
+                      "modelType": "Property",
+                      "valueType": "xs:float",
+                      "value": "600.0"
+                    },
+                    {
+                      "idShort": "yaw",
+                      "modelType": "Property",
+                      "valueType": "xs:float",
+                      "value": "90.0"
+                    }
+                  ]
+                },
+                {
                   "idShort": "SameAs",
                   "semanticId": {
                     "type": "ExternalReference",
@@ -271,6 +364,37 @@
               "entityType": "SelfManagedEntity",
               "globalAssetId": "https://smartproductionlab.aau.dk/assets/imaFillingSystem",
               "statements": [
+                {
+                  "idShort": "Location",
+                  "semanticId": {
+                    "type": "ExternalReference",
+                    "keys": [{
+                      "type": "GlobalReference",
+                      "value": "https://smartproductionlab.aau.dk/semantics/Location"
+                    }]
+                  },
+                  "modelType": "SubmodelElementCollection",
+                  "value": [
+                    {
+                      "idShort": "x",
+                      "modelType": "Property",
+                      "valueType": "xs:float",
+                      "value": "360.0"
+                    },
+                    {
+                      "idShort": "y",
+                      "modelType": "Property",
+                      "valueType": "xs:float",
+                      "value": "600.0"
+                    },
+                    {
+                      "idShort": "yaw",
+                      "modelType": "Property",
+                      "valueType": "xs:float",
+                      "value": "90.0"
+                    }
+                  ]
+                },
                 {
                   "idShort": "SameAs",
                   "semanticId": {
@@ -311,6 +435,37 @@
               "globalAssetId": "https://smartproductionlab.aau.dk/assets/syntegonStopperingSystem",
               "statements": [
                 {
+                  "idShort": "Location",
+                  "semanticId": {
+                    "type": "ExternalReference",
+                    "keys": [{
+                      "type": "GlobalReference",
+                      "value": "https://smartproductionlab.aau.dk/semantics/Location"
+                    }]
+                  },
+                  "modelType": "SubmodelElementCollection",
+                  "value": [
+                    {
+                      "idShort": "x",
+                      "modelType": "Property",
+                      "valueType": "xs:float",
+                      "value": "840.0"
+                    },
+                    {
+                      "idShort": "y",
+                      "modelType": "Property",
+                      "valueType": "xs:float",
+                      "value": "600.0"
+                    },
+                    {
+                      "idShort": "yaw",
+                      "modelType": "Property",
+                      "valueType": "xs:float",
+                      "value": "90.0"
+                    }
+                  ]
+                },
+                {
                   "idShort": "SameAs",
                   "semanticId": {
                     "type": "ExternalReference",
@@ -349,6 +504,37 @@
               "entityType": "SelfManagedEntity",
               "globalAssetId": "https://smartproductionlab.aau.dk/assets/optimaUnloadingSystem",
               "statements": [
+                {
+                  "idShort": "Location",
+                  "semanticId": {
+                    "type": "ExternalReference",
+                    "keys": [{
+                      "type": "GlobalReference",
+                      "value": "https://smartproductionlab.aau.dk/semantics/Location"
+                    }]
+                  },
+                  "modelType": "SubmodelElementCollection",
+                  "value": [
+                    {
+                      "idShort": "x",
+                      "modelType": "Property",
+                      "valueType": "xs:float",
+                      "value": "840.0"
+                    },
+                    {
+                      "idShort": "y",
+                      "modelType": "Property",
+                      "valueType": "xs:float",
+                      "value": "120.0"
+                    },
+                    {
+                      "idShort": "yaw",
+                      "modelType": "Property",
+                      "valueType": "xs:float",
+                      "value": "0.0"
+                    }
+                  ]
+                },
                 {
                   "idShort": "SameAs",
                   "semanticId": {
