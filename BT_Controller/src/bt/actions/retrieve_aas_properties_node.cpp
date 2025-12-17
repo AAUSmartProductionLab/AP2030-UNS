@@ -47,7 +47,7 @@ BT::NodeStatus RetrieveAASPropertyNode::tick()
 
         // Parse property input to detect if it's a path (contains |)
         std::optional<nlohmann::json> property_value_opt;
-        
+
         if (property_input.find('|') != std::string::npos)
         {
             // Parse as path - split by pipe delimiter
@@ -63,7 +63,8 @@ BT::NodeStatus RetrieveAASPropertyNode::tick()
             for (size_t i = 0; i < property_path.size(); ++i)
             {
                 std::cout << property_path[i];
-                if (i < property_path.size() - 1) std::cout << " | ";
+                if (i < property_path.size() - 1)
+                    std::cout << " | ";
             }
             std::cout << "] from submodel '" << submodel_id_short
                       << "' of asset '" << asset_name << "' (ID: " << asset_id << ")" << std::endl;
@@ -105,7 +106,7 @@ BT::NodeStatus RetrieveAASPropertyNode::tick()
             std::string value_type = property_value["valueType"].get<std::string>();
             nlohmann::json value = property_value["value"];
 
-            if (value_type == "xs:int" || value_type == "xs:integer" || 
+            if (value_type == "xs:int" || value_type == "xs:integer" ||
                 value_type == "xs:long" || value_type == "xs:short")
             {
                 out_value = BT::Any(std::stoi(value.get<std::string>()));
