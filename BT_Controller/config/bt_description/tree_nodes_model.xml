@@ -40,6 +40,12 @@
             <input_port name="Uuid" type="std::string" default="{ID}">UUID for the command to execute</input_port>
             <input_port name="Asset" type="std::string" default="{Asset}">The asset used for refilling</input_port>
         </Action>
+        <Action ID="getAASProperty">
+            <inout_port name="output_key" type="std::string">Name of the blackboard entry where the value should be written</inout_port>
+            <input_port name="Property" type="std::string">The property idShort or path (use | as delimiter, e.g., 'Filling|Location|x')</input_port>
+            <input_port name="Submodel" type="std::string">The submodel idShort containing the property</input_port>
+            <input_port name="Asset" type="std::string">The asset name to retrieve the property from</input_port>
+        </Action>
         <Action ID="moveToPosition">
             <input_port name="Uuid" type="std::string" default="{ProductID}">UUID for the command to execute</input_port>
             <input_port name="TargetPosition" type="std::string" default="{Station}">The name of the station to move to</input_port>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+  <BehaviorTree ID="Load">
+    <SequenceWithMemory>
+      <PopElement ProductID="{ProductID}"
+                  if_empty="SUCCESS"
+                  Queue="{ProductIDs}"
+                  _onSuccess="scrap:= false"
+                  _onFailure="scrap:= true"/>
+      <Occupy Uuid="{ProductID}"
+              Asset="{LoadingAsset}"
+              _skipIf="scrap == true">
+        <ReactiveSequence>
+          <ReactiveFallback>
+            <Data_Condition comparison_type="equal"
+                            Field="State"
+                            expected_value="operational"
+                            Property="PackMLState"
+                            Asset="{LoadingAsset}"/>
+            <Sleep msec="10000"/>
+          </ReactiveFallback>
+          <Sequence>
+            <moveToPosition Uuid="{ProductID}"
+                            TargetPosition="{Station}"
+                            Asset="{Xbot}"/>
+            <Command_Execution Parameters="&apos;{}&apos;"
+                               Uuid="{ProductID}"
+                               Operation="load"
+                               Asset="{LoadingAsset}"/>
+          </Sequence>
+        </ReactiveSequence>
+      </Occupy>
+    </SequenceWithMemory>
+  </BehaviorTree>
+</root>

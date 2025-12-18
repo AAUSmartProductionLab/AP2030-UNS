@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root BTCPP_format="4" project_name="Project">
+    <include path="camera.xml"/>
+    <include path="filling.xml"/>
+    <include path="lineSOP.xml"/>
+    <include path="loading.xml"/>
+    <include path="product.xml"/>
+    <include path="scraping.xml"/>
+    <include path="stoppering.xml"/>
     <include path="tree.xml"/>
+    <include path="unloading.xml"/>
     <!-- Description of Node Models (used by Groot) -->
     <TreeNodesModel>
         <Control ID="BC_Fallback"/>
@@ -21,9 +29,6 @@
             <input_port name="Property" type="std::string">The property interface from the Asset</input_port>
             <input_port name="Asset" default="{Asset}" type="std::string">The Asset from which to receive a message</input_port>
         </Condition>
-        <SubTree ID="Filling" editable="true">
-            <input_port name="Asset" default="Filling"/>
-        </SubTree>
         <Decorator ID="GetProductFromQueue">
             <output_port name="ProductID" default="{ProductID}" type="std::string">The product ID of the current product</output_port>
             <input_port name="if_empty" default="SUCCESS" type="BT::NodeStatus">Status to return if queue is empty: SUCCESS, FAILURE, SKIPPED</input_port>
@@ -33,9 +38,6 @@
             <input_port name="if_empty" default="SUCCESS" type="BT::NodeStatus">Status to return if queue is empty: SUCCESS, FAILURE, SKIPPED</input_port>
             <input_port name="Queue" default="{ProductIDs}" type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;">The queue to monitor. Node runs child while this queue is not empty.</input_port>
         </Decorator>
-        <SubTree ID="Load" editable="true">
-            <input_port name="Asset" default="Load"/>
-        </SubTree>
         <Action ID="MoveShuttle">
             <input_port name="Topic" default="{Topic}" type="std::string">Topic to which we want to send the request</input_port>
             <input_port name="Uuid" default="{ProductID}" type="std::string">UUID for the command to execute</input_port>
@@ -53,27 +55,15 @@
         <Action ID="OmronArclRequest">
             <input_port name="command" type="BT::AnyTypeAllowed"/>
         </Action>
-        <SubTree ID="PlanarSOP" editable="true">
-            <input_port name="Asset" default="Operator"/>
-        </SubTree>
         <Action ID="PopElement">
             <output_port name="ProductID" default="{ProductID}" type="std::string">The product ID popped from the queue.</output_port>
             <input_port name="if_empty" default="SUCCESS" type="BT::NodeStatus">Status to return if the queue is empty (SUCCESS, FAILURE, SKIPPED).</input_port>
             <input_port name="Queue" default="{ProductIDs}" type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;">The shared queue of product IDs. An element will be popped from it.</input_port>
         </Action>
-        <SubTree ID="QualityControl" editable="true">
-            <input_port name="Asset" default="Camera"/>
-        </SubTree>
         <Action ID="Refill_Node">
             <input_port name="Uuid" default="{ID}" type="std::string">UUID for the command to execute</input_port>
             <input_port name="Asset" default="{Asset}" type="std::string">The asset used for refilling</input_port>
         </Action>
-        <SubTree ID="Scrap" editable="true">
-            <input_port name="Asset" default="Scrap"/>
-        </SubTree>
-        <SubTree ID="StationProcess" editable="true">
-            <input_port name="Station" default="Stoppering"/>
-        </SubTree>
         <Action ID="Station_Complete">
             <input_port name="Uuid" default="{ID}" type="std::string">UUID for the command to execute</input_port>
             <input_port name="Station" default="{Station}" type="std::string">The station to unregister from</input_port>
@@ -87,12 +77,6 @@
             <input_port name="Uuid" default="{ID}" type="std::string">UUID for the command to execute</input_port>
             <input_port name="Station" default="{Station}" type="std::string">The station to register with</input_port>
         </Action>
-        <SubTree ID="Stoppering" editable="true">
-            <input_port name="Asset" default="Stoppering"/>
-        </SubTree>
-        <SubTree ID="Unload" editable="true">
-            <input_port name="Asset" default="Unload"/>
-        </SubTree>
         <Decorator ID="UseStation">
             <input_port name="Uuid" default="{ID}" type="std::string">UUID Used for registration</input_port>
             <input_port name="Station" default="{Station}" type="std::string">The station to register with</input_port>
@@ -101,6 +85,12 @@
             <input_port name="Xbot" default="Xbot1"/>
             <output_port name="ProductID"/>
         </SubTree>
+        <Action ID="getAASProperty">
+            <inout_port name="output_key" type="std::string">Name of the blackboard entry where the value should be written</inout_port>
+            <input_port name="Property" type="std::string">The property idShort or path (use | as delimiter, e.g., 'Filling|Location|x')</input_port>
+            <input_port name="Submodel" type="std::string">The submodel idShort containing the property</input_port>
+            <input_port name="Asset" type="std::string">The asset name to retrieve the property from</input_port>
+        </Action>
         <Action ID="moveToPosition">
             <input_port name="Uuid" default="{ProductID}" type="std::string">UUID for the command to execute</input_port>
             <input_port name="TargetPosition" default="{Station}" type="std::string">The name of the station to move to</input_port>
