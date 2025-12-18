@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+  <BehaviorTree ID="Camera">
+    <Occupy Uuid="{ProductID}"
+            Asset="{CameraAsset}"
+            _skipIf="scrap == true">
+      <ReactiveSequence>
+        <ReactiveFallback>
+          <Data_Condition comparison_type="equal"
+                          Field="State"
+                          expected_value="operational"
+                          Property="PackMLState"
+                          Asset="{CameraAsset}"/>
+          <Sleep msec="10000"/>
+        </ReactiveFallback>
+        <Sequence>
+          <moveToPosition Uuid="{ProductID}"
+                          TargetPosition="{Station}"
+                          Asset="{Xbot}"/>
+          <Command_Execution Parameters="&apos;{}&apos;"
+                             Uuid="{ProductID}"
+                             Operation="capture"
+                             Asset="{CameraAsset}"/>
+        </Sequence>
+      </ReactiveSequence>
+    </Occupy>
+  </BehaviorTree>
+</root>

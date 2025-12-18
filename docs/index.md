@@ -20,6 +20,9 @@ All schemas are automatically synchronized from the `schemas/` directory. Click 
 - **[SyntegonStopperingSystemInstance.json](schemas/ResourceDescription/SyntegonStopperingSystemInstance.json)**
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/schemas/ResourceDescription/SyntegonStopperingSystemInstance.json)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/schemas/ResourceDescription/SyntegonStopperingSystemInstance.json)
+- **[aauFillingLine.json](schemas/ResourceDescription/aauFillingLine.json)**
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/schemas/ResourceDescription/aauFillingLine.json)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/schemas/ResourceDescription/aauFillingLine.json)
 - **[imaFillingSystem.json](schemas/ResourceDescription/imaFillingSystem.json)**
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/schemas/ResourceDescription/imaFillingSystem.json)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/schemas/ResourceDescription/imaFillingSystem.json)
@@ -144,6 +147,52 @@ All schemas are automatically synchronized from the `schemas/` directory. Click 
 The behavior tree XML files define the control logic for the production line controller.
 
 <!-- AUTO-GENERATED-BT-START -->
+- **[camera.xml](bt_description/camera.xml)**
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/bt_description/camera.xml)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/BT_Controller/config/bt_description/camera.xml)
+
+- **[filling.xml](bt_description/filling.xml)**
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/bt_description/filling.xml)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/BT_Controller/config/bt_description/filling.xml)
+
+- **[lineSOP.xml](bt_description/lineSOP.xml)**
+  - Tree ID: `PlanarSOP`
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/bt_description/lineSOP.xml)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/BT_Controller/config/bt_description/lineSOP.xml)
+
+- **[loading.xml](bt_description/loading.xml)**
+  - Tree ID: `Load`
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/bt_description/loading.xml)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/BT_Controller/config/bt_description/loading.xml)
+
+- **[product.xml](bt_description/product.xml)**
+  - Tree ID: `Xbot_Production`
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/bt_description/product.xml)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/BT_Controller/config/bt_description/product.xml)
+
+- **[scraping.xml](bt_description/scraping.xml)**
+  - Tree ID: `Scrap`
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/bt_description/scraping.xml)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/BT_Controller/config/bt_description/scraping.xml)
+
+- **[stoppering.xml](bt_description/stoppering.xml)**
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/bt_description/stoppering.xml)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/BT_Controller/config/bt_description/stoppering.xml)
+
+- **[tree.xml](bt_description/tree.xml)**
+  - Tree ID: `MainTree`
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/bt_description/tree.xml)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/BT_Controller/config/bt_description/tree.xml)
+
+- **[tree_nodes_model.xml](bt_description/tree_nodes_model.xml)**
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/bt_description/tree_nodes_model.xml)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/BT_Controller/config/bt_description/tree_nodes_model.xml)
+
+- **[unloading.xml](bt_description/unloading.xml)**
+  - Tree ID: `Unload`
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/bt_description/unloading.xml)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/BT_Controller/config/bt_description/unloading.xml)
+
 <!-- AUTO-GENERATED-BT-END -->
 
 ## Usage

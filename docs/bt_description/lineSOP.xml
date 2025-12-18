@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+  <BehaviorTree ID="PlanarSOP">
+    <Sequence>
+      <Command_Execution Parameters="&apos;{ &quot;SopId&quot;: 10 }&apos;"
+                         Uuid="{Uuid}"
+                         Operation="operation"
+                         Asset="{OperatorAsset}"/>
+      <Command_Execution Parameters="&apos;{ &quot;SopId&quot;: 11 }&apos;"
+                         Uuid="{Uuid}"
+                         Operation="operation"
+                         Asset="{OperatorAsset}"/>
+      <Command_Execution Parameters="&apos;{ &quot;SopId&quot;: 12 }&apos;"
+                         Uuid="{Uuid}"
+                         Operation="operation"
+                         Asset="{OperatorAsset}"/>
+      <Command_Execution Parameters="&apos;{ &quot;SopId&quot;: 13 }&apos;"
+                         Uuid="{Uuid}"
+                         Operation="operation"
+                         Asset="{OperatorAsset}"/>
+      <Command_Execution Parameters="&apos;{ &quot;SopId&quot;: 0 }&apos;"
+                         Uuid="{Uuid}"
+                         Operation="operation"
+                         Asset="{OperatorAsset}"/>
+    </Sequence>
+  </BehaviorTree>
+</root>
