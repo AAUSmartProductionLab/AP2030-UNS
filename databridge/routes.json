@@ -2,6 +2,16 @@
   {
     "datasource": "mqtt_consumer_1",
     "transformers": [
+      "variables_image_value_transformer"
+    ],
+    "datasinks": [
+      "Variables/Image.Value"
+    ],
+    "trigger": "event"
+  },
+  {
+    "datasource": "mqtt_consumer_2",
+    "transformers": [
       "variables_occupationstate_state_transformer",
       "variables_occupationstate_queue_transformer"
     ],
@@ -20,32 +30,12 @@
     }
   },
   {
-    "datasource": "mqtt_consumer_2",
-    "transformers": [
-      "variables_qualitystatus_value_transformer"
-    ],
-    "datasinks": [
-      "Variables/QualityStatus.Value"
-    ],
-    "trigger": "event"
-  },
-  {
     "datasource": "mqtt_consumer_3",
     "transformers": [
       "variables_packmlstate_value_transformer"
     ],
     "datasinks": [
       "Variables/PackMLState.Value"
-    ],
-    "trigger": "event"
-  },
-  {
-    "datasource": "mqtt_consumer_4",
-    "transformers": [
-      "variables_stoppercount_value_transformer"
-    ],
-    "datasinks": [
-      "Variables/StopperCount.Value"
     ],
     "trigger": "event"
   }
