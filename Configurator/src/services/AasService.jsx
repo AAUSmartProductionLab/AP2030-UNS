@@ -1,108 +1,66 @@
 /**
- * AAS (Asset Administration Shell) Service - Simplified
+ * AAS (Asset Administration Shell) Service
  * 
- * Handles interactions with AAS Repository and Shell Registry:
- * - Repository (8081): AAS and Submodel data storage
- * - Shell Registry (8082): AAS descriptor discovery
+ * Uses basyx-typescript-sdk for registry operations and aas-core3.0-typescript
+ * types for building proper Submodel structures.
  */
 
 import { toast } from 'react-toastify';
+import { 
+  AasRegistryClient, 
+  SubmodelRepositoryClient,
+  Configuration
+} from 'basyx-typescript-sdk';
+import {
+  Submodel,
+  Entity,
+  EntityType,
+  Property,
+  SubmodelElementCollection,
+  ReferenceElement,
+  RelationshipElement,
+  Reference,
+  ReferenceTypes,
+  Key,
+  KeyTypes,
+  ModellingKind,
+  DataTypeDefXsd
+} from '@aas-core-works/aas-core3.0-typescript/types';
 
 class AasService {
   constructor() {
-    // Service URLs
+    // Service URLs from environment
     this.repositoryUrl = import.meta.env.VITE_AAS_REPOSITORY_URL || 'http://192.168.0.104:8081';
     this.shellRegistryUrl = import.meta.env.VITE_AAS_SHELL_REGISTRY_URL || 'http://192.168.0.104:8082';
     
     // Root AAS configuration
-    this.rootAasId = import.meta.env.VITE_ROOT_AAS_ID || 'https://smartproductionlab.aau.dk/aas/aauFillingLine';
     this.rootSubmodelId = import.meta.env.VITE_ROOT_SUBMODEL_ID || 
       'https://smartproductionlab.aau.dk/submodels/instances/aauFillingLine/HierarchicalStructures';
+    
+    // SDK Clients
+    this.registryClient = new AasRegistryClient();
+    this.submodelClient = new SubmodelRepositoryClient();
+    
+    // SDK Configurations
+    this.registryConfig = new Configuration({ basePath: this.shellRegistryUrl });
+    this.repositoryConfig = new Configuration({ basePath: this.repositoryUrl });
   }
 
   // ========================================
-  // Base64 Encoding/Decoding
-  // ========================================
-
-  encodeAasId(id) {
-    try {
-      return btoa(id);
-    } catch (error) {
-      console.error('Failed to encode AAS ID:', error);
-      throw new Error('Invalid AAS identifier for encoding');
-    }
-  }
-
-  decodeAasId(encodedId) {
-    try {
-      return atob(encodedId);
-    } catch (error) {
-      console.error('Failed to decode AAS ID:', error);
-      throw new Error('Invalid Base64-encoded identifier');
-    }
-  }
-
-  // ========================================
-  // HTTP Request Wrapper
-  // ========================================
-
-  async request(url, options = {}, timeout = 10000) {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-    try {
-      const response = await fetch(url, {
-        ...options,
-        signal: controller.signal,
-        headers: {
-          'Content-Type': 'application/json',
-          ...options.headers
-        }
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
-      }
-
-      const contentType = response.headers.get('content-type');
-      if (contentType && contentType.includes('application/json')) {
-        return await response.json();
-      }
-      
-      return await response.text();
-    } catch (error) {
-      clearTimeout(timeoutId);
-      
-      if (error.name === 'AbortError') {
-        throw new Error('Request timeout - AAS service not responding');
-      }
-      
-      console.error('AAS Service request failed:', error);
-      throw error;
-    }
-  }
-
-  // ========================================
-  // Shell Registry Operations
+  // Shell Registry Operations (SDK)
   // ========================================
 
   async getAllShells() {
     try {
-      const url = `${this.shellRegistryUrl}/shell-descriptors`;
-      const response = await this.request(url);
+      const result = await this.registryClient.getAllAssetAdministrationShellDescriptors({
+        configuration: this.registryConfig
+      });
       
-      if (response.result && Array.isArray(response.result)) {
-        return response.result;
+      if (result.success && result.data?.result) {
+        return result.data.result;
       }
       
-      if (Array.isArray(response)) {
-        return response;
-      }
-      
-      console.warn('Unexpected shell descriptors response format:', response);
+      console.error('Failed to get shell descriptors:', result.error);
       return [];
     } catch (error) {
       console.error('Failed to fetch shell descriptors:', error);
@@ -113,7 +71,15 @@ class AasService {
 
   async getFullShell(endpoint) {
     try {
-      return await this.request(endpoint);
+      const response = await fetch(endpoint, {
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      
+      return await response.json();
     } catch (error) {
       console.error(`Failed to fetch full shell from ${endpoint}:`, error);
       return null;
@@ -267,16 +233,12 @@ class AasService {
   formatDisplayName(idShort) {
     if (!idShort) return 'Unknown';
     
-    // Don't add spaces, just return as-is but ensure proper capitalization
-    // Remove 'AAS' suffix if present for cleaner display, then add it back properly
     let name = idShort;
     
-    // Handle common patterns
     if (name.endsWith('AAS')) {
-      name = name.slice(0, -3); // Remove AAS suffix
+      name = name.slice(0, -3);
     }
     
-    // Add spaces before capitals for readability, but keep it clean
     name = name
       .replace(/([a-z])([A-Z])/g, '$1 $2')
       .replace(/^./, str => str.toUpperCase())
@@ -286,16 +248,23 @@ class AasService {
   }
 
   // ========================================
-  // Repository Operations
+  // Repository Operations (SDK)
   // ========================================
 
   async getHierarchicalStructures(submodelId = null) {
     try {
       const id = submodelId || this.rootSubmodelId;
-      const encodedId = this.encodeAasId(id);
-      const url = `${this.repositoryUrl}/submodels/${encodedId}`;
       
-      return await this.request(url);
+      const result = await this.submodelClient.getSubmodelById({
+        configuration: this.repositoryConfig,
+        submodelIdentifier: id
+      });
+      
+      if (result.success) {
+        return result.data;
+      }
+      
+      throw new Error(result.error?.message || 'Failed to get submodel');
     } catch (error) {
       console.error('Failed to fetch HierarchicalStructures:', error);
       toast.error(`Failed to load configuration: ${error.message}`);
@@ -306,16 +275,19 @@ class AasService {
   async putHierarchicalStructures(submodelData, submodelId = null) {
     try {
       const id = submodelId || this.rootSubmodelId;
-      const encodedId = this.encodeAasId(id);
-      const url = `${this.repositoryUrl}/submodels/${encodedId}`;
       
-      const result = await this.request(url, {
-        method: 'PUT',
-        body: JSON.stringify(submodelData)
+      const result = await this.submodelClient.putSubmodelById({
+        configuration: this.repositoryConfig,
+        submodelIdentifier: id,
+        submodel: submodelData
       });
       
-      toast.success('Configuration saved to AAS successfully!');
-      return result;
+      if (result.success) {
+        toast.success('Configuration saved to AAS successfully!');
+        return result.data || submodelData;
+      }
+      
+      throw new Error(result.error?.message || 'Failed to update submodel');
     } catch (error) {
       console.error('Failed to update HierarchicalStructures:', error);
       toast.error(`Failed to save configuration: ${error.message}`);
@@ -324,20 +296,14 @@ class AasService {
   }
 
   // ========================================
-  // Data Transformation
+  // Data Transformation (Using SDK Types)
   // ========================================
 
-  /**
-   * Get a generic/clean name for use as idShort in HierarchicalStructures.
-   * Uses the assetType if available, otherwise infers from the instance name.
-   */
   getGenericName(assetType, instanceName) {
-    // Use assetType directly if available
     if (assetType && assetType !== 'Other') {
       return assetType;
     }
     
-    // Fallback: infer from instance name
     if (instanceName) {
       const lowerName = instanceName.toLowerCase();
       if (lowerName.includes('filling')) return 'Filling';
@@ -348,26 +314,230 @@ class AasService {
       if (lowerName.includes('planar')) return 'PlanarTable';
     }
     
-    // Last resort: sanitize the instance name
     return (instanceName || 'Unknown').replace(/\s+/g, '').replace(/[^a-zA-Z0-9]/g, '');
+  }
+
+  /**
+   * Create a Reference using SDK types
+   */
+  createReference(type, keys) {
+    return new Reference(type, keys);
+  }
+
+  /**
+   * Create a Key using SDK types
+   */
+  createKey(type, value) {
+    return new Key(type, value);
+  }
+
+  /**
+   * Create a Property using SDK types
+   */
+  createProperty(idShort, value, valueType = DataTypeDefXsd.String, semanticId = null) {
+    return new Property(
+      valueType,
+      null,  // extensions
+      null,  // category
+      idShort,
+      null,  // displayName
+      null,  // description
+      semanticId,
+      null,  // supplementalSemanticIds
+      null,  // qualifiers
+      null,  // embeddedDataSpecifications
+      value?.toString() || ''
+    );
+  }
+
+  /**
+   * Create a SubmodelElementCollection using SDK types
+   */
+  createSubmodelElementCollection(idShort, elements, semanticId = null) {
+    return new SubmodelElementCollection(
+      null,  // extensions
+      null,  // category
+      idShort,
+      null,  // displayName
+      null,  // description
+      semanticId,
+      null,  // supplementalSemanticIds
+      null,  // qualifiers
+      null,  // embeddedDataSpecifications
+      elements
+    );
+  }
+
+  /**
+   * Create a ReferenceElement using SDK types
+   */
+  createReferenceElement(idShort, reference, semanticId = null) {
+    return new ReferenceElement(
+      null,  // extensions
+      null,  // category
+      idShort,
+      null,  // displayName
+      null,  // description
+      semanticId,
+      null,  // supplementalSemanticIds
+      null,  // qualifiers
+      null,  // embeddedDataSpecifications
+      reference
+    );
+  }
+
+  /**
+   * Create an Entity using SDK types
+   */
+  createEntity(idShort, entityType, globalAssetId, statements, semanticId = null) {
+    return new Entity(
+      entityType,
+      null,  // extensions
+      null,  // category
+      idShort,
+      null,  // displayName
+      null,  // description
+      semanticId,
+      null,  // supplementalSemanticIds
+      null,  // qualifiers
+      null,  // embeddedDataSpecifications
+      statements,
+      globalAssetId,
+      null   // specificAssetIds
+    );
+  }
+
+  /**
+   * Create a RelationshipElement using SDK types
+   */
+  createRelationshipElement(idShort, first, second, semanticId = null) {
+    return new RelationshipElement(
+      first,
+      second,
+      null,  // extensions
+      null,  // category
+      idShort,
+      null,  // displayName
+      null,  // description
+      semanticId,
+      null,  // supplementalSemanticIds
+      null,  // qualifiers
+      null   // embeddedDataSpecifications
+    );
+  }
+
+  /**
+   * Create a Submodel using SDK types
+   */
+  createSubmodel(id, idShort, elements, semanticId = null) {
+    return new Submodel(
+      id,
+      null,  // extensions
+      null,  // category
+      idShort,
+      null,  // displayName
+      null,  // description
+      null,  // administration
+      ModellingKind.Instance,
+      semanticId,
+      null,  // supplementalSemanticIds
+      null,  // qualifiers
+      null,  // embeddedDataSpecifications
+      elements
+    );
+  }
+
+  /**
+   * Create an Entity node for a station
+   */
+  createEntityNode(idShort, globalAssetId, x, y, yaw = 0, instanceSubmodelId = null) {
+    // Create Location collection with x, y, yaw properties
+    const locationSemanticId = this.createReference(
+      ReferenceTypes.ExternalReference,
+      [this.createKey(KeyTypes.GlobalReference, 'https://smartproductionlab.aau.dk/semantics/Location')]
+    );
+    
+    const locationProperties = [
+      this.createProperty('x', x, DataTypeDefXsd.Float),
+      this.createProperty('y', y, DataTypeDefXsd.Float),
+      this.createProperty('yaw', yaw, DataTypeDefXsd.Float)
+    ];
+    
+    const locationCollection = this.createSubmodelElementCollection('Location', locationProperties, locationSemanticId);
+    
+    const statements = [locationCollection];
+    
+    // Add SameAs reference if instanceSubmodelId is provided
+    if (instanceSubmodelId) {
+      const sameAsSemanticId = this.createReference(
+        ReferenceTypes.ExternalReference,
+        [this.createKey(KeyTypes.GlobalReference, 'https://admin-shell.io/idta/HierarchicalStructures/1/0/SameAs')]
+      );
+      
+      const sameAsReference = this.createReference(
+        ReferenceTypes.ModelReference,
+        [
+          this.createKey(KeyTypes.Submodel, instanceSubmodelId),
+          this.createKey(KeyTypes.Entity, 'EntryNode')
+        ]
+      );
+      
+      const sameAsElement = this.createReferenceElement('SameAs', sameAsReference, sameAsSemanticId);
+      statements.push(sameAsElement);
+    }
+    
+    const nodeSemanticId = this.createReference(
+      ReferenceTypes.ExternalReference,
+      [this.createKey(KeyTypes.GlobalReference, 'https://admin-shell.io/idta/HierarchicalStructures/1/0/Node')]
+    );
+    
+    return this.createEntity(idShort, EntityType.SelfManagedEntity, globalAssetId, statements, nodeSemanticId);
+  }
+
+  /**
+   * Create a RelationshipElement for parent-child relationship
+   */
+  createRelationshipElementForHierarchy(idShort, parentNodeId, childNodeId) {
+    const submodelId = this.rootSubmodelId;
+    
+    const firstRef = this.createReference(
+      ReferenceTypes.ModelReference,
+      [
+        this.createKey(KeyTypes.Submodel, submodelId),
+        this.createKey(KeyTypes.Entity, parentNodeId)
+      ]
+    );
+    
+    const secondRef = this.createReference(
+      ReferenceTypes.ModelReference,
+      [
+        this.createKey(KeyTypes.Submodel, submodelId),
+        this.createKey(KeyTypes.Entity, parentNodeId),
+        this.createKey(KeyTypes.Entity, childNodeId)
+      ]
+    );
+    
+    const semanticId = this.createReference(
+      ReferenceTypes.ExternalReference,
+      [this.createKey(KeyTypes.GlobalReference, 'https://admin-shell.io/idta/HierarchicalStructures/1/0/IsPartOf')]
+    );
+    
+    return this.createRelationshipElement(idShort, firstRef, secondRef, semanticId);
   }
 
   transformLayoutDataToHierarchicalStructures(layoutData) {
     const submodelId = this.rootSubmodelId;
     const rootAssetId = 'https://smartproductionlab.aau.dk/assets/aauFillingLine';
     
-    // Build child entities from stations using their actual AAS data
+    // Build child entities from stations
     const childEntities = layoutData.Stations.map(station => {
       const instanceName = station['Instance Name'];
       const assetType = station['AssetType'];
-      
-      // Get generic name for the entity idShort (e.g., "Filling", "Camera")
       const genericName = this.getGenericName(assetType, instanceName);
       
-      // Use the actual asset ID and submodel ID from the placed module
       const globalAssetId = station['AssetId'] || 
         `https://smartproductionlab.aau.dk/assets/${genericName.toLowerCase()}`;
-      const instanceSubmodelId = station['SubmodelId']; // HierarchicalStructures submodel of this asset
+      const instanceSubmodelId = station['SubmodelId'];
       
       const approachPos = station["Approach Position"] || [0, 0, 0];
       const xMM = Array.isArray(approachPos) ? approachPos[0] : 0;
@@ -377,78 +547,73 @@ class AasService {
       return this.createEntityNode(genericName, globalAssetId, xMM, yMM, yaw, instanceSubmodelId);
     });
     
-    // Build relationships using generic names
+    // Build relationships
     const relationships = layoutData.Stations.map(station => {
       const genericName = this.getGenericName(station['AssetType'], station['Instance Name']);
-      return this.createRelationshipElement(`Has${genericName}`, 'EntryNode', genericName);
+      return this.createRelationshipElementForHierarchy(`Has${genericName}`, 'EntryNode', genericName);
     });
     
-    return {
-      modelType: 'Submodel',
-      kind: 'Instance',
-      semanticId: {
-        type: 'ExternalReference',
-        keys: [{
-          type: 'GlobalReference',
-          value: 'https://admin-shell.io/idta/HierarchicalStructures/1/0'
-        }]
-      },
-      id: submodelId,
-      idShort: 'HierarchicalStructures',
-      submodelElements: [
-        {
-          modelType: 'Property',
-          value: 'OneDown',
-          valueType: 'xs:string',
-          semanticId: {
-            type: 'ExternalReference',
-            keys: [{
-              type: 'GlobalReference',
-              value: 'https://admin-shell.io/idta/HierarchicalStructures/1/0/Archetype'
-            }]
-          },
-          idShort: 'Archetype'
-        },
-        {
-          modelType: 'Entity',
-          entityType: 'SelfManagedEntity',
-          globalAssetId: rootAssetId,
-          statements: childEntities,
-          semanticId: {
-            type: 'ExternalReference',
-            keys: [{
-              type: 'GlobalReference',
-              value: 'https://admin-shell.io/idta/HierarchicalStructures/1/0/EntryNode'
-            }]
-          },
-          idShort: 'EntryNode'
-        },
-        ...relationships
-      ]
-    };
+    // Create Archetype property
+    const archetypeSemanticId = this.createReference(
+      ReferenceTypes.ExternalReference,
+      [this.createKey(KeyTypes.GlobalReference, 'https://admin-shell.io/idta/HierarchicalStructures/1/0/Archetype')]
+    );
+    const archetypeProperty = this.createProperty('Archetype', 'OneDown', DataTypeDefXsd.String, archetypeSemanticId);
+    
+    // Create EntryNode entity
+    const entryNodeSemanticId = this.createReference(
+      ReferenceTypes.ExternalReference,
+      [this.createKey(KeyTypes.GlobalReference, 'https://admin-shell.io/idta/HierarchicalStructures/1/0/EntryNode')]
+    );
+    const entryNode = this.createEntity('EntryNode', EntityType.SelfManagedEntity, rootAssetId, childEntities, entryNodeSemanticId);
+    
+    // Create the Submodel
+    const submodelSemanticId = this.createReference(
+      ReferenceTypes.ExternalReference,
+      [this.createKey(KeyTypes.GlobalReference, 'https://admin-shell.io/idta/HierarchicalStructures/1/0')]
+    );
+    
+    const submodelElements = [archetypeProperty, entryNode, ...relationships];
+    
+    return this.createSubmodel(submodelId, 'HierarchicalStructures', submodelElements, submodelSemanticId);
   }
 
   transformHierarchicalStructuresToLayoutData(hierarchicalStructures, moduleCatalog) {
     try {
-      const entryNode = hierarchicalStructures.submodelElements?.find(
-        el => el.idShort === 'EntryNode' && el.modelType === 'Entity'
+      // Handle both SDK Submodel objects and raw JSON
+      const submodelElements = hierarchicalStructures.submodelElements || [];
+      
+      const entryNode = submodelElements.find(
+        el => (el.idShort === 'EntryNode') && 
+              (el.modelType === 'Entity' || el.modelType?.() === 'Entity' || el.entityType)
       );
       
-      if (!entryNode || !entryNode.statements) {
+      if (!entryNode) {
         console.warn('No EntryNode found in HierarchicalStructures');
         return { Stations: [] };
       }
       
-      const stations = entryNode.statements
-        .filter(statement => statement.modelType === 'Entity')
+      // Get statements - handle both SDK objects and raw JSON
+      const statements = entryNode.statements || [];
+      
+      const stations = statements
+        .filter(statement => 
+          statement.modelType === 'Entity' || 
+          statement.modelType?.() === 'Entity' || 
+          statement.entityType
+        )
         .map((entity, index) => {
-          const locationCollection = entity.statements?.find(
-            s => s.idShort === 'Location' && s.modelType === 'SubmodelElementCollection'
+          // Find Location collection
+          const entityStatements = entity.statements || [];
+          const locationCollection = entityStatements.find(
+            s => s.idShort === 'Location' && 
+                (s.modelType === 'SubmodelElementCollection' || s.value)
           );
           
-          const xProp = locationCollection?.value?.find(p => p.idShort === 'x');
-          const yProp = locationCollection?.value?.find(p => p.idShort === 'y');
-          const yawProp = locationCollection?.value?.find(p => p.idShort === 'yaw');
+          const locationValues = locationCollection?.value || [];
+          const xProp = locationValues.find(p => p.idShort === 'x');
+          const yProp = locationValues.find(p => p.idShort === 'y');
+          const yawProp = locationValues.find(p => p.idShort === 'yaw');
           
           const xMM = parseFloat(xProp?.value || 0);
           const yMM = parseFloat(yProp?.value || 0);
@@ -456,11 +621,15 @@ class AasService {
           
           const approachPosition = [xMM, yMM, yaw];
           
-          const sameAsRef = entity.statements?.find(
-            s => s.idShort === 'SameAs' && s.modelType === 'ReferenceElement'
+          // Find SameAs reference
+          const sameAsRef = entityStatements.find(
+            s => s.idShort === 'SameAs' && 
+                (s.modelType === 'ReferenceElement' || s.value?.keys)
           );
+          
           const submodelId = sameAsRef?.value?.keys?.find(k => k.type === 'Submodel')?.value || null;
           
+          // Match with module catalog
           const module = moduleCatalog.find(m => m.aasId === entity.globalAssetId);
           
           return {
@@ -480,137 +649,6 @@ class AasService {
       toast.error(`Failed to parse configuration: ${error.message}`);
       return { Stations: [] };
     }
-  }
-
-  // ========================================
-  // Helper Functions
-  // ========================================
-
-  createEntityNode(idShort, globalAssetId, x, y, yaw = 0, instanceSubmodelId = null) {
-    const statements = [
-      {
-        modelType: 'SubmodelElementCollection',
-        semanticId: {
-          type: 'ExternalReference',
-          keys: [{
-            type: 'GlobalReference',
-            value: 'https://smartproductionlab.aau.dk/semantics/Location'
-          }]
-        },
-        idShort: 'Location',
-        value: [
-          {
-            modelType: 'Property',
-            value: x.toString(),
-            valueType: 'xs:float',
-            idShort: 'x'
-          },
-          {
-            modelType: 'Property',
-            value: y.toString(),
-            valueType: 'xs:float',
-            idShort: 'y'
-          },
-          {
-            modelType: 'Property',
-            value: yaw.toString(),
-            valueType: 'xs:float',
-            idShort: 'yaw'
-          }
-        ]
-      }
-    ];
-    
-    // Add SameAs reference if submodel ID is provided
-    if (instanceSubmodelId) {
-      statements.push({
-        modelType: 'ReferenceElement',
-        semanticId: {
-          type: 'ExternalReference',
-          keys: [{
-            type: 'GlobalReference',
-            value: 'https://admin-shell.io/idta/HierarchicalStructures/1/0/SameAs'
-          }]
-        },
-        idShort: 'SameAs',
-        value: {
-          type: 'ModelReference',
-          keys: [
-            {
-              type: 'Submodel',
-              value: instanceSubmodelId
-            },
-            {
-              type: 'Entity',
-              value: 'EntryNode'
-            }
-          ]
-        }
-      });
-    }
-    
-    const entity = {
-      modelType: 'Entity',
-      entityType: 'SelfManagedEntity',
-      globalAssetId: globalAssetId,
-      statements: statements,
-      semanticId: {
-        type: 'ExternalReference',
-        keys: [{
-          type: 'GlobalReference',
-          value: 'https://admin-shell.io/idta/HierarchicalStructures/1/0/Node'
-        }]
-      },
-      idShort: idShort
-    };
-    
-    return entity;
-  }
-
-  createRelationshipElement(idShort, parentNodeId, childNodeId) {
-    const submodelId = this.rootSubmodelId;
-    
-    return {
-      modelType: 'RelationshipElement',
-      first: {
-        type: 'ModelReference',
-        keys: [
-          {
-            type: 'Submodel',
-            value: submodelId
-          },
-          {
-            type: 'Entity',
-            value: parentNodeId
-          }
-        ]
-      },
-      second: {
-        type: 'ModelReference',
-        keys: [
-          {
-            type: 'Submodel',
-            value: submodelId
-          },
-          {
-            type: 'Entity',
-            value: parentNodeId
-          },
-          {
-            type: 'Entity',
-            value: childNodeId
-          }
-        ]
-      },
-      semanticId: {
-        type: 'ExternalReference',
-        keys: [{
-          type: 'GlobalReference',
-          value: 'https://admin-shell.io/idta/HierarchicalStructures/1/0/IsPartOf'
-        }]
-      },
-      idShort: idShort
-    };
   }
 }
 
