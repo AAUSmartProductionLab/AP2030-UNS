@@ -32,6 +32,7 @@ add_library(bt_controller_common STATIC
     src/bt/actions/configuration_node.cpp
     src/bt/actions/pop_element_node.cpp
     src/bt/actions/refill_node.cpp
+    src/bt/actions/retrieve_aas_properties_node.cpp
     src/bt/conditions/generic_condition_node.cpp
     src/bt/decorators/occupy.cpp
     src/bt/decorators/get_product_from_queue.cpp

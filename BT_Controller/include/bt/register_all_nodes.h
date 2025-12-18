@@ -14,6 +14,7 @@
 #include "bt/actions/configuration_node.h"
 #include "bt/actions/pop_element_node.h"
 #include "bt/actions/refill_node.h"
+#include "bt/actions/retrieve_aas_properties_node.h"
 #include "bt/conditions/generic_condition_node.h"
 #include "bt/decorators/get_product_from_queue_node.h"
 #include "bt/decorators/keep_running_until_empty.h"
@@ -93,6 +94,11 @@ void registerAllNodes(
         mqtt_client,
         aas_client,
         "moveToPosition");
+
+    RetrieveAASPropertyNode::registerNodeType<RetrieveAASPropertyNode>(
+        factory,
+        aas_client,
+        "Retrieve_AAS_Property");
 
     MqttActionNode::registerNodeType<CommandExecuteNode>(
         factory,
