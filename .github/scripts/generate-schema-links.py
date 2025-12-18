@@ -38,20 +38,25 @@ def get_schema_description(schema_path: Path) -> str:
         pass
     return None
 
-def get_bt_title(bt_path: Path) -> str:
-    """Extract a title from a BT XML file, or use filename as fallback."""
+def get_bt_title(bt_path: Path) -> tuple[str, bool]:
+    """Extract a title from a BT XML file, or use filename as fallback.
+    
+    Returns:
+        tuple: (title, was_extracted) where was_extracted indicates if the title
+               was found in the XML (True) or is a fallback (False)
+    """
     try:
         tree = ET.parse(bt_path)
         root = tree.getroot()
         # Try to get the first BehaviorTree ID
         bt_node = root.find('.//BehaviorTree')
         if bt_node is not None and 'ID' in bt_node.attrib:
-            return bt_node.attrib['ID']
+            return bt_node.attrib['ID'], True
     except (ET.ParseError, Exception):
         pass
     
     # Fallback to filename
-    return bt_path.stem.replace('_', ' ').title()
+    return bt_path.stem.replace('_', ' ').title(), False
 
 def get_bt_description(bt_path: Path) -> str:
     """Extract description from BT XML file if available."""
@@ -124,13 +129,14 @@ def scan_bt_xmls(bt_dir: Path) -> List[Dict]:
         return bt_files
     
     for xml_file in bt_dir.glob('*.xml'):
-        title = get_bt_title(xml_file)
+        title, was_extracted = get_bt_title(xml_file)
         description = get_bt_description(xml_file)
         
         bt_files.append({
             'title': title,
             'filename': xml_file.name,
-            'description': description
+            'description': description,
+            'has_tree_id': was_extracted
         })
     
     # Sort by filename
@@ -175,7 +181,7 @@ def generate_markdown_bts(bt_files: List[Dict]) -> str:
         lines.append(f"- **[{bt['filename']}](bt_description/{bt['filename']})**")
         if bt['description']:
             lines.append(f"  - {bt['description']}")
-        if bt['title'] and bt['title'] != bt['filename'].replace('.xml', '').replace('_', ' ').title():
+        if bt['has_tree_id']:
             lines.append(f"  - Tree ID: `{bt['title']}`")
         lines.append(f"  - [View on GitHub Pages]({github_pages_url})")
         lines.append(f"  - [Raw]({raw_url})")

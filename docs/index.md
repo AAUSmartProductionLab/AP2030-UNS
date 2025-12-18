@@ -148,10 +148,12 @@ The behavior tree XML files define the control logic for the production line con
 
 <!-- AUTO-GENERATED-BT-START -->
 - **[camera.xml](bt_description/camera.xml)**
+  - Tree ID: `Camera`
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/bt_description/camera.xml)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/BT_Controller/config/bt_description/camera.xml)
 
 - **[filling.xml](bt_description/filling.xml)**
+  - Tree ID: `Filling`
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/bt_description/filling.xml)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/BT_Controller/config/bt_description/filling.xml)
 
@@ -176,6 +178,7 @@ The behavior tree XML files define the control logic for the production line con
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/BT_Controller/config/bt_description/scraping.xml)
 
 - **[stoppering.xml](bt_description/stoppering.xml)**
+  - Tree ID: `Stoppering`
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/bt_description/stoppering.xml)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/BT_Controller/config/bt_description/stoppering.xml)
 
