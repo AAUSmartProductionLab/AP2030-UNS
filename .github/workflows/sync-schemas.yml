@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'schemas/**'
+      - 'BT_Controller/config/bt_description/**'
       - 'docs/**'
     branches:
       - main
@@ -30,17 +31,19 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Sync schemas to docs
+      - name: Sync schemas and BT XMLs to docs
         run: |
           rm -rf docs/schemas
           cp -r schemas docs/schemas
+          rm -rf docs/bt_description
+          cp -r BT_Controller/config/bt_description docs/bt_description
       
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.x'
       
-      - name: Generate schema links
+      - name: Generate schema and BT links
         run: |
           python .github/scripts/generate-schema-links.py
           
@@ -48,8 +51,8 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add docs/schemas docs/index.md
-          git diff --quiet && git diff --staged --quiet || git commit -m "Auto-sync schemas to docs folder and update schema links"
+          git add docs/schemas docs/bt_description docs/index.md
+          git diff --quiet && git diff --staged --quiet || git commit -m "Auto-sync schemas and BT XMLs to docs folder and update links"
           
       - name: Push changes
         uses: ad-m/github-push-action@master

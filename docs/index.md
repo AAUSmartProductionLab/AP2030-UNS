@@ -139,8 +139,16 @@ All schemas are automatically synchronized from the `schemas/` directory. Click 
 
 <!-- AUTO-GENERATED-SCHEMAS-END -->
 
+## Behavior Tree Definitions
+
+The behavior tree XML files define the control logic for the production line controller.
+
+<!-- AUTO-GENERATED-BT-START -->
+<!-- AUTO-GENERATED-BT-END -->
 
 ## Usage
+
+### Schemas
 
 Access schemas directly via GitHub Pages:
 ```
@@ -150,4 +158,16 @@ https://aausmartproductionlab.github.io/AP2030-UNS/schemas/command.schema.json
 Or via raw GitHub URLs:
 ```
 https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/schemas/command.schema.json
+```
+
+### Behavior Trees
+
+Access behavior tree XML files via GitHub Pages:
+```
+https://aausmartproductionlab.github.io/AP2030-UNS/bt_description/tree.xml
+```
+
+Or via raw GitHub URLs:
+```
+https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/BT_Controller/config/bt_description/tree.xml
 ```
