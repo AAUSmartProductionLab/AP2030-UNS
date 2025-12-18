@@ -8,8 +8,8 @@ import {
   rectIntersection,
   DragOverlay
 } from "@dnd-kit/core";
-import { FaTrashAlt } from 'react-icons/fa'; // Install this package if needed
-import { ToastContainer, toast } from 'react-toastify';
+import { FaTrashAlt } from 'react-icons/fa';
+import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 // Import components
@@ -19,183 +19,14 @@ import { NodeSidebar } from "../components/NodeSidebar/NodeSidebar";
 import { ConfigPanel } from "../components/ConfigPanel/ConfigPanel";
 
 // Import services
-import mqttService from '../services/MqttService';
+import aasService from '../services/AasService';
 import MappingService from '../services/MappingService';
 
 export default function PlanarMotorConfigurator() {
   // Available node categories and nodes
-  const [mqttConnected, setMqttConnected] = useState(false);
-  const nodeCategories = [
-    {
-      id: "filling-modules",
-      name: "Filling Modules",
-      nodes: [
-        { 
-          id: "ima-filling", 
-          title: "imaFillingSystem", 
-          color: "#1E7D74", 
-          abstractId: "Filling",
-          capabilities: ["Dispense", "Weigh", "Refill"]
-        },
-        { 
-          id: "syntegon-filling", 
-          title: "syntegonFillingSystem", 
-          color: "#30A399", 
-          abstractId: "Filling",
-          capabilities: ["Dispense", "Weigh"]
-        },
-        { 
-          id: "optima-filling", 
-          title: "optimaFillingSystem", 
-          color: "#136058", 
-          abstractId: "Filling",
-          capabilities: ["Dispense"]
-        }
-      ]
-    },
-    {
-      id: "stoppering-modules",
-      name: "Stoppering Modules",
-      nodes: [
-        { 
-          id: "ima-stoppering", 
-          title: "imaStopperingSystem", 
-          color: "#0087CD", 
-          abstractId: "Stoppering",
-          capabilities: ["Stopper"]
-        },
-        { 
-          id: "syntegon-stoppering", 
-          title: "syntegonStopperingSystem", 
-          color: "#00A0F0", 
-          abstractId: "Stoppering",
-          capabilities: ["Stopper"]
-        },
-        { 
-          id: "optima-stoppering", 
-          title: "optimaStopperingSystem", 
-          color: "#006CA3", 
-          abstractId: "Stoppering",
-          capabilities: ["Stopper"]
-        }
-      ]
-    },
-    {
-      id: "capping-modules",
-      name: "Capping Modules",
-      nodes: [
-        { 
-          id: "ima-capping", 
-          title: "imaCappingSystem", 
-          color: "#9B4DCA", 
-          abstractId: "Capping",
-          capabilities: ["Cap"]
-        },
-        { 
-          id: "syntegon-capping", 
-          title: "syntegonCappingSystem", 
-          color: "#B07EDE", 
-          abstractId: "Capping",
-          capabilities: ["Cap"]
-        },
-        { 
-          id: "optima-capping", 
-          title: "optimaCappingSystem", 
-          color: "#7939A0", 
-          abstractId: "Capping",
-          capabilities: ["Cap"]
-        }
-      ]
-    },
-    {
-      id: "loading-modules",
-      name: "Loading Modules",
-      nodes: [
-        { 
-          id: "ima-loading", 
-          title: "imaLoadingSystem", 
-          color: "#FF8097", 
-          abstractId: "Load",
-          capabilities: ["Load"]
-        },
-        { 
-          id: "syntegon-loading", 
-          title: "syntegonLoadingSystem", 
-          color: "#FF9EB0", 
-          abstractId: "Load",
-          capabilities: ["Load"]
-        },
-        { 
-          id: "optima-loading", 
-          title: "optimaLoadingSystem", 
-          color: "#FF6080", 
-          abstractId: "Load",
-          capabilities: ["Load"]
-        }
-      ]
-    },
-    {
-      id: "unloading-modules",
-      name: "Unloading Modules",
-      nodes: [
-        { 
-          id: "ima-unloading", 
-          title: "imaUnloadingSystem", 
-          color: "#F39C12", 
-          abstractId: "Unload",
-          capabilities: ["Unload"]
-        },
-        { 
-          id: "syntegon-unloading", 
-          title: "syntegonUnloadingSystem", 
-          color: "#FFB142", 
-          abstractId: "Unload",
-          capabilities: ["Unload"]
-        },
-        { 
-          id: "optima-unloading", 
-          title: "optimaUnloadingSystem", 
-          color: "#E67E22", 
-          abstractId: "Unload",
-          capabilities: ["Unload"]
-        }
-      ]
-    },
-    {
-      id: "sensors",
-      name: "Sensors",
-      nodes: [
-        { 
-          id: "omron-camera", 
-          title: "omronCamera", 
-          color: "#2ECC71", 
-          abstractId: "Camera",
-          capabilities: ["Capture"]
-        },
-        { 
-          id: "omron-linetracker", 
-          title: "omronLineTracker", 
-          color: "#27AE60", 
-          abstractId: "LineTracker",
-          capabilities: ["FillLevel"]
-        },
-        { 
-          id: "quality-sensor", 
-          title: "qualityControlSensor", 
-          color: "#1BBC9B", 
-          abstractId: "QualitySensor",
-          capabilities: ["CheckQuality"]
-        },
-        { 
-          id: "weight-sensor", 
-          title: "weightVerification", 
-          color: "#16A085", 
-          abstractId: "WeightSensor",
-          capabilities: ["Weigh"]
-        }
-      ]
-    }
-  ];
+  const [moduleCatalog, setModuleCatalog] = useState([]);
+  const [catalogLoading, setCatalogLoading] = useState(true);
+  const [nodeCategories, setNodeCategories] = useState([]);
 
   // Flatten all nodes for easy lookup
   const allNodes = nodeCategories.flatMap(category => category.nodes);
@@ -248,6 +79,34 @@ export default function PlanarMotorConfigurator() {
     }
   }, [placedNodes]);
 
+  // Load module catalog from AAS on startup
+  useEffect(() => {
+    const loadModuleCatalog = async () => {
+      try {
+        setCatalogLoading(true);
+        
+        // Build flat module list
+        const modules = await aasService.buildModuleCatalog();
+        setModuleCatalog(modules);
+        
+        // Build categorized catalog for sidebar
+        const categories = aasService.buildCategorizedCatalog(modules);
+        setNodeCategories(categories);
+        
+        toast.success(`Loaded ${modules.length} modules from AAS`);
+      } catch (error) {
+        console.error('Failed to load module catalog:', error);
+        toast.warning('Using static module catalog - AAS not available');
+        // Keep nodeCategories as empty array - no fallback to static data
+        setNodeCategories([]);
+      } finally {
+        setCatalogLoading(false);
+      }
+    };
+    
+    loadModuleCatalog();
+  }, []);
+
   // Save to localStorage whenever motorConfig changes
   useEffect(() => {
     try {
@@ -261,17 +120,7 @@ export default function PlanarMotorConfigurator() {
   // Handler for config changes
   const handleConfigChange = (newConfig) => {
     setMotorConfig(newConfig);
-    console.log("Updated configuration:", newConfig);
   };
-
-  useEffect(() => {
-    // Register for connection status updates only
-    const unsubscribeConnection = mqttService.onConnectionChange(setMqttConnected);
-    
-    return () => {
-      unsubscribeConnection();
-    };
-  }, []);
 
   useEffect(() => {
     const updateMousePosition = (e) => {
@@ -285,13 +134,6 @@ export default function PlanarMotorConfigurator() {
     };
   }, []);
 
-  const centerOnCursorModifier = ({ transform }) => {
-    // Just return the transform as is - let CSS handle the centering
-    return transform;
-  };
-
-  const [draggingNodeRect, setDraggingNodeRect] = useState(null);
-  
   // Function to check if container is a corner (to be replaced with static squares)
   const isCornerPosition = (containerId) => {
     const id = parseInt(containerId.replace('container', ''));
@@ -366,34 +208,6 @@ export default function PlanarMotorConfigurator() {
   const handleDeleteNode = (nodeId) => {
     setPlacedNodes(prev => prev.filter(node => node.id !== nodeId));
   };
-
-  const handleSubmit = async () => {
-    const layoutData = prepareLayoutData();
-    const success = await mqttService.publishLayout(layoutData);
-
-    return success;
-  };
-  
-  // Replace the handleSubmitLowest function
-  const handleSubmitLowest = async () => {
-    const success = await mqttService.publishLimits(motorConfig);
-     
-    return success;
-  };
-  
-  // Replace the handlePublishConfig function
-  const handlePublishConfig = async () => {
-    // Prepare the layout configuration data
-    const layoutData = prepareLayoutData();
-    // Call both publish functions
-    const stationsSuccess = await mqttService.publishLayout(layoutData);
-    const limitsSuccess = await mqttService.publishLimits(motorConfig);
-    
-    // Show a single consolidated notification based on results
-    if (stationsSuccess && limitsSuccess) {
-      toast.success("Complete configuration published successfully!", { autoClose: 3000 });
-    }
-  };
   
   // Also update the clear functions
   const handleClearStations = () => {
@@ -451,31 +265,6 @@ export default function PlanarMotorConfigurator() {
     
     // Find whether it's a sidebar node or placed node
     const isSidebarNode = allNodes.some(node => node.id === active.id);
-    
-    // Get dimensions from the DOM directly for more accuracy
-    const activeElement = document.querySelector(`[data-id="${active.id}"]`);
-    
-    if (activeElement) {
-      const rect = activeElement.getBoundingClientRect();
-      console.log("Capturing actual DOM node dimensions:", rect.width, "x", rect.height);
-      setDraggingNodeRect({
-        width: rect.width,
-        height: rect.height
-      });
-    } else if (active.rect && active.rect.current && active.rect.current.initialized) {
-      console.log("Capturing DnD Kit rect dimensions:", active.rect.current.width, "x", active.rect.current.height);
-      setDraggingNodeRect({
-        width: active.rect.current.width,
-        height: active.rect.current.height
-      });
-    } else {
-      // Fallback to approximate dimensions based on node type
-      const dimensions = isSidebarNode ? 
-        { width: 200, height: 80 } : 
-        { width: 100, height: 100 };
-      console.log("Using default dimensions:", dimensions.width, "x", dimensions.height);
-      setDraggingNodeRect(dimensions);
-    }
     
     // Reset deletion zone when starting drag
     setActiveDeletionZone(null);
@@ -540,14 +329,11 @@ export default function PlanarMotorConfigurator() {
  // Updated handleDragMove function with better error handling
  const handleDragMove = (event) => {
   try {
-    console.log("DragMove triggered");
-    
     // First safely get the active element
     const { active } = event;
     
     // Safety check - if no active element, exit
     if (!active || !active.id) {
-      console.log("No active element");
       setActiveDeletionZone(null);
       return;
     }
@@ -555,42 +341,33 @@ export default function PlanarMotorConfigurator() {
     // Only check for deletion zones when dragging a placed node (not from sidebar)
     const isPlacedNode = placedNodes.some(node => node.id === active.id);
     if (!isPlacedNode) {
-      console.log("Not a placed node, skipping");
       setActiveDeletionZone(null);
       return;
     }
     
     // Use the tracked cursor position instead of trying to get it from the event
     const pointerX = cursorPosition.x;
-    console.log(`Using tracked cursor position: ${pointerX}`);
     
     // Get grid container wrapper dimensions
     const wrapperElement = document.querySelector('.grid-container-wrapper');
     if (!wrapperElement) {
-      console.error("Couldn't find grid-container-wrapper element");
       return;
     }
     
     const wrapperRect = wrapperElement.getBoundingClientRect();
     
     // Calculate deletion zone width - increased width
-    const zoneWidth = 300; // Increased from 200
+    const zoneWidth = 300;
     
     // Get the actual X position relative to the wrapper
     const relativeX = pointerX - wrapperRect.left;
     
-    console.log(`RelativeX: ${relativeX}, ZoneWidth: ${zoneWidth}`);
-    
     // Check if pointer is in left deletion zone
     if (relativeX < zoneWidth) {
-      console.log("IN LEFT ZONE");
       setActiveDeletionZone('left');
     }
     // Not in any deletion zone
     else {
-      if (activeDeletionZone !== null) {
-        console.log("NOT IN ZONE");
-      }
       setActiveDeletionZone(null);
     }
   } catch (error) {
@@ -601,12 +378,8 @@ export default function PlanarMotorConfigurator() {
   const handleDragEnd = (event) => {
     const { active, over } = event;
     
-    console.log(`Drag ended. Active: ${active?.id}, Zone: ${activeDeletionZone}`);
-    
     // Check if we were dragging a placed node and were in the deletion zone
     if (activeDeletionZone === 'left' && active && placedNodes.some(node => node.id === active.id)) {
-      console.log(`Attempting to delete node ${active.id} from left zone`);
-      
       // Use the tracked cursor position for final check
       const pointerX = cursorPosition.x;
       const wrapperElement = document.querySelector('.grid-container-wrapper');
@@ -614,24 +387,12 @@ export default function PlanarMotorConfigurator() {
       if (wrapperElement) {
         const wrapperRect = wrapperElement.getBoundingClientRect();
         const relativeX = pointerX - wrapperRect.left;
-        const zoneWidth = 300; // Match the increased width
+        const zoneWidth = 300;
         
-        // Log final position info for debugging
-        console.log(`Final position: x=${pointerX}, relativeX=${relativeX}`);
-        console.log(`Left zone: 0-${zoneWidth}`);
-        
-        // Verify we're in the expected zone at the end of the drag
         const inLeftZone = relativeX < zoneWidth;
         
-        console.log(`In left zone: ${inLeftZone}`);
-        
-        // Only delete if we're actually in the zone
         if (inLeftZone) {
-          // Remove the node
-          console.log("Deleting node now!");
           setPlacedNodes(nodes => nodes.filter(node => node.id !== active.id));
-        } else {
-          console.log("Not in deletion zone at end of drag, not deleting");
         }
       }
       
@@ -666,8 +427,6 @@ export default function PlanarMotorConfigurator() {
       // Create a new unique ID for the placed node
       const newId = `placed-${Date.now()}`;
       
-      console.log(`Creating new node ${newId} with isNew=true`);
-      
       // Add a new placed node with isNew flag for animation
       setPlacedNodes(nodes => [
         ...nodes, 
@@ -678,14 +437,19 @@ export default function PlanarMotorConfigurator() {
           color: draggedNode.color,
           sourceNode: draggedNode.id,
           abstractId: draggedNode.abstractId,
-          capabilities: draggedNode.capabilities, // Preserve capabilities
+          capabilities: draggedNode.capabilities,
+          // Store full node data for display
+          aasId: draggedNode.aasId,
+          assetId: draggedNode.assetId,
+          assetKind: draggedNode.assetKind,
+          assetType: draggedNode.assetType,
+          submodelId: draggedNode.submodelId,
           isNew: true // Add isNew flag to trigger animation
         }
       ]);
       
       // Remove the isNew flag after animation is complete
       setTimeout(() => {
-        console.log(`Setting isNew=false for node ${newId}`);
         setPlacedNodes(nodes => 
           nodes.map(node => 
             node.id === newId ? { ...node, isNew: false } : node
@@ -708,7 +472,6 @@ export default function PlanarMotorConfigurator() {
         }
         
         const movedNodeId = movedNode.id;
-        console.log(`Moving node ${movedNodeId} with isNew=true`);
         
         // Move the node to the new container with isNew flag for animation
         setPlacedNodes(nodes => 
@@ -721,7 +484,6 @@ export default function PlanarMotorConfigurator() {
         
         // Remove the isNew flag after animation is complete
         setTimeout(() => {
-          console.log(`Setting isNew=false for node ${movedNodeId}`);
           setPlacedNodes(nodes => 
             nodes.map(node => 
               node.id === movedNodeId ? { ...node, isNew: false } : node
@@ -743,85 +505,96 @@ export default function PlanarMotorConfigurator() {
   const isActiveSidebarNode = !!activeNodeTemplate;
 
 
+  // Handler for saving configuration to AAS
+  const handleSaveToAas = async () => {
+    try {
+      const layoutData = prepareLayoutData();
+      
+      const hierarchicalStructures = aasService.transformLayoutDataToHierarchicalStructures(layoutData);
+      
+      await aasService.putHierarchicalStructures(hierarchicalStructures);
+      toast.success('Configuration published to AAS successfully!');
+    } catch (error) {
+      console.error('Failed to publish configuration:', error);
+      toast.error(`Failed to publish configuration: ${error.message}`);
+    }
+  };
+
+  // Handler for loading configuration from AAS
+  const handleLoadFromAas = async () => {
+    try {
+      const hierarchicalStructures = await aasService.getHierarchicalStructures();
+      const layoutData = aasService.transformHierarchicalStructuresToLayoutData(
+        hierarchicalStructures,
+        moduleCatalog
+      );
+      
+      // Convert layout data back to placed nodes format
+      const loadedNodes = layoutData.Stations
+        .filter(station => station.StationId !== -1) // Exclude fixed infrastructure
+        .map((station, index) => {
+          // Find matching node template from allNodes
+          const matchingNode = allNodes.find(n => 
+            n.abstractId === station.Name || 
+            n.title === station['Instance Name']
+          );
+          
+          // Find appropriate container based on position
+          const containerIndex = MappingService.idToName(station.StationId);
+          
+          return {
+            id: `placed-${Date.now()}-${index}`,
+            sourceNode: matchingNode?.id || station['Instance Name'],
+            container: `container${containerIndex}`,
+            title: station['Instance Name'],
+            color: matchingNode?.color || '#888888',
+            abstractId: station.Name,
+            capabilities: station.Capabilities,
+            aasId: station.AasId,
+            submodelId: station.SubmodelId
+          };
+        });
+      
+      setPlacedNodes(loadedNodes);
+      toast.success('Configuration loaded from AAS successfully!');
+    } catch (error) {
+      console.error('Failed to load from AAS:', error);
+      toast.error(`Failed to load configuration: ${error.message}`);
+    }
+  };
+
   const prepareLayoutData = () => {
-    // Create the Stations array from placed nodes
-    const stationsArray = placedNodes.map(node => {
+    // Create the Stations array from placed nodes ONLY
+    const stationsArray = placedNodes.map((node) => {
       const containerName = getContainerName(node.container);
       const stationId = MappingService.nameToId(containerName);
       const positions = MappingService.getPositions(stationId);
       
-      // Find the source node to get the abstractId and capabilities if not directly on placed node
-      const sourceNode = node.abstractId ? 
-        null : 
-        allNodes.find(n => n.id === node.sourceNode);
-      
-      const abstractId = node.abstractId || 
-        (sourceNode ? sourceNode.abstractId : "Unknown");
-      
-      // Get capabilities from the node or its source
-      const capabilities = node.capabilities || 
-        (sourceNode ? sourceNode.capabilities : []);
-      
-      // Get instance name - check if a specific mapping exists, otherwise use node.title
-      const mappedName = MappingService.assetNameToInstanceMap[abstractId];
-      const instanceName = mappedName || node.title || "Unknown System";
+      // Use the node title as the instance name
+      const instanceName = node.title || "Unknown System";
       
       return {
-        Name: abstractId, // Use the abstractId as the Name
-        "Instance Name": instanceName, // The specific module instance (e.g., "Syntegon Filling System")
-        StationId: stationId,
+        "Instance Name": instanceName,
         "Approach Position": positions.approach,
         "Process Position": positions.process,
-        "Capabilities": capabilities
+        "AssetId": node.assetId,
+        "SubmodelId": node.submodelId,
+        "AssetType": node.assetType
       };
     });
     
-    // Add fixed infrastructure (PlanarSystem and Xbots) that are always present
-    const fixedInfrastructure = [
-      {
-        Name: "PlanarSystem",
-        "Instance Name": "planarTable",
-        StationId: -1, // Special ID for planar table (not a module area)
-        "Approach Position": [0, 0, 0],
-        "Process Position": [0, 0, 0],
-        "Capabilities": []
-      },
-      {
-        Name: "Xbot1",
-        "Instance Name": "planarTableShuttle1",
-        StationId: -1, // Special ID for shuttles
-        "Approach Position": [0, 0, 0],
-        "Process Position": [0, 0, 0],
-        "Capabilities": ["Transport"]
-      },
-      {
-        Name: "Xbot2",
-        "Instance Name": "planarTableShuttle2",
-        StationId: -1,
-        "Approach Position": [0, 0, 0],
-        "Process Position": [0, 0, 0],
-        "Capabilities": ["Transport"]
-      },
-      {
-        Name: "Xbot3",
-        "Instance Name": "planarTableShuttle3",
-        StationId: -1,
-        "Approach Position": [0, 0, 0],
-        "Process Position": [0, 0, 0],
-        "Capabilities": ["Transport"]
-      }
-    ];
-    
-    // Return the properly formatted object with both placed stations and fixed infrastructure
     return {
-      Stations: [...stationsArray, ...fixedInfrastructure]
+      Stations: stationsArray
     };
   };
 
 
   return (
     <div className="planar-motor-page">
-      <h1>Planar Motor Configurator</h1>
+      <div className="page-header">
+        <h1>Planar Motor Configurator</h1>
+        {catalogLoading && <span className="loading-indicator">Loading modules...</span>}
+      </div>
       
       <DndContext
         sensors={sensors}
@@ -870,6 +643,12 @@ export default function PlanarMotorConfigurator() {
                             color={node.color}
                             inSidebar={false}
                             onDelete={handleDeleteNode}
+                            nodeData={{
+                              assetId: node.assetId,
+                              aasId: node.aasId,
+                              assetKind: node.assetKind,
+                              assetType: node.assetType
+                            }}
                           />
                         ))
                       }
@@ -884,19 +663,14 @@ export default function PlanarMotorConfigurator() {
             onClearStations={handleClearStations}
             onClearLimits={handleClearLimits}
             onClearAll={handleClearAll}
-            onSubmit={handleSubmit}
-            onSubmitLowest={handleSubmitLowest}
-            onPublishConfig={handlePublishConfig}
             onSetDefaultStations={handleSetDefaultStations}
-            config={motorConfig} // Pass the current config to use for display
+            onPublishConfig={handleSaveToAas}
+            publishDisabled={catalogLoading || placedNodes.length === 0}
+            config={motorConfig}
           />
         </div>
                
-        {/* DragOverlay remains unchanged */}
-        <DragOverlay 
-          dropAnimation={null}
-          modifiers={[centerOnCursorModifier]}
-        >
+        <DragOverlay dropAnimation={null}>
           {activeId && activeNode ? (
             <div className="drag-overlay-container">
               <Task 
