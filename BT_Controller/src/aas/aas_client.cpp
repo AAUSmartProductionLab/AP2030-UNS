@@ -247,6 +247,11 @@ std::optional<mqtt_utils::Topic> AASClient::fetchInterface(const std::string &as
                                 base_topic = base_topic.substr(slash_pos);
                             }
                         }
+                        // Remove slash between port and base topic if present
+                        if (!base_topic.empty() && base_topic[0] == '/')
+                        {
+                            base_topic = base_topic.substr(1);
+                        }
                         break;
                     }
                 }

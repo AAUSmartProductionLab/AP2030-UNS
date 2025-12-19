@@ -26,66 +26,6 @@ void registerAllNodes(
     MqttClient &mqtt_client,
     AASClient &aas_client)
 {
-    // Define the topics for the nodes (may contain wildcards if replaced using bt entries)
-    // mqtt_utils::Topic XYMotionCMD(
-    //     unsTopicPrefix + "/+/CMD/XYMotion",
-    //     "../../schemas/moveToPosition.schema.json",
-    //     2,
-    //     false);
-    // mqtt_utils::Topic OmronARCLCMD(
-    //     unsTopicPrefix + "/Omron/CMD/ARCL",
-    //     "../../schemas/amrArclRequest.schema.json",
-    //     2,
-    //     false);
-    // mqtt_utils::Topic StationRegistrationCMD(
-    //     unsTopicPrefix + "/+/CMD/Register",
-    //     "../../schemas/command.schema.json",
-    //     2,
-    //     false);
-    // mqtt_utils::Topic StationUnregistrationCMD(
-    //     unsTopicPrefix + "/+/CMD/Unregister",
-    //     "../../schemas/command.schema.json",
-    //     2,
-    //     false);
-    // mqtt_utils::Topic ExecuteCMD(
-    //     unsTopicPrefix + "/+/CMD/+",
-    //     "../../schemas/command.schema.json",
-    //     2,
-    //     false);
-    // mqtt_utils::Topic OmronARCLState(
-    //     unsTopicPrefix + "/Omron/DATA/State",
-    //     "../../schemas/amrArclUpdate.schema.json",
-    //     2);
-    // mqtt_utils::Topic StationState(
-    //     unsTopicPrefix + "/+/DATA/State",
-    //     "../../schemas/stationState.schema.json",
-    //     2);
-    // mqtt_utils::Topic CommandResponse(
-    //     unsTopicPrefix + "/+/DATA/+",
-    //     "../../schemas/commandResponse.schema.json",
-    //     2);
-    // mqtt_utils::Topic StateData(
-    //     unsTopicPrefix + "/+/DATA/State",
-    //     "../../schemas/state.schema.json",
-    //     2);
-    // mqtt_utils::Topic WeightData(
-    //     unsTopicPrefix + "/+/DATA/Weight",
-    //     "../../schemas/data.schema.json",
-    //     2);
-    // mqtt_utils::Topic GenericConditonDATA(
-    //     unsTopicPrefix + "/+/DATA/+",
-    //     "../../schemas/data.schema.json",
-    //     2);
-    // mqtt_utils::Topic ConfigurationDATA(
-    //     unsTopicPrefix + "/Configuration/DATA/#",
-    //     "../../schemas/config.schema.json",
-    //     2);
-    // mqtt_utils::Topic ProductAssociation(
-    //     unsTopicPrefix + "/+/DATA/ProductId",
-    //     "../../schemas/productId.schema.json",
-    //     2,
-    //     true);
-
     // Register the nodes with the behavior tree and the mqtt client
     MqttActionNode::registerNodeType<MoveToPosition>(
         factory,
