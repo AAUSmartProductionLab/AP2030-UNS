@@ -24,8 +24,7 @@ void registerAllNodes(
     BT::BehaviorTreeFactory &factory,
     NodeMessageDistributor &node_message_distributor,
     MqttClient &mqtt_client,
-    AASClient &aas_client,
-    json &station_config)
+    AASClient &aas_client)
 {
     // Define the topics for the nodes (may contain wildcards if replaced using bt entries)
     // mqtt_utils::Topic XYMotionCMD(

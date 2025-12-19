@@ -299,9 +299,7 @@ bool BehaviorTreeController::registerNodesWithAASConfig()
     try
     {
         // Register all nodes (they will read equipment mapping from blackboard)
-        nlohmann::json empty_config = nlohmann::json::object();
-        registerAllNodes(*bt_factory_, *node_message_distributor_, *mqtt_client_,
-                         *aas_client_, empty_config);
+        registerAllNodes(*bt_factory_, *node_message_distributor_, *mqtt_client_, *aas_client_);
 
         // Set the node message distributor for base classes
         MqttSubBase::setNodeMessageDistributor(node_message_distributor_.get());
