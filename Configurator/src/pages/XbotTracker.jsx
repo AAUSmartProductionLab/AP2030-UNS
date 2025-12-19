@@ -884,7 +884,7 @@ const XbotTracker = () => {
             <button 
               className={`control-button suspend-button ${isBtSuspended ? 'unsuspend-active' : 'suspend-active'}`} 
               onClick={handleBtToggleSuspendSystem}
-              disabled={isPlanarHolding ? !btButtonStates.Unsuspend : !btButtonStates.Suspend}
+              disabled={isBtSuspended ? !btButtonStates.Unsuspend : !btButtonStates.Suspend}
             >
               {isBtSuspended ? 'Unsuspend' : 'Suspend'}
             </button>
