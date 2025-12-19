@@ -293,19 +293,16 @@ void BehaviorTreeController::populateBlackboard(BT::Blackboard::Ptr blackboard)
     }
     std::lock_guard<std::mutex> lock(equipment_mapping_mutex_);
     std::cout << "Populating blackboard with equipment mapping..." << std::endl;
-    // Store each equipment mapping in the blackboard with TWO keys:
-    // 1. Simple name -> AAS URL (e.g., "LoadingSystem" -> "https://.../imaLoadingSystem")
+
+    // Store each equipment mapping in the blackboard
+    // Simple name -> AAS URL (e.g., "LoadingSystem" -> "https://.../imaLoadingSystem")
     for (const auto &[equipment_name, aas_id] : equipment_aas_mapping_)
     {
-        // Store with simple name as key
         blackboard->set(equipment_name, aas_id);
         std::cout << "  Set blackboard[" << equipment_name << "] = " << aas_id << std::endl;
-
-        // Also store with AAS URL as key (self-referencing)
-        blackboard->set(aas_id, aas_id);
     }
-    std::cout << "Blackboard populated with " << equipment_aas_mapping_.size()
-              << " equipment entries (with both name and URL keys)" << std::endl;
+
+    std::cout << "Blackboard populated with " << equipment_aas_mapping_.size() << " equipment entries" << std::endl;
 }
 
 bool BehaviorTreeController::registerNodesWithAASConfig()
