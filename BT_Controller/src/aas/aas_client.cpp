@@ -131,21 +131,12 @@ void AASClient::resolveSchemaReferences(nlohmann::json &schema)
     schema_utils::resolveSchemaReferences(schema);
 }
 
-std::optional<mqtt_utils::Topic> AASClient::fetchInterface(const std::string &asset_id, const std::string &interaction, const std::string &endpoint)
+std::optional<AASClient::ShellAndSubmodelInfo> AASClient::findShellAndSubmodel(
+    const std::string &asset_id,
+    const std::string &submodel_name_pattern)
 {
     try
     {
-        std::cout << "Fetching interface from AAS - Asset: " << asset_id
-                  << ", Interaction: " << interaction
-                  << ", Endpoint: " << endpoint << std::endl;
-
-        // Validate endpoint parameter
-        if (endpoint != "input" && endpoint != "output")
-        {
-            std::cerr << "Invalid endpoint type: " << endpoint << ". Must be 'input' or 'output'" << std::endl;
-            return std::nullopt;
-        }
-
         // Step 1: Get the shell descriptor from registry to find the shell endpoint
         std::string registry_url = "/shell-descriptors";
         nlohmann::json registry_response = makeGetRequest(registry_url, true);
@@ -156,17 +147,15 @@ std::optional<mqtt_utils::Topic> AASClient::fetchInterface(const std::string &as
             return std::nullopt;
         }
 
-        // Find the AAS with matching idShort
-        std::string expected_id_short = asset_id + "AAS";
+        // Find the AAS with matching id (asset_id is the AAS shell ID)
         std::string shell_endpoint;
         for (const auto &shell : registry_response["result"])
         {
-            if (shell.contains("idShort") && shell["idShort"] == expected_id_short)
+            if (shell.contains("id") && shell["id"] == asset_id)
             {
                 if (shell.contains("endpoints") && shell["endpoints"].is_array() && !shell["endpoints"].empty())
                 {
                     shell_endpoint = shell["endpoints"][0]["protocolInformation"]["href"];
-                    std::cout << "Found matching AAS with idShort: " << expected_id_short << std::endl;
                     break;
                 }
             }
@@ -196,15 +185,14 @@ std::optional<mqtt_utils::Topic> AASClient::fetchInterface(const std::string &as
             return std::nullopt;
         }
 
-        // Find AssetInterfacesDescription submodel reference
+        // Find submodel reference matching the pattern
         std::string submodel_id;
         for (const auto &submodel_ref : shell_data["submodels"])
         {
             if (submodel_ref.contains("keys") && submodel_ref["keys"].is_array())
             {
                 std::string ref_value = submodel_ref["keys"][0]["value"];
-                if (ref_value.find("AssetInterfacesDescription") != std::string::npos ||
-                    ref_value.find("AssetInterfaceDescription") != std::string::npos)
+                if (ref_value.find(submodel_name_pattern) != std::string::npos)
                 {
                     submodel_id = ref_value;
                     break;
@@ -214,10 +202,42 @@ std::optional<mqtt_utils::Topic> AASClient::fetchInterface(const std::string &as
 
         if (submodel_id.empty())
         {
-            std::cerr << "Could not find AssetInterfacesDescription submodel" << std::endl;
+            std::cerr << "Could not find submodel with pattern: " << submodel_name_pattern << std::endl;
             return std::nullopt;
         }
 
+        return ShellAndSubmodelInfo{shell_path, submodel_id};
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Exception finding shell and submodel: " << e.what() << std::endl;
+        return std::nullopt;
+    }
+}
+
+std::optional<mqtt_utils::Topic> AASClient::fetchInterface(const std::string &asset_id, const std::string &interaction, const std::string &endpoint)
+{
+    try
+    {
+        std::cout << "Fetching interface from AAS - Asset: " << asset_id
+                  << ", Interaction: " << interaction
+                  << ", Endpoint: " << endpoint << std::endl;
+
+        // Validate endpoint parameter
+        if (endpoint != "input" && endpoint != "output")
+        {
+            std::cerr << "Invalid endpoint type: " << endpoint << ". Must be 'input' or 'output'" << std::endl;
+            return std::nullopt;
+        }
+
+        // Find shell and submodel using common helper
+        auto shell_submodel_info = findShellAndSubmodel(asset_id, "AssetInterface");
+        if (!shell_submodel_info.has_value())
+        {
+            return std::nullopt;
+        }
+
+        std::string submodel_id = shell_submodel_info->submodel_id;
         std::cout << "Found submodel ID: " << submodel_id << std::endl;
 
         // Step 3: Fetch the submodel using base64url-encoded ID
@@ -494,94 +514,6 @@ std::optional<mqtt_utils::Topic> AASClient::fetchInterface(const std::string &as
     }
 }
 
-std::string AASClient::getInstanceNameByAssetName(const std::string &asset_name)
-{
-    try
-    {
-        // Check if Stations array exists
-        if (!station_config.contains("Stations") || !station_config["Stations"].is_array())
-        {
-            throw std::runtime_error("Station configuration does not contain 'Stations' array");
-        }
-
-        const auto &stations = station_config["Stations"];
-
-        // Use std::find_if to search for the station
-        auto it = std::find_if(stations.begin(), stations.end(),
-                               [&asset_name](const nlohmann::json &station)
-                               {
-                                   return station.contains("Name") && station["Name"] == asset_name;
-                               });
-
-        // Check if station was found
-        if (it != stations.end())
-        {
-            // Check if InstanceName exists
-            if (it->contains("Instance Name") && (*it)["Instance Name"].is_string())
-            {
-                std::string instance_name = (*it)["Instance Name"].get<std::string>();
-                std::cout << "Found Instance Name: " << instance_name << " for Asset Name: " << asset_name << std::endl;
-                return instance_name;
-            }
-            else
-            {
-                throw std::runtime_error("Station '" + asset_name + "' found but has no valid InstanceName");
-            }
-        }
-
-        // Asset name not found
-        throw std::runtime_error("Asset '" + asset_name + "' not found in station configuration");
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << "Error in getInstanceNameByAssetName: " << e.what() << std::endl;
-        throw; // Re-throw to allow caller to handle
-    }
-}
-
-std::string AASClient::getStationIdByAssetName(const std::string &asset_name)
-{
-    try
-    {
-        // Check if Stations array exists
-        if (!station_config.contains("Stations") || !station_config["Stations"].is_array())
-        {
-            throw std::runtime_error("Station configuration does not contain 'Stations' array");
-        }
-
-        const auto &stations = station_config["Stations"];
-
-        // Use std::find_if to search for the station
-        auto it = std::find_if(stations.begin(), stations.end(),
-                               [&asset_name](const nlohmann::json &station)
-                               {
-                                   return station.contains("Name") && station["Name"] == asset_name;
-                               });
-
-        // Check if station was found
-        if (it != stations.end())
-        {
-            // Check if InstanceName exists
-            if (it->contains("StationId") && (*it)["StationId"].is_string())
-            {
-                return (*it)["StationId"].get<std::string>();
-            }
-            else
-            {
-                throw std::runtime_error("Station '" + asset_name + "' found but has no valid StationId");
-            }
-        }
-
-        // Asset name not found
-        throw std::runtime_error("Asset '" + asset_name + "' not found in station configuration");
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << "Error in getStationIdByAssetName: " << e.what() << std::endl;
-        throw; // Re-throw to allow caller to handle
-    }
-}
-
 std::optional<nlohmann::json> AASClient::fetchPropertyValue(
     const std::string &asset_id,
     const std::string &submodel_id_short,
@@ -646,75 +578,14 @@ std::optional<nlohmann::json> AASClient::fetchSubmodelData(
 {
     try
     {
-        // Step 1: Get the shell descriptor from registry
-        std::string registry_url = "/shell-descriptors";
-        nlohmann::json registry_response = makeGetRequest(registry_url, true);
-
-        if (!registry_response.contains("result") || !registry_response["result"].is_array())
+        // Find shell and submodel using common helper
+        auto shell_submodel_info = findShellAndSubmodel(asset_id, submodel_id_short);
+        if (!shell_submodel_info.has_value())
         {
-            std::cerr << "Invalid registry response structure" << std::endl;
             return std::nullopt;
         }
 
-        // Find the AAS with matching idShort
-        std::string expected_id_short = asset_id + "AAS";
-        std::string shell_endpoint;
-        for (const auto &shell : registry_response["result"])
-        {
-            if (shell.contains("idShort") && shell["idShort"] == expected_id_short)
-            {
-                if (shell.contains("endpoints") && shell["endpoints"].is_array() && !shell["endpoints"].empty())
-                {
-                    shell_endpoint = shell["endpoints"][0]["protocolInformation"]["href"];
-                    break;
-                }
-            }
-        }
-
-        if (shell_endpoint.empty())
-        {
-            std::cerr << "Could not find shell endpoint for asset: " << asset_id << std::endl;
-            return std::nullopt;
-        }
-
-        // Extract the relative path from the full URL
-        size_t pos = shell_endpoint.find("/shells/");
-        if (pos == std::string::npos)
-        {
-            std::cerr << "Invalid shell endpoint format: " << shell_endpoint << std::endl;
-            return std::nullopt;
-        }
-        std::string shell_path = shell_endpoint.substr(pos);
-
-        // Step 2: Get the shell to find submodel references
-        nlohmann::json shell_data = makeGetRequest(shell_path);
-
-        if (!shell_data.contains("submodels") || !shell_data["submodels"].is_array())
-        {
-            std::cerr << "Shell missing submodels array" << std::endl;
-            return std::nullopt;
-        }
-
-        // Find the submodel reference matching the submodel_id_short
-        std::string submodel_id;
-        for (const auto &submodel_ref : shell_data["submodels"])
-        {
-            if (submodel_ref.contains("keys") && submodel_ref["keys"].is_array())
-            {
-                std::string ref_value = submodel_ref["keys"][0]["value"];
-                if (ref_value.find(submodel_id_short) != std::string::npos)
-                {
-                    submodel_id = ref_value;
-                    break;
-                }
-            }
-        }
-
-        if (submodel_id.empty())
-        {
-            std::cerr << "Could not find submodel with idShort: " << submodel_id_short << std::endl;
-            return std::nullopt;
-        }
+        std::string submodel_id = shell_submodel_info->submodel_id;
 
         // Step 3: Fetch the submodel using base64url-encoded ID
         std::string submodel_id_b64 = base64url_encode(submodel_id);
@@ -810,4 +681,118 @@ std::optional<nlohmann::json> AASClient::searchPropertyInElements(
     }
 
     return std::nullopt;
+}
+
+std::optional<nlohmann::json> AASClient::fetchHierarchicalStructure(const std::string &aas_shell_id)
+{
+    try
+    {
+        std::cout << "Fetching HierarchicalStructures submodel for AAS: " << aas_shell_id << std::endl;
+
+        // Step 1: Fetch the full shell to get submodel references
+        std::string encoded_id = base64url_encode(aas_shell_id);
+        std::string shell_endpoint = "/shells/" + encoded_id;
+        nlohmann::json shell_data = makeGetRequest(shell_endpoint);
+
+        if (!shell_data.contains("submodels") || !shell_data["submodels"].is_array())
+        {
+            std::cerr << "Shell missing submodels array" << std::endl;
+            return std::nullopt;
+        }
+
+        // Step 2: Find the HierarchicalStructures submodel reference
+        std::string submodel_id;
+        for (const auto &submodel_ref : shell_data["submodels"])
+        {
+            if (submodel_ref.contains("keys") && submodel_ref["keys"].is_array())
+            {
+                std::string ref_value = submodel_ref["keys"][0]["value"];
+                if (ref_value.find("HierarchicalStructures") != std::string::npos)
+                {
+                    submodel_id = ref_value;
+                    break;
+                }
+            }
+        }
+
+        if (submodel_id.empty())
+        {
+            std::cerr << "HierarchicalStructures submodel reference not found for AAS: " << aas_shell_id << std::endl;
+            return std::nullopt;
+        }
+
+        std::cout << "Found HierarchicalStructures submodel reference: " << submodel_id << std::endl;
+
+        // Step 3: Fetch the submodel using base64url-encoded ID
+        std::string submodel_id_b64 = base64url_encode(submodel_id);
+        std::string submodel_url = "/submodels/" + submodel_id_b64;
+
+        nlohmann::json submodel_data = makeGetRequest(submodel_url);
+        std::cout << "Successfully fetched HierarchicalStructures submodel" << std::endl;
+
+        return submodel_data;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Error fetching HierarchicalStructures: " << e.what() << std::endl;
+        return std::nullopt;
+    }
+}
+
+std::optional<nlohmann::json> AASClient::lookupAssetById(const std::string &asset_id)
+{
+    try
+    {
+        std::string encoded_id = base64url_encode(asset_id);
+        std::string endpoint = "/shell-descriptors/" + encoded_id;
+        nlohmann::json response = makeGetRequest(endpoint, true);
+        return response;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Error looking up asset: " << e.what() << std::endl;
+        return std::nullopt;
+    }
+}
+
+std::optional<std::string> AASClient::lookupAasIdFromAssetId(const std::string &asset_id)
+{
+    try
+    {
+        std::cout << "Looking up AAS shell ID for asset: " << asset_id << std::endl;
+
+        // Query the registry for all shell descriptors
+        std::string endpoint = "/shell-descriptors";
+        nlohmann::json response = makeGetRequest(endpoint, true);
+
+        if (!response.contains("result") || !response["result"].is_array())
+        {
+            std::cerr << "Invalid response from registry" << std::endl;
+            return std::nullopt;
+        }
+
+        // Search for shell with matching globalAssetId
+        // In the registry response, globalAssetId is directly in the shell descriptor
+        for (const auto &shell_descriptor : response["result"])
+        {
+            if (shell_descriptor.contains("globalAssetId") &&
+                shell_descriptor["globalAssetId"].get<std::string>() == asset_id)
+            {
+                if (shell_descriptor.contains("id"))
+                {
+                    std::string shell_id = shell_descriptor["id"].get<std::string>();
+                    std::cout << "  ✓ Found matching AAS shell ID: " << shell_id << std::endl;
+                    return shell_id;
+                }
+            }
+        }
+
+        std::cerr << "No AAS shell found for asset ID: " << asset_id << std::endl;
+        return std::nullopt;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Error looking up AAS ID from asset ID: " << e.what() << std::endl;
+        return std::nullopt;
+    }
 }

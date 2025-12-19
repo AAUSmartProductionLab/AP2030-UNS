@@ -19,8 +19,8 @@ void GetProductFromQueue::initializeTopicsFromAAS()
         std::string xbot_topic = xbot_topic_opt->cast<std::string>();
         std::cout << "Node '" << this->name() << "' initializing for XbotTopic: " << xbot_topic << std::endl;
 
-        std::string asset_id = aas_client_.getInstanceNameByAssetName(xbot_topic);
-        std::cout << "Initializing MQTT topics for asset ID: " << asset_id << std::endl;
+        // Use xbot_topic directly (should be resolved from blackboard)
+        std::string asset_id = xbot_topic;
 
         // Create Topic objects
         auto request_opt = aas_client_.fetchInterface(asset_id, this->name(), "ProductID");

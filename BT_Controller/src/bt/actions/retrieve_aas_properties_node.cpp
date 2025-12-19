@@ -1,4 +1,5 @@
 #include "bt/actions/retrieve_aas_properties_node.h"
+#include "utils.h"
 #include <iostream>
 
 BT::PortsList RetrieveAASPropertyNode::providedPorts()
@@ -42,8 +43,8 @@ BT::NodeStatus RetrieveAASPropertyNode::tick()
 
     try
     {
-        // Resolve asset name to asset ID
-        std::string asset_id = aas_client_.getInstanceNameByAssetName(asset_name);
+        // Use asset name directly (already resolved from blackboard by BehaviorTree.CPP)
+        std::string asset_id = asset_name;
 
         // Parse property input to detect if it's a path (contains |)
         std::optional<nlohmann::json> property_value_opt;

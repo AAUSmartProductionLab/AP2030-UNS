@@ -22,7 +22,6 @@ BehaviorTreeController::BehaviorTreeController(int argc, char *argv[])
       mqtt_halt_bt_flag_{false},
       shutdown_flag_{false},
       sigint_received_{false},
-      station_config_received_{false},
       nodes_registered_{false},
       current_packml_state_{PackML::State::IDLE},
       current_bt_tick_status_{BT::NodeStatus::IDLE}
@@ -85,72 +84,241 @@ void BehaviorTreeController::onSigint()
     sigint_received_ = true;
 }
 
-void BehaviorTreeController::handleStationConfigUpdate(const nlohmann::json &new_config)
+bool BehaviorTreeController::fetchAndBuildEquipmentMapping()
 {
-    // Only allow configuration updates when in IDLE state
-    if (current_packml_state_ != PackML::State::IDLE)
+    std::cout << "Fetching hierarchical structures from AAS..." << std::endl;
+    std::cout << "Asset IDs to resolve:" << std::endl;
+    for (const auto &asset_id : app_params_.asset_ids_to_resolve)
     {
-        std::cout << "Station configuration update ignored. Controller must be in IDLE state. "
-                  << "Current state: " << PackML::stateToString(current_packml_state_) << std::endl;
-        return;
+        std::cout << "  - " << asset_id << std::endl;
     }
 
-    // Validate the new configuration
-    if (!station_config_topic_.validateMessage(new_config))
+    try
     {
-        std::cerr << "Invalid station configuration received. Update rejected." << std::endl;
-        return;
-    }
-
-    {
-        std::lock_guard<std::mutex> lock(station_config_mutex_);
-
-        // Check if configuration actually changed
-        if (station_config_received_ && aas_client_->station_config == new_config)
+        // Clear existing mapping
         {
-            return;
+            std::lock_guard<std::mutex> lock(equipment_mapping_mutex_);
+            equipment_aas_mapping_.clear();
         }
-        // Store the new configuration
-        aas_client_->station_config = new_config;
-        station_config_received_ = true;
-    }
 
-    // Unregister existing nodes if any
-    if (nodes_registered_)
-    {
-        std::cout << "Unregistering existing nodes..." << std::endl;
-        unregisterAllNodes();
-    }
+        // Recursively resolve the hierarchy for each asset in the list
+        std::set<std::string> visited_assets;
+        for (const auto &asset_id : app_params_.asset_ids_to_resolve)
+        {
+            // Extract a simple name from the asset ID for logging
+            std::string asset_name = asset_id.substr(asset_id.find_last_of('/') + 1);
+            recursivelyResolveHierarchy(asset_id, asset_name, visited_assets);
+        }
 
-    if (registerNodesWithStationConfig())
-    {
-        std::cout << "Nodes successfully registered with new configuration." << std::endl;
-        nodes_registered_ = true;
+        {
+            std::lock_guard<std::mutex> lock(equipment_mapping_mutex_);
+
+            if (equipment_aas_mapping_.empty())
+            {
+                std::cerr << "No equipment found in hierarchical structure!" << std::endl;
+                return false;
+            }
+
+            std::cout << "Equipment mapping built successfully with "
+                      << equipment_aas_mapping_.size() << " entries:" << std::endl;
+            for (const auto &[name, id] : equipment_aas_mapping_)
+            {
+                std::cout << "  " << name << " -> " << id << std::endl;
+            }
+        }
+
+        return true;
     }
-    else
+    catch (const std::exception &e)
     {
-        std::cerr << "Failed to register nodes with new station configuration!" << std::endl;
-        nodes_registered_ = false;
+        std::cerr << "Error fetching hierarchical structure: " << e.what() << std::endl;
+        return false;
     }
 }
 
-bool BehaviorTreeController::registerNodesWithStationConfig()
+std::string BehaviorTreeController::getArchetype(const nlohmann::json &hierarchy_submodel)
+{
+    if (!hierarchy_submodel.contains("submodelElements") || !hierarchy_submodel["submodelElements"].is_array())
+    {
+        return "";
+    }
+
+    for (const auto &element : hierarchy_submodel["submodelElements"])
+    {
+        if (element.contains("idShort") && element["idShort"].get<std::string>() == "Archetype" &&
+            element.contains("modelType") && element["modelType"].get<std::string>() == "Property")
+        {
+            if (element.contains("value"))
+            {
+                return element["value"].get<std::string>();
+            }
+        }
+    }
+
+    return "";
+}
+
+void BehaviorTreeController::recursivelyResolveHierarchy(const std::string &asset_id, const std::string &asset_name,
+                                                         std::set<std::string> &visited_assets)
+{
+    std::cout << "Resolving hierarchy for: " << asset_name << " (" << asset_id << ")" << std::endl;
+
+    // Check if we've already visited this asset (cycle detection)
+    if (visited_assets.find(asset_id) != visited_assets.end())
+    {
+        std::cout << "  Already visited " << asset_name << ", skipping to avoid circular reference" << std::endl;
+        return;
+    }
+
+    // Mark as visited
+    visited_assets.insert(asset_id);
+
+    // Lookup the AAS shell ID from the asset ID
+    auto aas_id_opt = aas_client_->lookupAasIdFromAssetId(asset_id);
+    if (!aas_id_opt.has_value())
+    {
+        std::cerr << "Could not find AAS shell for asset: " << asset_id << std::endl;
+        return;
+    }
+
+    std::string aas_shell_id = aas_id_opt.value();
+
+    // Add this asset to the mapping using the AAS shell ID
+    {
+        std::lock_guard<std::mutex> lock(equipment_mapping_mutex_);
+        equipment_aas_mapping_[asset_name] = aas_shell_id;
+    }
+
+    // Fetch the HierarchicalStructures submodel using the AAS shell ID
+    auto hierarchy_opt = aas_client_->fetchHierarchicalStructure(aas_shell_id);
+    if (!hierarchy_opt.has_value())
+    {
+        std::cout << "No hierarchical structure found for " << asset_name << std::endl;
+        return;
+    }
+
+    const auto &hierarchy = hierarchy_opt.value();
+
+    // Check the archetype to determine traversal direction
+    std::string archetype = getArchetype(hierarchy);
+    std::cout << "  Archetype: " << (archetype.empty() ? "(not specified)" : archetype) << std::endl;
+
+    // If archetype is "OneUp", this entity points upward in hierarchy
+    // We should NOT traverse its children as they point back to parents
+    if (archetype == "OneUp")
+    {
+        std::cout << "  Archetype is OneUp, skipping child traversal (points to parent)" << std::endl;
+        return;
+    }
+
+    // Look for submodel elements
+    if (!hierarchy.contains("submodelElements") || !hierarchy["submodelElements"].is_array())
+    {
+        std::cout << "No submodelElements in HierarchicalStructures for " << asset_name << std::endl;
+        return;
+    }
+
+    // Find the EntryNode entity which contains the children
+    nlohmann::json entry_node;
+    bool found_entry_node = false;
+
+    for (const auto &element : hierarchy["submodelElements"])
+    {
+        if (element.contains("idShort") && element["idShort"].get<std::string>() == "EntryNode" &&
+            element.contains("modelType") && element["modelType"].get<std::string>() == "Entity")
+        {
+            entry_node = element;
+            found_entry_node = true;
+            break;
+        }
+    }
+
+    if (!found_entry_node)
+    {
+        std::cout << "No EntryNode found in HierarchicalStructures for " << asset_name << std::endl;
+        return;
+    }
+
+    // Check if EntryNode has statements (children)
+    if (!entry_node.contains("statements") || !entry_node["statements"].is_array())
+    {
+        std::cout << "No statements in EntryNode for " << asset_name << std::endl;
+        return;
+    }
+
+    // Iterate through statements to find child entities
+    for (const auto &statement : entry_node["statements"])
+    {
+        // Look for Entity elements (not RelationshipElement, not SubmodelElementCollection)
+        if (!statement.contains("modelType") || statement["modelType"].get<std::string>() != "Entity")
+        {
+            continue;
+        }
+
+        // Skip if it doesn't have the required fields
+        if (!statement.contains("idShort") || !statement.contains("globalAssetId"))
+        {
+            continue;
+        }
+
+        std::string child_name = statement["idShort"].get<std::string>();
+        std::string child_global_asset_id = statement["globalAssetId"].get<std::string>();
+
+        std::cout << "  Found child: " << child_name << " -> " << child_global_asset_id << std::endl;
+
+        // Recursively resolve this child's hierarchy
+        // Pass the visited set to detect cycles
+        recursivelyResolveHierarchy(child_global_asset_id, child_name, visited_assets);
+    }
+}
+
+void BehaviorTreeController::populateBlackboardWithEquipmentMapping()
+{
+    if (!bt_tree_.rootNode())
+    {
+        std::cerr << "Cannot populate blackboard: tree not initialized" << std::endl;
+        return;
+    }
+
+    auto root_bb = bt_tree_.rootBlackboard();
+    populateBlackboard(root_bb);
+}
+
+void BehaviorTreeController::populateBlackboard(BT::Blackboard::Ptr blackboard)
+{
+    if (!blackboard)
+    {
+        std::cerr << "Cannot populate blackboard: blackboard is null" << std::endl;
+        return;
+    }
+    std::lock_guard<std::mutex> lock(equipment_mapping_mutex_);
+    std::cout << "Populating blackboard with equipment mapping..." << std::endl;
+    // Store each equipment mapping in the blackboard with TWO keys:
+    // 1. Simple name -> AAS URL (e.g., "LoadingSystem" -> "https://.../imaLoadingSystem")
+    for (const auto &[equipment_name, aas_id] : equipment_aas_mapping_)
+    {
+        // Store with simple name as key
+        blackboard->set(equipment_name, aas_id);
+        std::cout << "  Set blackboard[" << equipment_name << "] = " << aas_id << std::endl;
+
+        // Also store with AAS URL as key (self-referencing)
+        blackboard->set(aas_id, aas_id);
+    }
+    std::cout << "Blackboard populated with " << equipment_aas_mapping_.size()
+              << " equipment entries (with both name and URL keys)" << std::endl;
+}
+
+bool BehaviorTreeController::registerNodesWithAASConfig()
 {
     try
     {
-        nlohmann::json config_copy;
-        {
-            std::lock_guard<std::mutex> lock(station_config_mutex_);
-            config_copy = aas_client_->station_config;
-        }
-
-        // Register all nodes with the current station configuration
+        // Register all nodes (they will read equipment mapping from blackboard)
+        nlohmann::json empty_config = nlohmann::json::object();
         registerAllNodes(*bt_factory_, *node_message_distributor_, *mqtt_client_,
-                         *aas_client_, config_copy);
+                         *aas_client_, empty_config);
 
         // Set the node message distributor for base classes
         MqttSubBase::setNodeMessageDistributor(node_message_distributor_.get());
-
         return true;
     }
     catch (const std::exception &e)
@@ -278,7 +446,8 @@ void BehaviorTreeController::loadAppConfiguration(int argc, char *argv[])
         app_params_.aasRegistryUrl,
         app_params_.groot2_port,
         app_params_.bt_description_path,
-        app_params_.bt_nodes_path);
+        app_params_.bt_nodes_path,
+        app_params_.asset_ids_to_resolve);
 
     for (int i = 1; i < argc; ++i)
     {
@@ -292,7 +461,6 @@ void BehaviorTreeController::loadAppConfiguration(int argc, char *argv[])
     app_params_.start_topic = app_params_.unsTopicPrefix + "/" + app_params_.clientId + "/CMD/Start";
     app_params_.stop_topic = app_params_.unsTopicPrefix + "/" + app_params_.clientId + "/CMD/Stop";
     app_params_.halt_topic = app_params_.unsTopicPrefix + "/" + app_params_.clientId + "/CMD/Suspend";
-    app_params_.config_topic = app_params_.unsTopicPrefix + "/Configuration/DATA/Planar/Stations";
 
     std::string state_topic_str = app_params_.unsTopicPrefix + "/" + app_params_.clientId + "/DATA/State";
     std::string state_schema_url = "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/state.schema.json";
@@ -309,22 +477,6 @@ void BehaviorTreeController::loadAppConfiguration(int argc, char *argv[])
         std::cerr << "Warning: Failed to fetch state schema, creating topic without schema validation" << std::endl;
         app_params_.state_publication_config = mqtt_utils::Topic(state_topic_str, nlohmann::json(), 2, true);
     }
-
-    // Initialize station config topic with schema for validation
-    std::string station_schema_url = "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/planarStations.schema.json";
-
-    // Fetch and resolve the station schema
-    nlohmann::json station_schema = schema_utils::fetchSchemaFromUrl(station_schema_url);
-    if (!station_schema.empty())
-    {
-        schema_utils::resolveSchemaReferences(station_schema);
-        station_config_topic_ = mqtt_utils::Topic(app_params_.config_topic, station_schema, 2, false);
-    }
-    else
-    {
-        std::cerr << "Warning: Failed to fetch station schema, creating topic without schema validation" << std::endl;
-        station_config_topic_ = mqtt_utils::Topic(app_params_.config_topic, nlohmann::json(), 2, false);
-    }
 }
 
 void BehaviorTreeController::setupMainMqttMessageHandler()
@@ -339,9 +491,7 @@ void BehaviorTreeController::setupMainMqttMessageHandler()
                 // Only allow start if nodes are registered
                 if (!this->nodes_registered_.load())
                 {
-                    std::cerr << "Cannot start: No station configuration received yet!" << std::endl;
-                    std::cerr << "Please send station configuration to: "
-                              << this->app_params_.config_topic << std::endl;
+                    std::cerr << "Cannot start: Nodes not registered yet!" << std::endl;
                     return;
                 }
                 this->shutdown_flag_ = false;
@@ -356,10 +506,6 @@ void BehaviorTreeController::setupMainMqttMessageHandler()
         else if (topic == this->app_params_.halt_topic)
         {
             this->mqtt_halt_bt_flag_ = true;
-        }
-        else if (topic == this->app_params_.config_topic)
-        {
-            this->handleStationConfigUpdate(payload);
         }
         else
         {
@@ -390,11 +536,32 @@ void BehaviorTreeController::initializeMqttControlInterface()
     mqtt_client_->subscribe_topic(app_params_.start_topic, 2);
     mqtt_client_->subscribe_topic(app_params_.stop_topic, 2);
     mqtt_client_->subscribe_topic(app_params_.halt_topic, 2);
-    mqtt_client_->subscribe_topic(app_params_.config_topic, 2);
 
     std::cout << "MQTT control interface initialized." << std::endl;
-    std::cout << "Waiting for station configuration on topic: "
-              << app_params_.config_topic << std::endl;
+
+    // Fetch equipment mapping from AAS hierarchical structure
+    std::cout << "Fetching production line structure from AAS..." << std::endl;
+    if (fetchAndBuildEquipmentMapping())
+    {
+        std::cout << "Equipment mapping successfully built from AAS" << std::endl;
+
+        // Register nodes with the equipment mapping
+        if (registerNodesWithAASConfig())
+        {
+            std::cout << "Nodes successfully registered with AAS configuration." << std::endl;
+            nodes_registered_ = true;
+        }
+        else
+        {
+            std::cerr << "Failed to register nodes with AAS configuration!" << std::endl;
+            nodes_registered_ = false;
+        }
+    }
+    else
+    {
+        std::cerr << "Failed to fetch equipment mapping from AAS!" << std::endl;
+        std::cerr << "Cannot continue without equipment configuration." << std::endl;
+    }
 
     publishCurrentState();
 }
@@ -406,17 +573,14 @@ bool BehaviorTreeController::handleGenerateXmlModelsOption()
         // For XML generation, we need a dummy configuration
         std::cout << "Generating XML models requires station configuration..." << std::endl;
 
-        if (!station_config_received_)
-        {
-            std::cerr << "Warning: No station configuration available for XML generation." << std::endl;
-            std::cerr << "Using empty configuration." << std::endl;
-            aas_client_->station_config = nlohmann::json::object();
-            aas_client_->station_config["Stations"] = nlohmann::json::object();
-        }
-
         if (!nodes_registered_)
         {
-            registerNodesWithStationConfig();
+            // Fetch equipment mapping from AAS if not already done
+            if (equipment_aas_mapping_.empty())
+            {
+                fetchAndBuildEquipmentMapping();
+            }
+            registerNodesWithAASConfig();
         }
 
         std::string xml_models = BT::writeTreeNodesModelXML(*bt_factory_);
@@ -495,12 +659,10 @@ void BehaviorTreeController::processBehaviorTreeStart()
         return;
     }
 
-    // Check if nodes are registered with station configuration
+    // Check if nodes are registered
     if (!nodes_registered_.load())
     {
-        std::cerr << "Cannot start behavior tree: No station configuration loaded!" << std::endl;
-        std::cerr << "Please send station configuration to: "
-                  << app_params_.config_topic << std::endl;
+        std::cerr << "Cannot start behavior tree: Nodes not registered!" << std::endl;
         mqtt_start_bt_flag_ = false;
         return;
     }
@@ -553,7 +715,13 @@ void BehaviorTreeController::processBehaviorTreeStart()
         try
         {
             bt_factory_->registerBehaviorTreeFromFile(app_params_.bt_description_path);
-            bt_tree_ = bt_factory_->createTree("MainTree");
+
+            // Create blackboard and populate it BEFORE creating the tree
+            // This ensures nodes can access equipment mapping during initialization
+            auto root_blackboard = BT::Blackboard::create();
+            populateBlackboard(root_blackboard);
+
+            bt_tree_ = bt_factory_->createTree("MainTree", root_blackboard);
         }
         catch (const BT::RuntimeError &e)
         {

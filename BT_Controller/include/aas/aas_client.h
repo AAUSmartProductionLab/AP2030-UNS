@@ -21,12 +21,6 @@ public:
         const std::string &interaction,
         const std::string &interfaceProp);
 
-    nlohmann::json station_config;
-
-    // Helper function to search station config for InstanceName by asset name
-    std::string getInstanceNameByAssetName(const std::string &asset_name);
-    std::string getStationIdByAssetName(const std::string &asset_name);
-
     // Fetch a property value directly from the AAS
     // Simple version: searches recursively for first match
     std::optional<nlohmann::json> fetchPropertyValue(
@@ -41,6 +35,15 @@ public:
         const std::string &asset_id,
         const std::string &submodel_id_short,
         const std::vector<std::string> &property_path);
+
+    // Fetch the HierarchicalStructure submodel of an asset
+    std::optional<nlohmann::json> fetchHierarchicalStructure(const std::string &asset_id);
+
+    // Fetch the shell descriptor to get the asset ID from registry
+    std::optional<nlohmann::json> lookupAssetById(const std::string &asset_id);
+
+    // Lookup AAS shell ID from asset ID using the registry
+    std::optional<std::string> lookupAasIdFromAssetId(const std::string &asset_id);
 
 private:
     std::string aas_server_url_;
@@ -61,6 +64,15 @@ private:
 
     // Helper to encode string to base64url format (RFC 4648)
     static std::string base64url_encode(const std::string &input);
+
+    // Helper to find shell endpoint and submodel ID (common logic for fetchInterface and fetchSubmodelData)
+    struct ShellAndSubmodelInfo {
+        std::string shell_path;
+        std::string submodel_id;
+    };
+    std::optional<ShellAndSubmodelInfo> findShellAndSubmodel(
+        const std::string &asset_id,
+        const std::string &submodel_name_pattern);
 
     // Helper to fetch submodel data from AAS (common logic for fetchPropertyValue overloads)
     std::optional<nlohmann::json> fetchSubmodelData(

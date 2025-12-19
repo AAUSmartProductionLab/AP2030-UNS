@@ -13,11 +13,8 @@ void MoveToPosition::initializeTopicsFromAAS()
             return;
         }
 
-        std::string asset_name = asset_input.value();
-        std::cout << "Node '" << this->name() << "' initializing for Asset: " << asset_name << std::endl;
-
-        std::string asset_id = aas_client_.getInstanceNameByAssetName(asset_name);
-        std::cout << "Initializing MQTT topics for asset ID: " << asset_id << std::endl;
+        std::string asset_id = asset_input.value();
+        std::cout << "Node '" << this->name() << "' initializing for Asset: " << asset_id << std::endl;
 
         // Create Topic objects
         auto request_opt = aas_client_.fetchInterface(asset_id, this->name(), "input");
@@ -80,7 +77,9 @@ nlohmann::json MoveToPosition::createMessage()
     nlohmann::json message;
     if (TargetPosition.has_value() && Uuid.has_value())
     {
-        std::string stationId = aas_client_.getStationIdByAssetName(TargetPosition.value());
+        // Use the target position directly as the station ID
+        // The blackboard should already contain station names mapped to their AAS IDs
+        std::string stationId = TargetPosition.value();
         current_uuid_ = Uuid.value();
         message["TargetPosition"] = stationId;
         message["Uuid"] = current_uuid_;

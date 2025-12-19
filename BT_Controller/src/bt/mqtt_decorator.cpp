@@ -50,11 +50,8 @@ void MqttDecorator::initializeTopicsFromAAS()
             return;
         }
 
-        std::string asset_name = asset_input.value();
-        std::cout << "Node '" << this->name() << "' initializing for Asset: " << asset_name << std::endl;
-
-        std::string asset_id = aas_client_.getInstanceNameByAssetName(asset_name);
-        std::cout << "Initializing MQTT topics for asset ID: " << asset_id << std::endl;
+        std::string asset_id = asset_input.value();
+        std::cout << "Node '" << this->name() << "' initializing for Asset: " << asset_id << std::endl;
 
         // Create Topic objects
         auto request_opt = aas_client_.fetchInterface(asset_id, this->name(), "input");

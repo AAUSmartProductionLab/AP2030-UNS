@@ -36,8 +36,10 @@ struct BtControllerParameters
     std::string start_topic;
     std::string stop_topic;
     std::string halt_topic;
-    std::string config_topic;
     mqtt_utils::Topic state_publication_config;
+
+    // AAS Configuration
+    std::vector<std::string> asset_ids_to_resolve;
 };
 
 class BehaviorTreeController
@@ -65,14 +67,14 @@ private:
     std::atomic<bool> mqtt_halt_bt_flag_;
     std::atomic<bool> shutdown_flag_;
     std::atomic<bool> sigint_received_;
-    std::atomic<bool> station_config_received_;
     std::atomic<bool> nodes_registered_;
 
     PackML::State current_packml_state_;
     BT::NodeStatus current_bt_tick_status_;
 
-    std::mutex station_config_mutex_;
-    mqtt_utils::Topic station_config_topic_;
+    // Equipment mapping: asset name -> AAS ID/URL
+    std::map<std::string, std::string> equipment_aas_mapping_;
+    std::mutex equipment_mapping_mutex_;
 
     void setupMainMqttMessageHandler();
 
@@ -86,8 +88,15 @@ private:
     void processBehaviorTreeStart();
     void manageRunningBehaviorTree();
 
-    // New methods for station configuration management
-    void handleStationConfigUpdate(const nlohmann::json &new_config);
-    bool registerNodesWithStationConfig();
+    // Methods for node registration
+    bool registerNodesWithAASConfig();
     void unregisterAllNodes();
+
+    // Methods for AAS hierarchical structure fetching
+    bool fetchAndBuildEquipmentMapping();
+    void recursivelyResolveHierarchy(const std::string &asset_id, const std::string &asset_name,
+                                     std::set<std::string> &visited_assets);
+    std::string getArchetype(const nlohmann::json &hierarchy_submodel);
+    void populateBlackboardWithEquipmentMapping();
+    void populateBlackboard(BT::Blackboard::Ptr blackboard);
 };

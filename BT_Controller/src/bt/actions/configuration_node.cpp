@@ -56,8 +56,14 @@ void ConfigurationNode::initializeTopicsFromAAS()
     try
     {
 
-        std::string asset_id = aas_client_.getInstanceNameByAssetName("product");
-        std::cout << "Initializing MQTT topics for asset ID: " << asset_id << std::endl;
+        // Look up product from blackboard
+        auto product_opt = config().blackboard->getAnyLocked("product");
+        if (!product_opt)
+        {
+            std::cerr << "No equipment mapping found for: product" << std::endl;
+            return;
+        }
+        std::string asset_id = product_opt->cast<std::string>();
 
         // Create Topic objects
         auto response_opt = aas_client_.fetchInterface(asset_id, "config", "output");

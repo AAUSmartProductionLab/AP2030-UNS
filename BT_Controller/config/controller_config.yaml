@@ -6,6 +6,8 @@ mqtt:
 aas:
   server_url: "http://192.168.0.104:8081"
   registry_url: "http://192.168.0.104:8082"
+  asset_ids:
+    - "https://smartproductionlab.aau.dk/assets/aauFillingLine"
 
 groot2:
   port: 1667

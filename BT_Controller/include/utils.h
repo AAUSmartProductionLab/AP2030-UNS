@@ -63,7 +63,9 @@ namespace bt_utils
                             std::string &aasRegistryUrl,
                             int &groot2_port,
                             std::string &bt_description_path,
-                            std::string &bt_nodes_path);
+                            std::string &bt_nodes_path,
+                            std::vector<std::string> &asset_ids_to_resolve);
+
 }
 
 namespace schema_utils

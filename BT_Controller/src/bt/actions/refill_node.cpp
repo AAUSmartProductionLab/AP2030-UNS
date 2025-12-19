@@ -16,9 +16,8 @@ void RefillNode::initializeTopicsFromAAS()
             return;
         }
 
-        std::string asset_name = asset_input.value();
-
-        std::string asset_id = aas_client_.getInstanceNameByAssetName(asset_name);
+        std::string asset_id = asset_input.value();
+        std::cout << "Node '" << this->name() << "' initializing for Asset: " << asset_id << std::endl;
 
         // Create Topic objects
         auto request_opt = aas_client_.fetchInterface(asset_id, "dispense", "input");
@@ -27,9 +26,6 @@ void RefillNode::initializeTopicsFromAAS()
 
         if (!request_opt.has_value() || !response_opt.has_value() || !weight_opt.has_value())
         {
-
-            std::cout << "Node '" << this->name() << "' initializing for Asset: " << asset_name << std::endl;
-            std::cout << "Initializing MQTT topics for asset ID: " << asset_id << std::endl;
             std::cerr << "Failed to fetch interfaces from AAS for node: " << this->name() << std::endl;
             return;
         }

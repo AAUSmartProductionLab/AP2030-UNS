@@ -2,6 +2,7 @@
 #include "mqtt/node_message_distributor.h"
 #include "utils.h"
 #include <iostream>
+#include "behaviortree_cpp/blackboard.h"
 
 namespace fs = std::filesystem;
 // Initialize the static member
