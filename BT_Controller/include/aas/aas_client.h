@@ -66,7 +66,8 @@ private:
     static std::string base64url_encode(const std::string &input);
 
     // Helper to find shell endpoint and submodel ID (common logic for fetchInterface and fetchSubmodelData)
-    struct ShellAndSubmodelInfo {
+    struct ShellAndSubmodelInfo
+    {
         std::string shell_path;
         std::string submodel_id;
     };
