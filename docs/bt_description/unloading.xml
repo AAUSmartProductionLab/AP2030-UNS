@@ -2,7 +2,7 @@
 <root BTCPP_format="4">
   <BehaviorTree ID="Unload">
     <Occupy Uuid="{ProductID}"
-            Asset="{UnloadAsset}"
+            Asset="{UnloadSystem}"
             _skipIf="scrap == true">
       <ReactiveSequence>
         <ReactiveFallback>
@@ -10,7 +10,7 @@
                           Field="State"
                           expected_value="operational"
                           Property="PackMLState"
-                          Asset="{UnloadAsset}"/>
+                          Asset="{UnloadSystem}"/>
           <Sleep msec="10000"/>
         </ReactiveFallback>
         <Sequence>
@@ -20,7 +20,7 @@
           <Command_Execution Parameters="&apos;{}&apos;"
                              Uuid="{ProductID}"
                              Operation="unload"
-                             Asset="{UnloadAsset}"/>
+                             Asset="{UnloadSystem}"/>
         </Sequence>
       </ReactiveSequence>
     </Occupy>
