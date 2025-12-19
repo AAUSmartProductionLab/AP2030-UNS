@@ -35,7 +35,8 @@ struct BtControllerParameters
     std::string bt_nodes_path;
     std::string start_topic;
     std::string stop_topic;
-    std::string halt_topic;
+    std::string suspend_topic;
+    std::string unsuspend_topic;
     mqtt_utils::Topic state_publication_config;
 
     // AAS Configuration
@@ -64,7 +65,8 @@ private:
     std::unique_ptr<BT::Groot2Publisher> bt_publisher_;
 
     std::atomic<bool> mqtt_start_bt_flag_;
-    std::atomic<bool> mqtt_halt_bt_flag_;
+    std::atomic<bool> mqtt_suspend_bt_flag_;
+    std::atomic<bool> mqtt_unsuspend_bt_flag_;
     std::atomic<bool> shutdown_flag_;
     std::atomic<bool> sigint_received_;
     std::atomic<bool> nodes_registered_;
@@ -86,6 +88,7 @@ private:
     void publishCurrentState();
 
     void processBehaviorTreeStart();
+    void processBehaviorTreeUnsuspend();
     void manageRunningBehaviorTree();
 
     // Methods for node registration

@@ -37,7 +37,7 @@ void Occupy::initializeTopicsFromAAS()
 
         MqttPubBase::setTopic("occupyRequest", register_opt.value());
         MqttPubBase::setTopic("releaseRequest", unregister_opt.value());
-        MqttSubBase::setTopic("occupyRespose", register_response_opt.value());
+        MqttSubBase::setTopic("occupyResponse", register_response_opt.value());
         MqttSubBase::setTopic("releaseResponse", unregister_response_opt.value());
     }
     catch (const std::exception &e)
@@ -92,7 +92,11 @@ void Occupy::halt()
     {
         current_uuid_ = uuid.value();
     }
-    sendUnregisterCommand();
+    // Only send unregister if topics were initialized
+    if (MqttPubBase::topics_.find("releaseRequest") != MqttPubBase::topics_.end())
+    {
+        sendUnregisterCommand();
+    }
     DecoratorNode::halt();
 }
 

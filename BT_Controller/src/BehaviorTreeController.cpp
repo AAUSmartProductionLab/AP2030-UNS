@@ -19,7 +19,8 @@ BehaviorTreeController *g_controller_instance = nullptr;
 
 BehaviorTreeController::BehaviorTreeController(int argc, char *argv[])
     : mqtt_start_bt_flag_{false},
-      mqtt_halt_bt_flag_{false},
+      mqtt_suspend_bt_flag_{false},
+      mqtt_unsuspend_bt_flag_{false},
       shutdown_flag_{false},
       sigint_received_{false},
       nodes_registered_{false},
@@ -399,6 +400,15 @@ int BehaviorTreeController::run()
             mqtt_start_bt_flag_ = false;
         }
 
+        if (mqtt_unsuspend_bt_flag_.load())
+        {
+            if (!sigint_received_.load() && current_packml_state_ == PackML::State::SUSPENDED)
+            {
+                processBehaviorTreeUnsuspend();
+            }
+            mqtt_unsuspend_bt_flag_ = false;
+        }
+
         if (current_packml_state_ == PackML::State::EXECUTE)
         {
             manageRunningBehaviorTree();
@@ -444,7 +454,8 @@ void BehaviorTreeController::loadAppConfiguration(int argc, char *argv[])
 
     app_params_.start_topic = app_params_.unsTopicPrefix + "/" + app_params_.clientId + "/CMD/Start";
     app_params_.stop_topic = app_params_.unsTopicPrefix + "/" + app_params_.clientId + "/CMD/Stop";
-    app_params_.halt_topic = app_params_.unsTopicPrefix + "/" + app_params_.clientId + "/CMD/Suspend";
+    app_params_.suspend_topic = app_params_.unsTopicPrefix + "/" + app_params_.clientId + "/CMD/Suspend";
+    app_params_.unsuspend_topic = app_params_.unsTopicPrefix + "/" + app_params_.clientId + "/CMD/Unsuspend";
 
     std::string state_topic_str = app_params_.unsTopicPrefix + "/" + app_params_.clientId + "/DATA/State";
     std::string state_schema_url = "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/state.schema.json";
@@ -478,8 +489,15 @@ void BehaviorTreeController::setupMainMqttMessageHandler()
                     std::cerr << "Cannot start: Nodes not registered yet!" << std::endl;
                     return;
                 }
+                // Per PackML standards, start command should not work from SUSPENDED state
+                if (this->current_packml_state_ == PackML::State::SUSPENDED)
+                {
+                    std::cerr << "Cannot start from SUSPENDED state. Use unsuspend command instead." << std::endl;
+                    return;
+                }
                 this->shutdown_flag_ = false;
-                this->mqtt_halt_bt_flag_ = false;
+                this->mqtt_suspend_bt_flag_ = false;
+                this->mqtt_unsuspend_bt_flag_ = false;
                 this->mqtt_start_bt_flag_ = true;
             }
         }
@@ -487,9 +505,20 @@ void BehaviorTreeController::setupMainMqttMessageHandler()
         {
             this->requestShutdown();
         }
-        else if (topic == this->app_params_.halt_topic)
+        else if (topic == this->app_params_.suspend_topic)
         {
-            this->mqtt_halt_bt_flag_ = true;
+            this->mqtt_suspend_bt_flag_ = true;
+        }
+        else if (topic == this->app_params_.unsuspend_topic)
+        {
+            if (this->current_packml_state_ == PackML::State::SUSPENDED)
+            {
+                this->mqtt_unsuspend_bt_flag_ = true;
+            }
+            else
+            {
+                std::cerr << "Unsuspend command can only be used from SUSPENDED state." << std::endl;
+            }
         }
         else
         {
@@ -519,7 +548,8 @@ void BehaviorTreeController::initializeMqttControlInterface()
 
     mqtt_client_->subscribe_topic(app_params_.start_topic, 2);
     mqtt_client_->subscribe_topic(app_params_.stop_topic, 2);
-    mqtt_client_->subscribe_topic(app_params_.halt_topic, 2);
+    mqtt_client_->subscribe_topic(app_params_.suspend_topic, 2);
+    mqtt_client_->subscribe_topic(app_params_.unsuspend_topic, 2);
 
     std::cout << "MQTT control interface initialized." << std::endl;
 
@@ -651,15 +681,14 @@ void BehaviorTreeController::processBehaviorTreeStart()
         return;
     }
 
-    if (current_packml_state_ == PackML::State::SUSPENDED && bt_tree_.rootNode())
+    // Start command should not handle SUSPENDED state - that's handled by unsuspend
+    if (current_packml_state_ == PackML::State::SUSPENDED)
     {
-        std::cout << "Resuming suspended behavior tree." << std::endl;
-        if (mqtt_client_)
-        {
-            mqtt_client_->set_message_handler(main_mqtt_message_handler_);
-        }
+        std::cerr << "Cannot start from SUSPENDED state. Use unsuspend command." << std::endl;
+        mqtt_start_bt_flag_ = false;
+        return;
     }
-    else
+
     {
         if (mqtt_client_)
         {
@@ -756,8 +785,39 @@ void BehaviorTreeController::processBehaviorTreeStart()
     }
 
     shutdown_flag_ = false;
-    mqtt_halt_bt_flag_ = false;
-    std::cout << "====== Behavior tree starting/resuming... ======" << std::endl;
+    mqtt_suspend_bt_flag_ = false;
+    mqtt_unsuspend_bt_flag_ = false;
+    std::cout << "====== Behavior tree starting... ======" << std::endl;
+    setStateAndPublish(PackML::State::EXECUTE, BT::NodeStatus::IDLE);
+}
+
+void BehaviorTreeController::processBehaviorTreeUnsuspend()
+{
+    if (current_packml_state_ != PackML::State::SUSPENDED)
+    {
+        std::cerr << "Cannot unsuspend: Not in SUSPENDED state" << std::endl;
+        return;
+    }
+
+    if (!bt_tree_.rootNode())
+    {
+        std::cerr << "Cannot unsuspend: No behavior tree exists" << std::endl;
+        setStateAndPublish(PackML::State::IDLE);
+        return;
+    }
+
+    std::cout << "====== Resuming suspended behavior tree... ======" << std::endl;
+
+    // Restore message handler if needed
+    if (mqtt_client_)
+    {
+        mqtt_client_->set_message_handler(main_mqtt_message_handler_);
+    }
+
+    shutdown_flag_ = false;
+    mqtt_suspend_bt_flag_ = false;
+    mqtt_unsuspend_bt_flag_ = false;
+
     setStateAndPublish(PackML::State::EXECUTE, BT::NodeStatus::IDLE);
 }
 
@@ -778,13 +838,21 @@ void BehaviorTreeController::manageRunningBehaviorTree()
         bt_tree_.haltTree();
         setStateAndPublish(PackML::State::STOPPED);
     }
-    else if (mqtt_halt_bt_flag_.load())
+    else if (mqtt_suspend_bt_flag_.load())
+    {
+        std::cout << "SUSPEND command active during EXECUTE. "
+                  << "Halting tree and transitioning to SUSPENDED..." << std::endl;
+        bt_tree_.haltTree();
+        mqtt_suspend_bt_flag_ = false;
+        setStateAndPublish(PackML::State::SUSPENDED);
+    }
+    else if (mqtt_unsuspend_bt_flag_.load())
     {
         std::cout << "HALT command active during EXECUTE. "
                   << "Halting tree and transitioning to SUSPENDED..." << std::endl;
         bt_tree_.haltTree();
-        mqtt_halt_bt_flag_ = false;
-        setStateAndPublish(PackML::State::SUSPENDED);
+        mqtt_unsuspend_bt_flag_ = false;
+        setStateAndPublish(PackML::State::EXECUTE);
     }
     else
     {
