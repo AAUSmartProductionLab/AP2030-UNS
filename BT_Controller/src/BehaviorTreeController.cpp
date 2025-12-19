@@ -272,18 +272,6 @@ void BehaviorTreeController::recursivelyResolveHierarchy(const std::string &asse
     }
 }
 
-void BehaviorTreeController::populateBlackboardWithEquipmentMapping()
-{
-    if (!bt_tree_.rootNode())
-    {
-        std::cerr << "Cannot populate blackboard: tree not initialized" << std::endl;
-        return;
-    }
-
-    auto root_bb = bt_tree_.rootBlackboard();
-    populateBlackboard(root_bb);
-}
-
 void BehaviorTreeController::populateBlackboard(BT::Blackboard::Ptr blackboard)
 {
     if (!blackboard)
@@ -291,6 +279,7 @@ void BehaviorTreeController::populateBlackboard(BT::Blackboard::Ptr blackboard)
         std::cerr << "Cannot populate blackboard: blackboard is null" << std::endl;
         return;
     }
+
     std::lock_guard<std::mutex> lock(equipment_mapping_mutex_);
     std::cout << "Populating blackboard with equipment mapping..." << std::endl;
 

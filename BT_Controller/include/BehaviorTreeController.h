@@ -97,6 +97,5 @@ private:
     void recursivelyResolveHierarchy(const std::string &asset_id, const std::string &asset_name,
                                      std::set<std::string> &visited_assets);
     std::string getArchetype(const nlohmann::json &hierarchy_submodel);
-    void populateBlackboardWithEquipmentMapping();
     void populateBlackboard(BT::Blackboard::Ptr blackboard);
 };
