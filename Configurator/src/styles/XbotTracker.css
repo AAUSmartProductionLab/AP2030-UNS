@@ -447,8 +447,16 @@
   color: #212529;
 }
 
+.suspend-button:hover {
+  background-color: #4610e7; /* Teal */
+}
+
 .hold-button:hover {
   background-color: #17a2b8; /* Teal */
+}
+
+.suspend-button.unsuspend-active:hover {
+  background-color: #fd7e14; /* Orange */
 }
 
 .hold-button.unhold-active:hover {

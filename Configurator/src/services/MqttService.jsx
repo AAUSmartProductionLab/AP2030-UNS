@@ -379,7 +379,7 @@ class MqttService {
       'Failed to publish limits'
     );
   }
-
+  //TODO these should be alligned to our json schemas for commands.
   // System control methods
   startSystem() {
     const topic = "NN/Nybrovej/InnoLab/bt_controller/CMD/Start";
@@ -399,15 +399,15 @@ class MqttService {
     this.publish(topic, message, { qos: 1, retain: false });
   }
 
-  holdSystem() {
-    const topic = "NN/Nybrovej/InnoLab/bt_controller/CMD/Hold";
-    const message = JSON.stringify({ Command: "Hold", Timestamp: new Date().toISOString() });
+  suspendSystem() {
+    const topic = "NN/Nybrovej/InnoLab/bt_controller/CMD/Suspend";
+    const message = JSON.stringify({ Command: "Suspend", Timestamp: new Date().toISOString() });
     this.publish(topic, message, { qos: 1, retain: false });
   }
 
-  unholdSystem() {
-    const topic = "NN/Nybrovej/InnoLab/bt_controller/CMD/Unhold";
-    const message = JSON.stringify({ Command: "Unhold", Timestamp: new Date().toISOString() });
+  unsuspendSystem() {
+    const topic = "NN/Nybrovej/InnoLab/bt_controller/CMD/Unsuspend";
+    const message = JSON.stringify({ Command: "Unsuspend", Timestamp: new Date().toISOString() });
     this.publish(topic, message, { qos: 1, retain: false });
   }
 

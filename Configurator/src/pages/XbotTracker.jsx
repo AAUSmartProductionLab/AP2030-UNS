@@ -246,7 +246,7 @@ const XbotTracker = () => {
   const [stationLiveStates, setStationLiveStates] = useState({});
   const [btControllerState, setBtControllerState] = useState(null);
   const [planarSystemState, setPlanarSystemState] = useState(null);
-  const [isBtHolding, setIsBtHolding] = useState(false);
+  const [isBtSuspended, setIsBtSuspended] = useState(false);
   const [isPlanarHolding, setIsPlanarHolding] = useState(false);
 
   // Add new state for Planar button states
@@ -257,6 +257,14 @@ const XbotTracker = () => {
     Stop: true,
     Hold: true,
     UnHold: true
+  });
+
+  const [btButtonStates, setBtButtonStates] = useState({
+    Reset: true,
+    Start: true,
+    Stop: true,
+    Suspend: true,
+    Unsuspend: true
   });
 
   const animationFrameId = useRef(null);
@@ -292,7 +300,118 @@ const XbotTracker = () => {
         const data = typeof message === 'string' ? JSON.parse(message) : message;
         const stateKey = data.State?.toLowerCase();
         if (stateKey && stationDisplayStates[stateKey]) {
-          setBtControllerState(stateKey);
+          //There is probably a cleaner way of doing this and ideally it should also be based on answers from the bt to the commands TODO improve
+          if (stateKey == "stopped"){
+            setBtButtonStates({
+              Reset: true,
+              Start: false,
+              Stop: false,
+              Suspend: false,
+              UnSuspend: false
+            });
+          }
+          else if(stateKey == "resetting")
+          {
+            setBtButtonStates({
+              Reset: false,
+              Start: false,
+              Stop: true,
+              Suspend: false,
+              UnSuspend: false
+            });
+          }
+          else if(stateKey == "idle")
+          {
+            setBtButtonStates({
+              Reset: false,
+              Start: true,
+              Stop: true,
+              Suspend: false,
+              UnSuspend: false
+            });
+          }
+          else if(stateKey == "starting")
+          {
+            setBtButtonStates({
+              Reset: false,
+              Start: false,
+              Stop: true,
+              Suspend: false,
+              UnSuspend: false
+            });
+
+          }
+          else if(stateKey == "executing")
+          {
+            setBtButtonStates({
+              Reset: false,
+              Start: false,
+              Stop: true,
+              Suspend: true,
+              UnSuspend: false
+            });
+          }
+          else if(stateKey == "completing")
+          {
+            setBtButtonStates({
+              Reset: false,
+              Start: false,
+              Stop: true,
+              Suspend: false,
+              UnSuspend: false
+            });
+          }
+          else if(stateKey == "complete")
+          {
+            setBtButtonStates({
+              Reset: true,
+              Start: false,
+              Stop: true,
+              Suspend: false,
+              UnSuspend: false
+            });
+          }
+          else if(stateKey == "suspending")
+          {
+            setBtButtonStates({
+              Reset: false,
+              Start: false,
+              Stop: true,
+              Suspend: false,
+              UnSuspend: false
+            });
+          }
+          else if(stateKey == "suspended")
+          {
+            setBtButtonStates({
+              Reset: false,
+              Start: false,
+              Stop: true,
+              Suspend: false,
+              UnSuspend: true
+            });
+          }
+          else if(stateKey == "unsuspending")
+          {
+            setBtButtonStates({
+              Reset: false,
+              Start: false,
+              Stop: true,
+              Suspend: false,
+              UnSuspend: false
+            });
+          }
+          else if(stateKey == "stopping")
+          {
+            setBtButtonStates({
+              Reset: true,
+              Start: false,
+              Stop: false,
+              Suspend: false,
+              UnSuspend: false
+            });
+          }
+        setBtControllerState(stateKey);
         } else {
           console.warn(`BTControllerState: Received unknown state "${data.State}" from topic ${topic}`);
           setBtControllerState(data.State || 'unknown'); 
@@ -578,14 +697,14 @@ const XbotTracker = () => {
   const handleBtStartSystem = useCallback(() => mqttService.startSystem(), []);
   const handleBtStopSystem = useCallback(() => mqttService.stopSystem(), []);
   const handleBtResetSystem = useCallback(() => mqttService.resetSystem(), []);
-  const handleBtToggleHoldSystem = useCallback(() => {
-    if (isBtHolding) {
-      mqttService.unholdSystem();
+  const handleBtToggleSuspendSystem = useCallback(() => {
+    if (isBtSuspended) {
+      mqttService.unsuspendSystem();
     } else {
-      mqttService.holdSystem();
+      mqttService.suspendSystem();
     }
-    setIsBtHolding(!isBtHolding);
-  }, [isBtHolding]);
+    setIsBtSuspended(!isBtSuspended);
+  }, [isBtSuspended]);
 
   // Planar Control Handlers
   const handlePlanarStartSystem = useCallback(() => {
@@ -741,14 +860,33 @@ const XbotTracker = () => {
         <div className="control-sidebar">
           <div className="control-section">
             <h3>Behavior Tree Controls</h3>
-            <button className="control-button start-button" onClick={handleBtStartSystem}>Start</button>
-            <button className="control-button stop-button" onClick={handleBtStopSystem}>Stop</button>
-            <button className="control-button reset-button-system" onClick={handleBtResetSystem}>Clear</button>
             <button 
-              className={`control-button hold-button ${isBtHolding ? 'unhold-active' : 'hold-active'}`} 
-              onClick={handleBtToggleHoldSystem}
+              className="control-button start-button" 
+              onClick={handleBtStartSystem}
+              disabled={!btButtonStates.Start}
             >
-              {isBtHolding ? 'Unsuspend' : 'Suspend'}
+                Start
+            </button>
+            <button 
+              className="control-button stop-button" 
+              onClick={handleBtStopSystem}
+              disabled={!btButtonStates.Stop}
+              >
+              Stop
+            </button>
+            <button 
+              className="control-button reset-button-system" 
+              onClick={handleBtResetSystem}
+              disabled={!btButtonStates.Reset}
+            >
+              Reset
+            </button>
+            <button 
+              className={`control-button suspend-button ${isBtSuspended ? 'unsuspend-active' : 'suspend-active'}`} 
+              onClick={handleBtToggleSuspendSystem}
+              disabled={isPlanarHolding ? !btButtonStates.Unsuspend : !btButtonStates.Suspend}
+            >
+              {isBtSuspended ? 'Unsuspend' : 'Suspend'}
             </button>
           </div>
 
@@ -895,8 +1033,15 @@ const XbotTracker = () => {
                     setStationLiveStates({}); 
                     setBtControllerState(null);
                     setPlanarSystemState(null);
-                    setIsBtHolding(false);
+                    setIsBtSuspended(false);
                     setIsPlanarHolding(false);
+                    setBtButtonStates({
+                      Reset: true,
+                      Start: true,
+                      Stop: true,
+                      Suspend: true,
+                      Unsuspend: true
+                    })
                     setPlanarButtonStates({
                       Clear: true,
                       Reset: true,
