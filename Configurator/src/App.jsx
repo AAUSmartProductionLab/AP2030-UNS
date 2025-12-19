@@ -7,7 +7,7 @@ import BatchConfigurator from "./pages/BatchConfigurator";
 import Homepage from "./pages/Homepage";
 import Settings from "./pages/Settings";
 import XbotTracker from "./pages/XbotTracker";
-import SOPDashboard from "./pages/SOPDashboard"; // Add this import
+import SOPDashboard from "./pages/SOPDashboard";
 import mqttService from "./services/MqttService";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -32,7 +32,7 @@ const TitleUpdater = () => {
       case '/xbot-tracker':
         document.title = `${baseTitle} | Xbot Tracker`;
         break;
-      case '/sop-dashboard': // Add this case
+      case '/sop-dashboard':
         document.title = `${baseTitle} | SOP Dashboard`;
         break;
       case '/settings':
@@ -98,7 +98,6 @@ export default function App() {
               <i className="nav-icon robot-icon"></i> 
               <span>Production Live View</span>
             </NavLink>
-            {/* Add NavLink for SOP Dashboard */}
             <NavLink to="/sop-dashboard" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
               <i className="nav-icon checklist-icon"></i>
               <span>SOP Dashboard</span>
@@ -125,7 +124,7 @@ export default function App() {
               <Route path="/batches" element={<BatchConfigurator />} />
               <Route path="/planar-motor" element={<PlanarMotorConfigurator />} />
               <Route path="/xbot-tracker" element={<XbotTracker />} />
-              <Route path="/sop-dashboard" element={<SOPDashboard />} /> {/* Add this route */}
+              <Route path="/sop-dashboard" element={<SOPDashboard />} />
               <Route path="/settings" element={<Settings />} />
             </PersistentRouter>
         </PlanarMotorProvider> 

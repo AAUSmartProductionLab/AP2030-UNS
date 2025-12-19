@@ -6,10 +6,9 @@ export const ConfigPanel = ({
   onClearStations, 
   onClearLimits, 
   onClearAll, 
-  onSubmit, 
-  onSubmitLowest,
-  onPublishConfig,
   onSetDefaultStations,
+  onPublishConfig,
+  publishDisabled,
   config 
 }) => {
   const [localConfig, setLocalConfig] = useState({
@@ -154,39 +153,20 @@ export const ConfigPanel = ({
           >
             Clear All
           </button>
-        </div>
-      </div>
-      
-      {/* Section 3: Publish */}
-      <div className="config-section">
-        <h3>Publish</h3>
-        <div className="buttons-section">
-          <button 
-            className="config-button submit-button" 
-            onClick={onSubmit}
-          >
-            Publish Stations
-          </button>
-          
-          <button 
-            className="config-button submit-lowest-button" 
-            onClick={onSubmitLowest}
-          >
-            Publish Limits
-          </button>
-          
-          <button 
-            className="config-button publish-config-button" 
-            onClick={onPublishConfig}
-          >
-            Publish Configuration
-          </button>
           {onSetDefaultStations && (
             <button 
               className="config-button default-layout-button" 
               onClick={onSetDefaultStations}
             >
               Set Default Layout
+            </button>)}
+          {onPublishConfig && (
+            <button 
+              className="config-button publish-config-button" 
+              onClick={onPublishConfig}
+              disabled={publishDisabled}
+            >
+              Publish Configuration
             </button>)}
         </div>
       </div>

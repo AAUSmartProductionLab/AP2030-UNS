@@ -141,12 +141,23 @@
   }
 
   .publish-config-button {
-    background-color: #00A040; /* Green color for configuration */
+    background-color: #0033A0; /* Novo Nordisk Blue - primary action */
     color: white;
+    margin-top: 10px;
+    font-weight: 600;
   }
   
-  .publish-config-button:hover {
-    background-color: #008535;
+  .publish-config-button:hover:not(:disabled) {
+    background-color: #002369;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 51, 160, 0.3);
+  }
+
+  .publish-config-button:disabled {
+    background-color: #cccccc;
+    color: #666666;
+    cursor: not-allowed;
+    box-shadow: none;
   }
 
   .default-layout-button {

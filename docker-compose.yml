@@ -21,6 +21,7 @@ services:
     build:
       context: ./Configurator
       dockerfile: Dockerfile.frontend
+      target: dev
     ports:
       - "5173:5173"
     volumes:

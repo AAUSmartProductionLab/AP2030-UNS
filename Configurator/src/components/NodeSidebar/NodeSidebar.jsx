@@ -58,6 +58,7 @@ export const NodeSidebar = ({ categories }) => {
                       color={node.color}
                       isTemplate
                       inSidebar={true}
+                      nodeData={node}
                     />
                   </div>
                 ))}
