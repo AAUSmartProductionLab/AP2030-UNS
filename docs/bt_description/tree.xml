@@ -11,7 +11,7 @@
                           Field="State"
                           expected_value="operational"
                           Property="PackMLState"
-                          Asset="MotionAsset"/>
+                          Asset="{PlanarTable}"/>
           <SubTree ID="PlanarSOP"
                    Asset="Operator"
                    _autoremap="true"/>
@@ -19,15 +19,15 @@
         <Parallel failure_count="-1"
                   success_count="1">
           <SubTree ID="Xbot_Production"
-                   Xbot="Xbot1"
+                   Xbot="{Xbot1}"
                    ProductID=""
                    _autoremap="true"/>
           <SubTree ID="Xbot_Production"
-                   Xbot="Xbot2"
+                   Xbot="{Xbot2}"
                    ProductID=""
                    _autoremap="true"/>
           <SubTree ID="Xbot_Production"
-                   Xbot="Xbot3"
+                   Xbot="{Xbot3}"
                    ProductID=""
                    _autoremap="true"/>
         </Parallel>
