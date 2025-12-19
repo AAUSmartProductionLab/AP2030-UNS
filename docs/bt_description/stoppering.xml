@@ -2,7 +2,7 @@
 <root BTCPP_format="4">
   <BehaviorTree ID="Stoppering">
     <Occupy Uuid="{ProductID}"
-            Asset="{StopperingAsset}"
+            Asset="{StopperingSystem}"
             _skipIf="scrap == true">
       <ReactiveSequence>
         <ReactiveFallback>
@@ -10,7 +10,7 @@
                           Field="State"
                           expected_value="operational"
                           Property="PackMLState"
-                          Asset="{StopperingAsset}"/>
+                          Asset="{StopperingSystem}"/>
           <Sleep msec="10000"/>
         </ReactiveFallback>
         <Sequence>
@@ -20,7 +20,7 @@
           <Command_Execution Parameters="&apos;{}&apos;"
                              Uuid="{ProductID}"
                              Operation="stopper"
-                             Asset="{StopperingAsset}"/>
+                             Asset="{StopperingSystem}"/>
         </Sequence>
       </ReactiveSequence>
     </Occupy>

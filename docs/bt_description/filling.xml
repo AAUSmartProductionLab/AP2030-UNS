@@ -2,7 +2,7 @@
 <root BTCPP_format="4">
   <BehaviorTree ID="Filling">
     <Occupy Uuid="{ProductID}"
-            Asset="{FillingAsset}"
+            Asset="{FillingSystem}"
             _skipIf="scrap == true">
       <ReactiveSequence>
         <ReactiveFallback>
@@ -10,7 +10,7 @@
                           Field="State"
                           expected_value="operational"
                           Property="PackMLState"
-                          Asset="{FillingAsset}"/>
+                          Asset="{FillingSystem}"/>
           <Sleep msec="10000"/>
         </ReactiveFallback>
         <Sequence>
@@ -20,32 +20,32 @@
           <Command_Execution Parameters="&apos;{}&apos;"
                              Uuid="{ProductID}"
                              Operation="tare"
-                             Asset="{FillingAsset}"/>
+                             Asset="{FillingSystem}"/>
           <BC_Fallback _onFailure="scrap:= true">
             <Data_Condition comparison_type="inside"
                             Field="Weight"
                             expected_value="2.0;2.2"
                             Property="weight"
-                            Asset="{FillingAsset}"/>
+                            Asset="{FillingSystem}"/>
             <Sequence>
               <Data_Condition comparison_type="equal"
                               Field="Weight"
                               expected_value="0"
                               Property="weight"
-                              Asset="{FillingAsset}"/>
+                              Asset="{FillingSystem}"/>
               <Command_Execution Parameters="&apos;{}&apos;"
                                  Uuid="{ProductID}"
                                  Operation="dispense"
-                                 Asset="{FillingAsset}"/>
+                                 Asset="{FillingSystem}"/>
             </Sequence>
             <Sequence>
               <Data_Condition comparison_type="greater"
                               Field="Weight"
                               expected_value="0"
                               Property="weight"
-                              Asset="{FillingAsset}"/>
+                              Asset="{FillingSystem}"/>
               <Refill_Node Uuid="{ProductID}"
-                           Asset="{FillingAsset}"/>
+                           Asset="{FillingSystem}"/>
             </Sequence>
           </BC_Fallback>
         </Sequence>
