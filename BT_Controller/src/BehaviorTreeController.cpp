@@ -21,10 +21,11 @@ BehaviorTreeController::BehaviorTreeController(int argc, char *argv[])
     : mqtt_start_bt_flag_{false},
       mqtt_suspend_bt_flag_{false},
       mqtt_unsuspend_bt_flag_{false},
+      mqtt_reset_bt_flag_{false},
       shutdown_flag_{false},
       sigint_received_{false},
       nodes_registered_{false},
-      current_packml_state_{PackML::State::IDLE},
+      current_packml_state_{PackML::State::STOPPED},
       current_bt_tick_status_{BT::NodeStatus::IDLE}
 {
     g_controller_instance = this;
@@ -85,7 +86,7 @@ void BehaviorTreeController::onSigint()
     sigint_received_ = true;
 }
 
-bool BehaviorTreeController::fetchAndBuildEquipmentMapping()
+bool BehaviorTreeController::fetchAndBuildEquipmentMapping(BT::Blackboard::Ptr blackboard)
 {
     std::cout << "Fetching hierarchical structures from AAS..." << std::endl;
     std::cout << "Asset IDs to resolve:" << std::endl;
@@ -126,6 +127,12 @@ bool BehaviorTreeController::fetchAndBuildEquipmentMapping()
             {
                 std::cout << "  " << name << " -> " << id << std::endl;
             }
+        }
+
+        // Populate blackboard if provided
+        if (blackboard)
+        {
+            populateBlackboard(blackboard);
         }
 
         return true;
@@ -365,41 +372,48 @@ int BehaviorTreeController::run()
 
     while (true)
     {
+        // Handle reset command - transition to RESETTING state
+        if (mqtt_reset_bt_flag_.load())
+        {
+            if (!sigint_received_.load())
+            {
+                processResettingState();
+            }
+            mqtt_reset_bt_flag_ = false;
+        }
+
+        // Handle shutdown/stop during execution
         if (shutdown_flag_.load() && !mqtt_start_bt_flag_.load())
         {
-            if (current_packml_state_ != PackML::State::EXECUTE)
+            if (current_packml_state_ == PackML::State::EXECUTE)
             {
-                if (current_packml_state_ != PackML::State::STOPPED && current_packml_state_ != PackML::State::IDLE)
-                {
-                    setStateAndPublish(PackML::State::STOPPED);
-                }
-                if (current_packml_state_ == PackML::State::STOPPED)
-                {
-                    setStateAndPublish(PackML::State::IDLE);
-                }
-                if (current_packml_state_ == PackML::State::IDLE && shutdown_flag_.load())
-                {
-                    if (sigint_received_.load())
-                    {
-                        break;
-                    }
-                    else
-                    {
-                        shutdown_flag_ = false;
-                    }
-                }
+                // Stop will be handled in manageRunningBehaviorTree
+            }
+            else if (current_packml_state_ == PackML::State::IDLE)
+            {
+                // Transition from IDLE to STOPPED when stop command received
+                setStateAndPublish(PackML::State::STOPPED);
+            }
+            // If already in STOPPED or COMPLETE, remain there until reset
+
+            // Only exit on SIGINT
+            if (sigint_received_.load())
+            {
+                break;
             }
         }
 
+        // Handle start command
         if (mqtt_start_bt_flag_.load())
         {
-            if (!sigint_received_.load())
+            if (!sigint_received_.load() && current_packml_state_ == PackML::State::IDLE)
             {
                 processBehaviorTreeStart();
             }
             mqtt_start_bt_flag_ = false;
         }
 
+        // Handle unsuspend command
         if (mqtt_unsuspend_bt_flag_.load())
         {
             if (!sigint_received_.load() && current_packml_state_ == PackML::State::SUSPENDED)
@@ -409,20 +423,14 @@ int BehaviorTreeController::run()
             mqtt_unsuspend_bt_flag_ = false;
         }
 
+        // Execute behavior tree if in EXECUTE state
         if (current_packml_state_ == PackML::State::EXECUTE)
         {
             manageRunningBehaviorTree();
         }
         else
         {
-            if (sigint_received_.load() && current_packml_state_ == PackML::State::IDLE && shutdown_flag_.load())
-            {
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
-            }
-            else
-            {
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
     }
     return 0;
@@ -456,6 +464,7 @@ void BehaviorTreeController::loadAppConfiguration(int argc, char *argv[])
     app_params_.stop_topic = app_params_.unsTopicPrefix + "/" + app_params_.clientId + "/CMD/Stop";
     app_params_.suspend_topic = app_params_.unsTopicPrefix + "/" + app_params_.clientId + "/CMD/Suspend";
     app_params_.unsuspend_topic = app_params_.unsTopicPrefix + "/" + app_params_.clientId + "/CMD/Unsuspend";
+    app_params_.reset_topic = app_params_.unsTopicPrefix + "/" + app_params_.clientId + "/CMD/Reset";
 
     std::string state_topic_str = app_params_.unsTopicPrefix + "/" + app_params_.clientId + "/DATA/State";
     std::string state_schema_url = "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/state.schema.json";
@@ -483,21 +492,22 @@ void BehaviorTreeController::setupMainMqttMessageHandler()
         {
             if (!this->sigint_received_.load())
             {
-                // Only allow start if nodes are registered
+                // Only allow start if nodes are registered and in IDLE state
                 if (!this->nodes_registered_.load())
                 {
                     std::cerr << "Cannot start: Nodes not registered yet!" << std::endl;
                     return;
                 }
-                // Per PackML standards, start command should not work from SUSPENDED state
-                if (this->current_packml_state_ == PackML::State::SUSPENDED)
+                if (this->current_packml_state_ != PackML::State::IDLE)
                 {
-                    std::cerr << "Cannot start from SUSPENDED state. Use unsuspend command instead." << std::endl;
+                    std::cerr << "Cannot start from " << PackML::stateToString(this->current_packml_state_)
+                              << " state. Must be in IDLE state." << std::endl;
                     return;
                 }
                 this->shutdown_flag_ = false;
                 this->mqtt_suspend_bt_flag_ = false;
                 this->mqtt_unsuspend_bt_flag_ = false;
+                this->mqtt_reset_bt_flag_ = false;
                 this->mqtt_start_bt_flag_ = true;
             }
         }
@@ -518,6 +528,19 @@ void BehaviorTreeController::setupMainMqttMessageHandler()
             else
             {
                 std::cerr << "Unsuspend command can only be used from SUSPENDED state." << std::endl;
+            }
+        }
+        else if (topic == this->app_params_.reset_topic)
+        {
+            if (this->current_packml_state_ == PackML::State::STOPPED ||
+                this->current_packml_state_ == PackML::State::COMPLETE ||
+                this->current_packml_state_ == PackML::State::ABORTED)
+            {
+                this->mqtt_reset_bt_flag_ = true;
+            }
+            else
+            {
+                std::cerr << "Reset command can only be used from STOPPED, COMPLETE, or ABORTED states." << std::endl;
             }
         }
         else
@@ -550,32 +573,9 @@ void BehaviorTreeController::initializeMqttControlInterface()
     mqtt_client_->subscribe_topic(app_params_.stop_topic, 2);
     mqtt_client_->subscribe_topic(app_params_.suspend_topic, 2);
     mqtt_client_->subscribe_topic(app_params_.unsuspend_topic, 2);
+    mqtt_client_->subscribe_topic(app_params_.reset_topic, 2);
 
     std::cout << "MQTT control interface initialized." << std::endl;
-
-    // Fetch equipment mapping from AAS hierarchical structure
-    std::cout << "Fetching production line structure from AAS..." << std::endl;
-    if (fetchAndBuildEquipmentMapping())
-    {
-        std::cout << "Equipment mapping successfully built from AAS" << std::endl;
-
-        // Register nodes with the equipment mapping
-        if (registerNodesWithAASConfig())
-        {
-            std::cout << "Nodes successfully registered with AAS configuration." << std::endl;
-            nodes_registered_ = true;
-        }
-        else
-        {
-            std::cerr << "Failed to register nodes with AAS configuration!" << std::endl;
-            nodes_registered_ = false;
-        }
-    }
-    else
-    {
-        std::cerr << "Failed to fetch equipment mapping from AAS!" << std::endl;
-        std::cerr << "Cannot continue without equipment configuration." << std::endl;
-    }
 
     publishCurrentState();
 }
@@ -592,7 +592,7 @@ bool BehaviorTreeController::handleGenerateXmlModelsOption()
             // Fetch equipment mapping from AAS if not already done
             if (equipment_aas_mapping_.empty())
             {
-                fetchAndBuildEquipmentMapping();
+                fetchAndBuildEquipmentMapping(nullptr);
             }
             registerNodesWithAASConfig();
         }
@@ -668,8 +668,9 @@ void BehaviorTreeController::publishCurrentState()
 
 void BehaviorTreeController::processBehaviorTreeStart()
 {
-    if (current_packml_state_ == PackML::State::EXECUTE)
+    if (current_packml_state_ != PackML::State::IDLE)
     {
+        std::cerr << "Cannot start: Not in IDLE state" << std::endl;
         return;
     }
 
@@ -677,116 +678,22 @@ void BehaviorTreeController::processBehaviorTreeStart()
     if (!nodes_registered_.load())
     {
         std::cerr << "Cannot start behavior tree: Nodes not registered!" << std::endl;
-        mqtt_start_bt_flag_ = false;
         return;
     }
 
-    // Start command should not handle SUSPENDED state - that's handled by unsuspend
-    if (current_packml_state_ == PackML::State::SUSPENDED)
+    // Check if tree is initialized
+    if (!bt_tree_.rootNode())
     {
-        std::cerr << "Cannot start from SUSPENDED state. Use unsuspend command." << std::endl;
-        mqtt_start_bt_flag_ = false;
+        std::cerr << "Cannot start: Behavior tree not initialized!" << std::endl;
         return;
     }
 
-    {
-        if (mqtt_client_)
-        {
-            mqtt_client_->set_message_handler(nullptr);
-        }
-
-        if (node_message_distributor_ && mqtt_client_)
-        {
-            std::vector<std::string> old_topics = node_message_distributor_->getActiveTopicPatterns();
-            if (!old_topics.empty())
-            {
-                std::cout << "Unsubscribing from " << old_topics.size() << " old topics..." << std::endl;
-                for (const auto &topic_str : old_topics)
-                {
-                    try
-                    {
-                        mqtt_client_->unsubscribe_topic(topic_str);
-                    }
-                    catch (const std::exception &e)
-                    {
-                        std::cerr << "Exception during unsubscribe: " << e.what() << std::endl;
-                    }
-                }
-            }
-        }
-
-        if (bt_tree_.rootNode())
-        {
-            bt_tree_.haltTree();
-            bt_publisher_.reset();
-        }
-
-        // Recreate node message distributor for fresh start
-        node_message_distributor_ = std::make_unique<NodeMessageDistributor>(*mqtt_client_);
-        MqttSubBase::setNodeMessageDistributor(node_message_distributor_.get());
-
-        try
-        {
-            bt_factory_->registerBehaviorTreeFromFile(app_params_.bt_description_path);
-
-            // Create blackboard and populate it BEFORE creating the tree
-            // This ensures nodes can access equipment mapping during initialization
-            auto root_blackboard = BT::Blackboard::create();
-            populateBlackboard(root_blackboard);
-
-            bt_tree_ = bt_factory_->createTree("MainTree", root_blackboard);
-        }
-        catch (const BT::RuntimeError &e)
-        {
-            std::cerr << "BT Runtime Error during tree creation: " << e.what() << std::endl;
-            if (mqtt_client_)
-            {
-                initializeMqttControlInterface();
-            }
-            setStateAndPublish(PackML::State::ABORTED);
-            mqtt_start_bt_flag_ = false;
-            return;
-        }
-
-        if (mqtt_client_)
-        {
-            mqtt_client_->set_message_handler(main_mqtt_message_handler_);
-        }
-
-        bool subscriptions_successful = false;
-        if (node_message_distributor_ && bt_tree_.rootNode())
-        {
-            std::cout << "Attempting to subscribe to active node topics..." << std::endl;
-            subscriptions_successful = node_message_distributor_->subscribeToActiveNodes(
-                bt_tree_, std::chrono::seconds(5));
-        }
-
-        if (!subscriptions_successful)
-        {
-            std::cerr << "Failed to establish all necessary MQTT subscriptions. Aborting start." << std::endl;
-            if (mqtt_client_)
-            {
-                mqtt_client_->set_message_handler(nullptr);
-                initializeMqttControlInterface();
-            }
-            if (bt_tree_.rootNode())
-            {
-                bt_tree_.haltTree();
-            }
-            bt_publisher_.reset();
-            mqtt_start_bt_flag_ = false;
-            setStateAndPublish(PackML::State::ABORTED);
-            return;
-        }
-
-        std::cout << "All MQTT subscriptions for active nodes established." << std::endl;
-
-        bt_publisher_ = std::make_unique<BT::Groot2Publisher>(bt_tree_, app_params_.groot2_port);
-    }
-
+    // Clear flags and start execution
     shutdown_flag_ = false;
     mqtt_suspend_bt_flag_ = false;
     mqtt_unsuspend_bt_flag_ = false;
+    mqtt_reset_bt_flag_ = false;
+
     std::cout << "====== Behavior tree starting... ======" << std::endl;
     setStateAndPublish(PackML::State::EXECUTE, BT::NodeStatus::IDLE);
 }
@@ -819,6 +726,144 @@ void BehaviorTreeController::processBehaviorTreeUnsuspend()
     mqtt_unsuspend_bt_flag_ = false;
 
     setStateAndPublish(PackML::State::EXECUTE, BT::NodeStatus::IDLE);
+}
+
+void BehaviorTreeController::processResettingState()
+{
+    std::cout << "====== Entering RESETTING state... ======" << std::endl;
+    setStateAndPublish(PackML::State::RESETTING);
+
+    // Clear any existing flags
+    mqtt_start_bt_flag_ = false;
+    mqtt_suspend_bt_flag_ = false;
+    mqtt_unsuspend_bt_flag_ = false;
+    mqtt_reset_bt_flag_ = false;
+    shutdown_flag_ = false;
+
+    // Fetch equipment mapping from AAS hierarchical structure
+    std::cout << "Fetching production line structure from AAS..." << std::endl;
+    if (!fetchAndBuildEquipmentMapping(nullptr))
+    {
+        std::cerr << "Failed to fetch equipment mapping from AAS!" << std::endl;
+        std::cerr << "Cannot continue without equipment configuration." << std::endl;
+        setStateAndPublish(PackML::State::ABORTED);
+        return;
+    }
+
+    std::cout << "Equipment mapping successfully built from AAS" << std::endl;
+
+    // Unsubscribe from old node topics if any
+    if (node_message_distributor_ && mqtt_client_)
+    {
+        std::vector<std::string> old_topics = node_message_distributor_->getActiveTopicPatterns();
+        if (!old_topics.empty())
+        {
+            std::cout << "Unsubscribing from " << old_topics.size() << " old topics..." << std::endl;
+            for (const auto &topic_str : old_topics)
+            {
+                try
+                {
+                    mqtt_client_->unsubscribe_topic(topic_str);
+                }
+                catch (const std::exception &e)
+                {
+                    std::cerr << "Exception during unsubscribe: " << e.what() << std::endl;
+                }
+            }
+        }
+    }
+
+    // Halt and clear any existing tree and factory
+    if (bt_tree_.rootNode())
+    {
+        bt_tree_.haltTree();
+        bt_publisher_.reset();
+    }
+    // Reset the tree and factory to ensure no duplicate node registration
+    bt_tree_ = BT::Tree();
+    bt_factory_ = std::make_unique<BT::BehaviorTreeFactory>();
+
+    // Recreate node message distributor for fresh start
+    node_message_distributor_ = std::make_unique<NodeMessageDistributor>(*mqtt_client_);
+    MqttSubBase::setNodeMessageDistributor(node_message_distributor_.get());
+
+    // Register nodes with the equipment mapping
+    if (!registerNodesWithAASConfig())
+    {
+        std::cerr << "Failed to register nodes with AAS configuration!" << std::endl;
+        setStateAndPublish(PackML::State::ABORTED);
+        nodes_registered_ = false;
+        return;
+    }
+
+    std::cout << "Nodes successfully registered with AAS configuration." << std::endl;
+    nodes_registered_ = true;
+
+    // ===== Initialize Behavior Tree =====
+    std::cout << "Initializing behavior tree..." << std::endl;
+
+    // Temporarily disable message handler during tree creation
+    if (mqtt_client_)
+    {
+        mqtt_client_->set_message_handler(nullptr);
+    }
+
+    try
+    {
+        bt_factory_->registerBehaviorTreeFromFile(app_params_.bt_description_path);
+
+        // Create blackboard and populate with equipment mapping
+        auto root_blackboard = BT::Blackboard::create();
+        populateBlackboard(root_blackboard);
+
+        bt_tree_ = bt_factory_->createTree("MainTree", root_blackboard);
+    }
+    catch (const BT::RuntimeError &e)
+    {
+        std::cerr << "BT Runtime Error during tree creation: " << e.what() << std::endl;
+        if (mqtt_client_)
+        {
+            mqtt_client_->set_message_handler(main_mqtt_message_handler_);
+        }
+        setStateAndPublish(PackML::State::ABORTED);
+        return;
+    }
+
+    // Restore message handler
+    if (mqtt_client_)
+    {
+        mqtt_client_->set_message_handler(main_mqtt_message_handler_);
+    }
+
+    // Subscribe to active node topics
+    bool subscriptions_successful = false;
+    if (node_message_distributor_ && bt_tree_.rootNode())
+    {
+        std::cout << "Attempting to subscribe to active node topics..." << std::endl;
+        subscriptions_successful = node_message_distributor_->subscribeToActiveNodes(
+            bt_tree_, std::chrono::seconds(5));
+    }
+
+    if (!subscriptions_successful)
+    {
+        std::cerr << "Failed to establish all necessary MQTT subscriptions." << std::endl;
+        if (bt_tree_.rootNode())
+        {
+            bt_tree_.haltTree();
+        }
+        bt_publisher_.reset();
+        setStateAndPublish(PackML::State::ABORTED);
+        return;
+    }
+
+    std::cout << "All MQTT subscriptions for active nodes established." << std::endl;
+
+    // Create Groot2 publisher
+    bt_publisher_ = std::make_unique<BT::Groot2Publisher>(bt_tree_, app_params_.groot2_port);
+
+    // Automatically transition to IDLE after successful initialization
+    std::cout << "====== Behavior tree fully initialized, transitioning to IDLE... ======" << std::endl;
+    setStateAndPublish(PackML::State::IDLE);
 }
 
 void BehaviorTreeController::manageRunningBehaviorTree()

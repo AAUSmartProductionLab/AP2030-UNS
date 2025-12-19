@@ -37,6 +37,7 @@ struct BtControllerParameters
     std::string stop_topic;
     std::string suspend_topic;
     std::string unsuspend_topic;
+    std::string reset_topic;
     mqtt_utils::Topic state_publication_config;
 
     // AAS Configuration
@@ -67,6 +68,7 @@ private:
     std::atomic<bool> mqtt_start_bt_flag_;
     std::atomic<bool> mqtt_suspend_bt_flag_;
     std::atomic<bool> mqtt_unsuspend_bt_flag_;
+    std::atomic<bool> mqtt_reset_bt_flag_;
     std::atomic<bool> shutdown_flag_;
     std::atomic<bool> sigint_received_;
     std::atomic<bool> nodes_registered_;
@@ -89,6 +91,7 @@ private:
 
     void processBehaviorTreeStart();
     void processBehaviorTreeUnsuspend();
+    void processResettingState();
     void manageRunningBehaviorTree();
 
     // Methods for node registration
@@ -96,7 +99,7 @@ private:
     void unregisterAllNodes();
 
     // Methods for AAS hierarchical structure fetching
-    bool fetchAndBuildEquipmentMapping();
+    bool fetchAndBuildEquipmentMapping(BT::Blackboard::Ptr blackboard = nullptr);
     void recursivelyResolveHierarchy(const std::string &asset_id, const std::string &asset_name,
                                      std::set<std::string> &visited_assets);
     std::string getArchetype(const nlohmann::json &hierarchy_submodel);

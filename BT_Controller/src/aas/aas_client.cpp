@@ -131,90 +131,6 @@ void AASClient::resolveSchemaReferences(nlohmann::json &schema)
     schema_utils::resolveSchemaReferences(schema);
 }
 
-std::optional<AASClient::ShellAndSubmodelInfo> AASClient::findShellAndSubmodel(
-    const std::string &asset_id,
-    const std::string &submodel_name_pattern)
-{
-    try
-    {
-        // Step 1: Get the shell descriptor from registry to find the shell endpoint
-        std::string registry_url = "/shell-descriptors";
-        nlohmann::json registry_response = makeGetRequest(registry_url, true);
-
-        if (!registry_response.contains("result") || !registry_response["result"].is_array())
-        {
-            std::cerr << "Invalid registry response structure" << std::endl;
-            return std::nullopt;
-        }
-
-        // Find the AAS with matching id (asset_id is the AAS shell ID)
-        std::string shell_endpoint;
-        for (const auto &shell : registry_response["result"])
-        {
-            if (shell.contains("id") && shell["id"] == asset_id)
-            {
-                if (shell.contains("endpoints") && shell["endpoints"].is_array() && !shell["endpoints"].empty())
-                {
-                    shell_endpoint = shell["endpoints"][0]["protocolInformation"]["href"];
-                    break;
-                }
-            }
-        }
-
-        if (shell_endpoint.empty())
-        {
-            std::cerr << "Could not find shell endpoint for asset: " << asset_id << std::endl;
-            return std::nullopt;
-        }
-
-        // Extract the relative path from the full URL
-        size_t pos = shell_endpoint.find("/shells/");
-        if (pos == std::string::npos)
-        {
-            std::cerr << "Invalid shell endpoint format: " << shell_endpoint << std::endl;
-            return std::nullopt;
-        }
-        std::string shell_path = shell_endpoint.substr(pos);
-
-        // Step 2: Get the shell to find submodel references
-        nlohmann::json shell_data = makeGetRequest(shell_path);
-
-        if (!shell_data.contains("submodels") || !shell_data["submodels"].is_array())
-        {
-            std::cerr << "Shell missing submodels array" << std::endl;
-            return std::nullopt;
-        }
-
-        // Find submodel reference matching the pattern
-        std::string submodel_id;
-        for (const auto &submodel_ref : shell_data["submodels"])
-        {
-            if (submodel_ref.contains("keys") && submodel_ref["keys"].is_array())
-            {
-                std::string ref_value = submodel_ref["keys"][0]["value"];
-                if (ref_value.find(submodel_name_pattern) != std::string::npos)
-                {
-                    submodel_id = ref_value;
-                    break;
-                }
-            }
-        }
-
-        if (submodel_id.empty())
-        {
-            std::cerr << "Could not find submodel with pattern: " << submodel_name_pattern << std::endl;
-            return std::nullopt;
-        }
-
-        return ShellAndSubmodelInfo{shell_path, submodel_id};
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << "Exception finding shell and submodel: " << e.what() << std::endl;
-        return std::nullopt;
-    }
-}
-
 std::optional<mqtt_utils::Topic> AASClient::fetchInterface(const std::string &asset_id, const std::string &interaction, const std::string &endpoint)
 {
     try
@@ -230,14 +146,40 @@ std::optional<mqtt_utils::Topic> AASClient::fetchInterface(const std::string &as
             return std::nullopt;
         }
 
-        // Find shell and submodel using common helper
-        auto shell_submodel_info = findShellAndSubmodel(asset_id, "AssetInterface");
-        if (!shell_submodel_info.has_value())
+        std::string shell_id_b64 = base64url_encode(asset_id);
+        std::string shell_path = "/shells/" + shell_id_b64;
+
+        // Step 2: Get the shell to find submodel references
+        nlohmann::json shell_data = makeGetRequest(shell_path);
+
+        if (!shell_data.contains("submodels") || !shell_data["submodels"].is_array())
         {
+            std::cerr << "Shell missing submodels array" << std::endl;
             return std::nullopt;
         }
 
-        std::string submodel_id = shell_submodel_info->submodel_id;
+        // Find AssetInterfacesDescription submodel reference
+        std::string submodel_id;
+        for (const auto &submodel_ref : shell_data["submodels"])
+        {
+            if (submodel_ref.contains("keys") && submodel_ref["keys"].is_array())
+            {
+                std::string ref_value = submodel_ref["keys"][0]["value"];
+                if (ref_value.find("AssetInterfacesDescription") != std::string::npos ||
+                    ref_value.find("AssetInterfaceDescription") != std::string::npos)
+                {
+                    submodel_id = ref_value;
+                    break;
+                }
+            }
+        }
+
+        if (submodel_id.empty())
+        {
+            std::cerr << "Could not find AssetInterfacesDescription submodel" << std::endl;
+            return std::nullopt;
+        }
+
         std::cout << "Found submodel ID: " << submodel_id << std::endl;
 
         // Step 3: Fetch the submodel using base64url-encoded ID
@@ -578,14 +520,75 @@ std::optional<nlohmann::json> AASClient::fetchSubmodelData(
 {
     try
     {
-        // Find shell and submodel using common helper
-        auto shell_submodel_info = findShellAndSubmodel(asset_id, submodel_id_short);
-        if (!shell_submodel_info.has_value())
+        // Step 1: Get the shell descriptor from registry
+        std::string registry_url = "/shell-descriptors";
+        nlohmann::json registry_response = makeGetRequest(registry_url, true);
+
+        if (!registry_response.contains("result") || !registry_response["result"].is_array())
         {
+            std::cerr << "Invalid registry response structure" << std::endl;
             return std::nullopt;
         }
 
-        std::string submodel_id = shell_submodel_info->submodel_id;
+        // Find the AAS with matching idShort
+        std::string expected_id_short = asset_id + "AAS";
+        std::string shell_endpoint;
+        for (const auto &shell : registry_response["result"])
+        {
+            if (shell.contains("idShort") && shell["idShort"] == expected_id_short)
+            {
+                if (shell.contains("endpoints") && shell["endpoints"].is_array() && !shell["endpoints"].empty())
+                {
+                    shell_endpoint = shell["endpoints"][0]["protocolInformation"]["href"];
+                    break;
+                }
+            }
+        }
+
+        if (shell_endpoint.empty())
+        {
+            std::cerr << "Could not find shell endpoint for asset: " << asset_id << std::endl;
+            return std::nullopt;
+        }
+
+        // Extract the relative path from the full URL
+        size_t pos = shell_endpoint.find("/shells/");
+        if (pos == std::string::npos)
+        {
+            std::cerr << "Invalid shell endpoint format: " << shell_endpoint << std::endl;
+            return std::nullopt;
+        }
+        std::string shell_path = shell_endpoint.substr(pos);
+
+        // Step 2: Get the shell to find submodel references
+        nlohmann::json shell_data = makeGetRequest(shell_path);
+
+        if (!shell_data.contains("submodels") || !shell_data["submodels"].is_array())
+        {
+            std::cerr << "Shell missing submodels array" << std::endl;
+            return std::nullopt;
+        }
+
+        // Find the submodel reference matching the submodel_id_short
+        std::string submodel_id;
+        for (const auto &submodel_ref : shell_data["submodels"])
+        {
+            if (submodel_ref.contains("keys") && submodel_ref["keys"].is_array())
+            {
+                std::string ref_value = submodel_ref["keys"][0]["value"];
+                if (ref_value.find(submodel_id_short) != std::string::npos)
+                {
+                    submodel_id = ref_value;
+                    break;
+                }
+            }
+        }
+
+        if (submodel_id.empty())
+        {
+            std::cerr << "Could not find submodel with idShort: " << submodel_id_short << std::endl;
+            return std::nullopt;
+        }
 
         // Step 3: Fetch the submodel using base64url-encoded ID
         std::string submodel_id_b64 = base64url_encode(submodel_id);

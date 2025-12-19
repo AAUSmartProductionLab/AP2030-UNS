@@ -65,16 +65,6 @@ private:
     // Helper to encode string to base64url format (RFC 4648)
     static std::string base64url_encode(const std::string &input);
 
-    // Helper to find shell endpoint and submodel ID (common logic for fetchInterface and fetchSubmodelData)
-    struct ShellAndSubmodelInfo
-    {
-        std::string shell_path;
-        std::string submodel_id;
-    };
-    std::optional<ShellAndSubmodelInfo> findShellAndSubmodel(
-        const std::string &asset_id,
-        const std::string &submodel_name_pattern);
-
     // Helper to fetch submodel data from AAS (common logic for fetchPropertyValue overloads)
     std::optional<nlohmann::json> fetchSubmodelData(
         const std::string &asset_id,
