@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+  <include path="./loading.xml" />
+  <include path="./dispensing.xml" />
+  <include path="./stoppering.xml" />
+  <include path="./camera.xml" />
+  <include path="./unloading.xml" />
+  <include path="./scraping.xml" />
+  <BehaviorTree ID="AsepticFilling">
+    <Occupy Uuid="{Uuid}"
+            Asset="{Xbot}">
+      <KeepRunningUntilEmpty if_empty="SUCCESS"
+                             Queue="{ProductIDs}">
+        <ReactiveSequence>
+          <ReactiveFallback>
+            <Data_Condition comparison_type="equal"
+                            Field="State"
+                            expected_value="operational"
+                            Property="PackMLState"
+                            Asset="{Xbot}"/>
+            <Sleep msec="10000"/>
+          </ReactiveFallback>
+          <Fallback>
+            <SequenceWithMemory>
+              <SubTree ID="Loading"
+                       _autoremap="true"/>
+              <SubTree ID="Dispensing"
+                       _autoremap="true"/>
+              <SubTree ID="Stoppering"
+                       _autoremap="true"/>
+              <SubTree ID="QualityControl"
+                       _autoremap="true"/>
+              <SubTree ID="Unloading"
+                       _autoremap="true"/>
+            </SequenceWithMemory>
+            <SubTree ID="Scraping"
+                     _autoremap="true"/>
+          </Fallback>
+        </ReactiveSequence>
+      </KeepRunningUntilEmpty>
+    </Occupy>
+  </BehaviorTree>
+</root>

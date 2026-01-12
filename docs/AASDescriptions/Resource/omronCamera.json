@@ -1,0 +1,954 @@
+{
+  "assetAdministrationShells": [
+    {
+      "idShort": "omronCameraAAS",
+      "id": "https://smartproductionlab.aau.dk/aas/omronCamera",
+      "assetInformation": {
+        "assetKind": "Instance",
+        "globalAssetId": "https://smartproductionlab.aau.dk/assets/omronCamera",
+        "assetType": "Resource",
+        "specificAssetIds": [
+          {
+            "name": "serialNumber",
+            "value": "OM-CA-2024-001",
+            "externalSubjectId": {
+              "type": "ExternalReference",
+              "keys": [{
+                "type": "GlobalReference",
+                "value": "https://smartproductionlab.aau.dk/organization"
+              }]
+            }
+          },
+          {
+            "name": "location",
+            "value": "InnoLab, Nybrovej, AAU",
+            "externalSubjectId": {
+              "type": "ExternalReference",
+              "keys": [{
+                "type": "GlobalReference",
+                "value": "https://smartproductionlab.aau.dk/organization"
+              }]
+            }
+          },
+          {
+            "name":"SemanticType",
+            "value":"QualityControlSystem"
+          }
+        ]
+      },
+      "submodels": [
+        {
+          "type": "ModelReference",
+          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/omronCamera/AssetInterfacesDescription"}]
+        },
+        {
+          "type": "ModelReference",
+          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/omronCamera/Variables"}]
+        },
+        {
+          "type": "ModelReference",
+          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/omronCamera/Parameters"}]
+        },
+        {
+          "type": "ModelReference",
+          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/omronCamera/HierarchicalStructures"}]
+        }
+      ],
+      "derivedFrom": {
+        "type": "ModelReference",
+        "keys": [{"type": "AssetAdministrationShell", "value": "https://smartproductionlab.aau.dk/aas/templates/resourceInterface"}]
+      },
+      "modelType": "AssetAdministrationShell"
+    }
+  ],
+  "submodels": [
+    {
+      "idShort": "AssetInterfacesDescription",
+      "id": "https://smartproductionlab.aau.dk/submodels/instances/omronCamera/AssetInterfacesDescription",
+      "kind": "Instance",
+      "semanticId": {
+        "type": "ExternalReference",
+        "keys": [{"type": "GlobalReference", "value": "https://admin-shell.io/idta/AssetInterfacesDescription/1/0/Submodel"}]
+      },
+      "administration": {
+        "version": "1",
+        "revision": "0"
+      },
+      "submodelElements": [
+        {
+          "idShort": "InterfaceMQTT",
+          "semanticId": {
+            "type": "ExternalReference",
+            "keys": [{
+              "type": "GlobalReference",
+              "value": "https://admin-shell.io/idta/AssetInterfacesDescription/1/0/Interface"
+            }]
+          },
+          "supplementalSemanticIds": [
+            {
+              "type": "ExternalReference",
+              "keys": [{
+                "type": "GlobalReference",
+                "value": "http://www.w3.org/2011/mqtt"
+              }]
+            },
+            {
+              "type": "ExternalReference",
+              "keys": [{
+                "type": "GlobalReference",
+                "value": "https://www.w3.org/2019/wot/td"
+              }]
+            }
+          ],
+          "modelType": "SubmodelElementCollection",
+          "value": [
+            {
+              "idShort": "title",
+              "modelType": "Property",
+              "valueType": "xs:string",
+              "value": "Omron Camera"
+            },
+            {
+              "idShort": "EndpointMetadata",
+              "semanticId": {
+                "type": "ExternalReference",
+                "keys": [{
+                  "type": "GlobalReference",
+                  "value": "https://admin-shell.io/idta/AssetInterfacesDescription/1/0/EndpointMetadata"
+                }]
+              },
+              "modelType": "SubmodelElementCollection",
+              "value": [
+                {
+                  "idShort": "base",
+                  "modelType": "Property",
+                  "valueType": "xs:string",
+                  "value": "mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/WeightVerification"
+                },
+                {
+                  "idShort": "contentType",
+                  "modelType": "Property",
+                  "valueType": "xs:string",
+                  "value": "application/json"
+                }
+              ]
+            },
+            {
+              "idShort": "InteractionMetadata",
+              "semanticId": {
+                "type": "ExternalReference",
+                "keys": [{
+                  "type": "GlobalReference",
+                  "value": "https://admin-shell.io/idta/AssetInterfacesDescription/1/0/InteractionMetadata"
+                }]
+              },
+              "supplementalSemanticIds": [{
+                "type": "ExternalReference",
+                "keys": [{
+                  "type": "GlobalReference",
+                  "value": "https://www.w3.org/2019/wot/td#InteractionAffordance"
+                }]
+              }],
+              "modelType": "SubmodelElementCollection",
+              "value": [
+                {
+                  "idShort": "actions",
+                  "semanticId": {
+                    "type": "ExternalReference",
+                    "keys": [{
+                      "type": "GlobalReference",
+                      "value": "https://www.w3.org/2019/wot/td#ActionAffordance"
+                    }]
+                  },
+                  "modelType": "SubmodelElementCollection",
+                  "value": [
+                    {
+                      "idShort": "capture",
+                      "semanticId": {
+                        "type": "ExternalReference",
+                        "keys": [{
+                          "type": "GlobalReference",
+                          "value": "https://admin-shell.io/idta/AssetInterfaceDescription/1/0/ActionDefinition"
+                        }]
+                      },
+                      "supplementalSemanticIds": [{
+                        "type": "ExternalReference",
+                        "keys": [{
+                          "type": "GlobalReference",
+                          "value": "https://www.w3.org/2019/wot/td#name"
+                        }]
+                      }],
+                      "modelType": "SubmodelElementCollection",
+                      "value": [
+                        {"idShort": "key", "modelType": "Property", "valueType": "xs:string", "value": "capture"},
+                        {"idShort": "title", "modelType": "Property", "valueType": "xs:string", "value": "capture"},
+                        {"idShort": "synchronous", "modelType": "Property", "valueType": "xs:boolean", "value": "true"},
+                        {
+                            "idShort": "input",
+                            "modelType": "File",
+                            "contentType": "application/schema+json",
+                            "value": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/command.schema.json"
+                        },
+                        {
+                            "idShort": "output",
+                            "modelType": "File",
+                            "contentType": "application/schema+json",
+                            "value": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/commandResponse.schema.json"
+                        },
+                        {
+                          "idShort": "forms",
+                          "semanticId": {
+                            "type": "ExternalReference",
+                            "keys": [{
+                              "type": "GlobalReference",
+                              "value": "https://www.w3.org/2019/wot/td#Form"
+                            }]
+                          },
+                          "modelType": "SubmodelElementCollection",
+                          "value": [
+                            {"idShort": "contentType", "modelType": "Property", "valueType": "xs:string", "value": "application/json"},
+                            {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/CMD/Capture"},
+                            {"idShort": "op", "modelType": "Property", "valueType": "xs:string", "value": "invokeAction"},
+                            {"idShort": "mqv_retain", "modelType": "Property", "valueType": "xs:boolean", "value": "false"},
+                            {"idShort": "mqv_controlPacket", "modelType": "Property", "valueType": "xs:string", "value": "subscribe"},
+                            {"idShort": "mqv_qos", "modelType": "Property", "valueType": "xs:int", "value": "2"},
+                            {
+                              "idShort": "response",
+                              "modelType": "SubmodelElementCollection",
+                              "value": [
+                                {"idShort": "contentType", "modelType": "Property", "valueType": "xs:string", "value": "application/json"},
+                                {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/DATA/Capture"},
+                                {"idShort": "mqv_controlPacket", "modelType": "Property", "valueType": "xs:string", "value": "publish"}
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "idShort": "halt",
+                      "semanticId": {
+                        "type": "ExternalReference",
+                        "keys": [{
+                          "type": "GlobalReference",
+                          "value": "https://admin-shell.io/idta/AssetInterfaceDescription/1/0/ActionDefinition"
+                        }]
+                      },
+                      "supplementalSemanticIds": [{
+                        "type": "ExternalReference",
+                        "keys": [{
+                          "type": "GlobalReference",
+                          "value": "https://www.w3.org/2019/wot/td#name"
+                        }]
+                      }],
+                      "modelType": "SubmodelElementCollection",
+                      "value": [
+                        {"idShort": "key", "modelType": "Property", "valueType": "xs:string", "value": "halt"},
+                        {"idShort": "title", "modelType": "Property", "valueType": "xs:string", "value": "halt"},
+                        {"idShort": "synchronous", "modelType": "Property", "valueType": "xs:boolean", "value": "true"},
+                        {
+                            "idShort": "input",
+                            "modelType": "File",
+                            "contentType": "application/schema+json",
+                            "value": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/command.schema.json"
+                        },
+                        {
+                          "idShort": "forms",
+                          "semanticId": {
+                            "type": "ExternalReference",
+                            "keys": [{
+                              "type": "GlobalReference",
+                              "value": "https://www.w3.org/2019/wot/td#Form"
+                            }]
+                          },
+                          "modelType": "SubmodelElementCollection",
+                          "value": [
+                            {"idShort": "contentType", "modelType": "Property", "valueType": "xs:string", "value": "application/json"},
+                            {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/CMD/Halt"},
+                            {"idShort": "op", "modelType": "Property", "valueType": "xs:string", "value": "invokeAction"},
+                            {"idShort": "mqv_retain", "modelType": "Property", "valueType": "xs:boolean", "value": "false"},
+                            {"idShort": "mqv_controlPacket", "modelType": "Property", "valueType": "xs:string", "value": "subscribe"},
+                            {"idShort": "mqv_qos", "modelType": "Property", "valueType": "xs:int", "value": "2"}
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "idShort": "occupy",
+                      "semanticId": {
+                        "type": "ExternalReference",
+                        "keys": [{
+                          "type": "GlobalReference",
+                          "value": "https://admin-shell.io/idta/AssetInterfaceDescription/1/0/ActionDefinition"
+                        }]
+                      },
+                      "supplementalSemanticIds": [{
+                        "type": "ExternalReference",
+                        "keys": [{
+                          "type": "GlobalReference",
+                          "value": "https://www.w3.org/2019/wot/td#name"
+                        }]
+                      }],
+                      "modelType": "SubmodelElementCollection",
+                      "value": [
+                        {"idShort": "key", "modelType": "Property", "valueType": "xs:string", "value": "occupy"},
+                        {"idShort": "title", "modelType": "Property", "valueType": "xs:string", "value": "occupy"},
+                        {"idShort": "synchronous", "modelType": "Property", "valueType": "xs:boolean", "value": "true"},
+                        {
+                            "idShort": "input",
+                            "modelType": "File",
+                            "contentType": "application/schema+json",
+                            "value": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/command.schema.json"
+                        },
+                        {
+                            "idShort": "output",
+                            "modelType": "File",
+                            "contentType": "application/schema+json",
+                            "value": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/commandResponse.schema.json"
+                        },
+                        {
+                          "idShort": "forms",
+                          "semanticId": {
+                            "type": "ExternalReference",
+                            "keys": [{
+                              "type": "GlobalReference",
+                              "value": "https://www.w3.org/2019/wot/td#Form"
+                            }]
+                          },
+                          "modelType": "SubmodelElementCollection",
+                          "value": [
+                            {"idShort": "contentType", "modelType": "Property", "valueType": "xs:string", "value": "application/json"},
+                            {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/CMD/Occupy"},
+                            {"idShort": "op", "modelType": "Property", "valueType": "xs:string", "value": "invokeAction"},
+                            {"idShort": "mqv_retain", "modelType": "Property", "valueType": "xs:boolean", "value": "false"},
+                            {"idShort": "mqv_controlPacket", "modelType": "Property", "valueType": "xs:string", "value": "subscribe"},
+                            {"idShort": "mqv_qos", "modelType": "Property", "valueType": "xs:int", "value": "2"},
+                            {
+                              "idShort": "response",
+                              "modelType": "SubmodelElementCollection",
+                              "value": [
+                                {"idShort": "contentType", "modelType": "Property", "valueType": "xs:string", "value": "application/json"},
+                                {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/DATA/Occupy"},
+                                {"idShort": "mqv_controlPacket", "modelType": "Property", "valueType": "xs:string", "value": "publish"}
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "idShort": "release",
+                      "semanticId": {
+                        "type": "ExternalReference",
+                        "keys": [{
+                          "type": "GlobalReference",
+                          "value": "https://admin-shell.io/idta/AssetInterfaceDescription/1/0/ActionDefinition"
+                        }]
+                      },
+                      "supplementalSemanticIds": [{
+                        "type": "ExternalReference",
+                        "keys": [{
+                          "type": "GlobalReference",
+                          "value": "https://www.w3.org/2019/wot/td#name"
+                        }]
+                      }],
+                      "modelType": "SubmodelElementCollection",
+                      "value": [
+                        {"idShort": "key", "modelType": "Property", "valueType": "xs:string", "value": "release"},
+                        {"idShort": "title", "modelType": "Property", "valueType": "xs:string", "value": "release"},
+                        {"idShort": "synchronous", "modelType": "Property", "valueType": "xs:boolean", "value": "true"},
+                        {
+                            "idShort": "input",
+                            "modelType": "File",
+                            "contentType": "application/schema+json",
+                            "value": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/command.schema.json"
+                        },
+                        {
+                            "idShort": "output",
+                            "modelType": "File",
+                            "contentType": "application/schema+json",
+                            "value": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/commandResponse.schema.json"
+                        },
+                        {
+                          "idShort": "forms",
+                          "semanticId": {
+                            "type": "ExternalReference",
+                            "keys": [{
+                              "type": "GlobalReference",
+                              "value": "https://www.w3.org/2019/wot/td#Form"
+                            }]
+                          },
+                          "modelType": "SubmodelElementCollection",
+                          "value": [
+                            {"idShort": "contentType", "modelType": "Property", "valueType": "xs:string", "value": "application/json"},
+                            {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/CMD/Release"},
+                            {"idShort": "op", "modelType": "Property", "valueType": "xs:string", "value": "invokeAction"},
+                            {"idShort": "mqv_retain", "modelType": "Property", "valueType": "xs:boolean", "value": "false"},
+                            {"idShort": "mqv_controlPacket", "modelType": "Property", "valueType": "xs:string", "value": "subscribe"},
+                            {"idShort": "mqv_qos", "modelType": "Property", "valueType": "xs:int", "value": "2"},
+                            {
+                              "idShort": "response",
+                              "modelType": "SubmodelElementCollection",
+                              "value": [
+                                {"idShort": "contentType", "modelType": "Property", "valueType": "xs:string", "value": "application/json"},
+                                {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/DATA/Release"},
+                                {"idShort": "mqv_controlPacket", "modelType": "Property", "valueType": "xs:string", "value": "publish"}
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "idShort": "properties",
+                  "semanticId": {
+                    "type": "ExternalReference",
+                    "keys": [{
+                      "type": "GlobalReference",
+                      "value": "https://www.w3.org/2019/wot/td#PropertyAffordance"
+                    }]
+                  },
+                  "modelType": "SubmodelElementCollection",
+                  "value": [
+                    {
+                      "idShort": "PackMLState",
+                      "semanticId": {
+                        "type": "ExternalReference",
+                        "keys": [{
+                          "type": "GlobalReference",
+                          "value": "https://admin-shell.io/idta/AssetInterfaceDescription/1/0/PropertyDefinition"
+                        }]
+                      },
+                      "supplementalSemanticIds": [{
+                        "type": "ExternalReference",
+                        "keys": [{
+                          "type": "GlobalReference",
+                          "value": "https://www.w3.org/2019/wot/td#name"
+                        }]
+                      }],
+                      "modelType": "SubmodelElementCollection",
+                      "value": [
+                        {
+                          "idShort": "key",
+                          "semanticId": {
+                            "type": "ExternalReference",
+                            "keys": [{
+                              "type": "GlobalReference",
+                              "value": "https://admin-shell.io/idta/AssetInterfacesDescription/1/0/key"
+                            }]
+                          },
+                          "valueType": "xs:string",
+                          "value": "PackMLState",
+                          "modelType": "Property"
+                        },
+                        {
+                          "idShort": "type",
+                          "semanticId": {
+                            "type": "ExternalReference",
+                            "keys": [{
+                              "type": "GlobalReference",
+                              "value": "https://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+                            }]
+                          },
+                          "valueType": "xs:string",
+                          "value": "object",
+                          "modelType": "Property"
+                        },
+                        {
+                            "idShort": "output",
+                            "modelType": "File",
+                            "contentType": "application/schema+json",
+                            "value": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/state.schema.json"
+                        },
+                        {
+                          "idShort": "forms",
+                          "semanticId": {
+                            "type": "ExternalReference",
+                            "keys": [{
+                              "type": "GlobalReference",
+                              "value": "https://www.w3.org/2019/wot/td#Form"
+                            }]
+                          },
+                          "modelType": "SubmodelElementCollection",
+                          "value": [
+                            {"idShort": "contentType", "modelType": "Property", "valueType": "xs:string", "value": "application/json"},
+                            {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/DATA/State"},
+                            {"idShort": "mqv_retain", "modelType": "Property", "valueType": "xs:boolean", "value": "false"},
+                            {"idShort": "mqv_controlPacket", "modelType": "Property", "valueType": "xs:string", "value": "publish"},
+                            {"idShort": "mqv_qos", "modelType": "Property", "valueType": "xs:int", "value": "0"}
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "idShort": "occupationState",
+                      "semanticId": {
+                        "type": "ExternalReference",
+                        "keys": [{
+                          "type": "GlobalReference",
+                          "value": "https://admin-shell.io/idta/AssetInterfaceDescription/1/0/PropertyDefinition"
+                        }]
+                      },
+                      "supplementalSemanticIds": [{
+                        "type": "ExternalReference",
+                        "keys": [{
+                          "type": "GlobalReference",
+                          "value": "https://www.w3.org/2019/wot/td#name"
+                        }]
+                      }],
+                      "modelType": "SubmodelElementCollection",
+                      "value": [
+                        {
+                          "idShort": "key",
+                          "semanticId": {
+                            "type": "ExternalReference",
+                            "keys": [{
+                              "type": "GlobalReference",
+                              "value": "https://admin-shell.io/idta/AssetInterfacesDescription/1/0/key"
+                            }]
+                          },
+                          "valueType": "xs:string",
+                          "value": "occupationState",
+                          "modelType": "Property"
+                        },
+                        {
+                          "idShort": "type",
+                          "semanticId": {
+                            "type": "ExternalReference",
+                            "keys": [{
+                              "type": "GlobalReference",
+                              "value": "https://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+                            }]
+                          },
+                          "valueType": "xs:string",
+                          "value": "object",
+                          "modelType": "Property"
+                        },
+                        {
+                            "idShort": "output",
+                            "modelType": "File",
+                            "contentType": "application/schema+json",
+                            "value": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/stationOccupation.schema.json"
+                        },
+                        {
+                          "idShort": "forms",
+                          "semanticId": {
+                            "type": "ExternalReference",
+                            "keys": [{
+                              "type": "GlobalReference",
+                              "value": "https://www.w3.org/2019/wot/td#Form"
+                            }]
+                          },
+                          "modelType": "SubmodelElementCollection",
+                          "value": [
+                            {"idShort": "contentType", "modelType": "Property", "valueType": "xs:string", "value": "application/json"},
+                            {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/DATA/Occupation"},
+                            {"idShort": "mqv_retain", "modelType": "Property", "valueType": "xs:boolean", "value": "false"},
+                            {"idShort": "mqv_controlPacket", "modelType": "Property", "valueType": "xs:string", "value": "publish"},
+                            {"idShort": "mqv_qos", "modelType": "Property", "valueType": "xs:int", "value": "0"}
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "idShort": "Image",
+                      "semanticId": {
+                        "type": "ExternalReference",
+                        "keys": [{
+                          "type": "GlobalReference",
+                          "value": "https://admin-shell.io/idta/AssetInterfaceDescription/1/0/PropertyDefinition"
+                        }]
+                      },
+                      "supplementalSemanticIds": [{
+                        "type": "ExternalReference",
+                        "keys": [{
+                          "type": "GlobalReference",
+                          "value": "https://www.w3.org/2019/wot/td#name"
+                        }]
+                      }],
+                      "modelType": "SubmodelElementCollection",
+                      "value": [
+                        {
+                          "idShort": "key",
+                          "semanticId": {
+                            "type": "ExternalReference",
+                            "keys": [{
+                              "type": "GlobalReference",
+                              "value": "https://admin-shell.io/idta/AssetInterfacesDescription/1/0/key"
+                            }]
+                          },
+                          "valueType": "xs:string",
+                          "value": "Image",
+                          "modelType": "Property"
+                        },
+                        {
+                          "idShort": "type",
+                          "semanticId": {
+                            "type": "ExternalReference",
+                            "keys": [{
+                              "type": "GlobalReference",
+                              "value": "https://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+                            }]
+                          },
+                          "valueType": "xs:string",
+                          "value": "object",
+                          "modelType": "Property"
+                        },
+                        {
+                          "idShort": "output",
+                          "modelType": "File",
+                          "contentType": "application/schema+json",
+                          "value": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/image.schema.json"
+                        },
+                        {
+                          "idShort": "forms",
+                          "semanticId": {
+                            "type": "ExternalReference",
+                            "keys": [{
+                              "type": "GlobalReference",
+                              "value": "https://www.w3.org/2019/wot/td#Form"
+                            }]
+                          },
+                          "modelType": "SubmodelElementCollection",
+                          "value": [
+                            {"idShort": "contentType", "modelType": "Property", "valueType": "xs:string", "value": "application/json"},
+                            {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/DATA/Image"},
+                            {"idShort": "mqv_retain", "modelType": "Property", "valueType": "xs:boolean", "value": "true"},
+                            {"idShort": "mqv_controlPacket", "modelType": "Property", "valueType": "xs:string", "value": "publish"},
+                            {"idShort": "mqv_qos", "modelType": "Property", "valueType": "xs:int", "value": "0"}
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "modelType": "Submodel"
+    },
+    {
+      "idShort": "Variables",
+      "id": "https://smartproductionlab.aau.dk/submodels/instances/omronCamera/Variables",
+      "kind": "Instance",
+      "semanticId": {
+        "type": "ExternalReference",
+        "keys": [{"type": "GlobalReference", "value": "https://admin-shell.io/idta/Variables/1/0/Submodel"}]
+      },
+      "administration": {
+        "version": "1",
+        "revision": "0"
+      },
+      "submodelElements": [
+        {
+          "idShort": "PackMLState",
+          "semanticId": {
+            "type": "ExternalReference",
+            "keys": [{
+              "type": "GlobalReference",
+              "value": "https://www.omac.org/packml/state"
+            }]
+          },
+          "modelType": "SubmodelElementCollection",
+          "value": [
+            {
+              "idShort": "Value",
+              "modelType": "Property",
+              "valueType": "xs:string",
+              "value": "Idle"
+            },
+            {
+              "idShort": "InterfaceReference",
+              "semanticId": {
+                "type": "ExternalReference",
+                "keys": [{
+                  "type": "GlobalReference",
+                  "value": "https://admin-shell.io/idta/AssetInterfacesDescription/1/0/InterfaceReference"
+                }]
+              },
+              "modelType": "ReferenceElement",
+              "value": {
+                "type": "ModelReference",
+                "keys": [
+                  {
+                    "type": "Submodel",
+                    "value": "https://smartproductionlab.aau.dk/submodels/instances/omronCamera/AssetInterfacesDescription"
+                  },
+                  {
+                    "type": "SubmodelElementCollection",
+                    "value": "InterfaceMQTT"
+                  },
+                  {
+                    "type": "SubmodelElementCollection",
+                    "value": "InteractionMetadata"
+                  },
+                  {
+                    "type": "SubmodelElementCollection",
+                    "value": "properties"
+                  },
+                  {
+                    "type": "SubmodelElementCollection",
+                    "value": "PackMLState"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "idShort": "OccupationState",
+          "modelType": "SubmodelElementCollection",
+          "value": [
+            {
+              "idShort": "State",
+              "modelType": "Property",
+              "valueType": "xs:string",
+              "value": "Available"
+            },
+            {
+              "idShort": "Queue",
+              "modelType": "Property",
+              "valueType": "xs:string",
+              "value": "[]"
+            },
+            {
+              "idShort": "InterfaceReference",
+              "semanticId": {
+                "type": "ExternalReference",
+                "keys": [{
+                  "type": "GlobalReference",
+                  "value": "https://admin-shell.io/idta/AssetInterfacesDescription/1/0/InterfaceReference"
+                }]
+              },
+              "modelType": "ReferenceElement",
+              "value": {
+                "type": "ModelReference",
+                "keys": [
+                  {
+                    "type": "Submodel",
+                    "value": "https://smartproductionlab.aau.dk/submodels/instances/omronCamera/AssetInterfacesDescription"
+                  },
+                  {
+                    "type": "SubmodelElementCollection",
+                    "value": "InterfaceMQTT"
+                  },
+                  {
+                    "type": "SubmodelElementCollection",
+                    "value": "InteractionMetadata"
+                  },
+                  {
+                    "type": "SubmodelElementCollection",
+                    "value": "properties"
+                  },
+                  {
+                    "type": "SubmodelElementCollection",
+                    "value": "occupationState"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "idShort": "Image",
+          "semanticId": {
+            "type": "ExternalReference",
+            "keys": [{
+              "type": "GlobalReference",
+              "value": "https://smartproductionlab.aau.dk/properties/image"
+            }]
+          },
+          "modelType": "SubmodelElementCollection",
+          "value": [
+            {
+              "idShort": "Value",
+              "modelType": "Property",
+              "valueType": "xs:string",
+              "value": ""
+            },
+            {
+              "idShort": "InterfaceReference",
+              "semanticId": {
+                "type": "ExternalReference",
+                "keys": [{
+                  "type": "GlobalReference",
+                  "value": "https://admin-shell.io/idta/AssetInterfacesDescription/1/0/InterfaceReference"
+                }]
+              },
+              "modelType": "ReferenceElement",
+              "value": {
+                "type": "ModelReference",
+                "keys": [
+                  {
+                    "type": "Submodel",
+                    "value": "https://smartproductionlab.aau.dk/submodels/instances/omronCamera/AssetInterfacesDescription"
+                  },
+                  {
+                    "type": "SubmodelElementCollection",
+                    "value": "InterfaceMQTT"
+                  },
+                  {
+                    "type": "SubmodelElementCollection",
+                    "value": "InteractionMetadata"
+                  },
+                  {
+                    "type": "SubmodelElementCollection",
+                    "value": "properties"
+                  },
+                  {
+                    "type": "SubmodelElementCollection",
+                    "value": "Image"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "modelType": "Submodel"
+    },
+    {
+      "idShort": "Parameters",
+      "id": "https://smartproductionlab.aau.dk/submodels/instances/omronCamera/Parameters",
+      "kind": "Instance",
+      "semanticId": {
+        "type": "ExternalReference",
+        "keys": [{"type": "GlobalReference", "value": "https://admin-shell.io/idta/Parameters/1/0/Submodel"}]
+      },
+      "administration": {
+        "version": "1",
+        "revision": "0"
+      },
+      "submodelElements": [],
+      "modelType": "Submodel"
+    },
+    {
+      "idShort": "HierarchicalStructures",
+      "id": "https://smartproductionlab.aau.dk/submodels/instances/omronCamera/HierarchicalStructures",
+      "kind": "Instance",
+      "semanticId": {
+        "type": "ExternalReference",
+        "keys": [{"type": "GlobalReference", "value": "https://admin-shell.io/idta/HierarchicalStructures/1/0/Submodel"}]
+      },
+      "administration": {
+        "version": "1",
+        "revision": "0"
+      },
+      "submodelElements": [
+        {
+          "idShort": "Archetype",
+          "semanticId": {
+            "type": "ExternalReference",
+            "keys": [{
+              "type": "GlobalReference",
+              "value": "https://admin-shell.io/idta/HierarchicalStructures/1/0/Archetype"
+            }]
+          },
+          "modelType": "Property",
+          "valueType": "xs:string",
+          "value": "OneUp"
+        },
+        {
+          "idShort": "EntryNode",
+          "semanticId": {
+            "type": "ExternalReference",
+            "keys": [{
+              "type": "GlobalReference",
+              "value": "https://admin-shell.io/idta/HierarchicalStructures/1/0/EntryNode"
+            }]
+          },
+          "modelType": "Entity",
+          "entityType": "SelfManagedEntity",
+          "globalAssetId": "https://smartproductionlab.aau.dk/assets/omronCamera",
+          "statements": [
+            {
+              "idShort": "PlanarTable",
+              "semanticId": {
+                "type": "ExternalReference",
+                "keys": [{
+                  "type": "GlobalReference",
+                  "value": "https://admin-shell.io/idta/HierarchicalStructures/1/0/Node"
+                }]
+              },
+              "modelType": "Entity",
+              "entityType": "SelfManagedEntity",
+              "globalAssetId": "https://smartproductionlab.aau.dk/assets/planarTable",
+              "statements": [
+                {
+                  "idShort": "SameAs",
+                  "semanticId": {
+                    "type": "ExternalReference",
+                    "keys": [{
+                      "type": "GlobalReference",
+                      "value": "https://admin-shell.io/idta/HierarchicalStructures/1/0/SameAs"
+                    }]
+                  },
+                  "modelType": "ReferenceElement",
+                  "value": {
+                    "type": "ModelReference",
+                    "keys": [
+                      {
+                        "type": "Submodel",
+                        "value": "https://smartproductionlab.aau.dk/submodels/instances/planarTable/HierarchicalStructures"
+                      },
+                      {
+                        "type": "Entity",
+                        "value": "EntryNode"
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "idShort": "IsPartOf",
+              "semanticId": {
+                "type": "ExternalReference",
+                "keys": [{
+                  "type": "GlobalReference",
+                  "value": "https://admin-shell.io/idta/HierarchicalStructures/1/0/Relationship"
+                }]
+              },
+              "modelType": "RelationshipElement",
+              "first": {
+                "type": "ModelReference",
+                "keys": [
+                  {
+                    "type": "Submodel",
+                    "value": "https://smartproductionlab.aau.dk/submodels/instances/omronCamera/HierarchicalStructures"
+                  },
+                  {
+                    "type": "Entity",
+                    "value": "EntryNode"
+                  }
+                ]
+              },
+              "second": {
+                "type": "ModelReference",
+                "keys": [
+                  {
+                    "type": "Submodel",
+                    "value": "https://smartproductionlab.aau.dk/submodels/instances/omronCamera/HierarchicalStructures"
+                  },
+                  {
+                    "type": "Entity",
+                    "value": "EntryNode"
+                  },
+                  {
+                    "type": "Entity",
+                    "value": "PlanarTable"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "modelType": "Submodel"
+    }
+  ]
+}
