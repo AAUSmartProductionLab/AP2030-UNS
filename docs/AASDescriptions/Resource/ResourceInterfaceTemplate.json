@@ -6,7 +6,7 @@
       "assetInformation": {
         "assetKind": "Type",
         "globalAssetId": "https://smartproductionlab.aau.dk/assets/templates/resource",
-        "assetType": "https://smartproductionlab.aau.dk/Template"
+        "assetType": "https://smartproductionlab.aau.dk/Resource/Template"
       },
       "submodels": [
         {
