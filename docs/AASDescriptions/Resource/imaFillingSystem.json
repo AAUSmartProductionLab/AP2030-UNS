@@ -1,12 +1,12 @@
 {
   "assetAdministrationShells": [
     {
-      "idShort": "imaFillingSystemAAS",
-      "id": "https://smartproductionlab.aau.dk/aas/imaFillingSystem",
+      "idShort": "imaDispensingSystemAAS",
+      "id": "https://smartproductionlab.aau.dk/aas/imaDispensingSystem",
       "assetInformation": {
         "assetKind": "Instance",
-        "globalAssetId": "https://smartproductionlab.aau.dk/assets/imaFillingSystem",
-        "assetType": "Resource",
+        "globalAssetId": "https://smartproductionlab.aau.dk/assets/imaDispensingSystem",
+        "assetType": "https://smartproductionlab.aau.dk/Resource/CPPM/DispensingSystem/imaDispensingSystem",
         "specificAssetIds": [
           {
             "name": "serialNumber",
@@ -29,29 +29,25 @@
                 "value": "https://smartproductionlab.aau.dk/organization"
               }]
             }
-          },
-          {
-            "name":"SemanticType",
-            "value":"DispensingSystem"
           }
         ]
       },
       "submodels": [
         {
           "type": "ModelReference",
-          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/imaFillingSystem/AssetInterfacesDescription"}]
+          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystem/AssetInterfacesDescription"}]
         },
         {
           "type": "ModelReference",
-          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/imaFillingSystem/Variables"}]
+          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystem/Variables"}]
         },
         {
           "type": "ModelReference",
-          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/imaFillingSystem/Parameters"}]
+          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystem/Parameters"}]
         },
         {
           "type": "ModelReference",
-          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/imaFillingSystem/HierarchicalStructures"}]
+          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystem/HierarchicalStructures"}]
         }
       ],
       "derivedFrom": {
@@ -64,7 +60,7 @@
   "submodels": [
     {
       "idShort": "AssetInterfacesDescription",
-      "id": "https://smartproductionlab.aau.dk/submodels/instances/imaFillingSystem/AssetInterfacesDescription",
+      "id": "https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystem/AssetInterfacesDescription",
       "kind": "Instance",
       "semanticId": {
         "type": "ExternalReference",
@@ -106,7 +102,7 @@
               "idShort": "title",
               "modelType": "Property",
               "valueType": "xs:string",
-              "value": "IMA Filling System"
+              "value": "IMA Dispensing System"
             },
             {
               "idShort": "EndpointMetadata",
@@ -123,7 +119,7 @@
                   "idShort": "base",
                   "modelType": "Property",
                   "valueType": "xs:string",
-                  "value": "mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/Filling"
+                  "value": "mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/Dispensing"
                 },
                 {
                   "idShort": "contentType",
@@ -292,7 +288,7 @@
                                 "keys": [
                                   {
                                     "type": "Submodel",
-                                    "value": "https://smartproductionlab.aau.dk/submodels/instances/imaFillingSystem/AssetInterfacesDescription"
+                                    "value": "https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystem/AssetInterfacesDescription"
                                   },
                                   {
                                     "type": "SubmodelElementCollection",
@@ -788,7 +784,7 @@
     },
     {
       "idShort": "Variables",
-      "id": "https://smartproductionlab.aau.dk/submodels/instances/imaFillingSystem/Variables",
+      "id": "https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystem/Variables",
       "kind": "Instance",
       "semanticId": {
         "type": "ExternalReference",
@@ -831,7 +827,7 @@
                 "keys": [
                   {
                     "type": "Submodel",
-                    "value": "https://smartproductionlab.aau.dk/submodels/instances/imaFillingSystem/AssetInterfacesDescription"
+                    "value": "https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystem/AssetInterfacesDescription"
                   },
                   {
                     "type": "SubmodelElementCollection",
@@ -885,7 +881,7 @@
                 "keys": [
                   {
                     "type": "Submodel",
-                    "value": "https://smartproductionlab.aau.dk/submodels/instances/imaFillingSystem/AssetInterfacesDescription"
+                    "value": "https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystem/AssetInterfacesDescription"
                   },
                   {
                     "type": "SubmodelElementCollection",
@@ -940,7 +936,7 @@
                 "keys": [
                   {
                     "type": "Submodel",
-                    "value": "https://smartproductionlab.aau.dk/submodels/instances/imaFillingSystem/AssetInterfacesDescription"
+                    "value": "https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystem/AssetInterfacesDescription"
                   },
                   {
                     "type": "SubmodelElementCollection",
@@ -968,7 +964,7 @@
     },
     {
       "idShort": "Parameters",
-      "id": "https://smartproductionlab.aau.dk/submodels/instances/imaFillingSystem/Parameters",
+      "id": "https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystem/Parameters",
       "kind": "Instance",
       "semanticId": {
         "type": "ExternalReference",
@@ -983,7 +979,7 @@
     },
     {
       "idShort": "HierarchicalStructures",
-      "id": "https://smartproductionlab.aau.dk/submodels/instances/imaFillingSystem/HierarchicalStructures",
+      "id": "https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystem/HierarchicalStructures",
       "kind": "Instance",
       "semanticId": {
         "type": "ExternalReference",
@@ -1018,7 +1014,7 @@
           },
           "modelType": "Entity",
           "entityType": "SelfManagedEntity",
-          "globalAssetId": "https://smartproductionlab.aau.dk/assets/imaFillingSystem",
+          "globalAssetId": "https://smartproductionlab.aau.dk/assets/imaDispensingSystem",
           "statements": [
             {
               "idShort": "PlanarTable",
@@ -1074,7 +1070,7 @@
                 "keys": [
                   {
                     "type": "Submodel",
-                    "value": "https://smartproductionlab.aau.dk/submodels/instances/imaFillingSystem/HierarchicalStructures"
+                    "value": "https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystem/HierarchicalStructures"
                   },
                   {
                     "type": "Entity",
@@ -1087,7 +1083,7 @@
                 "keys": [
                   {
                     "type": "Submodel",
-                    "value": "https://smartproductionlab.aau.dk/submodels/instances/imaFillingSystem/HierarchicalStructures"
+                    "value": "https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystem/HierarchicalStructures"
                   },
                   {
                     "type": "Entity",

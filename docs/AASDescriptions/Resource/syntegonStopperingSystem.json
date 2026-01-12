@@ -6,7 +6,7 @@
       "assetInformation": {
         "assetKind": "Instance",
         "globalAssetId": "https://smartproductionlab.aau.dk/assets/syntegonStopperingSystem",
-        "assetType": "Resource",
+        "assetType": "https://smartproductionlab.aau.dk/Resource/CPPM/StopperingSystem/omronCamera",
         "specificAssetIds": [
           {
             "name": "serialNumber",
@@ -29,10 +29,6 @@
                 "value": "https://smartproductionlab.aau.dk/organization"
               }]
             }
-          },
-          {
-            "name":"SemanticType",
-            "value":"StopperingSystem"
           }
         ]
       },
