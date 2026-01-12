@@ -254,13 +254,13 @@
                           "idShort": "input",
                           "modelType": "File",
                           "contentType": "application/schema+json",
-                          "value": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/command.schema.json"
+                          "value": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json"
                         },
                         {
                           "idShort": "output",
                           "modelType": "File",
                           "contentType": "application/schema+json",
-                          "value": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/commandResponse.schema.json"
+                          "value": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json"
                         },
                         {
                           "idShort": "forms",
@@ -385,7 +385,7 @@
                           "idShort": "input",
                           "modelType": "File",
                           "contentType": "application/schema+json",
-                          "value": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/command.schema.json"
+                          "value": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json"
                         },
                         {
                           "idShort": "forms",
@@ -486,13 +486,13 @@
                           "idShort": "input",
                           "modelType": "File",
                           "contentType": "application/schema+json",
-                          "value": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/command.schema.json"
+                          "value": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json"
                         },
                         {
                           "idShort": "output",
                           "modelType": "File",
                           "contentType": "application/schema+json",
-                          "value": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/commandResponse.schema.json"
+                          "value": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json"
                         },
                         {
                           "idShort": "forms",
@@ -617,13 +617,13 @@
                           "idShort": "input",
                           "modelType": "File",
                           "contentType": "application/schema+json",
-                          "value": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/command.schema.json"
+                          "value": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json"
                         },
                         {
                           "idShort": "output",
                           "modelType": "File",
                           "contentType": "application/schema+json",
-                          "value": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/commandResponse.schema.json"
+                          "value": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json"
                         },
                         {
                           "idShort": "forms",
@@ -775,7 +775,7 @@
                           "idShort": "output",
                           "modelType": "File",
                           "contentType": "application/schema+json",
-                          "value": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/state.schema.json"
+                          "value": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/state.schema.json"
                         },
                         {
                           "idShort": "forms",
@@ -882,7 +882,7 @@
                           "idShort": "output",
                           "modelType": "File",
                           "contentType": "application/schema+json",
-                          "value": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/stationOccupation.schema.json"
+                          "value": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/stationOccupation.schema.json"
                         },
                         {
                           "idShort": "forms",
@@ -989,7 +989,7 @@
                           "idShort": "output",
                           "modelType": "File",
                           "contentType": "application/schema+json",
-                          "value": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/image.schema.json"
+                          "value": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/image.schema.json"
                         },
                         {
                           "idShort": "forms",
