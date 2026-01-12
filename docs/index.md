@@ -65,6 +65,9 @@ All schemas are automatically synchronized from the `schemas/` directory. Click 
 - **[omronCamera.json](AASDescriptions/Resource/omronCamera.json)**
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/omronCamera.json)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/omronCamera.json)
+- **[optimaStopperingSystem.json](AASDescriptions/Resource/optimaStopperingSystem.json)**
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/optimaStopperingSystem.json)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/optimaStopperingSystem.json)
 - **[optimaUnloadingSystem.json](AASDescriptions/Resource/optimaUnloadingSystem.json)**
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/optimaUnloadingSystem.json)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/optimaUnloadingSystem.json)
@@ -80,6 +83,9 @@ All schemas are automatically synchronized from the `schemas/` directory. Click 
 - **[planarTable.json](AASDescriptions/Resource/planarTable.json)**
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/planarTable.json)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/planarTable.json)
+- **[syntegonDispensingSystem.json](AASDescriptions/Resource/syntegonDispensingSystem.json)**
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/syntegonDispensingSystem.json)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/syntegonDispensingSystem.json)
 - **[syntegonStopperingSystem.json](AASDescriptions/Resource/syntegonStopperingSystem.json)**
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/syntegonStopperingSystem.json)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/syntegonStopperingSystem.json)
