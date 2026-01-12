@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root BTCPP_format="4">
-  <BehaviorTree ID="Load">
+  <BehaviorTree ID="Loading">
     <SequenceWithMemory>
       <PopElement ProductID="{ProductID}"
                   if_empty="SUCCESS"

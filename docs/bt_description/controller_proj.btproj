@@ -1,16 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root BTCPP_format="4" project_name="Project">
-    <include path="camera.xml"/>
-    <include path="filling.xml"/>
-    <include path="lineSOP.xml"/>
+    <include path="asepticFilling.xml"/>
+    <include path="dispensing.xml"/>
     <include path="loading.xml"/>
-    <include path="product.xml"/>
+    <include path="planarSOP.xml"/>
+    <include path="production.xml"/>
+    <include path="qualityControl.xml"/>
     <include path="scraping.xml"/>
     <include path="stoppering.xml"/>
-    <include path="tree.xml"/>
     <include path="unloading.xml"/>
     <!-- Description of Node Models (used by Groot) -->
     <TreeNodesModel>
+        <SubTree ID="AsepticFilling" editable="true">
+            <input_port name="Xbot" default="Xbot1"/>
+            <output_port name="ProductID"/>
+        </SubTree>
         <Control ID="BC_Fallback"/>
         <Control ID="BC_Fallback_Async"/>
         <Action ID="Command_Execution">
@@ -81,10 +85,6 @@
             <input_port name="Uuid" default="{ID}" type="std::string">UUID Used for registration</input_port>
             <input_port name="Station" default="{Station}" type="std::string">The station to register with</input_port>
         </Decorator>
-        <SubTree ID="Xbot_Production" editable="true">
-            <input_port name="Xbot" default="Xbot1"/>
-            <output_port name="ProductID"/>
-        </SubTree>
         <Action ID="getAASProperty">
             <inout_port name="output_key" type="std::string">Name of the blackboard entry where the value should be written</inout_port>
             <input_port name="Property" type="std::string">The property idShort or path (use | as delimiter, e.g., 'Filling|Location|x')</input_port>

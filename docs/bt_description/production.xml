@@ -2,7 +2,7 @@
 <root BTCPP_format="4">
   <include path="./lineSOP.xml"/> 
   <include path="./product.xml" />
-  <BehaviorTree ID="MainTree">
+  <BehaviorTree ID="Production">
     <Sequence>
       <Configure ProductIDs="{ProductIDs}"/>
       <ReactiveSequence>
@@ -18,15 +18,15 @@
         </Fallback>
         <Parallel failure_count="-1"
                   success_count="1">
-          <SubTree ID="Xbot_Production"
+          <SubTree ID="AsepticFilling"
                    Xbot="{Xbot1}"
                    ProductID=""
                    _autoremap="true"/>
-          <SubTree ID="Xbot_Production"
+          <SubTree ID="AsepticFilling"
                    Xbot="{Xbot2}"
                    ProductID=""
                    _autoremap="true"/>
-          <SubTree ID="Xbot_Production"
+          <SubTree ID="AsepticFilling"
                    Xbot="{Xbot3}"
                    ProductID=""
                    _autoremap="true"/>
