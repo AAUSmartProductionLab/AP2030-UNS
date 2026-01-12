@@ -6,6 +6,7 @@
       "assetInformation": {
         "assetKind": "Instance",
         "globalAssetId": "https://smartproductionlab.aau.dk/assets/omronCamera",
+        "assetType": "Resource",
         "specificAssetIds": [
           {
             "name": "serialNumber",
@@ -28,6 +29,10 @@
                 "value": "https://smartproductionlab.aau.dk/organization"
               }]
             }
+          },
+          {
+            "name":"SemanticType",
+            "value":"QualityControlSystem"
           }
         ]
       },
