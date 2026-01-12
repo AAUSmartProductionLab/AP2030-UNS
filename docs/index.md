@@ -50,39 +50,72 @@ All schemas are automatically synchronized from the `schemas/` directory. Click 
 - **[ResourceInterfaceTemplate.json](AASDescriptions/Resource/ResourceInterfaceTemplate.json)**
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/ResourceInterfaceTemplate.json)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/ResourceInterfaceTemplate.json)
+- **[ResourceTemplate.json](AASDescriptions/Resource/updated/ResourceTemplate.json)**
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/updated/ResourceTemplate.json)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/updated/ResourceTemplate.json)
 - **[SyntegonStopperingSystemInstance.json](AASDescriptions/Resource/SyntegonStopperingSystemInstance.json)**
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/SyntegonStopperingSystemInstance.json)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/SyntegonStopperingSystemInstance.json)
 - **[aauFillingLine.json](AASDescriptions/Resource/aauFillingLine.json)**
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/aauFillingLine.json)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/aauFillingLine.json)
+- **[aauFillingLine.json](AASDescriptions/Resource/updated/aauFillingLine.json)**
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/updated/aauFillingLine.json)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/updated/aauFillingLine.json)
 - **[imaFillingSystem.json](AASDescriptions/Resource/imaFillingSystem.json)**
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/imaFillingSystem.json)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/imaFillingSystem.json)
+- **[imaFillingSystem.json](AASDescriptions/Resource/updated/imaFillingSystem.json)**
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/updated/imaFillingSystem.json)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/updated/imaFillingSystem.json)
 - **[imaLoadingSystem.json](AASDescriptions/Resource/imaLoadingSystem.json)**
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/imaLoadingSystem.json)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/imaLoadingSystem.json)
+- **[imaLoadingSystem.json](AASDescriptions/Resource/updated/imaLoadingSystem.json)**
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/updated/imaLoadingSystem.json)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/updated/imaLoadingSystem.json)
 - **[omronCamera.json](AASDescriptions/Resource/omronCamera.json)**
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/omronCamera.json)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/omronCamera.json)
+- **[omronCamera.json](AASDescriptions/Resource/updated/omronCamera.json)**
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/updated/omronCamera.json)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/updated/omronCamera.json)
 - **[optimaUnloadingSystem.json](AASDescriptions/Resource/optimaUnloadingSystem.json)**
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/optimaUnloadingSystem.json)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/optimaUnloadingSystem.json)
+- **[optimaUnloadingSystem.json](AASDescriptions/Resource/updated/optimaUnloadingSystem.json)**
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/updated/optimaUnloadingSystem.json)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/updated/optimaUnloadingSystem.json)
 - **[planarShuttle1.json](AASDescriptions/Resource/planarShuttle1.json)**
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/planarShuttle1.json)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/planarShuttle1.json)
+- **[planarShuttle1.json](AASDescriptions/Resource/updated/planarShuttle1.json)**
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/updated/planarShuttle1.json)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/updated/planarShuttle1.json)
 - **[planarShuttle2.json](AASDescriptions/Resource/planarShuttle2.json)**
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/planarShuttle2.json)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/planarShuttle2.json)
+- **[planarShuttle2.json](AASDescriptions/Resource/updated/planarShuttle2.json)**
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/updated/planarShuttle2.json)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/updated/planarShuttle2.json)
 - **[planarShuttle3.json](AASDescriptions/Resource/planarShuttle3.json)**
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/planarShuttle3.json)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/planarShuttle3.json)
+- **[planarShuttle3.json](AASDescriptions/Resource/updated/planarShuttle3.json)**
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/updated/planarShuttle3.json)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/updated/planarShuttle3.json)
 - **[planarTable.json](AASDescriptions/Resource/planarTable.json)**
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/planarTable.json)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/planarTable.json)
+- **[planarTable.json](AASDescriptions/Resource/updated/planarTable.json)**
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/updated/planarTable.json)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/updated/planarTable.json)
 - **[syntegonStopperingSystem.json](AASDescriptions/Resource/syntegonStopperingSystem.json)**
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/syntegonStopperingSystem.json)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/syntegonStopperingSystem.json)
+- **[syntegonStopperingSystem.json](AASDescriptions/Resource/updated/syntegonStopperingSystem.json)**
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/updated/syntegonStopperingSystem.json)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/updated/syntegonStopperingSystem.json)
 
 ### MQTT Schemas
 

@@ -1,0 +1,218 @@
+{
+  "assetAdministrationShells": [
+    {
+      "idShort": "ResourceTemplateAAS",
+      "id": "https://smartproductionlab.aau.dk/aas/templates/resource",
+      "assetInformation": {
+        "assetKind": "Type",
+        "globalAssetId": "https://smartproductionlab.aau.dk/assets/MWU5YjNhYTUtMzk0Yi00OTgwLWFiYzYtZDE0M2JkNjZmZjIw",
+        "assetType": "https://smartproductionlab.aau.dk/Resource/Template"
+      },
+      "submodels": [
+        {
+          "type": "ModelReference",
+          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/templates/AssetInterfacesDescription"}]
+        },
+        {
+          "type": "ModelReference",
+          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/templates/Variables"}]
+        },
+        {
+          "type": "ModelReference",
+          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/templates/Parameters"}]
+        }
+      ],
+      "modelType": "AssetAdministrationShell"
+    }
+  ],
+  "submodels": [
+    {
+      "idShort": "AssetInterfacesDescription",
+      "id": "https://smartproductionlab.aau.dk/submodels/templates/AssetInterfacesDescription",
+      "kind": "Template",
+      "semanticId": {
+        "type": "ExternalReference",
+        "keys": [{"type": "GlobalReference", "value": "https://admin-shell.io/idta/AssetInterfacesDescription/1/0/Submodel"}]
+      },
+      "description": [
+        {
+          "language": "en",
+          "text": "Generic template for resource interface descriptions following IDTA 02017-1-0 and W3C WoT Thing Description. Defines the structural pattern for any resource (filling systems, cameras, AMRs, etc.)"
+        }
+      ],
+      "submodelElements": [
+        {
+          "idShort": "Interface",
+          "semanticId": {
+            "type": "ExternalReference",
+            "keys": [{
+              "type": "GlobalReference",
+              "value": "https://admin-shell.io/idta/AssetInterfacesDescription/1/0/Interface"
+            }]
+          },
+          "description": [
+            {
+              "language": "en",
+              "text": "Interface definition. Each resource instance must specify the protocol (HTTP, MQTT, OPC UA, etc.) via supplementalSemanticIds"
+            }
+          ],
+          "modelType": "SubmodelElementCollection",
+          "value": [
+            {
+              "idShort": "title",
+              "description": [{"language": "en", "text": "Human-readable title for the interface"}],
+              "modelType": "Property",
+              "valueType": "xs:string"
+            },
+            {
+              "idShort": "EndpointMetadata",
+              "semanticId": {
+                "type": "ExternalReference",
+                "keys": [{
+                  "type": "GlobalReference",
+                  "value": "https://admin-shell.io/idta/AssetInterfacesDescription/1/0/EndpointMetadata"
+                }]
+              },
+              "description": [
+                {
+                  "language": "en", 
+                  "text": "Protocol-specific endpoint configuration. Properties depend on the protocol (base URI for MQTT/HTTP, endpoint URL for OPC UA, etc.)"
+                }
+              ],
+              "modelType": "SubmodelElementCollection",
+              "value": [
+                {
+                  "idShort": "base",
+                  "description": [{"language": "en", "text": "Base URI or endpoint address for the protocol"}],
+                  "modelType": "Property",
+                  "valueType": "xs:string"
+                },
+                {
+                  "idShort": "contentType",
+                  "description": [{"language": "en", "text": "Default content type for messages (e.g., application/json, application/xml)"}],
+                  "modelType": "Property",
+                  "valueType": "xs:string"
+                }
+              ]
+            },
+            {
+              "idShort": "InteractionMetadata",
+              "semanticId": {
+                "type": "ExternalReference",
+                "keys": [{
+                  "type": "GlobalReference",
+                  "value": "https://admin-shell.io/idta/AssetInterfacesDescription/1/0/InteractionMetadata"
+                }]
+              },
+              "supplementalSemanticIds": [{
+                "type": "ExternalReference",
+                "keys": [{
+                  "type": "GlobalReference",
+                  "value": "https://www.w3.org/2019/wot/td#InteractionAffordance"
+                }]
+              }],
+              "description": [
+                {
+                  "language": "en", 
+                  "text": "Container for all available interactions. Resource instances populate this with their specific actions, properties, and events"
+                }
+              ],
+              "modelType": "SubmodelElementCollection",
+              "value": [
+                {
+                  "idShort": "actions",
+                  "semanticId": {
+                    "type": "ExternalReference",
+                    "keys": [{
+                      "type": "GlobalReference",
+                      "value": "https://www.w3.org/2019/wot/td#ActionAffordance"
+                    }]
+                  },
+                  "description": [
+                    {
+                      "language": "en", 
+                      "text": "Collection of invokable actions. Each action must follow the ActionDefinition structure below"
+                    }
+                  ],
+                  "modelType": "SubmodelElementCollection",
+                  "value": []
+                },
+                {
+                  "idShort": "properties",
+                  "semanticId": {
+                    "type": "ExternalReference",
+                    "keys": [{
+                      "type": "GlobalReference",
+                      "value": "https://www.w3.org/2019/wot/td#PropertyAffordance"
+                    }]
+                  },
+                  "description": [
+                    {
+                      "language": "en", 
+                      "text": "Collection of observable/readable properties. Each property must follow the PropertyDefinition structure"
+                    }
+                  ],
+                  "modelType": "SubmodelElementCollection",
+                  "value": []
+                },
+                {
+                  "idShort": "events",
+                  "semanticId": {
+                    "type": "ExternalReference",
+                    "keys": [{
+                      "type": "GlobalReference",
+                      "value": "https://www.w3.org/2019/wot/td#EventAffordance"
+                    }]
+                  },
+                  "description": [
+                    {
+                      "language": "en", 
+                      "text": "Collection of events that can be subscribed to. Each event follows a similar pattern to actions but is push-based"
+                    }
+                  ],
+                  "modelType": "SubmodelElementCollection",
+                  "value": []
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "modelType": "Submodel"
+    },
+    {
+      "idShort": "Variables",
+      "id": "https://smartproductionlab.aau.dk/submodels/templates/Variables",
+      "kind": "Template",
+      "semanticId": {
+        "type": "ExternalReference",
+        "keys": [{"type": "GlobalReference", "value": "https://admin-shell.io/idta/Variables/1/0/Submodel"}]
+      },
+      "description": [
+        {
+          "language": "en",
+          "text": "Optional submodel for resource runtime variables and state information. Resource instances can add state variables, occupancy info, errors, etc."
+        }
+      ],
+      "submodelElements": [],
+      "modelType": "Submodel"
+    },
+    {
+      "idShort": "Parameters",
+      "id": "https://smartproductionlab.aau.dk/submodels/templates/Parameters",
+      "kind": "Template",
+      "semanticId": {
+        "type": "ExternalReference",
+        "keys": [{"type": "GlobalReference", "value": "https://admin-shell.io/idta/Parameters/1/0/Submodel"}]
+      },
+      "description": [
+        {
+          "language": "en",
+          "text": "Optional submodel for resource configuration parameters. Resource instances can add tunable parameters, setpoints, limits, etc."
+        }
+      ],
+      "submodelElements": [],
+      "modelType": "Submodel"
+    }
+  ]
+}
