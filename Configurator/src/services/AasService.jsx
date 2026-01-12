@@ -79,6 +79,18 @@ class AasService {
     };
   }
 
+  /**
+   * Generate a unique global asset ID using base64-encoded UUID
+   * Format: https://smartproductionlab.aau.dk/assets/{base64(uuid)}
+   * @param {string} uuid - The UUID to encode (if not provided, a new one should be passed)
+   * @returns {string} The global asset ID URL
+   */
+  generateGlobalAssetId(uuid) {
+    const baseUrl = 'https://smartproductionlab.aau.dk';
+    const encodedUuid = this.base64UrlEncode(uuid);
+    return `${baseUrl}/assets/${encodedUuid}`;
+  }
+
   // ========================================
   // Shell Registry Operations (SDK) - Generic CRUD
   // ========================================
@@ -754,15 +766,17 @@ class AasService {
    * Generate product AAS and submodel IDs from order UUID
    * @param {string} orderUuid - The order UUID
    * @param {string} productFamily - The product family (e.g., 'Monoclonal Antibodies', 'Growth Hormones')
+   * @param {string} productName - The product name (e.g., 'MIM8', 'HgH')
    */
-  getProductAasIds(orderUuid, productFamily = null) {
+  getProductAasIds(orderUuid, productFamily = null, productName = null) {
     const baseUrl = 'https://smartproductionlab.aau.dk';
     const sanitizedFamily = productFamily ? productFamily.toLowerCase().replace(/\s+/g, '-') : 'unknown';
+    const sanitizedProduct = productName ? productName.replace(/\s+/g, '') : 'unknown';
     return {
       aasId: `${baseUrl}/aas/products/${orderUuid}`,
-      assetId: `${baseUrl}/assets/products/${orderUuid}`,
-      // AssetType uses ontology URL structure: role/category/specific-type
-      assetType: `${baseUrl}/product/productFamily/${sanitizedFamily}`,
+      assetId: this.generateGlobalAssetId(orderUuid),
+      // AssetType uses ontology URL structure: role/category/specific-type/product
+      assetType: `${baseUrl}/product/productFamily/${sanitizedFamily}/${sanitizedProduct}`,
       batchInfoSubmodelId: `${baseUrl}/submodels/products/${orderUuid}/BatchInformation`,
       requirementsSubmodelId: `${baseUrl}/submodels/products/${orderUuid}/Requirements`,
       billOfMaterialsSubmodelId: `${baseUrl}/submodels/products/${orderUuid}/BillOfMaterials`
@@ -776,7 +790,8 @@ class AasService {
    */
   createProductAas(batchData) {
     const productFamily = batchData.productFamily || batchData.product;
-    const ids = this.getProductAasIds(batchData.Uuid, productFamily);
+    const productName = batchData.product;
+    const ids = this.getProductAasIds(batchData.Uuid, productFamily, productName);
     
     // Create all submodels
     const batchInfoSubmodel = this.createBatchInformationSubmodel(batchData, ids.batchInfoSubmodelId);
@@ -1311,16 +1326,19 @@ class AasService {
    * Creates IDs like "MIM8AAS" for the actively produced product
    * @param {string} productName - The product name
    * @param {string} productFamily - The product family (e.g., 'Monoclonal Antibodies', 'Growth Hormones')
+   * @param {string} batchUuid - The batch UUID for unique asset identification
    */
-  getActiveProductAasIds(productName, productFamily = null) {
+  getActiveProductAasIds(productName, productFamily = null, batchUuid = null) {
     const baseUrl = 'https://smartproductionlab.aau.dk';
     const sanitizedName = productName.replace(/\s+/g, '');
     const sanitizedFamily = productFamily ? productFamily.toLowerCase().replace(/\s+/g, '-') : 'unknown';
+    // Use batch UUID for unique asset ID, or generate placeholder if not provided
+    const assetId = batchUuid ? this.generateGlobalAssetId(batchUuid) : `${baseUrl}/assets/${sanitizedName.toLowerCase()}`;
     return {
       aasId: `${baseUrl}/aas/${sanitizedName}AAS`,
-      assetId: `${baseUrl}/assets/${sanitizedName.toLowerCase()}`,
-      // AssetType uses ontology URL structure: role/category/specific-type
-      assetType: `${baseUrl}/product/productFamily/${sanitizedFamily}`,
+      assetId,
+      // AssetType uses ontology URL structure: role/category/specific-type/product
+      assetType: `${baseUrl}/product/productFamily/${sanitizedFamily}/${sanitizedName}`,
       batchInfoSubmodelId: `${baseUrl}/submodels/instances/${sanitizedName}/BatchInformation`,
       requirementsSubmodelId: `${baseUrl}/submodels/instances/${sanitizedName}/Requirements`,
       billOfMaterialsSubmodelId: `${baseUrl}/submodels/instances/${sanitizedName}/BillOfMaterials`
@@ -1341,7 +1359,8 @@ class AasService {
       }
       
       const productFamily = batchData.productFamily || productName;
-      const ids = this.getActiveProductAasIds(productName, productFamily);
+      const batchUuid = batchData.Uuid;
+      const ids = this.getActiveProductAasIds(productName, productFamily, batchUuid);
       
       // Create submodels with the active product IDs
       const batchInfoSubmodel = this.createBatchInformationSubmodel(batchData, ids.batchInfoSubmodelId);

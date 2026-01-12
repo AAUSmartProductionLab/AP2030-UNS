@@ -36,6 +36,7 @@ export default function BatchConfigurator() {
   const [batchConfig, setBatchConfig] = useState(initialState);
   const [mqttConnected, setMqttConnected] = useState(false);
   const firstQueueItemRef = useRef(null);
+  const previousTopBatchUuidRef = useRef(null);
 
   // Load queue and log data from localStorage on component mount
   const [queue, setQueue] = useState(() => {
@@ -145,6 +146,27 @@ export default function BatchConfigurator() {
       });
     }
   }, [queue, mqttConnected]);
+
+  // Publish AAS when a new batch reaches the top of the queue (any way it happens)
+  useEffect(() => {
+    if (queue && queue.length > 0) {
+      const currentTopBatch = queue[0];
+      const previousTopUuid = previousTopBatchUuidRef.current;
+      
+      // If the top batch changed (different UUID)
+      if (currentTopBatch.Uuid && currentTopBatch.Uuid !== previousTopUuid) {
+        previousTopBatchUuidRef.current = currentTopBatch.Uuid;
+        
+        // Post the active product AAS for the new top batch
+        aasService.postActiveProductAas(currentTopBatch).catch(error => {
+          console.error('Failed to post active Product AAS:', error);
+        });
+      }
+    } else {
+      // Queue is empty, reset the ref
+      previousTopBatchUuidRef.current = null;
+    }
+  }, [queue]);
   
   const packagingOptions = [
     { id: '1', name: 'Cartridge (3mL)' },
@@ -353,20 +375,6 @@ export default function BatchConfigurator() {
     // Proceed with removal for non-running batches
     setQueue(prevQueue => prevQueue.filter(batch => batch.id !== batchId));
     toast.info(`Removed batch: ${batchToRemove.name}`);
-  };
-
-  /**
-   * Handler for when a batch is moved to the top of the queue
-   * Posts the Product AAS with "{productName}AAS" naming to the server
-   */
-  const handleBatchMovedToTop = async (batch) => {
-    try {
-      console.log('Batch moved to top of queue:', batch);
-      await aasService.postActiveProductAas(batch);
-    } catch (error) {
-      console.error('Failed to post active Product AAS:', error);
-      // Toast error is already shown by the service
-    }
   };
 
   const handleOrderAcknowledge = (message) => {
@@ -726,8 +734,7 @@ export default function BatchConfigurator() {
         setQueue={setQueue}
         log={log}
         setLog={setLog}
-        onRemoveBatch={removeBatchFromQueue}
-        onBatchMovedToTop={handleBatchMovedToTop}/>
+        onRemoveBatch={removeBatchFromQueue}/>
     </div>
     </div>
   );
