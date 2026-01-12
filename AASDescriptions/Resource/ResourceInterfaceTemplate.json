@@ -1,16 +1,17 @@
 {
   "assetAdministrationShells": [
     {
-      "idShort": "ResourceInterfaceTemplateAAS",
-      "id": "https://smartproductionlab.aau.dk/aas/templates/resourceInterface",
+      "idShort": "ResourceTemplateAAS",
+      "id": "https://smartproductionlab.aau.dk/aas/templates/resource",
       "assetInformation": {
         "assetKind": "Type",
-        "globalAssetId": "https://smartproductionlab.aau.dk/assets/templates/resourceInterface"
+        "globalAssetId": "https://smartproductionlab.aau.dk/assets/templates/resource",
+        "assetType": "https://smartproductionlab.aau.dk/Resource/Template"
       },
       "submodels": [
         {
           "type": "ModelReference",
-          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/templates/AssetInterfacesDescription"}]
+          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/templates/AssetsDescription"}]
         },
         {
           "type": "ModelReference",

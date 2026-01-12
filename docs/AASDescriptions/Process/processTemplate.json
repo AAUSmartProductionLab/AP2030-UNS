@@ -6,7 +6,7 @@
       "specificAssetIds":[],
       "assetInformation": {
         "assetKind": "Instance",
-        "assetType": "Process",
+        "assetType": "https://smartproductionlab.aau.dk/Process/Template",
         "globalAssetId": "https://smartproductionlab.aau.dk/aas/templates/process",
         "specificAssetIds": [
           {
@@ -19,10 +19,6 @@
                 "value": "https://smartproductionlab.aau.dk/organization"
               }]
             }
-          },
-          {
-            "name":"SemanticType",
-            "value":"ProcessTemplate"
           }
         ]
       },
