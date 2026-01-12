@@ -1,15 +1,16 @@
 {
   "assetAdministrationShells": [
     {
-      "idShort": "syntegonStopperingSystemAAS",
-      "id": "https://smartproductionlab.aau.dk/aas/syntegonStopperingSystem",
+      "idShort": "omronCameraAAS",
+      "id": "https://smartproductionlab.aau.dk/aas/omronCamera",
       "assetInformation": {
         "assetKind": "Instance",
-        "globalAssetId": "https://smartproductionlab.aau.dk/assets/syntegonStopperingSystem",
+        "globalAssetId": "https://smartproductionlab.aau.dk/assets/omronCamera",
+        "assetType": "Resource",
         "specificAssetIds": [
           {
             "name": "serialNumber",
-            "value": "SYN-SS-2024-001",
+            "value": "OM-CA-2024-001",
             "externalSubjectId": {
               "type": "ExternalReference",
               "keys": [{
@@ -28,25 +29,29 @@
                 "value": "https://smartproductionlab.aau.dk/organization"
               }]
             }
+          },
+          {
+            "name":"SemanticType",
+            "value":"QualityControlSystem"
           }
         ]
       },
       "submodels": [
         {
           "type": "ModelReference",
-          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/syntegonStopperingSystem/AssetInterfacesDescription"}]
+          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/omronCamera/AssetInterfacesDescription"}]
         },
         {
           "type": "ModelReference",
-          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/syntegonStopperingSystem/Variables"}]
+          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/omronCamera/Variables"}]
         },
         {
           "type": "ModelReference",
-          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/syntegonStopperingSystem/Parameters"}]
+          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/omronCamera/Parameters"}]
         },
         {
           "type": "ModelReference",
-          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/syntegonStopperingSystem/HierarchicalStructures"}]
+          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/omronCamera/HierarchicalStructures"}]
         }
       ],
       "derivedFrom": {
@@ -59,7 +64,7 @@
   "submodels": [
     {
       "idShort": "AssetInterfacesDescription",
-      "id": "https://smartproductionlab.aau.dk/submodels/instances/syntegonStopperingSystem/AssetInterfacesDescription",
+      "id": "https://smartproductionlab.aau.dk/submodels/instances/omronCamera/AssetInterfacesDescription",
       "kind": "Instance",
       "semanticId": {
         "type": "ExternalReference",
@@ -101,7 +106,7 @@
               "idShort": "title",
               "modelType": "Property",
               "valueType": "xs:string",
-              "value": "Syntegon Stoppering System"
+              "value": "Omron Camera"
             },
             {
               "idShort": "EndpointMetadata",
@@ -118,7 +123,7 @@
                   "idShort": "base",
                   "modelType": "Property",
                   "valueType": "xs:string",
-                  "value": "mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/Stopper"
+                  "value": "mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/WeightVerification"
                 },
                 {
                   "idShort": "contentType",
@@ -158,7 +163,7 @@
                   "modelType": "SubmodelElementCollection",
                   "value": [
                     {
-                      "idShort": "stopper",
+                      "idShort": "capture",
                       "semanticId": {
                         "type": "ExternalReference",
                         "keys": [{
@@ -175,8 +180,8 @@
                       }],
                       "modelType": "SubmodelElementCollection",
                       "value": [
-                        {"idShort": "key", "modelType": "Property", "valueType": "xs:string", "value": "stopper"},
-                        {"idShort": "title", "modelType": "Property", "valueType": "xs:string", "value": "stopper"},
+                        {"idShort": "key", "modelType": "Property", "valueType": "xs:string", "value": "capture"},
+                        {"idShort": "title", "modelType": "Property", "valueType": "xs:string", "value": "capture"},
                         {"idShort": "synchronous", "modelType": "Property", "valueType": "xs:boolean", "value": "true"},
                         {
                             "idShort": "input",
@@ -202,7 +207,7 @@
                           "modelType": "SubmodelElementCollection",
                           "value": [
                             {"idShort": "contentType", "modelType": "Property", "valueType": "xs:string", "value": "application/json"},
-                            {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/CMD/Stopper"},
+                            {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/CMD/Capture"},
                             {"idShort": "op", "modelType": "Property", "valueType": "xs:string", "value": "invokeAction"},
                             {"idShort": "mqv_retain", "modelType": "Property", "valueType": "xs:boolean", "value": "false"},
                             {"idShort": "mqv_controlPacket", "modelType": "Property", "valueType": "xs:string", "value": "subscribe"},
@@ -212,7 +217,7 @@
                               "modelType": "SubmodelElementCollection",
                               "value": [
                                 {"idShort": "contentType", "modelType": "Property", "valueType": "xs:string", "value": "application/json"},
-                                {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/DATA/Stopper"},
+                                {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/DATA/Capture"},
                                 {"idShort": "mqv_controlPacket", "modelType": "Property", "valueType": "xs:string", "value": "publish"}
                               ]
                             }
@@ -546,6 +551,76 @@
                           ]
                         }
                       ]
+                    },
+                    {
+                      "idShort": "Image",
+                      "semanticId": {
+                        "type": "ExternalReference",
+                        "keys": [{
+                          "type": "GlobalReference",
+                          "value": "https://admin-shell.io/idta/AssetInterfaceDescription/1/0/PropertyDefinition"
+                        }]
+                      },
+                      "supplementalSemanticIds": [{
+                        "type": "ExternalReference",
+                        "keys": [{
+                          "type": "GlobalReference",
+                          "value": "https://www.w3.org/2019/wot/td#name"
+                        }]
+                      }],
+                      "modelType": "SubmodelElementCollection",
+                      "value": [
+                        {
+                          "idShort": "key",
+                          "semanticId": {
+                            "type": "ExternalReference",
+                            "keys": [{
+                              "type": "GlobalReference",
+                              "value": "https://admin-shell.io/idta/AssetInterfacesDescription/1/0/key"
+                            }]
+                          },
+                          "valueType": "xs:string",
+                          "value": "Image",
+                          "modelType": "Property"
+                        },
+                        {
+                          "idShort": "type",
+                          "semanticId": {
+                            "type": "ExternalReference",
+                            "keys": [{
+                              "type": "GlobalReference",
+                              "value": "https://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+                            }]
+                          },
+                          "valueType": "xs:string",
+                          "value": "object",
+                          "modelType": "Property"
+                        },
+                        {
+                          "idShort": "output",
+                          "modelType": "File",
+                          "contentType": "application/schema+json",
+                          "value": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/image.schema.json"
+                        },
+                        {
+                          "idShort": "forms",
+                          "semanticId": {
+                            "type": "ExternalReference",
+                            "keys": [{
+                              "type": "GlobalReference",
+                              "value": "https://www.w3.org/2019/wot/td#Form"
+                            }]
+                          },
+                          "modelType": "SubmodelElementCollection",
+                          "value": [
+                            {"idShort": "contentType", "modelType": "Property", "valueType": "xs:string", "value": "application/json"},
+                            {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/DATA/Image"},
+                            {"idShort": "mqv_retain", "modelType": "Property", "valueType": "xs:boolean", "value": "true"},
+                            {"idShort": "mqv_controlPacket", "modelType": "Property", "valueType": "xs:string", "value": "publish"},
+                            {"idShort": "mqv_qos", "modelType": "Property", "valueType": "xs:int", "value": "0"}
+                          ]
+                        }
+                      ]
                     }
                   ]
                 }
@@ -558,7 +633,7 @@
     },
     {
       "idShort": "Variables",
-      "id": "https://smartproductionlab.aau.dk/submodels/instances/syntegonStopperingSystem/Variables",
+      "id": "https://smartproductionlab.aau.dk/submodels/instances/omronCamera/Variables",
       "kind": "Instance",
       "semanticId": {
         "type": "ExternalReference",
@@ -601,7 +676,7 @@
                 "keys": [
                   {
                     "type": "Submodel",
-                    "value": "https://smartproductionlab.aau.dk/submodels/instances/syntegonStopperingSystem/AssetInterfacesDescription"
+                    "value": "https://smartproductionlab.aau.dk/submodels/instances/omronCamera/AssetInterfacesDescription"
                   },
                   {
                     "type": "SubmodelElementCollection",
@@ -655,7 +730,7 @@
                 "keys": [
                   {
                     "type": "Submodel",
-                    "value": "https://smartproductionlab.aau.dk/submodels/instances/syntegonStopperingSystem/AssetInterfacesDescription"
+                    "value": "https://smartproductionlab.aau.dk/submodels/instances/omronCamera/AssetInterfacesDescription"
                   },
                   {
                     "type": "SubmodelElementCollection",
@@ -677,13 +752,68 @@
               }
             }
           ]
+        },
+        {
+          "idShort": "Image",
+          "semanticId": {
+            "type": "ExternalReference",
+            "keys": [{
+              "type": "GlobalReference",
+              "value": "https://smartproductionlab.aau.dk/properties/image"
+            }]
+          },
+          "modelType": "SubmodelElementCollection",
+          "value": [
+            {
+              "idShort": "Value",
+              "modelType": "Property",
+              "valueType": "xs:string",
+              "value": ""
+            },
+            {
+              "idShort": "InterfaceReference",
+              "semanticId": {
+                "type": "ExternalReference",
+                "keys": [{
+                  "type": "GlobalReference",
+                  "value": "https://admin-shell.io/idta/AssetInterfacesDescription/1/0/InterfaceReference"
+                }]
+              },
+              "modelType": "ReferenceElement",
+              "value": {
+                "type": "ModelReference",
+                "keys": [
+                  {
+                    "type": "Submodel",
+                    "value": "https://smartproductionlab.aau.dk/submodels/instances/omronCamera/AssetInterfacesDescription"
+                  },
+                  {
+                    "type": "SubmodelElementCollection",
+                    "value": "InterfaceMQTT"
+                  },
+                  {
+                    "type": "SubmodelElementCollection",
+                    "value": "InteractionMetadata"
+                  },
+                  {
+                    "type": "SubmodelElementCollection",
+                    "value": "properties"
+                  },
+                  {
+                    "type": "SubmodelElementCollection",
+                    "value": "Image"
+                  }
+                ]
+              }
+            }
+          ]
         }
       ],
       "modelType": "Submodel"
     },
     {
       "idShort": "Parameters",
-      "id": "https://smartproductionlab.aau.dk/submodels/instances/syntegonStopperingSystem/Parameters",
+      "id": "https://smartproductionlab.aau.dk/submodels/instances/omronCamera/Parameters",
       "kind": "Instance",
       "semanticId": {
         "type": "ExternalReference",
@@ -698,7 +828,7 @@
     },
     {
       "idShort": "HierarchicalStructures",
-      "id": "https://smartproductionlab.aau.dk/submodels/instances/syntegonStopperingSystem/HierarchicalStructures",
+      "id": "https://smartproductionlab.aau.dk/submodels/instances/omronCamera/HierarchicalStructures",
       "kind": "Instance",
       "semanticId": {
         "type": "ExternalReference",
@@ -733,7 +863,7 @@
           },
           "modelType": "Entity",
           "entityType": "SelfManagedEntity",
-          "globalAssetId": "https://smartproductionlab.aau.dk/assets/syntegonStopperingSystem",
+          "globalAssetId": "https://smartproductionlab.aau.dk/assets/omronCamera",
           "statements": [
             {
               "idShort": "PlanarTable",
@@ -789,7 +919,7 @@
                 "keys": [
                   {
                     "type": "Submodel",
-                    "value": "https://smartproductionlab.aau.dk/submodels/instances/syntegonStopperingSystem/HierarchicalStructures"
+                    "value": "https://smartproductionlab.aau.dk/submodels/instances/omronCamera/HierarchicalStructures"
                   },
                   {
                     "type": "Entity",
@@ -802,7 +932,7 @@
                 "keys": [
                   {
                     "type": "Submodel",
-                    "value": "https://smartproductionlab.aau.dk/submodels/instances/syntegonStopperingSystem/HierarchicalStructures"
+                    "value": "https://smartproductionlab.aau.dk/submodels/instances/omronCamera/HierarchicalStructures"
                   },
                   {
                     "type": "Entity",

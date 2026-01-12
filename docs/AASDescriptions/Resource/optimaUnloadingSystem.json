@@ -1,15 +1,16 @@
 {
   "assetAdministrationShells": [
     {
-      "idShort": "imaLoadingSystemAAS",
-      "id": "https://smartproductionlab.aau.dk/aas/imaLoadingSystem",
+      "idShort": "optimaUnloadingSystemAAS",
+      "id": "https://smartproductionlab.aau.dk/aas/optimaUnloadingSystem",
       "assetInformation": {
         "assetKind": "Instance",
-        "globalAssetId": "https://smartproductionlab.aau.dk/assets/imaLoadingSystem",
+        "globalAssetId": "https://smartproductionlab.aau.dk/assets/optimaUnloadingSystem",
+        "assetType": "Resource",
         "specificAssetIds": [
           {
             "name": "serialNumber",
-            "value": "SYN-SS-2024-001",
+            "value": "OPT-US-2024-001",
             "externalSubjectId": {
               "type": "ExternalReference",
               "keys": [{
@@ -28,25 +29,29 @@
                 "value": "https://smartproductionlab.aau.dk/organization"
               }]
             }
+          },
+          {
+            "name":"SemanticType",
+            "value":"UnloadingSystem"
           }
         ]
       },
       "submodels": [
         {
           "type": "ModelReference",
-          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/imaLoadingSystem/AssetInterfacesDescription"}]
+          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/optimaUnloadingSystem/AssetInterfacesDescription"}]
         },
         {
           "type": "ModelReference",
-          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/imaLoadingSystem/Variables"}]
+          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/optimaUnloadingSystem/Variables"}]
         },
         {
           "type": "ModelReference",
-          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/imaLoadingSystem/Parameters"}]
+          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/optimaUnloadingSystem/Parameters"}]
         },
         {
           "type": "ModelReference",
-          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/imaLoadingSystem/HierarchicalStructures"}]
+          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/optimaUnloadingSystem/HierarchicalStructures"}]
         }
       ],
       "derivedFrom": {
@@ -59,7 +64,7 @@
   "submodels": [
     {
       "idShort": "AssetInterfacesDescription",
-      "id": "https://smartproductionlab.aau.dk/submodels/instances/imaLoadingSystem/AssetInterfacesDescription",
+      "id": "https://smartproductionlab.aau.dk/submodels/instances/optimaUnloadingSystem/AssetInterfacesDescription",
       "kind": "Instance",
       "semanticId": {
         "type": "ExternalReference",
@@ -101,7 +106,7 @@
               "idShort": "title",
               "modelType": "Property",
               "valueType": "xs:string",
-              "value": "IMA Loading System"
+              "value": "Optima Unloading System"
             },
             {
               "idShort": "EndpointMetadata",
@@ -118,7 +123,7 @@
                   "idShort": "base",
                   "modelType": "Property",
                   "valueType": "xs:string",
-                  "value": "mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/Load"
+                  "value": "mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/Unload"
                 },
                 {
                   "idShort": "contentType",
@@ -158,7 +163,7 @@
                   "modelType": "SubmodelElementCollection",
                   "value": [
                     {
-                      "idShort": "load",
+                      "idShort": "unload",
                       "semanticId": {
                         "type": "ExternalReference",
                         "keys": [{
@@ -175,8 +180,8 @@
                       }],
                       "modelType": "SubmodelElementCollection",
                       "value": [
-                        {"idShort": "key", "modelType": "Property", "valueType": "xs:string", "value": "load"},
-                        {"idShort": "title", "modelType": "Property", "valueType": "xs:string", "value": "load"},
+                        {"idShort": "key", "modelType": "Property", "valueType": "xs:string", "value": "unload"},
+                        {"idShort": "title", "modelType": "Property", "valueType": "xs:string", "value": "unload"},
                         {"idShort": "synchronous", "modelType": "Property", "valueType": "xs:boolean", "value": "true"},
                         {
                             "idShort": "input",
@@ -202,7 +207,7 @@
                           "modelType": "SubmodelElementCollection",
                           "value": [
                             {"idShort": "contentType", "modelType": "Property", "valueType": "xs:string", "value": "application/json"},
-                            {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/CMD/Load"},
+                            {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/CMD/Unload"},
                             {"idShort": "op", "modelType": "Property", "valueType": "xs:string", "value": "invokeAction"},
                             {"idShort": "mqv_retain", "modelType": "Property", "valueType": "xs:boolean", "value": "false"},
                             {"idShort": "mqv_controlPacket", "modelType": "Property", "valueType": "xs:string", "value": "subscribe"},
@@ -212,7 +217,7 @@
                               "modelType": "SubmodelElementCollection",
                               "value": [
                                 {"idShort": "contentType", "modelType": "Property", "valueType": "xs:string", "value": "application/json"},
-                                {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/DATA/Load"},
+                                {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/DATA/Unload"},
                                 {"idShort": "mqv_controlPacket", "modelType": "Property", "valueType": "xs:string", "value": "publish"}
                               ]
                             }
@@ -558,7 +563,7 @@
     },
     {
       "idShort": "Variables",
-      "id": "https://smartproductionlab.aau.dk/submodels/instances/imaLoadingSystem/Variables",
+      "id": "https://smartproductionlab.aau.dk/submodels/instances/optimaUnloadingSystem/Variables",
       "kind": "Instance",
       "semanticId": {
         "type": "ExternalReference",
@@ -601,7 +606,7 @@
                 "keys": [
                   {
                     "type": "Submodel",
-                    "value": "https://smartproductionlab.aau.dk/submodels/instances/imaLoadingSystem/AssetInterfacesDescription"
+                    "value": "https://smartproductionlab.aau.dk/submodels/instances/optimaUnloadingSystem/AssetInterfacesDescription"
                   },
                   {
                     "type": "SubmodelElementCollection",
@@ -655,7 +660,7 @@
                 "keys": [
                   {
                     "type": "Submodel",
-                    "value": "https://smartproductionlab.aau.dk/submodels/instances/imaLoadingSystem/AssetInterfacesDescription"
+                    "value": "https://smartproductionlab.aau.dk/submodels/instances/optimaUnloadingSystem/AssetInterfacesDescription"
                   },
                   {
                     "type": "SubmodelElementCollection",
@@ -683,7 +688,7 @@
     },
     {
       "idShort": "Parameters",
-      "id": "https://smartproductionlab.aau.dk/submodels/instances/imaLoadingSystem/Parameters",
+      "id": "https://smartproductionlab.aau.dk/submodels/instances/optimaUnloadingSystem/Parameters",
       "kind": "Instance",
       "semanticId": {
         "type": "ExternalReference",
@@ -698,7 +703,7 @@
     },
     {
       "idShort": "HierarchicalStructures",
-      "id": "https://smartproductionlab.aau.dk/submodels/instances/imaLoadingSystem/HierarchicalStructures",
+      "id": "https://smartproductionlab.aau.dk/submodels/instances/optimaUnloadingSystem/HierarchicalStructures",
       "kind": "Instance",
       "semanticId": {
         "type": "ExternalReference",
@@ -733,7 +738,7 @@
           },
           "modelType": "Entity",
           "entityType": "SelfManagedEntity",
-          "globalAssetId": "https://smartproductionlab.aau.dk/assets/imaLoadingSystem",
+          "globalAssetId": "https://smartproductionlab.aau.dk/assets/optimaUnloadingSystem",
           "statements": [
             {
               "idShort": "PlanarTable",
@@ -789,7 +794,7 @@
                 "keys": [
                   {
                     "type": "Submodel",
-                    "value": "https://smartproductionlab.aau.dk/submodels/instances/imaLoadingSystem/HierarchicalStructures"
+                    "value": "https://smartproductionlab.aau.dk/submodels/instances/optimaUnloadingSystem/HierarchicalStructures"
                   },
                   {
                     "type": "Entity",
@@ -802,7 +807,7 @@
                 "keys": [
                   {
                     "type": "Submodel",
-                    "value": "https://smartproductionlab.aau.dk/submodels/instances/imaLoadingSystem/HierarchicalStructures"
+                    "value": "https://smartproductionlab.aau.dk/submodels/instances/optimaUnloadingSystem/HierarchicalStructures"
                   },
                   {
                     "type": "Entity",

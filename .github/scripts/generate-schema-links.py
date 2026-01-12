@@ -71,21 +71,35 @@ def get_bt_description(bt_path: Path) -> str:
         pass
     return None
 
-def scan_schemas(schemas_dir: Path) -> Dict[str, List[Dict]]:
-    """Scan the schemas directory and organize schemas by category."""
+def scan_schemas(schemas_dir: Path, base_path: str = '') -> Dict[str, List[Dict]]:
+    """Scan the schemas directory and organize schemas by category.
+    
+    Args:
+        schemas_dir: The directory to scan for JSON schemas
+        base_path: The base path to prepend to relative paths (e.g., 'AASDescriptions', 'MQTTSchemas')
+    """
     categories = {}
     
     for schema_file in schemas_dir.rglob('*.json'):
         # Get relative path from schemas directory
         rel_path = schema_file.relative_to(schemas_dir)
         
+        # Build full path including base_path
+        if base_path:
+            full_path = f"{base_path}/{rel_path.as_posix()}"
+        else:
+            full_path = rel_path.as_posix()
+        
         # Determine category based on directory structure
         parts = rel_path.parts
         
-        if len(parts) >= 3 and parts[0] == 'AASDescriptions':
-            # AASDescriptions subfolder structure: AASDescriptions/Process/, AASDescriptions/Product/, etc.
-            category = f"AAS {parts[1]} Descriptions"
-        elif len(parts) >= 2 and parts[0] == 'MQTTSchemas':
+        if base_path == 'AASDescriptions':
+            # AASDescriptions subfolder structure: Process/, Product/, Resource/
+            if len(parts) > 1:
+                category = f"AAS {parts[0]} Descriptions"
+            else:
+                category = 'AAS Descriptions'
+        elif base_path == 'MQTTSchemas':
             # MQTT Schemas
             category = 'MQTT Schemas'
         elif len(parts) > 1:
@@ -104,7 +118,7 @@ def scan_schemas(schemas_dir: Path) -> Dict[str, List[Dict]]:
         categories[category].append({
             'title': title,
             'filename': schema_file.name,
-            'path': str(rel_path.as_posix()),
+            'path': full_path,
             'description': description
         })
     
@@ -157,10 +171,10 @@ def generate_markdown_schemas(categories: Dict[str, List[Dict]]) -> str:
             
             for schema in schemas:
                 # Create link
-                github_pages_url = f"https://aausmartproductionlab.github.io/AP2030-UNS/schemas/{schema['path']}"
-                raw_url = f"https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/schemas/{schema['path']}"
+                github_pages_url = f"https://aausmartproductionlab.github.io/AP2030-UNS/{schema['path']}"
+                raw_url = f"https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/{schema['path']}"
                 
-                lines.append(f"- **[{schema['filename']}](schemas/{schema['path']})**")
+                lines.append(f"- **[{schema['filename']}]({schema['path']})**")
                 if schema['description']:
                     lines.append(f"  - {schema['description']}")
                 lines.append(f"  - [View on GitHub Pages]({github_pages_url})")
@@ -174,10 +188,10 @@ def generate_markdown_schemas(categories: Dict[str, List[Dict]]) -> str:
             lines.append(f"### {category}\n")
             
             for schema in schemas:
-                github_pages_url = f"https://aausmartproductionlab.github.io/AP2030-UNS/schemas/{schema['path']}"
-                raw_url = f"https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/schemas/{schema['path']}"
+                github_pages_url = f"https://aausmartproductionlab.github.io/AP2030-UNS/{schema['path']}"
+                raw_url = f"https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/{schema['path']}"
                 
-                lines.append(f"- **[{schema['filename']}](schemas/{schema['path']})**")
+                lines.append(f"- **[{schema['filename']}]({schema['path']})**")
                 if schema['description']:
                     lines.append(f"  - {schema['description']}")
                 lines.append(f"  - [View on GitHub Pages]({github_pages_url})")
@@ -193,10 +207,10 @@ def generate_markdown_bts(bt_files: List[Dict]) -> str:
     
     for bt in bt_files:
         # Create links
-        github_pages_url = f"https://aausmartproductionlab.github.io/AP2030-UNS/bt_description/{bt['filename']}"
-        raw_url = f"https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/BT_Controller/config/bt_description/{bt['filename']}"
+        github_pages_url = f"https://aausmartproductionlab.github.io/AP2030-UNS/BTDescriptions/{bt['filename']}"
+        raw_url = f"https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/BTDescriptions/{bt['filename']}"
         
-        lines.append(f"- **[{bt['filename']}](bt_description/{bt['filename']})**")
+        lines.append(f"- **[{bt['filename']}](BTDescriptions/{bt['filename']})**")
         if bt['description']:
             lines.append(f"  - {bt['description']}")
         if bt['has_tree_id']:
@@ -256,15 +270,22 @@ def main():
     script_dir = Path(__file__).parent
     repo_root = script_dir.parent.parent
     docs_dir = repo_root / 'docs'
-    schemas_dir = docs_dir / 'schemas'
-    bt_dir = docs_dir / 'bt_description'
+    aas_dir = docs_dir / 'AASDescriptions'
+    mqtt_dir = docs_dir / 'MQTTSchemas'
+    bt_dir = docs_dir / 'BTDescriptions'
     
-    if not schemas_dir.exists():
-        print(f"Error: Schemas directory not found at {schemas_dir}")
-        return 1
+    # Scan all three directories
+    categories = {}
     
-    print(f"Scanning schemas in {schemas_dir}...")
-    categories = scan_schemas(schemas_dir)
+    if aas_dir.exists():
+        print(f"Scanning AAS descriptions in {aas_dir}...")
+        aas_categories = scan_schemas(aas_dir, base_path='AASDescriptions')
+        categories.update(aas_categories)
+    
+    if mqtt_dir.exists():
+        print(f"Scanning MQTT schemas in {mqtt_dir}...")
+        mqtt_categories = scan_schemas(mqtt_dir, base_path='MQTTSchemas')
+        categories.update(mqtt_categories)
     
     print(f"Found {sum(len(s) for s in categories.values())} schemas in {len(categories)} categories")
     

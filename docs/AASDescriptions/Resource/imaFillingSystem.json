@@ -1,15 +1,16 @@
 {
   "assetAdministrationShells": [
     {
-      "idShort": "planarTableShuttle2AAS",
-      "id": "https://smartproductionlab.aau.dk/aas/planarTableShuttle2",
+      "idShort": "imaFillingSystemAAS",
+      "id": "https://smartproductionlab.aau.dk/aas/imaFillingSystem",
       "assetInformation": {
         "assetKind": "Instance",
-        "globalAssetId": "https://smartproductionlab.aau.dk/assets/planarTableShuttle2",
+        "globalAssetId": "https://smartproductionlab.aau.dk/assets/imaFillingSystem",
+        "assetType": "Resource",
         "specificAssetIds": [
           {
             "name": "serialNumber",
-            "value": "PM-S1-2024-001",
+            "value": "IMA-FS-2024-001",
             "externalSubjectId": {
               "type": "ExternalReference",
               "keys": [{
@@ -28,25 +29,29 @@
                 "value": "https://smartproductionlab.aau.dk/organization"
               }]
             }
+          },
+          {
+            "name":"SemanticType",
+            "value":"DispensingSystem"
           }
         ]
       },
       "submodels": [
         {
           "type": "ModelReference",
-          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/planarTableShuttle2/AssetInterfacesDescription"}]
+          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/imaFillingSystem/AssetInterfacesDescription"}]
         },
         {
           "type": "ModelReference",
-          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/planarTableShuttle2/Variables"}]
+          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/imaFillingSystem/Variables"}]
         },
         {
           "type": "ModelReference",
-          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/planarTableShuttle2/Parameters"}]
+          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/imaFillingSystem/Parameters"}]
         },
         {
           "type": "ModelReference",
-          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/planarTableShuttle2/HierarchicalStructures"}]
+          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/imaFillingSystem/HierarchicalStructures"}]
         }
       ],
       "derivedFrom": {
@@ -59,7 +64,7 @@
   "submodels": [
     {
       "idShort": "AssetInterfacesDescription",
-      "id": "https://smartproductionlab.aau.dk/submodels/instances/planarTableShuttle2/AssetInterfacesDescription",
+      "id": "https://smartproductionlab.aau.dk/submodels/instances/imaFillingSystem/AssetInterfacesDescription",
       "kind": "Instance",
       "semanticId": {
         "type": "ExternalReference",
@@ -101,7 +106,7 @@
               "idShort": "title",
               "modelType": "Property",
               "valueType": "xs:string",
-              "value": "Planar Motor Shuttle 1"
+              "value": "IMA Filling System"
             },
             {
               "idShort": "EndpointMetadata",
@@ -118,7 +123,7 @@
                   "idShort": "base",
                   "modelType": "Property",
                   "valueType": "xs:string",
-                  "value": "mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/Planar/Xbot2/"
+                  "value": "mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/Filling"
                 },
                 {
                   "idShort": "contentType",
@@ -158,7 +163,7 @@
                   "modelType": "SubmodelElementCollection",
                   "value": [
                     {
-                      "idShort": "moveToPosition",
+                      "idShort": "dispense",
                       "semanticId": {
                         "type": "ExternalReference",
                         "keys": [{
@@ -175,14 +180,14 @@
                       }],
                       "modelType": "SubmodelElementCollection",
                       "value": [
-                        {"idShort": "key", "modelType": "Property", "valueType": "xs:string", "value": "XYMotion"},
-                        {"idShort": "title", "modelType": "Property", "valueType": "xs:string", "value": "XYMotion"},
+                        {"idShort": "key", "modelType": "Property", "valueType": "xs:string", "value": "dispense"},
+                        {"idShort": "title", "modelType": "Property", "valueType": "xs:string", "value": "dispense"},
                         {"idShort": "synchronous", "modelType": "Property", "valueType": "xs:boolean", "value": "true"},
                         {
                             "idShort": "input",
                             "modelType": "File",
                             "contentType": "application/schema+json",
-                            "value": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/moveToPosition.schema.json"
+                            "value": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/command.schema.json"
                         },
                         {
                             "idShort": "output",
@@ -202,7 +207,7 @@
                           "modelType": "SubmodelElementCollection",
                           "value": [
                             {"idShort": "contentType", "modelType": "Property", "valueType": "xs:string", "value": "application/json"},
-                            {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/CMD/XYMotion"},
+                            {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/CMD/Dispense"},
                             {"idShort": "op", "modelType": "Property", "valueType": "xs:string", "value": "invokeAction"},
                             {"idShort": "mqv_retain", "modelType": "Property", "valueType": "xs:boolean", "value": "false"},
                             {"idShort": "mqv_controlPacket", "modelType": "Property", "valueType": "xs:string", "value": "subscribe"},
@@ -212,7 +217,162 @@
                               "modelType": "SubmodelElementCollection",
                               "value": [
                                 {"idShort": "contentType", "modelType": "Property", "valueType": "xs:string", "value": "application/json"},
-                                {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/DATA/XYMotion"},
+                                {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/DATA/Dispense"},
+                                {"idShort": "mqv_controlPacket", "modelType": "Property", "valueType": "xs:string", "value": "publish"}
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "idShort": "weigh",
+                      "semanticId": {
+                        "type": "ExternalReference",
+                        "keys": [{
+                          "type": "GlobalReference",
+                          "value": "https://admin-shell.io/idta/AssetInterfaceDescription/1/0/ActionDefinition"
+                        }]
+                      },
+                      "supplementalSemanticIds": [{
+                        "type": "ExternalReference",
+                        "keys": [{
+                          "type": "GlobalReference",
+                          "value": "https://www.w3.org/2019/wot/td#name"
+                        }]
+                      }],
+                      "modelType": "SubmodelElementCollection",
+                      "value": [
+                        {"idShort": "key", "modelType": "Property", "valueType": "xs:string", "value": "weigh"},
+                        {"idShort": "title", "modelType": "Property", "valueType": "xs:string", "value": "weigh"},
+                        {"idShort": "synchronous", "modelType": "Property", "valueType": "xs:boolean", "value": "true"},
+                        {
+                            "idShort": "input",
+                            "modelType": "File",
+                            "contentType": "application/schema+json",
+                            "value": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/command.schema.json"
+                        },
+                        {
+                            "idShort": "output",
+                            "modelType": "File",
+                            "contentType": "application/schema+json",
+                            "value": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/commandResponse.schema.json"
+                        },
+                        {
+                          "idShort": "forms",
+                          "semanticId": {
+                            "type": "ExternalReference",
+                            "keys": [{
+                              "type": "GlobalReference",
+                              "value": "https://www.w3.org/2019/wot/td#Form"
+                            }]
+                          },
+                          "modelType": "SubmodelElementCollection",
+                          "value": [
+                            {"idShort": "contentType", "modelType": "Property", "valueType": "xs:string", "value": "application/json"},
+                            {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/CMD/Weigh"},
+                            {"idShort": "op", "modelType": "Property", "valueType": "xs:string", "value": "invokeAction"},
+                            {"idShort": "mqv_retain", "modelType": "Property", "valueType": "xs:boolean", "value": "false"},
+                            {"idShort": "mqv_controlPacket", "modelType": "Property", "valueType": "xs:string", "value": "subscribe"},
+                            {"idShort": "mqv_qos", "modelType": "Property", "valueType": "xs:int", "value": "2"},
+                            {
+                              "idShort": "response",
+                              "modelType": "SubmodelElementCollection",
+                              "value": [
+                                {"idShort": "contentType", "modelType": "Property", "valueType": "xs:string", "value": "application/json"},
+                                {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/DATA/Weigh"},
+                                {"idShort": "mqv_controlPacket", "modelType": "Property", "valueType": "xs:string", "value": "publish"}
+                              ]
+                            },
+                            {
+                              "idShort": "additionalResponses",
+                              "modelType": "ReferenceElement",
+                              "value": {
+                                "type": "ModelReference",
+                                "keys": [
+                                  {
+                                    "type": "Submodel",
+                                    "value": "https://smartproductionlab.aau.dk/submodels/instances/imaFillingSystem/AssetInterfacesDescription"
+                                  },
+                                  {
+                                    "type": "SubmodelElementCollection",
+                                    "value": "InterfaceMQTT"
+                                  },
+                                  {
+                                    "type": "SubmodelElementCollection",
+                                    "value": "InteractionMetadata"
+                                  },
+                                  {
+                                    "type": "SubmodelElementCollection",
+                                    "value": "properties"
+                                  },
+                                  {
+                                    "type": "SubmodelElementCollection",
+                                    "value": "weight"
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                                        {
+                      "idShort": "tare",
+                      "semanticId": {
+                        "type": "ExternalReference",
+                        "keys": [{
+                          "type": "GlobalReference",
+                          "value": "https://admin-shell.io/idta/AssetInterfaceDescription/1/0/ActionDefinition"
+                        }]
+                      },
+                      "supplementalSemanticIds": [{
+                        "type": "ExternalReference",
+                        "keys": [{
+                          "type": "GlobalReference",
+                          "value": "https://www.w3.org/2019/wot/td#name"
+                        }]
+                      }],
+                      "modelType": "SubmodelElementCollection",
+                      "value": [
+                        {"idShort": "key", "modelType": "Property", "valueType": "xs:string", "value": "tare"},
+                        {"idShort": "title", "modelType": "Property", "valueType": "xs:string", "value": "tare"},
+                        {"idShort": "synchronous", "modelType": "Property", "valueType": "xs:boolean", "value": "true"},
+                        {
+                            "idShort": "input",
+                            "modelType": "File",
+                            "contentType": "application/schema+json",
+                            "value": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/command.schema.json"
+                        },
+                        {
+                            "idShort": "output",
+                            "modelType": "File",
+                            "contentType": "application/schema+json",
+                            "value": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/commandResponse.schema.json"
+                        },
+                        {
+                          "idShort": "forms",
+                          "semanticId": {
+                            "type": "ExternalReference",
+                            "keys": [{
+                              "type": "GlobalReference",
+                              "value": "https://www.w3.org/2019/wot/td#Form"
+                            }]
+                          },
+                          "modelType": "SubmodelElementCollection",
+                          "value": [
+                            {"idShort": "contentType", "modelType": "Property", "valueType": "xs:string", "value": "application/json"},
+                            {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/CMD/Tare"},
+                            {"idShort": "op", "modelType": "Property", "valueType": "xs:string", "value": "invokeAction"},
+                            {"idShort": "mqv_retain", "modelType": "Property", "valueType": "xs:boolean", "value": "false"},
+                            {"idShort": "mqv_controlPacket", "modelType": "Property", "valueType": "xs:string", "value": "subscribe"},
+                            {"idShort": "mqv_qos", "modelType": "Property", "valueType": "xs:int", "value": "2"},
+                            {
+                              "idShort": "response",
+                              "modelType": "SubmodelElementCollection",
+                              "value": [
+                                {"idShort": "contentType", "modelType": "Property", "valueType": "xs:string", "value": "application/json"},
+                                {"idShort": "href", "modelType": "Property", "valueType": "xs:string", "value": "/DATA/Tare"},
                                 {"idShort": "mqv_controlPacket", "modelType": "Property", "valueType": "xs:string", "value": "publish"}
                               ]
                             }
@@ -628,7 +788,7 @@
     },
     {
       "idShort": "Variables",
-      "id": "https://smartproductionlab.aau.dk/submodels/instances/planarTableShuttle2/Variables",
+      "id": "https://smartproductionlab.aau.dk/submodels/instances/imaFillingSystem/Variables",
       "kind": "Instance",
       "semanticId": {
         "type": "ExternalReference",
@@ -671,7 +831,7 @@
                 "keys": [
                   {
                     "type": "Submodel",
-                    "value": "https://smartproductionlab.aau.dk/submodels/instances/planarTableShuttle2/AssetInterfacesDescription"
+                    "value": "https://smartproductionlab.aau.dk/submodels/instances/imaFillingSystem/AssetInterfacesDescription"
                   },
                   {
                     "type": "SubmodelElementCollection",
@@ -725,7 +885,7 @@
                 "keys": [
                   {
                     "type": "Submodel",
-                    "value": "https://smartproductionlab.aau.dk/submodels/instances/planarTableShuttle2/AssetInterfacesDescription"
+                    "value": "https://smartproductionlab.aau.dk/submodels/instances/imaFillingSystem/AssetInterfacesDescription"
                   },
                   {
                     "type": "SubmodelElementCollection",
@@ -747,13 +907,68 @@
               }
             }
           ]
+        },
+        {
+          "idShort": "Weight",
+          "semanticId": {
+            "type": "ExternalReference",
+            "keys": [{
+              "type": "GlobalReference",
+              "value": "https://smartproductionlab.aau.dk/properties/weight"
+            }]
+          },
+          "modelType": "SubmodelElementCollection",
+          "value": [
+            {
+              "idShort": "Value",
+              "modelType": "Property",
+              "valueType": "xs:double",
+              "value": "0.0"
+            },
+            {
+              "idShort": "InterfaceReference",
+              "semanticId": {
+                "type": "ExternalReference",
+                "keys": [{
+                  "type": "GlobalReference",
+                  "value": "https://admin-shell.io/idta/AssetInterfacesDescription/1/0/InterfaceReference"
+                }]
+              },
+              "modelType": "ReferenceElement",
+              "value": {
+                "type": "ModelReference",
+                "keys": [
+                  {
+                    "type": "Submodel",
+                    "value": "https://smartproductionlab.aau.dk/submodels/instances/imaFillingSystem/AssetInterfacesDescription"
+                  },
+                  {
+                    "type": "SubmodelElementCollection",
+                    "value": "InterfaceMQTT"
+                  },
+                  {
+                    "type": "SubmodelElementCollection",
+                    "value": "InteractionMetadata"
+                  },
+                  {
+                    "type": "SubmodelElementCollection",
+                    "value": "properties"
+                  },
+                  {
+                    "type": "SubmodelElementCollection",
+                    "value": "weight"
+                  }
+                ]
+              }
+            }
+          ]
         }
       ],
       "modelType": "Submodel"
     },
     {
       "idShort": "Parameters",
-      "id": "https://smartproductionlab.aau.dk/submodels/instances/planarTableShuttle2/Parameters",
+      "id": "https://smartproductionlab.aau.dk/submodels/instances/imaFillingSystem/Parameters",
       "kind": "Instance",
       "semanticId": {
         "type": "ExternalReference",
@@ -768,7 +983,7 @@
     },
     {
       "idShort": "HierarchicalStructures",
-      "id": "https://smartproductionlab.aau.dk/submodels/instances/planarTableShuttle2/HierarchicalStructures",
+      "id": "https://smartproductionlab.aau.dk/submodels/instances/imaFillingSystem/HierarchicalStructures",
       "kind": "Instance",
       "semanticId": {
         "type": "ExternalReference",
@@ -803,7 +1018,7 @@
           },
           "modelType": "Entity",
           "entityType": "SelfManagedEntity",
-          "globalAssetId": "https://smartproductionlab.aau.dk/assets/planarTableShuttle2",
+          "globalAssetId": "https://smartproductionlab.aau.dk/assets/imaFillingSystem",
           "statements": [
             {
               "idShort": "PlanarTable",
@@ -859,7 +1074,7 @@
                 "keys": [
                   {
                     "type": "Submodel",
-                    "value": "https://smartproductionlab.aau.dk/submodels/instances/planarTableShuttle2/HierarchicalStructures"
+                    "value": "https://smartproductionlab.aau.dk/submodels/instances/imaFillingSystem/HierarchicalStructures"
                   },
                   {
                     "type": "Entity",
@@ -872,7 +1087,7 @@
                 "keys": [
                   {
                     "type": "Submodel",
-                    "value": "https://smartproductionlab.aau.dk/submodels/instances/planarTableShuttle2/HierarchicalStructures"
+                    "value": "https://smartproductionlab.aau.dk/submodels/instances/imaFillingSystem/HierarchicalStructures"
                   },
                   {
                     "type": "Entity",
