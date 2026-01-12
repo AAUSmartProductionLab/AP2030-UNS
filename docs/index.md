@@ -56,9 +56,9 @@ All schemas are automatically synchronized from the `schemas/` directory. Click 
 - **[aauFillingLine.json](AASDescriptions/Resource/aauFillingLine.json)**
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/aauFillingLine.json)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/aauFillingLine.json)
-- **[imaFillingSystem.json](AASDescriptions/Resource/imaFillingSystem.json)**
-  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/imaFillingSystem.json)
-  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/imaFillingSystem.json)
+- **[imaDispensingSystem.json](AASDescriptions/Resource/imaDispensingSystem.json)**
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/imaDispensingSystem.json)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/imaDispensingSystem.json)
 - **[imaLoadingSystem.json](AASDescriptions/Resource/imaLoadingSystem.json)**
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/imaLoadingSystem.json)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/imaLoadingSystem.json)
