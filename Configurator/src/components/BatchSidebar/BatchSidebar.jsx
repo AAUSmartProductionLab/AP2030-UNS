@@ -17,7 +17,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import './BatchSidebar.css';
 
-export const BatchSidebar = ({ queue, setQueue, log, setLog, onRemoveBatch }) => {
+export const BatchSidebar = ({ queue, setQueue, log, setLog, onRemoveBatch, onBatchMovedToTop }) => {
     const handleStartBatch = (batchId) => {
         // Find the batch in the queue
         const batchToStart = queue.find(batch => batch.id === batchId);
@@ -199,7 +199,15 @@ export const BatchSidebar = ({ queue, setQueue, log, setLog, onRemoveBatch }) =>
         
         // Otherwise, allow the reordering
         setQueue((items) => {
-            return arrayMove(items, oldIndex, newIndex);
+            const reorderedItems = arrayMove(items, oldIndex, newIndex);
+            
+            // If a batch was moved to the top (position 0), notify parent
+            if (newIndex === 0 && oldIndex !== 0 && onBatchMovedToTop) {
+                // Call callback with the batch that was moved to top
+                onBatchMovedToTop(reorderedItems[0]);
+            }
+            
+            return reorderedItems;
         });
     };
 

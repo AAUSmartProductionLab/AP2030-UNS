@@ -5,19 +5,31 @@ import { toast } from 'react-toastify';
 import '../styles/BatchConfigurator.css';
 import { BatchSidebar } from '../components/BatchSidebar/BatchSidebar';
 import mqttService from '../services/MqttService';
+import aasService from '../services/AasService';
 
 
 export default function BatchConfigurator() {
   
   // State to track form inputs
   const initialState = {
-  "Uuid": "545e033e-a9a2-41fe-b920-dfbc64bd93bc",
+  "Uuid": uuidv4(),
   "Format": "Cartridge (1mL)",
   "Units": 40000,
   "IPCw": 90,
   "IPCi": 85,
   "QC-samples": 100,
-  "TimeStamp": "2025-06-06T13:14:03.746Z"
+  "TimeStamp": new Date().toISOString(),
+  // Extended fields for AAS
+  "product": "",
+  "productFamily": "",
+  "volume": "",
+  "primaryPackaging": "",
+  "qcCount": "50",
+  "ipcWeighing": 75,
+  "ipcInspection": 80,
+  "productionTemperature": "22.0",
+  "humidity": "45.0",
+  "selectedRecipe": ""
   };
 
   // Use the initial state object for useState
@@ -148,11 +160,14 @@ export default function BatchConfigurator() {
       name: 'MIM8 Standard (15L)',
       config: {
         product: 'MIM8',
+        productFamily: 'Monoclonal Antibodies',
         volume: '5000', // 15L/3mL = 5000 units
         primaryPackaging: '1', // Cartridge (3mL)
         qcCount: '50',
         ipcWeighing: 75,
-        ipcInspection: 80
+        ipcInspection: 80,
+        productionTemperature: '22.0',
+        humidity: '45.0'
       }
     },
     { 
@@ -160,11 +175,14 @@ export default function BatchConfigurator() {
       name: 'MIM8 Medium Batch (20L)',
       config: {
         product: 'MIM8',
+        productFamily: 'Monoclonal Antibodies',
         volume: '8000', // 20L/2.5mL = 8000 units
         primaryPackaging: '4', // Prefilled Syringe (2.5mL)
         qcCount: '65',
         ipcWeighing: 85,
-        ipcInspection: 75
+        ipcInspection: 75,
+        productionTemperature: '22.0',
+        humidity: '45.0'
       }
     },
     { 
@@ -172,11 +190,14 @@ export default function BatchConfigurator() {
       name: 'MIM8 High Volume (40L)',
       config: {
         product: 'MIM8',
+        productFamily: 'Monoclonal Antibodies',
         volume: '40000', // 40L/1mL = 40000 units
         primaryPackaging: '2', // Cartridge (1mL)
         qcCount: '100',
         ipcWeighing: 90,
-        ipcInspection: 85
+        ipcInspection: 85,
+        productionTemperature: '22.0',
+        humidity: '45.0'
       }
     },
     { 
@@ -184,11 +205,14 @@ export default function BatchConfigurator() {
       name: 'Concizumb (15L)',
       config: {
         product: 'Concizumb',
+        productFamily: 'Biosimilars',
         volume: '5000', // 15L/3mL = 5000 units
         primaryPackaging: '3', // Prefilled Syringe (3mL)
         qcCount: '75',
         ipcWeighing: 95,
-        ipcInspection: 90
+        ipcInspection: 90,
+        productionTemperature: '20.0',
+        humidity: '50.0'
       }
     },
     { 
@@ -196,11 +220,14 @@ export default function BatchConfigurator() {
       name: 'HgH Large Batch (100L)',
       config: {
         product: 'HgH',
+        productFamily: 'Growth Hormones',
         volume: '40000', // 100L/2.5mL = 40000 units
         primaryPackaging: '4', // Prefilled Syringe (2.5mL)
         qcCount: '150',
         ipcWeighing: 100,
-        ipcInspection: 100
+        ipcInspection: 100,
+        productionTemperature: '18.0',
+        humidity: '40.0'
       }
     },
     { 
@@ -208,11 +235,14 @@ export default function BatchConfigurator() {
       name: 'Sogroya Medium Batch (50L)',
       config: {
         product: 'Sogroya',
+        productFamily: 'Growth Hormones',
         volume: '16665', // 50L/3mL ≈ 16667 units
         primaryPackaging: '3', // Prefilled Syringe (3mL)
         qcCount: '90',
         ipcWeighing: 85,
-        ipcInspection: 95
+        ipcInspection: 95,
+        productionTemperature: '18.0',
+        humidity: '42.0'
       }
     },
     { 
@@ -220,11 +250,14 @@ export default function BatchConfigurator() {
       name: 'Sogroya Large Batch (100L)',
       config: {
         product: 'Sogroya',
+        productFamily: 'Growth Hormones',
         volume: '30000', // 100L/1mL = 100000 units
         primaryPackaging: '1', // Cartridge (3mL)
         qcCount: '120',
         ipcWeighing: 80,
-        ipcInspection: 90
+        ipcInspection: 90,
+        productionTemperature: '18.0',
+        humidity: '42.0'
       }
     }
   ];
@@ -253,29 +286,44 @@ export default function BatchConfigurator() {
     });
   };
 
-  const addBatchToQueue = (batchData) => {
+  const addBatchToQueue = async (batchData) => {
     const getPackagingName = (id) => {
       const pkg = packagingOptions.find(p => p.id === id);
       return pkg ? pkg.name : 'Unknown packaging';
     };
 
+    const batchUuid = uuidv4();
+    const packagingName = getPackagingName(batchData.primaryPackaging);
+    
     const newBatch = {
       id: `batch-${Date.now()}`,
-      Uuid: uuidv4(),
+      Uuid: batchUuid,
       name: `${batchData.product} (${batchData.volume} units)`,
       product: batchData.product,
+      productFamily: batchData.productFamily || batchData.product,
       volume: `${batchData.volume} units`,
-      packaging: getPackagingName(batchData.primaryPackaging),
+      packaging: packagingName,
       status: 'Pending',
       qcCount: batchData.qcCount,
       ipcWeighing: batchData.ipcWeighing,
-      ipcInspection: batchData.ipcInspection
+      ipcInspection: batchData.ipcInspection,
+      productionTemperature: batchData.productionTemperature,
+      humidity: batchData.humidity,
+      orderTimestamp: new Date().toISOString()
     };
 
+    // Add to queue first
     setQueue(prevQueue => [...prevQueue, newBatch]);
-    
-    // Show toast notification
     toast.success(`Added batch: ${newBatch.name} to queue`);
+    
+    // Save to AAS server
+    try {
+      await aasService.saveProductAas(newBatch);
+    } catch (error) {
+      console.error('Failed to save Product AAS:', error);
+      // Don't remove from queue, just warn user
+      toast.warning('Batch added to queue but failed to save to AAS server');
+    }
   };
 
   const removeBatchFromQueue = (batchId) => {
@@ -314,6 +362,20 @@ export default function BatchConfigurator() {
     // Proceed with removal for non-running batches
     setQueue(prevQueue => prevQueue.filter(batch => batch.id !== batchId));
     toast.info(`Removed batch: ${batchToRemove.name}`);
+  };
+
+  /**
+   * Handler for when a batch is moved to the top of the queue
+   * Posts the Product AAS with "{productName}AAS" naming to the server
+   */
+  const handleBatchMovedToTop = async (batch) => {
+    try {
+      console.log('Batch moved to top of queue:', batch);
+      await aasService.postActiveProductAas(batch);
+    } catch (error) {
+      console.error('Failed to post active Product AAS:', error);
+      // Toast error is already shown by the service
+    }
   };
 
   const handleOrderAcknowledge = (message) => {
@@ -494,6 +556,19 @@ export default function BatchConfigurator() {
               </div>
               
               <div className="form-group">
+                <label htmlFor="productFamily">Product Family:</label>
+                <input 
+                  type="text" 
+                  id="productFamily" 
+                  name="productFamily" 
+                  value={batchConfig.productFamily}
+                  onChange={handleChange}
+                  className="form-input"
+                  placeholder="e.g., Monoclonal Antibodies"
+                />
+              </div>
+              
+              <div className="form-group">
                 <label htmlFor="volume">Units:</label>
                 <input 
                   type="number" 
@@ -544,6 +619,45 @@ export default function BatchConfigurator() {
                   onChange={handleChange}
                   className="form-input"
                   placeholder="Enter number of QC samples"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="config-section">
+            <div className="section-header">
+              <h2>Environmental Requirements</h2>
+            </div>
+            <div className="section-content two-columns">
+              <div className="form-group">
+                <label htmlFor="productionTemperature">Production Temperature (°C):</label>
+                <input 
+                  type="number" 
+                  id="productionTemperature" 
+                  name="productionTemperature" 
+                  step="0.1"
+                  min="15"
+                  max="30"
+                  value={batchConfig.productionTemperature}
+                  onChange={handleChange}
+                  className="form-input"
+                  placeholder="e.g., 22.0"
+                />
+              </div>
+              
+              <div className="form-group">
+                <label htmlFor="humidity">Humidity (%RH):</label>
+                <input 
+                  type="number" 
+                  id="humidity" 
+                  name="humidity" 
+                  step="0.1"
+                  min="30"
+                  max="70"
+                  value={batchConfig.humidity}
+                  onChange={handleChange}
+                  className="form-input"
+                  placeholder="e.g., 45.0"
                 />
               </div>
             </div>
@@ -621,7 +735,8 @@ export default function BatchConfigurator() {
         setQueue={setQueue}
         log={log}
         setLog={setLog}
-        onRemoveBatch={removeBatchFromQueue}/>
+        onRemoveBatch={removeBatchFromQueue}
+        onBatchMovedToTop={handleBatchMovedToTop}/>
     </div>
     </div>
   );
