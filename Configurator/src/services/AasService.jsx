@@ -10,7 +10,9 @@ import {
   AasRegistryClient, 
   AasRepositoryClient,
   SubmodelRepositoryClient,
-  Configuration
+  Configuration,
+  AssetAdministrationShellDescriptor,
+  SubmodelDescriptor
 } from 'basyx-typescript-sdk';
 import {
   AssetAdministrationShell,
@@ -49,6 +51,32 @@ class AasService {
     // SDK Configurations
     this.registryConfig = new Configuration({ basePath: this.shellRegistryUrl });
     this.repositoryConfig = new Configuration({ basePath: this.repositoryUrl });
+  }
+
+  // ========================================
+  // Utility Methods
+  // ========================================
+
+  /**
+   * Base64 URL encode a string (for AAS/Submodel IDs in endpoints)
+   * @param {string} str - The string to encode
+   * @returns {string} Base64 URL encoded string
+   */
+  base64UrlEncode(str) {
+    return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+
+  /**
+   * Create endpoint object for descriptors
+   * @param {string} interfaceName - The interface name (e.g., 'AAS-3.0', 'SUBMODEL-3.0')
+   * @param {string} href - The endpoint URL
+   * @returns {Object} Endpoint object
+   */
+  createEndpoint(interfaceName, href) {
+    return {
+      _interface: interfaceName,
+      protocolInformation: { href }
+    };
   }
 
   // ========================================
@@ -472,6 +500,55 @@ class AasService {
     } catch (createError) {
       console.error(`Failed to create submodel ${submodelId}:`, createError);
       throw createError;
+    }
+  }
+
+  /**
+   * Create a submodel descriptor for registry registration
+   * @param {string} submodelId - The submodel identifier
+   * @param {Object} submodel - Optional submodel object for additional metadata
+   * @returns {SubmodelDescriptor} The descriptor object
+   */
+  createSubmodelDescriptor(submodelId, submodel = null) {
+    const encodedId = this.base64UrlEncode(submodelId);
+    const endpoint = this.createEndpoint('SUBMODEL-3.0', `${this.repositoryUrl}/submodels/${encodedId}`);
+    
+    return new SubmodelDescriptor(
+      submodelId,
+      [endpoint],
+      submodel?.idShort ?? null,
+      submodel?.description ?? null,
+      submodel?.displayName ?? null,
+      submodel?.semanticId ?? null,
+      submodel?.administration ?? null
+    );
+  }
+
+  /**
+   * Register submodel descriptors for an AAS in the registry
+   * @param {string} aasId - The AAS identifier
+   * @param {Array} submodelIds - Array of submodel IDs to register
+   */
+  async registerSubmodelDescriptors(aasId, submodelIds) {
+    for (const submodelId of submodelIds) {
+      try {
+        const descriptor = this.createSubmodelDescriptor(submodelId);
+        console.log(`Registering submodel descriptor: ${submodelId}`);
+        
+        const result = await this.registryClient.postSubmodelDescriptorThroughSuperpath({
+          configuration: this.registryConfig,
+          aasIdentifier: aasId,
+          submodelDescriptor: descriptor
+        });
+        
+        if (result.success) {
+          console.log(`Successfully registered submodel descriptor: ${submodelId}`);
+        } else {
+          console.warn(`Failed to register submodel descriptor: ${result.error?.message}`);
+        }
+      } catch (error) {
+        console.warn(`Submodel descriptor registration warning for ${submodelId}:`, error.message);
+      }
     }
   }
 
@@ -1086,6 +1163,7 @@ class AasService {
 
   /**
    * Save or update an AAS shell - checks existence first to avoid conflicts
+   * Also registers/updates the descriptor in the registry
    */
   async saveOrUpdateAasShell(aasId, aasShell) {
     let aasExists = false;
@@ -1113,6 +1191,7 @@ class AasService {
       if (!result.success) {
         throw new Error(result.error?.message || 'Failed to update AAS');
       }
+      
       return result.data || aasShell;
     }
     
@@ -1126,11 +1205,105 @@ class AasService {
     
     if (result.success) {
       console.log(`Successfully created AAS: ${aasId}`);
+      
+      // Register in registry
+      await this.registerAasDescriptor(aasId, aasShell);
+      
       return result.data || aasShell;
     }
     
     console.error('Failed to create AAS. Full result:', result);
     throw new Error(result.error?.message || result.error?.details || JSON.stringify(result.error) || 'Failed to create AAS');
+  }
+
+  /**
+   * Create an AAS descriptor from an AAS shell for registry registration
+   * @param {Object} aasShell - The AAS shell object
+   * @param {Array} submodelIds - Array of submodel IDs to include as submodel descriptors
+   * @returns {AssetAdministrationShellDescriptor} The descriptor object
+   */
+  createDescriptorFromAas(aasShell, submodelIds = []) {
+    const encodedId = this.base64UrlEncode(aasShell.id);
+    const endpoint = this.createEndpoint('AAS-3.0', `${this.repositoryUrl}/shells/${encodedId}`);
+    
+    // Create submodel descriptors if submodel IDs are provided
+    const submodelDescriptors = submodelIds.map(id => this.createSubmodelDescriptor(id));
+    
+    return new AssetAdministrationShellDescriptor(
+      aasShell.id,
+      aasShell.displayName ?? null,
+      aasShell.description ?? null,
+      aasShell.extensions ?? null,
+      aasShell.administration ?? null,
+      aasShell.idShort ?? null,
+      aasShell.assetInformation?.assetKind ?? null,
+      aasShell.assetInformation?.assetType ?? null,
+      aasShell.assetInformation?.globalAssetId ?? null,
+      aasShell.assetInformation?.specificAssetIds ?? null,
+      submodelDescriptors.length > 0 ? submodelDescriptors : null,
+      [endpoint]
+    );
+  }
+
+  /**
+   * Register an AAS descriptor in the registry (for new AAS only)
+   * @param {string} aasId - The AAS identifier
+   * @param {Object} aasShell - The AAS shell object
+   * @param {Array} submodelIds - Optional array of submodel IDs
+   */
+  async registerAasDescriptor(aasId, aasShell, submodelIds = []) {
+    try {
+      // Extract submodel IDs from the shell's submodel references if not provided
+      if (submodelIds.length === 0 && aasShell.submodels) {
+        submodelIds = aasShell.submodels.map(ref => {
+          // Get the submodel ID from the reference keys
+          const submodelKey = ref.keys?.find(k => k.type === 'Submodel');
+          return submodelKey?.value;
+        }).filter(Boolean);
+      }
+      
+      const descriptor = this.createDescriptorFromAas(aasShell, submodelIds);
+      
+      // Check if descriptor exists in registry
+      let descriptorExists = false;
+      try {
+        const existsResult = await this.registryClient.getAssetAdministrationShellDescriptorById({
+          configuration: this.registryConfig,
+          aasIdentifier: aasId
+        });
+        descriptorExists = existsResult.success === true;
+      } catch (checkError) {
+        descriptorExists = false;
+      }
+      
+      if (descriptorExists) {
+        // Descriptor already exists, skip registration
+        console.log(`Registry descriptor already exists for: ${aasId}`);
+        return;
+      }
+      
+      // Create new descriptor
+      console.log(`Registering new AAS descriptor: ${aasId}`);
+      const result = await this.registryClient.postAssetAdministrationShellDescriptor({
+        configuration: this.registryConfig,
+        assetAdministrationShellDescriptor: descriptor
+      });
+      
+      if (!result.success) {
+        console.warn(`Failed to register AAS descriptor: ${result.error?.message}`);
+        return;
+      }
+      
+      console.log(`Successfully registered AAS descriptor: ${aasId}`);
+      
+      // Register submodel descriptors
+      if (submodelIds.length > 0) {
+        await this.registerSubmodelDescriptors(aasId, submodelIds);
+      }
+    } catch (error) {
+      // Don't fail the whole operation if registry registration fails
+      console.warn(`Registry registration warning for ${aasId}:`, error.message);
+    }
   }
 
   /**
