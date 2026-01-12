@@ -510,9 +510,13 @@ export default function PlanarMotorConfigurator() {
     try {
       const layoutData = prepareLayoutData();
       
+      // Save station layout to HierarchicalStructures submodel
       const hierarchicalStructures = aasService.transformLayoutDataToHierarchicalStructures(layoutData);
-      
       await aasService.putHierarchicalStructures(hierarchicalStructures);
+      
+      // Save motor config to planarTable Parameters submodel
+      await aasService.putPlanarTableMotorConfig(motorConfig);
+      
       toast.success('Configuration published to AAS successfully!');
     } catch (error) {
       console.error('Failed to publish configuration:', error);
@@ -523,11 +527,19 @@ export default function PlanarMotorConfigurator() {
   // Handler for loading configuration from AAS
   const handleLoadFromAas = async () => {
     try {
+      // Load station layout from HierarchicalStructures
       const hierarchicalStructures = await aasService.getHierarchicalStructures();
       const layoutData = aasService.transformHierarchicalStructuresToLayoutData(
         hierarchicalStructures,
         moduleCatalog
       );
+      
+      // Load motor config from planarTable Parameters submodel
+      const loadedMotorConfig = await aasService.getPlanarTableMotorConfig();
+      if (loadedMotorConfig) {
+        setMotorConfig(loadedMotorConfig);
+        handleConfigChange(loadedMotorConfig);
+      }
       
       // Convert layout data back to placed nodes format
       const loadedNodes = layoutData.Stations
@@ -536,6 +548,8 @@ export default function PlanarMotorConfigurator() {
           // Find matching node template from allNodes
           const matchingNode = allNodes.find(n => 
             n.abstractId === station.Name || 
+            n.abstractId === station.AssetType ||
+            n.assetType === station.AssetType ||
             n.title === station['Instance Name']
           );
           
@@ -548,7 +562,8 @@ export default function PlanarMotorConfigurator() {
             container: `container${containerIndex}`,
             title: station['Instance Name'],
             color: matchingNode?.color || '#888888',
-            abstractId: station.Name,
+            abstractId: station.AssetType || station.Name,
+            assetType: station.AssetType || station.Name,
             capabilities: station.Capabilities,
             aasId: station.AasId,
             submodelId: station.SubmodelId
