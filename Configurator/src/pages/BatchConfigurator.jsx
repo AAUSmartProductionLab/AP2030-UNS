@@ -286,7 +286,7 @@ export default function BatchConfigurator() {
     });
   };
 
-  const addBatchToQueue = async (batchData) => {
+  const addBatchToQueue = (batchData) => {
     const getPackagingName = (id) => {
       const pkg = packagingOptions.find(p => p.id === id);
       return pkg ? pkg.name : 'Unknown packaging';
@@ -312,18 +312,9 @@ export default function BatchConfigurator() {
       orderTimestamp: new Date().toISOString()
     };
 
-    // Add to queue first
+    // Add to queue
     setQueue(prevQueue => [...prevQueue, newBatch]);
     toast.success(`Added batch: ${newBatch.name} to queue`);
-    
-    // Save to AAS server
-    try {
-      await aasService.saveProductAas(newBatch);
-    } catch (error) {
-      console.error('Failed to save Product AAS:', error);
-      // Don't remove from queue, just warn user
-      toast.warning('Batch added to queue but failed to save to AAS server');
-    }
   };
 
   const removeBatchFromQueue = (batchId) => {
