@@ -1,16 +1,16 @@
 {
   "assetAdministrationShells": [
     {
-      "idShort": "syntegonStopperingSystemAAS",
-      "id": "https://smartproductionlab.aau.dk/aas/syntegonStopperingSystem",
+      "idShort": "optimaStopperingSystemAAS",
+      "id": "https://smartproductionlab.aau.dk/aas/optimaStopperingSystem",
       "assetInformation": {
         "assetKind": "Instance",
-        "globalAssetId": "https://smartproductionlab.aau.dk/assets/NGQ5ZWE4ZmUtY2Q3OS00Nzc5LWE5YjEtNGEzZGRkODRhNzQ2",
-        "assetType": "https://smartproductionlab.aau.dk/Resource/CPPM/StopperingSystem/syntegonStopperingSystem",
+        "globalAssetId": "https://smartproductionlab.aau.dk/assets/N2EzNTg1ZTktOTAxNi00M2E3LWEzNTYtMjg5NjJlZDhmMDFk",
+        "assetType": "https://smartproductionlab.aau.dk/Resource/CPPM/StopperingSystem/optimaStopperingSystem",
         "specificAssetIds": [
           {
             "name": "serialNumber",
-            "value": "SYN-SS-2024-001",
+            "value": "OPTIMA-SS-2024-001",
             "externalSubjectId": {
               "type": "ExternalReference",
               "keys": [
@@ -42,7 +42,7 @@
           "keys": [
             {
               "type": "Submodel",
-              "value": "https://smartproductionlab.aau.dk/submodels/instances/syntegonStopperingSystem/AssetInterfacesDescription"
+              "value": "https://smartproductionlab.aau.dk/submodels/instances/optimaStopperingSystem/AssetInterfacesDescription"
             }
           ]
         },
@@ -51,7 +51,7 @@
           "keys": [
             {
               "type": "Submodel",
-              "value": "https://smartproductionlab.aau.dk/submodels/instances/syntegonStopperingSystem/Variables"
+              "value": "https://smartproductionlab.aau.dk/submodels/instances/optimaStopperingSystem/Variables"
             }
           ]
         },
@@ -60,7 +60,7 @@
           "keys": [
             {
               "type": "Submodel",
-              "value": "https://smartproductionlab.aau.dk/submodels/instances/syntegonStopperingSystem/Parameters"
+              "value": "https://smartproductionlab.aau.dk/submodels/instances/optimaStopperingSystem/Parameters"
             }
           ]
         },
@@ -69,7 +69,7 @@
           "keys": [
             {
               "type": "Submodel",
-              "value": "https://smartproductionlab.aau.dk/submodels/instances/syntegonStopperingSystem/HierarchicalStructures"
+              "value": "https://smartproductionlab.aau.dk/submodels/instances/optimaStopperingSystem/HierarchicalStructures"
             }
           ]
         }
@@ -89,7 +89,7 @@
   "submodels": [
     {
       "idShort": "AssetInterfacesDescription",
-      "id": "https://smartproductionlab.aau.dk/submodels/instances/syntegonStopperingSystem/AssetInterfacesDescription",
+      "id": "https://smartproductionlab.aau.dk/submodels/instances/optimaStopperingSystem/AssetInterfacesDescription",
       "kind": "Instance",
       "semanticId": {
         "type": "ExternalReference",
@@ -142,7 +142,7 @@
               "idShort": "title",
               "modelType": "Property",
               "valueType": "xs:string",
-              "value": "Syntegon Stoppering System"
+              "value": "Optima Stoppering System"
             },
             {
               "idShort": "EndpointMetadata",
@@ -161,7 +161,7 @@
                   "idShort": "base",
                   "modelType": "Property",
                   "valueType": "xs:string",
-                  "value": "mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/Stopper"
+                  "value": "mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/OptimaStopper"
                 },
                 {
                   "idShort": "contentType",
@@ -942,7 +942,7 @@
     },
     {
       "idShort": "Variables",
-      "id": "https://smartproductionlab.aau.dk/submodels/instances/syntegonStopperingSystem/Variables",
+      "id": "https://smartproductionlab.aau.dk/submodels/instances/optimaStopperingSystem/Variables",
       "kind": "Instance",
       "semanticId": {
         "type": "ExternalReference",
@@ -994,7 +994,7 @@
                 "keys": [
                   {
                     "type": "Submodel",
-                    "value": "https://smartproductionlab.aau.dk/submodels/instances/syntegonStopperingSystem/AssetInterfacesDescription"
+                    "value": "https://smartproductionlab.aau.dk/submodels/instances/optimaStopperingSystem/AssetInterfacesDescription"
                   },
                   {
                     "type": "SubmodelElementCollection",
@@ -1050,7 +1050,7 @@
                 "keys": [
                   {
                     "type": "Submodel",
-                    "value": "https://smartproductionlab.aau.dk/submodels/instances/syntegonStopperingSystem/AssetInterfacesDescription"
+                    "value": "https://smartproductionlab.aau.dk/submodels/instances/optimaStopperingSystem/AssetInterfacesDescription"
                   },
                   {
                     "type": "SubmodelElementCollection",
@@ -1078,7 +1078,7 @@
     },
     {
       "idShort": "Parameters",
-      "id": "https://smartproductionlab.aau.dk/submodels/instances/syntegonStopperingSystem/Parameters",
+      "id": "https://smartproductionlab.aau.dk/submodels/instances/optimaStopperingSystem/Parameters",
       "kind": "Instance",
       "semanticId": {
         "type": "ExternalReference",
@@ -1098,7 +1098,7 @@
     },
     {
       "idShort": "HierarchicalStructures",
-      "id": "https://smartproductionlab.aau.dk/submodels/instances/syntegonStopperingSystem/HierarchicalStructures",
+      "id": "https://smartproductionlab.aau.dk/submodels/instances/optimaStopperingSystem/HierarchicalStructures",
       "kind": "Instance",
       "semanticId": {
         "type": "ExternalReference",
@@ -1142,7 +1142,7 @@
           },
           "modelType": "Entity",
           "entityType": "SelfManagedEntity",
-          "globalAssetId": "https://smartproductionlab.aau.dk/assets/NGQ5ZWE4ZmUtY2Q3OS00Nzc5LWE5YjEtNGEzZGRkODRhNzQ2",
+          "globalAssetId": "https://smartproductionlab.aau.dk/assets/N2EzNTg1ZTktOTAxNi00M2E3LWEzNTYtMjg5NjJlZDhmMDFk",
           "statements": [
             {
               "idShort": "PlanarTable",
@@ -1204,7 +1204,7 @@
                 "keys": [
                   {
                     "type": "Submodel",
-                    "value": "https://smartproductionlab.aau.dk/submodels/instances/syntegonStopperingSystem/HierarchicalStructures"
+                    "value": "https://smartproductionlab.aau.dk/submodels/instances/optimaStopperingSystem/HierarchicalStructures"
                   },
                   {
                     "type": "Entity",
@@ -1217,7 +1217,7 @@
                 "keys": [
                   {
                     "type": "Submodel",
-                    "value": "https://smartproductionlab.aau.dk/submodels/instances/syntegonStopperingSystem/HierarchicalStructures"
+                    "value": "https://smartproductionlab.aau.dk/submodels/instances/optimaStopperingSystem/HierarchicalStructures"
                   },
                   {
                     "type": "Entity",
