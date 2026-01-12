@@ -6,7 +6,7 @@
       "assetInformation": {
         "assetKind": "Instance",
         "globalAssetId": "https://smartproductionlab.aau.dk/assets/optimaUnloadingSystem",
-        "assetType": "Resource",
+        "assetType": "https://smartproductionlab.aau.dk/Resource/CPPM/UnloadingSystem/optimaUnloadingSystem",
         "specificAssetIds": [
           {
             "name": "serialNumber",
@@ -29,10 +29,6 @@
                 "value": "https://smartproductionlab.aau.dk/organization"
               }]
             }
-          },
-          {
-            "name":"SemanticType",
-            "value":"UnloadingSystem"
           }
         ]
       },
