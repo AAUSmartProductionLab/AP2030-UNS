@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root BTCPP_format="4">
-  <BehaviorTree ID="Camera">
+  <BehaviorTree ID="QualityControl">
     <Occupy Uuid="{ProductID}"
-            Asset="{CameraSystem}"
+            Asset="{QualityControlSystem}"
             _skipIf="scrap == true">
       <ReactiveSequence>
         <ReactiveFallback>
@@ -10,7 +10,7 @@
                           Field="State"
                           expected_value="operational"
                           Property="PackMLState"
-                          Asset="{CameraSystem}"/>
+                          Asset="{QualityControlSystem}"/>
           <Sleep msec="10000"/>
         </ReactiveFallback>
         <Sequence>
@@ -20,7 +20,7 @@
           <Command_Execution Parameters="&apos;{}&apos;"
                              Uuid="{ProductID}"
                              Operation="capture"
-                             Asset="{CameraSystem}"/>
+                             Asset="{QualityControlSystem}"/>
         </Sequence>
       </ReactiveSequence>
     </Occupy>

@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root BTCPP_format="4">
   <include path="./loading.xml" />
-  <include path="./filling.xml" />
+  <include path="./dispensing.xml" />
   <include path="./stoppering.xml" />
   <include path="./camera.xml" />
   <include path="./unloading.xml" />
   <include path="./scraping.xml" />
-  <BehaviorTree ID="Xbot_Production">
+  <BehaviorTree ID="AsepticFilling">
     <Occupy Uuid="{Uuid}"
             Asset="{Xbot}">
       <KeepRunningUntilEmpty if_empty="SUCCESS"
@@ -22,18 +22,18 @@
           </ReactiveFallback>
           <Fallback>
             <SequenceWithMemory>
-              <SubTree ID="Load"
+              <SubTree ID="Loading"
                        _autoremap="true"/>
-              <SubTree ID="Filling"
+              <SubTree ID="Dispensing"
                        _autoremap="true"/>
               <SubTree ID="Stoppering"
                        _autoremap="true"/>
-              <SubTree ID="Camera"
+              <SubTree ID="QualityControl"
                        _autoremap="true"/>
-              <SubTree ID="Unload"
+              <SubTree ID="Unloading"
                        _autoremap="true"/>
             </SequenceWithMemory>
-            <SubTree ID="Scrap"
+            <SubTree ID="Scraping"
                      _autoremap="true"/>
           </Fallback>
         </ReactiveSequence>

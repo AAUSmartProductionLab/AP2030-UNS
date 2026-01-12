@@ -1,0 +1,207 @@
+{
+  "assetAdministrationShells": [
+    {
+      "idShort": "stopperingAAS",
+      "id": "https://smartproductionlab.aau.dk/aas/stoppering",
+      "specificAssetIds":[],
+      "assetInformation": {
+        "assetKind": "Instance",
+        "assetType": "Process",
+        "globalAssetId": "https://smartproductionlab.aau.dk/assets/stoppering",
+        "specificAssetIds": [
+          {
+            "name": "serialNumber",
+            "value": "AAU-AFP-000",
+            "externalSubjectId": {
+              "type": "ExternalReference",
+              "keys": [{
+                "type": "GlobalReference",
+                "value": "https://smartproductionlab.aau.dk/organization"
+              }]
+            }
+          },
+          {
+            "name":"SemanticType",
+            "value":"stoppering"
+          }
+        ]
+      },
+      "submodels": [
+        {
+          "type": "ModelReference",
+          "keys": [{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/stoppering/HierarchicalStructures"}]
+        },
+        {
+            "type": "ModelReference",
+            "keys":[{"type": "Submodel", "value": "https://smartproductionlab.aau.dk/submodels/instances/stoppering/Policy"}]
+        }
+      ],
+      "derivedFrom": {
+        "type": "ModelReference",
+        "keys": [{"type": "AssetAdministrationShell", "value": "https://smartproductionlab.aau.dk/aas/templates/process"}]
+      },
+      "modelType": "AssetAdministrationShell"
+    }
+  ],
+  "submodels": [
+    {
+      "idShort": "HierarchicalStructures",
+      "id": "https://smartproductionlab.aau.dk/submodels/instances/stoppering/HierarchicalStructures",
+      "kind": "Instance",
+      "semanticId": {
+        "type": "ExternalReference",
+        "keys": [{"type": "GlobalReference", "value": "https://admin-shell.io/idta/HierarchicalStructures/1/0/Submodel"}]
+      },
+      "administration": {
+        "version": "1",
+        "revision": "0"
+      },
+      "submodelElements": [
+        {
+          "idShort": "Archetype",
+          "semanticId": {
+            "type": "ExternalReference",
+            "keys": [{
+              "type": "GlobalReference",
+              "value": "https://admin-shell.io/idta/HierarchicalStructures/1/0/Archetype"
+            }]
+          },
+          "modelType": "Property",
+          "valueType": "xs:string",
+          "value": "OneDown"
+        },
+        {
+          "idShort": "EntryNode",
+          "semanticId": {
+            "type": "ExternalReference",
+            "keys": [{
+              "type": "GlobalReference",
+              "value": "https://admin-shell.io/idta/HierarchicalStructures/1/0/EntryNode"
+            }]
+          },
+          "modelType": "Entity",
+          "entityType": "SelfManagedEntity",
+          "globalAssetId": "https://smartproductionlab.aau.dk/assets/stoppering",
+          "statements": [
+            {
+              "idShort": "subProcess",
+              "semanticId": {
+                "type": "ExternalReference",
+                "keys": [{
+                  "type": "GlobalReference",
+                  "value": "https://admin-shell.io/idta/HierarchicalStructures/1/0/Node"
+                }]
+              },
+              "modelType": "Entity",
+              "entityType": "SelfManagedEntity",
+              "globalAssetId": "https://smartproductionlab.aau.dk/assets/SubProcess",
+              "statements": [
+                {
+                  "idShort": "SameAs",
+                  "semanticId": {
+                    "type": "ExternalReference",
+                    "keys": [{
+                      "type": "GlobalReference",
+                      "value": "https://admin-shell.io/idta/HierarchicalStructures/1/0/SameAs"
+                    }]
+                  },
+                  "modelType": "ReferenceElement",
+                  "value": {
+                    "type": "ModelReference",
+                    "keys": [
+                      {
+                        "type": "Submodel",
+                        "value": "https://smartproductionlab.aau.dk/submodels/instances/SubProcess/HierarchicalStructures"
+                      },
+                      {
+                        "type": "Entity",
+                        "value": "EntryNode"
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "idShort": "HasGenericSubProcess",
+              "semanticId": {
+                "type": "ExternalReference",
+                "keys": [{
+                  "type": "GlobalReference",
+                  "value": "https://admin-shell.io/idta/HierarchicalStructures/1/0/Relationship"
+                }]
+              },
+              "modelType": "RelationshipElement",
+              "first": {
+                "type": "ModelReference",
+                "keys": [
+                  {
+                    "type": "Submodel",
+                    "value": "https://smartproductionlab.aau.dk/submodels/instances/stoppering/HierarchicalStructures"
+                  },
+                  {
+                    "type": "Entity",
+                    "value": "EntryNode"
+                  }
+                ]
+              },
+              "second": {
+                "type": "ModelReference",
+                "keys": [
+                  {
+                    "type": "Submodel",
+                    "value": "https://smartproductionlab.aau.dk/submodels/instances/stoppering/HierarchicalStructures"
+                  },
+                  {
+                    "type": "Entity",
+                    "value": "EntryNode"
+                  },
+                  {
+                    "type": "Entity",
+                    "value": "SubProcess"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "modelType": "Submodel"
+    },
+    {
+      "idShort": "Policy",
+      "id": "https://smartproductionlab.aau.dk/submodels/instances/stoppering/Policy",
+      "kind": "Instance",
+      "semanticId": {
+        "type": "ExternalReference",
+        "keys": [{"type": "GlobalReference", "value": "https://smartproductionlab.aau.dk/Policy/1/0/Submodel"}]
+      },
+      "administration": {
+        "version": "1",
+        "revision": "0"
+      },
+      "submodelElements": [
+        {
+          "idShort": "PolicyType",
+          "semanticId": {
+            "type": "ExternalReference",
+            "keys": [{
+              "type": "GlobalReference",
+              "value": "https://smartproductionlab.aau.dk/Policy/1/0/PolicyType"
+            }]
+          },
+          "modelType": "Property",
+          "valueType": "xs:string",
+          "value": "BehaviorTree"
+        },
+        {
+            "idShort": "Policy",
+            "modelType": "File",
+            "contentType": "application/xml",
+            "value": "https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/BT_Controller/config/bt_description/stoppering.xml"
+        }
+      ],
+      "modelType": "Submodel"
+    }
+  ]
+}

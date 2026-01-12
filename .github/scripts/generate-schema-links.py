@@ -80,27 +80,20 @@ def scan_schemas(schemas_dir: Path) -> Dict[str, List[Dict]]:
         rel_path = schema_file.relative_to(schemas_dir)
         
         # Determine category based on directory structure
-        if len(rel_path.parts) > 1:
-            category = rel_path.parts[0]
-        else:
-            # Categorize root-level schemas by name pattern
-            filename = schema_file.stem.lower()
-            if 'command' in filename:
-                category = 'Command'
-            elif 'amr' in filename or 'arcl' in filename:
-                category = 'AMR (Mobile Robot)'
-            elif any(x in filename for x in ['data', 'state', 'weight', 'image']):
-                category = 'Data & State'
-            elif any(x in filename for x in ['config', 'order', 'product']):
-                category = 'Configuration'
-            elif any(x in filename for x in ['station', 'planar', 'move']):
-                category = 'Station & Movement'
-            else:
-                category = 'Other'
+        parts = rel_path.parts
         
-        # Format category name
-        if category == 'ResourceDescription':
-            category = 'AAS Resource Descriptions'
+        if len(parts) >= 3 and parts[0] == 'AASDescriptions':
+            # AASDescriptions subfolder structure: AASDescriptions/Process/, AASDescriptions/Product/, etc.
+            category = f"AAS {parts[1]} Descriptions"
+        elif len(parts) >= 2 and parts[0] == 'MQTTSchemas':
+            # MQTT Schemas
+            category = 'MQTT Schemas'
+        elif len(parts) > 1:
+            # Other subdirectories
+            category = parts[0].replace('_', ' ').title()
+        else:
+            # Root-level schemas (fallback)
+            category = 'Other'
         
         if category not in categories:
             categories[category] = []
@@ -148,24 +141,49 @@ def generate_markdown_schemas(categories: Dict[str, List[Dict]]) -> str:
     """Generate markdown content for the schema links."""
     lines = []
     
-    # Sort categories for consistent output
-    sorted_categories = sorted(categories.items())
+    # Define category order for better organization
+    category_order = [
+        'AAS Process Descriptions',
+        'AAS Product Descriptions', 
+        'AAS Resource Descriptions',
+        'MQTT Schemas'
+    ]
     
-    for category, schemas in sorted_categories:
-        lines.append(f"### {category}\n")
-        
-        for schema in schemas:
-            # Create link
-            github_pages_url = f"https://aausmartproductionlab.github.io/AP2030-UNS/schemas/{schema['path']}"
-            raw_url = f"https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/schemas/{schema['path']}"
+    # First, add ordered categories
+    for category in category_order:
+        if category in categories:
+            schemas = categories[category]
+            lines.append(f"### {category}\n")
             
-            lines.append(f"- **[{schema['filename']}](schemas/{schema['path']})**")
-            if schema['description']:
-                lines.append(f"  - {schema['description']}")
-            lines.append(f"  - [View on GitHub Pages]({github_pages_url})")
-            lines.append(f"  - [Raw]({raw_url})")
-        
-        lines.append("")  # Empty line between categories
+            for schema in schemas:
+                # Create link
+                github_pages_url = f"https://aausmartproductionlab.github.io/AP2030-UNS/schemas/{schema['path']}"
+                raw_url = f"https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/schemas/{schema['path']}"
+                
+                lines.append(f"- **[{schema['filename']}](schemas/{schema['path']})**")
+                if schema['description']:
+                    lines.append(f"  - {schema['description']}")
+                lines.append(f"  - [View on GitHub Pages]({github_pages_url})")
+                lines.append(f"  - [Raw]({raw_url})")
+            
+            lines.append("")  # Empty line between categories
+    
+    # Then add any remaining categories not in the predefined order
+    for category, schemas in sorted(categories.items()):
+        if category not in category_order:
+            lines.append(f"### {category}\n")
+            
+            for schema in schemas:
+                github_pages_url = f"https://aausmartproductionlab.github.io/AP2030-UNS/schemas/{schema['path']}"
+                raw_url = f"https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/schemas/{schema['path']}"
+                
+                lines.append(f"- **[{schema['filename']}](schemas/{schema['path']})**")
+                if schema['description']:
+                    lines.append(f"  - {schema['description']}")
+                lines.append(f"  - [View on GitHub Pages]({github_pages_url})")
+                lines.append(f"  - [Raw]({raw_url})")
+            
+            lines.append("")  # Empty line between categories
     
     return '\n'.join(lines)
 
