@@ -675,12 +675,17 @@ class AasService {
 
   /**
    * Generate product AAS and submodel IDs from order UUID
+   * @param {string} orderUuid - The order UUID
+   * @param {string} productFamily - The product family (e.g., 'Monoclonal Antibodies', 'Growth Hormones')
    */
-  getProductAasIds(orderUuid) {
+  getProductAasIds(orderUuid, productFamily = null) {
     const baseUrl = 'https://smartproductionlab.aau.dk';
+    const sanitizedFamily = productFamily ? productFamily.toLowerCase().replace(/\s+/g, '-') : 'unknown';
     return {
       aasId: `${baseUrl}/aas/products/${orderUuid}`,
       assetId: `${baseUrl}/assets/products/${orderUuid}`,
+      // AssetType uses ontology URL structure: role/category/specific-type
+      assetType: `${baseUrl}/product/productFamily/${sanitizedFamily}`,
       batchInfoSubmodelId: `${baseUrl}/submodels/products/${orderUuid}/BatchInformation`,
       requirementsSubmodelId: `${baseUrl}/submodels/products/${orderUuid}/Requirements`,
       billOfMaterialsSubmodelId: `${baseUrl}/submodels/products/${orderUuid}/BillOfMaterials`
@@ -693,7 +698,8 @@ class AasService {
    * @returns {Object} Object containing the AAS and all submodels
    */
   createProductAas(batchData) {
-    const ids = this.getProductAasIds(batchData.Uuid);
+    const productFamily = batchData.productFamily || batchData.product;
+    const ids = this.getProductAasIds(batchData.Uuid, productFamily);
     
     // Create all submodels
     const batchInfoSubmodel = this.createBatchInformationSubmodel(batchData, ids.batchInfoSubmodelId);
@@ -720,12 +726,6 @@ class AasService {
     );
     
     const elements = [
-      // Role property - defines this as a Product AAS
-      this.createProperty('Role', AasService.AAS_ROLES.PRODUCT, DataTypeDefXsd.String,
-        this.createReference(ReferenceTypes.ExternalReference,
-          [this.createKey(KeyTypes.GlobalReference, 'https://smartproductionlab.aau.dk/semantics/AasRole')]
-        )
-      ),
       // Product identification
       this.createProperty('ProductName', batchData.product || '', DataTypeDefXsd.String,
         this.createReference(ReferenceTypes.ExternalReference,
@@ -875,7 +875,8 @@ class AasService {
       [this.createKey(KeyTypes.GlobalReference, 'https://admin-shell.io/idta/HierarchicalStructures/EntryNode/1/0')]
     );
     
-    const productAssetId = this.getProductAasIds(batchData.Uuid).assetId;
+    const productFamily = batchData.productFamily || batchData.product;
+    const productAssetId = this.getProductAasIds(batchData.Uuid, productFamily).assetId;
     const entryNode = this.createEntity(
       'Product',
       EntityType.SelfManagedEntity,
@@ -1038,14 +1039,15 @@ class AasService {
     const productName = batchData.product || 'Product';
     const idShort = `${productName.replace(/\s+/g, '')}AAS`;
     
-    // Create asset information
+    // Create asset information with assetType using ontology URL structure
+    // AssetType format: https://smartproductionlab.aau.dk/{role}/{category}/{specific-type}
+    // Example: https://smartproductionlab.aau.dk/product/productFamily/growth-hormones
+    // Constructor: (assetKind, globalAssetId, specificAssetIds, assetType, defaultThumbnail)
     const assetInfo = new AssetInformation(
       AssetKind.Instance,
-      ids.assetId,
-      null, // assetType
-      null, // specificAssetIds
-      null, // globalAssetId (deprecated in favor of first param)
-      null  // thumbnail
+      ids.assetId,  // globalAssetId
+      null, // specificAssetIds - not used, all info is in assetType
+      ids.assetType  // assetType - ontology URL encoding role/category/type
     );
     
     // Create submodel references
@@ -1116,6 +1118,7 @@ class AasService {
     
     // Create new AAS
     console.log(`Creating new AAS: ${aasId}`);
+    console.log('AAS Shell payload:', JSON.stringify(aasShell, null, 2));
     const result = await this.aasRepositoryClient.postAssetAdministrationShell({
       configuration: this.repositoryConfig,
       assetAdministrationShell: aasShell
@@ -1126,19 +1129,25 @@ class AasService {
       return result.data || aasShell;
     }
     
-    throw new Error(result.error?.message || 'Failed to create AAS');
+    console.error('Failed to create AAS. Full result:', result);
+    throw new Error(result.error?.message || result.error?.details || JSON.stringify(result.error) || 'Failed to create AAS');
   }
 
   /**
    * Generate product AAS IDs based on product name (for active production)
    * Creates IDs like "MIM8AAS" for the actively produced product
+   * @param {string} productName - The product name
+   * @param {string} productFamily - The product family (e.g., 'Monoclonal Antibodies', 'Growth Hormones')
    */
-  getActiveProductAasIds(productName) {
+  getActiveProductAasIds(productName, productFamily = null) {
     const baseUrl = 'https://smartproductionlab.aau.dk';
     const sanitizedName = productName.replace(/\s+/g, '');
+    const sanitizedFamily = productFamily ? productFamily.toLowerCase().replace(/\s+/g, '-') : 'unknown';
     return {
       aasId: `${baseUrl}/aas/${sanitizedName}AAS`,
       assetId: `${baseUrl}/assets/${sanitizedName.toLowerCase()}`,
+      // AssetType uses ontology URL structure: role/category/specific-type
+      assetType: `${baseUrl}/product/productFamily/${sanitizedFamily}`,
       batchInfoSubmodelId: `${baseUrl}/submodels/instances/${sanitizedName}/BatchInformation`,
       requirementsSubmodelId: `${baseUrl}/submodels/instances/${sanitizedName}/Requirements`,
       billOfMaterialsSubmodelId: `${baseUrl}/submodels/instances/${sanitizedName}/BillOfMaterials`
@@ -1158,7 +1167,8 @@ class AasService {
         throw new Error('Product name is required');
       }
       
-      const ids = this.getActiveProductAasIds(productName);
+      const productFamily = batchData.productFamily || productName;
+      const ids = this.getActiveProductAasIds(productName, productFamily);
       
       // Create submodels with the active product IDs
       const batchInfoSubmodel = this.createBatchInformationSubmodel(batchData, ids.batchInfoSubmodelId);
