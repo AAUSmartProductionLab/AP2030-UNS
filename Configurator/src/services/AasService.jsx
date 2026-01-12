@@ -237,20 +237,8 @@ class AasService {
     try {
       const shellDescriptors = await this.getAllShells();
       
-      // Filter out shuttles and root system
-      const excludePatterns = ['shuttle', 'aauFillingLine'];
-      
-      const moduleDescriptors = shellDescriptors.filter(shell => {
-        const idShort = shell.idShort?.toLowerCase() || '';
-        const id = shell.id?.toLowerCase() || '';
-        
-        return !excludePatterns.some(pattern => 
-          idShort.includes(pattern) || id.includes(pattern)
-        );
-      });
-      
-      // Fetch full shell details
-      const shellPromises = moduleDescriptors.map(async (descriptor) => {
+      // Fetch full shell details to get assetType
+      const shellPromises = shellDescriptors.map(async (descriptor) => {
         const endpoint = descriptor.endpoints?.[0]?.protocolInformation?.href;
         if (endpoint) {
           const fullShell = await this.getFullShell(endpoint);
@@ -261,8 +249,19 @@ class AasService {
       
       const shells = await Promise.all(shellPromises);
       
+      // Filter to only include CPPM resources (Cyber-Physical Production Modules)
+      // AssetType format: https://smartproductionlab.aau.dk/Resource/{SystemType}/{Category}/{InstanceName}
+      // - CPPS: Cyber-Physical Production System (full system, exclude)
+      // - CPPM: Cyber-Physical Production Module (modules, include)
+      // - CPS: Cyber-Physical System (sub-parts of modules, exclude)
+      const cppmShells = shells.filter(shell => {
+        const assetType = shell.assetInformation?.assetType || '';
+        // Only include Resource/CPPM entries
+        return assetType.includes('/Resource/CPPM/');
+      });
+      
       // Extract module data with full AAS metadata
-      const modules = shells.map(shell => {
+      const modules = cppmShells.map(shell => {
         const hierarchicalSubmodel = shell.submodels?.find(sm => 
           sm.keys?.[0]?.value?.includes('HierarchicalStructures')
         );
@@ -271,7 +270,10 @@ class AasService {
         const assetInfo = shell.assetInformation || {};
         const assetId = assetInfo.globalAssetId || shell.id;
         const assetKind = assetInfo.assetKind || 'Instance';
-        const assetType = assetInfo.assetType || this.inferAssetType(shell.idShort);
+        const assetTypeUrl = assetInfo.assetType || '';
+        
+        // Extract category from assetType URL (e.g., DispensingSystem from .../CPPM/DispensingSystem/...)
+        const category = this.extractCategoryFromAssetType(assetTypeUrl);
         
         return {
           name: shell.idShort || 'Unknown Module',
@@ -279,19 +281,23 @@ class AasService {
           aasId: shell.id,
           assetId: assetId,
           assetKind: assetKind,
-          assetType: assetType,
+          assetType: category,
+          assetTypeUrl: assetTypeUrl,
           submodelId: hierarchicalSubmodel?.keys?.[0]?.value || null,
           description: shell.description?.[0]?.text || ''
         };
       });
       
-      // Sort modules by assetType
+      // Sort modules by category
+      const categoryOrder = [
+        'DispensingSystem', 'StopperingSystem', 'LoadingSystem', 
+        'UnloadingSystem', 'QualityControlSystem', 'MovementSystem', 'Other'
+      ];
       modules.sort((a, b) => {
-        const typeOrder = ['Filling', 'Stoppering', 'Loading', 'Unloading', 'Camera', 'PlanarTable', 'Other'];
-        const aIndex = typeOrder.indexOf(a.assetType);
-        const bIndex = typeOrder.indexOf(b.assetType);
-        const aOrder = aIndex === -1 ? typeOrder.length : aIndex;
-        const bOrder = bIndex === -1 ? typeOrder.length : bIndex;
+        const aIndex = categoryOrder.indexOf(a.assetType);
+        const bIndex = categoryOrder.indexOf(b.assetType);
+        const aOrder = aIndex === -1 ? categoryOrder.length : aIndex;
+        const bOrder = bIndex === -1 ? categoryOrder.length : bIndex;
         return aOrder - bOrder;
       });
       
@@ -303,72 +309,109 @@ class AasService {
     }
   }
 
+  /**
+   * Extract the category from an assetType URL
+   * Format: https://smartproductionlab.aau.dk/Resource/CPPM/{Category}/{InstanceName}
+   * @param {string} assetTypeUrl - The full assetType URL
+   * @returns {string} The category (e.g., 'DispensingSystem', 'LoadingSystem')
+   */
+  extractCategoryFromAssetType(assetTypeUrl) {
+    if (!assetTypeUrl) return 'Other';
+    
+    // Match pattern: /Resource/CPPM/{Category}/
+    const match = assetTypeUrl.match(/\/Resource\/CPPM\/([^\/]+)/);
+    if (match && match[1]) {
+      return match[1];
+    }
+    
+    return 'Other';
+  }
+
+  /**
+   * @deprecated Use extractCategoryFromAssetType instead
+   * Legacy method for inferring asset type from idShort
+   */
   inferAssetType(idShort) {
     if (!idShort) return 'Other';
     const lower = idShort.toLowerCase();
     
-    if (lower.includes('filling')) return 'Filling';
-    if (lower.includes('stoppering')) return 'Stoppering';
-    if (lower.includes('loading') && !lower.includes('unloading')) return 'Loading';
-    if (lower.includes('unloading')) return 'Unloading';
-    if (lower.includes('camera')) return 'Camera';
-    if (lower.includes('planar')) return 'PlanarTable';
+    if (lower.includes('filling') || lower.includes('dispensing')) return 'DispensingSystem';
+    if (lower.includes('stoppering')) return 'StopperingSystem';
+    if (lower.includes('loading') && !lower.includes('unloading')) return 'LoadingSystem';
+    if (lower.includes('unloading')) return 'UnloadingSystem';
+    if (lower.includes('camera')) return 'QualityControlSystem';
+    if (lower.includes('planar') && !lower.includes('shuttle')) return 'MovementSystem';
     
     return 'Other';
   }
 
   buildCategorizedCatalog(modules) {
-    // Group modules by assetType
-    const groupedByType = {};
+    // Group modules by category (extracted from assetType)
+    const groupedByCategory = {};
     
     modules.forEach(module => {
-      const assetType = module.assetType || 'Other';
-      if (!groupedByType[assetType]) {
-        groupedByType[assetType] = [];
+      const category = module.assetType || 'Other';
+      if (!groupedByCategory[category]) {
+        groupedByCategory[category] = [];
       }
-      groupedByType[assetType].push(module);
+      groupedByCategory[category].push(module);
     });
     
-    // Color map for different asset types
-    const typeColors = {
-      'Filling': '#1E7D74',
-      'Stoppering': '#30A399',
-      'Loading': '#0087CD',
-      'Unloading': '#00A0F0',
-      'Camera': '#9B4DCA',
-      'PlanarTable': '#136058',
+    // Color map for different CPPM categories
+    const categoryColors = {
+      'DispensingSystem': '#1E7D74',
+      'StopperingSystem': '#30A399',
+      'LoadingSystem': '#0087CD',
+      'UnloadingSystem': '#00A0F0',
+      'QualityControlSystem': '#9B4DCA',
+      'MovementSystem': '#136058',
       'Other': '#666666'
     };
     
+    // Display names for categories
+    const categoryDisplayNames = {
+      'DispensingSystem': 'Dispensing Systems',
+      'StopperingSystem': 'Stoppering Systems',
+      'LoadingSystem': 'Loading Systems',
+      'UnloadingSystem': 'Unloading Systems',
+      'QualityControlSystem': 'Quality Control',
+      'MovementSystem': 'Movement Systems',
+      'Other': 'Other Modules'
+    };
+    
     // Build categories from grouped modules
-    const categories = Object.entries(groupedByType).map(([assetType, typeModules]) => {
-      const nodes = typeModules.map((module) => ({
+    const categories = Object.entries(groupedByCategory).map(([category, categoryModules]) => {
+      const nodes = categoryModules.map((module) => ({
         id: module.name.toLowerCase().replace(/\s+/g, '-'),
         title: module.displayName,
-        color: typeColors[assetType] || '#666666',
+        color: categoryColors[category] || '#666666',
         aasId: module.aasId,
         submodelId: module.submodelId,
         assetId: module.assetId,
         assetKind: module.assetKind,
         assetType: module.assetType,
+        assetTypeUrl: module.assetTypeUrl,
         abstractId: module.assetType,  // Used for MQTT topic subscription
         description: module.description
       }));
       
       return {
-        id: `category-${assetType.toLowerCase()}`,
-        name: assetType,
-        assetType: assetType,
+        id: `category-${category.toLowerCase()}`,
+        name: categoryDisplayNames[category] || category,
+        assetType: category,
         nodes: nodes
       };
     });
     
-    // Sort categories by asset type order
-    const typeOrder = ['Filling', 'Stoppering', 'Loading', 'Unloading', 'Camera', 'PlanarTable', 'Other'];
+    // Sort categories by defined order
+    const categoryOrder = [
+      'DispensingSystem', 'StopperingSystem', 'LoadingSystem', 
+      'UnloadingSystem', 'QualityControlSystem', 'MovementSystem', 'Other'
+    ];
     categories.sort((a, b) => {
-      const aIndex = typeOrder.indexOf(a.assetType);
-      const bIndex = typeOrder.indexOf(b.assetType);
-      return (aIndex === -1 ? typeOrder.length : aIndex) - (bIndex === -1 ? typeOrder.length : bIndex);
+      const aIndex = categoryOrder.indexOf(a.assetType);
+      const bIndex = categoryOrder.indexOf(b.assetType);
+      return (aIndex === -1 ? categoryOrder.length : aIndex) - (bIndex === -1 ? categoryOrder.length : bIndex);
     });
     
     return categories;
