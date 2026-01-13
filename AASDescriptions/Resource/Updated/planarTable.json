@@ -1070,7 +1070,7 @@
           },
           "modelType": "Entity",
           "entityType": "SelfManagedEntity",
-          "globalAssetId": "https://smartproductionlab.aau.dk/aas/MTc1ZDA1MTAtY2Q4NC00MzY3LTgyM2QtNjY3NWJhMjhjODBj",
+          "globalAssetId": "https://smartproductionlab.aau.dk/assets/YzExZDhmNTctYjc3My00ZWVjLWI4ZGMtODM1YjhmMTZlNGYy",
           "statements": [
             {
               "idShort": "Xbot1",
@@ -1085,7 +1085,7 @@
               },
               "modelType": "Entity",
               "entityType": "SelfManagedEntity",
-              "globalAssetId": "https://smartproductionlab.aau.dk/aas/M2JmN2M0ODMtNjRlZC00M2I2LTk4MWUtYzg1MzBiYWViZTlj",
+              "globalAssetId": "https://smartproductionlab.aau.dk/assets/NTYyMTA0MmUtMzQyMS00YTk1LTg4ZGMtODRlOTRmOWIwZDc2",
               "statements": [
                 {
                   "idShort": "SameAs",
@@ -1128,7 +1128,7 @@
               },
               "modelType": "Entity",
               "entityType": "SelfManagedEntity",
-              "globalAssetId": "https://smartproductionlab.aau.dk/aas/ZGNkNjhlNzItZWZlNS00ODE3LWI2OTMtNDU3MjkwYTcyY2E4",
+              "globalAssetId": "https://smartproductionlab.aau.dk/assets/OTZhZGNiZDAtNTNhNS00YmJhLThiNDctMzFjYzM3OGNiNTMw",
               "statements": [
                 {
                   "idShort": "SameAs",
@@ -1171,7 +1171,7 @@
               },
               "modelType": "Entity",
               "entityType": "SelfManagedEntity",
-              "globalAssetId": "https://smartproductionlab.aau.dk/aas/NjJlNTg5ZjYtNzc1ZS00ZTVlLTgyOTUtOWI0ZDhmMmY0MzNm",
+              "globalAssetId": "https://smartproductionlab.aau.dk/assets/YjY3ZTJjZGEtZDYxMC00ZDJjLTlkYjYtOGUyNGE4NWVlNTBi",
               "statements": [
                 {
                   "idShort": "SameAs",
