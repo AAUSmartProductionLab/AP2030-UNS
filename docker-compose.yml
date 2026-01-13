@@ -300,6 +300,27 @@ services:
         condition: service_started
     networks:
       - hivemq-network
+  
+  registration-service:
+    build:
+      context: ./Registration_Service
+      dockerfile: Dockerfile
+    container_name: registration-service
+    volumes:
+      - ./databridge:/databridge
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: always
+    depends_on:
+      hivemq-broker:
+        condition: service_started
+      aas-env:
+        condition: service_started
+      databridge:
+        condition: service_started
+    networks:
+      - hivemq-network
 
 
 #################¤ NETWORKS AND VOLUMES ####################
