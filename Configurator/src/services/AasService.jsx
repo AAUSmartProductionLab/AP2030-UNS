@@ -21,6 +21,7 @@ import {
   Submodel,
   Entity,
   EntityType,
+  SpecificAssetId,
   Property,
   SubmodelElementCollection,
   ReferenceElement,
@@ -518,16 +519,23 @@ class AasService {
   async saveOrUpdateSubmodel(submodelId, submodelData) {
     let submodelExists = false;
     
-    // First check if submodel exists
+    // First check if submodel exists by listing (avoids 404 console error)
     try {
-      const existsResult = await this.submodelClient.getSubmodelById({
-        configuration: this.repositoryConfig,
-        submodelIdentifier: submodelId
+      const listResult = await this.submodelClient.getAllSubmodels({
+        configuration: this.repositoryConfig
       });
-      
-      submodelExists = existsResult.success === true;
+
+      if (listResult.success && listResult.data?.result) {
+         submodelExists = listResult.data.result.some(sm => sm.id === submodelId);
+      } else {
+         // Fallback: check directly (may cause 404)
+         const existsResult = await this.submodelClient.getSubmodelById({
+            configuration: this.repositoryConfig,
+            submodelIdentifier: submodelId
+         });
+         submodelExists = existsResult.success === true;
+      }
     } catch (checkError) {
-      // Submodel doesn't exist (404 error), will create it
       submodelExists = false;
     }
     
@@ -1061,7 +1069,7 @@ class AasService {
     materials.push(this.createEntity(
       'PrimaryContainer',
       EntityType.CoManagedEntity,
-      `https://smartproductionlab.aau.dk/assets/materials/${containerType.toLowerCase()}`,
+      null,
       [containerCollection],
       nodeSemanticId
     ));
@@ -1077,7 +1085,7 @@ class AasService {
     materials.push(this.createEntity(
       'Stopper',
       EntityType.CoManagedEntity,
-      'https://smartproductionlab.aau.dk/assets/materials/stopper',
+      null,
       [stopperCollection],
       nodeSemanticId
     ));
@@ -1093,7 +1101,7 @@ class AasService {
     materials.push(this.createEntity(
       'DrugSubstance',
       EntityType.CoManagedEntity,
-      `https://smartproductionlab.aau.dk/assets/materials/${(batchData.product || 'unknown').toLowerCase()}`,
+      null,
       [apiCollection],
       nodeSemanticId
     ));
@@ -1226,13 +1234,21 @@ class AasService {
   async saveOrUpdateAasShell(aasId, aasShell) {
     let aasExists = false;
     
-    // Check if AAS exists
+    // Check if AAS exists by listing (avoids 404 console error)
     try {
-      const existsResult = await this.aasRepositoryClient.getAssetAdministrationShellById({
-        configuration: this.repositoryConfig,
-        aasIdentifier: aasId
+      const listResult = await this.aasRepositoryClient.getAllAssetAdministrationShells({
+        configuration: this.repositoryConfig
       });
-      aasExists = existsResult.success === true;
+
+      if (listResult.success && listResult.data?.result) {
+        aasExists = listResult.data.result.some(aas => aas.id === aasId);
+      } else {
+        const existsResult = await this.aasRepositoryClient.getAssetAdministrationShellById({
+            configuration: this.repositoryConfig,
+            aasIdentifier: aasId
+        });
+        aasExists = existsResult.success === true;
+      }
     } catch (checkError) {
       aasExists = false;
     }
@@ -1632,7 +1648,7 @@ class AasService {
   /**
    * Create an Entity using SDK types
    */
-  createEntity(idShort, entityType, globalAssetId, statements, semanticId = null) {
+  createEntity(idShort, entityType, globalAssetId, statements, semanticId = null, specificAssetId = null) {
     return new Entity(
       entityType,
       null,  // extensions
@@ -1646,7 +1662,7 @@ class AasService {
       null,  // embeddedDataSpecifications
       statements,
       globalAssetId,
-      null   // specificAssetIds
+      specificAssetId ? [specificAssetId] : null   // specificAssetIds
     );
   }
 
@@ -1773,7 +1789,15 @@ class AasService {
       [this.createKey(KeyTypes.GlobalReference, 'https://admin-shell.io/idta/HierarchicalStructures/Node/1/0')]
     );
     
-    return this.createEntity(idShort, EntityType.SelfManagedEntity, globalAssetId, statements, nodeSemanticId);
+    // Logic to distinguish between SelfManaged and CoManaged
+    if (instanceSubmodelId) {
+      // SelfManaged: Use AAS ID in globalAssetId field
+      return this.createEntity(idShort, EntityType.SelfManagedEntity, globalAssetId, statements, nodeSemanticId);
+    } else {
+      // CoManaged: Use SpecificAssetId instead of globalAssetId
+      const specificAssetId = new SpecificAssetId('specificAssetId', globalAssetId);
+      return this.createEntity(idShort, EntityType.CoManagedEntity, null, statements, nodeSemanticId, specificAssetId);
+    }
   }
 
   /**
@@ -1912,14 +1936,25 @@ class AasService {
           
           const submodelId = sameAsRef?.value?.keys?.find(k => k.type === 'Submodel')?.value || null;
           
+          // Get asset ID (either globalAssetId or from specificAssetId)
+          let assetId = entity.globalAssetId;
+          const specificAssetIdList = entity.specificAssetIds || entity.specificAssetId;
+          if (!assetId && specificAssetIdList) {
+             if (Array.isArray(specificAssetIdList) && specificAssetIdList.length > 0) {
+                 assetId = specificAssetIdList[0].value;
+             } else if (specificAssetIdList.value) {
+                 assetId = specificAssetIdList.value;
+             }
+          }
+          
           // Match with module catalog
-          const module = moduleCatalog.find(m => m.aasId === entity.globalAssetId);
+          const module = moduleCatalog.find(m => m.aasId === assetId);
           
           return {
             Name: entity.idShort,
             'Instance Name': module?.name || entity.idShort,
             StationId: index,
-            AasId: entity.globalAssetId,
+            AasId: assetId,
             AssetType: module?.assetType || entity.idShort,
             SubmodelId: submodelId,
             'Approach Position': approachPosition,
