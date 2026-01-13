@@ -160,13 +160,31 @@ Examples:
                 sys.exit(1)
 
             logger.info(f"Registering from JSON: {json_path}")
-            success = service.register_from_json(str(json_path))
+            
+            try:
+                import json
+                with open(json_path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                
+                # Extract AAS components from standard environment format or flat structure
+                submodels = data.get('submodels', [])
+                shells = data.get('assetAdministrationShells', [])
+                concept_descriptions = data.get('conceptDescriptions', [])
+                
+                success = service.register_from_json(
+                    submodels=submodels, 
+                    shells=shells, 
+                    concept_descriptions=concept_descriptions
+                )
 
-            if success:
-                logger.info("✓ JSON registration completed successfully")
-                sys.exit(0)
-            else:
-                logger.error("✗ JSON registration failed")
+                if success:
+                    logger.info("✓ JSON registration completed successfully")
+                    sys.exit(0)
+                else:
+                    logger.error("✗ JSON registration failed")
+                    sys.exit(1)
+            except Exception as e:
+                logger.error(f"Failed to process JSON file: {e}")
                 sys.exit(1)
 
         elif args.command == 'list':

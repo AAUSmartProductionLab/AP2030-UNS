@@ -3,11 +3,17 @@ AAS Interface Parser
 
 Extracts MQTT interface information from AAS InterfaceMQTT submodels
 according to IDTA Asset Interfaces Description specification.
+
+Now supports both SDK objects and legacy dict-based parsing.
 """
 
+import json
 import logging
 from typing import Dict, List, Any, Optional
 from urllib.parse import urlparse
+
+from basyx.aas import model
+from basyx.aas.adapter import json as aas_json
 
 logger = logging.getLogger(__name__)
 
@@ -18,35 +24,39 @@ class MQTTInterfaceParser:
     def __init__(self):
         self.interface_data = {}
 
-    def parse_interface_submodels(self, submodels: List[Dict[str, Any]]) -> Dict[str, Any]:
+
+    def _to_dict(self, obj: Any) -> Dict[str, Any]:
+        """Convert SDK object to dict if needed"""
+        if isinstance(obj, dict):
+            return obj
+        # Keep basic types
+        if isinstance(obj, (str, int, float, bool, type(None))):
+            return obj
+        # Handle lists
+        if isinstance(obj, list):
+            return [self._to_dict(item) for item in obj]
+        try:
+            # Try using AAS JSON encoder for SDK objects
+            return json.loads(json.dumps(obj, cls=aas_json.AASToJsonEncoder))
+        except Exception as e:
+            logger.debug(f"Could not convert object to dict via JSON encoder: {e}")
+            # Fallback for objects that might behave like dicts but aren't
+            if hasattr(obj, '__dict__'):
+                return obj.__dict__
+            return obj
+
+    def parse_interface_submodels(self, submodels: List[Any]) -> Dict[str, Any]:
         """
-        Parse all submodels looking for InterfaceMQTT and extract MQTT metadata
+        Parse all submodels looking for InterfaceMQTT and extract MQTT metadata.
         
+        Args:
+            submodels: List of submodels (either SDK objects or Dicts)
+            
         Returns:
             Dict with structure:
             {
                 'broker_url': str,
-                'broker_host': str,
-                'broker_port': int,
-                'base_topic': str,
-                'actions': {
-                    'action_name': {
-                        'request_topic': str,
-                        'response_topic': str,
-                        'additional_topics': [str],
-                        'input_schema': str,
-                        'output_schema': str,
-                        'synchronous': bool,
-                        'qos': int
-                    }
-                },
-                'properties': {
-                    'property_name': {
-                        'topic': str,
-                        'schema': str,
-                        'direction': 'subscribe' | 'publish'
-                    }
-                }
+                # ...
             }
         """
         interface_info = {
@@ -58,7 +68,10 @@ class MQTTInterfaceParser:
             'properties': {}
         }
 
-        for submodel in submodels:
+        # Normalize input to list of dicts
+        normalized_submodels = [self._to_dict(sm) for sm in submodels]
+
+        for submodel in normalized_submodels:
             # Look for InterfaceMQTT submodel element collections
             elements = submodel.get('submodelElements', [])
             
@@ -271,10 +284,13 @@ class MQTTInterfaceParser:
         
         return topic_mappings
     
-    def extract_interface_references(self, submodels: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
+    def extract_interface_references(self, submodels: List[Any]) -> Dict[str, Dict[str, Any]]:
         """
         Extract InterfaceReference elements from Variables submodel and map them to InterfaceMQTT topics.
         
+        Args:
+            submodels: List of submodels (either SDK objects or Dicts)
+
         Returns dict mapping Variable property paths to interface information:
         {
             'Variables/Weight.Value': {
@@ -284,8 +300,11 @@ class MQTTInterfaceParser:
             }
         }
         """
+        # Normalize input to list of dicts
+        normalized_submodels = [self._to_dict(sm) for sm in submodels]
+
         # First parse InterfaceMQTT to get topic mappings
-        interface_info = self.parse_interface_submodels(submodels)
+        interface_info = self.parse_interface_submodels(normalized_submodels)
         
         # Create lookup by interface property name
         interface_lookup = {}
@@ -295,7 +314,7 @@ class MQTTInterfaceParser:
         # Now find all InterfaceReferences in other submodels (only for properties, not actions)
         variable_mappings = {}
         
-        for submodel in submodels:
+        for submodel in normalized_submodels:
             submodel_short = submodel.get('idShort', '')
             
             # Skip InterfaceMQTT itself
