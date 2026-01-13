@@ -1142,7 +1142,7 @@
           },
           "modelType": "Entity",
           "entityType": "SelfManagedEntity",
-          "globalAssetId": "https://smartproductionlab.aau.dk/aas/NTY3MDUwNTItNWI2ZS00YTkwLWIzODItNDY4MDg1YTk4YmY0",
+          "globalAssetId": "https://smartproductionlab.aau.dk/assets/MzU2ZTQ4NDUtZjQ4Ny00MDdiLTk4ODctMzYzMjdmNDUxYzY1",
           "statements": [
             {
               "idShort": "PlanarTable",
@@ -1157,7 +1157,7 @@
               },
               "modelType": "Entity",
               "entityType": "SelfManagedEntity",
-              "globalAssetId": "https://smartproductionlab.aau.dk/aas/MTc1ZDA1MTAtY2Q4NC00MzY3LTgyM2QtNjY3NWJhMjhjODBj",
+              "globalAssetId": "https://smartproductionlab.aau.dk/assets/YzExZDhmNTctYjc3My00ZWVjLWI4ZGMtODM1YjhmMTZlNGYy",
               "statements": [
                 {
                   "idShort": "SameAs",
