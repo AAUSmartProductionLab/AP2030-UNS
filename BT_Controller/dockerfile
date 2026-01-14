@@ -93,6 +93,7 @@ RUN apt-get update && apt-get install -y \
     libgtest-dev \
     libssl-dev \
     libzmq5 \
+    libcurl4-openssl-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 COPY --from=third_party_builder /opt/third_party_install /usr/local
