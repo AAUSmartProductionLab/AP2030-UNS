@@ -102,7 +102,8 @@ RUN ldconfig
 WORKDIR /src/AP2030-UNS
 
 COPY ./BT_Controller/CMakeLists.txt ./BT_Controller/CMakeLists.txt
-COPY ./schemas ./schemas/
+#COPY ./schemas ./schemas/
+COPY ./BTDescriptions ./schemas/
 COPY ./BT_Controller/src ./BT_Controller/src/
 COPY ./BT_Controller/include ./BT_Controller/include/
 
