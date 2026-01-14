@@ -116,7 +116,7 @@ services:
     container_name: bt_controller
     volumes:
       - ./BT_Controller/config:/AP2030-UNS/BT_Controller/config
-      - ./schemas:/AP2030-UNS/schemas
+      - ./BTDescriptions:/AP2030-UNS/schemas
     ports:
     - "1667:1667"
     networks:
