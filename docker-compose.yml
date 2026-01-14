@@ -53,6 +53,7 @@ services:
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
+    user: "472"
     volumes:
       - ./Grafana/grafana-data:/var/lib/grafana
     environment:
