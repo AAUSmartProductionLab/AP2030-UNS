@@ -125,6 +125,20 @@ services:
     depends_on:
       - hivemq-broker
 
+  planar_controller:
+    build:
+      context: ./Planar_Controller
+      dockerfile: Dockerfile
+    container_name: planar_controller
+    environment:
+      - MQTT_BROKER=hivemq-broker
+      - MQTT_PORT=1883
+      - PMC_IP=192.168.0.199
+    networks:
+      - hivemq-network
+    depends_on:
+      - hivemq-broker
+    restart: unless-stopped
 
   filling_station:
     extends:
@@ -328,7 +342,3 @@ services:
 networks:
   hivemq-network:
     driver: bridge
-
-# volumes:
-#   timescaledb-data:
-#   grafana-data:
