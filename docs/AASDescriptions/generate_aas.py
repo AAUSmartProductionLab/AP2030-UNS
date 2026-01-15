@@ -11,22 +11,36 @@ Usage:
 import json
 import yaml
 import argparse
+import os
 from pathlib import Path
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Tuple
 from basyx.aas import model
 from basyx.aas.adapter.json import json_serialization
 from aas_validator import AASValidator
 
 
+# JSON Schema to AAS datatypes mapping
+SCHEMA_TYPE_TO_AAS_TYPE = {
+    'string': model.datatypes.String,
+    'integer': model.datatypes.Int,
+    'number': model.datatypes.Double,
+    'boolean': model.datatypes.Boolean,
+    'array': model.datatypes.String,  # Arrays serialized as JSON strings
+    'object': model.datatypes.String,  # Objects serialized as JSON strings
+}
+
+
 class AASGenerator:
     """Generates AAS descriptions from configuration files."""
     
-    def __init__(self, config_path: str):
+    def __init__(self, config_path: str, delegation_base_url: str = None):
         """
         Initialize the AAS Generator.
         
         Args:
             config_path: Path to the YAML configuration file
+            delegation_base_url: Base URL for Operation Delegation Service
+                                 (e.g., 'http://operation-delegation:8087')
         """
         with open(config_path, 'r') as f:
             self.config = yaml.safe_load(f)
@@ -34,6 +48,13 @@ class AASGenerator:
         # Base URL is now derived from individual system IDs
         self.base_url = None
         self.idta_version = '1.0'
+        
+        # Operation Delegation Service URL for BaSyx invocationDelegation
+        # This service translates AAS Operation invocations to MQTT commands
+        self.delegation_base_url = delegation_base_url or os.environ.get(
+            'DELEGATION_SERVICE_URL', 
+            'http://192.168.0.104:8087'
+        )
         
     def generate_all(self, output_dir: str, validate: bool = True):
         """
@@ -198,7 +219,20 @@ class AASGenerator:
             submodel_names.append('HierarchicalStructures')
         if 'Capabilities' in config and config.get('Capabilities'):
             submodel_names.append('OfferedCapabilitiyDescription')
-        if 'Skills' in config and config.get('Skills'):
+        
+        # Add Skills submodel reference if:
+        # 1. Skills are explicitly defined in config, OR
+        # 2. There are actions in AssetInterfacesDescription (auto-generation)
+        has_explicit_skills = 'Skills' in config and config.get('Skills')
+        has_actions = False
+        interface_config = config.get('AssetInterfacesDescription', {}) or {}
+        mqtt_config = interface_config.get('InterfaceMQTT', {}) or {}
+        interaction_metadata = mqtt_config.get('InteractionMetadata', {}) or {}
+        actions = interaction_metadata.get('actions', [])
+        if actions:
+            has_actions = True
+        
+        if has_explicit_skills or has_actions:
             submodel_names.append('Skills')
         
         submodel_refs = [
@@ -1151,169 +1185,321 @@ class AASGenerator:
         
         return submodel
     
+    def _load_schema_from_url(self, schema_url: str) -> Optional[Dict]:
+        """
+        Load a JSON schema from URL or local path.
+        
+        Args:
+            schema_url: URL or local path to the schema
+            
+        Returns:
+            Parsed schema dictionary or None if not found
+        """
+        # Cache for loaded schemas
+        if not hasattr(self, '_schema_cache'):
+            self._schema_cache = {}
+        
+        if schema_url in self._schema_cache:
+            return self._schema_cache[schema_url]
+        
+        schema = None
+        
+        # Try to resolve the schema from local MQTTSchemas folder first
+        if 'MQTTSchemas/' in schema_url or 'schemas/' in schema_url:
+            # Extract filename from URL
+            filename = schema_url.split('/')[-1]
+            
+            # Look in MQTTSchemas folder (relative to this script)
+            script_dir = Path(__file__).parent.parent
+            local_paths = [
+                script_dir / 'MQTTSchemas' / filename,
+                script_dir / 'schemas' / filename,
+                Path(__file__).parent / 'schemas' / filename,
+            ]
+            
+            for local_path in local_paths:
+                if local_path.exists():
+                    try:
+                        with open(local_path, 'r') as f:
+                            schema = json.load(f)
+                        break
+                    except Exception as e:
+                        print(f"Warning: Could not load schema from {local_path}: {e}")
+        
+        # If no local file found, try to fetch from URL
+        if schema is None and schema_url.startswith('http'):
+            try:
+                import urllib.request
+                with urllib.request.urlopen(schema_url, timeout=5) as response:
+                    schema = json.loads(response.read().decode())
+            except Exception as e:
+                print(f"Warning: Could not fetch schema from {schema_url}: {e}")
+        
+        if schema:
+            self._schema_cache[schema_url] = schema
+        
+        return schema
+    
+    def _extract_schema_properties(self, schema: Dict, include_inherited: bool = True) -> Dict[str, Dict]:
+        """
+        Extract properties from a JSON schema, including from allOf references.
+        
+        Args:
+            schema: The JSON schema dictionary
+            include_inherited: Whether to include properties from referenced schemas
+            
+        Returns:
+            Dictionary of property name -> property definition
+        """
+        properties = {}
+        
+        # Direct properties
+        if 'properties' in schema:
+            for prop_name, prop_def in schema['properties'].items():
+                properties[prop_name] = prop_def
+        
+        # Handle allOf (schema composition)
+        if include_inherited and 'allOf' in schema:
+            for sub_schema in schema['allOf']:
+                if '$ref' in sub_schema:
+                    # Try to load referenced schema
+                    ref_schema = self._load_schema_from_url(sub_schema['$ref'])
+                    if ref_schema:
+                        ref_props = self._extract_schema_properties(ref_schema, include_inherited=True)
+                        properties.update(ref_props)
+                elif 'properties' in sub_schema:
+                    for prop_name, prop_def in sub_schema['properties'].items():
+                        properties[prop_name] = prop_def
+        
+        return properties
+    
+    def _create_operation_input_property(self, var_name: str, var_type: str, 
+                                   description: str = "") -> model.Property:
+        """
+        Create a Property for use as an Operation input/output variable.
+        
+        Args:
+            var_name: Name of the variable
+            var_type: JSON Schema type (string, integer, etc.)
+            description: Optional description
+            
+        Returns:
+            Property element for use in Operation
+        """
+        aas_type = SCHEMA_TYPE_TO_AAS_TYPE.get(var_type, model.datatypes.String)
+        
+        prop = model.Property(
+            id_short=var_name,
+            value_type=aas_type,
+            description=model.MultiLanguageTextType({"en": description}) if description else None
+        )
+        
+        return prop
+    
+    def _create_operation_from_action(self, action_name: str, action_config: Dict,
+                                       system_id: str) -> model.Operation:
+        """
+        Create an AAS Operation from an action interface definition.
+        
+        Args:
+            action_name: Name of the action
+            action_config: Configuration dictionary for the action
+            system_id: System identifier for references
+            
+        Returns:
+            AAS Operation element
+        """
+        input_variables = []
+        output_variables = []
+        inoutput_variables = []
+        
+        # Track property names to avoid duplicates between input and output
+        input_prop_names = set()
+        
+        # Load input schema if specified
+        input_schema_url = action_config.get('input')
+        if input_schema_url:
+            input_schema = self._load_schema_from_url(input_schema_url)
+            if input_schema:
+                props = self._extract_schema_properties(input_schema)
+                for prop_name, prop_def in props.items():
+                    prop_type = prop_def.get('type', 'string')
+                    prop_desc = prop_def.get('description', '')
+                    input_variables.append(
+                        self._create_operation_input_property(prop_name, prop_type, prop_desc)
+                    )
+                    input_prop_names.add(prop_name)
+        
+        # Load output schema if specified
+        output_schema_url = action_config.get('output')
+        if output_schema_url:
+            output_schema = self._load_schema_from_url(output_schema_url)
+            if output_schema:
+                props = self._extract_schema_properties(output_schema)
+                for prop_name, prop_def in props.items():
+                    # Skip properties that already exist in input (they become in-output)
+                    if prop_name in input_prop_names:
+                        # Move from input to in-output
+                        prop_type = prop_def.get('type', 'string')
+                        prop_desc = prop_def.get('description', '')
+                        inoutput_variables.append(
+                            self._create_operation_input_property(prop_name, prop_type, prop_desc)
+                        )
+                        # Remove from input_variables
+                        input_variables = [v for v in input_variables if v.id_short != prop_name]
+                    else:
+                        prop_type = prop_def.get('type', 'string')
+                        prop_desc = prop_def.get('description', '')
+                        output_variables.append(
+                            self._create_operation_input_property(prop_name, prop_type, prop_desc)
+                        )
+        
+        # Get description from action title or key
+        description = action_config.get('title', action_name)
+        
+        # Create semantic ID from action name
+        semantic_id = model.ExternalReference(
+            (model.Key(
+                type_=model.KeyTypes.GLOBAL_REFERENCE,
+                value=f"https://smartproductionlab.aau.dk/skills/{action_name}"
+            ),)
+        )
+        
+        # Build the qualifiers for the operation to link to the interface
+        qualifiers = []
+        
+        # Add invocationDelegation qualifier for BaSyx Operation Delegation
+        # This tells BaSyx to forward operation invocations to the delegation service
+        # which translates them to MQTT commands and waits for responses
+        if self.delegation_base_url:
+            # Build the delegation URL: /operations/<asset_id>/<skill_name>
+            delegation_url = f"{self.delegation_base_url}/operations/{system_id}/{action_name}"
+            qualifiers.append(
+                model.Qualifier(
+                    type_="invocationDelegation",
+                    value_type=model.datatypes.String,
+                    value=delegation_url
+                )
+            )
+        
+        # Add synchronous flag as qualifier
+        if 'synchronous' in action_config:
+            qualifiers.append(
+                model.Qualifier(
+                    type_="Synchronous",
+                    value_type=model.datatypes.Boolean,
+                    value=str(action_config['synchronous']).lower() == 'true'
+                )
+            )
+        
+        operation = model.Operation(
+            id_short=action_name,
+            input_variable=input_variables if input_variables else (),
+            output_variable=output_variables if output_variables else (),
+            in_output_variable=inoutput_variables if inoutput_variables else (),
+            description=model.MultiLanguageTextType({"en": f"Operation to invoke {description} action"}),
+            semantic_id=semantic_id,
+            qualifier=qualifiers if qualifiers else ()
+        )
+        
+        return operation
+    
     def _create_skills_submodel(self, system_id: str, config: Dict) -> model.Submodel:
         """
-        Create the Skills submodel.
+        Create the Skills submodel with Operations derived from action interfaces.
+        
+        This method creates Operations directly in the submodel (not wrapped in collections)
+        so that BaSyx can invoke them via the invocationDelegation qualifier.
+        
+        The operations are generated from:
+        - Explicit Skills configuration in YAML (if provided)
+        - OR automatically from action interfaces in AssetInterfacesDescription
         
         Args:
             system_id: Unique identifier for the system
             config: Configuration dictionary
             
         Returns:
-            Skills submodel
+            Skills submodel with Operations
         """
         skills_config = config.get('Skills', {}) or {}
-        skill_collections = []
+        skill_elements = []
         
-        for skill_name, skill_data in skills_config.items():
-            skill_elements = []
-            
-            # Name
-            skill_elements.append(
-                model.Property(
-                    id_short="Name",
-                    value_type=model.datatypes.String,
-                    value=skill_name
-                )
-            )
-            
-            # Description
-            if 'description' in skill_data:
-                skill_elements.append(
-                    model.MultiLanguageProperty(
-                        id_short="Description",
-                        value=model.MultiLanguageTextType({"en": skill_data['description']})
-                    )
-                )
-            
-            # Semantic ID
-            if 'semantic_id' in skill_data:
-                skill_elements.append(
-                    model.Property(
-                        id_short="SemanticId",
-                        value_type=model.datatypes.String,
-                        value=skill_data['semantic_id']
-                    )
-                )
-            
-            # StateMachine (placeholder)
-            skill_elements.append(
-                model.SubmodelElementCollection(
-                    id_short="StateMachine",
-                    value=[],
-                    description=model.MultiLanguageTextType({"en": "State machine details omitted"})
-                )
-            )
-            
-            # SkillInterfaceDescription
-            interface_elements = []
-            
-            # Input variables
-            if 'input_variable' in skill_data:
-                input_vars = []
-                for var_name, var_type in skill_data['input_variable'].items():
-                    input_vars.append(
-                        model.Property(
-                            id_short=var_name,
-                            value_type=model.datatypes.String,
-                            value=var_type
-                        )
-                    )
-                if input_vars:
-                    interface_elements.append(
-                        model.SubmodelElementCollection(
-                            id_short="InputVariables",
-                            value=input_vars
-                        )
-                    )
-            
-            # Output variables
-            if 'output_variable' in skill_data:
-                output_vars = []
-                for var_name, var_type in skill_data['output_variable'].items():
-                    output_vars.append(
-                        model.Property(
-                            id_short=var_name,
-                            value_type=model.datatypes.String,
-                            value=var_type
-                        )
-                    )
-                if output_vars:
-                    interface_elements.append(
-                        model.SubmodelElementCollection(
-                            id_short="OutputVariables",
-                            value=output_vars
-                        )
-                    )
-            
-            # In-output variables
-            if 'in_ouput_variable' in skill_data:
-                inout_vars = []
-                for var_name, var_type in skill_data['in_ouput_variable'].items():
-                    inout_vars.append(
-                        model.Property(
-                            id_short=var_name,
-                            value_type=model.datatypes.String,
-                            value=var_type
-                        )
-                    )
-                if inout_vars:
-                    interface_elements.append(
-                        model.SubmodelElementCollection(
-                            id_short="InOutputVariables",
-                            value=inout_vars
-                        )
-                    )
-            
-            # Interface reference
-            if 'interface' in skill_data:
-                interface_elements.append(
-                    model.Property(
-                        id_short="InterfaceReference",
-                        value_type=model.datatypes.String,
-                        value=skill_data['interface']
-                    )
-                )
+        # Get action interfaces from AssetInterfacesDescription
+        interface_config = config.get('AssetInterfacesDescription', {}) or {}
+        mqtt_config = interface_config.get('InterfaceMQTT', {}) or {}
+        interaction_metadata = mqtt_config.get('InteractionMetadata', {}) or {}
+        actions = interaction_metadata.get('actions', [])
+        
+        # Build a map of action name -> action config for easy lookup
+        action_map = {}
+        for action_dict in actions:
+            action_name = list(action_dict.keys())[0]
+            action_map[action_name] = action_dict[action_name]
+        
+        # If explicit Skills are configured, use them
+        if skills_config:
+            for skill_name, skill_data in skills_config.items():
+                # Get the interface name for this skill
+                interface_name = skill_data.get('interface', skill_name)
                 
-                # Create reference to action in AssetInterfacesDescription
-                interface_elements.append(
-                    model.ReferenceElement(
-                        id_short="ActionReference",
-                        value=model.ModelReference(
-                            (model.Key(
-                                type_=model.KeyTypes.SUBMODEL,
-                                value=f"{self.base_url}/submodels/instances/{system_id}/AssetInterfacesDescription"
-                            ),
-                            model.Key(
-                                type_=model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION,
-                                value="InterfaceMQTT"
-                            ),
-                            model.Key(
-                                type_=model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION,
-                                value="Actions"
-                            ),
-                            model.Key(
-                                type_=model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION,
-                                value=skill_data['interface']
-                            )),
-                            model.SubmodelElementCollection
-                        )
+                # Create the Operation from the linked action interface
+                if interface_name and interface_name in action_map:
+                    action_config = action_map[interface_name]
+                    operation = self._create_operation_from_action(
+                        skill_name, action_config, system_id
                     )
+                    skill_elements.append(operation)
+                elif 'input_variable' in skill_data or 'output_variable' in skill_data:
+                    # Fallback: create operation from explicit skill config
+                    input_variables = []
+                    output_variables = []
+                    
+                    if 'input_variable' in skill_data and skill_data['input_variable']:
+                        for var_name, var_type in skill_data['input_variable'].items():
+                            input_variables.append(
+                                self._create_operation_input_property(var_name, var_type)
+                            )
+                    
+                    if 'output_variable' in skill_data and skill_data['output_variable']:
+                        for var_name, var_type in skill_data['output_variable'].items():
+                            output_variables.append(
+                                self._create_operation_input_property(var_name, var_type)
+                            )
+                    
+                    # Build qualifiers for delegation
+                    qualifiers = []
+                    if self.delegation_base_url:
+                        qualifiers.append(model.Qualifier(
+                            type_="invocationDelegation",
+                            value_type=model.datatypes.String,
+                            value=f"{self.delegation_base_url}/operations/{system_id}/{skill_name}",
+                            kind=model.QualifierKind.CONCEPT_QUALIFIER
+                        ))
+                        qualifiers.append(model.Qualifier(
+                            type_="Synchronous",
+                            value_type=model.datatypes.Boolean,
+                            value="true",
+                            kind=model.QualifierKind.CONCEPT_QUALIFIER
+                        ))
+                    
+                    operation = model.Operation(
+                        id_short=skill_name,
+                        input_variable=input_variables if input_variables else (),
+                        output_variable=output_variables if output_variables else (),
+                        description=model.MultiLanguageTextType({"en": skill_data.get('description', f'Operation for {skill_name}')}),
+                        qualifier=qualifiers if qualifiers else ()
+                    )
+                    skill_elements.append(operation)
+        
+        else:
+            # Auto-generate operations from action interfaces
+            for action_name, action_config in action_map.items():
+                # Create the Operation from the action interface
+                operation = self._create_operation_from_action(
+                    action_name, action_config, system_id
                 )
-            
-            skill_elements.append(
-                model.SubmodelElementCollection(
-                    id_short="SkillInterfaceDescription",
-                    value=interface_elements
-                )
-            )
-            
-            # Create skill collection
-            skill_collection = model.SubmodelElementCollection(
-                id_short=skill_name,
-                value=skill_elements
-            )
-            skill_collections.append(skill_collection)
+                skill_elements.append(operation)
         
         # Create submodel
         submodel = model.Submodel(
@@ -1327,7 +1513,7 @@ class AASGenerator:
                 ),)
             ),
             administration=model.AdministrativeInformation(version="1", revision="0"),
-            submodel_element=skill_collections
+            submodel_element=skill_elements
         )
         
         return submodel
@@ -1363,11 +1549,18 @@ def main():
         action='store_false',
         help='Disable AAS validation'
     )
+    parser.add_argument(
+        '--delegation-url',
+        type=str,
+        default=None,
+        help='Base URL for Operation Delegation Service (e.g., http://operation-delegation:8087). '
+             'If not specified, uses DELEGATION_SERVICE_URL env var or default.'
+    )
     
     args = parser.parse_args()
     
     # Create generator
-    generator = AASGenerator(args.config)
+    generator = AASGenerator(args.config, delegation_base_url=args.delegation_url)
     
     # Generate the system
     success = generator.generate_all(args.output, validate=args.validate)

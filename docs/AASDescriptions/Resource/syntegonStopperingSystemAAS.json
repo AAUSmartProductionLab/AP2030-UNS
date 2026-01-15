@@ -18,19 +18,6 @@
         "globalAssetId": "https://smartproductionlab.aau.dk/assets/NGQ5ZWE4ZmUtY2Q3OS00Nzc5LWE5YjEtNGEzZGRkODRhNzQ2",
         "specificAssetIds": [
           {
-            "name": "location",
-            "value": "InnoLab, Nybrovej, AAU",
-            "externalSubjectId": {
-              "type": "ExternalReference",
-              "keys": [
-                {
-                  "type": "GlobalReference",
-                  "value": "https://admin-shell.io/aas/3/0/SpecificAssetId/Location"
-                }
-              ]
-            }
-          },
-          {
             "name": "serialNumber",
             "value": "SYN-SS-2024-001",
             "externalSubjectId": {
@@ -39,6 +26,19 @@
                 {
                   "type": "GlobalReference",
                   "value": "https://admin-shell.io/aas/3/0/SpecificAssetId/SerialNumber"
+                }
+              ]
+            }
+          },
+          {
+            "name": "location",
+            "value": "InnoLab, Nybrovej, AAU",
+            "externalSubjectId": {
+              "type": "ExternalReference",
+              "keys": [
+                {
+                  "type": "GlobalReference",
+                  "value": "https://admin-shell.io/aas/3/0/SpecificAssetId/Location"
                 }
               ]
             }
@@ -80,6 +80,15 @@
             {
               "type": "Submodel",
               "value": "https://smartproductionlab.aau.dk/submodels/instances/syntegonStopperingSystemAAS/HierarchicalStructures"
+            }
+          ]
+        },
+        {
+          "type": "ModelReference",
+          "keys": [
+            {
+              "type": "Submodel",
+              "value": "https://smartproductionlab.aau.dk/submodels/instances/syntegonStopperingSystemAAS/Skills"
             }
           ]
         }
@@ -1095,7 +1104,550 @@
             "value": "https://smartfactory.de/aas/submodel/Skills#1/0"
           }
         ]
-      }
+      },
+      "submodelElements": [
+        {
+          "idShort": "Stoppering",
+          "modelType": "SubmodelElementCollection",
+          "semanticId": {
+            "type": "ExternalReference",
+            "keys": [
+              {
+                "type": "GlobalReference",
+                "value": "https://smartfactory.de/aas/submodel/Skills/Skill#1/0"
+              }
+            ]
+          },
+          "value": [
+            {
+              "idShort": "Name",
+              "modelType": "Property",
+              "value": "Stoppering",
+              "valueType": "xs:string"
+            },
+            {
+              "idShort": "Description",
+              "modelType": "MultiLanguageProperty",
+              "value": [
+                {
+                  "language": "en",
+                  "text": "Skill to invoke Stoppering action"
+                }
+              ]
+            },
+            {
+              "idShort": "StateMachine",
+              "description": [
+                {
+                  "language": "en",
+                  "text": "State machine details omitted"
+                }
+              ],
+              "modelType": "SubmodelElementCollection"
+            },
+            {
+              "idShort": "SkillInterfaceDescription",
+              "modelType": "SubmodelElementCollection",
+              "value": [
+                {
+                  "idShort": "InterfaceReference",
+                  "modelType": "Property",
+                  "value": "Stoppering",
+                  "valueType": "xs:string"
+                },
+                {
+                  "idShort": "ActionReference",
+                  "modelType": "ReferenceElement",
+                  "value": {
+                    "type": "ModelReference",
+                    "keys": [
+                      {
+                        "type": "Submodel",
+                        "value": "https://smartproductionlab.aau.dk/submodels/instances/syntegonStopperingSystemAAS/AssetInterfacesDescription"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "InterfaceMQTT"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "InteractionMetadata"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "actions"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "Stoppering"
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "idShort": "Stoppering",
+              "description": [
+                {
+                  "language": "en",
+                  "text": "Operation to invoke Stoppering action"
+                }
+              ],
+              "modelType": "Operation",
+              "semanticId": {
+                "type": "ExternalReference",
+                "keys": [
+                  {
+                    "type": "GlobalReference",
+                    "value": "https://smartproductionlab.aau.dk/skills/Stoppering"
+                  }
+                ]
+              },
+              "qualifiers": [
+                {
+                  "value": "Stoppering",
+                  "kind": "ConceptQualifier",
+                  "valueType": "xs:string",
+                  "type": "InterfaceReference"
+                },
+                {
+                  "value": "true",
+                  "kind": "ConceptQualifier",
+                  "valueType": "xs:boolean",
+                  "type": "Synchronous"
+                }
+              ],
+              "outputVariables": [
+                {
+                  "value": {
+                    "idShort": "TimeStamp",
+                    "description": [
+                      {
+                        "language": "en",
+                        "text": "The time stamp of the message"
+                      }
+                    ],
+                    "modelType": "Property",
+                    "valueType": "xs:string"
+                  }
+                }
+              ],
+              "inoutputVariables": [
+                {
+                  "value": {
+                    "idShort": "Uuid",
+                    "modelType": "Property",
+                    "valueType": "xs:string"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "idShort": "halt",
+          "modelType": "SubmodelElementCollection",
+          "semanticId": {
+            "type": "ExternalReference",
+            "keys": [
+              {
+                "type": "GlobalReference",
+                "value": "https://smartfactory.de/aas/submodel/Skills/Skill#1/0"
+              }
+            ]
+          },
+          "value": [
+            {
+              "idShort": "Name",
+              "modelType": "Property",
+              "value": "halt",
+              "valueType": "xs:string"
+            },
+            {
+              "idShort": "Description",
+              "modelType": "MultiLanguageProperty",
+              "value": [
+                {
+                  "language": "en",
+                  "text": "Skill to invoke halt action"
+                }
+              ]
+            },
+            {
+              "idShort": "StateMachine",
+              "description": [
+                {
+                  "language": "en",
+                  "text": "State machine details omitted"
+                }
+              ],
+              "modelType": "SubmodelElementCollection"
+            },
+            {
+              "idShort": "SkillInterfaceDescription",
+              "modelType": "SubmodelElementCollection",
+              "value": [
+                {
+                  "idShort": "InterfaceReference",
+                  "modelType": "Property",
+                  "value": "halt",
+                  "valueType": "xs:string"
+                },
+                {
+                  "idShort": "ActionReference",
+                  "modelType": "ReferenceElement",
+                  "value": {
+                    "type": "ModelReference",
+                    "keys": [
+                      {
+                        "type": "Submodel",
+                        "value": "https://smartproductionlab.aau.dk/submodels/instances/syntegonStopperingSystemAAS/AssetInterfacesDescription"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "InterfaceMQTT"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "InteractionMetadata"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "actions"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "halt"
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "idShort": "halt",
+              "description": [
+                {
+                  "language": "en",
+                  "text": "Operation to invoke halt action"
+                }
+              ],
+              "modelType": "Operation",
+              "semanticId": {
+                "type": "ExternalReference",
+                "keys": [
+                  {
+                    "type": "GlobalReference",
+                    "value": "https://smartproductionlab.aau.dk/skills/halt"
+                  }
+                ]
+              },
+              "qualifiers": [
+                {
+                  "value": "halt",
+                  "kind": "ConceptQualifier",
+                  "valueType": "xs:string",
+                  "type": "InterfaceReference"
+                },
+                {
+                  "value": "true",
+                  "kind": "ConceptQualifier",
+                  "valueType": "xs:boolean",
+                  "type": "Synchronous"
+                }
+              ],
+              "inputVariables": [
+                {
+                  "value": {
+                    "idShort": "Uuid",
+                    "modelType": "Property",
+                    "valueType": "xs:string"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "idShort": "occupy",
+          "modelType": "SubmodelElementCollection",
+          "semanticId": {
+            "type": "ExternalReference",
+            "keys": [
+              {
+                "type": "GlobalReference",
+                "value": "https://smartfactory.de/aas/submodel/Skills/Skill#1/0"
+              }
+            ]
+          },
+          "value": [
+            {
+              "idShort": "Name",
+              "modelType": "Property",
+              "value": "occupy",
+              "valueType": "xs:string"
+            },
+            {
+              "idShort": "Description",
+              "modelType": "MultiLanguageProperty",
+              "value": [
+                {
+                  "language": "en",
+                  "text": "Skill to invoke occupy action"
+                }
+              ]
+            },
+            {
+              "idShort": "StateMachine",
+              "description": [
+                {
+                  "language": "en",
+                  "text": "State machine details omitted"
+                }
+              ],
+              "modelType": "SubmodelElementCollection"
+            },
+            {
+              "idShort": "SkillInterfaceDescription",
+              "modelType": "SubmodelElementCollection",
+              "value": [
+                {
+                  "idShort": "InterfaceReference",
+                  "modelType": "Property",
+                  "value": "occupy",
+                  "valueType": "xs:string"
+                },
+                {
+                  "idShort": "ActionReference",
+                  "modelType": "ReferenceElement",
+                  "value": {
+                    "type": "ModelReference",
+                    "keys": [
+                      {
+                        "type": "Submodel",
+                        "value": "https://smartproductionlab.aau.dk/submodels/instances/syntegonStopperingSystemAAS/AssetInterfacesDescription"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "InterfaceMQTT"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "InteractionMetadata"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "actions"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "occupy"
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "idShort": "occupy",
+              "description": [
+                {
+                  "language": "en",
+                  "text": "Operation to invoke occupy action"
+                }
+              ],
+              "modelType": "Operation",
+              "semanticId": {
+                "type": "ExternalReference",
+                "keys": [
+                  {
+                    "type": "GlobalReference",
+                    "value": "https://smartproductionlab.aau.dk/skills/occupy"
+                  }
+                ]
+              },
+              "qualifiers": [
+                {
+                  "value": "occupy",
+                  "kind": "ConceptQualifier",
+                  "valueType": "xs:string",
+                  "type": "InterfaceReference"
+                },
+                {
+                  "value": "true",
+                  "kind": "ConceptQualifier",
+                  "valueType": "xs:boolean",
+                  "type": "Synchronous"
+                }
+              ],
+              "outputVariables": [
+                {
+                  "value": {
+                    "idShort": "TimeStamp",
+                    "description": [
+                      {
+                        "language": "en",
+                        "text": "The time stamp of the message"
+                      }
+                    ],
+                    "modelType": "Property",
+                    "valueType": "xs:string"
+                  }
+                }
+              ],
+              "inoutputVariables": [
+                {
+                  "value": {
+                    "idShort": "Uuid",
+                    "modelType": "Property",
+                    "valueType": "xs:string"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "idShort": "release",
+          "modelType": "SubmodelElementCollection",
+          "semanticId": {
+            "type": "ExternalReference",
+            "keys": [
+              {
+                "type": "GlobalReference",
+                "value": "https://smartfactory.de/aas/submodel/Skills/Skill#1/0"
+              }
+            ]
+          },
+          "value": [
+            {
+              "idShort": "Name",
+              "modelType": "Property",
+              "value": "release",
+              "valueType": "xs:string"
+            },
+            {
+              "idShort": "Description",
+              "modelType": "MultiLanguageProperty",
+              "value": [
+                {
+                  "language": "en",
+                  "text": "Skill to invoke release action"
+                }
+              ]
+            },
+            {
+              "idShort": "StateMachine",
+              "description": [
+                {
+                  "language": "en",
+                  "text": "State machine details omitted"
+                }
+              ],
+              "modelType": "SubmodelElementCollection"
+            },
+            {
+              "idShort": "SkillInterfaceDescription",
+              "modelType": "SubmodelElementCollection",
+              "value": [
+                {
+                  "idShort": "InterfaceReference",
+                  "modelType": "Property",
+                  "value": "release",
+                  "valueType": "xs:string"
+                },
+                {
+                  "idShort": "ActionReference",
+                  "modelType": "ReferenceElement",
+                  "value": {
+                    "type": "ModelReference",
+                    "keys": [
+                      {
+                        "type": "Submodel",
+                        "value": "https://smartproductionlab.aau.dk/submodels/instances/syntegonStopperingSystemAAS/AssetInterfacesDescription"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "InterfaceMQTT"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "InteractionMetadata"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "actions"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "release"
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "idShort": "release",
+              "description": [
+                {
+                  "language": "en",
+                  "text": "Operation to invoke release action"
+                }
+              ],
+              "modelType": "Operation",
+              "semanticId": {
+                "type": "ExternalReference",
+                "keys": [
+                  {
+                    "type": "GlobalReference",
+                    "value": "https://smartproductionlab.aau.dk/skills/release"
+                  }
+                ]
+              },
+              "qualifiers": [
+                {
+                  "value": "release",
+                  "kind": "ConceptQualifier",
+                  "valueType": "xs:string",
+                  "type": "InterfaceReference"
+                },
+                {
+                  "value": "true",
+                  "kind": "ConceptQualifier",
+                  "valueType": "xs:boolean",
+                  "type": "Synchronous"
+                }
+              ],
+              "outputVariables": [
+                {
+                  "value": {
+                    "idShort": "TimeStamp",
+                    "description": [
+                      {
+                        "language": "en",
+                        "text": "The time stamp of the message"
+                      }
+                    ],
+                    "modelType": "Property",
+                    "valueType": "xs:string"
+                  }
+                }
+              ],
+              "inoutputVariables": [
+                {
+                  "value": {
+                    "idShort": "Uuid",
+                    "modelType": "Property",
+                    "valueType": "xs:string"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   ]
 }
