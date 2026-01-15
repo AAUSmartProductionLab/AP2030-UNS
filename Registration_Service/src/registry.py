@@ -2,16 +2,19 @@
 BaSyx Registration Service
 
 Handles registration of AAS shells, submodels, and concept descriptions
-with BaSyx server and registries.
+with BaSyx server and registries using the official BaSyx Python SDK.
 """
 
 import base64
-import json
+import copy
 import logging
 import subprocess
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 import requests
+
+from basyx.aas import model
+from basyx.aas.adapter import json as aas_json
 
 from .config import BaSyxConfig
 from .parsers import AASXParser
@@ -37,203 +40,168 @@ class BaSyxRegistrationService:
         self.session = requests.Session()
         self.session.headers.update({'Content-Type': 'application/json'})
 
+    def _to_dict(self, obj: Any) -> Dict[str, Any]:
+        """Convert SDK object to dict if needed"""
+        if isinstance(obj, dict):
+            return copy.deepcopy(obj)
+        elif hasattr(obj, 'id') or hasattr(obj, 'id_short'):  # SDK object
+            import json
+            obj_json = json.dumps(obj, cls=aas_json.AASToJsonEncoder)
+            return json.loads(obj_json)
+        return obj
+
     def register_aasx(self, aasx_path: str) -> bool:
-        """Register AASX file and configure databridge"""
+        """Register AASX file and configure databridge."""
         try:
             logger.info(f"Starting registration of {aasx_path}")
-
-            # Parse AASX file
             parser = AASXParser(aasx_path)
-            aas_data = parser.parse()
+            object_store = parser.parse()
+            
+            shells = parser.get_shells(object_store)
+            submodels = parser.get_submodels(object_store)
+            concept_descriptions = parser.get_concept_descriptions(object_store)
 
-            logger.info(
-                f"Found {len(aas_data['aas_shells'])} AAS shells and {len(aas_data['submodels'])} submodels")
+            logger.info(f"Found {len(shells)} AAS shell(s), "
+                       f"{len(submodels)} submodel(s), "
+                       f"{len(concept_descriptions)} concept description(s)")
 
-            # Register submodels first
-            for submodel in aas_data['submodels']:
+            for cd in concept_descriptions:
+                self.register_concept_description(cd)
+
+            for submodel in submodels:
                 self._register_submodel(submodel)
 
-            # Register AAS shells with submodel references
-            for shell in aas_data['aas_shells']:
-                self._register_aas_shell_with_submodels(
-                    shell, aas_data['submodels'])
+            for shell in shells:
+                self._register_aas_shell_with_submodels(shell, submodels)
 
-            # Generate and save databridge configurations
-            self._generate_databridge_configs(
-                aas_data['submodels'], self.mqtt_broker, None, None)
+            self.generate_databridge_configs(submodels, self.mqtt_broker)
 
             logger.info("Registration completed successfully!")
             return True
 
         except Exception as e:
-            logger.error(f"Registration failed: {e}")
+            logger.error(f"Registration failed: {e}", exc_info=True)
             return False
 
-    def register_from_json(self, json_path: str) -> bool:
-        """Register AAS from JSON file with automatic topic extraction from InterfaceMQTT"""
+    def register_from_json(self, 
+                          json_path: Optional[str] = None,
+                          submodels: Optional[List[Any]] = None,
+                          shells: Optional[List[Any]] = None,
+                          concept_descriptions: Optional[List[Any]] = None) -> bool:
+        """
+        Register AAS from JSON file or direct lists of objects/dicts.
+        
+        Args:
+            json_path: Path to JSON file (optional)
+            submodels: List of submodels (optional)
+            shells: List of AAS shells (optional)
+            concept_descriptions: List of concept descriptions (optional)
+        """
         try:
-            logger.info(f"Starting registration from JSON: {json_path}")
-
-            # Load JSON file
-            with open(json_path, 'r', encoding='utf-8') as f:
-                registration_data = json.load(f)
-
-            # Support multiple input formats
-            # Format 1: Direct AAS structure (assetAdministrationShells, submodels)
-            # Format 2: Wrapped in 'aas_data' key with optional 'topic_mappings'
-            if 'assetAdministrationShells' in registration_data:
-                # Direct format
-                shells = registration_data.get('assetAdministrationShells', [])
-                submodels = registration_data.get('submodels', [])
-                manual_topic_mappings = {}
-            else:
-                # Wrapped format
-                aas_data = registration_data.get('aas_data', {})
-                shells = aas_data.get('assetAdministrationShells', [])
-                if not shells:
-                    # Fallback to single shell format
-                    shell = aas_data.get('aas_shell', {})
-                    if shell:
-                        shells = [shell]
+            if json_path:
+                logger.info(f"Starting registration from JSON: {json_path}")
+                # Use standard JSON parser if checking for SDK objects, 
+                # but if we want to support both SDK and pure dicts, we might need custom logic.
+                # Here we assume json_path points to an environment serialization.
+                object_store = aas_json.read_aas_json_file(json_path, failsafe=True)
                 
-                submodels = aas_data.get('submodels', [])
-                manual_topic_mappings = registration_data.get('topic_mappings', {})
-
-            logger.info(f"Found {len(shells)} AAS shell(s) and {len(submodels)} submodels")
-
-            # Parse InterfaceMQTT submodel to extract MQTT topics automatically
-            interface_parser = MQTTInterfaceParser()
-            interface_info = interface_parser.parse_interface_submodels(submodels)
+                shells = [obj for obj in object_store if isinstance(obj, model.AssetAdministrationShell)]
+                submodels = [obj for obj in object_store if isinstance(obj, model.Submodel)]
+                concept_descriptions = [obj for obj in object_store if isinstance(obj, model.ConceptDescription)]
             
-            # Extract InterfaceReferences from Variables submodel (maps Variables to MQTT topics)
+            # Ensure lists are not None
+            shells = shells or []
+            submodels = submodels or []
+            concept_descriptions = concept_descriptions or []
+
+            logger.info(f"Found {len(shells)} AAS shell(s), "
+                       f"{len(submodels)} submodel(s), "
+                       f"{len(concept_descriptions)} concept description(s)")
+
+            # Parse InterfaceMQTT
+            interface_parser = MQTTInterfaceParser()
+            # Parser handles SDK objects or dicts now
+            interface_info = interface_parser.parse_interface_submodels(submodels)
             interface_references = interface_parser.extract_interface_references(submodels)
             
-            # Extract topic mappings from interface (legacy format)
-            auto_topic_mappings = interface_parser.extract_topic_mappings(submodels)
-            
-            # Update broker info if found in interface
             if interface_info.get('broker_host'):
-                logger.info(f"Using MQTT broker from InterfaceMQTT: {interface_info['broker_host']}:{interface_info['broker_port']}")
+                logger.info(f"Using MQTT broker from InterfaceMQTT: "
+                          f"{interface_info['broker_host']}:{interface_info['broker_port']}")
                 self.mqtt_broker = interface_info['broker_host']
                 self.mqtt_port = interface_info['broker_port']
             
-            # Merge manual and auto-extracted topic mappings (manual takes precedence)
-            topic_mappings = {**auto_topic_mappings, **manual_topic_mappings}
-            
             if interface_references:
-                logger.info(f"Extracted {len(interface_references)} InterfaceReference mappings from Variables submodel")
-                for var_path, mapping in list(interface_references.items())[:5]:  # Show first 5
-                    logger.info(f"  {var_path} ← {mapping['topic']}")
-                if len(interface_references) > 5:
-                    logger.info(f"  ... and {len(interface_references) - 5} more")
-            elif auto_topic_mappings:
-                logger.info(f"Extracted {len(auto_topic_mappings)} topic mappings from InterfaceMQTT")
-                for topic, path in list(auto_topic_mappings.items())[:5]:  # Show first 5
-                    logger.info(f"  {topic} -> {path}")
-                if len(auto_topic_mappings) > 5:
-                    logger.info(f"  ... and {len(auto_topic_mappings) - 5} more")
+                logger.info(f"Extracted {len(interface_references)} InterfaceReference mappings")
 
-            # Register concept descriptions first (if any semanticIds exist)
-            self._register_concept_descriptions_from_submodels(submodels)
+            for cd in concept_descriptions:
+                self.register_concept_description(cd)
 
-            # Register submodels
             for submodel in submodels:
                 self._register_submodel(submodel)
 
-            # Register AAS shells with submodel references
             for shell in shells:
                 if shell:
                     self._register_aas_shell_with_submodels(shell, submodels)
 
-            # Generate and save databridge configurations with InterfaceReferences
-            self._generate_databridge_configs(
-                submodels, self.mqtt_broker, topic_mappings, interface_info, interface_references)
+            self.generate_databridge_configs(submodels, self.mqtt_broker, interface_info, interface_references)
 
-            # Restart databridge container
             self._restart_databridge()
-
             logger.info("Registration completed successfully!")
             return True
 
         except Exception as e:
-            logger.error(f"Registration failed: {e}")
+            logger.error(f"Registration failed: {e}", exc_info=True)
             return False
 
-    def _register_aas_shell_with_submodels(self, shell_data: Dict[str, Any], submodels: List[Dict[str, Any]]) -> bool:
-        """Register AAS shell with proper submodel references"""
+    def _register_aas_shell_with_submodels(self, shell: Any, submodels: List[Any]) -> bool:
+        """Register AAS shell with BaSyx server."""
         try:
-            # Create submodel references
-            submodel_refs = []
-            for submodel in submodels:
-                if submodel and submodel.get('id'):
-                    submodel_ref = {
-                        "keys": [
-                            {
-                                "type": "Submodel",
-                                "value": submodel['id']
-                            }
-                        ],
-                        "type": "ModelReference"
-                    }
-                    submodel_refs.append(submodel_ref)
+            shell_repo_data = self._to_dict(shell)
+            if not shell_repo_data:
+                return False
 
-            # Upload to repository with submodel references
-            shell_repo_data = {
-                "modelType": "AssetAdministrationShell",
-                "id": shell_data['id'],
-                "idShort": shell_data['idShort'],
-                "assetInformation": shell_data.get('assetInformation', {"assetKind": "Instance"}),
-                "submodels": submodel_refs
-            }
+            if 'modelType' not in shell_repo_data:
+                shell_repo_data['modelType'] = 'AssetAdministrationShell'
 
-            encoded_id = base64.b64encode(shell_data['id'].encode()).decode()
-            repo_response = self._make_request(
-                'POST', self.basyx_config.aas_repo_url, shell_repo_data)
+            encoded_id = base64.b64encode(shell_repo_data['id'].encode()).decode()
+            self._make_request('POST', self.basyx_config.aas_repo_url, shell_repo_data)
 
-            logger.info(
-                f"Registered AAS shell in repository with {len(submodel_refs)} submodel references: {shell_data['idShort']}")
+            logger.info(f"Registered AAS shell: {shell_repo_data['idShort']}")
             
-            # Also register shell descriptor in AAS Registry with submodel descriptors
-            self._register_shell_descriptor(shell_data, encoded_id, submodels)
+            # Convert submodels to list of dicts for descriptor registration
+            submodel_dicts = [self._to_dict(sm) for sm in submodels]
+            self._register_shell_descriptor(shell_repo_data, encoded_id, submodel_dicts)
 
             return True
 
         except Exception as e:
-            logger.error(
-                f"Failed to register AAS shell {shell_data.get('idShort', 'unknown')}: {e}")
+            logger.error(f"Failed to register AAS shell: {e}", exc_info=True)
             return False
 
-    def _register_submodel(self, submodel_data: Dict[str, Any]) -> bool:
-        """Register submodel with BaSyx server"""
+    def _register_submodel(self, submodel: Any) -> bool:
+        """Register submodel with BaSyx server."""
         try:
-            # Preprocess submodel to fix File elements
-            processed_submodel = self._preprocess_submodel_for_registration(submodel_data)
-            
-            # Add modelType for BaSyx 2.0 compatibility
-            submodel_repo_data = {
-                "modelType": "Submodel",
-                **processed_submodel
-            }
+            submodel_repo_data = self._to_dict(submodel)
+            if not submodel_repo_data:
+                return False
 
-            # Upload to repository (BaSyx 2.0 pattern)
-            encoded_id = base64.b64encode(
-                submodel_data['id'].encode()).decode()
-            repo_response = self._make_request(
-                'POST', self.basyx_config.submodel_repo_url, submodel_repo_data)
+            if 'modelType' not in submodel_repo_data:
+                submodel_repo_data['modelType'] = 'Submodel'
+            
+            submodel_repo_data = self._preprocess_submodel_for_registration(submodel_repo_data)
+            encoded_id = base64.b64encode(submodel_repo_data['id'].encode()).decode()
+            
+            self._make_request('POST', self.basyx_config.submodel_repo_url, submodel_repo_data)
 
-            logger.info(f"Registered submodel in repository: {submodel_data['idShort']}")
+            logger.info(f"Registered submodel: {submodel_repo_data['idShort']}")
             
-            # Upload file attachments (schemas, etc.) for File elements
-            self._upload_file_attachments(submodel_data, encoded_id)
-            
-            # Also register submodel descriptor in Submodel Registry
-            self._register_submodel_descriptor(submodel_data, encoded_id)
+            self._upload_file_attachments(submodel_repo_data, encoded_id)
+            self._register_submodel_descriptor(submodel_repo_data, encoded_id)
 
             return True
 
         except Exception as e:
-            logger.error(
-                f"Failed to register submodel {submodel_data.get('idShort', 'unknown')}: {e}")
+            logger.error(f"Failed to register submodel: {e}", exc_info=True)
             return False
     
     def _preprocess_submodel_for_registration(self, submodel_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -548,96 +516,58 @@ class BaSyxRegistrationService:
             logger.error(f"Failed to register submodel descriptor: {e}")
             return False
 
-    def _register_concept_descriptions_from_submodels(self, submodels: List[Dict[str, Any]]):
-        """Extract and register concept descriptions from submodels"""
+    def register_concept_description(self, cd: Any) -> bool:
+        """Register a concept description (SDK object or dict)."""
         try:
-            concept_descriptions = {}
-            
-            # Extract unique semanticIds from submodels and their elements
-            for submodel in submodels:
-                # Submodel semanticId
-                if 'semanticId' in submodel:
-                    semantic_id = submodel['semanticId']['keys'][0]['value']
-                    if semantic_id not in concept_descriptions:
-                        concept_descriptions[semantic_id] = {
-                            "modelType": "ConceptDescription",
-                            "id": semantic_id,
-                            "idShort": submodel.get('idShort', 'ConceptDescription'),
-                            "description": [
-                                {
-                                    "language": "en",
-                                    "text": f"Concept description for {submodel.get('idShort', 'submodel')}"
-                                }
-                            ]
-                        }
-                
-                # Property semanticIds
-                for element in submodel.get('submodelElements', []):
-                    if 'semanticId' in element:
-                        semantic_id = element['semanticId']['keys'][0]['value']
-                        if semantic_id not in concept_descriptions:
-                            concept_descriptions[semantic_id] = {
-                                "modelType": "ConceptDescription",
-                                "id": semantic_id,
-                                "idShort": element.get('idShort', 'ConceptDescription'),
-                                "description": [
-                                    {
-                                        "language": "en",
-                                        "text": f"Concept description for {element.get('idShort', 'property')}"
-                                    }
-                                ]
-                            }
-            
-            # Register each concept description
-            if concept_descriptions:
-                logger.info(f"Registering {len(concept_descriptions)} concept descriptions")
-                for cd_id, cd_data in concept_descriptions.items():
-                    self._register_concept_description(cd_data)
-            
-        except Exception as e:
-            logger.warning(f"Failed to register concept descriptions: {e}")
+            cd_data = self._to_dict(cd)
+            if not cd_data:
+                return False
 
-    def _register_concept_description(self, cd_data: Dict[str, Any]) -> bool:
-        """Register a concept description in the repository"""
-        try:
-            # POST to concept descriptions endpoint
+            if 'modelType' not in cd_data:
+                cd_data['modelType'] = 'ConceptDescription'
+            
             cd_url = f"{self.basyx_config.base_url}/concept-descriptions"
             response = self._make_request('POST', cd_url, cd_data)
             
             if response.status_code in [200, 201, 409]:
-                logger.info(f"Registered concept description: {cd_data['idShort']}")
+                logger.info(f"Registered concept description: {cd_data.get('idShort', 'unknown')}")
                 return True
             else:
                 logger.debug(f"Concept description registration status: {response.status_code}")
                 return False
                 
         except Exception as e:
-            logger.debug(f"Failed to register concept description {cd_data.get('idShort', 'unknown')}: {e}")
+            logger.debug(f"Failed to register concept description: {e}")
             return False
 
-    def _generate_databridge_configs(self, submodels: List[Dict[str, Any]], mqtt_broker: str, topic_mappings: Optional[Dict[str, str]] = None, interface_info: Optional[Dict[str, Any]] = None, interface_references: Optional[Dict[str, Dict[str, Any]]] = None):
-        """Generate and save databridge configuration files using new generator"""
+    def generate_databridge_configs(
+        self,
+        submodels: List[Any],
+        mqtt_broker: str,
+        interface_info: Optional[Dict[str, Any]] = None,
+        interface_references: Optional[Dict[str, Dict[str, Any]]] = None
+    ):
+        """Generate and save databridge configuration files."""
         try:
-            # Use broker port from interface_info if available
+            # Convert SDK submodels to dicts if needed
+            submodels_dicts = [self._to_dict(sm) for sm in submodels]
+            
             mqtt_port = self.mqtt_port
             if interface_info and interface_info.get('broker_port'):
                 mqtt_port = interface_info['broker_port']
             
             config_gen = DataBridgeConfigGenerator(mqtt_broker, mqtt_port)
 
-            # Use databridge directory in workspace root (parent of Registration_Service)
             script_dir = Path(__file__).resolve().parent.parent
             databridge_dir = script_dir.parent / 'databridge'
             databridge_dir.mkdir(exist_ok=True)
 
-            # Generate all configurations in one call
-            # Extract port from base_url (e.g., "http://localhost:8081" -> 8081)
             port = 8081
             if ':' in self.basyx_config.base_url:
                 port = int(self.basyx_config.base_url.rsplit(':', 1)[1].rstrip('/'))
             
             counts = config_gen.generate_all_configs(
-                submodels=submodels,
+                submodels=submodels_dicts,
                 output_dir=str(databridge_dir),
                 basyx_url=f"http://aas-env:{port}"
             )
@@ -645,7 +575,7 @@ class BaSyxRegistrationService:
             logger.info("✓ Generated databridge configurations")
             logger.info(f"  - {counts['consumers']} MQTT consumers")
             logger.info(f"  - {counts['sinks']} AAS server endpoints")
-            logger.info(f"  - {counts['transformers']} JSONATA transformers (with query files)")
+            logger.info(f"  - {counts['transformers']} JSONATA transformers")
             logger.info(f"  - {counts['routes']} routes")
 
         except Exception as e:

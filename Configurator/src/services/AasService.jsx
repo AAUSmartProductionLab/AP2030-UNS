@@ -10,7 +10,9 @@ import {
   AasRegistryClient, 
   AasRepositoryClient,
   SubmodelRepositoryClient,
-  Configuration
+  Configuration,
+  AssetAdministrationShellDescriptor,
+  SubmodelDescriptor
 } from 'basyx-typescript-sdk';
 import {
   AssetAdministrationShell,
@@ -19,6 +21,7 @@ import {
   Submodel,
   Entity,
   EntityType,
+  SpecificAssetId,
   Property,
   SubmodelElementCollection,
   ReferenceElement,
@@ -49,6 +52,44 @@ class AasService {
     // SDK Configurations
     this.registryConfig = new Configuration({ basePath: this.shellRegistryUrl });
     this.repositoryConfig = new Configuration({ basePath: this.repositoryUrl });
+  }
+
+  // ========================================
+  // Utility Methods
+  // ========================================
+
+  /**
+   * Base64 URL encode a string (for AAS/Submodel IDs in endpoints)
+   * @param {string} str - The string to encode
+   * @returns {string} Base64 URL encoded string
+   */
+  base64UrlEncode(str) {
+    return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+
+  /**
+   * Create endpoint object for descriptors
+   * @param {string} interfaceName - The interface name (e.g., 'AAS-3.0', 'SUBMODEL-3.0')
+   * @param {string} href - The endpoint URL
+   * @returns {Object} Endpoint object
+   */
+  createEndpoint(interfaceName, href) {
+    return {
+      _interface: interfaceName,
+      protocolInformation: { href }
+    };
+  }
+
+  /**
+   * Generate a unique global asset ID using base64-encoded UUID
+   * Format: https://smartproductionlab.aau.dk/assets/{base64(uuid)}
+   * @param {string} uuid - The UUID to encode (if not provided, a new one should be passed)
+   * @returns {string} The global asset ID URL
+   */
+  generateGlobalAssetId(uuid) {
+    const baseUrl = 'https://smartproductionlab.aau.dk';
+    const encodedUuid = this.base64UrlEncode(uuid);
+    return `${baseUrl}/assets/${encodedUuid}`;
   }
 
   // ========================================
@@ -197,20 +238,8 @@ class AasService {
     try {
       const shellDescriptors = await this.getAllShells();
       
-      // Filter out shuttles and root system
-      const excludePatterns = ['shuttle', 'aauFillingLine'];
-      
-      const moduleDescriptors = shellDescriptors.filter(shell => {
-        const idShort = shell.idShort?.toLowerCase() || '';
-        const id = shell.id?.toLowerCase() || '';
-        
-        return !excludePatterns.some(pattern => 
-          idShort.includes(pattern) || id.includes(pattern)
-        );
-      });
-      
-      // Fetch full shell details
-      const shellPromises = moduleDescriptors.map(async (descriptor) => {
+      // Fetch full shell details to get assetType
+      const shellPromises = shellDescriptors.map(async (descriptor) => {
         const endpoint = descriptor.endpoints?.[0]?.protocolInformation?.href;
         if (endpoint) {
           const fullShell = await this.getFullShell(endpoint);
@@ -221,8 +250,19 @@ class AasService {
       
       const shells = await Promise.all(shellPromises);
       
+      // Filter to only include CPPM resources (Cyber-Physical Production Modules)
+      // AssetType format: https://smartproductionlab.aau.dk/Resource/{SystemType}/{Category}/{InstanceName}
+      // - CPPS: Cyber-Physical Production System (full system, exclude)
+      // - CPPM: Cyber-Physical Production Module (modules, include)
+      // - CPS: Cyber-Physical System (sub-parts of modules, exclude)
+      const cppmShells = shells.filter(shell => {
+        const assetType = shell.assetInformation?.assetType || '';
+        // Only include Resource/CPPM entries
+        return assetType.includes('/Resource/CPPM/');
+      });
+      
       // Extract module data with full AAS metadata
-      const modules = shells.map(shell => {
+      const modules = cppmShells.map(shell => {
         const hierarchicalSubmodel = shell.submodels?.find(sm => 
           sm.keys?.[0]?.value?.includes('HierarchicalStructures')
         );
@@ -231,7 +271,10 @@ class AasService {
         const assetInfo = shell.assetInformation || {};
         const assetId = assetInfo.globalAssetId || shell.id;
         const assetKind = assetInfo.assetKind || 'Instance';
-        const assetType = assetInfo.assetType || this.inferAssetType(shell.idShort);
+        const assetTypeUrl = assetInfo.assetType || '';
+        
+        // Extract category from assetType URL (e.g., DispensingSystem from .../CPPM/DispensingSystem/...)
+        const category = this.extractCategoryFromAssetType(assetTypeUrl);
         
         return {
           name: shell.idShort || 'Unknown Module',
@@ -239,19 +282,23 @@ class AasService {
           aasId: shell.id,
           assetId: assetId,
           assetKind: assetKind,
-          assetType: assetType,
+          assetType: category,
+          assetTypeUrl: assetTypeUrl,
           submodelId: hierarchicalSubmodel?.keys?.[0]?.value || null,
           description: shell.description?.[0]?.text || ''
         };
       });
       
-      // Sort modules by assetType
+      // Sort modules by category
+      const categoryOrder = [
+        'DispensingSystem', 'StopperingSystem', 'LoadingSystem', 
+        'UnloadingSystem', 'QualityControlSystem', 'MovementSystem', 'Other'
+      ];
       modules.sort((a, b) => {
-        const typeOrder = ['Filling', 'Stoppering', 'Loading', 'Unloading', 'Camera', 'PlanarTable', 'Other'];
-        const aIndex = typeOrder.indexOf(a.assetType);
-        const bIndex = typeOrder.indexOf(b.assetType);
-        const aOrder = aIndex === -1 ? typeOrder.length : aIndex;
-        const bOrder = bIndex === -1 ? typeOrder.length : bIndex;
+        const aIndex = categoryOrder.indexOf(a.assetType);
+        const bIndex = categoryOrder.indexOf(b.assetType);
+        const aOrder = aIndex === -1 ? categoryOrder.length : aIndex;
+        const bOrder = bIndex === -1 ? categoryOrder.length : bIndex;
         return aOrder - bOrder;
       });
       
@@ -263,72 +310,109 @@ class AasService {
     }
   }
 
+  /**
+   * Extract the category from an assetType URL
+   * Format: https://smartproductionlab.aau.dk/Resource/CPPM/{Category}/{InstanceName}
+   * @param {string} assetTypeUrl - The full assetType URL
+   * @returns {string} The category (e.g., 'DispensingSystem', 'LoadingSystem')
+   */
+  extractCategoryFromAssetType(assetTypeUrl) {
+    if (!assetTypeUrl) return 'Other';
+    
+    // Match pattern: /Resource/CPPM/{Category}/
+    const match = assetTypeUrl.match(/\/Resource\/CPPM\/([^\/]+)/);
+    if (match && match[1]) {
+      return match[1];
+    }
+    
+    return 'Other';
+  }
+
+  /**
+   * @deprecated Use extractCategoryFromAssetType instead
+   * Legacy method for inferring asset type from idShort
+   */
   inferAssetType(idShort) {
     if (!idShort) return 'Other';
     const lower = idShort.toLowerCase();
     
-    if (lower.includes('filling')) return 'Filling';
-    if (lower.includes('stoppering')) return 'Stoppering';
-    if (lower.includes('loading') && !lower.includes('unloading')) return 'Loading';
-    if (lower.includes('unloading')) return 'Unloading';
-    if (lower.includes('camera')) return 'Camera';
-    if (lower.includes('planar')) return 'PlanarTable';
+    if (lower.includes('filling') || lower.includes('dispensing')) return 'DispensingSystem';
+    if (lower.includes('stoppering')) return 'StopperingSystem';
+    if (lower.includes('loading') && !lower.includes('unloading')) return 'LoadingSystem';
+    if (lower.includes('unloading')) return 'UnloadingSystem';
+    if (lower.includes('camera')) return 'QualityControlSystem';
+    if (lower.includes('planar') && !lower.includes('shuttle')) return 'MovementSystem';
     
     return 'Other';
   }
 
   buildCategorizedCatalog(modules) {
-    // Group modules by assetType
-    const groupedByType = {};
+    // Group modules by category (extracted from assetType)
+    const groupedByCategory = {};
     
     modules.forEach(module => {
-      const assetType = module.assetType || 'Other';
-      if (!groupedByType[assetType]) {
-        groupedByType[assetType] = [];
+      const category = module.assetType || 'Other';
+      if (!groupedByCategory[category]) {
+        groupedByCategory[category] = [];
       }
-      groupedByType[assetType].push(module);
+      groupedByCategory[category].push(module);
     });
     
-    // Color map for different asset types
-    const typeColors = {
-      'Filling': '#1E7D74',
-      'Stoppering': '#30A399',
-      'Loading': '#0087CD',
-      'Unloading': '#00A0F0',
-      'Camera': '#9B4DCA',
-      'PlanarTable': '#136058',
+    // Color map for different CPPM categories
+    const categoryColors = {
+      'DispensingSystem': '#1E7D74',
+      'StopperingSystem': '#30A399',
+      'LoadingSystem': '#0087CD',
+      'UnloadingSystem': '#00A0F0',
+      'QualityControlSystem': '#9B4DCA',
+      'MovementSystem': '#136058',
       'Other': '#666666'
     };
     
+    // Display names for categories
+    const categoryDisplayNames = {
+      'DispensingSystem': 'Dispensing Systems',
+      'StopperingSystem': 'Stoppering Systems',
+      'LoadingSystem': 'Loading Systems',
+      'UnloadingSystem': 'Unloading Systems',
+      'QualityControlSystem': 'Quality Control',
+      'MovementSystem': 'Movement Systems',
+      'Other': 'Other Modules'
+    };
+    
     // Build categories from grouped modules
-    const categories = Object.entries(groupedByType).map(([assetType, typeModules]) => {
-      const nodes = typeModules.map((module) => ({
+    const categories = Object.entries(groupedByCategory).map(([category, categoryModules]) => {
+      const nodes = categoryModules.map((module) => ({
         id: module.name.toLowerCase().replace(/\s+/g, '-'),
         title: module.displayName,
-        color: typeColors[assetType] || '#666666',
+        color: categoryColors[category] || '#666666',
         aasId: module.aasId,
         submodelId: module.submodelId,
         assetId: module.assetId,
         assetKind: module.assetKind,
         assetType: module.assetType,
+        assetTypeUrl: module.assetTypeUrl,
         abstractId: module.assetType,  // Used for MQTT topic subscription
         description: module.description
       }));
       
       return {
-        id: `category-${assetType.toLowerCase()}`,
-        name: assetType,
-        assetType: assetType,
+        id: `category-${category.toLowerCase()}`,
+        name: categoryDisplayNames[category] || category,
+        assetType: category,
         nodes: nodes
       };
     });
     
-    // Sort categories by asset type order
-    const typeOrder = ['Filling', 'Stoppering', 'Loading', 'Unloading', 'Camera', 'PlanarTable', 'Other'];
+    // Sort categories by defined order
+    const categoryOrder = [
+      'DispensingSystem', 'StopperingSystem', 'LoadingSystem', 
+      'UnloadingSystem', 'QualityControlSystem', 'MovementSystem', 'Other'
+    ];
     categories.sort((a, b) => {
-      const aIndex = typeOrder.indexOf(a.assetType);
-      const bIndex = typeOrder.indexOf(b.assetType);
-      return (aIndex === -1 ? typeOrder.length : aIndex) - (bIndex === -1 ? typeOrder.length : bIndex);
+      const aIndex = categoryOrder.indexOf(a.assetType);
+      const bIndex = categoryOrder.indexOf(b.assetType);
+      return (aIndex === -1 ? categoryOrder.length : aIndex) - (bIndex === -1 ? categoryOrder.length : bIndex);
     });
     
     return categories;
@@ -435,16 +519,23 @@ class AasService {
   async saveOrUpdateSubmodel(submodelId, submodelData) {
     let submodelExists = false;
     
-    // First check if submodel exists
+    // First check if submodel exists by listing (avoids 404 console error)
     try {
-      const existsResult = await this.submodelClient.getSubmodelById({
-        configuration: this.repositoryConfig,
-        submodelIdentifier: submodelId
+      const listResult = await this.submodelClient.getAllSubmodels({
+        configuration: this.repositoryConfig
       });
-      
-      submodelExists = existsResult.success === true;
+
+      if (listResult.success && listResult.data?.result) {
+         submodelExists = listResult.data.result.some(sm => sm.id === submodelId);
+      } else {
+         // Fallback: check directly (may cause 404)
+         const existsResult = await this.submodelClient.getSubmodelById({
+            configuration: this.repositoryConfig,
+            submodelIdentifier: submodelId
+         });
+         submodelExists = existsResult.success === true;
+      }
     } catch (checkError) {
-      // Submodel doesn't exist (404 error), will create it
       submodelExists = false;
     }
     
@@ -472,6 +563,55 @@ class AasService {
     } catch (createError) {
       console.error(`Failed to create submodel ${submodelId}:`, createError);
       throw createError;
+    }
+  }
+
+  /**
+   * Create a submodel descriptor for registry registration
+   * @param {string} submodelId - The submodel identifier
+   * @param {Object} submodel - Optional submodel object for additional metadata
+   * @returns {SubmodelDescriptor} The descriptor object
+   */
+  createSubmodelDescriptor(submodelId, submodel = null) {
+    const encodedId = this.base64UrlEncode(submodelId);
+    const endpoint = this.createEndpoint('SUBMODEL-3.0', `${this.repositoryUrl}/submodels/${encodedId}`);
+    
+    return new SubmodelDescriptor(
+      submodelId,
+      [endpoint],
+      submodel?.idShort ?? null,
+      submodel?.description ?? null,
+      submodel?.displayName ?? null,
+      submodel?.semanticId ?? null,
+      submodel?.administration ?? null
+    );
+  }
+
+  /**
+   * Register submodel descriptors for an AAS in the registry
+   * @param {string} aasId - The AAS identifier
+   * @param {Array} submodelIds - Array of submodel IDs to register
+   */
+  async registerSubmodelDescriptors(aasId, submodelIds) {
+    for (const submodelId of submodelIds) {
+      try {
+        const descriptor = this.createSubmodelDescriptor(submodelId);
+        console.log(`Registering submodel descriptor: ${submodelId}`);
+        
+        const result = await this.registryClient.postSubmodelDescriptorThroughSuperpath({
+          configuration: this.registryConfig,
+          aasIdentifier: aasId,
+          submodelDescriptor: descriptor
+        });
+        
+        if (result.success) {
+          console.log(`Successfully registered submodel descriptor: ${submodelId}`);
+        } else {
+          console.warn(`Failed to register submodel descriptor: ${result.error?.message}`);
+        }
+      } catch (error) {
+        console.warn(`Submodel descriptor registration warning for ${submodelId}:`, error.message);
+      }
     }
   }
 
@@ -677,15 +817,17 @@ class AasService {
    * Generate product AAS and submodel IDs from order UUID
    * @param {string} orderUuid - The order UUID
    * @param {string} productFamily - The product family (e.g., 'Monoclonal Antibodies', 'Growth Hormones')
+   * @param {string} productName - The product name (e.g., 'MIM8', 'HgH')
    */
-  getProductAasIds(orderUuid, productFamily = null) {
+  getProductAasIds(orderUuid, productFamily = null, productName = null) {
     const baseUrl = 'https://smartproductionlab.aau.dk';
     const sanitizedFamily = productFamily ? productFamily.toLowerCase().replace(/\s+/g, '-') : 'unknown';
+    const sanitizedProduct = productName ? productName.replace(/\s+/g, '') : 'unknown';
     return {
       aasId: `${baseUrl}/aas/products/${orderUuid}`,
-      assetId: `${baseUrl}/assets/products/${orderUuid}`,
-      // AssetType uses ontology URL structure: role/category/specific-type
-      assetType: `${baseUrl}/product/productFamily/${sanitizedFamily}`,
+      assetId: this.generateGlobalAssetId(orderUuid),
+      // AssetType uses ontology URL structure: role/category/specific-type/product
+      assetType: `${baseUrl}/product/productFamily/${sanitizedFamily}/${sanitizedProduct}`,
       batchInfoSubmodelId: `${baseUrl}/submodels/products/${orderUuid}/BatchInformation`,
       requirementsSubmodelId: `${baseUrl}/submodels/products/${orderUuid}/Requirements`,
       billOfMaterialsSubmodelId: `${baseUrl}/submodels/products/${orderUuid}/BillOfMaterials`
@@ -699,7 +841,8 @@ class AasService {
    */
   createProductAas(batchData) {
     const productFamily = batchData.productFamily || batchData.product;
-    const ids = this.getProductAasIds(batchData.Uuid, productFamily);
+    const productName = batchData.product;
+    const ids = this.getProductAasIds(batchData.Uuid, productFamily, productName);
     
     // Create all submodels
     const batchInfoSubmodel = this.createBatchInformationSubmodel(batchData, ids.batchInfoSubmodelId);
@@ -926,7 +1069,7 @@ class AasService {
     materials.push(this.createEntity(
       'PrimaryContainer',
       EntityType.CoManagedEntity,
-      `https://smartproductionlab.aau.dk/assets/materials/${containerType.toLowerCase()}`,
+      null,
       [containerCollection],
       nodeSemanticId
     ));
@@ -942,7 +1085,7 @@ class AasService {
     materials.push(this.createEntity(
       'Stopper',
       EntityType.CoManagedEntity,
-      'https://smartproductionlab.aau.dk/assets/materials/stopper',
+      null,
       [stopperCollection],
       nodeSemanticId
     ));
@@ -958,7 +1101,7 @@ class AasService {
     materials.push(this.createEntity(
       'DrugSubstance',
       EntityType.CoManagedEntity,
-      `https://smartproductionlab.aau.dk/assets/materials/${(batchData.product || 'unknown').toLowerCase()}`,
+      null,
       [apiCollection],
       nodeSemanticId
     ));
@@ -1086,17 +1229,26 @@ class AasService {
 
   /**
    * Save or update an AAS shell - checks existence first to avoid conflicts
+   * Also registers/updates the descriptor in the registry
    */
   async saveOrUpdateAasShell(aasId, aasShell) {
     let aasExists = false;
     
-    // Check if AAS exists
+    // Check if AAS exists by listing (avoids 404 console error)
     try {
-      const existsResult = await this.aasRepositoryClient.getAssetAdministrationShellById({
-        configuration: this.repositoryConfig,
-        aasIdentifier: aasId
+      const listResult = await this.aasRepositoryClient.getAllAssetAdministrationShells({
+        configuration: this.repositoryConfig
       });
-      aasExists = existsResult.success === true;
+
+      if (listResult.success && listResult.data?.result) {
+        aasExists = listResult.data.result.some(aas => aas.id === aasId);
+      } else {
+        const existsResult = await this.aasRepositoryClient.getAssetAdministrationShellById({
+            configuration: this.repositoryConfig,
+            aasIdentifier: aasId
+        });
+        aasExists = existsResult.success === true;
+      }
     } catch (checkError) {
       aasExists = false;
     }
@@ -1113,6 +1265,7 @@ class AasService {
       if (!result.success) {
         throw new Error(result.error?.message || 'Failed to update AAS');
       }
+      
       return result.data || aasShell;
     }
     
@@ -1126,6 +1279,10 @@ class AasService {
     
     if (result.success) {
       console.log(`Successfully created AAS: ${aasId}`);
+      
+      // Register in registry
+      await this.registerAasDescriptor(aasId, aasShell);
+      
       return result.data || aasShell;
     }
     
@@ -1134,20 +1291,113 @@ class AasService {
   }
 
   /**
+   * Create an AAS descriptor from an AAS shell for registry registration
+   * @param {Object} aasShell - The AAS shell object
+   * @param {Array} submodelIds - Array of submodel IDs to include as submodel descriptors
+   * @returns {AssetAdministrationShellDescriptor} The descriptor object
+   */
+  createDescriptorFromAas(aasShell, submodelIds = []) {
+    const encodedId = this.base64UrlEncode(aasShell.id);
+    const endpoint = this.createEndpoint('AAS-3.0', `${this.repositoryUrl}/shells/${encodedId}`);
+    
+    // Create submodel descriptors if submodel IDs are provided
+    const submodelDescriptors = submodelIds.map(id => this.createSubmodelDescriptor(id));
+    
+    return new AssetAdministrationShellDescriptor(
+      aasShell.id,
+      aasShell.displayName ?? null,
+      aasShell.description ?? null,
+      aasShell.extensions ?? null,
+      aasShell.administration ?? null,
+      aasShell.idShort ?? null,
+      aasShell.assetInformation?.assetKind ?? null,
+      aasShell.assetInformation?.assetType ?? null,
+      aasShell.assetInformation?.globalAssetId ?? null,
+      aasShell.assetInformation?.specificAssetIds ?? null,
+      submodelDescriptors.length > 0 ? submodelDescriptors : null,
+      [endpoint]
+    );
+  }
+
+  /**
+   * Register an AAS descriptor in the registry (for new AAS only)
+   * @param {string} aasId - The AAS identifier
+   * @param {Object} aasShell - The AAS shell object
+   * @param {Array} submodelIds - Optional array of submodel IDs
+   */
+  async registerAasDescriptor(aasId, aasShell, submodelIds = []) {
+    try {
+      // Extract submodel IDs from the shell's submodel references if not provided
+      if (submodelIds.length === 0 && aasShell.submodels) {
+        submodelIds = aasShell.submodels.map(ref => {
+          // Get the submodel ID from the reference keys
+          const submodelKey = ref.keys?.find(k => k.type === 'Submodel');
+          return submodelKey?.value;
+        }).filter(Boolean);
+      }
+      
+      const descriptor = this.createDescriptorFromAas(aasShell, submodelIds);
+      
+      // Check if descriptor exists in registry
+      let descriptorExists = false;
+      try {
+        const existsResult = await this.registryClient.getAssetAdministrationShellDescriptorById({
+          configuration: this.registryConfig,
+          aasIdentifier: aasId
+        });
+        descriptorExists = existsResult.success === true;
+      } catch (checkError) {
+        descriptorExists = false;
+      }
+      
+      if (descriptorExists) {
+        // Descriptor already exists, skip registration
+        console.log(`Registry descriptor already exists for: ${aasId}`);
+        return;
+      }
+      
+      // Create new descriptor
+      console.log(`Registering new AAS descriptor: ${aasId}`);
+      const result = await this.registryClient.postAssetAdministrationShellDescriptor({
+        configuration: this.registryConfig,
+        assetAdministrationShellDescriptor: descriptor
+      });
+      
+      if (!result.success) {
+        console.warn(`Failed to register AAS descriptor: ${result.error?.message}`);
+        return;
+      }
+      
+      console.log(`Successfully registered AAS descriptor: ${aasId}`);
+      
+      // Register submodel descriptors
+      if (submodelIds.length > 0) {
+        await this.registerSubmodelDescriptors(aasId, submodelIds);
+      }
+    } catch (error) {
+      // Don't fail the whole operation if registry registration fails
+      console.warn(`Registry registration warning for ${aasId}:`, error.message);
+    }
+  }
+
+  /**
    * Generate product AAS IDs based on product name (for active production)
    * Creates IDs like "MIM8AAS" for the actively produced product
    * @param {string} productName - The product name
    * @param {string} productFamily - The product family (e.g., 'Monoclonal Antibodies', 'Growth Hormones')
+   * @param {string} batchUuid - The batch UUID for unique asset identification
    */
-  getActiveProductAasIds(productName, productFamily = null) {
+  getActiveProductAasIds(productName, productFamily = null, batchUuid = null) {
     const baseUrl = 'https://smartproductionlab.aau.dk';
     const sanitizedName = productName.replace(/\s+/g, '');
     const sanitizedFamily = productFamily ? productFamily.toLowerCase().replace(/\s+/g, '-') : 'unknown';
+    // Use batch UUID for unique asset ID, or generate placeholder if not provided
+    const assetId = batchUuid ? this.generateGlobalAssetId(batchUuid) : `${baseUrl}/assets/${sanitizedName.toLowerCase()}`;
     return {
       aasId: `${baseUrl}/aas/${sanitizedName}AAS`,
-      assetId: `${baseUrl}/assets/${sanitizedName.toLowerCase()}`,
-      // AssetType uses ontology URL structure: role/category/specific-type
-      assetType: `${baseUrl}/product/productFamily/${sanitizedFamily}`,
+      assetId,
+      // AssetType uses ontology URL structure: role/category/specific-type/product
+      assetType: `${baseUrl}/product/productFamily/${sanitizedFamily}/${sanitizedName}`,
       batchInfoSubmodelId: `${baseUrl}/submodels/instances/${sanitizedName}/BatchInformation`,
       requirementsSubmodelId: `${baseUrl}/submodels/instances/${sanitizedName}/Requirements`,
       billOfMaterialsSubmodelId: `${baseUrl}/submodels/instances/${sanitizedName}/BillOfMaterials`
@@ -1168,7 +1418,8 @@ class AasService {
       }
       
       const productFamily = batchData.productFamily || productName;
-      const ids = this.getActiveProductAasIds(productName, productFamily);
+      const batchUuid = batchData.Uuid;
+      const ids = this.getActiveProductAasIds(productName, productFamily, batchUuid);
       
       // Create submodels with the active product IDs
       const batchInfoSubmodel = this.createBatchInformationSubmodel(batchData, ids.batchInfoSubmodelId);
@@ -1397,7 +1648,7 @@ class AasService {
   /**
    * Create an Entity using SDK types
    */
-  createEntity(idShort, entityType, globalAssetId, statements, semanticId = null) {
+  createEntity(idShort, entityType, globalAssetId, statements, semanticId = null, specificAssetId = null) {
     return new Entity(
       entityType,
       null,  // extensions
@@ -1411,7 +1662,7 @@ class AasService {
       null,  // embeddedDataSpecifications
       statements,
       globalAssetId,
-      null   // specificAssetIds
+      specificAssetId ? [specificAssetId] : null   // specificAssetIds
     );
   }
 
@@ -1538,7 +1789,15 @@ class AasService {
       [this.createKey(KeyTypes.GlobalReference, 'https://admin-shell.io/idta/HierarchicalStructures/Node/1/0')]
     );
     
-    return this.createEntity(idShort, EntityType.SelfManagedEntity, globalAssetId, statements, nodeSemanticId);
+    // Logic to distinguish between SelfManaged and CoManaged
+    if (instanceSubmodelId) {
+      // SelfManaged: Use AAS ID in globalAssetId field
+      return this.createEntity(idShort, EntityType.SelfManagedEntity, globalAssetId, statements, nodeSemanticId);
+    } else {
+      // CoManaged: Use SpecificAssetId instead of globalAssetId
+      const specificAssetId = new SpecificAssetId('specificAssetId', globalAssetId);
+      return this.createEntity(idShort, EntityType.CoManagedEntity, null, statements, nodeSemanticId, specificAssetId);
+    }
   }
 
   /**
@@ -1677,14 +1936,25 @@ class AasService {
           
           const submodelId = sameAsRef?.value?.keys?.find(k => k.type === 'Submodel')?.value || null;
           
+          // Get asset ID (either globalAssetId or from specificAssetId)
+          let assetId = entity.globalAssetId;
+          const specificAssetIdList = entity.specificAssetIds || entity.specificAssetId;
+          if (!assetId && specificAssetIdList) {
+             if (Array.isArray(specificAssetIdList) && specificAssetIdList.length > 0) {
+                 assetId = specificAssetIdList[0].value;
+             } else if (specificAssetIdList.value) {
+                 assetId = specificAssetIdList.value;
+             }
+          }
+          
           // Match with module catalog
-          const module = moduleCatalog.find(m => m.aasId === entity.globalAssetId);
+          const module = moduleCatalog.find(m => m.aasId === assetId);
           
           return {
             Name: entity.idShort,
             'Instance Name': module?.name || entity.idShort,
             StationId: index,
-            AasId: entity.globalAssetId,
+            AasId: assetId,
             AssetType: module?.assetType || entity.idShort,
             SubmodelId: submodelId,
             'Approach Position': approachPosition,

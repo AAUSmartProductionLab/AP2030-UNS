@@ -1,0 +1,12 @@
+# BaSyx Python SDK - Official SDK for Asset Administration Shell
+basyx-python-sdk>=1.0.0
+
+# Required for HTTP communication with BaSyx server
+requests>=2.31.0
+
+# Already implied by basyx-python-sdk, but listed for clarity
+lxml>=4.9.0
+python-dateutil>=2.8.0
+pyecma376-2>=0.2.0
+
+paho-mqtt>=2.1.0

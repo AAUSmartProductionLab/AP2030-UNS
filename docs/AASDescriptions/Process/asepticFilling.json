@@ -6,7 +6,7 @@
       "specificAssetIds":[],
       "assetInformation": {
         "assetKind": "Instance",
-        "assetType": "Process",
+        "assetType": "https://smartproductionlab.aau.dk/Process/CoreProcess/asepticFilling",
         "globalAssetId": "https://smartproductionlab.aau.dk/assets/asepticFilling",
         "specificAssetIds": [
           {
@@ -19,10 +19,6 @@
                 "value": "https://smartproductionlab.aau.dk/organization"
               }]
             }
-          },
-          {
-            "name":"SemanticType",
-            "value":"asepticFilling"
           }
         ]
       },

@@ -5,7 +5,7 @@
       "id": "https://smartproductionlab.aau.dk/aas/aauFillingLine",
       "assetInformation": {
         "assetKind": "Instance",
-        "globalAssetId": "https://smartproductionlab.aau.dk/assets/aauFillingLine",
+        "globalAssetId": "https://smartproductionlab.aau.dk/assets/MWQ2ODY5ZDEtZTQ3Yy00NWU4LTlmYTAtNTI3YjVlMDk4MWFi",
         "assetType": "https://smartproductionlab.aau.dk/Resource/CPPS/ProductionLine/aauFillingLine",
         "specificAssetIds": [
           {
@@ -52,7 +52,7 @@
       ],
       "derivedFrom": {
         "type": "ModelReference",
-        "keys": [{"type": "AssetAdministrationShell", "value": "https://smartproductionlab.aau.dk/aas/templates/resourceInterface"}]
+        "keys": [{"type": "AssetAdministrationShell", "value": "https://smartproductionlab.aau.dk/aas/templates/resource"}]
       },
       "modelType": "AssetAdministrationShell"
     }
@@ -140,7 +140,7 @@
           },
           "modelType": "Entity",
           "entityType": "SelfManagedEntity",
-          "globalAssetId": "https://smartproductionlab.aau.dk/assets/aauFillingLine",
+          "globalAssetId": "https://smartproductionlab.aau.dk/assets/MWQ2ODY5ZDEtZTQ3Yy00NWU4LTlmYTAtNTI3YjVlMDk4MWFi",
           "statements": [
             {
               "idShort": "PlanarTable",
@@ -153,7 +153,7 @@
               },
               "modelType": "Entity",
               "entityType": "SelfManagedEntity",
-              "globalAssetId": "https://smartproductionlab.aau.dk/assets/planarTable",
+              "globalAssetId": "https://smartproductionlab.aau.dk/assets/YzExZDhmNTctYjc3My00ZWVjLWI4ZGMtODM1YjhmMTZlNGYy",
               "statements": [
                 {
                   "idShort": "Location",
@@ -223,7 +223,7 @@
               },
               "modelType": "Entity",
               "entityType": "SelfManagedEntity",
-              "globalAssetId": "https://smartproductionlab.aau.dk/assets/imaLoadingSystem",
+              "globalAssetId": "https://smartproductionlab.aau.dk/assets/MzU2ZTQ4NDUtZjQ4Ny00MDdiLTk4ODctMzYzMjdmNDUxYzY1",
               "statements": [
                 {
                   "idShort": "Location",
@@ -293,7 +293,7 @@
               },
               "modelType": "Entity",
               "entityType": "SelfManagedEntity",
-              "globalAssetId": "https://smartproductionlab.aau.dk/assets/omronCamera",
+              "globalAssetId": "https://smartproductionlab.aau.dk/assets/MGY4MjQwM2UtNDUyNC00NGQwLThmOTItYWU4Y2ZjYTFlMTc0",
               "statements": [
                 {
                   "idShort": "Location",
@@ -363,7 +363,7 @@
               },
               "modelType": "Entity",
               "entityType": "SelfManagedEntity",
-              "globalAssetId": "https://smartproductionlab.aau.dk/assets/imaDispensingSystem",
+              "globalAssetId": "https://smartproductionlab.aau.dk/assets/MzFiZTU1YzAtODc0ZC00YTRmLTkzYzItMDQ5ZDZjZDdhZTYw",
               "statements": [
                 {
                   "idShort": "Location",
@@ -433,7 +433,7 @@
               },
               "modelType": "Entity",
               "entityType": "SelfManagedEntity",
-              "globalAssetId": "https://smartproductionlab.aau.dk/assets/syntegonStopperingSystem",
+              "globalAssetId": "https://smartproductionlab.aau.dk/assets/NGQ5ZWE4ZmUtY2Q3OS00Nzc5LWE5YjEtNGEzZGRkODRhNzQ2",
               "statements": [
                 {
                   "idShort": "Location",
@@ -503,7 +503,7 @@
               },
               "modelType": "Entity",
               "entityType": "SelfManagedEntity",
-              "globalAssetId": "https://smartproductionlab.aau.dk/assets/optimaUnloadingSystem",
+              "globalAssetId": "https://smartproductionlab.aau.dk/assets/ODRlMmI3MzMtNjA0MS00OWRjLWI0OWEtYTBjYzYzN2Q4YmNh",
               "statements": [
                 {
                   "idShort": "Location",

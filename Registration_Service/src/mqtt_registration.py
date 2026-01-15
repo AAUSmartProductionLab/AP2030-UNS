@@ -138,14 +138,7 @@ class MQTTRegistrationService:
         """Callback when disconnected from MQTT broker"""
         if rc != 0:
             logger.warning(f"Unexpected disconnect from MQTT broker: {rc}")
-            # Try to reconnect
-            if self.running:
-                logger.info("Attempting to reconnect...")
-                try:
-                    time.sleep(5)
-                    client.reconnect()
-                except Exception as e:
-                    logger.error(f"Reconnection failed: {e}")
+            # Paho MQTT loop_start() handles reconnection automatically
     
     def _on_message(self, client, userdata, msg):
         """Callback when message received"""
@@ -182,45 +175,27 @@ class MQTTRegistrationService:
             self.stats['failed'] += 1
     
     def _validate_registration_message(self, payload: Dict[str, Any]) -> bool:
-        """
-        Validate registration message structure
-        
-        Expected format:
-        {
-            "requestId": "unique-id",
-            "assetId": "asset-id",  # Optional - will be extracted from AAS if not provided
-            "aasData": {
-                "assetAdministrationShells": [...],
-                "submodels": [...]
-            }
-        }
-        """
-        # Only requestId and aasData are mandatory
-        required_fields = ['requestId', 'aasData']
-        
-        for field in required_fields:
-            if field not in payload:
-                logger.error(f"Missing required field: {field}")
-                return False
-        
-        # Validate aasData structure
-        aas_data = payload.get('aasData', {})
-        if 'assetAdministrationShells' not in aas_data or 'submodels' not in aas_data:
+        """Validate registration message structure"""
+        if 'requestId' not in payload or 'aasData' not in payload:
+            logger.error("Missing requestId or aasData")
+            return False
+
+        aas_data = payload['aasData']
+        if not all(k in aas_data for k in ('assetAdministrationShells', 'submodels')):
             logger.error("Invalid aasData structure")
             return False
         
-        # Auto-extract assetId from AAS if not provided
-        if 'assetId' not in payload or not payload['assetId']:
-            aas_shells = aas_data.get('assetAdministrationShells', [])
-            if aas_shells:
-                # Extract idShort from first AAS
-                asset_id = aas_shells[0].get('idShort', '').replace('AAS', '').replace('aas', '')
+        # Auto-extract assetId if missing
+        if not payload.get('assetId'):
+            shells = aas_data.get('assetAdministrationShells', [])
+            if shells:
+                # Try idShort then id URL
+                asset_id = shells[0].get('idShort', '').replace('AAS', '').replace('aas', '')
                 if not asset_id:
-                    # Fallback: extract from id URL
-                    aas_id = aas_shells[0].get('id', '')
-                    asset_id = aas_id.split('/')[-1] if aas_id else 'unknown_asset'
-                payload['assetId'] = asset_id
-                logger.info(f"Auto-extracted assetId: {asset_id}")
+                    asset_id = shells[0].get('id', '').split('/')[-1]
+                
+                payload['assetId'] = asset_id or 'unknown_asset'
+                logger.info(f"Auto-extracted assetId: {payload['assetId']}")
         
         return True
     
@@ -266,7 +241,7 @@ class MQTTRegistrationService:
     
     def _process_registration(self, payload: Dict[str, Any]) -> bool:
         """
-        Process a single registration request
+        Process a single registration request by delegating to the registration service.
         
         Args:
             payload: Registration message payload
@@ -276,61 +251,21 @@ class MQTTRegistrationService:
         """
         try:
             asset_id = payload.get('assetId')
-            aas_data = payload.get('aasData')
+            aas_data = payload.get('aasData', {})
             
-            # Extract shells and submodels
+            # Extract shells, submodels, and concept descriptions
             shells = aas_data.get('assetAdministrationShells', [])
             submodels = aas_data.get('submodels', [])
+            concept_descriptions = aas_data.get('conceptDescriptions', [])
             
-            logger.info(f"Registering {len(shells)} shell(s) and {len(submodels)} submodels for {asset_id}")
+            logger.info(f"Registering asset {asset_id} with {len(shells)} shell(s), {len(submodels)} submodels")
             
-            # Parse InterfaceMQTT submodel to extract MQTT topics automatically
-            from .interface_parser import MQTTInterfaceParser
-            
-            interface_parser = MQTTInterfaceParser()
-            interface_info = interface_parser.parse_interface_submodels(submodels)
-            
-            # Extract InterfaceReferences from Variables submodel
-            interface_references = interface_parser.extract_interface_references(submodels)
-            
-            # Extract topic mappings from interface
-            topic_mappings = interface_parser.extract_topic_mappings(submodels)
-            
-            if interface_references:
-                logger.info(f"Extracted {len(interface_references)} InterfaceReference mappings from Variables submodel")
-                for var_path, ref_info in interface_references.items():
-                    logger.info(f"  {var_path} ← {ref_info['topic']}")
-            
-            # Register concept descriptions first
-            self.registration_service._register_concept_descriptions_from_submodels(submodels)
-            
-            # Register submodels
-            for submodel in submodels:
-                if not self.registration_service._register_submodel(submodel):
-                    logger.error(f"Failed to register submodel: {submodel.get('idShort')}")
-                    return False
-            
-            # Register AAS shells with submodel references
-            for shell in shells:
-                if not self.registration_service._register_aas_shell_with_submodels(shell, submodels):
-                    logger.error(f"Failed to register shell: {shell.get('idShort')}")
-                    return False
-            
-            # Generate and save databridge configurations with InterfaceReferences
-            self.registration_service._generate_databridge_configs(
-                submodels, 
-                self.registration_service.mqtt_broker, 
-                topic_mappings, 
-                interface_info, 
-                interface_references
+            # Delegate to unified registration service
+            return self.registration_service.register_from_json(
+                submodels=submodels,
+                shells=shells,
+                concept_descriptions=concept_descriptions
             )
-            
-            # Restart databridge container
-            if not self.registration_service._restart_databridge():
-                logger.warning("Failed to restart databridge container")
-                # Don't return False - registration was successful even if restart failed
-            
-            return True
             
         except Exception as e:
             logger.error(f"Error processing registration: {e}", exc_info=True)
