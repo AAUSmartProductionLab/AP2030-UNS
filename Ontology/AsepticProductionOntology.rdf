@@ -1,0 +1,326 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns="http://www.semanticweb.org/tristan/ontologies/2026/0/untitled-ontology-7/"
+     xml:base="http://www.semanticweb.org/tristan/ontologies/2026/0/untitled-ontology-7/"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:xml="http://www.w3.org/XML/1998/namespace"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#">
+    <owl:Ontology rdf:about="https://smartproductionlab.aau.dk"/>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Object Properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- https://smartproductionlab.aau.dk/is_a -->
+
+    <owl:ObjectProperty rdf:about="https://smartproductionlab.aau.dk/is_a"/>
+    
+
+
+    <!-- https://smartproductionlab.aau.dk/part_of -->
+
+    <owl:ObjectProperty rdf:about="https://smartproductionlab.aau.dk/part_of"/>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Classes
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- https://smartproductionlab.aau.dk#CPPM -->
+
+    <owl:Class rdf:about="https://smartproductionlab.aau.dk#CPPM">
+        <rdfs:subClassOf rdf:resource="https://smartproductionlab.aau.dk#Resource"/>
+    </owl:Class>
+    
+
+
+    <!-- https://smartproductionlab.aau.dk#CPPS -->
+
+    <owl:Class rdf:about="https://smartproductionlab.aau.dk#CPPS">
+        <rdfs:subClassOf rdf:resource="https://smartproductionlab.aau.dk#Resource"/>
+    </owl:Class>
+    
+
+
+    <!-- https://smartproductionlab.aau.dk#CPS -->
+
+    <owl:Class rdf:about="https://smartproductionlab.aau.dk#CPS">
+        <rdfs:subClassOf rdf:resource="https://smartproductionlab.aau.dk#Resource"/>
+    </owl:Class>
+    
+
+
+    <!-- https://smartproductionlab.aau.dk#DispensingModule -->
+
+    <owl:Class rdf:about="https://smartproductionlab.aau.dk#DispensingModule">
+        <rdfs:subClassOf rdf:resource="https://smartproductionlab.aau.dk#CPPM"/>
+    </owl:Class>
+    
+
+
+    <!-- https://smartproductionlab.aau.dk#InProcessControlModule -->
+
+    <owl:Class rdf:about="https://smartproductionlab.aau.dk#InProcessControlModule">
+        <rdfs:subClassOf rdf:resource="https://smartproductionlab.aau.dk#CPPM"/>
+    </owl:Class>
+    
+
+
+    <!-- https://smartproductionlab.aau.dk#LoadingModule -->
+
+    <owl:Class rdf:about="https://smartproductionlab.aau.dk#LoadingModule">
+        <rdfs:subClassOf rdf:resource="https://smartproductionlab.aau.dk#CPPM"/>
+    </owl:Class>
+    
+
+
+    <!-- https://smartproductionlab.aau.dk#QualityControlModule -->
+
+    <owl:Class rdf:about="https://smartproductionlab.aau.dk#QualityControlModule">
+        <rdfs:subClassOf rdf:resource="https://smartproductionlab.aau.dk#CPPM"/>
+    </owl:Class>
+    
+
+
+    <!-- https://smartproductionlab.aau.dk#Resource -->
+
+    <owl:Class rdf:about="https://smartproductionlab.aau.dk#Resource"/>
+    
+
+
+    <!-- https://smartproductionlab.aau.dk#UnloadingModule -->
+
+    <owl:Class rdf:about="https://smartproductionlab.aau.dk#UnloadingModule">
+        <rdfs:subClassOf rdf:resource="https://smartproductionlab.aau.dk#CPPM"/>
+    </owl:Class>
+    
+
+
+    <!-- https://smartproductionlab.aau.dk/AsepticFillingLine -->
+
+    <owl:Class rdf:about="https://smartproductionlab.aau.dk/AsepticFillingLine">
+        <rdfs:subClassOf rdf:resource="https://smartproductionlab.aau.dk#CPPS"/>
+    </owl:Class>
+    
+
+
+    <!-- https://smartproductionlab.aau.dk/AsepticProduction -->
+
+    <owl:Class rdf:about="https://smartproductionlab.aau.dk/AsepticProduction">
+        <rdfs:subClassOf rdf:resource="https://smartproductionlab.aau.dk/CoreProcess"/>
+    </owl:Class>
+    
+
+
+    <!-- https://smartproductionlab.aau.dk/Capping -->
+
+    <owl:Class rdf:about="https://smartproductionlab.aau.dk/Capping">
+        <rdfs:subClassOf rdf:resource="https://smartproductionlab.aau.dk/AsepticProduction"/>
+    </owl:Class>
+    
+
+
+    <!-- https://smartproductionlab.aau.dk/CappingModule -->
+
+    <owl:Class rdf:about="https://smartproductionlab.aau.dk/CappingModule">
+        <rdfs:subClassOf rdf:resource="https://smartproductionlab.aau.dk#CPPM"/>
+    </owl:Class>
+    
+
+
+    <!-- https://smartproductionlab.aau.dk/CardiovascularDisease -->
+
+    <owl:Class rdf:about="https://smartproductionlab.aau.dk/CardiovascularDisease">
+        <rdfs:subClassOf rdf:resource="https://smartproductionlab.aau.dk/Product"/>
+    </owl:Class>
+    
+
+
+    <!-- https://smartproductionlab.aau.dk/CoreProcess -->
+
+    <owl:Class rdf:about="https://smartproductionlab.aau.dk/CoreProcess">
+        <rdfs:subClassOf rdf:resource="https://smartproductionlab.aau.dk/Process"/>
+    </owl:Class>
+    
+
+
+    <!-- https://smartproductionlab.aau.dk/Diabetes -->
+
+    <owl:Class rdf:about="https://smartproductionlab.aau.dk/Diabetes">
+        <rdfs:subClassOf rdf:resource="https://smartproductionlab.aau.dk/Product"/>
+    </owl:Class>
+    
+
+
+    <!-- https://smartproductionlab.aau.dk/Dispensing -->
+
+    <owl:Class rdf:about="https://smartproductionlab.aau.dk/Dispensing">
+        <rdfs:subClassOf rdf:resource="https://smartproductionlab.aau.dk/AsepticProduction"/>
+    </owl:Class>
+    
+
+
+    <!-- https://smartproductionlab.aau.dk/EmergingTherapyAreas -->
+
+    <owl:Class rdf:about="https://smartproductionlab.aau.dk/EmergingTherapyAreas">
+        <rdfs:subClassOf rdf:resource="https://smartproductionlab.aau.dk/Product"/>
+    </owl:Class>
+    
+
+
+    <!-- https://smartproductionlab.aau.dk/Formulation -->
+
+    <owl:Class rdf:about="https://smartproductionlab.aau.dk/Formulation">
+        <rdfs:subClassOf rdf:resource="https://smartproductionlab.aau.dk/CoreProcess"/>
+    </owl:Class>
+    
+
+
+    <!-- https://smartproductionlab.aau.dk/InProcessControl -->
+
+    <owl:Class rdf:about="https://smartproductionlab.aau.dk/InProcessControl">
+        <rdfs:subClassOf rdf:resource="https://smartproductionlab.aau.dk/AsepticProduction"/>
+    </owl:Class>
+    
+
+
+    <!-- https://smartproductionlab.aau.dk/Loading -->
+
+    <owl:Class rdf:about="https://smartproductionlab.aau.dk/Loading">
+        <rdfs:subClassOf rdf:resource="https://smartproductionlab.aau.dk/AsepticProduction"/>
+    </owl:Class>
+    
+
+
+    <!-- https://smartproductionlab.aau.dk/Obesity -->
+
+    <owl:Class rdf:about="https://smartproductionlab.aau.dk/Obesity">
+        <rdfs:subClassOf rdf:resource="https://smartproductionlab.aau.dk/Product"/>
+    </owl:Class>
+    
+
+
+    <!-- https://smartproductionlab.aau.dk/Process -->
+
+    <owl:Class rdf:about="https://smartproductionlab.aau.dk/Process"/>
+    
+
+
+    <!-- https://smartproductionlab.aau.dk/Product -->
+
+    <owl:Class rdf:about="https://smartproductionlab.aau.dk/Product"/>
+    
+
+
+    <!-- https://smartproductionlab.aau.dk/QualityControl -->
+
+    <owl:Class rdf:about="https://smartproductionlab.aau.dk/QualityControl">
+        <rdfs:subClassOf rdf:resource="https://smartproductionlab.aau.dk/AsepticProduction"/>
+    </owl:Class>
+    
+
+
+    <!-- https://smartproductionlab.aau.dk/RareBloodDisorders -->
+
+    <owl:Class rdf:about="https://smartproductionlab.aau.dk/RareBloodDisorders">
+        <rdfs:subClassOf rdf:resource="https://smartproductionlab.aau.dk/Product"/>
+    </owl:Class>
+    
+
+
+    <!-- https://smartproductionlab.aau.dk/RareEndocrineDisorders -->
+
+    <owl:Class rdf:about="https://smartproductionlab.aau.dk/RareEndocrineDisorders">
+        <rdfs:subClassOf rdf:resource="https://smartproductionlab.aau.dk/Product"/>
+    </owl:Class>
+    
+
+
+    <!-- https://smartproductionlab.aau.dk/Stoppering -->
+
+    <owl:Class rdf:about="https://smartproductionlab.aau.dk/Stoppering">
+        <rdfs:subClassOf rdf:resource="https://smartproductionlab.aau.dk/AsepticProduction"/>
+    </owl:Class>
+    
+
+
+    <!-- https://smartproductionlab.aau.dk/StopperingModule -->
+
+    <owl:Class rdf:about="https://smartproductionlab.aau.dk/StopperingModule">
+        <rdfs:subClassOf rdf:resource="https://smartproductionlab.aau.dk#CPPM"/>
+    </owl:Class>
+    
+
+
+    <!-- https://smartproductionlab.aau.dk/SupportingProcess -->
+
+    <owl:Class rdf:about="https://smartproductionlab.aau.dk/SupportingProcess">
+        <rdfs:subClassOf rdf:resource="https://smartproductionlab.aau.dk/Process"/>
+    </owl:Class>
+    
+
+
+    <!-- https://smartproductionlab.aau.dk/TransportSystem -->
+
+    <owl:Class rdf:about="https://smartproductionlab.aau.dk/TransportSystem">
+        <rdfs:subClassOf rdf:resource="https://smartproductionlab.aau.dk#CPS"/>
+    </owl:Class>
+    
+
+
+    <!-- https://smartproductionlab.aau.dk/Unloading -->
+
+    <owl:Class rdf:about="https://smartproductionlab.aau.dk/Unloading">
+        <rdfs:subClassOf rdf:resource="https://smartproductionlab.aau.dk/AsepticProduction"/>
+    </owl:Class>
+    
+
+
+    <!-- https://smartproductionlab.aau.dk/WashAndSterilization -->
+
+    <owl:Class rdf:about="https://smartproductionlab.aau.dk/WashAndSterilization">
+        <rdfs:subClassOf rdf:resource="https://smartproductionlab.aau.dk/SupportingProcess"/>
+    </owl:Class>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Individuals
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- https://smartproductionlab.aau.dk/imaDispensingModule -->
+
+    <owl:NamedIndividual rdf:about="https://smartproductionlab.aau.dk/imaDispensingModule">
+        <rdf:type rdf:resource="https://smartproductionlab.aau.dk#DispensingModule"/>
+    </owl:NamedIndividual>
+</rdf:RDF>
+
+
+
+<!-- Generated by the OWL API (version 4.5.29.2024-05-13T12:11:03Z) https://github.com/owlcs/owlapi -->
+
