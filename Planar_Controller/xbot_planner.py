@@ -39,6 +39,22 @@ MQTT_BASE_TOPIC = "NN/Nybrovej/InnoLab/Planar"
 
 POSITION_TOLERANCE_M = 0.005
 
+class PackMLState:
+    IDLE = "Idle"
+    STARTING = "Starting"
+    EXECUTE = "Execute"
+    HOLDING = "Holding"
+    HELD = "Held"
+    UNHOLDING = "Unholding"
+    STOPPING = "Stopping"
+    STOPPED = "Stopped"
+    ABORTING = "Aborting"
+    ABORTED = "Aborted"
+    RESETTING = "Resetting"
+    COMPLETING = "Completing"
+    COMPLETE = "Complete"
+    CLEARING = "Clearing"
+
 # XBot State to PackML State mapping
 # Based on: https://planarmotor.atlassian.net/wiki/spaces/pmdoc/pages/131011844/XBot+State+Descriptions
 XBOT_STATE_TO_PACKML = {
@@ -75,6 +91,185 @@ class SimpleController:
         self.mqtt_client = mqtt_client
         self.active_xbots = set()
         self.pmc_lock = threading.Lock()  # Lock for PMC communication if needed
+        
+        # PackML State Management
+        self.state = PackMLState.IDLE
+        self.pause_event = threading.Event() # Set when Active/Execute, Cleared when Held/Idle
+        self.pause_event.clear() # Initially Idle, so paused
+        
+        self.publish_system_state()
+        self.publish_button_states()
+
+    def set_system_state(self, new_state):
+        """Update global system state and manage pause event."""
+        print(f"[PackML] State transition: {self.state} -> {new_state}")
+        self.state = new_state
+        self.publish_system_state()
+        self.publish_button_states()
+        
+        # Manage execution status
+        if new_state == PackMLState.EXECUTE:
+            self.pause_event.set() # Allow execution
+        elif new_state in [PackMLState.HELD, PackMLState.IDLE, PackMLState.STOPPED, PackMLState.ABORTED]:
+            self.pause_event.clear() # Pause execution (threads verify state separately for Stop/Abort)
+
+    def publish_system_state(self):
+        """Publish the global PackML state of the controller."""
+        topic = f"{MQTT_BASE_TOPIC}/DATA/State"
+        payload = {
+            "State": self.state,
+            "TimeStamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+        try:
+            self.mqtt_client.publish(topic, json.dumps(payload), qos=1, retain=True)
+            print(f"  [MQTT] Published system state: {self.state}")
+        except Exception as e:
+            print(f"  [MQTT] ERROR publishing system state: {e}")
+
+    def publish_button_states(self):
+        """Publish enabled button states based on current PackML state."""
+        buttons = {
+            "Clear": False,
+            "Reset": False,
+            "Start": False,
+            "Stop": False,
+            "Hold": False,
+            "UnHold": False
+        }
+        
+        s = self.state
+        
+        if s == PackMLState.IDLE:
+            buttons["Start"] = True
+            buttons["Stop"] = True
+            
+        elif s == PackMLState.EXECUTE:
+            buttons["Stop"] = True
+            buttons["Hold"] = True
+            
+        elif s == PackMLState.HELD:
+            buttons["Stop"] = True
+            buttons["UnHold"] = True
+            
+        elif s == PackMLState.STOPPED:
+            buttons["Reset"] = True
+            
+        elif s == PackMLState.COMPLETE:
+            buttons["Reset"] = True
+            buttons["Stop"] = True
+            
+        elif s == PackMLState.ABORTED:
+            buttons["Reset"] = True
+            buttons["Clear"] = True 
+
+        # Allow Stop during most transitions and active states
+        if s in [PackMLState.STARTING, PackMLState.HOLDING, PackMLState.UNHOLDING, 
+                 PackMLState.RESETTING, PackMLState.COMPLETING, PackMLState.CLEARING,
+                 PackMLState.EXECUTE, PackMLState.HELD]:
+             buttons["Stop"] = True
+
+        if s in [PackMLState.STOPPING, PackMLState.ABORTING]:
+            buttons["Stop"] = False
+
+        topic = f"{MQTT_BASE_TOPIC}/DATA/ButtonStates"
+        try:
+             self.mqtt_client.publish(topic, json.dumps(buttons), qos=1, retain=True)
+        except Exception as e:
+             print(f"  [MQTT] ERROR publishing button states: {e}")
+
+    def handle_command(self, payload):
+        """Handle incoming PackML commands (Start, Stop, Hold, Unhold, Reset, Clear)."""
+        button_id = payload.get("ButtonId")
+        print(f"[PackML] Received command: {button_id} (Current State: {self.state})")
+        
+        # Use case-insensitive command matching
+        cmd = str(button_id).lower() if button_id else ""
+        
+        if cmd == "start":
+            if self.state == PackMLState.IDLE:
+                self.set_system_state(PackMLState.STARTING)
+                
+                # Activate XBots hardware
+                try:
+                    xbot.activate_xbots()
+                    print("[PackML] Activated all XBots")
+                except Exception as e:
+                    print(f"[PackML] Error activating XBots: {e}")
+
+                time.sleep(1) # Fake startup time
+                self.set_system_state(PackMLState.EXECUTE)
+            else:
+                print(f"[PackML] Start ignored. State {self.state} != {PackMLState.IDLE}")
+        
+        elif cmd == "stop":
+            if self.state not in [PackMLState.STOPPED, PackMLState.STOPPING]:
+                self.set_system_state(PackMLState.STOPPING)
+                # Signal threads to abort handled in execute_xbot loop via state check
+                # Stop all motion immediately
+                self.stop_all_xbots()
+                
+                # Deactivate XBots hardware
+                try:
+                    xbot.deactivate_xbots()
+                    print("[PackML] Deactivated all XBots")
+                except Exception as e:
+                    print(f"[PackML] Error deactivating XBots: {e}")
+                
+                 # Force update states for all known xbots to Stopped
+                for xbot_id in self.xbots:
+                    self.publish_state(xbot_id, "Stopped")
+
+                time.sleep(1)
+                self.set_system_state(PackMLState.STOPPED)
+            else:
+                 print(f"[PackML] Stop ignored. Already {self.state}")
+                
+        elif cmd == "hold":
+            if self.state == PackMLState.EXECUTE:
+                self.set_system_state(PackMLState.HOLDING)
+                time.sleep(0.5)
+                self.set_system_state(PackMLState.HELD)
+            else:
+                print(f"[PackML] Hold ignored. State {self.state} != {PackMLState.EXECUTE}")
+                
+        elif cmd == "unhold":
+            # Allow Unhold from HELD or HOLDING (in case stuck)
+            if self.state in [PackMLState.HELD, PackMLState.HOLDING]:
+                self.set_system_state(PackMLState.UNHOLDING)
+                time.sleep(0.5)
+                self.set_system_state(PackMLState.EXECUTE)
+            else:
+                print(f"[PackML] Unhold ignored. State {self.state} not in [HELD, HOLDING]")
+        
+        elif cmd == "clear":
+            if self.state == PackMLState.ABORTED:
+                self.set_system_state(PackMLState.CLEARING)
+                time.sleep(1)
+                self.set_system_state(PackMLState.STOPPED)
+            else:
+                print(f"[PackML] Clear ignored. State {self.state} != {PackMLState.ABORTED}")
+
+        elif cmd == "reset":
+            # Reset only allowed from STOPPED, ABORTED, COMPLETE
+            if self.state in [PackMLState.STOPPED, PackMLState.ABORTED, PackMLState.COMPLETE]:
+                self.set_system_state(PackMLState.RESETTING)
+                self.xbots.clear() # Clear task queue
+                self.stop_all_xbots()
+                time.sleep(1)
+                self.set_system_state(PackMLState.IDLE)
+            else:
+                 print(f"[PackML] Reset ignored. State {self.state} invalid for Reset.")
+
+    
+    def stop_all_xbots(self):
+        """Emergency stop for all active XBots."""
+        print("[PackML] Stopping all XBots...")
+        with self.pmc_lock:
+             for xbot_id in list(self.active_xbots):
+                try:
+                    xbot.stop_motion(xbot_id=xbot_id)
+                except Exception as e:
+                    print(f"Error stopping XBot {xbot_id}: {e}")
 
     def publish_state(self, xbot_id, packml_state):
         """Publish PackML state via MQTT."""
@@ -554,6 +749,14 @@ class SimpleController:
 
         # Publish starting state
         self.publish_state(xbot_id, "Execute")
+        
+        # Check system state before starting
+        while not self.pause_event.is_set():
+             if self.state in [PackMLState.STOPPING, PackMLState.STOPPED, PackMLState.ABORTING, PackMLState.ABORTED, PackMLState.RESETTING]:
+                 print(f"XBot {xbot_id} execution aborted due to system state: {self.state}")
+                 self.publish_state(xbot_id, "Aborted")
+                 return False
+             time.sleep(0.1)
 
         # Check if we need to rotate at the starting position
         if xbot_obj.rotation_point and xbot_obj.goal_rotation is not None:
@@ -594,6 +797,16 @@ class SimpleController:
 
             print(
                 f"  Moving to waypoint {xbot_obj.current_waypoint_index + 1}/{len(xbot_obj.current_path) - 1}: ({target[0]:.3f}, {target[1]:.3f})")
+
+            # PackML Pause/Abort Check within movement loop
+            while not self.pause_event.is_set():
+                 if self.state in [PackMLState.STOPPING, PackMLState.STOPPED, PackMLState.ABORTING, PackMLState.ABORTED, PackMLState.RESETTING]:
+                     print(f"XBot {xbot_id} execution aborted loop due to system state: {self.state}")
+                     # Stop motion immediately
+                     xbot.stop_motion(xbot_id=xbot_id)
+                     self.publish_state(xbot_id, "Aborted")
+                     return False
+                 time.sleep(0.1)
 
             # Move axis-aligned: X first, then Y
             current_pos = get_xbot_position(xbot_id)
@@ -923,6 +1136,18 @@ def on_message(client, userdata, msg):
         print(
             f"\n[MQTT] Received command: {msg.topic} at {datetime.fromtimestamp(t_mqtt_arrival).strftime('%H:%M:%S.%f')}")
         print(f"  Payload: {payload}")
+        
+        # Check for System Command
+        if msg.topic == f"{MQTT_BASE_TOPIC}/CMD/Command":
+             controller.handle_command(payload)
+             return
+
+        # Check state for XBot commands - only process if Executing
+        # Note: If Held, we might want to queue or ignore. User said "ignore all mqtt messages ... until unhold".
+        # So we simply return if not executing.
+        if controller.state != PackMLState.EXECUTE:
+            print(f"[MQTT] Ignoring XBot command because system state is {controller.state}")
+            return
 
         # Extract XBot ID from topic
         # Topic format: NN/Nybrovej/InnoLab/Planar/Xbot{N}/CMD/XYMotion
@@ -969,6 +1194,12 @@ def on_connect(client, userdata, flags, rc):
     """MQTT connection callback."""
     if rc == 0:
         print("[MQTT] Connected successfully")
+        
+        # Subscribe to System Command Topic
+        cmd_topic = f"{MQTT_BASE_TOPIC}/CMD/Command"
+        client.subscribe(cmd_topic, qos=1)
+        print(f"[MQTT] Subscribed to: {cmd_topic}")
+        
         # Subscribe to all XBot command topics
         for xbot_id in range(1, 10):  # Support XBots 1-9
             topic = f"{MQTT_BASE_TOPIC}/Xbot{xbot_id}/CMD/XYMotion"

@@ -134,6 +134,8 @@ services:
       - MQTT_BROKER=hivemq-broker
       - MQTT_PORT=1883
       - PMC_IP=192.168.0.199
+    volumes:
+      - ./MQTTSchemas:/app/schemas
     networks:
       - hivemq-network
     depends_on:
