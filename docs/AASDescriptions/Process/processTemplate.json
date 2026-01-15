@@ -191,10 +191,63 @@
           "value": "BehaviorTree"
         },
         {
-            "idShort": "Policy",
-            "modelType": "File",
-            "contentType": "application/xml",
-            "value": "https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/BT_Controller/config/bt_description/tree.xml"
+          "idShort": "Policy",
+          "modelType": "File",
+          "contentType": "application/xml",
+          "value": "https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/BT_Controller/config/bt_description/tree.xml"
+        },
+        {
+          "idShort": "Product",
+          "semanticId": {
+            "type": "ExternalReference",
+            "keys": [{
+              "type": "GlobalReference",
+              "value": "https://smartproductionlab.aau.dk/Policy/1/0/Product"
+            }]
+          },
+          "modelType": "ReferenceElement",
+          "value": {
+            "type": "ModelReference",
+            "keys": [
+              {
+                "type": "AssetAdministrationShell",
+                "value": "https://smartproductionlab.aau.dk/aas/HgHAAS"
+              }
+            ]
+          }
+        },
+        {
+          "idShort": "Resources",
+          "semanticId": {
+            "type": "ExternalReference",
+            "keys": [{
+              "type": "GlobalReference",
+              "value": "https://smartproductionlab.aau.dk/Policy/1/0/Resources"
+            }]
+          },
+          "modelType": "SubmodelElementCollection",
+          "value": [
+            {
+              "idShort": "Resource1",
+              "semanticId": {
+                "type": "ExternalReference",
+                "keys": [{
+                  "type": "GlobalReference",
+                  "value": "https://smartproductionlab.aau.dk/Policy/1/0/Resource"
+                }]
+              },
+              "modelType": "ReferenceElement",
+              "value": {
+                "type": "ModelReference",
+                "keys": [
+                  {
+                    "type": "AssetAdministrationShell",
+                    "value": "https://smartproductionlab.aau.dk/aas/omronCameraAAS"
+                  }
+                ]
+              }
+            }
+          ]
         }
       ],
       "modelType": "Submodel"
