@@ -353,7 +353,7 @@
               ]
             },
             {
-              "idShort": "Filling",
+              "idShort": "Dispensing",
               "semanticId": {
                 "type": "ExternalReference",
                 "keys": [{
@@ -363,7 +363,7 @@
               },
               "modelType": "Entity",
               "entityType": "SelfManagedEntity",
-              "globalAssetId": "https://smartproductionlab.aau.dk/assets/imaFillingSystem",
+              "globalAssetId": "https://smartproductionlab.aau.dk/assets/imaDispensingSystem",
               "statements": [
                 {
                   "idShort": "Location",
@@ -411,7 +411,7 @@
                     "keys": [
                       {
                         "type": "Submodel",
-                        "value": "https://smartproductionlab.aau.dk/submodels/instances/imaFillingSystem/HierarchicalStructures"
+                        "value": "https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystem/HierarchicalStructures"
                       },
                       {
                         "type": "Entity",
@@ -686,7 +686,7 @@
               }
             },
             {
-              "idShort": "HasFilling",
+              "idShort": "HasDispensing",
               "semanticId": {
                 "type": "ExternalReference",
                 "keys": [{
@@ -721,7 +721,7 @@
                   },
                   {
                     "type": "Entity",
-                    "value": "Filling"
+                    "value": "Dispensing"
                   }
                 ]
               }

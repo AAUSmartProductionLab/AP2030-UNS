@@ -37,7 +37,7 @@
       "description": [
         {
           "language": "en",
-          "text": "Generic template for resource interface descriptions following IDTA 02017-1-0 and W3C WoT Thing Description. Defines the structural pattern for any resource (filling systems, cameras, AMRs, etc.)"
+          "text": "Generic template for resource interface descriptions following IDTA 02017-1-0 and W3C WoT Thing Description. Defines the structural pattern for any resource (dispensing systems, cameras, AMRs, etc.)"
         }
       ],
       "submodelElements": [
@@ -597,7 +597,7 @@
           "description": [
             {
               "language": "en",
-              "text": "Example configuration parameter. Resource instances replace this with their actual parameters (e.g., MaxSpeed, TargetTemperature, FillingVolume)"
+              "text": "Example configuration parameter. Resource instances replace this with their actual parameters (e.g., MaxSpeed, TargetTemperature, DispensingVolume)"
             }
           ],
           "modelType": "Property",
