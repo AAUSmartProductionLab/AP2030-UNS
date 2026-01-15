@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+  <BehaviorTree ID="Dispensing">
+    <Occupy Uuid="{ProductID}"
+            Asset="{DispensingSystem}"
+            _skipIf="scrap == true">
+      <ReactiveSequence>
+        <ReactiveFallback>
+          <Data_Condition comparison_type="equal"
+                          Field="State"
+                          expected_value="operational"
+                          Property="PackMLState"
+                          Asset="{DispensingSystem}"/>
+          <Sleep msec="10000"/>
+        </ReactiveFallback>
+        <Sequence>
+          <moveToPosition Uuid="{ProductID}"
+                          TargetPosition="{Station}"
+                          Asset="{Xbot}"/>
+          <Command_Execution Parameters="&apos;{}&apos;"
+                             Uuid="{ProductID}"
+                             Operation="tare"
+                             Asset="{DispensingSystem}"/>
+          <BC_Fallback _onFailure="scrap:= true">
+            <Data_Condition comparison_type="inside"
+                            Field="Weight"
+                            expected_value="2.0;2.2"
+                            Property="weight"
+                            Asset="{DispensingSystem}"/>
+            <Sequence>
+              <Data_Condition comparison_type="equal"
+                              Field="Weight"
+                              expected_value="0"
+                              Property="weight"
+                              Asset="{DispensingSystem}"/>
+              <Command_Execution Parameters="&apos;{}&apos;"
+                                 Uuid="{ProductID}"
+                                 Operation="dispense"
+                                 Asset="{DispensingSystem}"/>
+            </Sequence>
+            <Sequence>
+              <Data_Condition comparison_type="greater"
+                              Field="Weight"
+                              expected_value="0"
+                              Property="weight"
+                              Asset="{DispensingSystem}"/>
+              <Refill_Node Uuid="{ProductID}"
+                           Asset="{DispensingSystem}"/>
+            </Sequence>
+          </BC_Fallback>
+        </Sequence>
+      </ReactiveSequence>
+    </Occupy>
+  </BehaviorTree>
+</root>

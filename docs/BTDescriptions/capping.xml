@@ -1,16 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root BTCPP_format="4">
-  <BehaviorTree ID="Dispensing">
+  <BehaviorTree ID="Capping">
     <Occupy Uuid="{ProductID}"
-            Asset="{DispensingSystem}"
-            _skipIf="scrap == true">
+            Asset="{CappingSystem}"/>     
       <ReactiveSequence>
         <ReactiveFallback>
           <Data_Condition comparison_type="equal"
                           Field="State"
                           expected_value="operational"
                           Property="PackMLState"
-                          Asset="{DispensingSystem}"/>
+                          Asset="{CappingSystem}"/>
           <Sleep msec="10000"/>
         </ReactiveFallback>
         <Sequence>
@@ -18,9 +17,9 @@
                           TargetPosition="{Station}"
                           Asset="{Xbot}"/>
           <Command_Execution Parameters="&apos;{}&apos;"
-                              Uuid="{ProductID}"
-                              Operation="dispense"
-                              Asset="{DispensingSystem}"/>
+                             Uuid="{ProductID}"
+                             Operation="cap"
+                             Asset="{CappingSystem}"/>
         </Sequence>
       </ReactiveSequence>
     </Occupy>
