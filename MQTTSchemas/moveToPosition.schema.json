@@ -9,12 +9,20 @@
         {
             "type": "object",
             "properties": {
-                "TargetPosition": {
-                    "type": "integer",
-                    "description": "Target position to move the xBot to [x, y]"
+                "X": {
+                    "type": "number",
+                    "description": "Target X position in mm"
+                },
+                "Y": {
+                    "type": "number",
+                    "description": "Target Y position in mm"
+                },
+                "Velocity": {
+                    "type": "number",
+                    "description": "Movement velocity in mm/s"
                 }
             },
-            "required": ["TargetPosition"]
+            "required": ["X", "Y"]
         }
     ]
 }

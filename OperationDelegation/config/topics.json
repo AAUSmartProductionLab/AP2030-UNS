@@ -1,0 +1,63 @@
+{
+    "planarTableShuttle1AAS": {
+        "base_topic": "NN/Nybrovej/InnoLab/PlanarMotorSystem/shuttles/1",
+        "skills": {
+            "MoveToPosition": {
+                "command_topic": "NN/Nybrovej/InnoLab/Planar/Xbot1/CMD/XYMotion",
+                "response_topic": "NN/Nybrovej/InnoLab/Planar/Xbot1/DATA/XYMotion"
+            },
+            "halt": {
+                "command_topic": "NN/Nybrovej/InnoLab/Planar/Xbot1/CMD/Halt",
+                "response_topic": "NN/Nybrovej/InnoLab/Planar/Xbot1/DATA/Halt"
+            },
+            "occupy": {
+                "command_topic": "NN/Nybrovej/InnoLab/Planar/Xbot1/CMD/Occupy",
+                "response_topic": "NN/Nybrovej/InnoLab/Planar/Xbot1/DATA/Occupy"
+            },
+            "release": {
+                "command_topic": "NN/Nybrovej/InnoLab/Planar/Xbot1/CMD/Release",
+                "response_topic": "NN/Nybrovej/InnoLab/Planar/Xbot1/DATA/Release"
+            }
+        }
+    },
+    "planarTableShuttle2AAS": {
+        "base_topic": "NN/Nybrovej/InnoLab/PlanarMotorSystem/shuttles/2",
+        "skills": {}
+    },
+    "syntegonStopperingAAS": {
+        "base_topic": "NN/Nybrovej/InnoLab/Stoppering",
+        "skills": {
+            "Stopper": {
+                "command_topic": "NN/Nybrovej/InnoLab/Stoppering/CMD/Stopper",
+                "response_topic": "NN/Nybrovej/InnoLab/Stoppering/DATA/Stopper"
+            }
+        }
+    },
+    "syntegonFillingAAS": {
+        "base_topic": "NN/Nybrovej/InnoLab/Filling",
+        "skills": {
+            "Dispense": {
+                "command_topic": "NN/Nybrovej/InnoLab/Filling/CMD/Dispense",
+                "response_topic": "NN/Nybrovej/InnoLab/Filling/DATA/Dispense"
+            }
+        }
+    },
+    "loadStationAAS": {
+        "base_topic": "NN/Nybrovej/InnoLab/Loading",
+        "skills": {
+            "Load": {
+                "command_topic": "NN/Nybrovej/InnoLab/Loading/CMD/Load",
+                "response_topic": "NN/Nybrovej/InnoLab/Loading/DATA/Load"
+            }
+        }
+    },
+    "unloadStationAAS": {
+        "base_topic": "NN/Nybrovej/InnoLab/Unloading",
+        "skills": {
+            "Unload": {
+                "command_topic": "NN/Nybrovej/InnoLab/Unloading/CMD/Unload",
+                "response_topic": "NN/Nybrovej/InnoLab/Unloading/DATA/Unload"
+            }
+        }
+    }
+}

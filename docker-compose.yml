@@ -190,6 +190,35 @@ services:
 
 
 ################################### BASYX CONTAINERS ####################################
+
+  # Operation Delegation Service - translates AAS Operations to MQTT commands
+  operation-delegation:
+    build:
+      context: ./OperationDelegation
+      dockerfile: Dockerfile
+    container_name: operation-delegation
+    environment:
+      - MQTT_BROKER=hivemq-broker
+      - MQTT_PORT=1883
+      - PORT=8087
+      - OPERATION_TIMEOUT=30
+      - TOPIC_CONFIG_PATH=/app/config/topics.json
+    volumes:
+      - ./OperationDelegation/config:/app/config:ro
+    ports:
+      - '8087:8087'
+    restart: unless-stopped
+    depends_on:
+      - hivemq-broker
+    networks:
+      - hivemq-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8087/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
   aas-env:
     image: eclipsebasyx/aas-environment:2.0.0-SNAPSHOT
     container_name: aas-env
