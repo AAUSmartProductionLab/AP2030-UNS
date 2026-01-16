@@ -101,7 +101,8 @@ class UnifiedRegistrationService:
     def register_from_yaml_config(self, 
                                    config_path: str = None,
                                    config_data: Dict[str, Any] = None,
-                                   validate_aas: bool = True) -> bool:
+                                   validate_aas: bool = True,
+                                   restart_services: bool = True) -> bool:
         """
         Register an asset from its YAML configuration.
         
@@ -111,12 +112,13 @@ class UnifiedRegistrationService:
         3. Generate DataBridge configs
         4. Generate AAS
         5. Register with BaSyx
-        6. Restart services
+        6. Restart services (optional)
         
         Args:
             config_path: Path to YAML configuration file
             config_data: Already parsed YAML config data (alternative to config_path)
             validate_aas: Whether to validate generated AAS
+            restart_services: Whether to restart DataBridge and Operation Delegation containers
             
         Returns:
             True if registration successful
@@ -163,10 +165,13 @@ class UnifiedRegistrationService:
                 logger.error("Failed to register with BaSyx")
                 return False
             
-            # Step 6: Restart services
-            logger.info("Restarting services...")
-            self._restart_databridge()
-            self._restart_operation_delegation()
+            # Step 6: Restart services (if requested)
+            if restart_services:
+                logger.info("Restarting services...")
+                self._restart_databridge()
+                self._restart_operation_delegation()
+            else:
+                logger.info("Skipping service restarts")
             
             logger.info(f"✓ Successfully registered {system_id}")
             return True
@@ -291,12 +296,30 @@ class UnifiedRegistrationService:
             # POST to AAS repository
             response = self._make_request('POST', self.basyx_config.aas_repo_url, shell_data)
             
-            if response.status_code in [200, 201, 409]:
+            if response.status_code in [200, 201]:
                 logger.info(f"Registered AAS shell: {shell_data.get('idShort')}")
-                
                 # Register with AAS registry
                 self._register_shell_descriptor(shell_data, encoded_id, submodels)
                 return True
+            elif response.status_code == 409:
+                # Already exists - delete and re-register
+                logger.info(f"Shell exists, updating: {shell_data.get('idShort')}")
+                delete_url = f"{self.basyx_config.aas_repo_url}/{encoded_id}"
+                self._make_request('DELETE', delete_url)
+                
+                # Delete from registry too
+                registry_delete_url = f"{self.basyx_config.aas_registry_url}/{encoded_id}"
+                self._make_request('DELETE', registry_delete_url)
+                
+                # Re-register
+                response = self._make_request('POST', self.basyx_config.aas_repo_url, shell_data)
+                if response.status_code in [200, 201]:
+                    logger.info(f"Updated AAS shell: {shell_data.get('idShort')}")
+                    self._register_shell_descriptor(shell_data, encoded_id, submodels)
+                    return True
+                else:
+                    logger.warning(f"Shell re-registration failed: {response.status_code}")
+                    return False
             else:
                 logger.warning(f"Shell registration failed: {response.status_code}")
                 return False
@@ -314,17 +337,39 @@ class UnifiedRegistrationService:
             # Preprocess to fix any compatibility issues
             submodel_data = self._preprocess_submodel(submodel_data)
             
+            # Debug logging for capabilities submodel
+            if submodel_data.get('idShort') == 'OfferedCapabilitiyDescription':
+                logger.info(f"Debug: CapabilitySet has {len(submodel_data.get('submodelElements', [])[0].get('value', []))} capability containers")
+            
             encoded_id = base64.b64encode(submodel_data['id'].encode()).decode()
             
             # POST to submodel repository
             response = self._make_request('POST', self.basyx_config.submodel_repo_url, submodel_data)
             
-            if response.status_code in [200, 201, 409]:
+            if response.status_code in [200, 201]:
                 logger.info(f"Registered submodel: {submodel_data.get('idShort')}")
-                
                 # Register with submodel registry
                 self._register_submodel_descriptor(submodel_data, encoded_id)
                 return True
+            elif response.status_code == 409:
+                # Already exists - delete and re-register
+                logger.info(f"Submodel exists, updating: {submodel_data.get('idShort')}")
+                delete_url = f"{self.basyx_config.submodel_repo_url}/{encoded_id}"
+                self._make_request('DELETE', delete_url)
+                
+                # Delete from registry too
+                registry_delete_url = f"{self.basyx_config.submodel_registry_url}/{encoded_id}"
+                self._make_request('DELETE', registry_delete_url)
+                
+                # Re-register
+                response = self._make_request('POST', self.basyx_config.submodel_repo_url, submodel_data)
+                if response.status_code in [200, 201]:
+                    logger.info(f"Updated submodel: {submodel_data.get('idShort')}")
+                    self._register_submodel_descriptor(submodel_data, encoded_id)
+                    return True
+                else:
+                    logger.warning(f"Submodel re-registration failed: {response.status_code}")
+                    return False
             else:
                 logger.warning(f"Submodel registration failed: {response.status_code}")
                 return False
@@ -342,9 +387,20 @@ class UnifiedRegistrationService:
             cd_url = f"{self.basyx_config.base_url}/concept-descriptions"
             response = self._make_request('POST', cd_url, cd_data)
             
-            if response.status_code in [200, 201, 409]:
+            if response.status_code in [200, 201]:
                 logger.debug(f"Registered concept description: {cd_data.get('idShort', 'unknown')}")
                 return True
+            elif response.status_code == 409:
+                # Already exists - delete and re-register
+                encoded_id = base64.b64encode(cd_data['id'].encode()).decode()
+                delete_url = f"{cd_url}/{encoded_id}"
+                self._make_request('DELETE', delete_url)
+                
+                # Re-register
+                response = self._make_request('POST', cd_url, cd_data)
+                if response.status_code in [200, 201]:
+                    logger.debug(f"Updated concept description: {cd_data.get('idShort', 'unknown')}")
+                    return True
             return False
             
         except Exception as e:
@@ -435,7 +491,8 @@ class UnifiedRegistrationService:
     
     def _preprocess_submodel(self, submodel_data: Dict[str, Any]) -> Dict[str, Any]:
         """Preprocess submodel for BaSyx compatibility"""
-        processed = copy.deepcopy(submodel_data)
+        # Don't deep copy - work on original  
+        processed = submodel_data
         
         if 'submodelElements' in processed:
             processed['submodelElements'] = self._fix_submodel_elements(processed['submodelElements'])
@@ -447,7 +504,7 @@ class UnifiedRegistrationService:
         fixed = []
         
         for element in elements:
-            fixed_element = element.copy()
+            fixed_element = copy.deepcopy(element)  # Deep copy to preserve nested structures
             model_type = element.get('modelType', '')
             
             # Fix File elements
@@ -470,6 +527,11 @@ class UnifiedRegistrationService:
             
             # Recursively fix collections
             elif model_type == 'SubmodelElementCollection':
+                if 'value' in fixed_element and isinstance(fixed_element['value'], list):
+                    fixed_element['value'] = self._fix_submodel_elements(fixed_element['value'])
+            
+            # Recursively fix SubmodelElementList
+            elif model_type == 'SubmodelElementList':
                 if 'value' in fixed_element and isinstance(fixed_element['value'], list):
                     fixed_element['value'] = self._fix_submodel_elements(fixed_element['value'])
             
@@ -518,10 +580,12 @@ class UnifiedRegistrationService:
                 response = self.session.post(url, json=data)
             elif method.upper() == 'PUT':
                 response = self.session.put(url, json=data)
+            elif method.upper() == 'DELETE':
+                response = self.session.delete(url)
             else:
                 raise ValueError(f"Unsupported HTTP method: {method}")
             
-            if response.status_code not in [200, 201, 204, 409]:
+            if response.status_code not in [200, 201, 204, 404, 409]:
                 logger.warning(f"HTTP {response.status_code} for {method} {url}")
             
             return response

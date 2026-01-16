@@ -1,6 +1,6 @@
 {
     "planarTableShuttle1AAS": {
-        "base_topic": "NN/Nybrovej/InnoLab/PlanarMotorSystem/shuttles/1",
+        "base_topic": "NN/Nybrovej/InnoLab/Planar/Xbot1",
         "skills": {
             "MoveToPosition": {
                 "command_topic": "NN/Nybrovej/InnoLab/Planar/Xbot1/CMD/XYMotion",
@@ -21,8 +21,25 @@
         }
     },
     "planarTableShuttle2AAS": {
-        "base_topic": "NN/Nybrovej/InnoLab/PlanarMotorSystem/shuttles/2",
-        "skills": {}
+        "base_topic": "NN/Nybrovej/InnoLab/Planar/Xbot1",
+        "skills": {
+            "MoveToPosition": {
+                "command_topic": "NN/Nybrovej/InnoLab/Planar/Xbot1/CMD/XYMotion",
+                "response_topic": "NN/Nybrovej/InnoLab/Planar/Xbot1/DATA/XYMotion"
+            },
+            "halt": {
+                "command_topic": "NN/Nybrovej/InnoLab/Planar/Xbot1/CMD/Halt",
+                "response_topic": "NN/Nybrovej/InnoLab/Planar/Xbot1/DATA/Halt"
+            },
+            "occupy": {
+                "command_topic": "NN/Nybrovej/InnoLab/Planar/Xbot1/CMD/Occupy",
+                "response_topic": "NN/Nybrovej/InnoLab/Planar/Xbot1/DATA/Occupy"
+            },
+            "release": {
+                "command_topic": "NN/Nybrovej/InnoLab/Planar/Xbot1/CMD/Release",
+                "response_topic": "NN/Nybrovej/InnoLab/Planar/Xbot1/DATA/Release"
+            }
+        }
     },
     "syntegonStopperingAAS": {
         "base_topic": "NN/Nybrovej/InnoLab/Stoppering",
@@ -78,6 +95,191 @@
             "Halt": {
                 "command_topic": "NN/Nybrovej/InnoLab/TestRobot/CMD/Halt",
                 "response_topic": "NN/Nybrovej/InnoLab/TestRobot/DATA/Halt"
+            }
+        }
+    },
+    "testRobot1AAS": {
+        "base_topic": "NN/Nybrovej/InnoLab/TestRobot",
+        "skills": {
+            "PickUp": {
+                "command_topic": "NN/Nybrovej/InnoLab/TestRobot/CMD/PickUp",
+                "response_topic": "NN/Nybrovej/InnoLab/TestRobot/DATA/PickUp"
+            },
+            "PlaceDown": {
+                "command_topic": "NN/Nybrovej/InnoLab/TestRobot/CMD/PlaceDown",
+                "response_topic": "NN/Nybrovej/InnoLab/TestRobot/DATA/PlaceDown"
+            },
+            "MoveToPosition": {
+                "command_topic": "NN/Nybrovej/InnoLab/TestRobot/CMD/Move",
+                "response_topic": "NN/Nybrovej/InnoLab/TestRobot/DATA/Move"
+            },
+            "Halt": {
+                "command_topic": "NN/Nybrovej/InnoLab/TestRobot/CMD/Halt",
+                "response_topic": "NN/Nybrovej/InnoLab/TestRobot/DATA/Halt"
+            }
+        }
+    },
+    "cytivaCappingSystemAAS": {
+        "base_topic": "NN/Nybrovej/InnoLab/Stopper",
+        "skills": {
+            "Capping": {
+                "command_topic": "NN/Nybrovej/InnoLab/Stopper/CMD/Capping",
+                "response_topic": "NN/Nybrovej/InnoLab/Stopper/DATA/Capping"
+            },
+            "halt": {
+                "command_topic": "NN/Nybrovej/InnoLab/Stopper/CMD/Halt",
+                "response_topic": "NN/Nybrovej/InnoLab/Stopper/DATA/Halt"
+            },
+            "occupy": {
+                "command_topic": "NN/Nybrovej/InnoLab/Stopper/CMD/Occupy",
+                "response_topic": "NN/Nybrovej/InnoLab/Stopper/DATA/Occupy"
+            },
+            "release": {
+                "command_topic": "NN/Nybrovej/InnoLab/Stopper/CMD/Release",
+                "response_topic": "NN/Nybrovej/InnoLab/Stopper/DATA/Release"
+            }
+        }
+    },
+    "imaDispensingSystemAAS": {
+        "base_topic": "NN/Nybrovej/InnoLab/Dispensing",
+        "skills": {
+            "dispensing": {
+                "command_topic": "NN/Nybrovej/InnoLab/Dispensing/CMD/Dispensing",
+                "response_topic": "NN/Nybrovej/InnoLab/Dispensing/DATA/Dispensing"
+            },
+            "halt": {
+                "command_topic": "NN/Nybrovej/InnoLab/Dispensing/CMD/Halt",
+                "response_topic": "NN/Nybrovej/InnoLab/Dispensing/DATA/Halt"
+            },
+            "occupy": {
+                "command_topic": "NN/Nybrovej/InnoLab/Dispensing/CMD/Occupy",
+                "response_topic": "NN/Nybrovej/InnoLab/Dispensing/DATA/Occupy"
+            },
+            "release": {
+                "command_topic": "NN/Nybrovej/InnoLab/Dispensing/CMD/Release",
+                "response_topic": "NN/Nybrovej/InnoLab/Dispensing/DATA/Release"
+            }
+        }
+    },
+    "imaLoadingSystemAAS": {
+        "base_topic": "NN/Nybrovej/InnoLab/Dispense",
+        "skills": {
+            "loading": {
+                "command_topic": "NN/Nybrovej/InnoLab/Dispense/CMD/Loading",
+                "response_topic": "NN/Nybrovej/InnoLab/Dispense/DATA/Loading"
+            },
+            "halt": {
+                "command_topic": "NN/Nybrovej/InnoLab/Dispense/CMD/Halt",
+                "response_topic": "NN/Nybrovej/InnoLab/Dispense/DATA/Halt"
+            },
+            "occupy": {
+                "command_topic": "NN/Nybrovej/InnoLab/Dispense/CMD/Occupy",
+                "response_topic": "NN/Nybrovej/InnoLab/Dispense/DATA/Occupy"
+            },
+            "release": {
+                "command_topic": "NN/Nybrovej/InnoLab/Dispense/CMD/Release",
+                "response_topic": "NN/Nybrovej/InnoLab/Dispense/DATA/Release"
+            }
+        }
+    },
+    "omronCameraSystemAAS": {
+        "base_topic": "NN/Nybrovej/InnoLab/Dispense",
+        "skills": {
+            "Capture": {
+                "command_topic": "NN/Nybrovej/InnoLab/Dispense/CMD/Capture",
+                "response_topic": "NN/Nybrovej/InnoLab/Dispense/DATA/Capture"
+            },
+            "halt": {
+                "command_topic": "NN/Nybrovej/InnoLab/Dispense/CMD/Halt",
+                "response_topic": "NN/Nybrovej/InnoLab/Dispense/DATA/Halt"
+            },
+            "occupy": {
+                "command_topic": "NN/Nybrovej/InnoLab/Dispense/CMD/Occupy",
+                "response_topic": "NN/Nybrovej/InnoLab/Dispense/DATA/Occupy"
+            },
+            "release": {
+                "command_topic": "NN/Nybrovej/InnoLab/Dispense/CMD/Release",
+                "response_topic": "NN/Nybrovej/InnoLab/Dispense/DATA/Release"
+            }
+        }
+    },
+    "optimaUnloadingSystemAAS": {
+        "base_topic": "NN/Nybrovej/InnoLab/Dispense",
+        "skills": {
+            "Unloading": {
+                "command_topic": "NN/Nybrovej/InnoLab/Dispense/CMD/Unloading",
+                "response_topic": "NN/Nybrovej/InnoLab/Dispense/DATA/Unloading"
+            },
+            "halt": {
+                "command_topic": "NN/Nybrovej/InnoLab/Dispense/CMD/Halt",
+                "response_topic": "NN/Nybrovej/InnoLab/Dispense/DATA/Halt"
+            },
+            "occupy": {
+                "command_topic": "NN/Nybrovej/InnoLab/Dispense/CMD/Occupy",
+                "response_topic": "NN/Nybrovej/InnoLab/Dispense/DATA/Occupy"
+            },
+            "release": {
+                "command_topic": "NN/Nybrovej/InnoLab/Dispense/CMD/Release",
+                "response_topic": "NN/Nybrovej/InnoLab/Dispense/DATA/Release"
+            }
+        }
+    },
+    "planarTableShuttle3AAS": {
+        "base_topic": "NN/Nybrovej/InnoLab/Planar/Xbot1",
+        "skills": {
+            "MoveToPosition": {
+                "command_topic": "NN/Nybrovej/InnoLab/Planar/Xbot1/CMD/XYMotion",
+                "response_topic": "NN/Nybrovej/InnoLab/Planar/Xbot1/DATA/XYMotion"
+            },
+            "halt": {
+                "command_topic": "NN/Nybrovej/InnoLab/Planar/Xbot1/CMD/Halt",
+                "response_topic": "NN/Nybrovej/InnoLab/Planar/Xbot1/DATA/Halt"
+            },
+            "occupy": {
+                "command_topic": "NN/Nybrovej/InnoLab/Planar/Xbot1/CMD/Occupy",
+                "response_topic": "NN/Nybrovej/InnoLab/Planar/Xbot1/DATA/Occupy"
+            },
+            "release": {
+                "command_topic": "NN/Nybrovej/InnoLab/Planar/Xbot1/CMD/Release",
+                "response_topic": "NN/Nybrovej/InnoLab/Planar/Xbot1/DATA/Release"
+            }
+        }
+    },
+    "planarTableAAS": {
+        "base_topic": "NN/Nybrovej/InnoLab/Planar/Xbot1",
+        "skills": {
+            "halt": {
+                "command_topic": "NN/Nybrovej/InnoLab/Planar/Xbot1/CMD/Halt",
+                "response_topic": "NN/Nybrovej/InnoLab/Planar/Xbot1/DATA/Halt"
+            },
+            "occupy": {
+                "command_topic": "NN/Nybrovej/InnoLab/Planar/Xbot1/CMD/Occupy",
+                "response_topic": "NN/Nybrovej/InnoLab/Planar/Xbot1/DATA/Occupy"
+            },
+            "release": {
+                "command_topic": "NN/Nybrovej/InnoLab/Planar/Xbot1/CMD/Release",
+                "response_topic": "NN/Nybrovej/InnoLab/Planar/Xbot1/DATA/Release"
+            }
+        }
+    },
+    "syntegonStopperingSystemAAS": {
+        "base_topic": "NN/Nybrovej/InnoLab/Stopper",
+        "skills": {
+            "Stoppering": {
+                "command_topic": "NN/Nybrovej/InnoLab/Stopper/CMD/Stoppering",
+                "response_topic": "NN/Nybrovej/InnoLab/Stopper/DATA/Stoppering"
+            },
+            "halt": {
+                "command_topic": "NN/Nybrovej/InnoLab/Stopper/CMD/Halt",
+                "response_topic": "NN/Nybrovej/InnoLab/Stopper/DATA/Halt"
+            },
+            "occupy": {
+                "command_topic": "NN/Nybrovej/InnoLab/Stopper/CMD/Occupy",
+                "response_topic": "NN/Nybrovej/InnoLab/Stopper/DATA/Occupy"
+            },
+            "release": {
+                "command_topic": "NN/Nybrovej/InnoLab/Stopper/CMD/Release",
+                "response_topic": "NN/Nybrovej/InnoLab/Stopper/DATA/Release"
             }
         }
     }

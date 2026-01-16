@@ -202,19 +202,18 @@ class ConfigParser:
         Returns:
             List of variable dictionaries with interface references
         """
-        variables_list = self.config.get('Variables', []) or []
+        variables_dict = self.config.get('Variables', {}) or {}
         
         variables = []
-        for var_item in variables_list:
-            # Each variable is a dict with the variable name as key
-            for var_name, var_config in var_item.items():
-                variables.append({
-                    'name': var_name,
-                    'semantic_id': var_config.get('semanticId', ''),
-                    'interface_reference': var_config.get('InterfaceReference'),
-                    'values': {k: v for k, v in var_config.items() 
-                             if k not in ['semanticId', 'InterfaceReference']}
-                })
+        # Handle dict format: Variables: { VarName: {...}, ... }
+        for var_name, var_config in variables_dict.items():
+            variables.append({
+                'name': var_name,
+                'semantic_id': var_config.get('semanticId', ''),
+                'interface_reference': var_config.get('InterfaceReference'),
+                'values': {k: v for k, v in var_config.items() 
+                         if k not in ['semanticId', 'InterfaceReference']}
+            })
         
         return variables
     
@@ -234,15 +233,15 @@ class ConfigParser:
         Returns:
             List of capability dictionaries
         """
-        capabilities_list = self.config.get('Capabilities', []) or []
+        capabilities_dict = self.config.get('Capabilities', {}) or {}
         
         capabilities = []
-        for cap_item in capabilities_list:
-            for cap_name, cap_config in cap_item.items():
-                capabilities.append({
-                    'name': cap_name,
-                    'realized_by': cap_config.get('realizedBy')
-                })
+        # Handle dict format: Capabilities: { CapName: {...}, ... }
+        for cap_name, cap_config in capabilities_dict.items():
+            capabilities.append({
+                'name': cap_name,
+                'realized_by': cap_config.get('realizedBy')
+            })
         
         return capabilities
     

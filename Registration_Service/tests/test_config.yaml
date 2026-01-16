@@ -120,17 +120,17 @@ testRobotAAS:
                             mqv_controlPacket: 'subscribe'
 
     Variables:
-        - CurrentState:
+        CurrentState:
             semanticId: 'https://www.omac.org/packml/state'
             Value: 'Idle'   
             InterfaceReference: 'CurrentState'
-        - Position:
+        Position:
             semanticId: 'https://smartproductionlab.aau.dk/variables/position'
             X: 0.0
             Y: 0.0
             Z: 0.0
             InterfaceReference: 'Position'
-        - GripperStatus:
+        GripperStatus:
             semanticId: 'https://smartproductionlab.aau.dk/variables/gripper'
             Status: 'Open'
             InterfaceReference: 'GripperStatus'
@@ -144,13 +144,13 @@ testRobotAAS:
                 globalAssetId: 'https://smartproductionlab.aau.dk/assets/testWorkCell001'
     
     Capabilities:
-        - PickUp:
+        PickUp:
             realizedBy: "PickUp"
-        - PlaceDown:
+        PlaceDown:
             realizedBy: "PlaceDown"
-        - MoveToPosition:
+        MoveToPosition:
             realizedBy: "MoveToPosition"
-        - Halt:
+        Halt:
             realizedBy: "Halt"
     
     Skills:

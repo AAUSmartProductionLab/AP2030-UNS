@@ -16,12 +16,7 @@ from pathlib import Path
 from typing import Dict, List, Any, Optional, Tuple
 from basyx.aas import model
 from basyx.aas.adapter.json import json_serialization
-
-# Use relative import when used as module, absolute when run standalone
-try:
-    from .aas_validator import AASValidator
-except ImportError:
-    from aas_validator import AASValidator
+from .aas_validator import AASValidator
 
 
 # JSON Schema to AAS datatypes mapping
@@ -640,22 +635,12 @@ class AASGenerator:
                                    config: Dict) -> model.Submodel:
         """Create the Variables submodel."""
         
-        variables_config = config.get('Variables', []) or []
+        variables_config = config.get('Variables', {}) or {}
         variable_elements = []
         
-        for var in variables_config:
-            if isinstance(var, str):
-                # Simple variable name
-                var_name = var
-                var_config = {}
-            elif isinstance(var, dict):
-                # Variable with configuration
-                var_name = list(var.keys())[0]
-                var_config = var[var_name]
-            else:
-                continue
-            
-            var_collection = self._create_variable_collection_new(var_name, var_config)
+        # Handle dict format (no dashes): Variables: { VarName: {...}, ... }
+        for var_name, var_config in variables_config.items():
+            var_collection = self._create_variable_collection_new(var_name, var_config or {})
             if var_collection:
                 variable_elements.append(var_collection)
         
@@ -1005,16 +990,18 @@ class AASGenerator:
         Returns:
             Capabilities submodel
         """
-        capabilities = config.get('capabilities', []) or []
+        capabilities = config.get('Capabilities', {}) or {}
         capability_containers = []
         
-        for cap in capabilities:
+        # Handle dict format (no dashes): Capabilities: { CapName: {...}, ... }
+        for cap_name, cap_config in capabilities.items():
+            cap_config = cap_config or {}
             container_elements = []
             
             # Capability element (type: Capability)
             container_elements.append(
                 model.Capability(
-                    id_short=cap['name'],
+                    id_short=cap_name,
                     semantic_id=model.ExternalReference(
                         (model.Key(
                             type_=model.KeyTypes.GLOBAL_REFERENCE,
@@ -1025,11 +1012,11 @@ class AASGenerator:
             )
             
             # Comment
-            if 'comment' in cap:
+            if 'comment' in cap_config:
                 container_elements.append(
                     model.MultiLanguageProperty(
                         id_short="Comment",
-                        value=model.MultiLanguageTextType({"en": cap['comment']})
+                        value=model.MultiLanguageTextType({"en": cap_config['comment']})
                     )
                 )
             
@@ -1048,9 +1035,16 @@ class AASGenerator:
             )
             
             # realizedBy - relationships to skills
-            if 'realized_by' in cap and cap['realized_by']:
+            realized_by = cap_config.get('realizedBy')
+            if realized_by:
+                # Handle both single string and list of strings
+                if isinstance(realized_by, str):
+                    skill_names = [realized_by]
+                else:
+                    skill_names = realized_by
+                
                 realized_by_elements = []
-                for skill_name in cap['realized_by']:
+                for skill_name in skill_names:
                     # Create relationship element pointing to skill
                     # id_short=None for SubmodelElementList items (constraint AASd-120)
                     rel_element = model.RelationshipElement(
@@ -1066,7 +1060,7 @@ class AASGenerator:
                             ),
                             model.Key(
                                 type_=model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION,
-                                value=cap.get('id_short', cap['name'] + 'Container')
+                                value=cap_config.get('id_short', cap_name + 'Container')
                             )),
                             model.SubmodelElementCollection
                         ),
@@ -1099,9 +1093,9 @@ class AASGenerator:
                 )
             
             # PropertySet
-            if 'properties' in cap and cap['properties']:
+            if 'properties' in cap_config and cap_config['properties']:
                 property_elements = []
-                for prop in cap['properties']:
+                for prop in cap_config['properties']:
                     prop_container_elements = []
                     
                     # Comment (only add if description is not empty)
@@ -1148,17 +1142,23 @@ class AASGenerator:
                     )
             
             # Create capability container
-            capability_container = model.SubmodelElementCollection(
-                id_short=cap.get('id_short', cap['name'] + 'Container'),
-                value=container_elements,
-                description=model.MultiLanguageTextType({"en": cap.get('description', '')}),
-                semantic_id=model.ExternalReference(
+            container_kwargs = {
+                'id_short': cap_config.get('id_short', cap_name + 'Container'),
+                'value': container_elements,
+                'semantic_id': model.ExternalReference(
                     (model.Key(
                         type_=model.KeyTypes.GLOBAL_REFERENCE,
                         value="https://smartfactory.de/aas/submodel/OfferedCapabilitiyDescription/CapabilitySet/CapabilityContainer#1/0"
                     ),)
                 )
-            )
+            }
+            
+            # Only add description if it's not empty
+            description = cap_config.get('description', '')
+            if description:
+                container_kwargs['description'] = model.MultiLanguageTextType({"en": description})
+            
+            capability_container = model.SubmodelElementCollection(**container_kwargs)
             capability_containers.append(capability_container)
         
         # Create CapabilitySet
@@ -1296,6 +1296,7 @@ class AASGenerator:
         prop = model.Property(
             id_short=var_name,
             value_type=aas_type,
+            display_name=var_name,
             description=model.MultiLanguageTextType({"en": description}) if description else None
         )
         
@@ -1342,7 +1343,7 @@ class AASGenerator:
             if output_schema:
                 props = self._extract_schema_properties(output_schema)
                 for prop_name, prop_def in props.items():
-                    # Properties that exist in both input and output become in-output variables
+                    # Skip properties that already exist in input (they become in-output)
                     if prop_name in input_prop_names:
                         # Move from input to in-output
                         prop_type = prop_def.get('type', 'string')
@@ -1396,13 +1397,20 @@ class AASGenerator:
                     value=str(action_config['synchronous']).lower() == 'true'
                 )
             )
-        
+        elif 'asynchronous' in action_config:
+            qualifiers.append(
+                model.Qualifier(
+                    type_="Asynchronous",
+                    value_type=model.datatypes.Boolean,
+                    value=str(action_config['asynchronous']).lower() == 'true'
+                )
+            )
         operation = model.Operation(
             id_short="Operation",
             input_variable=input_variables if input_variables else (),
             output_variable=output_variables if output_variables else (),
             in_output_variable=inoutput_variables if inoutput_variables else (),
-            description=model.MultiLanguageTextType({"en": f"Operation to invoke {description} skill"}),
+            description=model.MultiLanguageTextType({"en": f"Operation to invoke {description} action"}),
             semantic_id=semantic_id,
             qualifier=qualifiers if qualifiers else ()
         )
@@ -1492,95 +1500,55 @@ class AASGenerator:
                     )
                     skill_elements.append(skill_collection)
                     
-                elif 'input_variable' in skill_data or 'output_variable' in skill_data:
-                    # Fallback: create operation from explicit skill config
-                    input_variables = []
-                    output_variables = []
-                    
-                    if 'input_variable' in skill_data and skill_data['input_variable']:
-                        for var_name, var_type in skill_data['input_variable'].items():
-                            input_variables.append(
-                                self._create_operation_input_property(var_name, var_type)
-                            )
-                    
-                    if 'output_variable' in skill_data and skill_data['output_variable']:
-                        for var_name, var_type in skill_data['output_variable'].items():
-                            output_variables.append(
-                                self._create_operation_input_property(var_name, var_type)
-                            )
-                    
-                    # Build qualifiers for delegation
-                    qualifiers = []
-                    if self.delegation_base_url:
-                        qualifiers.append(model.Qualifier(
-                            type_="invocationDelegation",
-                            value_type=model.datatypes.String,
-                            value=f"{self.delegation_base_url}/operations/{system_id}/{skill_name}",
-                            kind=model.QualifierKind.CONCEPT_QUALIFIER
-                        ))
-                        qualifiers.append(model.Qualifier(
-                            type_="Synchronous",
-                            value_type=model.datatypes.Boolean,
-                            value="true",
-                            kind=model.QualifierKind.CONCEPT_QUALIFIER
-                        ))
-                    
-                    operation = model.Operation(
-                        id_short=skill_name,
-                        input_variable=input_variables if input_variables else (),
-                        output_variable=output_variables if output_variables else (),
-                        description=model.MultiLanguageTextType({"en": skill_data.get('description', f'Operation for {skill_name}')}),
-                        qualifier=qualifiers if qualifiers else ()
-                    )
-                    
-                    # Wrap operation in a SubmodelElementCollection (no interface reference for fallback)
-                    skill_collection = model.SubmodelElementCollection(
-                        id_short=skill_name,
-                        value=[operation],
-                        description=model.MultiLanguageTextType({"en": skill_data.get('description', f'Skill: {skill_name}')})
-                    )
-                    skill_elements.append(skill_collection)
+                    if 'input_variable' in skill_data or 'output_variable' in skill_data:
+                        # Fallback: create operation from explicit skill config
+                        input_variables = []
+                        output_variables = []
+                        
+                        if 'input_variable' in skill_data and skill_data['input_variable']:
+                            for var_name, var_type in skill_data['input_variable'].items():
+                                input_variables.append(
+                                    self._create_operation_input_property(var_name, var_type)
+                                )
+                        
+                        if 'output_variable' in skill_data and skill_data['output_variable']:
+                            for var_name, var_type in skill_data['output_variable'].items():
+                                output_variables.append(
+                                    self._create_operation_input_property(var_name, var_type)
+                                )
+                        
+                        # Build qualifiers for delegation
+                        qualifiers = []
+                        if self.delegation_base_url:
+                            qualifiers.append(model.Qualifier(
+                                type_="invocationDelegation",
+                                value_type=model.datatypes.String,
+                                value=f"{self.delegation_base_url}/operations/{system_id}/{skill_name}",
+                                kind=model.QualifierKind.CONCEPT_QUALIFIER
+                            ))
+                            qualifiers.append(model.Qualifier(
+                                type_="Synchronous",
+                                value_type=model.datatypes.Boolean,
+                                value="true",
+                                kind=model.QualifierKind.CONCEPT_QUALIFIER
+                            ))
+                        
+                        operation = model.Operation(
+                            id_short=skill_name,
+                            input_variable=input_variables if input_variables else (),
+                            output_variable=output_variables if output_variables else (),
+                            description=model.MultiLanguageTextType({"en": skill_data.get('description', f'Operation for {skill_name}')}),
+                            qualifier=qualifiers if qualifiers else ()
+                        )
+                        
+                        # Wrap operation in a SubmodelElementCollection (no interface reference for fallback)
+                        skill_collection = model.SubmodelElementCollection(
+                            id_short=skill_name,
+                            value=[operation],
+                            description=model.MultiLanguageTextType({"en": skill_data.get('description', f'Skill: {skill_name}')})
+                        )
+                        skill_elements.append(skill_collection)
         
-        else:
-            # Auto-generate operations from action interfaces
-            for action_name, action_config in action_map.items():
-                # Create the Operation from the action interface
-                operation = self._create_operation_from_action(
-                    action_name, action_config, system_id
-                )
-                
-                # Create reference to the action interface
-                interface_reference = model.ReferenceElement(
-                    id_short="InterfaceReference",
-                    value=model.ModelReference(
-                        (model.Key(
-                            type_=model.KeyTypes.SUBMODEL,
-                            value=f"{self.base_url}/submodels/instances/{system_id}/AssetInterfacesDescription"
-                        ),
-                        model.Key(
-                            type_=model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION,
-                            value="InterfaceMQTT"
-                        ),
-                        model.Key(
-                            type_=model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION,
-                            value="InteractionMetadata"
-                        ),
-                        model.Key(
-                            type_=model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION,
-                            value=action_name
-                        ),),
-                        model.SubmodelElementCollection
-                    ),
-                    description=model.MultiLanguageTextType({"en": f"Reference to {action_name} action interface"})
-                )
-                
-                # Wrap operation and reference in a SubmodelElementCollection
-                skill_collection = model.SubmodelElementCollection(
-                    id_short=action_name,
-                    value=[operation, interface_reference],
-                    description=model.MultiLanguageTextType({"en": f'Skill: {action_config.get("title", action_name)}'})
-                )
-                skill_elements.append(skill_collection)
         
         # Create submodel
         submodel = model.Submodel(
