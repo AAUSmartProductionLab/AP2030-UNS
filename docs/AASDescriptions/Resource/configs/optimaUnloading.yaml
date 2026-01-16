@@ -10,7 +10,7 @@ optimaUnloadingSystemAAS:
         InterfaceMQTT:
             Title: 'optima Unloading System'
             EndpointMetadata:
-                base: 'mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/Dispense'
+                base: 'mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/Unloading'
                 contentType: 'application/json'
             InteractionMetadata:
                 actions:
