@@ -9,4 +9,8 @@ lxml>=4.9.0
 python-dateutil>=2.8.0
 pyecma376-2>=0.2.0
 
+# MQTT for registration listening and operation delegation
 paho-mqtt>=2.1.0
+
+# YAML parsing for config-based registration
+PyYAML>=6.0.0

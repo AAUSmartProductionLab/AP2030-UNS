@@ -1,20 +1,17 @@
 [
   {
-    "uniqueId": "mqtt_consumer_1",
-    "serverUrl": "192.168.0.104",
-    "serverPort": 1883,
-    "topic": "NN/Nybrovej/InnoLab/WeightVerification/DATA/Image"
+    "uniqueId": "NN_Nybrovej_InnoLab_TestRobot_DATA_State",
+    "serverUrl": "tcp://192.168.0.104:1883",
+    "topic": "NN/Nybrovej/InnoLab/TestRobot/DATA/State"
   },
   {
-    "uniqueId": "mqtt_consumer_2",
-    "serverUrl": "192.168.0.104",
-    "serverPort": 1883,
-    "topic": "NN/Nybrovej/InnoLab/WeightVerification/DATA/Occupation"
+    "uniqueId": "NN_Nybrovej_InnoLab_TestRobot_DATA_Position",
+    "serverUrl": "tcp://192.168.0.104:1883",
+    "topic": "NN/Nybrovej/InnoLab/TestRobot/DATA/Position"
   },
   {
-    "uniqueId": "mqtt_consumer_3",
-    "serverUrl": "192.168.0.104",
-    "serverPort": 1883,
-    "topic": "NN/Nybrovej/InnoLab/WeightVerification/DATA/State"
+    "uniqueId": "NN_Nybrovej_InnoLab_TestRobot_DATA_Gripper",
+    "serverUrl": "tcp://192.168.0.104:1883",
+    "topic": "NN/Nybrovej/InnoLab/TestRobot/DATA/Gripper"
   }
 ]

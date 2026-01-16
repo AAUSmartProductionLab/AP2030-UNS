@@ -59,5 +59,26 @@
                 "response_topic": "NN/Nybrovej/InnoLab/Unloading/DATA/Unload"
             }
         }
+    },
+    "testRobotAAS": {
+        "base_topic": "NN/Nybrovej/InnoLab/TestRobot",
+        "skills": {
+            "PickUp": {
+                "command_topic": "NN/Nybrovej/InnoLab/TestRobot/CMD/PickUp",
+                "response_topic": "NN/Nybrovej/InnoLab/TestRobot/DATA/PickUp"
+            },
+            "PlaceDown": {
+                "command_topic": "NN/Nybrovej/InnoLab/TestRobot/CMD/PlaceDown",
+                "response_topic": "NN/Nybrovej/InnoLab/TestRobot/DATA/PlaceDown"
+            },
+            "MoveToPosition": {
+                "command_topic": "NN/Nybrovej/InnoLab/TestRobot/CMD/Move",
+                "response_topic": "NN/Nybrovej/InnoLab/TestRobot/DATA/Move"
+            },
+            "Halt": {
+                "command_topic": "NN/Nybrovej/InnoLab/TestRobot/CMD/Halt",
+                "response_topic": "NN/Nybrovej/InnoLab/TestRobot/DATA/Halt"
+            }
+        }
     }
 }

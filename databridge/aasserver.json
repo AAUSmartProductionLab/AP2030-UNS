@@ -1,26 +1,27 @@
 [
   {
-    "uniqueId": "Variables/PackMLState.Value",
-    "submodelEndpoint": "http://aas-env:8081/submodels/aHR0cHM6Ly9zbWFydHByb2R1Y3Rpb25sYWIuYWF1LmRrL3N1Ym1vZGVscy9pbnN0YW5jZXMvb21yb25DYW1lcmEvVmFyaWFibGVz",
-    "idShortPath": "PackMLState.Value",
-    "api": "DotAasV3"
+    "uniqueId": "testRobotAAS_CurrentState_sink_Value",
+    "submodelEndpoint": "http://aas-env:8081/submodels/aHR0cHM6Ly9zbWFydHByb2R1Y3Rpb25sYWIuYWF1LmRrL3N1Ym1vZGVscy9pbnN0YW5jZXMvdGVzdFJvYm90QUFTL1ZhcmlhYmxlcw==",
+    "idShortPath": "CurrentState.Value"
   },
   {
-    "uniqueId": "Variables/OccupationState.State",
-    "submodelEndpoint": "http://aas-env:8081/submodels/aHR0cHM6Ly9zbWFydHByb2R1Y3Rpb25sYWIuYWF1LmRrL3N1Ym1vZGVscy9pbnN0YW5jZXMvb21yb25DYW1lcmEvVmFyaWFibGVz",
-    "idShortPath": "OccupationState.State",
-    "api": "DotAasV3"
+    "uniqueId": "testRobotAAS_Position_sink_X",
+    "submodelEndpoint": "http://aas-env:8081/submodels/aHR0cHM6Ly9zbWFydHByb2R1Y3Rpb25sYWIuYWF1LmRrL3N1Ym1vZGVscy9pbnN0YW5jZXMvdGVzdFJvYm90QUFTL1ZhcmlhYmxlcw==",
+    "idShortPath": "Position.X"
   },
   {
-    "uniqueId": "Variables/OccupationState.Queue",
-    "submodelEndpoint": "http://aas-env:8081/submodels/aHR0cHM6Ly9zbWFydHByb2R1Y3Rpb25sYWIuYWF1LmRrL3N1Ym1vZGVscy9pbnN0YW5jZXMvb21yb25DYW1lcmEvVmFyaWFibGVz",
-    "idShortPath": "OccupationState.Queue",
-    "api": "DotAasV3"
+    "uniqueId": "testRobotAAS_Position_sink_Y",
+    "submodelEndpoint": "http://aas-env:8081/submodels/aHR0cHM6Ly9zbWFydHByb2R1Y3Rpb25sYWIuYWF1LmRrL3N1Ym1vZGVscy9pbnN0YW5jZXMvdGVzdFJvYm90QUFTL1ZhcmlhYmxlcw==",
+    "idShortPath": "Position.Y"
   },
   {
-    "uniqueId": "Variables/Image.Value",
-    "submodelEndpoint": "http://aas-env:8081/submodels/aHR0cHM6Ly9zbWFydHByb2R1Y3Rpb25sYWIuYWF1LmRrL3N1Ym1vZGVscy9pbnN0YW5jZXMvb21yb25DYW1lcmEvVmFyaWFibGVz",
-    "idShortPath": "Image.Value",
-    "api": "DotAasV3"
+    "uniqueId": "testRobotAAS_Position_sink_Z",
+    "submodelEndpoint": "http://aas-env:8081/submodels/aHR0cHM6Ly9zbWFydHByb2R1Y3Rpb25sYWIuYWF1LmRrL3N1Ym1vZGVscy9pbnN0YW5jZXMvdGVzdFJvYm90QUFTL1ZhcmlhYmxlcw==",
+    "idShortPath": "Position.Z"
+  },
+  {
+    "uniqueId": "testRobotAAS_GripperStatus_sink_Status",
+    "submodelEndpoint": "http://aas-env:8081/submodels/aHR0cHM6Ly9zbWFydHByb2R1Y3Rpb25sYWIuYWF1LmRrL3N1Ym1vZGVscy9pbnN0YW5jZXMvdGVzdFJvYm90QUFTL1ZhcmlhYmxlcw==",
+    "idShortPath": "GripperStatus.Status"
   }
 ]

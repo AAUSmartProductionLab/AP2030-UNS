@@ -1,0 +1,172 @@
+# Test Asset Configuration
+# Uses the same format as the real configs (planarShuttle1.yaml etc.)
+
+testRobotAAS:
+    idShort: testRobotAAS
+    id: 'https://smartproductionlab.aau.dk/aas/testRobot'
+    globalAssetId: 'https://smartproductionlab.aau.dk/assets/testRobot001'
+    derivedFrom: 'https://smartproductionlab.aau.dk/aas/templates/resource'
+    assetType: 'https://smartproductionlab.aau.dk/Resource/CPS/Robot/testRobot'
+    serialNumber: 'TEST-001'
+    location: 'InnoLab, Nybrovej, AAU'
+    AssetInterfacesDescription:
+        InterfaceMQTT:
+            Title: 'Test Robot Arm'
+            EndpointMetadata:
+                base: 'mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/TestRobot/'
+                contentType: 'application/json'
+            InteractionMetadata:
+                actions:
+                    - PickUp:
+                        key: 'PickUp'
+                        title: 'PickUp'
+                        synchronous: 'true'
+                        input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
+                        output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
+                        forms:
+                            contentType: 'application/json'
+                            href: '/CMD/PickUp'
+                            op: 'invokeAction'
+                            mqv_retain: 'false'
+                            mqv_controlPacket: subscribe
+                            mqv_qos: '2'
+                            response:
+                                contentType: 'application/json'
+                                href: '/DATA/PickUp'
+                                mqv_controlPacket: 'publish'
+                    - PlaceDown:
+                        key: 'PlaceDown'
+                        title: 'PlaceDown'
+                        synchronous: 'true'
+                        input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
+                        output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
+                        forms:
+                            contentType: 'application/json'
+                            href: '/CMD/PlaceDown'
+                            op: 'invokeAction'
+                            mqv_retain: 'false'
+                            mqv_controlPacket: subscribe
+                            mqv_qos: '2'
+                            response:
+                                contentType: 'application/json'
+                                href: '/DATA/PlaceDown'
+                                mqv_controlPacket: 'publish'
+                    - MoveToPosition:
+                        key: 'MoveToPosition'
+                        title: 'MoveToPosition'
+                        synchronous: 'true'
+                        input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/moveToPosition.schema.json'
+                        output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
+                        forms:
+                            contentType: 'application/json'
+                            href: '/CMD/Move'
+                            op: 'invokeAction'
+                            mqv_retain: 'false'
+                            mqv_controlPacket: subscribe
+                            mqv_qos: '2'
+                            response:
+                                contentType: 'application/json'
+                                href: '/DATA/Move'
+                                mqv_controlPacket: 'publish'
+                    - Halt:
+                        key: 'Halt'
+                        title: 'Halt'
+                        synchronous: 'true'
+                        input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
+                        forms:
+                            contentType: 'application/json'
+                            href: '/CMD/Halt'
+                            op: 'invokeAction'
+                            mqv_retain: 'false'
+                            mqv_controlPacket: subscribe
+                            mqv_qos: '2'
+                            response:
+                                contentType: 'application/json'
+                                href: '/DATA/Halt'
+                                mqv_controlPacket: 'publish'
+                properties:
+                    - CurrentState:
+                        key: 'CurrentState'
+                        title: 'Current PackML State'
+                        observable: 'true'
+                        readOnly: 'true'
+                        forms:
+                            contentType: 'application/json'
+                            href: '/DATA/State'
+                            op: 'observeProperty'
+                            mqv_retain: 'true'
+                            mqv_controlPacket: 'subscribe'
+                    - Position:
+                        key: 'Position'
+                        title: 'Current Position'
+                        observable: 'true'
+                        readOnly: 'true'
+                        forms:
+                            contentType: 'application/json'
+                            href: '/DATA/Position'
+                            op: 'observeProperty'
+                            mqv_retain: 'true'
+                            mqv_controlPacket: 'subscribe'
+                    - GripperStatus:
+                        key: 'GripperStatus'
+                        title: 'Gripper Open/Closed'
+                        observable: 'true'
+                        readOnly: 'true'
+                        forms:
+                            contentType: 'application/json'
+                            href: '/DATA/Gripper'
+                            op: 'observeProperty'
+                            mqv_retain: 'true'
+                            mqv_controlPacket: 'subscribe'
+
+    Variables:
+        - CurrentState:
+            semanticId: 'https://www.omac.org/packml/state'
+            Value: 'Idle'   
+            InterfaceReference: 'CurrentState'
+        - Position:
+            semanticId: 'https://smartproductionlab.aau.dk/variables/position'
+            X: 0.0
+            Y: 0.0
+            Z: 0.0
+            InterfaceReference: 'Position'
+        - GripperStatus:
+            semanticId: 'https://smartproductionlab.aau.dk/variables/gripper'
+            Status: 'Open'
+            InterfaceReference: 'GripperStatus'
+
+    Parameters:
+    
+    HierarchicalStructures:
+        Archetype: 'OneUp'
+        IsPartOf:
+            - testWorkCell:
+                globalAssetId: 'https://smartproductionlab.aau.dk/assets/testWorkCell001'
+    
+    Capabilities:
+        - PickUp:
+            realizedBy: "PickUp"
+        - PlaceDown:
+            realizedBy: "PlaceDown"
+        - MoveToPosition:
+            realizedBy: "MoveToPosition"
+        - Halt:
+            realizedBy: "Halt"
+    
+    Skills:
+        PickUp:
+            description: "Pick up an object from the current position"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/PickUp"
+            interface: "PickUp"
+        PlaceDown:
+            description: "Place down the held object"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/PlaceDown"
+            interface: "PlaceDown"
+        MoveToPosition:
+            description: "Move the robot arm to a target position"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/MoveToPosition"
+            interface: "MoveToPosition"
+        Halt:
+            description: "Emergency stop all movement"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/Halt"
+            interface: "Halt"

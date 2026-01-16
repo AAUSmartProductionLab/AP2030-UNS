@@ -1,42 +1,52 @@
 [
   {
-    "datasource": "mqtt_consumer_1",
+    "routeId": "route_NN_Nybrovej_InnoLab_TestRobot_DATA_State_to_testRobotAAS_CurrentState_sink_Value",
+    "datasource": "NN_Nybrovej_InnoLab_TestRobot_DATA_State",
     "transformers": [
-      "variables_image_value_transformer"
+      "testRobotAAS_CurrentState_transformer"
     ],
     "datasinks": [
-      "Variables/Image.Value"
-    ],
-    "trigger": "event"
+      "testRobotAAS_CurrentState_sink_Value"
+    ]
   },
   {
-    "datasource": "mqtt_consumer_2",
+    "routeId": "route_NN_Nybrovej_InnoLab_TestRobot_DATA_Position_to_testRobotAAS_Position_sink_X",
+    "datasource": "NN_Nybrovej_InnoLab_TestRobot_DATA_Position",
     "transformers": [
-      "variables_occupationstate_state_transformer",
-      "variables_occupationstate_queue_transformer"
+      "testRobotAAS_Position_transformer"
     ],
     "datasinks": [
-      "Variables/OccupationState.State",
-      "Variables/OccupationState.Queue"
-    ],
-    "trigger": "event",
-    "datasinkMappingConfiguration": {
-      "Variables/OccupationState.State": [
-        "variables_occupationstate_state_transformer"
-      ],
-      "Variables/OccupationState.Queue": [
-        "variables_occupationstate_queue_transformer"
-      ]
-    }
+      "testRobotAAS_Position_sink_X"
+    ]
   },
   {
-    "datasource": "mqtt_consumer_3",
+    "routeId": "route_NN_Nybrovej_InnoLab_TestRobot_DATA_Position_to_testRobotAAS_Position_sink_Y",
+    "datasource": "NN_Nybrovej_InnoLab_TestRobot_DATA_Position",
     "transformers": [
-      "variables_packmlstate_value_transformer"
+      "testRobotAAS_Position_transformer"
     ],
     "datasinks": [
-      "Variables/PackMLState.Value"
+      "testRobotAAS_Position_sink_Y"
+    ]
+  },
+  {
+    "routeId": "route_NN_Nybrovej_InnoLab_TestRobot_DATA_Position_to_testRobotAAS_Position_sink_Z",
+    "datasource": "NN_Nybrovej_InnoLab_TestRobot_DATA_Position",
+    "transformers": [
+      "testRobotAAS_Position_transformer"
     ],
-    "trigger": "event"
+    "datasinks": [
+      "testRobotAAS_Position_sink_Z"
+    ]
+  },
+  {
+    "routeId": "route_NN_Nybrovej_InnoLab_TestRobot_DATA_Gripper_to_testRobotAAS_GripperStatus_sink_Status",
+    "datasource": "NN_Nybrovej_InnoLab_TestRobot_DATA_Gripper",
+    "transformers": [
+      "testRobotAAS_GripperStatus_transformer"
+    ],
+    "datasinks": [
+      "testRobotAAS_GripperStatus_sink_Status"
+    ]
   }
 ]
