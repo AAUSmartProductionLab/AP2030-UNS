@@ -104,11 +104,11 @@ planarTableShuttle2AAS:
                                 mqv_qos: '0'
 
     Variables:
-        - PackMLState:
+        PackMLState:
             semanticId: 'https://www.omac.org/packml/state'
             Value: 'Idle'   
             InterfaceReference: 'PackMLState'
-        - OccupationState:
+        OccupationState:
             semanticId: ''
             State: 'Available'
             Queue: '[]'   

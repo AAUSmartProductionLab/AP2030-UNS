@@ -104,11 +104,11 @@ planarTableShuttle1AAS:
                                 mqv_qos: '0'
 
     Variables:
-        - PackMLState:
+        PackMLState:
             semanticId: 'https://www.omac.org/packml/state'
             Value: 'Idle'   
             InterfaceReference: 'PackMLState'
-        - OccupationState:
+        OccupationState:
             semanticId: ''
             State: 'Available'
             Queue: '[]'   
@@ -122,13 +122,13 @@ planarTableShuttle1AAS:
                 globalAssetId: 'https://smartproductionlab.aau.dk/assets/51kUZLlDQky3k5Mk6SRb2Q'
     
     Capabilities:
-        - MoveToPosition:
+        MoveToPosition:
             realizedBy: "MoveToPosition"
-        - halt:
+        halt:
             realizedBy: "halt"
-        - occupy:
+        occupy:
             realizedBy: "occupy"
-        - release:
+        release:
             realizedBy: "release"
     
     Skills:
