@@ -5,7 +5,7 @@
     "type": "object",
         "allOf": [
             {
-                "$ref": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/data.schema.json"
+                "$ref": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/data.schema.json"
             },
             {
                 "anyOf": [
