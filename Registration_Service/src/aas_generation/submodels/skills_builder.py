@@ -276,11 +276,11 @@ class SkillsSubmodelBuilder:
         aas_type = self.schema_handler.get_aas_type(var_type)
         
         # For operation variables, we need a Property without a value
-        # but with display_name and description
+        # display_name must be MultiLanguageNameType (array of {language, text})
         prop = model.Property(
             id_short=var_name,
             value_type=aas_type,
-            display_name=var_name,
+            display_name=model.MultiLanguageNameType({"en": var_name}),
             description=model.MultiLanguageTextType({"en": description}) if description else None
         )
         return prop

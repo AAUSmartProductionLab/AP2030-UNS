@@ -374,6 +374,13 @@ class UnifiedRegistrationService:
                     return False
             else:
                 logger.warning(f"Submodel registration failed: {response.status_code}")
+                # Log detailed error response for debugging
+                try:
+                    error_detail = response.text if hasattr(response, 'text') else str(response.content)
+                    logger.warning(f"Server response: {error_detail[:500]}")
+                    logger.warning(f"Failed submodel idShort: {submodel_data.get('idShort')}")
+                except:
+                    pass
                 return False
                 
         except Exception as e:

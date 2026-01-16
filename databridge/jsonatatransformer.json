@@ -1,149 +1,177 @@
 [
   {
-    "uniqueId": "cytivaCappingSystemAAS_PackMLState_transformer",
-    "queryPath": "queries/cytivaCappingSystemAAS_PackMLState.jsonata",
+    "uniqueId": "cytivaCappingSystemAAS_PackMLState_State_transformer",
+    "queryLanguage": "JSONATA",
+    "queryPath": "queries/cytivaCappingSystemAAS_PackMLState_State.jsonata",
     "inputType": "JsonString",
-    "outputType": "JsonString",
-    "queryLanguage": "JSONATA"
+    "outputType": "JsonString"
   },
   {
-    "uniqueId": "cytivaCappingSystemAAS_OccupationState_transformer",
-    "queryPath": "queries/cytivaCappingSystemAAS_OccupationState.jsonata",
+    "uniqueId": "cytivaCappingSystemAAS_OccupationState_Occupation_transformer",
+    "queryLanguage": "JSONATA",
+    "queryPath": "queries/cytivaCappingSystemAAS_OccupationState_Occupation.jsonata",
     "inputType": "JsonString",
-    "outputType": "JsonString",
-    "queryLanguage": "JSONATA"
+    "outputType": "JsonString"
   },
   {
-    "uniqueId": "imaDispensingSystemAAS_PackMLState_transformer",
-    "queryPath": "queries/imaDispensingSystemAAS_PackMLState.jsonata",
+    "uniqueId": "imaDispensingSystemAAS_PackMLState_State_transformer",
+    "queryLanguage": "JSONATA",
+    "queryPath": "queries/imaDispensingSystemAAS_PackMLState_State.jsonata",
     "inputType": "JsonString",
-    "outputType": "JsonString",
-    "queryLanguage": "JSONATA"
+    "outputType": "JsonString"
   },
   {
-    "uniqueId": "imaDispensingSystemAAS_OccupationState_transformer",
-    "queryPath": "queries/imaDispensingSystemAAS_OccupationState.jsonata",
+    "uniqueId": "imaDispensingSystemAAS_OccupationState_Occupation_transformer",
+    "queryLanguage": "JSONATA",
+    "queryPath": "queries/imaDispensingSystemAAS_OccupationState_Occupation.jsonata",
     "inputType": "JsonString",
-    "outputType": "JsonString",
-    "queryLanguage": "JSONATA"
+    "outputType": "JsonString"
   },
   {
-    "uniqueId": "imaDispensingSystemAAS_Weight_transformer",
-    "queryPath": "queries/imaDispensingSystemAAS_Weight.jsonata",
+    "uniqueId": "imaDispensingSystemAAS_Weight_Weight_transformer",
+    "queryLanguage": "JSONATA",
+    "queryPath": "queries/imaDispensingSystemAAS_Weight_Weight.jsonata",
     "inputType": "JsonString",
-    "outputType": "JsonString",
-    "queryLanguage": "JSONATA"
+    "outputType": "JsonString"
   },
   {
-    "uniqueId": "imaLoadingSystemAAS_PackMLState_transformer",
-    "queryPath": "queries/imaLoadingSystemAAS_PackMLState.jsonata",
+    "uniqueId": "imaLoadingSystemAAS_PackMLState_State_transformer",
+    "queryLanguage": "JSONATA",
+    "queryPath": "queries/imaLoadingSystemAAS_PackMLState_State.jsonata",
     "inputType": "JsonString",
-    "outputType": "JsonString",
-    "queryLanguage": "JSONATA"
+    "outputType": "JsonString"
   },
   {
-    "uniqueId": "imaLoadingSystemAAS_OccupationState_transformer",
-    "queryPath": "queries/imaLoadingSystemAAS_OccupationState.jsonata",
+    "uniqueId": "imaLoadingSystemAAS_OccupationState_Occupation_transformer",
+    "queryLanguage": "JSONATA",
+    "queryPath": "queries/imaLoadingSystemAAS_OccupationState_Occupation.jsonata",
     "inputType": "JsonString",
-    "outputType": "JsonString",
-    "queryLanguage": "JSONATA"
+    "outputType": "JsonString"
   },
   {
-    "uniqueId": "omronCameraSystemAAS_PackMLState_transformer",
-    "queryPath": "queries/omronCameraSystemAAS_PackMLState.jsonata",
+    "uniqueId": "imaLoadingSystemAAS_Weight_Weight_transformer",
+    "queryLanguage": "JSONATA",
+    "queryPath": "queries/imaLoadingSystemAAS_Weight_Weight.jsonata",
     "inputType": "JsonString",
-    "outputType": "JsonString",
-    "queryLanguage": "JSONATA"
+    "outputType": "JsonString"
   },
   {
-    "uniqueId": "omronCameraSystemAAS_OccupationState_transformer",
-    "queryPath": "queries/omronCameraSystemAAS_OccupationState.jsonata",
+    "uniqueId": "omronCameraSystemAAS_PackMLState_State_transformer",
+    "queryLanguage": "JSONATA",
+    "queryPath": "queries/omronCameraSystemAAS_PackMLState_State.jsonata",
     "inputType": "JsonString",
-    "outputType": "JsonString",
-    "queryLanguage": "JSONATA"
+    "outputType": "JsonString"
   },
   {
-    "uniqueId": "optimaUnloadingSystemAAS_PackMLState_transformer",
-    "queryPath": "queries/optimaUnloadingSystemAAS_PackMLState.jsonata",
+    "uniqueId": "omronCameraSystemAAS_OccupationState_Occupation_transformer",
+    "queryLanguage": "JSONATA",
+    "queryPath": "queries/omronCameraSystemAAS_OccupationState_Occupation.jsonata",
     "inputType": "JsonString",
-    "outputType": "JsonString",
-    "queryLanguage": "JSONATA"
+    "outputType": "JsonString"
   },
   {
-    "uniqueId": "optimaUnloadingSystemAAS_OccupationState_transformer",
-    "queryPath": "queries/optimaUnloadingSystemAAS_OccupationState.jsonata",
+    "uniqueId": "omronCameraSystemAAS_Image_Format_transformer",
+    "queryLanguage": "JSONATA",
+    "queryPath": "queries/omronCameraSystemAAS_Image_Format.jsonata",
     "inputType": "JsonString",
-    "outputType": "JsonString",
-    "queryLanguage": "JSONATA"
+    "outputType": "JsonString"
   },
   {
-    "uniqueId": "planarTableShuttle1AAS_PackMLState_transformer",
-    "queryPath": "queries/planarTableShuttle1AAS_PackMLState.jsonata",
+    "uniqueId": "omronCameraSystemAAS_Image_Image_transformer",
+    "queryLanguage": "JSONATA",
+    "queryPath": "queries/omronCameraSystemAAS_Image_Image.jsonata",
     "inputType": "JsonString",
-    "outputType": "JsonString",
-    "queryLanguage": "JSONATA"
+    "outputType": "JsonString"
   },
   {
-    "uniqueId": "planarTableShuttle1AAS_OccupationState_transformer",
-    "queryPath": "queries/planarTableShuttle1AAS_OccupationState.jsonata",
+    "uniqueId": "optimaUnloadingSystemAAS_PackMLState_State_transformer",
+    "queryLanguage": "JSONATA",
+    "queryPath": "queries/optimaUnloadingSystemAAS_PackMLState_State.jsonata",
     "inputType": "JsonString",
-    "outputType": "JsonString",
-    "queryLanguage": "JSONATA"
+    "outputType": "JsonString"
   },
   {
-    "uniqueId": "planarTableShuttle2AAS_PackMLState_transformer",
-    "queryPath": "queries/planarTableShuttle2AAS_PackMLState.jsonata",
+    "uniqueId": "optimaUnloadingSystemAAS_OccupationState_Occupation_transformer",
+    "queryLanguage": "JSONATA",
+    "queryPath": "queries/optimaUnloadingSystemAAS_OccupationState_Occupation.jsonata",
     "inputType": "JsonString",
-    "outputType": "JsonString",
-    "queryLanguage": "JSONATA"
+    "outputType": "JsonString"
   },
   {
-    "uniqueId": "planarTableShuttle2AAS_OccupationState_transformer",
-    "queryPath": "queries/planarTableShuttle2AAS_OccupationState.jsonata",
+    "uniqueId": "optimaUnloadingSystemAAS_Weight_Weight_transformer",
+    "queryLanguage": "JSONATA",
+    "queryPath": "queries/optimaUnloadingSystemAAS_Weight_Weight.jsonata",
     "inputType": "JsonString",
-    "outputType": "JsonString",
-    "queryLanguage": "JSONATA"
+    "outputType": "JsonString"
   },
   {
-    "uniqueId": "planarTableShuttle3AAS_PackMLState_transformer",
-    "queryPath": "queries/planarTableShuttle3AAS_PackMLState.jsonata",
+    "uniqueId": "planarTableShuttle1AAS_PackMLState_State_transformer",
+    "queryLanguage": "JSONATA",
+    "queryPath": "queries/planarTableShuttle1AAS_PackMLState_State.jsonata",
     "inputType": "JsonString",
-    "outputType": "JsonString",
-    "queryLanguage": "JSONATA"
+    "outputType": "JsonString"
   },
   {
-    "uniqueId": "planarTableShuttle3AAS_OccupationState_transformer",
-    "queryPath": "queries/planarTableShuttle3AAS_OccupationState.jsonata",
+    "uniqueId": "planarTableShuttle1AAS_OccupationState_Occupation_transformer",
+    "queryLanguage": "JSONATA",
+    "queryPath": "queries/planarTableShuttle1AAS_OccupationState_Occupation.jsonata",
     "inputType": "JsonString",
-    "outputType": "JsonString",
-    "queryLanguage": "JSONATA"
+    "outputType": "JsonString"
   },
   {
-    "uniqueId": "planarTableAAS_PackMLState_transformer",
-    "queryPath": "queries/planarTableAAS_PackMLState.jsonata",
+    "uniqueId": "planarTableShuttle2AAS_PackMLState_State_transformer",
+    "queryLanguage": "JSONATA",
+    "queryPath": "queries/planarTableShuttle2AAS_PackMLState_State.jsonata",
     "inputType": "JsonString",
-    "outputType": "JsonString",
-    "queryLanguage": "JSONATA"
+    "outputType": "JsonString"
   },
   {
-    "uniqueId": "planarTableAAS_OccupationState_transformer",
-    "queryPath": "queries/planarTableAAS_OccupationState.jsonata",
+    "uniqueId": "planarTableShuttle2AAS_OccupationState_Occupation_transformer",
+    "queryLanguage": "JSONATA",
+    "queryPath": "queries/planarTableShuttle2AAS_OccupationState_Occupation.jsonata",
     "inputType": "JsonString",
-    "outputType": "JsonString",
-    "queryLanguage": "JSONATA"
+    "outputType": "JsonString"
   },
   {
-    "uniqueId": "syntegonStopperingSystemAAS_PackMLState_transformer",
-    "queryPath": "queries/syntegonStopperingSystemAAS_PackMLState.jsonata",
+    "uniqueId": "planarTableShuttle3AAS_PackMLState_State_transformer",
+    "queryLanguage": "JSONATA",
+    "queryPath": "queries/planarTableShuttle3AAS_PackMLState_State.jsonata",
     "inputType": "JsonString",
-    "outputType": "JsonString",
-    "queryLanguage": "JSONATA"
+    "outputType": "JsonString"
   },
   {
-    "uniqueId": "syntegonStopperingSystemAAS_OccupationState_transformer",
-    "queryPath": "queries/syntegonStopperingSystemAAS_OccupationState.jsonata",
+    "uniqueId": "planarTableShuttle3AAS_OccupationState_Occupation_transformer",
+    "queryLanguage": "JSONATA",
+    "queryPath": "queries/planarTableShuttle3AAS_OccupationState_Occupation.jsonata",
     "inputType": "JsonString",
-    "outputType": "JsonString",
-    "queryLanguage": "JSONATA"
+    "outputType": "JsonString"
+  },
+  {
+    "uniqueId": "planarTableAAS_PackMLState_State_transformer",
+    "queryLanguage": "JSONATA",
+    "queryPath": "queries/planarTableAAS_PackMLState_State.jsonata",
+    "inputType": "JsonString",
+    "outputType": "JsonString"
+  },
+  {
+    "uniqueId": "planarTableAAS_OccupationState_Occupation_transformer",
+    "queryLanguage": "JSONATA",
+    "queryPath": "queries/planarTableAAS_OccupationState_Occupation.jsonata",
+    "inputType": "JsonString",
+    "outputType": "JsonString"
+  },
+  {
+    "uniqueId": "syntegonStopperingSystemAAS_PackMLState_State_transformer",
+    "queryLanguage": "JSONATA",
+    "queryPath": "queries/syntegonStopperingSystemAAS_PackMLState_State.jsonata",
+    "inputType": "JsonString",
+    "outputType": "JsonString"
+  },
+  {
+    "uniqueId": "syntegonStopperingSystemAAS_OccupationState_Occupation_transformer",
+    "queryLanguage": "JSONATA",
+    "queryPath": "queries/syntegonStopperingSystemAAS_OccupationState_Occupation.jsonata",
+    "inputType": "JsonString",
+    "outputType": "JsonString"
   }
 ]

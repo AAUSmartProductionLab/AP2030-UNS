@@ -2,226 +2,251 @@
   {
     "datasource": "NN_Nybrovej_InnoLab_Stopper_DATA_State",
     "transformers": [
-      "cytivaCappingSystemAAS_PackMLState_transformer",
-      "syntegonStopperingSystemAAS_PackMLState_transformer"
+      "cytivaCappingSystemAAS_PackMLState_State_transformer"
     ],
     "datasinks": [
-      "cytivaCappingSystemAAS_PackMLState_sink_Value",
-      "syntegonStopperingSystemAAS_PackMLState_sink_Value"
+      "cytivaCappingSystemAAS_PackMLState_sink_State"
     ],
-    "trigger": "event",
-    "datasinkMappingConfiguration": {
-      "cytivaCappingSystemAAS_PackMLState_sink_Value": [
-        "cytivaCappingSystemAAS_PackMLState_transformer"
-      ],
-      "syntegonStopperingSystemAAS_PackMLState_sink_Value": [
-        "syntegonStopperingSystemAAS_PackMLState_transformer"
-      ]
-    }
+    "trigger": "event"
   },
   {
     "datasource": "NN_Nybrovej_InnoLab_Stopper_DATA_Occupation",
     "transformers": [
-      "cytivaCappingSystemAAS_OccupationState_transformer",
-      "syntegonStopperingSystemAAS_OccupationState_transformer"
+      "cytivaCappingSystemAAS_OccupationState_Occupation_transformer"
     ],
     "datasinks": [
-      "cytivaCappingSystemAAS_OccupationState_sink_State",
-      "cytivaCappingSystemAAS_OccupationState_sink_Queue",
-      "syntegonStopperingSystemAAS_OccupationState_sink_State",
-      "syntegonStopperingSystemAAS_OccupationState_sink_Queue"
+      "cytivaCappingSystemAAS_OccupationState_sink_Occupation"
     ],
-    "trigger": "event",
-    "datasinkMappingConfiguration": {
-      "cytivaCappingSystemAAS_OccupationState_sink_State": [
-        "cytivaCappingSystemAAS_OccupationState_transformer"
-      ],
-      "cytivaCappingSystemAAS_OccupationState_sink_Queue": [
-        "cytivaCappingSystemAAS_OccupationState_transformer"
-      ],
-      "syntegonStopperingSystemAAS_OccupationState_sink_State": [
-        "syntegonStopperingSystemAAS_OccupationState_transformer"
-      ],
-      "syntegonStopperingSystemAAS_OccupationState_sink_Queue": [
-        "syntegonStopperingSystemAAS_OccupationState_transformer"
-      ]
-    }
+    "trigger": "event"
   },
   {
     "datasource": "NN_Nybrovej_InnoLab_Dispensing_DATA_State",
     "transformers": [
-      "imaDispensingSystemAAS_PackMLState_transformer"
+      "imaDispensingSystemAAS_PackMLState_State_transformer"
     ],
     "datasinks": [
-      "imaDispensingSystemAAS_PackMLState_sink_Value"
+      "imaDispensingSystemAAS_PackMLState_sink_State"
     ],
     "trigger": "event"
   },
   {
     "datasource": "NN_Nybrovej_InnoLab_Dispensing_DATA_Occupation",
     "transformers": [
-      "imaDispensingSystemAAS_OccupationState_transformer"
+      "imaDispensingSystemAAS_OccupationState_Occupation_transformer"
     ],
     "datasinks": [
-      "imaDispensingSystemAAS_OccupationState_sink_State",
-      "imaDispensingSystemAAS_OccupationState_sink_Queue"
-    ],
-    "trigger": "event",
-    "datasinkMappingConfiguration": {
-      "imaDispensingSystemAAS_OccupationState_sink_State": [
-        "imaDispensingSystemAAS_OccupationState_transformer"
-      ],
-      "imaDispensingSystemAAS_OccupationState_sink_Queue": [
-        "imaDispensingSystemAAS_OccupationState_transformer"
-      ]
-    }
-  },
-  {
-    "datasource": "NN_Nybrovej_InnoLab_Dispensing_DATA_Weight",
-    "transformers": [
-      "imaDispensingSystemAAS_Weight_transformer"
-    ],
-    "datasinks": [
-      "imaDispensingSystemAAS_Weight_sink_Value"
+      "imaDispensingSystemAAS_OccupationState_sink_Occupation"
     ],
     "trigger": "event"
   },
   {
-    "datasource": "NN_Nybrovej_InnoLab_Dispense_DATA_State",
+    "datasource": "NN_Nybrovej_InnoLab_Dispensing_DATA_Weight",
     "transformers": [
-      "imaLoadingSystemAAS_PackMLState_transformer",
-      "omronCameraSystemAAS_PackMLState_transformer",
-      "optimaUnloadingSystemAAS_PackMLState_transformer"
+      "imaDispensingSystemAAS_Weight_Weight_transformer"
     ],
     "datasinks": [
-      "imaLoadingSystemAAS_PackMLState_sink_Value",
-      "omronCameraSystemAAS_PackMLState_sink_Value",
-      "optimaUnloadingSystemAAS_PackMLState_sink_Value"
+      "imaDispensingSystemAAS_Weight_sink_Weight"
+    ],
+    "trigger": "event"
+  },
+  {
+    "datasource": "NN_Nybrovej_InnoLab_Loading_DATA_State",
+    "transformers": [
+      "imaLoadingSystemAAS_PackMLState_State_transformer"
+    ],
+    "datasinks": [
+      "imaLoadingSystemAAS_PackMLState_sink_State"
+    ],
+    "trigger": "event"
+  },
+  {
+    "datasource": "NN_Nybrovej_InnoLab_Loading_DATA_Occupation",
+    "transformers": [
+      "imaLoadingSystemAAS_OccupationState_Occupation_transformer"
+    ],
+    "datasinks": [
+      "imaLoadingSystemAAS_OccupationState_sink_Occupation"
+    ],
+    "trigger": "event"
+  },
+  {
+    "datasource": "NN_Nybrovej_InnoLab_Loading_DATA_Weight",
+    "transformers": [
+      "imaLoadingSystemAAS_Weight_Weight_transformer"
+    ],
+    "datasinks": [
+      "imaLoadingSystemAAS_Weight_sink_Weight"
+    ],
+    "trigger": "event"
+  },
+  {
+    "datasource": "NN_Nybrovej_InnoLab_Camera_DATA_State",
+    "transformers": [
+      "omronCameraSystemAAS_PackMLState_State_transformer"
+    ],
+    "datasinks": [
+      "omronCameraSystemAAS_PackMLState_sink_State"
+    ],
+    "trigger": "event"
+  },
+  {
+    "datasource": "NN_Nybrovej_InnoLab_Camera_DATA_Occupation",
+    "transformers": [
+      "omronCameraSystemAAS_OccupationState_Occupation_transformer"
+    ],
+    "datasinks": [
+      "omronCameraSystemAAS_OccupationState_sink_Occupation"
+    ],
+    "trigger": "event"
+  },
+  {
+    "datasource": "NN_Nybrovej_InnoLab_Camera_DATA_Image",
+    "transformers": [
+      "omronCameraSystemAAS_Image_Format_transformer",
+      "omronCameraSystemAAS_Image_Image_transformer"
+    ],
+    "datasinks": [
+      "omronCameraSystemAAS_Image_sink_Format",
+      "omronCameraSystemAAS_Image_sink_Image"
     ],
     "trigger": "event",
     "datasinkMappingConfiguration": {
-      "imaLoadingSystemAAS_PackMLState_sink_Value": [
-        "imaLoadingSystemAAS_PackMLState_transformer"
+      "omronCameraSystemAAS_Image_sink_Format": [
+        "omronCameraSystemAAS_Image_Format_transformer"
       ],
-      "omronCameraSystemAAS_PackMLState_sink_Value": [
-        "omronCameraSystemAAS_PackMLState_transformer"
-      ],
-      "optimaUnloadingSystemAAS_PackMLState_sink_Value": [
-        "optimaUnloadingSystemAAS_PackMLState_transformer"
+      "omronCameraSystemAAS_Image_sink_Image": [
+        "omronCameraSystemAAS_Image_Image_transformer"
       ]
     }
   },
   {
-    "datasource": "NN_Nybrovej_InnoLab_Dispense_DATA_Occupation",
+    "datasource": "NN_Nybrovej_InnoLab_Unloading_DATA_State",
     "transformers": [
-      "imaLoadingSystemAAS_OccupationState_transformer",
-      "omronCameraSystemAAS_OccupationState_transformer",
-      "optimaUnloadingSystemAAS_OccupationState_transformer"
+      "optimaUnloadingSystemAAS_PackMLState_State_transformer"
     ],
     "datasinks": [
-      "imaLoadingSystemAAS_OccupationState_sink_State",
-      "imaLoadingSystemAAS_OccupationState_sink_Queue",
-      "omronCameraSystemAAS_OccupationState_sink_State",
-      "omronCameraSystemAAS_OccupationState_sink_Queue",
-      "optimaUnloadingSystemAAS_OccupationState_sink_State",
-      "optimaUnloadingSystemAAS_OccupationState_sink_Queue"
+      "optimaUnloadingSystemAAS_PackMLState_sink_State"
     ],
-    "trigger": "event",
-    "datasinkMappingConfiguration": {
-      "imaLoadingSystemAAS_OccupationState_sink_State": [
-        "imaLoadingSystemAAS_OccupationState_transformer"
-      ],
-      "imaLoadingSystemAAS_OccupationState_sink_Queue": [
-        "imaLoadingSystemAAS_OccupationState_transformer"
-      ],
-      "omronCameraSystemAAS_OccupationState_sink_State": [
-        "omronCameraSystemAAS_OccupationState_transformer"
-      ],
-      "omronCameraSystemAAS_OccupationState_sink_Queue": [
-        "omronCameraSystemAAS_OccupationState_transformer"
-      ],
-      "optimaUnloadingSystemAAS_OccupationState_sink_State": [
-        "optimaUnloadingSystemAAS_OccupationState_transformer"
-      ],
-      "optimaUnloadingSystemAAS_OccupationState_sink_Queue": [
-        "optimaUnloadingSystemAAS_OccupationState_transformer"
-      ]
-    }
+    "trigger": "event"
+  },
+  {
+    "datasource": "NN_Nybrovej_InnoLab_Unloading_DATA_Occupation",
+    "transformers": [
+      "optimaUnloadingSystemAAS_OccupationState_Occupation_transformer"
+    ],
+    "datasinks": [
+      "optimaUnloadingSystemAAS_OccupationState_sink_Occupation"
+    ],
+    "trigger": "event"
+  },
+  {
+    "datasource": "NN_Nybrovej_InnoLab_Unloading_DATA_Weight",
+    "transformers": [
+      "optimaUnloadingSystemAAS_Weight_Weight_transformer"
+    ],
+    "datasinks": [
+      "optimaUnloadingSystemAAS_Weight_sink_Weight"
+    ],
+    "trigger": "event"
   },
   {
     "datasource": "NN_Nybrovej_InnoLab_Planar_Xbot1_DATA_State",
     "transformers": [
-      "planarTableShuttle1AAS_PackMLState_transformer",
-      "planarTableShuttle2AAS_PackMLState_transformer",
-      "planarTableShuttle3AAS_PackMLState_transformer",
-      "planarTableAAS_PackMLState_transformer"
+      "planarTableShuttle1AAS_PackMLState_State_transformer"
     ],
     "datasinks": [
-      "planarTableShuttle1AAS_PackMLState_sink_Value",
-      "planarTableShuttle2AAS_PackMLState_sink_Value",
-      "planarTableShuttle3AAS_PackMLState_sink_Value",
-      "planarTableAAS_PackMLState_sink_Value"
+      "planarTableShuttle1AAS_PackMLState_sink_State"
     ],
-    "trigger": "event",
-    "datasinkMappingConfiguration": {
-      "planarTableShuttle1AAS_PackMLState_sink_Value": [
-        "planarTableShuttle1AAS_PackMLState_transformer"
-      ],
-      "planarTableShuttle2AAS_PackMLState_sink_Value": [
-        "planarTableShuttle2AAS_PackMLState_transformer"
-      ],
-      "planarTableShuttle3AAS_PackMLState_sink_Value": [
-        "planarTableShuttle3AAS_PackMLState_transformer"
-      ],
-      "planarTableAAS_PackMLState_sink_Value": [
-        "planarTableAAS_PackMLState_transformer"
-      ]
-    }
+    "trigger": "event"
   },
   {
     "datasource": "NN_Nybrovej_InnoLab_Planar_Xbot1_DATA_Occupation",
     "transformers": [
-      "planarTableShuttle1AAS_OccupationState_transformer",
-      "planarTableShuttle2AAS_OccupationState_transformer",
-      "planarTableShuttle3AAS_OccupationState_transformer",
-      "planarTableAAS_OccupationState_transformer"
+      "planarTableShuttle1AAS_OccupationState_Occupation_transformer"
     ],
     "datasinks": [
-      "planarTableShuttle1AAS_OccupationState_sink_State",
-      "planarTableShuttle1AAS_OccupationState_sink_Queue",
-      "planarTableShuttle2AAS_OccupationState_sink_State",
-      "planarTableShuttle2AAS_OccupationState_sink_Queue",
-      "planarTableShuttle3AAS_OccupationState_sink_State",
-      "planarTableShuttle3AAS_OccupationState_sink_Queue",
-      "planarTableAAS_OccupationState_sink_State",
-      "planarTableAAS_OccupationState_sink_Queue"
+      "planarTableShuttle1AAS_OccupationState_sink_Occupation"
     ],
-    "trigger": "event",
-    "datasinkMappingConfiguration": {
-      "planarTableShuttle1AAS_OccupationState_sink_State": [
-        "planarTableShuttle1AAS_OccupationState_transformer"
-      ],
-      "planarTableShuttle1AAS_OccupationState_sink_Queue": [
-        "planarTableShuttle1AAS_OccupationState_transformer"
-      ],
-      "planarTableShuttle2AAS_OccupationState_sink_State": [
-        "planarTableShuttle2AAS_OccupationState_transformer"
-      ],
-      "planarTableShuttle2AAS_OccupationState_sink_Queue": [
-        "planarTableShuttle2AAS_OccupationState_transformer"
-      ],
-      "planarTableShuttle3AAS_OccupationState_sink_State": [
-        "planarTableShuttle3AAS_OccupationState_transformer"
-      ],
-      "planarTableShuttle3AAS_OccupationState_sink_Queue": [
-        "planarTableShuttle3AAS_OccupationState_transformer"
-      ],
-      "planarTableAAS_OccupationState_sink_State": [
-        "planarTableAAS_OccupationState_transformer"
-      ],
-      "planarTableAAS_OccupationState_sink_Queue": [
-        "planarTableAAS_OccupationState_transformer"
-      ]
-    }
+    "trigger": "event"
+  },
+  {
+    "datasource": "NN_Nybrovej_InnoLab_Planar_Xbot2_DATA_State",
+    "transformers": [
+      "planarTableShuttle2AAS_PackMLState_State_transformer"
+    ],
+    "datasinks": [
+      "planarTableShuttle2AAS_PackMLState_sink_State"
+    ],
+    "trigger": "event"
+  },
+  {
+    "datasource": "NN_Nybrovej_InnoLab_Planar_Xbot2_DATA_Occupation",
+    "transformers": [
+      "planarTableShuttle2AAS_OccupationState_Occupation_transformer"
+    ],
+    "datasinks": [
+      "planarTableShuttle2AAS_OccupationState_sink_Occupation"
+    ],
+    "trigger": "event"
+  },
+  {
+    "datasource": "NN_Nybrovej_InnoLab_Planar_Xbot3_DATA_State",
+    "transformers": [
+      "planarTableShuttle3AAS_PackMLState_State_transformer"
+    ],
+    "datasinks": [
+      "planarTableShuttle3AAS_PackMLState_sink_State"
+    ],
+    "trigger": "event"
+  },
+  {
+    "datasource": "NN_Nybrovej_InnoLab_Planar_Xbot3_DATA_Occupation",
+    "transformers": [
+      "planarTableShuttle3AAS_OccupationState_Occupation_transformer"
+    ],
+    "datasinks": [
+      "planarTableShuttle3AAS_OccupationState_sink_Occupation"
+    ],
+    "trigger": "event"
+  },
+  {
+    "datasource": "NN_Nybrovej_InnoLab_Planar_Xbot1_DATA_State",
+    "transformers": [
+      "planarTableAAS_PackMLState_State_transformer"
+    ],
+    "datasinks": [
+      "planarTableAAS_PackMLState_sink_State"
+    ],
+    "trigger": "event"
+  },
+  {
+    "datasource": "NN_Nybrovej_InnoLab_Planar_Xbot1_DATA_Occupation",
+    "transformers": [
+      "planarTableAAS_OccupationState_Occupation_transformer"
+    ],
+    "datasinks": [
+      "planarTableAAS_OccupationState_sink_Occupation"
+    ],
+    "trigger": "event"
+  },
+  {
+    "datasource": "NN_Nybrovej_InnoLab_Stopper_DATA_State",
+    "transformers": [
+      "syntegonStopperingSystemAAS_PackMLState_State_transformer"
+    ],
+    "datasinks": [
+      "syntegonStopperingSystemAAS_PackMLState_sink_State"
+    ],
+    "trigger": "event"
+  },
+  {
+    "datasource": "NN_Nybrovej_InnoLab_Stopper_DATA_Occupation",
+    "transformers": [
+      "syntegonStopperingSystemAAS_OccupationState_Occupation_transformer"
+    ],
+    "datasinks": [
+      "syntegonStopperingSystemAAS_OccupationState_sink_Occupation"
+    ],
+    "trigger": "event"
   }
 ]

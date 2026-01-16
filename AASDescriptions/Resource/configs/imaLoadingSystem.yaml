@@ -10,7 +10,7 @@ imaLoadingSystemAAS:
         InterfaceMQTT:
             Title: 'IMA Loading System'
             EndpointMetadata:
-                base: 'mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/Dispense'
+                base: 'mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/Loading'
                 contentType: 'application/json'
             InteractionMetadata:
                 actions:
