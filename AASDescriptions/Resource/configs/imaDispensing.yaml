@@ -113,16 +113,16 @@ imaDispensingSystemAAS:
                                 mqv_controlPacket: publish
                                 mqv_qos: '0'
     Variables:
-        - PackMLState:
+        PackMLState:
             semanticId: 'https://www.omac.org/packml/state'
             Value: 'Idle'   
             InterfaceReference: 'PackMLState'
-        - OccupationState:
+        OccupationState:
             semanticId: ''
             State: 'Available'
             Queue: '[]'   
             InterfaceReference: 'OccupationState'
-        - Weight:
+        Weight:
             semanticId: ''
             Value: 0.0
             InterfaceReference: 'Weight'
