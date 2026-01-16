@@ -18,19 +18,6 @@
         "globalAssetId": "https://smartproductionlab.aau.dk/assets/Ufy3NZolQZi6yRmdMmJ9fQ",
         "specificAssetIds": [
           {
-            "name": "location",
-            "value": "InnoLab, Nybrovej, AAU",
-            "externalSubjectId": {
-              "type": "ExternalReference",
-              "keys": [
-                {
-                  "type": "GlobalReference",
-                  "value": "https://admin-shell.io/aas/3/0/SpecificAssetId/Location"
-                }
-              ]
-            }
-          },
-          {
             "name": "serialNumber",
             "value": "PM-S1-2024-001",
             "externalSubjectId": {
@@ -39,6 +26,19 @@
                 {
                   "type": "GlobalReference",
                   "value": "https://admin-shell.io/aas/3/0/SpecificAssetId/SerialNumber"
+                }
+              ]
+            }
+          },
+          {
+            "name": "location",
+            "value": "InnoLab, Nybrovej, AAU",
+            "externalSubjectId": {
+              "type": "ExternalReference",
+              "keys": [
+                {
+                  "type": "GlobalReference",
+                  "value": "https://admin-shell.io/aas/3/0/SpecificAssetId/Location"
                 }
               ]
             }
@@ -1120,95 +1120,157 @@
           "description": [
             {
               "language": "en",
-              "text": "Operation to invoke MoveToPosition action"
+              "text": "Move the planar shuttle to a target position"
             }
           ],
-          "modelType": "Operation",
-          "semanticId": {
-            "type": "ExternalReference",
-            "keys": [
-              {
-                "type": "GlobalReference",
-                "value": "https://smartproductionlab.aau.dk/skills/MoveToPosition"
-              }
-            ]
-          },
-          "qualifiers": [
+          "modelType": "SubmodelElementCollection",
+          "value": [
             {
-              "value": "http://192.168.0.104:8087/operations/planarTableShuttle1AAS/MoveToPosition",
-              "kind": "ConceptQualifier",
-              "valueType": "xs:string",
-              "type": "invocationDelegation"
+              "idShort": "MoveToPosition",
+              "description": [
+                {
+                  "language": "en",
+                  "text": "Operation to invoke MoveToPosition action"
+                }
+              ],
+              "modelType": "Operation",
+              "semanticId": {
+                "type": "ExternalReference",
+                "keys": [
+                  {
+                    "type": "GlobalReference",
+                    "value": "https://smartproductionlab.aau.dk/skills/MoveToPosition"
+                  }
+                ]
+              },
+              "qualifiers": [
+                {
+                  "value": "http://192.168.0.104:8087/operations/planarTableShuttle1AAS/MoveToPosition",
+                  "kind": "ConceptQualifier",
+                  "valueType": "xs:string",
+                  "type": "invocationDelegation"
+                },
+                {
+                  "value": "true",
+                  "kind": "ConceptQualifier",
+                  "valueType": "xs:boolean",
+                  "type": "Synchronous"
+                }
+              ],
+              "inputVariables": [
+                {
+                  "value": {
+                    "idShort": "X",
+                    "description": [
+                      {
+                        "language": "en",
+                        "text": "Target X position in mm"
+                      }
+                    ],
+                    "modelType": "Property",
+                    "valueType": "xs:double"
+                  }
+                },
+                {
+                  "value": {
+                    "idShort": "Y",
+                    "description": [
+                      {
+                        "language": "en",
+                        "text": "Target Y position in mm"
+                      }
+                    ],
+                    "modelType": "Property",
+                    "valueType": "xs:double"
+                  }
+                },
+                {
+                  "value": {
+                    "idShort": "Velocity",
+                    "description": [
+                      {
+                        "language": "en",
+                        "text": "Movement velocity in mm/s"
+                      }
+                    ],
+                    "modelType": "Property",
+                    "valueType": "xs:double"
+                  }
+                }
+              ],
+              "outputVariables": [
+                {
+                  "value": {
+                    "idShort": "TimeStamp",
+                    "description": [
+                      {
+                        "language": "en",
+                        "text": "The time stamp of the message"
+                      }
+                    ],
+                    "modelType": "Property",
+                    "valueType": "xs:string"
+                  }
+                },
+                {
+                  "value": {
+                    "idShort": "State",
+                    "description": [
+                      {
+                        "language": "en",
+                        "text": "The state of the command being executed"
+                      }
+                    ],
+                    "modelType": "Property",
+                    "valueType": "xs:string"
+                  }
+                }
+              ],
+              "inoutputVariables": [
+                {
+                  "value": {
+                    "idShort": "Uuid",
+                    "description": [
+                      {
+                        "language": "en",
+                        "text": "The UUID of the command"
+                      }
+                    ],
+                    "modelType": "Property",
+                    "valueType": "xs:string"
+                  }
+                }
+              ]
             },
             {
-              "value": "true",
-              "kind": "ConceptQualifier",
-              "valueType": "xs:boolean",
-              "type": "Synchronous"
-            }
-          ],
-          "inputVariables": [
-            {
+              "idShort": "InterfaceReference",
+              "description": [
+                {
+                  "language": "en",
+                  "text": "Reference to MoveToPosition action interface"
+                }
+              ],
+              "modelType": "ReferenceElement",
               "value": {
-                "idShort": "X",
-                "description": [
+                "type": "ModelReference",
+                "keys": [
                   {
-                    "language": "en",
-                    "text": "Target X position in mm"
-                  }
-                ],
-                "modelType": "Property",
-                "valueType": "xs:double"
-              }
-            },
-            {
-              "value": {
-                "idShort": "Y",
-                "description": [
+                    "type": "Submodel",
+                    "value": "https://smartproductionlab.aau.dk/submodels/instances/planarTableShuttle1AAS/AssetInterfacesDescription"
+                  },
                   {
-                    "language": "en",
-                    "text": "Target Y position in mm"
-                  }
-                ],
-                "modelType": "Property",
-                "valueType": "xs:double"
-              }
-            },
-            {
-              "value": {
-                "idShort": "Velocity",
-                "description": [
+                    "type": "SubmodelElementCollection",
+                    "value": "InterfaceMQTT"
+                  },
                   {
-                    "language": "en",
-                    "text": "Movement velocity in mm/s"
-                  }
-                ],
-                "modelType": "Property",
-                "valueType": "xs:double"
-              }
-            }
-          ],
-          "outputVariables": [
-            {
-              "value": {
-                "idShort": "TimeStamp",
-                "description": [
+                    "type": "SubmodelElementCollection",
+                    "value": "InteractionMetadata"
+                  },
                   {
-                    "language": "en",
-                    "text": "The time stamp of the message"
+                    "type": "SubmodelElementCollection",
+                    "value": "MoveToPosition"
                   }
-                ],
-                "modelType": "Property",
-                "valueType": "xs:string"
-              }
-            }
-          ],
-          "inoutputVariables": [
-            {
-              "value": {
-                "idShort": "Uuid",
-                "modelType": "Property",
-                "valueType": "xs:string"
+                ]
               }
             }
           ]
@@ -1218,39 +1280,82 @@
           "description": [
             {
               "language": "en",
-              "text": "Operation to invoke halt action"
+              "text": "Halt the current movement operation"
             }
           ],
-          "modelType": "Operation",
-          "semanticId": {
-            "type": "ExternalReference",
-            "keys": [
-              {
-                "type": "GlobalReference",
-                "value": "https://smartproductionlab.aau.dk/skills/halt"
-              }
-            ]
-          },
-          "qualifiers": [
+          "modelType": "SubmodelElementCollection",
+          "value": [
             {
-              "value": "http://192.168.0.104:8087/operations/planarTableShuttle1AAS/halt",
-              "kind": "ConceptQualifier",
-              "valueType": "xs:string",
-              "type": "invocationDelegation"
+              "idShort": "halt",
+              "description": [
+                {
+                  "language": "en",
+                  "text": "Operation to invoke halt action"
+                }
+              ],
+              "modelType": "Operation",
+              "semanticId": {
+                "type": "ExternalReference",
+                "keys": [
+                  {
+                    "type": "GlobalReference",
+                    "value": "https://smartproductionlab.aau.dk/skills/halt"
+                  }
+                ]
+              },
+              "qualifiers": [
+                {
+                  "value": "http://192.168.0.104:8087/operations/planarTableShuttle1AAS/halt",
+                  "kind": "ConceptQualifier",
+                  "valueType": "xs:string",
+                  "type": "invocationDelegation"
+                },
+                {
+                  "value": "true",
+                  "kind": "ConceptQualifier",
+                  "valueType": "xs:boolean",
+                  "type": "Synchronous"
+                }
+              ],
+              "inputVariables": [
+                {
+                  "value": {
+                    "idShort": "Uuid",
+                    "modelType": "Property",
+                    "valueType": "xs:string"
+                  }
+                }
+              ]
             },
             {
-              "value": "true",
-              "kind": "ConceptQualifier",
-              "valueType": "xs:boolean",
-              "type": "Synchronous"
-            }
-          ],
-          "inputVariables": [
-            {
+              "idShort": "InterfaceReference",
+              "description": [
+                {
+                  "language": "en",
+                  "text": "Reference to halt action interface"
+                }
+              ],
+              "modelType": "ReferenceElement",
               "value": {
-                "idShort": "Uuid",
-                "modelType": "Property",
-                "valueType": "xs:string"
+                "type": "ModelReference",
+                "keys": [
+                  {
+                    "type": "Submodel",
+                    "value": "https://smartproductionlab.aau.dk/submodels/instances/planarTableShuttle1AAS/AssetInterfacesDescription"
+                  },
+                  {
+                    "type": "SubmodelElementCollection",
+                    "value": "InterfaceMQTT"
+                  },
+                  {
+                    "type": "SubmodelElementCollection",
+                    "value": "InteractionMetadata"
+                  },
+                  {
+                    "type": "SubmodelElementCollection",
+                    "value": "halt"
+                  }
+                ]
               }
             }
           ]
@@ -1260,54 +1365,116 @@
           "description": [
             {
               "language": "en",
-              "text": "Operation to invoke occupy action"
+              "text": "Occupy the shuttle for exclusive use"
             }
           ],
-          "modelType": "Operation",
-          "semanticId": {
-            "type": "ExternalReference",
-            "keys": [
-              {
-                "type": "GlobalReference",
-                "value": "https://smartproductionlab.aau.dk/skills/occupy"
-              }
-            ]
-          },
-          "qualifiers": [
+          "modelType": "SubmodelElementCollection",
+          "value": [
             {
-              "value": "http://192.168.0.104:8087/operations/planarTableShuttle1AAS/occupy",
-              "kind": "ConceptQualifier",
-              "valueType": "xs:string",
-              "type": "invocationDelegation"
+              "idShort": "occupy",
+              "description": [
+                {
+                  "language": "en",
+                  "text": "Operation to invoke occupy action"
+                }
+              ],
+              "modelType": "Operation",
+              "semanticId": {
+                "type": "ExternalReference",
+                "keys": [
+                  {
+                    "type": "GlobalReference",
+                    "value": "https://smartproductionlab.aau.dk/skills/occupy"
+                  }
+                ]
+              },
+              "qualifiers": [
+                {
+                  "value": "http://192.168.0.104:8087/operations/planarTableShuttle1AAS/occupy",
+                  "kind": "ConceptQualifier",
+                  "valueType": "xs:string",
+                  "type": "invocationDelegation"
+                },
+                {
+                  "value": "true",
+                  "kind": "ConceptQualifier",
+                  "valueType": "xs:boolean",
+                  "type": "Synchronous"
+                }
+              ],
+              "outputVariables": [
+                {
+                  "value": {
+                    "idShort": "TimeStamp",
+                    "description": [
+                      {
+                        "language": "en",
+                        "text": "The time stamp of the message"
+                      }
+                    ],
+                    "modelType": "Property",
+                    "valueType": "xs:string"
+                  }
+                },
+                {
+                  "value": {
+                    "idShort": "State",
+                    "description": [
+                      {
+                        "language": "en",
+                        "text": "The state of the command being executed"
+                      }
+                    ],
+                    "modelType": "Property",
+                    "valueType": "xs:string"
+                  }
+                }
+              ],
+              "inoutputVariables": [
+                {
+                  "value": {
+                    "idShort": "Uuid",
+                    "description": [
+                      {
+                        "language": "en",
+                        "text": "The UUID of the command"
+                      }
+                    ],
+                    "modelType": "Property",
+                    "valueType": "xs:string"
+                  }
+                }
+              ]
             },
             {
-              "value": "true",
-              "kind": "ConceptQualifier",
-              "valueType": "xs:boolean",
-              "type": "Synchronous"
-            }
-          ],
-          "outputVariables": [
-            {
+              "idShort": "InterfaceReference",
+              "description": [
+                {
+                  "language": "en",
+                  "text": "Reference to occupy action interface"
+                }
+              ],
+              "modelType": "ReferenceElement",
               "value": {
-                "idShort": "TimeStamp",
-                "description": [
+                "type": "ModelReference",
+                "keys": [
                   {
-                    "language": "en",
-                    "text": "The time stamp of the message"
+                    "type": "Submodel",
+                    "value": "https://smartproductionlab.aau.dk/submodels/instances/planarTableShuttle1AAS/AssetInterfacesDescription"
+                  },
+                  {
+                    "type": "SubmodelElementCollection",
+                    "value": "InterfaceMQTT"
+                  },
+                  {
+                    "type": "SubmodelElementCollection",
+                    "value": "InteractionMetadata"
+                  },
+                  {
+                    "type": "SubmodelElementCollection",
+                    "value": "occupy"
                   }
-                ],
-                "modelType": "Property",
-                "valueType": "xs:string"
-              }
-            }
-          ],
-          "inoutputVariables": [
-            {
-              "value": {
-                "idShort": "Uuid",
-                "modelType": "Property",
-                "valueType": "xs:string"
+                ]
               }
             }
           ]
@@ -1317,54 +1484,116 @@
           "description": [
             {
               "language": "en",
-              "text": "Operation to invoke release action"
+              "text": "Release the shuttle from exclusive use"
             }
           ],
-          "modelType": "Operation",
-          "semanticId": {
-            "type": "ExternalReference",
-            "keys": [
-              {
-                "type": "GlobalReference",
-                "value": "https://smartproductionlab.aau.dk/skills/release"
-              }
-            ]
-          },
-          "qualifiers": [
+          "modelType": "SubmodelElementCollection",
+          "value": [
             {
-              "value": "http://192.168.0.104:8087/operations/planarTableShuttle1AAS/release",
-              "kind": "ConceptQualifier",
-              "valueType": "xs:string",
-              "type": "invocationDelegation"
+              "idShort": "release",
+              "description": [
+                {
+                  "language": "en",
+                  "text": "Operation to invoke release action"
+                }
+              ],
+              "modelType": "Operation",
+              "semanticId": {
+                "type": "ExternalReference",
+                "keys": [
+                  {
+                    "type": "GlobalReference",
+                    "value": "https://smartproductionlab.aau.dk/skills/release"
+                  }
+                ]
+              },
+              "qualifiers": [
+                {
+                  "value": "http://192.168.0.104:8087/operations/planarTableShuttle1AAS/release",
+                  "kind": "ConceptQualifier",
+                  "valueType": "xs:string",
+                  "type": "invocationDelegation"
+                },
+                {
+                  "value": "true",
+                  "kind": "ConceptQualifier",
+                  "valueType": "xs:boolean",
+                  "type": "Synchronous"
+                }
+              ],
+              "outputVariables": [
+                {
+                  "value": {
+                    "idShort": "TimeStamp",
+                    "description": [
+                      {
+                        "language": "en",
+                        "text": "The time stamp of the message"
+                      }
+                    ],
+                    "modelType": "Property",
+                    "valueType": "xs:string"
+                  }
+                },
+                {
+                  "value": {
+                    "idShort": "State",
+                    "description": [
+                      {
+                        "language": "en",
+                        "text": "The state of the command being executed"
+                      }
+                    ],
+                    "modelType": "Property",
+                    "valueType": "xs:string"
+                  }
+                }
+              ],
+              "inoutputVariables": [
+                {
+                  "value": {
+                    "idShort": "Uuid",
+                    "description": [
+                      {
+                        "language": "en",
+                        "text": "The UUID of the command"
+                      }
+                    ],
+                    "modelType": "Property",
+                    "valueType": "xs:string"
+                  }
+                }
+              ]
             },
             {
-              "value": "true",
-              "kind": "ConceptQualifier",
-              "valueType": "xs:boolean",
-              "type": "Synchronous"
-            }
-          ],
-          "outputVariables": [
-            {
+              "idShort": "InterfaceReference",
+              "description": [
+                {
+                  "language": "en",
+                  "text": "Reference to release action interface"
+                }
+              ],
+              "modelType": "ReferenceElement",
               "value": {
-                "idShort": "TimeStamp",
-                "description": [
+                "type": "ModelReference",
+                "keys": [
                   {
-                    "language": "en",
-                    "text": "The time stamp of the message"
+                    "type": "Submodel",
+                    "value": "https://smartproductionlab.aau.dk/submodels/instances/planarTableShuttle1AAS/AssetInterfacesDescription"
+                  },
+                  {
+                    "type": "SubmodelElementCollection",
+                    "value": "InterfaceMQTT"
+                  },
+                  {
+                    "type": "SubmodelElementCollection",
+                    "value": "InteractionMetadata"
+                  },
+                  {
+                    "type": "SubmodelElementCollection",
+                    "value": "release"
                   }
-                ],
-                "modelType": "Property",
-                "valueType": "xs:string"
-              }
-            }
-          ],
-          "inoutputVariables": [
-            {
-              "value": {
-                "idShort": "Uuid",
-                "modelType": "Property",
-                "valueType": "xs:string"
+                ]
               }
             }
           ]

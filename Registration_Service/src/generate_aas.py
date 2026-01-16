@@ -16,7 +16,12 @@ from pathlib import Path
 from typing import Dict, List, Any, Optional, Tuple
 from basyx.aas import model
 from basyx.aas.adapter.json import json_serialization
-from aas_validator import AASValidator
+
+# Use relative import when used as module, absolute when run standalone
+try:
+    from .aas_validator import AASValidator
+except ImportError:
+    from aas_validator import AASValidator
 
 
 # JSON Schema to AAS datatypes mapping
@@ -1337,7 +1342,7 @@ class AASGenerator:
             if output_schema:
                 props = self._extract_schema_properties(output_schema)
                 for prop_name, prop_def in props.items():
-                    # Skip properties that already exist in input (they become in-output)
+                    # Properties that exist in both input and output become in-output variables
                     if prop_name in input_prop_names:
                         # Move from input to in-output
                         prop_type = prop_def.get('type', 'string')
@@ -1393,11 +1398,11 @@ class AASGenerator:
             )
         
         operation = model.Operation(
-            id_short=action_name,
+            id_short="Operation",
             input_variable=input_variables if input_variables else (),
             output_variable=output_variables if output_variables else (),
             in_output_variable=inoutput_variables if inoutput_variables else (),
-            description=model.MultiLanguageTextType({"en": f"Operation to invoke {description} action"}),
+            description=model.MultiLanguageTextType({"en": f"Operation to invoke {description} skill"}),
             semantic_id=semantic_id,
             qualifier=qualifiers if qualifiers else ()
         )
@@ -1408,8 +1413,8 @@ class AASGenerator:
         """
         Create the Skills submodel with Operations derived from action interfaces.
         
-        This method creates Operations directly in the submodel (not wrapped in collections)
-        so that BaSyx can invoke them via the invocationDelegation qualifier.
+        Each operation is wrapped in a SubmodelElementCollection that also contains
+        a reference to its corresponding action interface.
         
         The operations are generated from:
         - Explicit Skills configuration in YAML (if provided)
@@ -1420,7 +1425,7 @@ class AASGenerator:
             config: Configuration dictionary
             
         Returns:
-            Skills submodel with Operations
+            Skills submodel with Operations wrapped in SubmodelElementCollections
         """
         skills_config = config.get('Skills', {}) or {}
         skill_elements = []
@@ -1449,7 +1454,44 @@ class AASGenerator:
                     operation = self._create_operation_from_action(
                         skill_name, action_config, system_id
                     )
-                    skill_elements.append(operation)
+                    
+                    # Create reference to the action interface
+                    interface_reference = model.ReferenceElement(
+                        id_short="InterfaceReference",
+                        value=model.ModelReference(
+                            (model.Key(
+                                type_=model.KeyTypes.SUBMODEL,
+                                value=f"{self.base_url}/submodels/instances/{system_id}/AssetInterfacesDescription"
+                            ),
+                            model.Key(
+                                type_=model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION,
+                                value="InterfaceMQTT"
+                            ),
+                            model.Key(
+                                type_=model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION,
+                                value="InteractionMetadata"
+                            ),
+                            model.Key(
+                                type_=model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION,
+                                value="actions"
+                            ),
+                            model.Key(
+                                type_=model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION,
+                                value=interface_name
+                            ),),
+                            model.SubmodelElementCollection
+                        ),
+                        description=model.MultiLanguageTextType({"en": f"Reference to {interface_name} action interface"})
+                    )
+                    
+                    # Wrap operation and reference in a SubmodelElementCollection
+                    skill_collection = model.SubmodelElementCollection(
+                        id_short=skill_name,
+                        value=[operation, interface_reference],
+                        description=model.MultiLanguageTextType({"en": skill_data.get('description', f'Skill: {skill_name}')})
+                    )
+                    skill_elements.append(skill_collection)
+                    
                 elif 'input_variable' in skill_data or 'output_variable' in skill_data:
                     # Fallback: create operation from explicit skill config
                     input_variables = []
@@ -1490,7 +1532,14 @@ class AASGenerator:
                         description=model.MultiLanguageTextType({"en": skill_data.get('description', f'Operation for {skill_name}')}),
                         qualifier=qualifiers if qualifiers else ()
                     )
-                    skill_elements.append(operation)
+                    
+                    # Wrap operation in a SubmodelElementCollection (no interface reference for fallback)
+                    skill_collection = model.SubmodelElementCollection(
+                        id_short=skill_name,
+                        value=[operation],
+                        description=model.MultiLanguageTextType({"en": skill_data.get('description', f'Skill: {skill_name}')})
+                    )
+                    skill_elements.append(skill_collection)
         
         else:
             # Auto-generate operations from action interfaces
@@ -1499,7 +1548,39 @@ class AASGenerator:
                 operation = self._create_operation_from_action(
                     action_name, action_config, system_id
                 )
-                skill_elements.append(operation)
+                
+                # Create reference to the action interface
+                interface_reference = model.ReferenceElement(
+                    id_short="InterfaceReference",
+                    value=model.ModelReference(
+                        (model.Key(
+                            type_=model.KeyTypes.SUBMODEL,
+                            value=f"{self.base_url}/submodels/instances/{system_id}/AssetInterfacesDescription"
+                        ),
+                        model.Key(
+                            type_=model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION,
+                            value="InterfaceMQTT"
+                        ),
+                        model.Key(
+                            type_=model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION,
+                            value="InteractionMetadata"
+                        ),
+                        model.Key(
+                            type_=model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION,
+                            value=action_name
+                        ),),
+                        model.SubmodelElementCollection
+                    ),
+                    description=model.MultiLanguageTextType({"en": f"Reference to {action_name} action interface"})
+                )
+                
+                # Wrap operation and reference in a SubmodelElementCollection
+                skill_collection = model.SubmodelElementCollection(
+                    id_short=action_name,
+                    value=[operation, interface_reference],
+                    description=model.MultiLanguageTextType({"en": f'Skill: {action_config.get("title", action_name)}'})
+                )
+                skill_elements.append(skill_collection)
         
         # Create submodel
         submodel = model.Submodel(
