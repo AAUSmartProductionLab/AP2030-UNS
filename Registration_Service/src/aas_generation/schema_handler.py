@@ -1,0 +1,161 @@
+"""
+Schema Handler
+
+Handles loading and parsing JSON schemas for AAS generation.
+"""
+
+import json
+import urllib.request
+from pathlib import Path
+from typing import Dict, Optional
+from basyx.aas import model
+
+
+# JSON Schema to AAS datatypes mapping
+SCHEMA_TYPE_TO_AAS_TYPE = {
+    'string': model.datatypes.String,
+    'integer': model.datatypes.Int,
+    'number': model.datatypes.Double,
+    'boolean': model.datatypes.Boolean,
+    'array': model.datatypes.String,  # Arrays serialized as JSON strings
+    'object': model.datatypes.String,  # Objects serialized as JSON strings
+}
+
+
+class SchemaHandler:
+    """Handles loading and parsing JSON schemas."""
+    
+    def __init__(self, project_root: Optional[Path] = None):
+        """
+        Initialize schema handler.
+        
+        Args:
+            project_root: Root directory of the project (for locating schema files)
+        """
+        self.project_root = project_root or Path(__file__).parent.parent.parent
+        self._schema_cache: Dict[str, Dict] = {}
+    
+    def load_schema(self, schema_url: str) -> Optional[Dict]:
+        """
+        Load a JSON schema from URL or local path.
+        
+        Args:
+            schema_url: URL or local path to the schema
+            
+        Returns:
+            Parsed schema dictionary or None if not found
+        """
+        # Check cache first
+        if schema_url in self._schema_cache:
+            return self._schema_cache[schema_url]
+        
+        schema = None
+        
+        # Try to resolve from local MQTTSchemas folder first
+        if 'MQTTSchemas/' in schema_url or 'schemas/' in schema_url:
+            schema = self._load_local_schema(schema_url)
+        
+        # If no local file found, try to fetch from URL
+        if schema is None and schema_url.startswith('http'):
+            schema = self._load_remote_schema(schema_url)
+        
+        if schema:
+            self._schema_cache[schema_url] = schema
+        
+        return schema
+    
+    def _load_local_schema(self, schema_url: str) -> Optional[Dict]:
+        """
+        Load schema from local file system.
+        
+        Args:
+            schema_url: Schema URL (used to extract filename)
+            
+        Returns:
+            Parsed schema or None
+        """
+        # Extract filename from URL
+        filename = schema_url.split('/')[-1]
+        
+        # Look in common schema locations
+        local_paths = [
+            self.project_root / 'MQTTSchemas' / filename,
+            self.project_root / 'schemas' / filename,
+            Path(__file__).parent / 'schemas' / filename,
+        ]
+        
+        for local_path in local_paths:
+            if local_path.exists():
+                try:
+                    with open(local_path, 'r') as f:
+                        return json.load(f)
+                except Exception as e:
+                    print(f"Warning: Could not load schema from {local_path}: {e}")
+        
+        return None
+    
+    def _load_remote_schema(self, schema_url: str) -> Optional[Dict]:
+        """
+        Load schema from remote URL.
+        
+        Args:
+            schema_url: Schema URL
+            
+        Returns:
+            Parsed schema or None
+        """
+        try:
+            with urllib.request.urlopen(schema_url, timeout=5) as response:
+                return json.loads(response.read().decode())
+        except Exception as e:
+            print(f"Warning: Could not fetch schema from {schema_url}: {e}")
+            return None
+    
+    def extract_properties(self, schema: Dict, include_inherited: bool = True) -> Dict[str, Dict]:
+        """
+        Extract properties from a JSON schema, including from allOf references.
+        
+        Args:
+            schema: The JSON schema dictionary
+            include_inherited: Whether to include properties from referenced schemas
+            
+        Returns:
+            Dictionary of property name -> property definition
+        """
+        properties = {}
+        
+        # Direct properties
+        if 'properties' in schema:
+            for prop_name, prop_def in schema['properties'].items():
+                properties[prop_name] = prop_def
+        
+        # Handle allOf (schema composition)
+        if include_inherited and 'allOf' in schema:
+            for sub_schema in schema['allOf']:
+                if '$ref' in sub_schema:
+                    # Try to load referenced schema
+                    ref_schema = self.load_schema(sub_schema['$ref'])
+                    if ref_schema:
+                        ref_props = self.extract_properties(ref_schema, include_inherited=True)
+                        properties.update(ref_props)
+                elif 'properties' in sub_schema:
+                    for prop_name, prop_def in sub_schema['properties'].items():
+                        properties[prop_name] = prop_def
+        
+        return properties
+    
+    def get_aas_type(self, json_type: str) -> type:
+        """
+        Convert JSON schema type to AAS datatype.
+        
+        Args:
+            json_type: JSON schema type string
+            
+        Returns:
+            AAS datatype class
+        """
+        return SCHEMA_TYPE_TO_AAS_TYPE.get(json_type, model.datatypes.String)
+    
+    def clear_cache(self):
+        """Clear the schema cache."""
+        self._schema_cache.clear()

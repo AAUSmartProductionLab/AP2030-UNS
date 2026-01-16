@@ -44,6 +44,14 @@ from src import (
     generate_topics_from_directory,
     generate_databridge_from_directory
 )
+from src.core.constants import (
+    DEFAULT_MQTT_BROKER,
+    DEFAULT_MQTT_PORT,
+    DEFAULT_BASYX_URL,
+    DEFAULT_DELEGATION_URL,
+    ContainerNames,
+    MQTTTopics
+)
 
 # Configure logging
 logging.basicConfig(
@@ -81,13 +89,13 @@ Examples:
     )
 
     # Global options
-    parser.add_argument('--basyx-url', default='http://localhost:8081',
-                        help='BaSyx server base URL (default: http://localhost:8081)')
-    parser.add_argument('--mqtt-broker', default='192.168.0.104',
-                        help='MQTT broker hostname/IP (default: 192.168.0.104)')
-    parser.add_argument('--mqtt-port', type=int, default=1883,
-                        help='MQTT broker port (default: 1883)')
-    parser.add_argument('--delegation-url', default='http://192.168.0.104:8087',
+    parser.add_argument('--basyx-url', default=DEFAULT_BASYX_URL,
+                        help=f'BaSyx server base URL (default: {DEFAULT_BASYX_URL})')
+    parser.add_argument('--mqtt-broker', default=DEFAULT_MQTT_BROKER,
+                        help=f'MQTT broker hostname/IP (default: {DEFAULT_MQTT_BROKER})')
+    parser.add_argument('--mqtt-port', type=int, default=DEFAULT_MQTT_PORT,
+                        help=f'MQTT broker port (default: {DEFAULT_MQTT_PORT})')
+    parser.add_argument('--delegation-url', default=DEFAULT_DELEGATION_URL,
                         help='Operation Delegation Service URL')
     parser.add_argument('--debug', action='store_true',
                         help='Enable debug logging')
@@ -102,9 +110,9 @@ Examples:
                                help='Path to YAML configuration file')
     config_parser.add_argument('--no-validate', action='store_true',
                                help='Skip AAS validation')
-    config_parser.add_argument('--databridge-name', default='databridge',
+    config_parser.add_argument('--databridge-name', default=ContainerNames.DATABRIDGE,
                                help='DataBridge container name')
-    config_parser.add_argument('--delegation-container', default='operation-delegation',
+    config_parser.add_argument('--delegation-container', default=ContainerNames.OPERATION_DELEGATION,
                                help='Operation Delegation container name')
 
     # Register from directory
@@ -114,7 +122,7 @@ Examples:
                             help='Directory containing YAML config files')
     dir_parser.add_argument('--no-validate', action='store_true',
                             help='Skip AAS validation')
-    dir_parser.add_argument('--databridge-name', default='databridge',
+    dir_parser.add_argument('--databridge-name', default=ContainerNames.DATABRIDGE,
                             help='DataBridge container name')
 
     # Generate topics.json only
@@ -136,13 +144,13 @@ Examples:
     # MQTT Listener
     listen_parser = subparsers.add_parser('listen',
                                            help='Start MQTT listener for registration')
-    listen_parser.add_argument('--config-topic', default='NN/Nybrovej/InnoLab/Registration/Config',
+    listen_parser.add_argument('--config-topic', default=MQTTTopics.REGISTRATION_CONFIG,
                                help='MQTT topic for config registration')
-    listen_parser.add_argument('--legacy-topic', default='NN/Nybrovej/InnoLab/Registration/Request',
+    listen_parser.add_argument('--legacy-topic', default=MQTTTopics.REGISTRATION_LEGACY,
                                help='MQTT topic for legacy registration')
-    listen_parser.add_argument('--response-topic', default='NN/Nybrovej/InnoLab/Registration/Response',
+    listen_parser.add_argument('--response-topic', default=MQTTTopics.REGISTRATION_RESPONSE,
                                help='MQTT topic for responses')
-    listen_parser.add_argument('--databridge-name', default='databridge',
+    listen_parser.add_argument('--databridge-name', default=ContainerNames.DATABRIDGE,
                                help='DataBridge container name')
 
     # List registered AAS

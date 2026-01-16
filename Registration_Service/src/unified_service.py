@@ -11,16 +11,13 @@ A single service that handles the complete registration workflow:
 This consolidates OperationDelegation config and RegistrationService functionality.
 """
 
-import base64
 import copy
 import json
 import logging
-import subprocess
 import sys
 import tempfile
 from pathlib import Path
 from typing import Dict, List, Any, Optional
-import requests
 import yaml
 
 from .config import BaSyxConfig
@@ -28,6 +25,18 @@ from .config_parser import ConfigParser, parse_config_file
 from .topics_generator import TopicsGenerator
 from .databridge_from_config import DataBridgeFromConfig
 from .generate_aas import AASGenerator
+from .core import (
+    HTTPClient,
+    DockerService,
+    DEFAULT_MQTT_BROKER,
+    DEFAULT_MQTT_PORT,
+    DEFAULT_DELEGATION_URL,
+    DEFAULT_GITHUB_PAGES_URL,
+    HTTPStatus,
+    ModelType,
+    ContainerNames
+)
+from .utils import encode_aas_id
 
 logger = logging.getLogger(__name__)
 
@@ -47,12 +56,12 @@ class UnifiedRegistrationService:
 
     def __init__(self, 
                  config: Optional[BaSyxConfig] = None,
-                 mqtt_broker: str = "192.168.0.104",
-                 mqtt_port: int = 1883,
-                 databridge_container_name: str = "databridge",
-                 operation_delegation_container: str = "operation-delegation",
-                 delegation_service_url: str = "http://192.168.0.104:8087",
-                 github_pages_base_url: str = "https://aausmartproductionlab.github.io/AP2030-UNS"):
+                 mqtt_broker: str = DEFAULT_MQTT_BROKER,
+                 mqtt_port: int = DEFAULT_MQTT_PORT,
+                 databridge_container_name: str = ContainerNames.DATABRIDGE,
+                 operation_delegation_container: str = ContainerNames.OPERATION_DELEGATION,
+                 delegation_service_url: str = DEFAULT_DELEGATION_URL,
+                 github_pages_base_url: str = DEFAULT_GITHUB_PAGES_URL):
         """
         Initialize the unified registration service.
         
@@ -73,8 +82,9 @@ class UnifiedRegistrationService:
         self.delegation_service_url = delegation_service_url
         self.github_pages_base_url = github_pages_base_url
         
-        self.session = requests.Session()
-        self.session.headers.update({'Content-Type': 'application/json'})
+        # Use new HTTP client and Docker service
+        self.http_client = HTTPClient()
+        self.docker_service = DockerService()
         
         # Paths
         self.script_dir = Path(__file__).resolve().parent.parent
@@ -87,16 +97,8 @@ class UnifiedRegistrationService:
         self.databridge_generator = DataBridgeFromConfig(
             mqtt_broker=self.mqtt_broker,
             mqtt_port=self.mqtt_port,
-            basyx_url=self._get_internal_basyx_url()
+            basyx_url=self.basyx_config.get_internal_url_for_databridge()
         )
-    
-    def _get_internal_basyx_url(self) -> str:
-        """Get internal BaSyx URL for DataBridge (Docker network)"""
-        # Extract port from config URL
-        port = 8081
-        if ':' in self.basyx_config.base_url:
-            port = int(self.basyx_config.base_url.rsplit(':', 1)[1].rstrip('/'))
-        return f"http://aas-env:{port}"
     
     def register_from_yaml_config(self, 
                                    config_path: str = None,
@@ -289,31 +291,31 @@ class UnifiedRegistrationService:
         """Register AAS shell with BaSyx server"""
         try:
             if 'modelType' not in shell_data:
-                shell_data['modelType'] = 'AssetAdministrationShell'
+                shell_data['modelType'] = ModelType.AAS
             
-            encoded_id = base64.b64encode(shell_data['id'].encode()).decode()
+            encoded_id = encode_aas_id(shell_data['id'])
             
             # POST to AAS repository
-            response = self._make_request('POST', self.basyx_config.aas_repo_url, shell_data)
+            response = self.http_client.post(self.basyx_config.aas_repo_url, shell_data)
             
-            if response.status_code in [200, 201]:
+            if self.http_client.is_success(response):
                 logger.info(f"Registered AAS shell: {shell_data.get('idShort')}")
                 # Register with AAS registry
                 self._register_shell_descriptor(shell_data, encoded_id, submodels)
                 return True
-            elif response.status_code == 409:
+            elif self.http_client.is_conflict(response):
                 # Already exists - delete and re-register
                 logger.info(f"Shell exists, updating: {shell_data.get('idShort')}")
                 delete_url = f"{self.basyx_config.aas_repo_url}/{encoded_id}"
-                self._make_request('DELETE', delete_url)
+                self.http_client.delete(delete_url)
                 
                 # Delete from registry too
                 registry_delete_url = f"{self.basyx_config.aas_registry_url}/{encoded_id}"
-                self._make_request('DELETE', registry_delete_url)
+                self.http_client.delete(registry_delete_url)
                 
                 # Re-register
-                response = self._make_request('POST', self.basyx_config.aas_repo_url, shell_data)
-                if response.status_code in [200, 201]:
+                response = self.http_client.post(self.basyx_config.aas_repo_url, shell_data)
+                if self.http_client.is_success(response):
                     logger.info(f"Updated AAS shell: {shell_data.get('idShort')}")
                     self._register_shell_descriptor(shell_data, encoded_id, submodels)
                     return True
@@ -332,7 +334,7 @@ class UnifiedRegistrationService:
         """Register submodel with BaSyx server"""
         try:
             if 'modelType' not in submodel_data:
-                submodel_data['modelType'] = 'Submodel'
+                submodel_data['modelType'] = ModelType.SUBMODEL
             
             # Preprocess to fix any compatibility issues
             submodel_data = self._preprocess_submodel(submodel_data)
@@ -341,29 +343,29 @@ class UnifiedRegistrationService:
             if submodel_data.get('idShort') == 'OfferedCapabilitiyDescription':
                 logger.info(f"Debug: CapabilitySet has {len(submodel_data.get('submodelElements', [])[0].get('value', []))} capability containers")
             
-            encoded_id = base64.b64encode(submodel_data['id'].encode()).decode()
+            encoded_id = encode_aas_id(submodel_data['id'])
             
             # POST to submodel repository
-            response = self._make_request('POST', self.basyx_config.submodel_repo_url, submodel_data)
+            response = self.http_client.post(self.basyx_config.submodel_repo_url, submodel_data)
             
-            if response.status_code in [200, 201]:
+            if self.http_client.is_success(response):
                 logger.info(f"Registered submodel: {submodel_data.get('idShort')}")
                 # Register with submodel registry
                 self._register_submodel_descriptor(submodel_data, encoded_id)
                 return True
-            elif response.status_code == 409:
+            elif self.http_client.is_conflict(response):
                 # Already exists - delete and re-register
                 logger.info(f"Submodel exists, updating: {submodel_data.get('idShort')}")
                 delete_url = f"{self.basyx_config.submodel_repo_url}/{encoded_id}"
-                self._make_request('DELETE', delete_url)
+                self.http_client.delete(delete_url)
                 
                 # Delete from registry too
                 registry_delete_url = f"{self.basyx_config.submodel_registry_url}/{encoded_id}"
-                self._make_request('DELETE', registry_delete_url)
+                self.http_client.delete(registry_delete_url)
                 
                 # Re-register
-                response = self._make_request('POST', self.basyx_config.submodel_repo_url, submodel_data)
-                if response.status_code in [200, 201]:
+                response = self.http_client.post(self.basyx_config.submodel_repo_url, submodel_data)
+                if self.http_client.is_success(response):
                     logger.info(f"Updated submodel: {submodel_data.get('idShort')}")
                     self._register_submodel_descriptor(submodel_data, encoded_id)
                     return True
@@ -382,23 +384,22 @@ class UnifiedRegistrationService:
         """Register concept description with BaSyx server"""
         try:
             if 'modelType' not in cd_data:
-                cd_data['modelType'] = 'ConceptDescription'
+                cd_data['modelType'] = ModelType.CONCEPT_DESCRIPTION
             
-            cd_url = f"{self.basyx_config.base_url}/concept-descriptions"
-            response = self._make_request('POST', cd_url, cd_data)
+            response = self.http_client.post(self.basyx_config.concept_desc_url, cd_data)
             
-            if response.status_code in [200, 201]:
+            if self.http_client.is_success(response):
                 logger.debug(f"Registered concept description: {cd_data.get('idShort', 'unknown')}")
                 return True
-            elif response.status_code == 409:
+            elif self.http_client.is_conflict(response):
                 # Already exists - delete and re-register
-                encoded_id = base64.b64encode(cd_data['id'].encode()).decode()
-                delete_url = f"{cd_url}/{encoded_id}"
-                self._make_request('DELETE', delete_url)
+                encoded_id = encode_aas_id(cd_data['id'])
+                delete_url = f"{self.basyx_config.concept_desc_url}/{encoded_id}"
+                self.http_client.delete(delete_url)
                 
                 # Re-register
-                response = self._make_request('POST', cd_url, cd_data)
-                if response.status_code in [200, 201]:
+                response = self.http_client.post(self.basyx_config.concept_desc_url, cd_data)
+                if self.http_client.is_success(response):
                     logger.debug(f"Updated concept description: {cd_data.get('idShort', 'unknown')}")
                     return True
             return False
@@ -412,7 +413,7 @@ class UnifiedRegistrationService:
                                     submodels: List[Dict[str, Any]]) -> bool:
         """Register shell descriptor in AAS registry"""
         try:
-            external_url = self.basyx_config.base_url.replace("localhost", "192.168.0.104")
+            external_url = self.basyx_config.get_external_url()
             
             shell_descriptor = {
                 "id": shell_data['id'],
@@ -436,7 +437,7 @@ class UnifiedRegistrationService:
                 submodel_descriptors = []
                 for sm in submodels:
                     if sm and sm.get('id'):
-                        sm_encoded_id = base64.b64encode(sm['id'].encode()).decode()
+                        sm_encoded_id = encode_aas_id(sm['id'])
                         sm_descriptor = {
                             "id": sm['id'],
                             "idShort": sm['idShort'],
@@ -455,8 +456,8 @@ class UnifiedRegistrationService:
                 if submodel_descriptors:
                     shell_descriptor['submodelDescriptors'] = submodel_descriptors
             
-            response = self._make_request('POST', self.basyx_config.aas_registry_url, shell_descriptor)
-            return response.status_code in [200, 201, 409]
+            response = self.http_client.post(self.basyx_config.aas_registry_url, shell_descriptor)
+            return response.status_code in [HTTPStatus.OK, HTTPStatus.CREATED, HTTPStatus.CONFLICT]
             
         except Exception as e:
             logger.error(f"Failed to register shell descriptor: {e}")
@@ -465,7 +466,7 @@ class UnifiedRegistrationService:
     def _register_submodel_descriptor(self, submodel_data: Dict[str, Any], encoded_id: str) -> bool:
         """Register submodel descriptor in submodel registry"""
         try:
-            external_url = self.basyx_config.base_url.replace("localhost", "192.168.0.104")
+            external_url = self.basyx_config.get_external_url()
             
             submodel_descriptor = {
                 "id": submodel_data['id'],
@@ -482,8 +483,8 @@ class UnifiedRegistrationService:
             if 'semanticId' in submodel_data:
                 submodel_descriptor['semanticId'] = submodel_data['semanticId']
             
-            response = self._make_request('POST', self.basyx_config.submodel_registry_url, submodel_descriptor)
-            return response.status_code in [200, 201, 409]
+            response = self.http_client.post(self.basyx_config.submodel_registry_url, submodel_descriptor)
+            return response.status_code in [HTTPStatus.OK, HTTPStatus.CREATED, HTTPStatus.CONFLICT]
             
         except Exception as e:
             logger.error(f"Failed to register submodel descriptor: {e}")
@@ -508,7 +509,7 @@ class UnifiedRegistrationService:
             model_type = element.get('modelType', '')
             
             # Fix File elements
-            if model_type == 'File':
+            if model_type == ModelType.FILE:
                 if 'valueType' in fixed_element:
                     value_type = fixed_element['valueType']
                     if not value_type.startswith('xs:'):
@@ -520,18 +521,18 @@ class UnifiedRegistrationService:
                         fixed_element['value'] = f"{self.github_pages_base_url}{value}"
             
             # Fix Property elements
-            elif model_type == 'Property':
+            elif model_type == ModelType.PROPERTY:
                 if 'valueType' in fixed_element:
                     if not fixed_element['valueType'].startswith('xs:'):
                         fixed_element['valueType'] = 'xs:string'
             
             # Recursively fix collections
-            elif model_type == 'SubmodelElementCollection':
+            elif model_type == ModelType.SUBMODEL_COLLECTION:
                 if 'value' in fixed_element and isinstance(fixed_element['value'], list):
                     fixed_element['value'] = self._fix_submodel_elements(fixed_element['value'])
             
             # Recursively fix SubmodelElementList
-            elif model_type == 'SubmodelElementList':
+            elif model_type == ModelType.SUBMODEL_LIST:
                 if 'value' in fixed_element and isinstance(fixed_element['value'], list):
                     fixed_element['value'] = self._fix_submodel_elements(fixed_element['value'])
             
@@ -541,68 +542,21 @@ class UnifiedRegistrationService:
     
     def _restart_databridge(self) -> bool:
         """Restart DataBridge container"""
-        return self._restart_container(self.databridge_container_name)
+        return self.docker_service.restart_databridge()
     
     def _restart_operation_delegation(self) -> bool:
         """Restart Operation Delegation container"""
-        return self._restart_container(self.operation_delegation_container)
-    
-    def _restart_container(self, container_name: str) -> bool:
-        """Restart a Docker container"""
-        try:
-            result = subprocess.run(['which', 'docker'], capture_output=True)
-            if result.returncode != 0:
-                logger.warning("Docker not available, skipping container restart")
-                return False
-            
-            result = subprocess.run(
-                ['docker', 'restart', container_name],
-                capture_output=True, text=True, timeout=30
-            )
-            
-            if result.returncode == 0:
-                logger.info(f"✓ Restarted {container_name}")
-                return True
-            else:
-                logger.warning(f"Failed to restart {container_name}: {result.stderr}")
-                return False
-                
-        except Exception as e:
-            logger.warning(f"Could not restart {container_name}: {e}")
-            return False
-    
-    def _make_request(self, method: str, url: str, data: Any = None) -> requests.Response:
-        """Make HTTP request with error handling"""
-        try:
-            if method.upper() == 'GET':
-                response = self.session.get(url)
-            elif method.upper() == 'POST':
-                response = self.session.post(url, json=data)
-            elif method.upper() == 'PUT':
-                response = self.session.put(url, json=data)
-            elif method.upper() == 'DELETE':
-                response = self.session.delete(url)
-            else:
-                raise ValueError(f"Unsupported HTTP method: {method}")
-            
-            if response.status_code not in [200, 201, 204, 404, 409]:
-                logger.warning(f"HTTP {response.status_code} for {method} {url}")
-            
-            return response
-            
-        except Exception as e:
-            logger.error(f"Request failed: {method} {url} - {e}")
-            raise
+        return self.docker_service.restart_operation_delegation()
     
     def list_registered_assets(self) -> Dict[str, Any]:
         """List all registered AAS and submodels"""
         try:
-            aas_response = self._make_request('GET', self.basyx_config.aas_repo_url)
-            aas_data = aas_response.json() if aas_response.status_code == 200 else {}
+            aas_response = self.http_client.get(self.basyx_config.aas_repo_url)
+            aas_data = aas_response.json() if aas_response.status_code == HTTPStatus.OK else {}
             aas_shells = aas_data.get('result', []) if isinstance(aas_data, dict) else []
             
-            sm_response = self._make_request('GET', self.basyx_config.submodel_repo_url)
-            sm_data = sm_response.json() if sm_response.status_code == 200 else {}
+            sm_response = self.http_client.get(self.basyx_config.submodel_repo_url)
+            sm_data = sm_response.json() if sm_response.status_code == HTTPStatus.OK else {}
             submodels = sm_data.get('result', []) if isinstance(sm_data, dict) else []
             
             return {

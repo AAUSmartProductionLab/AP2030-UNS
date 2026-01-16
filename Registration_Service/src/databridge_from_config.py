@@ -13,12 +13,12 @@ Key concepts:
 import json
 import logging
 import os
-import re
-import requests
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Tuple
 
 from .config_parser import ConfigParser, parse_config_file
+from .core.constants import DEFAULT_MQTT_BROKER, DEFAULT_MQTT_PORT, DEFAULT_BASYX_INTERNAL_URL, SemanticIds
+from .utils import encode_aas_id, sanitize_id, topic_to_id
 
 logger = logging.getLogger(__name__)
 
@@ -34,9 +34,9 @@ class DataBridgeFromConfig:
     """
 
     def __init__(self, 
-                 mqtt_broker: str = "192.168.0.104", 
-                 mqtt_port: int = 1883,
-                 basyx_url: str = "http://aas-env:8081"):
+                 mqtt_broker: str = DEFAULT_MQTT_BROKER, 
+                 mqtt_port: int = DEFAULT_MQTT_PORT,
+                 basyx_url: str = DEFAULT_BASYX_INTERNAL_URL):
         self.mqtt_broker = mqtt_broker
         self.mqtt_port = mqtt_port
         self.basyx_url = basyx_url
@@ -154,7 +154,7 @@ class DataBridgeFromConfig:
             Consumer unique ID, or None if already exists
         """
         # Create unique ID from topic
-        consumer_id = self._topic_to_id(topic)
+        consumer_id = topic_to_id(topic)
         
         # Check if already added
         if topic in self._topic_ids:
@@ -179,10 +179,10 @@ class DataBridgeFromConfig:
             Transformer unique ID
         """
         # Create unique ID
-        transformer_id = f"{self._sanitize_id(system_id)}_{self._sanitize_id(variable_name)}_transformer"
+        transformer_id = f"{sanitize_id(system_id)}_{sanitize_id(variable_name)}_transformer"
         
         # Create JSONATA query file name
-        query_file = f"{self._sanitize_id(system_id)}_{self._sanitize_id(variable_name)}.jsonata"
+        query_file = f"{sanitize_id(system_id)}_{sanitize_id(variable_name)}.jsonata"
         
         self.transformers.append({
             "uniqueId": transformer_id,
@@ -202,7 +202,7 @@ class DataBridgeFromConfig:
             Sink unique ID
         """
         # Create unique ID  
-        sink_id = f"{self._sanitize_id(system_id)}_{self._sanitize_id(variable_name)}_sink"
+        sink_id = f"{sanitize_id(system_id)}_{sanitize_id(variable_name)}_sink"
         
         # Build the submodel element path
         # Variables submodel, variable collection, specific property
@@ -210,11 +210,10 @@ class DataBridgeFromConfig:
         
         # For each value field, we need a separate sink entry
         for field in value_fields:
-            field_sink_id = f"{sink_id}_{self._sanitize_id(field)}"
+            field_sink_id = f"{sink_id}_{sanitize_id(field)}"
             id_short_path = f"{variable_name}.{field}"
             
-            import base64
-            encoded_sm_id = base64.b64encode(submodel_id.encode()).decode()
+            encoded_sm_id = encode_aas_id(submodel_id)
             
             self.sinks.append({
                 "uniqueId": field_sink_id,
@@ -255,15 +254,6 @@ class DataBridgeFromConfig:
                 count += 1
         
         return count
-    
-    def _topic_to_id(self, topic: str) -> str:
-        """Convert MQTT topic to a valid unique ID"""
-        # Replace / with _ and remove special chars
-        return re.sub(r'[^a-zA-Z0-9_]', '_', topic)
-    
-    def _sanitize_id(self, name: str) -> str:
-        """Sanitize a name for use as an ID"""
-        return re.sub(r'[^a-zA-Z0-9_]', '_', name)
     
     def save_configs(self, output_dir: str) -> Dict[str, int]:
         """
@@ -327,9 +317,9 @@ class DataBridgeFromConfig:
 
 def generate_databridge_from_configs(config_paths: List[str], 
                                      output_dir: str,
-                                     mqtt_broker: str = "192.168.0.104",
-                                     mqtt_port: int = 1883,
-                                     basyx_url: str = "http://aas-env:8081") -> Dict[str, int]:
+                                     mqtt_broker: str = DEFAULT_MQTT_BROKER,
+                                     mqtt_port: int = DEFAULT_MQTT_PORT,
+                                     basyx_url: str = DEFAULT_BASYX_INTERNAL_URL) -> Dict[str, int]:
     """
     Generate DataBridge configurations from multiple YAML config files.
     
@@ -362,9 +352,9 @@ def generate_databridge_from_configs(config_paths: List[str],
 
 def generate_databridge_from_directory(config_dir: str,
                                         output_dir: str,
-                                        mqtt_broker: str = "192.168.0.104",
-                                        mqtt_port: int = 1883,
-                                        basyx_url: str = "http://aas-env:8081") -> Dict[str, int]:
+                                        mqtt_broker: str = DEFAULT_MQTT_BROKER,
+                                        mqtt_port: int = DEFAULT_MQTT_PORT,
+                                        basyx_url: str = DEFAULT_BASYX_INTERNAL_URL) -> Dict[str, int]:
     """
     Generate DataBridge configurations from all YAML files in a directory.
     

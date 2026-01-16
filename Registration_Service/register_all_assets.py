@@ -29,6 +29,14 @@ from src import (
     BaSyxConfig,
     ConfigParser
 )
+from src.core.constants import (
+    DEFAULT_BASYX_URL,
+    DEFAULT_MQTT_BROKER,
+    DEFAULT_MQTT_PORT,
+    DEFAULT_DELEGATION_URL,
+    EXTERNAL_BASYX_HOST,
+    PathDefaults
+)
 
 
 class Colors:
@@ -189,29 +197,29 @@ Examples:
     
     parser.add_argument(
         '--config-dir',
-        default='../AASDescriptions/Resource/configs',
-        help='Directory containing config YAML files (default: ../AASDescriptions/Resource/configs)'
+        default=f'../{PathDefaults.CONFIG_DIR}',
+        help=f'Directory containing config YAML files (default: ../{PathDefaults.CONFIG_DIR})'
     )
     parser.add_argument(
         '--basyx-url',
-        default='http://192.168.0.104:8081',
-        help='BaSyx server URL (default: http://192.168.0.104:8081)'
+        default=f'http://{EXTERNAL_BASYX_HOST}:8081',
+        help=f'BaSyx server URL (default: http://{EXTERNAL_BASYX_HOST}:8081)'
     )
     parser.add_argument(
         '--mqtt-broker',
-        default='192.168.0.104',
-        help='MQTT broker host (default: 192.168.0.104)'
+        default=DEFAULT_MQTT_BROKER,
+        help=f'MQTT broker host (default: {DEFAULT_MQTT_BROKER})'
     )
     parser.add_argument(
         '--mqtt-port',
         type=int,
-        default=1883,
-        help='MQTT broker port (default: 1883)'
+        default=DEFAULT_MQTT_PORT,
+        help=f'MQTT broker port (default: {DEFAULT_MQTT_PORT})'
     )
     parser.add_argument(
         '--delegation-url',
-        default='http://192.168.0.104:8087',
-        help='Operation delegation service URL (default: http://192.168.0.104:8087)'
+        default=DEFAULT_DELEGATION_URL,
+        help=f'Operation delegation service URL (default: {DEFAULT_DELEGATION_URL})'
     )
     parser.add_argument(
         '--validate',

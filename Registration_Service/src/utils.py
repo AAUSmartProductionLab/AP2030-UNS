@@ -1,27 +1,20 @@
 """
-Utility Functions
+Utility Functions (Legacy Compatibility)
 
-Helper functions for the AAS registration service.
+This module maintains backward compatibility.
+New code should import from src.utils.* directly.
 """
 
-import json
-from pathlib import Path
-from typing import Any
+from .utils.formatters import save_json_file, load_json_file, ensure_directory
+from .utils.id_utils import encode_aas_id, sanitize_id, topic_to_id
 
+# Re-export for backward compatibility
+__all__ = [
+    'save_json_file',
+    'load_json_file',
+    'ensure_directory',
+    'encode_aas_id',
+    'sanitize_id',
+    'topic_to_id',
+]
 
-def save_json_file(file_path: Path, data: Any, indent: int = 2):
-    """Save data to JSON file with formatting"""
-    with open(file_path, 'w', encoding='utf-8') as f:
-        json.dump(data, f, indent=indent, ensure_ascii=False)
-
-
-def load_json_file(file_path: Path) -> Any:
-    """Load data from JSON file"""
-    with open(file_path, 'r', encoding='utf-8') as f:
-        return json.load(f)
-
-
-def ensure_directory(dir_path: Path) -> Path:
-    """Ensure directory exists, create if needed"""
-    dir_path.mkdir(parents=True, exist_ok=True)
-    return dir_path
