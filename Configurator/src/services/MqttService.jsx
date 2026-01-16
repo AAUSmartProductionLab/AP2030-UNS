@@ -154,7 +154,8 @@ class MqttService {
     console.log('MqttService: Attempting to connect...');
     const savedSettings = localStorage.getItem('appSettings');
     
-    let brokerHost = "192.168.0.104"; 
+    // Default to the hostname of the page origin (localhost or network IP)
+    let brokerHost = window.location.hostname;
     let brokerPort = "8000";       
     // Use more specific client IDs to avoid conflicts
     let clientId = `configurator-${window.location.hostname}-${Date.now()}-${Math.random().toString(16).substring(2, 8)}`;
