@@ -10,13 +10,13 @@
             {
                 "anyOf": [
                     {
-                        "$ref": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/order.schema.json"
+                        "$ref": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/order.schema.json"
                     },
                     {
-                        "$ref": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/planarStations.schema.json"
+                        "$ref": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/planarStations.schema.json"
                     },
                     {
-                        "$ref": "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/planarLimits.schema.json"
+                        "$ref": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/planarLimits.schema.json"
                     }
                 ]
             }
