@@ -148,6 +148,44 @@ class AASGenerator:
         print(f"Saved to {output_file}")
         return True
     
+    def generate_system(self, system_id: str, config: Dict, return_store: bool = False):
+        """
+        Legacy compatibility method for generating AAS.
+        
+        Note: This method exists for backward compatibility with existing code.
+        New code should use generate_all() instead.
+        
+        Args:
+            system_id: Unique identifier for the system (ignored, uses config system_id)
+            config: Configuration dictionary for this system (ignored, uses loaded config)
+            return_store: If True, returns (obj_store, dict), otherwise just dict
+            
+        Returns:
+            Dictionary representation of the AAS, or tuple of (obj_store, dict) if return_store=True
+        """
+        obj_store = self._build_object_store()
+        aas_dict = self._serialize_to_dict(obj_store)
+        
+        if return_store:
+            return obj_store, aas_dict
+        return aas_dict
+    
+    def validate_generated_aas(self, obj_store: model.DictObjectStore, context: str = "") -> bool:
+        """
+        Legacy compatibility method for validation.
+        
+        Note: This method exists for backward compatibility with existing code.
+        New code should use _validate_object_store() or generate_all(validate=True).
+        
+        Args:
+            obj_store: The DictObjectStore containing generated AAS objects
+            context: Context string for error messages (e.g., system name)
+            
+        Returns:
+            True if validation passed (no errors), False otherwise
+        """
+        return self._validate_object_store(obj_store)
+    
     # ==================== Core Building Methods ====================
     
     def _build_object_store(self) -> model.DictObjectStore:
