@@ -1,0 +1,20 @@
+[
+  {
+    "uniqueId": "mqtt_consumer_1",
+    "serverUrl": "192.168.0.104",
+    "serverPort": 1883,
+    "topic": "NN/Nybrovej/InnoLab/WeightVerification/DATA/Image"
+  },
+  {
+    "uniqueId": "mqtt_consumer_2",
+    "serverUrl": "192.168.0.104",
+    "serverPort": 1883,
+    "topic": "NN/Nybrovej/InnoLab/WeightVerification/DATA/Occupation"
+  },
+  {
+    "uniqueId": "mqtt_consumer_3",
+    "serverUrl": "192.168.0.104",
+    "serverPort": 1883,
+    "topic": "NN/Nybrovej/InnoLab/WeightVerification/DATA/State"
+  }
+]

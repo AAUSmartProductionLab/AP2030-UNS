@@ -102,20 +102,26 @@ optimaUnloadingSystemAAS:
                                 mqv_retain: 'false'
                                 mqv_controlPacket: publish
                                 mqv_qos: '0'
+                    - Weight:
+                            key: 'Weight'
+                            title: 'Weight'
+                            output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/weight.schema.json'
+                            forms:
+                                contentType: 'application/json'
+                                href: '/DATA/Weight'
+                                mqv_retain: 'false'
+                                mqv_controlPacket: publish
+                                mqv_qos: '0'
 
     Variables:
         PackMLState:
             semanticId: 'https://www.omac.org/packml/state'
-            Value: 'Idle'   
             InterfaceReference: 'PackMLState'
         OccupationState:
-            semanticId: ''
-            State: 'Available'
-            Queue: '[]'   
+            semanticId: 'https://smartproductionlab.aau.dk/stationOccupation'
             InterfaceReference: 'OccupationState'
         Weight:
-            semanticId: ''
-            Value: 0.0
+            semanticId: 'https://smartproductionlab.aau.dk/weight'
             InterfaceReference: 'Weight'
     Parameters:
     HierarchicalStructures:

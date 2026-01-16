@@ -156,6 +156,70 @@ class SchemaHandler:
         """
         return SCHEMA_TYPE_TO_AAS_TYPE.get(json_type, model.datatypes.String)
     
+    def extract_data_fields(self, schema_url: str) -> Dict[str, Dict]:
+        """
+        Extract the data fields from a schema for DataBridge configuration.
+        
+        This extracts the meaningful data fields from the schema, excluding
+        common base fields like TimeStamp that are present in all messages.
+        
+        Args:
+            schema_url: URL of the schema to extract fields from
+            
+        Returns:
+            Dictionary of field_name -> {type, description, default_value}
+        """
+        schema = self.load_schema(schema_url)
+        if not schema:
+            return {}
+        
+        # Get all properties including from allOf
+        all_properties = self.extract_properties(schema, include_inherited=True)
+        
+        # Get required fields from the main schema (not inherited)
+        required_fields = set()
+        if 'required' in schema:
+            required_fields.update(schema['required'])
+        
+        # Also check allOf for required fields (but not from base refs)
+        if 'allOf' in schema:
+            for sub_schema in schema['allOf']:
+                if '$ref' not in sub_schema and 'required' in sub_schema:
+                    required_fields.update(sub_schema['required'])
+        
+        # Base fields to exclude (from data.schema.json)
+        base_fields = {'TimeStamp'}
+        
+        # Extract data fields (required fields minus base fields)
+        data_fields = {}
+        for field_name in required_fields:
+            if field_name in base_fields:
+                continue
+            
+            prop_def = all_properties.get(field_name, {})
+            json_type = prop_def.get('type', 'string')
+            
+            # Determine default value based on type
+            if json_type == 'array':
+                default_value = '[]'
+            elif json_type == 'integer':
+                default_value = 0
+            elif json_type == 'number':
+                default_value = 0.0
+            elif json_type == 'boolean':
+                default_value = False
+            else:
+                default_value = ''
+            
+            data_fields[field_name] = {
+                'type': json_type,
+                'aas_type': self.get_aas_type(json_type),
+                'description': prop_def.get('description', ''),
+                'default_value': default_value
+            }
+        
+        return data_fields
+    
     def clear_cache(self):
         """Clear the schema cache."""
         self._schema_cache.clear()

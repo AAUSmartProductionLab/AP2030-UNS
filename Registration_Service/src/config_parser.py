@@ -14,6 +14,8 @@ from urllib.parse import urlparse
 from pathlib import Path
 import yaml
 
+from .aas_generation.schema_handler import SchemaHandler
+
 logger = logging.getLogger(__name__)
 
 
@@ -43,6 +45,9 @@ class ConfigParser:
         # Config contains a single system with the system ID as the top-level key
         self.system_id = list(config_data.keys())[0]
         self.config = config_data[self.system_id]
+        
+        # Initialize schema handler for schema-driven field extraction
+        self._schema_handler = SchemaHandler()
         
     @property
     def id_short(self) -> str:
@@ -217,6 +222,64 @@ class ConfigParser:
         
         return variables
     
+    def get_variables_with_schema_fields(self) -> List[Dict[str, Any]]:
+        """
+        Extract variable definitions with field names derived from MQTT schemas.
+        
+        This method resolves InterfaceReferences to their property schemas
+        and uses the schema to determine the field names and types.
+        The MQTT schema is the single source of truth for field definitions.
+        
+        Returns:
+            List of variable dictionaries with schema-derived fields:
+            - name: Variable name
+            - semantic_id: Semantic ID for the variable
+            - interface_reference: Name of the referenced interface property
+            - fields: Dict of field_name -> {type, default_value, description}
+        """
+        variables = self.get_variables()
+        properties = self.get_properties()
+        
+        # Build property lookup by name
+        property_lookup = {p['name']: p for p in properties}
+        
+        enriched_variables = []
+        for var in variables:
+            interface_ref = var.get('interface_reference')
+            
+            # Start with config-defined values as defaults
+            fields = var.get('values', {})
+            
+            # If there's an interface reference with a schema, derive fields from it
+            if interface_ref and interface_ref in property_lookup:
+                prop = property_lookup[interface_ref]
+                schema_url = prop.get('schema')
+                
+                if schema_url:
+                    # Get field definitions from schema
+                    schema_fields = self._schema_handler.extract_data_fields(schema_url)
+                    
+                    # Use schema fields, with config values as overrides for defaults
+                    fields = {}
+                    for field_name, field_def in schema_fields.items():
+                        fields[field_name] = {
+                            'type': field_def['type'],
+                            'aas_type': field_def['aas_type'],
+                            'default_value': var.get('values', {}).get(
+                                field_name, field_def['default_value']
+                            ),
+                            'description': field_def.get('description', '')
+                        }
+            
+            enriched_variables.append({
+                'name': var['name'],
+                'semantic_id': var.get('semantic_id', ''),
+                'interface_reference': interface_ref,
+                'fields': fields
+            })
+        
+        return enriched_variables
+    
     def get_skills(self) -> Dict[str, Dict[str, Any]]:
         """
         Extract skill definitions from config.
@@ -272,7 +335,8 @@ class ConfigParser:
         Generate property mappings for DataBridge configuration.
         
         Links Variables to their InterfaceReference properties for
-        MQTT -> AAS synchronization.
+        MQTT -> AAS synchronization. Field names are derived from the
+        MQTT schema - the single source of truth.
         
         Returns:
             List of mapping dictionaries with:
@@ -280,7 +344,7 @@ class ConfigParser:
             - property_name: Name of the interface property
             - mqtt_topic: Full MQTT topic for the property
             - schema: Schema URL for the property data
-            - value_fields: List of value fields to extract
+            - value_fields: List of field names derived from the MQTT schema
         """
         variables = self.get_variables()
         properties = self.get_properties()
@@ -293,18 +357,25 @@ class ConfigParser:
             interface_ref = var.get('interface_reference')
             if interface_ref and interface_ref in property_lookup:
                 prop = property_lookup[interface_ref]
+                schema_url = prop.get('schema')
                 
-                # Extract value field names from the variable values
-                value_fields = list(var.get('values', {}).keys())
+                # Extract field names from the MQTT schema (single source of truth)
+                if schema_url:
+                    data_fields = self._schema_handler.extract_data_fields(schema_url)
+                    value_fields = list(data_fields.keys())
+                else:
+                    # Fallback: use fields defined in YAML config
+                    value_fields = list(var.get('values', {}).keys())
                 
-                mappings.append({
-                    'variable_name': var['name'],
-                    'property_name': prop['name'],
-                    'mqtt_topic': prop['topic'],
-                    'schema': prop.get('schema'),
-                    'value_fields': value_fields,
-                    'qos': prop.get('qos', 0)
-                })
+                if value_fields:  # Only add mapping if there are fields to map
+                    mappings.append({
+                        'variable_name': var['name'],
+                        'property_name': prop['name'],
+                        'mqtt_topic': prop['topic'],
+                        'schema': schema_url,
+                        'value_fields': value_fields,
+                        'qos': prop.get('qos', 0)
+                    })
         
         return mappings
 

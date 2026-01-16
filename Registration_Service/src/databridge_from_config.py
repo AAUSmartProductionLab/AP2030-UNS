@@ -49,6 +49,10 @@ class DataBridgeFromConfig:
         
         # Track topics to avoid duplicates
         self._topic_ids: Dict[str, str] = {}
+        
+        # Track transformer metadata for JSONATA generation
+        # Maps transformer_id -> {variable_name, field_name, mqtt_field}
+        self._transformer_metadata: Dict[str, Dict] = {}
     
     def add_from_config(self, config: ConfigParser) -> Dict[str, int]:
         """
@@ -64,11 +68,9 @@ class DataBridgeFromConfig:
         endpoint = config.get_mqtt_endpoint()
         mappings = config.get_databridge_property_mappings()
         
-        # Override broker if specified in config
-        if endpoint.get('broker_host'):
-            self.mqtt_broker = endpoint['broker_host']
-        if endpoint.get('broker_port'):
-            self.mqtt_port = endpoint['broker_port']
+        # Note: We don't override broker from config endpoint since the generator
+        # is initialized with the correct Docker-internal hostname (hivemq-broker).
+        # The config files use external IPs which won't work inside Docker.
         
         counts = {'consumers': 0, 'transformers': 0, 'sinks': 0, 'routes': 0}
         
@@ -87,34 +89,45 @@ class DataBridgeFromConfig:
             if consumer_id:
                 counts['consumers'] += 1
             
-            # Generate transformers and sinks for each variable mapping
-            transformer_ids = []
-            sink_ids = []
+            # Collect all transformers, sinks, and their mappings for this topic
+            all_transformers = []
+            all_sinks = []
+            datasink_mapping = {}
             
             for mapping in group_mappings:
-                # Generate transformer
-                transformer_id = self._generate_transformer(
-                    system_id, 
-                    mapping['variable_name'],
-                    mapping['value_fields']
-                )
-                if transformer_id:
-                    transformer_ids.append(transformer_id)
-                    counts['transformers'] += 1
+                variable_name = mapping['variable_name']
+                value_fields = mapping['value_fields']
                 
-                # Generate sink
-                sink_id = self._generate_sink(
-                    system_id,
-                    mapping['variable_name'],
-                    mapping['value_fields']
-                )
-                if sink_id:
-                    sink_ids.append(sink_id)
-                    counts['sinks'] += 1
+                # Generate a separate transformer and sink for each value field
+                for field in value_fields:
+                    # Generate transformer for this specific field
+                    # The field name IS the MQTT field name (harmonized naming)
+                    transformer_id = self._generate_transformer(
+                        system_id, 
+                        variable_name,
+                        field
+                    )
+                    if transformer_id:
+                        all_transformers.append(transformer_id)
+                        counts['transformers'] += 1
+                    
+                    # Generate sink for this specific field
+                    sink_id = self._generate_sink(
+                        system_id,
+                        variable_name,
+                        field
+                    )
+                    if sink_id:
+                        all_sinks.append(sink_id)
+                        counts['sinks'] += 1
+                        # Map this sink to its transformer
+                        datasink_mapping[sink_id] = [transformer_id]
             
-            # Generate route connecting consumer to transformers and sinks
-            if consumer_id and transformer_ids and sink_ids:
-                route_count = self._generate_routes(consumer_id, transformer_ids, sink_ids)
+            # Generate consolidated route for this topic
+            if consumer_id and all_transformers and all_sinks:
+                route_count = self._generate_route(
+                    consumer_id, all_transformers, all_sinks, datasink_mapping
+                )
                 counts['routes'] += route_count
         
         logger.info(f"Added configs for {system_id}: {counts}")
@@ -162,98 +175,117 @@ class DataBridgeFromConfig:
         
         self._topic_ids[topic] = consumer_id
         
+        # Strip any existing tcp:// prefix to avoid duplication
+        broker = self.mqtt_broker
+        if broker.startswith('tcp://'):
+            broker = broker[6:]
+        
         self.consumers.append({
             "uniqueId": consumer_id,
-            "serverUrl": f"tcp://{self.mqtt_broker}:{self.mqtt_port}",
+            "serverUrl": broker,
+            "serverPort": self.mqtt_port,
             "topic": topic
         })
         
         return consumer_id
     
     def _generate_transformer(self, system_id: str, variable_name: str, 
-                              value_fields: List[str]) -> Optional[str]:
+                              field: str) -> Optional[str]:
         """
-        Generate JSONATA transformer for a variable.
+        Generate JSONATA transformer for a specific variable field.
         
+        Args:
+            system_id: The AAS system ID
+            variable_name: The variable name (e.g., PackMLState, OccupationState)
+            field: The specific field to transform - matches MQTT schema field name
+            
         Returns:
             Transformer unique ID
         """
-        # Create unique ID
-        transformer_id = f"{sanitize_id(system_id)}_{sanitize_id(variable_name)}_transformer"
+        # Create unique ID including the field
+        transformer_id = f"{sanitize_id(system_id)}_{sanitize_id(variable_name)}_{sanitize_id(field)}_transformer"
         
         # Create JSONATA query file name
-        query_file = f"{sanitize_id(system_id)}_{sanitize_id(variable_name)}.jsonata"
+        query_file = f"{sanitize_id(system_id)}_{sanitize_id(variable_name)}_{sanitize_id(field)}.jsonata"
         
         self.transformers.append({
             "uniqueId": transformer_id,
+            "queryLanguage": "JSONATA",
             "queryPath": f"queries/{query_file}",
             "inputType": "JsonString",
             "outputType": "JsonString"
         })
         
+        # Store metadata for JSONATA query generation
+        # Since field names are now harmonized, field == mqtt_field
+        self._transformer_metadata[transformer_id] = {
+            'variable_name': variable_name,
+            'field': field
+        }
+        
         return transformer_id
     
     def _generate_sink(self, system_id: str, variable_name: str,
-                       value_fields: List[str]) -> Optional[str]:
+                       field: str) -> Optional[str]:
         """
-        Generate AAS server sink for a variable.
+        Generate AAS server sink for a specific variable field.
         
+        Args:
+            system_id: The AAS system ID
+            variable_name: The variable name (e.g., PackMLState, OccupationState)
+            field: The specific field (e.g., Value, State, Queue)
+            
         Returns:
             Sink unique ID
         """
-        # Create unique ID  
-        sink_id = f"{sanitize_id(system_id)}_{sanitize_id(variable_name)}_sink"
+        # Create unique ID including the field
+        sink_id = f"{sanitize_id(system_id)}_{sanitize_id(variable_name)}_sink_{sanitize_id(field)}"
         
         # Build the submodel element path
-        # Variables submodel, variable collection, specific property
         submodel_id = f"https://smartproductionlab.aau.dk/submodels/instances/{system_id}/Variables"
+        id_short_path = f"{variable_name}.{field}"
         
-        # For each value field, we need a separate sink entry
-        for field in value_fields:
-            field_sink_id = f"{sink_id}_{sanitize_id(field)}"
-            id_short_path = f"{variable_name}.{field}"
-            
-            encoded_sm_id = encode_aas_id(submodel_id)
-            
-            self.sinks.append({
-                "uniqueId": field_sink_id,
-                "submodelEndpoint": f"{self.basyx_url}/submodels/{encoded_sm_id}",
-                "idShortPath": id_short_path
-            })
+        encoded_sm_id = encode_aas_id(submodel_id)
+        
+        self.sinks.append({
+            "uniqueId": sink_id,
+            "submodelEndpoint": f"{self.basyx_url}/submodels/{encoded_sm_id}",
+            "idShortPath": id_short_path,
+            "api": "DotAasV3"
+        })
         
         return sink_id
     
-    def _generate_routes(self, consumer_id: str, transformer_ids: List[str], 
-                         sink_ids: List[str]) -> int:
+    def _generate_route(self, consumer_id: str, transformers: List[str], 
+                        sinks: List[str], datasink_mapping: Dict[str, List[str]]) -> int:
         """
-        Generate routes connecting consumer to transformers and sinks.
+        Generate a single consolidated route connecting consumer to all transformers and sinks.
         
+        Args:
+            consumer_id: The MQTT consumer ID
+            transformers: List of transformer IDs
+            sinks: List of sink IDs
+            datasink_mapping: Mapping of sink_id -> [transformer_ids]
+            
         Returns:
-            Number of routes generated
+            Number of routes generated (always 1)
         """
-        count = 0
+        if not sinks:
+            return 0
         
-        # Each transformer should map to corresponding sink(s)
-        for i, transformer_id in enumerate(transformer_ids):
-            # Get base sink ID (without field suffix)
-            base_sink_id = sink_ids[i] if i < len(sink_ids) else sink_ids[-1]
-            
-            # Find all sinks that match this base
-            matching_sinks = [s['uniqueId'] for s in self.sinks 
-                            if s['uniqueId'].startswith(base_sink_id)]
-            
-            for sink_id in matching_sinks:
-                route_id = f"route_{consumer_id}_to_{sink_id}"
-                
-                self.routes.append({
-                    "routeId": route_id,
-                    "datasource": consumer_id,
-                    "transformers": [transformer_id],
-                    "datasinks": [sink_id]
-                })
-                count += 1
+        route = {
+            "datasource": consumer_id,
+            "transformers": transformers,
+            "datasinks": sinks,
+            "trigger": "event"
+        }
         
-        return count
+        # Only add datasinkMappingConfiguration if there are multiple sinks
+        if len(sinks) > 1:
+            route["datasinkMappingConfiguration"] = datasink_mapping
+        
+        self.routes.append(route)
+        return 1
     
     def save_configs(self, output_dir: str) -> Dict[str, int]:
         """
@@ -296,9 +328,18 @@ class DataBridgeFromConfig:
         Generate JSONATA query content for a transformer.
         
         The query extracts values from MQTT JSON and formats for AAS.
+        Since field names are harmonized between YAML configs and MQTT schemas,
+        we simply extract $.{field_name} from the MQTT message.
         """
-        # Default passthrough query - can be customized based on schema
-        return "$.value"
+        metadata = self._transformer_metadata.get(transformer_id, {})
+        field = metadata.get('field', '')
+        
+        if not field:
+            return '$'
+        
+        # Simple, direct field extraction - field names match MQTT schema
+        # Use $string() wrapper to ensure proper string formatting for AAS
+        return f'$string($.{field})'
     
     def _write_json(self, path: Path, data: Any):
         """Write JSON data to file"""
@@ -313,6 +354,7 @@ class DataBridgeFromConfig:
         self.sinks = []
         self.routes = []
         self._topic_ids = {}
+        self._transformer_metadata = {}
 
 
 def generate_databridge_from_configs(config_paths: List[str], 

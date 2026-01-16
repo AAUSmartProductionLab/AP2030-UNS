@@ -102,21 +102,27 @@ omronCameraSystemAAS:
                                 mqv_retain: 'false'
                                 mqv_controlPacket: publish
                                 mqv_qos: '0'
+                    - Image:
+                            key: 'Image'
+                            title: 'Image'
+                            output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/image.schema.json'
+                            forms:
+                                contentType: 'application/json'
+                                href: '/DATA/Image'
+                                mqv_retain: 'false'
+                                mqv_controlPacket: publish
+                                mqv_qos: '0'
 
     Variables:
         PackMLState:
             semanticId: 'https://www.omac.org/packml/state'
-            Value: 'Idle'   
             InterfaceReference: 'PackMLState'
         OccupationState:
-            semanticId: ''
-            State: 'Available'
-            Queue: '[]'   
+            semanticId: 'https://smartproductionlab.aau.dk/stationOccupation'
             InterfaceReference: 'OccupationState'
-        Weight:
-            semanticId: ''
-            Value: 0.0
-            InterfaceReference: 'Weight'
+        Image:
+            semanticId: 'https://smartproductionlab.aau.dk/image'
+            InterfaceReference: 'Image'
     Parameters:
     HierarchicalStructures:
         Archetype: 'OneUp'

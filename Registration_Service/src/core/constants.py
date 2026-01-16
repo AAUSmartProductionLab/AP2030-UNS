@@ -9,11 +9,11 @@ from typing import Final
 
 
 # Default network configuration
-DEFAULT_MQTT_BROKER: Final[str] = "192.168.0.104"
+DEFAULT_MQTT_BROKER: Final[str] = "hivemq-broker"
 DEFAULT_MQTT_PORT: Final[int] = 1883
 DEFAULT_BASYX_URL: Final[str] = "http://localhost:8081"
 DEFAULT_BASYX_INTERNAL_URL: Final[str] = "http://aas-env:8081"
-DEFAULT_DELEGATION_URL: Final[str] = "http://192.168.0.104:8087"
+DEFAULT_DELEGATION_URL: Final[str] = "http://operation-delegation:8087"
 DEFAULT_GITHUB_PAGES_URL: Final[str] = "https://aausmartproductionlab.github.io/AP2030-UNS"
 
 # External URL for registry descriptors

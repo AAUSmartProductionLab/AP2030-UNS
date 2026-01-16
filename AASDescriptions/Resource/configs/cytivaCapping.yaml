@@ -105,12 +105,9 @@ cytivaCappingSystemAAS:
     Variables:
         PackMLState:
             semanticId: 'https://www.omac.org/packml/state'
-            Value: 'Idle'   
             InterfaceReference: 'PackMLState'
         OccupationState:
-            semanticId: ''
-            State: 'Available'
-            Queue: '[]'   
+            semanticId: 'https://smartproductionlab.aau.dk/stationOccupation'
             InterfaceReference: 'OccupationState'
     Parameters:
     HierarchicalStructures:

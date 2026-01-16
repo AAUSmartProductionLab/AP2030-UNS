@@ -96,7 +96,8 @@ class AASGenerator:
             self.base_url, self.semantic_factory, self.element_factory
         )
         self.variables_builder = VariablesSubmodelBuilder(
-            self.base_url, self.semantic_factory, self.element_factory
+            self.base_url, self.semantic_factory, self.element_factory,
+            self.schema_handler
         )
         self.skills_builder = SkillsSubmodelBuilder(
             self.base_url, self.delegation_base_url,
@@ -188,6 +189,33 @@ class AASGenerator:
     
     # ==================== Core Building Methods ====================
     
+    def _extract_interface_properties(self) -> List[Dict]:
+        """
+        Extract interface properties with schema URLs from config.
+        
+        These are used for schema-driven field extraction in Variables submodel.
+        
+        Returns:
+            List of property dicts with name and schema URL
+        """
+        interface_config = self.system_config.get('AssetInterfacesDescription', {}) or {}
+        mqtt_config = interface_config.get('InterfaceMQTT', {}) or {}
+        interaction_config = mqtt_config.get('InteractionMetadata', {}) or {}
+        properties_list = interaction_config.get('properties', []) or []
+        
+        properties = []
+        for prop_item in properties_list:
+            # Handle list format: [{ PropName: {...} }, ...]
+            if isinstance(prop_item, dict):
+                for prop_name, prop_config in prop_item.items():
+                    if isinstance(prop_config, dict):
+                        properties.append({
+                            'name': prop_name,
+                            'schema': prop_config.get('output')
+                        })
+        
+        return properties
+    
     def _build_object_store(self) -> model.DictObjectStore:
         """
         Build the complete AAS object store with all submodels.
@@ -201,10 +229,13 @@ class AASGenerator:
         aas = self.aas_builder.build(self.system_id, self.system_config)
         obj_store.add(aas)
         
+        # Extract interface properties for schema-driven field extraction
+        interface_properties = self._extract_interface_properties()
+        
         # Generate all submodels
         submodels = [
             self.asset_interfaces_builder.build(self.system_id, self.system_config),
-            self.variables_builder.build(self.system_id, self.system_config),
+            self.variables_builder.build(self.system_id, self.system_config, interface_properties),
             self.parameters_builder.build(self.system_id, self.system_config),
             self.hierarchical_structures_builder.build(self.system_id, self.system_config),
             self.capabilities_builder.build(self.system_id, self.system_config),
