@@ -1,19 +1,33 @@
 services:
   
+  # hivemq-broker:
+  #   image: hivemq/hivemq4:latest
+  #   container_name: hivemq-broker
+  #   volumes:
+  #     - ./HiveMQ/conf:/opt/hivemq/conf
+  #     - ./HiveMQ/extensions:/opt/hivemq/extensions
+  #   restart: unless-stopped
+  #   ports:
+  #     - "1883:1883"
+  #     - "8080:8080"
+  #     - "8883:8883"
+  #     - "8884:8884"
+  #     - "8091:8081"
+  #     - "8000:8000"
+  #   networks:
+  #     - hivemq-network
+
   hivemq-broker:
-    image: hivemq/hivemq4:latest
+    image: eclipse-mosquitto
     container_name: hivemq-broker
     volumes:
-      - ./HiveMQ/conf:/opt/hivemq/conf
-      - ./HiveMQ/extensions:/opt/hivemq/extensions
+      - ./Mosquitto/config:/mosquitto/config:rw
+      - ./Mosquitto/data:/mosquitto/data:rw
+      - ./Mosquitto/log:/mosquitto/log:rw
     restart: unless-stopped
     ports:
-      - "1883:1883"
-      - "8080:8080"
-      - "8883:8883"
-      - "8884:8884"
-      - "8091:8081"
-      - "8000:8000"
+      - "1883:1883" #default mqtt port
+      - "9001:9001" #default mqtt port for websockets
     networks:
       - hivemq-network
 
