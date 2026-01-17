@@ -37,8 +37,8 @@ import {
 class AasService {
   constructor() {
     // Service URLs from environment
-    this.repositoryUrl = import.meta.env.VITE_AAS_REPOSITORY_URL || 'http://192.168.0.104:8081';
-    this.shellRegistryUrl = import.meta.env.VITE_AAS_SHELL_REGISTRY_URL || 'http://192.168.0.104:8082';
+    this.repositoryUrl = import.meta.env.VITE_AAS_REPOSITORY_URL || 'http://localhost:8081';
+    this.shellRegistryUrl = import.meta.env.VITE_AAS_SHELL_REGISTRY_URL || 'http://localhost:8082';
     
     // Root AAS configuration
     this.rootSubmodelId = import.meta.env.VITE_ROOT_SUBMODEL_ID || 

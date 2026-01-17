@@ -4,11 +4,12 @@ from PackMLSimulator import PackMLStateMachine
 import datetime
 import cv2
 import base64
+import os
 
-BROKER_ADDRESS = "192.168.0.104"
-BROKER_PORT = 1883
+BROKER_ADDRESS = os.getenv("MQTT_BROKER", "hivemq-broker")
+BROKER_PORT = int(os.getenv("MQTT_PORT", "1883"))
 BASE_TOPIC = "NN/Nybrovej/InnoLab/Camera"
-uuid=""
+uuid = ""
 
 image_publisher = Publisher(
     BASE_TOPIC + "/DATA/Image",
@@ -22,18 +23,20 @@ def capture_process(duration=0.5):
     try:
         webcam = cv2.VideoCapture(0)
         ret, image = webcam.read()
-        
+
         if not ret:
             print("Failed to capture image from webcam")
             return
-            
+
         # Encode image to compressed format (JPEG)
-        _, img_encoded = cv2.imencode('.jpg', image, [cv2.IMWRITE_JPEG_QUALITY, 80])
+        _, img_encoded = cv2.imencode(
+            '.jpg', image, [cv2.IMWRITE_JPEG_QUALITY, 80])
         img_bytes = base64.b64encode(img_encoded).decode('utf-8')
-        
+
         # Generate ISO 8601 timestamp with Z suffix for UTC
-        timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
-        
+        timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat(
+            timespec='milliseconds').replace('+00:00', 'Z')
+
         response = {
             "Image": img_bytes,
             "TimeStamp": timestamp,
@@ -51,7 +54,7 @@ def capture_process(duration=0.5):
 def capture_callback(topic, client, message, properties):
     """Callback handler for capture commands"""
     global uuid
-    uuid =message.get("Uuid")
+    uuid = message.get("Uuid")
     try:
         state_machine.execute_command(message, capture, capture_process)
     except Exception as e:
@@ -59,28 +62,28 @@ def capture_callback(topic, client, message, properties):
 
 
 capture = ResponseAsync(
-    BASE_TOPIC+"/DATA/Capture", 
+    BASE_TOPIC+"/DATA/Capture",
     BASE_TOPIC+"/CMD/Capture",
-    "./schemas/commandResponse.schema.json", 
-    "./schemas/command.schema.json", 
-    2, 
+    "./MQTTSchemas/commandResponse.schema.json",
+    "./MQTTSchemas/command.schema.json",
+    2,
     capture_callback
 )
 
 cameraProxy = Proxy(
-    BROKER_ADDRESS, 
+    BROKER_ADDRESS,
     BROKER_PORT,
-    "CameraProxy", 
-    [capture,image_publisher]
+    "CameraProxy",
+    [capture, image_publisher]
 )
 
 state_machine = PackMLStateMachine(BASE_TOPIC, cameraProxy, None)
-state_machine.failureChance=0
+state_machine.failureChance = 0
+
 
 def main():
     """Main entry point for the filling proxy"""
 
-    
     cameraProxy.loop_forever()
 
 

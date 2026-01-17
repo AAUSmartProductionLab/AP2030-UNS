@@ -3,9 +3,9 @@ import '../styles/Settings.css';
 import mqttService from '../services/MqttService';
 
 export default function Settings() {
-  // Default values
+  // Default values - use window.location.hostname to auto-detect server
   const defaultSettings = {
-    mqttBrokerHost: "192.168.0.104",
+    mqttBrokerHost: window.location.hostname || "localhost",
     mqttBrokerPort: "8000",
     clientId: "configurator-" + Math.random().toString(16).substring(2, 8),
     autoSaveInterval: 5,

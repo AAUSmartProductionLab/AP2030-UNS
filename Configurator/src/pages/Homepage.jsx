@@ -7,7 +7,7 @@ export default function Homepage() {
   const [mqttConnected, setMqttConnected] = useState(false);
   const [activeBatches, setActiveBatches] = useState(0);
   const [uptime, setUptime] = useState('0h 0m 0s');
-  const [serverIp, setServerIp] = useState('192.168.0.104'); 
+  const [serverIp, setServerIp] = useState(window.location.hostname || 'localhost'); 
   
   useEffect(() => {
     const updateServerIpFromStorage = () => {

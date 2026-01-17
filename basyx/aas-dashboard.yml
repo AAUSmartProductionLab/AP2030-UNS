@@ -12,4 +12,4 @@ basyx:
   cors:
     allowed-origins: '*'
     allowed-methods: GET,POST,PATCH,DELETE,PUT,OPTIONS,HEAD
-  externalurl: http://localhost:8085
+  externalurl: http://${EXTERNAL_HOST:localhost}:8085

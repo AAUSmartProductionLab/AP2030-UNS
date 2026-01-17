@@ -5,6 +5,22 @@
     cd AP2030-UNS
     git submodule update --init --recursive
 ```
+
+# Configuration
+
+Before running the system, configure your environment:
+
+```bash
+    # Copy the example environment file
+    cp .env.example .env
+    
+    # Edit .env and set your machine's IP address
+    # Update EXTERNAL_HOST to your machine's IP (e.g., 192.168.1.100)
+    nano .env
+```
+
+For detailed configuration instructions, see [CONFIGURATION.md](CONFIGURATION.md).
+
 # Schemas and AAS Templates
 
 All json schemas are hosted on github pages under the following link:

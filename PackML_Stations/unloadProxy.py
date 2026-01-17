@@ -1,10 +1,12 @@
 from MQTT_classes import Proxy, ResponseAsync, Publisher, Subscriber
 import time
 from PackMLSimulator import PackMLStateMachine
+import os
 
-BROKER_ADDRESS = "192.168.0.104"
-BROKER_PORT = 1883
+BROKER_ADDRESS = os.getenv("MQTT_BROKER", "hivemq-broker")
+BROKER_PORT = int(os.getenv("MQTT_PORT", "1883"))
 BASE_TOPIC = "NN/Nybrovej/InnoLab/Unload"
+
 
 def unload_process(duration=2.0):
     time.sleep(duration)
@@ -35,16 +37,18 @@ unload = ResponseAsync(
 
 
 unloadProxy = Proxy(
-    BROKER_ADDRESS, 
+    BROKER_ADDRESS,
     BROKER_PORT,
-    "UnloadProxy", 
+    "UnloadProxy",
     [unload]
 )
 
-state_machine = PackMLStateMachine(BASE_TOPIC,unloadProxy, None)
+state_machine = PackMLStateMachine(BASE_TOPIC, unloadProxy, None)
+
 
 def main():
     unloadProxy.loop_forever()
+
 
 if __name__ == "__main__":
     main()

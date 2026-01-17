@@ -1,11 +1,11 @@
 mqtt:
-  broker_uri: "tcp://192.168.0.104:1883"
+  broker_uri: "tcp://${MQTT_BROKER:-hivemq-broker}:${MQTT_PORT:-1883}"
   client_id: "bt_controller"
   uns_topic: "NN/Nybrovej/InnoLab"
 
 aas:
-  server_url: "http://192.168.0.104:8081"
-  registry_url: "http://192.168.0.104:8082"
+  server_url: "http://${AAS_SERVER:-aas-env}:${AAS_PORT:-8081}"
+  registry_url: "http://${AAS_REGISTRY:-aas-registry}:${AAS_REGISTRY_PORT:-8080}"
   asset_ids:
     - "https://smartproductionlab.aau.dk/assets/aauFillingLine"
 

@@ -1,8 +1,8 @@
 import enum
 import datetime
-import threading # Add this import
+import threading  # Add this import
 import inspect   # Add this import
-from library.MQTT_classes import Proxy,Publisher, ResponseAsync, Topic
+from library.MQTT_classes import Proxy, Publisher, ResponseAsync, Topic
 
 
 class PackMLState(enum.Enum):
@@ -13,17 +13,17 @@ class PackMLState(enum.Enum):
     COMPLETING = "COMPLETING"
     COMPLETE = "COMPLETE"
     RESETTING = "RESETTING"
-    
+
     # Hold states
     HOLDING = "HOLDING"
     HELD = "HELD"
     UNHOLDING = "UNHOLDING"
-    
+
     # Suspend states
     SUSPENDING = "SUSPENDING"
     SUSPENDED = "SUSPENDED"
     UNSUSPENDING = "UNSUSPENDING"
-    
+
     # Stop and abort states
     STOPPING = "STOPPING"
     STOPPED = "STOPPED"
@@ -33,10 +33,11 @@ class PackMLState(enum.Enum):
 
 
 class PackMLStateMachine:
-    def __init__(self,  base_topic, client:Proxy, properties):
+    def __init__(self,  base_topic, client: Proxy, properties):
         self.state = PackMLState.IDLE
         self.base_topic = base_topic
-        self.running_execution = False # Keep if used elsewhere, otherwise consider removing
+        # Keep if used elsewhere, otherwise consider removing
+        self.running_execution = False
         # Mqtt stuff
         self.client = client
         self.properties = properties
@@ -56,7 +57,7 @@ class PackMLStateMachine:
         # Key: UUID of the item in queue, Value: UUID of the original registration command
         self.pending_registrations = {}
 
-        # Schemas assume . relative path from CWD. In container /app is CWD and schemas are in /app/schemas.
+        # Schemas assume . relative path from CWD. In container /app is CWD and schemas are in /app/MQTTSchema.
         # So ./MQTTSchema is correct if mapped correctly.
         self.register_topic = ResponseAsync(
             self.base_topic+"/DATA/Occupy",
@@ -128,8 +129,8 @@ class PackMLStateMachine:
         )
 
         # Register basic PackML topics
-        topics=[self.register_topic, self.unregister_topic, self.state_topic,
-                self.start_topic, self.stop_topic, self.reset_topic, self.hold_topic, self.unhold_topic]
+        topics = [self.register_topic, self.unregister_topic, self.state_topic,
+                  self.start_topic, self.stop_topic, self.reset_topic, self.hold_topic, self.unhold_topic]
         for topic in topics:
             client.register_topic(topic)
 
@@ -143,7 +144,8 @@ class PackMLStateMachine:
         self.on_unhold = None
 
     def _publish_command_status(self, status_topic_publisher, command_uuid, state_value):
-        timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
+        timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat(
+            timespec='milliseconds').replace('+00:00', 'Z')
         response = {
             "State": state_value,
             "TimeStamp": timestamp,
@@ -151,10 +153,10 @@ class PackMLStateMachine:
         }
         status_topic_publisher.publish(response, self.client, False)
 
-    def register_callback(self,topic, client, message, properties):
+    def register_callback(self, topic, client, message, properties):
         print(f"PackML Register: {message}")
 
-    def unregister_callback(self,topic, client, message, properties):
+    def unregister_callback(self, topic, client, message, properties):
         print(f"PackML Unregister: {message}")
 
     def start_callback(self, topic, client, message, properties):
@@ -162,16 +164,16 @@ class PackMLStateMachine:
         if self.state == PackMLState.IDLE:
             self.set_state(PackMLState.STARTING)
             self._publish_command_status(topic, message.get("Uuid"), "SUCCESS")
-            
+
             if self.on_start:
                 try:
                     self.on_start()
                 except Exception as e:
                     print(f"Error in on_start: {e}")
-            
+
             self.set_state(PackMLState.EXECUTE)
         else:
-             self._publish_command_status(topic, message.get("Uuid"), "FAILURE")
+            self._publish_command_status(topic, message.get("Uuid"), "FAILURE")
 
     def stop_callback(self, topic, client, message, properties):
         print("Received Stop command")
@@ -180,71 +182,73 @@ class PackMLStateMachine:
             previous_state = self.state
             self.set_state(PackMLState.STOPPING)
             self._publish_command_status(topic, message.get("Uuid"), "SUCCESS")
-            
+
             if self.on_stop:
-                 try:
+                try:
                     self.on_stop()
-                 except Exception as e:
+                except Exception as e:
                     print(f"Error in on_stop: {e}")
-            
+
             self.set_state(PackMLState.STOPPED)
         else:
-             self._publish_command_status(topic, message.get("Uuid"), "SUCCESS") # Already stopped is success?
+            self._publish_command_status(topic, message.get(
+                "Uuid"), "SUCCESS")  # Already stopped is success?
 
     def reset_callback(self, topic, client, message, properties):
         print("Received Reset command")
         if self.state in [PackMLState.STOPPED, PackMLState.COMPLETE, PackMLState.ABORTED]:
             self.set_state(PackMLState.RESETTING)
             self._publish_command_status(topic, message.get("Uuid"), "SUCCESS")
-            
+
             if self.on_reset:
-                 try:
+                try:
                     self.on_reset()
-                 except Exception as e:
+                except Exception as e:
                     print(f"Error in on_reset: {e}")
-            
+
             self.set_state(PackMLState.IDLE)
         else:
-             self._publish_command_status(topic, message.get("Uuid"), "FAILURE")
+            self._publish_command_status(topic, message.get("Uuid"), "FAILURE")
 
     def hold_callback(self, topic, client, message, properties):
         print("Received Hold command")
         if self.state == PackMLState.EXECUTE:
             self.set_state(PackMLState.HOLDING)
             self._publish_command_status(topic, message.get("Uuid"), "SUCCESS")
-            
+
             if self.on_hold:
-                 try:
+                try:
                     self.on_hold()
-                 except Exception as e:
+                except Exception as e:
                     print(f"Error in on_hold: {e}")
-            
+
             self.set_state(PackMLState.HELD)
         else:
-             self._publish_command_status(topic, message.get("Uuid"), "FAILURE")
+            self._publish_command_status(topic, message.get("Uuid"), "FAILURE")
 
     def unhold_callback(self, topic, client, message, properties):
         print("Received Unhold command")
         if self.state == PackMLState.HELD:
             self.set_state(PackMLState.UNHOLDING)
             self._publish_command_status(topic, message.get("Uuid"), "SUCCESS")
-            
+
             if self.on_unhold:
-                 try:
+                try:
                     self.on_unhold()
-                 except Exception as e:
+                except Exception as e:
                     print(f"Error in on_unhold: {e}")
-            
+
             self.set_state(PackMLState.EXECUTE)
         else:
-             self._publish_command_status(topic, message.get("Uuid"), "FAILURE")
+            self._publish_command_status(topic, message.get("Uuid"), "FAILURE")
 
     def set_state(self, state: PackMLState):
         self.state = state
         self.publish_state()
 
     def publish_state(self):
-        timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
+        timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat(
+            timespec='milliseconds').replace('+00:00', 'Z')
         message = {
             "State": self.state.value,
             "TimeStamp": timestamp

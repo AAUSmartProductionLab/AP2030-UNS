@@ -5,4 +5,9 @@ basyx:
 spring:
   data:
     mongodb:
-      uri: mongodb://mongoAdmin:mongoPassword@mongo:27017
+      host: mongo
+      port: 27017
+      database: aas-registry
+      authentication-database: admin
+      username: mongoAdmin
+      password: mongoPassword
