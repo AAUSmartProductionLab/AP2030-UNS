@@ -6,18 +6,25 @@ Centralizes magic strings, default values, and configuration constants.
 
 from enum import Enum
 from typing import Final
+import os
 
 
 # Default network configuration
-DEFAULT_MQTT_BROKER: Final[str] = "hivemq-broker"
-DEFAULT_MQTT_PORT: Final[int] = 1883
-DEFAULT_BASYX_URL: Final[str] = "http://localhost:8081"
-DEFAULT_BASYX_INTERNAL_URL: Final[str] = "http://aas-env:8081"
-DEFAULT_DELEGATION_URL: Final[str] = "http://operation-delegation:8087"
+# These defaults assume the service runs within Docker (the primary deployment method)
+# Override via command-line arguments or environment variables when running outside Docker
+DEFAULT_MQTT_BROKER: Final[str] = os.environ.get(
+    "MQTT_BROKER", "hivemq-broker")
+DEFAULT_MQTT_PORT: Final[int] = int(os.environ.get("MQTT_PORT", "1883"))
+DEFAULT_BASYX_URL: Final[str] = os.environ.get(
+    "BASYX_URL", "http://aas-env:8081")
+DEFAULT_BASYX_INTERNAL_URL: Final[str] = os.environ.get(
+    "BASYX_INTERNAL_URL", "http://aas-env:8081")
+DEFAULT_DELEGATION_URL: Final[str] = os.environ.get(
+    "DELEGATION_SERVICE_URL", "http://operation-delegation:8087")
 DEFAULT_GITHUB_PAGES_URL: Final[str] = "https://aausmartproductionlab.github.io/AP2030-UNS"
 
-# External URL for registry descriptors
-EXTERNAL_BASYX_HOST: Final[str] = "192.168.0.104"
+# External URL for registry descriptors (used for URLs that need to be accessed from outside Docker)
+EXTERNAL_BASYX_HOST: Final[str] = os.environ.get("EXTERNAL_HOST", "localhost")
 
 
 class ModelType(str, Enum):
@@ -83,13 +90,13 @@ class SemanticIds:
     HIERARCHICAL_STRUCTURES_1_0: Final[str] = "https://admin-shell.io/idta/HierarchicalStructures/1/0/Submodel"
     HIERARCHICAL_STRUCTURES_1_1: Final[str] = "https://admin-shell.io/idta/HierarchicalStructures/1/1/Submodel"
     CARBON_FOOTPRINT: Final[str] = "https://admin-shell.io/idta/CarbonFootprint/0/9/ProductCarbonFootprint"
-    
+
     # Custom submodels
     VARIABLES: Final[str] = "http://smartproductionlab.aau.dk/submodels/Variables/1/0"
     PARAMETERS: Final[str] = "http://smartproductionlab.aau.dk/submodels/Parameters/1/0"
     SKILLS: Final[str] = "http://smartproductionlab.aau.dk/submodels/Skills/1/0"
     CAPABILITIES: Final[str] = "http://smartproductionlab.aau.dk/submodels/OfferedCapabilitiyDescription/1/0"
-    
+
     # W3C Thing Description
     WOT_ACTION: Final[str] = "https://www.w3.org/2019/wot/td#ActionAffordance"
     WOT_PROPERTY: Final[str] = "https://www.w3.org/2019/wot/td#PropertyAffordance"

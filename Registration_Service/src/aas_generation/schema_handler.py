@@ -24,83 +24,82 @@ SCHEMA_TYPE_TO_AAS_TYPE = {
 
 class SchemaHandler:
     """Handles loading and parsing JSON schemas."""
-    
+
     def __init__(self, project_root: Optional[Path] = None):
         """
         Initialize schema handler.
-        
+
         Args:
             project_root: Root directory of the project (for locating schema files)
         """
         self.project_root = project_root or Path(__file__).parent.parent.parent
         self._schema_cache: Dict[str, Dict] = {}
-    
+
     def load_schema(self, schema_url: str) -> Optional[Dict]:
         """
         Load a JSON schema from URL or local path.
-        
+
         Args:
             schema_url: URL or local path to the schema
-            
+
         Returns:
             Parsed schema dictionary or None if not found
         """
         # Check cache first
         if schema_url in self._schema_cache:
             return self._schema_cache[schema_url]
-        
+
         schema = None
-        
+
         # Try to resolve from local MQTTSchemas folder first
         if 'MQTTSchemas/' in schema_url or 'schemas/' in schema_url:
             schema = self._load_local_schema(schema_url)
-        
+
         # If no local file found, try to fetch from URL
         if schema is None and schema_url.startswith('http'):
             schema = self._load_remote_schema(schema_url)
-        
+
         if schema:
             self._schema_cache[schema_url] = schema
-        
+
         return schema
-    
+
     def _load_local_schema(self, schema_url: str) -> Optional[Dict]:
         """
         Load schema from local file system.
-        
+
         Args:
             schema_url: Schema URL (used to extract filename)
-            
+
         Returns:
             Parsed schema or None
         """
         # Extract filename from URL
         filename = schema_url.split('/')[-1]
-        
+
         # Look in common schema locations
         local_paths = [
             self.project_root / 'MQTTSchemas' / filename,
-            self.project_root / 'schemas' / filename,
-            Path(__file__).parent / 'schemas' / filename,
         ]
-        
+
         for local_path in local_paths:
             if local_path.exists():
                 try:
                     with open(local_path, 'r') as f:
                         return json.load(f)
                 except Exception as e:
-                    print(f"Warning: Could not load schema from {local_path}: {e}")
-        
+                    print(
+                        f"Warning: Could not load schema from {local_path}: {e}")
+
         return None
-    
+
     def _load_remote_schema(self, schema_url: str) -> Optional[Dict]:
         """
         Load schema from remote URL.
-        
+
         Args:
             schema_url: Schema URL
-            
+
         Returns:
             Parsed schema or None
         """
@@ -110,25 +109,25 @@ class SchemaHandler:
         except Exception as e:
             print(f"Warning: Could not fetch schema from {schema_url}: {e}")
             return None
-    
+
     def extract_properties(self, schema: Dict, include_inherited: bool = True) -> Dict[str, Dict]:
         """
         Extract properties from a JSON schema, including from allOf references.
-        
+
         Args:
             schema: The JSON schema dictionary
             include_inherited: Whether to include properties from referenced schemas
-            
+
         Returns:
             Dictionary of property name -> property definition
         """
         properties = {}
-        
+
         # Direct properties
         if 'properties' in schema:
             for prop_name, prop_def in schema['properties'].items():
                 properties[prop_name] = prop_def
-        
+
         # Handle allOf (schema composition)
         if include_inherited and 'allOf' in schema:
             for sub_schema in schema['allOf']:
@@ -136,69 +135,71 @@ class SchemaHandler:
                     # Try to load referenced schema
                     ref_schema = self.load_schema(sub_schema['$ref'])
                     if ref_schema:
-                        ref_props = self.extract_properties(ref_schema, include_inherited=True)
+                        ref_props = self.extract_properties(
+                            ref_schema, include_inherited=True)
                         properties.update(ref_props)
                 elif 'properties' in sub_schema:
                     for prop_name, prop_def in sub_schema['properties'].items():
                         properties[prop_name] = prop_def
-        
+
         return properties
-    
+
     def get_aas_type(self, json_type: str) -> type:
         """
         Convert JSON schema type to AAS datatype.
-        
+
         Args:
             json_type: JSON schema type string
-            
+
         Returns:
             AAS datatype class
         """
         return SCHEMA_TYPE_TO_AAS_TYPE.get(json_type, model.datatypes.String)
-    
+
     def extract_data_fields(self, schema_url: str) -> Dict[str, Dict]:
         """
         Extract the data fields from a schema for DataBridge configuration.
-        
+
         This extracts the meaningful data fields from the schema, excluding
         common base fields like TimeStamp that are present in all messages.
-        
+
         Args:
             schema_url: URL of the schema to extract fields from
-            
+
         Returns:
             Dictionary of field_name -> {type, description, default_value}
         """
         schema = self.load_schema(schema_url)
         if not schema:
             return {}
-        
+
         # Get all properties including from allOf
-        all_properties = self.extract_properties(schema, include_inherited=True)
-        
+        all_properties = self.extract_properties(
+            schema, include_inherited=True)
+
         # Get required fields from the main schema (not inherited)
         required_fields = set()
         if 'required' in schema:
             required_fields.update(schema['required'])
-        
+
         # Also check allOf for required fields (but not from base refs)
         if 'allOf' in schema:
             for sub_schema in schema['allOf']:
                 if '$ref' not in sub_schema and 'required' in sub_schema:
                     required_fields.update(sub_schema['required'])
-        
+
         # Base fields to exclude (from data.schema.json)
         base_fields = {'TimeStamp'}
-        
+
         # Extract data fields (required fields minus base fields)
         data_fields = {}
         for field_name in required_fields:
             if field_name in base_fields:
                 continue
-            
+
             prop_def = all_properties.get(field_name, {})
             json_type = prop_def.get('type', 'string')
-            
+
             # Determine default value based on type
             if json_type == 'array':
                 default_value = '[]'
@@ -210,16 +211,16 @@ class SchemaHandler:
                 default_value = False
             else:
                 default_value = ''
-            
+
             data_fields[field_name] = {
                 'type': json_type,
                 'aas_type': self.get_aas_type(json_type),
                 'description': prop_def.get('description', ''),
                 'default_value': default_value
             }
-        
+
         return data_fields
-    
+
     def clear_cache(self):
         """Clear the schema cache."""
         self._schema_cache.clear()

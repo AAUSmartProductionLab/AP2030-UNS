@@ -7,16 +7,16 @@ from basyx.aas import model
 class SkillsSubmodelBuilder:
     """
     Builder class for creating Skills submodel.
-    
+
     The Skills submodel contains Operations derived from action interfaces,
     each wrapped in a SubmodelElementCollection with interface references.
     """
-    
+
     def __init__(self, base_url: str, delegation_base_url: Optional[str],
                  semantic_factory, element_factory, schema_handler):
         """
         Initialize the Skills submodel builder.
-        
+
         Args:
             base_url: Base URL for AAS identifiers
             delegation_base_url: Base URL for operation delegation service
@@ -29,40 +29,40 @@ class SkillsSubmodelBuilder:
         self.semantic_factory = semantic_factory
         self.element_factory = element_factory
         self.schema_handler = schema_handler
-    
+
     def build(self, system_id: str, config: Dict) -> model.Submodel:
         """
         Create the Skills submodel with Operations derived from action interfaces.
-        
+
         Each operation is wrapped in a SubmodelElementCollection that also contains
         a reference to its corresponding action interface.
-        
+
         The operations are generated from:
         - Explicit Skills configuration in YAML (if provided)
         - OR automatically from action interfaces in AssetInterfacesDescription
-        
+
         Args:
             system_id: Unique identifier for the system
             config: Configuration dictionary
-            
+
         Returns:
             Skills submodel with Operations wrapped in SubmodelElementCollections
         """
         skills_config = config.get('Skills', {}) or {}
         skill_elements = []
-        
+
         # Get action interfaces from AssetInterfacesDescription
         interface_config = config.get('AssetInterfacesDescription', {}) or {}
         mqtt_config = interface_config.get('InterfaceMQTT', {}) or {}
         interaction_metadata = mqtt_config.get('InteractionMetadata', {}) or {}
         actions = interaction_metadata.get('actions', [])
-        
+
         # Build a map of action name -> action config for easy lookup
         action_map = {}
         for action_dict in actions:
             action_name = list(action_dict.keys())[0]
             action_map[action_name] = action_dict[action_name]
-        
+
         # If explicit Skills are configured, use them
         if skills_config:
             for skill_name, skill_data in skills_config.items():
@@ -71,37 +71,39 @@ class SkillsSubmodelBuilder:
                 )
                 if skill_collection:
                     skill_elements.append(skill_collection)
-        
+
         # Create submodel
         submodel = model.Submodel(
             id_=f"{self.base_url}/submodels/instances/{system_id}/Skills",
             id_short="Skills",
             kind=model.ModellingKind.INSTANCE,
             semantic_id=self.semantic_factory.SKILLS_SUBMODEL,
-            administration=model.AdministrativeInformation(version="1", revision="0"),
+            administration=model.AdministrativeInformation(
+                version="1", revision="0"),
             submodel_element=skill_elements
         )
-        
+
         return submodel
-    
+
     def _create_skill_collection(self, skill_name: str, skill_data: Dict,
-                                action_map: Dict, system_id: str) -> Optional[model.SubmodelElementCollection]:
+                                 action_map: Dict, system_id: str) -> Optional[model.SubmodelElementCollection]:
         """
         Create a skill collection with operation and interface reference.
-        
+
         Args:
             skill_name: Name of the skill
             skill_data: Configuration for the skill
             action_map: Map of action names to action configs
             system_id: System identifier
-            
+
         Returns:
             SubmodelElementCollection containing the skill operation
         """
         # Get the interface name for this skill
         interface_name = skill_data.get('interface', skill_name)
         elements = []
-        
+        is_async = False
+
         # Create the Operation from the linked action interface
         if interface_name and interface_name in action_map:
             action_config = action_map[interface_name]
@@ -109,92 +111,111 @@ class SkillsSubmodelBuilder:
                 skill_name, action_config, system_id
             )
             elements.append(operation)
-            
+
+            # Determine if this is an asynchronous operation
+            is_async = self._is_async_operation(action_config)
+
             # Create reference to the action interface
-            interface_reference = self._create_interface_reference(interface_name, system_id)
+            interface_reference = self._create_interface_reference(
+                interface_name, system_id)
             elements.append(interface_reference)
-            
+
         elif 'input_variable' in skill_data or 'output_variable' in skill_data:
             # Fallback: create operation from explicit skill config
-            operation = self._create_operation_from_config(skill_name, skill_data, system_id)
+            operation = self._create_operation_from_config(
+                skill_name, skill_data, system_id)
             elements.append(operation)
-        
+
         if not elements:
             return None
-        
+
+        # For asynchronous operations, add an StateMachine property
+        # This property can be polled by clients for intermediate state updates
+        if is_async:
+            state_property = self._create_state_machine_property()
+            elements.append(state_property)
+
         # Wrap operation and reference in a SubmodelElementCollection
         return self.element_factory.create_collection(
             id_short=skill_name,
             elements=elements,
             description=skill_data.get('description', f'Skill: {skill_name}')
         )
-    
+
     def _create_operation_from_action(self, action_name: str, action_config: Dict,
-                                     system_id: str) -> model.Operation:
+                                      system_id: str) -> model.Operation:
         """
         Create an operation from an action interface configuration.
-        
+
         Args:
             action_name: Name of the action
             action_config: Action configuration from AssetInterfacesDescription
             system_id: System identifier
-            
+
         Returns:
             Operation element
         """
         input_variables = []
         output_variables = []
         inoutput_variables = []
-        
+
         # Track property names to avoid duplicates between input and output
         input_prop_names = set()
-        
+
         # Parse input schema if present
         input_schema_url = action_config.get('input')
         if input_schema_url:
             schema = self.schema_handler.load_schema(input_schema_url)
-            if schema and 'properties' in schema:
+            if schema:
+                # extract_properties handles both direct 'properties' and 'allOf' compositions
                 props = self.schema_handler.extract_properties(schema)
                 for prop_name, prop_info in props.items():
                     prop_type = prop_info.get('type', 'string')
                     prop_desc = prop_info.get('description', '')
                     input_variables.append(
-                        self._create_operation_variable(prop_name, prop_type, prop_desc)
+                        self._create_operation_variable(
+                            prop_name, prop_type, prop_desc)
                     )
                     input_prop_names.add(prop_name)
-        
+
         # Parse output schema if present
         output_schema_url = action_config.get('output')
         if output_schema_url:
             schema = self.schema_handler.load_schema(output_schema_url)
-            if schema and 'properties' in schema:
+            if schema:
+                # extract_properties handles both direct 'properties' and 'allOf' compositions
                 props = self.schema_handler.extract_properties(schema)
                 for prop_name, prop_info in props.items():
                     prop_type = prop_info.get('type', 'string')
                     prop_desc = prop_info.get('description', '')
-                    
+
                     # If property exists in both input and output, it becomes in-output
                     if prop_name in input_prop_names:
                         # Move from input to in-output
                         inoutput_variables.append(
-                            self._create_operation_variable(prop_name, prop_type, prop_desc)
+                            self._create_operation_variable(
+                                prop_name, prop_type, prop_desc)
                         )
                         # Remove from input_variables
-                        input_variables = [v for v in input_variables if v.id_short != prop_name]
+                        input_variables = [
+                            v for v in input_variables if v.id_short != prop_name]
                     else:
                         output_variables.append(
-                            self._create_operation_variable(prop_name, prop_type, prop_desc)
+                            self._create_operation_variable(
+                                prop_name, prop_type, prop_desc)
                         )
-        
+
         # Get description from action title or key
         description = action_config.get('title', action_name)
-        
+
         # Create semantic ID from action name
-        semantic_id = self.semantic_factory.create_skill_semantic_id(action_name)
-        
+        semantic_id = self.semantic_factory.create_skill_semantic_id(
+            action_name)
+
         # Build the qualifiers for the operation
-        qualifiers = self._create_operation_qualifiers(action_config, system_id, action_name)
-        
+        qualifiers = self._create_operation_qualifiers(
+            action_config, system_id, action_name)
+
         # Use element factory to create the operation
         return self.element_factory.create_operation(
             id_short="Operation",
@@ -205,35 +226,35 @@ class SkillsSubmodelBuilder:
             qualifiers=qualifiers if qualifiers else None,
             description=f"Operation to invoke {description} action"
         )
-    
+
     def _create_operation_from_config(self, skill_name: str, skill_data: Dict,
-                                     system_id: str) -> model.Operation:
+                                      system_id: str) -> model.Operation:
         """
         Create operation from explicit skill configuration (fallback method).
-        
+
         Args:
             skill_name: Name of the skill
             skill_data: Skill configuration
             system_id: System identifier
-            
+
         Returns:
             Operation element
         """
         input_variables = []
         output_variables = []
-        
+
         if 'input_variable' in skill_data and skill_data['input_variable']:
             for var_name, var_type in skill_data['input_variable'].items():
                 input_variables.append(
                     self._create_operation_variable(var_name, var_type)
                 )
-        
+
         if 'output_variable' in skill_data and skill_data['output_variable']:
             for var_name, var_type in skill_data['output_variable'].items():
                 output_variables.append(
                     self._create_operation_variable(var_name, var_type)
                 )
-        
+
         # Build qualifiers for delegation
         qualifiers = []
         if self.delegation_base_url:
@@ -251,56 +272,68 @@ class SkillsSubmodelBuilder:
                     kind=model.QualifierKind.CONCEPT_QUALIFIER
                 )
             ])
-        
+
         return model.Operation(
             id_short=skill_name,
             input_variable=input_variables if input_variables else (),
             output_variable=output_variables if output_variables else (),
-            description=model.MultiLanguageTextType({"en": skill_data.get('description', f'Operation for {skill_name}')}),
+            description=model.MultiLanguageTextType(
+                {"en": skill_data.get('description', f'Operation for {skill_name}')}),
             qualifier=qualifiers if qualifiers else ()
         )
-    
+
     def _create_operation_variable(self, var_name: str, var_type: str,
-                                  description: str = "") -> model.Property:
+                                   description: str = "") -> model.Property:
         """
         Create an operation variable (input/output parameter) as a Property.
-        
+
         Args:
             var_name: Name of the variable
             var_type: Type of the variable (JSON schema type)
             description: Optional description
-            
+
         Returns:
             Property element for use in Operation
         """
         aas_type = self.schema_handler.get_aas_type(var_type)
-        
+
         # For operation variables, we need a Property without a value
         # display_name must be MultiLanguageNameType (array of {language, text})
         prop = model.Property(
             id_short=var_name,
             value_type=aas_type,
             display_name=model.MultiLanguageNameType({"en": var_name}),
-            description=model.MultiLanguageTextType({"en": description}) if description else None
+            description=model.MultiLanguageTextType(
+                {"en": description}) if description else None
         )
         return prop
-    
+
     def _create_operation_qualifiers(self, action_config: Dict, system_id: str,
-                                    action_name: str) -> List[model.Qualifier]:
+                                     action_name: str) -> List[model.Qualifier]:
         """
         Create qualifiers for an operation.
-        
+
         Args:
             action_config: Action configuration
             system_id: System identifier
             action_name: Name of the action
-            
+
         Returns:
             List of qualifiers
         """
         qualifiers = []
-        
+
+        # Determine operation type from config structure
+        # One-way: no output schema AND no response in forms
+        forms = action_config.get('forms', {})
+        has_output = 'output' in action_config
+        has_response = 'response' in forms
+        is_one_way = not has_output and not has_response
+        is_synchronous = str(action_config.get(
+            'synchronous', 'true')).lower() == 'true'
+
         # Add invocationDelegation qualifier for BaSyx Operation Delegation
+        # Operation type (oneWay, synchronous) is read from topics.json by the delegation service
         if self.delegation_base_url:
             delegation_url = f"{self.delegation_base_url}/operations/{system_id}/{action_name}"
             qualifiers.append(
@@ -310,35 +343,73 @@ class SkillsSubmodelBuilder:
                     value=delegation_url
                 )
             )
-        
-        # Add synchronous/asynchronous flag as qualifier
-        if 'synchronous' in action_config:
+
+        # Add operation type qualifier
+        if is_one_way:
+            # OneWay operations: no response expected, synchronous flag is not applicable
+            qualifiers.append(
+                model.Qualifier(
+                    type_="OneWay",
+                    value_type=model.datatypes.Boolean,
+                    value=True
+                )
+            )
+        else:
+            # Two-way operations: add synchronous flag (default: true)
             qualifiers.append(
                 model.Qualifier(
                     type_="Synchronous",
                     value_type=model.datatypes.Boolean,
-                    value=str(action_config['synchronous']).lower() == 'true'
+                    value=is_synchronous
                 )
             )
-        elif 'asynchronous' in action_config:
-            qualifiers.append(
-                model.Qualifier(
-                    type_="Asynchronous",
-                    value_type=model.datatypes.Boolean,
-                    value=str(action_config['asynchronous']).lower() == 'true'
-                )
-            )
-        
+
         return qualifiers
-    
+
+    def _is_async_operation(self, action_config: Dict) -> bool:
+        """
+        Determine if an operation is asynchronous based on action configuration.
+
+        Args:
+            action_config: Action configuration dictionary
+
+        Returns:
+            True if the operation is asynchronous (synchronous=false), False otherwise
+        """
+        # Check synchronous flag (default is true = synchronous)
+        # If synchronous is false, the operation is asynchronous
+        return str(action_config.get('synchronous', 'true')).lower() == 'false'
+
+    def _create_state_machine_property(self) -> model.Property:
+        """
+        Create an StateMachine property for asynchronous operations.
+
+        This property is updated by the Operation Delegation Service with
+        intermediate states (IDLE, RUNNING, SUCCESS, FAILURE) during execution.
+        Clients can poll this property to monitor operation progress.
+
+        Returns:
+            Property element for operation state
+        """
+        return model.Property(
+            id_short="StateMachine",
+            value_type=model.datatypes.String,
+            value="IDLE",
+            description=model.MultiLanguageTextType({
+                "en": "Current state of the asynchronous operation. "
+                      "Values: IDLE, RUNNING, SUCCESS, FAILURE. "
+                      "Poll this property to monitor operation progress."
+            })
+        )
+
     def _create_interface_reference(self, interface_name: str, system_id: str) -> model.ReferenceElement:
         """
         Create a reference to an action interface.
-        
+
         Args:
             interface_name: Name of the interface
             system_id: System identifier
-            
+
         Returns:
             ReferenceElement pointing to the interface
         """
@@ -349,23 +420,24 @@ class SkillsSubmodelBuilder:
                     type_=model.KeyTypes.SUBMODEL,
                     value=f"{self.base_url}/submodels/instances/{system_id}/AssetInterfacesDescription"
                 ),
-                model.Key(
+                    model.Key(
                     type_=model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION,
                     value="InterfaceMQTT"
                 ),
-                model.Key(
+                    model.Key(
                     type_=model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION,
                     value="InteractionMetadata"
                 ),
-                model.Key(
+                    model.Key(
                     type_=model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION,
                     value="actions"
                 ),
-                model.Key(
+                    model.Key(
                     type_=model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION,
                     value=interface_name
                 ),),
                 model.SubmodelElementCollection
             ),
-            description=model.MultiLanguageTextType({"en": f"Reference to {interface_name} action interface"})
+            description=model.MultiLanguageTextType(
+                {"en": f"Reference to {interface_name} action interface"})
         )
