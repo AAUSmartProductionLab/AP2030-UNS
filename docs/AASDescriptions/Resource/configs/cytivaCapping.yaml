@@ -10,7 +10,7 @@ cytivaCappingSystemAAS:
         InterfaceMQTT:
             Title: 'Cytiva Capping System'
             EndpointMetadata:
-                base: 'mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/Stopper'
+                base: 'mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/Capping'
                 contentType: 'application/json'
             InteractionMetadata:
                 actions:
@@ -43,10 +43,7 @@ cytivaCappingSystemAAS:
                             mqv_retain: 'false'
                             mqv_controlPacket: subscribe
                             mqv_qos: '2'
-                            response:
-                                contentType: 'application/json'
-                                href: '/DATA/Halt'
-                                mqv_controlPacket: 'publish'                                                
+                                                                         
                     - occupy:
                         key: 'occupy'
                         title: 'occupy'
@@ -116,44 +113,30 @@ cytivaCappingSystemAAS:
             - aauFillingLine:
                 globalAssetId: 'https://smartproductionlab.aau.dk/assets/MWQ2ODY5ZDEtZTQ3Yy00NWU4LTlmYTAtNTI3YjVlMDk4MWFi'
     
-    # Capabilities:
-    #     - Capping:
-    #         realizedBy: "Capping"
+    Capabilities:
+        Capping:
+            realizedBy: "Capping"
+        halt:
+            realizedBy: "halt"
+        occupy:
+            realizedBy: "occupy"
+        release:
+            realizedBy: "release"
     
-    # Skills:
-        # Stopper:
-        #     description: "Capping function for pharmaceutical primary packaging"
-        #     semantic_id: "https://smartproductionlab.aau.dk/Capping"
-        #     input_variable:
-        #         Uuid: "string"
-        #     output_variable:
-        #         State: "string"
-        #     in_ouput_variable:
-        #     interface: "Capping"
-        # Occupy:
-        #     description: "Capping function for pharmaceutical primary packaging"
-        #     semantic_id: "https://smartproductionlab.aau.dk/Occupy"
-        #     input_variable:
-        #         Uuid: "string"
-        #     output_variable:
-        #         State: "string"
-        #     in_ouput_variable:
-        #     interface: "occupy"
-        # Release:
-        #     description: "Capping function for pharmaceutical primary packaging"
-        #     semantic_id: "https://smartproductionlab.aau.dk/Release"
-        #     input_variable:
-        #         Uuid: "string"
-        #     output_variable:
-        #         State: "string"
-        #     in_ouput_variable:
-        #     interface: "release"
-        # Halt:
-        #     description: "Capping function for pharmaceutical primary packaging"
-        #     semantic_id: "https://smartproductionlab.aau.dk/Halt"
-        #     input_variable:
-        #         Uuid: "string"
-        #     output_variable:
-        #         State: "string"
-        #     in_ouput_variable:
-        #     interface: "halt"
+    Skills:
+        Capping:
+            description: "Capping function for pharmaceutical primary packaging"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/Capping"
+            interface: "Capping"
+        halt:
+            description: "Halt the current capping operation"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/halt"
+            interface: "halt"
+        occupy:
+            description: "Occupy the capping system for exclusive use"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/occupy"
+            interface: "occupy"
+        release:
+            description: "Release the capping system from exclusive use"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/release"
+            interface: "release"

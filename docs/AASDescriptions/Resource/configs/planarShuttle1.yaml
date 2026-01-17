@@ -17,7 +17,7 @@ planarTableShuttle1AAS:
                     - MoveToPosition:
                         key: 'MoveToPosition'
                         title: 'MoveToPosition'
-                        synchronous: 'true'
+                        synchronous: 'false'
                         input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/moveToPosition.schema.json'
                         output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
                         forms:
@@ -34,7 +34,6 @@ planarTableShuttle1AAS:
                     - halt:
                         key: 'halt'
                         title: 'halt'
-                        synchronous: 'true'
                         input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
                         forms:
                             contentType: 'application/json'
@@ -42,11 +41,7 @@ planarTableShuttle1AAS:
                             op: 'invokeAction'
                             mqv_retain: 'false'
                             mqv_controlPacket: subscribe
-                            mqv_qos: '2'
-                            response:
-                                contentType: 'application/json'
-                                href: '/DATA/Halt'
-                                mqv_controlPacket: 'publish'                                                
+                            mqv_qos: '2'                                              
                     - occupy:
                         key: 'occupy'
                         title: 'occupy'
@@ -119,7 +114,7 @@ planarTableShuttle1AAS:
                 globalAssetId: 'https://smartproductionlab.aau.dk/assets/51kUZLlDQky3k5Mk6SRb2Q'
     
     Capabilities:
-        MoveToPosition:
+        Transport:
             realizedBy: "MoveToPosition"
         halt:
             realizedBy: "halt"

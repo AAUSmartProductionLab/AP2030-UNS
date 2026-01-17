@@ -17,7 +17,7 @@ imaLoadingSystemAAS:
                     - loading:
                         key: 'loading'
                         title: 'Loading'
-                        synchronous: 'true'
+                        synchronous: 'false'
                         input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
                         output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
                         forms:
@@ -34,7 +34,6 @@ imaLoadingSystemAAS:
                     - halt:
                         key: 'halt'
                         title: 'halt'
-                        synchronous: 'true'
                         input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
                         forms:
                             contentType: 'application/json'
@@ -42,11 +41,7 @@ imaLoadingSystemAAS:
                             op: 'invokeAction'
                             mqv_retain: 'false'
                             mqv_controlPacket: subscribe
-                            mqv_qos: '2'
-                            response:
-                                contentType: 'application/json'
-                                href: '/DATA/Halt'
-                                mqv_controlPacket: 'publish'                                                
+                            mqv_qos: '2'                                              
                     - occupy:
                         key: 'occupy'
                         title: 'occupy'
@@ -102,16 +97,6 @@ imaLoadingSystemAAS:
                                 mqv_retain: 'false'
                                 mqv_controlPacket: publish
                                 mqv_qos: '0'
-                    - Weight:
-                            key: 'Weight'
-                            title: 'Weight'
-                            output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/weight.schema.json'
-                            forms:
-                                contentType: 'application/json'
-                                href: '/DATA/Weight'
-                                mqv_retain: 'false'
-                                mqv_controlPacket: publish
-                                mqv_qos: '0'
 
     Variables:
         PackMLState:
@@ -120,9 +105,7 @@ imaLoadingSystemAAS:
         OccupationState:
             semanticId: 'https://smartproductionlab.aau.dk/stationOccupation'
             InterfaceReference: 'OccupationState'
-        Weight:
-            semanticId: 'https://smartproductionlab.aau.dk/weight'
-            InterfaceReference: 'Weight'
+
     Parameters:
     HierarchicalStructures:
         Archetype: 'OneUp'
@@ -130,44 +113,24 @@ imaLoadingSystemAAS:
             - aauFillingLine:
                 globalAssetId: 'https://smartproductionlab.aau.dk/assets/MWQ2ODY5ZDEtZTQ3Yy00NWU4LTlmYTAtNTI3YjVlMDk4MWFi'
     
-    # Capabilities:
-    #     - loading:
-    #         realizedBy: "loading"
+    Capabilities:
+        Loading:
+            realizedBy: "Load"
     
-    # Skills:
-        # loading:
-        #     description: "loading function for pharmaceutical primary packaging"
-        #     semantic_id: "https://smartproductionlab.aau.dk/loading"
-        #     input_variable:
-        #         Uuid: "string"
-        #     output_variable:
-        #         State: "string"
-        #     in_ouput_variable:
-        #     interface: "loading"
-        # Occupy:
-        #     description: "loading function for pharmaceutical primary packaging"
-        #     semantic_id: "https://smartproductionlab.aau.dk/Occupy"
-        #     input_variable:
-        #         Uuid: "string"
-        #     output_variable:
-        #         State: "string"
-        #     in_ouput_variable:
-        #     interface: "occupy"
-        # Release:
-        #     description: "loading function for pharmaceutical primary packaging"
-        #     semantic_id: "https://smartproductionlab.aau.dk/Release"
-        #     input_variable:
-        #         Uuid: "string"
-        #     output_variable:
-        #         State: "string"
-        #     in_ouput_variable:
-        #     interface: "release"
-        # Halt:
-        #     description: "loading function for pharmaceutical primary packaging"
-        #     semantic_id: "https://smartproductionlab.aau.dk/Halt"
-        #     input_variable:
-        #         Uuid: "string"
-        #     output_variable:
-        #         State: "string"
-        #     in_ouput_variable:
-        #     interface: "halt"
+    Skills:
+        loading:
+            description: "Loading function for pharmaceutical primary packaging"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/loading"
+            interface: "loading"
+        halt:
+            description: "Halt the current loading operation"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/halt"
+            interface: "halt"
+        occupy:
+            description: "Occupy the loading system for exclusive use"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/occupy"
+            interface: "occupy"
+        release:
+            description: "Release the loading system from exclusive use"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/release"
+            interface: "release"
