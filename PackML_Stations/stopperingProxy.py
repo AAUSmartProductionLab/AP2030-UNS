@@ -16,18 +16,19 @@ def stopper_callback(topic, client, message, properties):
     except Exception as e:
         print(f"Error in dispense_callback: {e}")
 
+
 state = Publisher(
-    BASE_TOPIC+"/DATA/State", 
-    "./schemas/stationState.schema.json",
+    BASE_TOPIC+"/DATA/State",
+    "./MQTTSchemas/stationState.schema.json",
     2
 )
 
 stopper = ResponseAsync(
-    BASE_TOPIC+"/DATA/Stopper", 
+    BASE_TOPIC+"/DATA/Stopper",
     BASE_TOPIC+"/CMD/Stopper",
-    "./schemas/commandResponse.schema.json", 
-    "./schemas/command.schema.json", 
-    2, 
+    "./MQTTSchemas/commandResponse.schema.json",
+    "./MQTTSchemas/command.schema.json",
+    2,
     stopper_callback
 )
 

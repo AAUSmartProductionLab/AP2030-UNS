@@ -521,12 +521,12 @@ class UnifiedRegistrationService:
                     value_type = fixed_element['valueType']
                     if not value_type.startswith('xs:'):
                         del fixed_element['valueType']
-                
+
                 if 'value' in fixed_element and fixed_element['value']:
                     value = fixed_element['value']
-                    if value.startswith('/schemas/'):
+                    if value.startswith('/MQTTSchema'):
                         fixed_element['value'] = f"{self.github_pages_base_url}{value}"
-            
+
             # Fix Property elements
             elif model_type == ModelType.PROPERTY:
                 if 'valueType' in fixed_element:

@@ -54,11 +54,11 @@ def planning_callback(topic, client, message, properties):
 
 
 plan = ResponseAsync(
-    BASE_TOPIC+"/DATA/Plan", 
+    BASE_TOPIC+"/DATA/Plan",
     BASE_TOPIC+"/CMD/Plan",
-    "./schemas/commandResponse.schema.json", 
-    "./schemas/command.schema.json", 
-    2, 
+    "./MQTTSchemas/commandResponse.schema.json",
+    "./MQTTSchemas/command.schema.json",
+    2,
     planning_callback
 )
 

@@ -275,12 +275,12 @@ The behavior tree XML files define the control logic for the production line con
 
 Access schemas directly via GitHub Pages:
 ```
-https://aausmartproductionlab.github.io/AP2030-UNS/schemas/command.schema.json
+https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemacommand.schema.json
 ```
 
 Or via raw GitHub URLs:
 ```
-https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/schemas/command.schema.json
+https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/MQTTSchemacommand.schema.json
 ```
 
 ### Behavior Trees

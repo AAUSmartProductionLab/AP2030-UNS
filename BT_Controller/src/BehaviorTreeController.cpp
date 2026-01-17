@@ -467,7 +467,7 @@ void BehaviorTreeController::loadAppConfiguration(int argc, char *argv[])
     app_params_.reset_topic = app_params_.unsTopicPrefix + "/" + app_params_.clientId + "/CMD/Reset";
 
     std::string state_topic_str = app_params_.unsTopicPrefix + "/" + app_params_.clientId + "/DATA/State";
-    std::string state_schema_url = "https://aausmartproductionlab.github.io/AP2030-UNS/schemas/state.schema.json";
+    std::string state_schema_url = "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/state.schema.json";
 
     // Fetch and resolve the state schema
     nlohmann::json state_schema = schema_utils::fetchSchemaFromUrl(state_schema_url);

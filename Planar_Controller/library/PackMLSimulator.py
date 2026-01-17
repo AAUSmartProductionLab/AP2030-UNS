@@ -45,86 +45,88 @@ class PackMLStateMachine:
         # ProcessQueue
         self.is_processing = False
         self.uuids = []  # Track all queued command UUIDs
-        
-        self.current_processing_uuid = None     # UUID of the command currently in process_function
-        self.processing_events = {} # Stores threading.Event for interruptible processes
-        self.interruption_requested_for_uuid = {} # Tracks if complete was called for a UUID during its processing
+
+        # UUID of the command currently in process_function
+        self.current_processing_uuid = None
+        self.processing_events = {}  # Stores threading.Event for interruptible processes
+        # Tracks if complete was called for a UUID during its processing
+        self.interruption_requested_for_uuid = {}
 
         # Stores original command UUID for pending registration confirmations
         # Key: UUID of the item in queue, Value: UUID of the original registration command
         self.pending_registrations = {}
-        
+
         # Schemas assume . relative path from CWD. In container /app is CWD and schemas are in /app/schemas.
-        # So ./schemas/ is correct if mapped correctly.
+        # So ./MQTTSchema is correct if mapped correctly.
         self.register_topic = ResponseAsync(
             self.base_topic+"/DATA/Register",
             self.base_topic+"/CMD/Register",
-            "./schemas/commandResponse.schema.json", 
-            "./schemas/command.schema.json", 
-            2, 
+            "./MQTTSchemacommandResponse.schema.json",
+            "./MQTTSchemacommand.schema.json",
+            2,
             self.register_callback
         )
         self.unregister_topic = ResponseAsync(
             self.base_topic+"/DATA/Unregister",
             self.base_topic+"/CMD/Unregister",
-            "./schemas/commandResponse.schema.json", 
-            "./schemas/command.schema.json", 
-            2, 
+            "./MQTTSchemacommandResponse.schema.json",
+            "./MQTTSchemacommand.schema.json",
+            2,
             self.unregister_callback
         )
-        
+
         # Add basic commands
         self.start_topic = ResponseAsync(
             self.base_topic+"/DATA/Start",
             self.base_topic+"/CMD/Start",
-            "./schemas/commandResponse.schema.json", 
-            "./schemas/command.schema.json", 
-            2, 
+            "./MQTTSchemacommandResponse.schema.json",
+            "./MQTTSchemacommand.schema.json",
+            2,
             self.start_callback
         )
 
         self.stop_topic = ResponseAsync(
             self.base_topic+"/DATA/Stop",
             self.base_topic+"/CMD/Stop",
-            "./schemas/commandResponse.schema.json", 
-            "./schemas/command.schema.json", 
-            2, 
+            "./MQTTSchemacommandResponse.schema.json",
+            "./MQTTSchemacommand.schema.json",
+            2,
             self.stop_callback
         )
 
         self.reset_topic = ResponseAsync(
             self.base_topic+"/DATA/Reset",
             self.base_topic+"/CMD/Reset",
-            "./schemas/commandResponse.schema.json", 
-            "./schemas/command.schema.json", 
-            2, 
+            "./MQTTSchemacommandResponse.schema.json",
+            "./MQTTSchemacommand.schema.json",
+            2,
             self.reset_callback
         )
 
         self.hold_topic = ResponseAsync(
             self.base_topic+"/DATA/Hold",
             self.base_topic+"/CMD/Hold",
-            "./schemas/commandResponse.schema.json", 
-            "./schemas/command.schema.json", 
-            2, 
+            "./MQTTSchemacommandResponse.schema.json",
+            "./MQTTSchemacommand.schema.json",
+            2,
             self.hold_callback
         )
 
         self.unhold_topic = ResponseAsync(
             self.base_topic+"/DATA/Unhold",
             self.base_topic+"/CMD/Unhold",
-            "./schemas/commandResponse.schema.json", 
-            "./schemas/command.schema.json", 
-            2, 
+            "./MQTTSchemacommandResponse.schema.json",
+            "./MQTTSchemacommand.schema.json",
+            2,
             self.unhold_callback
         )
 
         self.state_topic = Publisher(
-            self.base_topic+"/DATA/State", 
-            "./schemas/stationState.schema.json",
+            self.base_topic+"/DATA/State",
+            "./MQTTSchemastationState.schema.json",
             2
         )
-        
+
         # Register basic PackML topics
         topics=[self.register_topic, self.unregister_topic, self.state_topic,
                 self.start_topic, self.stop_topic, self.reset_topic, self.hold_topic, self.unhold_topic]

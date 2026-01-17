@@ -18,20 +18,18 @@ def unload_callback(topic, client, message, properties):
         print(f"Error in dispense_callback: {e}")
 
 
-
-
 state = Publisher(
-    BASE_TOPIC+"/DATA/State", 
-    "./schemas/stationState.schema.json",
+    BASE_TOPIC+"/DATA/State",
+    "./MQTTSchemas/stationState.schema.json",
     2
 )
 
 unload = ResponseAsync(
-    BASE_TOPIC+"/DATA/Unload", 
+    BASE_TOPIC+"/DATA/Unload",
     BASE_TOPIC+"/CMD/Unload",
-    "./schemas/commandResponse.schema.json", 
-    "./schemas/command.schema.json", 
-    2, 
+    "./MQTTSchemas/commandResponse.schema.json",
+    "./MQTTSchemas/command.schema.json",
+    2,
     unload_callback
 )
 

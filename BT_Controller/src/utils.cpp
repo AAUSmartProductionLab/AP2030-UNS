@@ -404,7 +404,7 @@ namespace mqtt_utils
                         }
 
                         // Build the full path relative to the schemas directory
-                        std::string schema_path = "../../schemas/" + schema_file;
+                        std::string schema_path = "../../MQTTSchema" + schema_file;
 
                         // Load the referenced schema
                         schema = load_schema(schema_path);
