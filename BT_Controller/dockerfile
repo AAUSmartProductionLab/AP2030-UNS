@@ -93,6 +93,7 @@ RUN apt-get update && apt-get install -y \
     libgtest-dev \
     libssl-dev \
     libzmq5 \
+    libcurl4 \
     libcurl4-openssl-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
@@ -103,7 +104,7 @@ RUN ldconfig
 WORKDIR /src/AP2030-UNS
 
 COPY ./BT_Controller/CMakeLists.txt ./BT_Controller/CMakeLists.txt
-#COPY ./schemas ./MQTTSchema
+#COPY ./MQTTSchemas ./MQTTSchema
 COPY ./BTDescriptions ./MQTTSchemas/
 COPY ./BT_Controller/src ./BT_Controller/src/
 COPY ./BT_Controller/include ./BT_Controller/include/
@@ -129,6 +130,7 @@ RUN apt-get update && apt-get install -y \
     libssl3 \
     libuuid1 \
     libyaml-cpp0.7 \
+    libcurl4 \
     libfmt8 \
     libzmq5 \
     libsqlite3-0 \

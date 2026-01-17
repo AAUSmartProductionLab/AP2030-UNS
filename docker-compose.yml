@@ -131,7 +131,7 @@ services:
     container_name: bt_controller
     volumes:
       - ./BT_Controller/config:/AP2030-UNS/BT_Controller/config
-      - ./BTDescriptions:/AP2030-UNS/schemas
+      - ./BTDescriptions:/AP2030-UNS/MQTTSchemas
     ports:
     - "1667:1667"
     networks:
@@ -149,7 +149,7 @@ services:
       - MQTT_PORT=1883
       - PMC_IP=192.168.0.199
     volumes:
-      - ./MQTTSchemas:/app/schemas
+      - ./MQTTSchemas:/app/MQTTSchemas
     networks:
       - hivemq-network
     depends_on:

@@ -29,8 +29,8 @@ services:
       dockerfile: ./dockerfile
     container_name: stoppering_station
     volumes:
-      - ../schemas:/app/schemas
-      - .:/app  # Mount entire directory
+      - .:/app  # Mount entire directory first
+      - ../MQTTSchemas:/app/MQTTSchemas  # Then overlay schemas
     command: stopperingProxy.py
 
   load_station:
@@ -39,8 +39,8 @@ services:
       dockerfile: ./dockerfile
     container_name: load_station
     volumes:
-      - ../schemas:/app/schemas
-      - .:/app  # Mount entire directory
+      - .:/app  # Mount entire directory first
+      - ../MQTTSchemas:/app/MQTTSchemas  # Then overlay schemas
     command: loadProxy.py
 
   unload_station:
@@ -49,8 +49,8 @@ services:
       dockerfile: ./dockerfile
     container_name: unload_station
     volumes:
-      - ../schemas:/app/schemas
-      - .:/app
+      - .:/app  # Mount entire directory first
+      - ../MQTTSchemas:/app/MQTTSchemas  # Then overlay schemas
     command: unloadProxy.py
     
   camera_station:
@@ -60,8 +60,8 @@ services:
     container_name: camera_station
     restart: always
     volumes:
-      - ../schemas:/app/schemas
-      - .:/app  # Mount entire directory
+      - .:/app  # Mount entire directory first
+      - ../MQTTSchemas:/app/MQTTSchemas  # Then overlay schemas
     devices:
       - /dev/video0:/dev/video0
     command: cameraProxy.py
