@@ -7,7 +7,7 @@ import os
 
 BROKER_ADDRESS = os.getenv("MQTT_BROKER", "hivemq-broker")
 BROKER_PORT = int(os.getenv("MQTT_PORT", "1883"))
-BASE_TOPIC = "NN/Nybrovej/InnoLab/Filling"
+BASE_TOPIC = "NN/Nybrovej/InnoLab/Dispensing"
 
 uuid = ""
 
@@ -155,14 +155,14 @@ weigh_publisher = Publisher(
 fillProxy = Proxy(
     BROKER_ADDRESS,
     BROKER_PORT,
-    "FillingProxy",
+    "DispensingProxy",
     [dispense, weigh_publisher, tare, refill]
 )
 state_machine = PackMLStateMachine(BASE_TOPIC, fillProxy, None)
 
 
 def main():
-    """Main entry point for the filling proxy"""
+    """Main entry point for the dispensing proxy"""
     fillProxy.loop_forever()
 
 

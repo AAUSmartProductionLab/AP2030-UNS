@@ -126,15 +126,15 @@
     "topic": "NN/Nybrovej/InnoLab/Planar/DATA/Occupation"
   },
   {
-    "uniqueId": "NN_Nybrovej_InnoLab_Stopper_DATA_State",
+    "uniqueId": "NN_Nybrovej_InnoLab_Stoppering_DATA_State",
     "serverUrl": "hivemq-broker",
     "serverPort": 1883,
-    "topic": "NN/Nybrovej/InnoLab/Stopper/DATA/State"
+    "topic": "NN/Nybrovej/InnoLab/Stoppering/DATA/State"
   },
   {
-    "uniqueId": "NN_Nybrovej_InnoLab_Stopper_DATA_Occupation",
+    "uniqueId": "NN_Nybrovej_InnoLab_Stoppering_DATA_Occupation",
     "serverUrl": "hivemq-broker",
     "serverPort": 1883,
-    "topic": "NN/Nybrovej/InnoLab/Stopper/DATA/Occupation"
+    "topic": "NN/Nybrovej/InnoLab/Stoppering/DATA/Occupation"
   }
 ]

@@ -10,7 +10,7 @@ syntegonStopperingSystemAAS:
         InterfaceMQTT:
             Title: 'Syntegon Stoppering System'
             EndpointMetadata:
-                base: 'mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/Stopper'
+                base: 'mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/Stoppering'
                 contentType: 'application/json'
             InteractionMetadata:
                 actions:

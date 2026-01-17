@@ -220,7 +220,7 @@
     "trigger": "event"
   },
   {
-    "datasource": "NN_Nybrovej_InnoLab_Stopper_DATA_State",
+    "datasource": "NN_Nybrovej_InnoLab_Stoppering_DATA_State",
     "transformers": [
       "syntegonStopperingSystemAAS_PackMLState_State_transformer"
     ],
@@ -230,7 +230,7 @@
     "trigger": "event"
   },
   {
-    "datasource": "NN_Nybrovej_InnoLab_Stopper_DATA_Occupation",
+    "datasource": "NN_Nybrovej_InnoLab_Stoppering_DATA_Occupation",
     "transformers": [
       "syntegonStopperingSystemAAS_OccupationState_Occupation_transformer"
     ],
