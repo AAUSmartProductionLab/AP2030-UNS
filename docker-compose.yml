@@ -130,12 +130,12 @@ services:
       dockerfile: BT_Controller/dockerfile
     container_name: bt_controller
     environment:
-      - MQTT_BROKER=hivemq-broker
-      - MQTT_PORT=1883
-      - AAS_SERVER=aas-env
-      - AAS_PORT=8081
-      - AAS_REGISTRY=aas-registry
-      - AAS_REGISTRY_PORT=8080
+      - MQTT_BROKER=${MQTT_BROKER:-hivemq-broker}
+      - MQTT_PORT=${MQTT_PORT:-1883}
+      - AAS_SERVER=${AAS_SERVER:-aas-env}
+      - AAS_PORT=${AAS_PORT:-8081}
+      - AAS_REGISTRY=${AAS_REGISTRY:-aas-registry}
+      - AAS_REGISTRY_PORT=${AAS_REGISTRY_PORT:-8080}
     volumes:
       - ./BT_Controller/config:/AP2030-UNS/BT_Controller/config
       - ./BTDescriptions:/AP2030-UNS/MQTTSchemas
@@ -152,8 +152,8 @@ services:
       dockerfile: Dockerfile
     container_name: planar_controller
     environment:
-      - MQTT_BROKER=hivemq-broker
-      - MQTT_PORT=1883
+      - MQTT_BROKER=${MQTT_BROKER:-hivemq-broker}
+      - MQTT_PORT=${MQTT_PORT:-1883}
       - PMC_IP=${PMC_IP:-192.168.0.199}
     volumes:
       - ./MQTTSchemas:/app/MQTTSchemas
@@ -219,12 +219,12 @@ services:
       dockerfile: Dockerfile
     container_name: operation-delegation
     environment:
-      - MQTT_BROKER=hivemq-broker
-      - MQTT_PORT=1883
+      - MQTT_BROKER=${MQTT_BROKER:-hivemq-broker}
+      - MQTT_PORT=${MQTT_PORT:-1883}
       - PORT=8087
       - OPERATION_TIMEOUT=30
       - TOPIC_CONFIG_PATH=/app/config/topics.json
-      - AAS_SERVER_URL=http://aas-env:8081
+      - AAS_SERVER_URL=http://${AAS_SERVER:-aas-env}:${AAS_PORT:-8081}
       - AAS_BASE_URL=https://smartproductionlab.aau.dk
     volumes:
       - ./OperationDelegation/config:/app/config:ro
@@ -418,10 +418,11 @@ services:
     container_name: registration-service
     environment:
       - PYTHONUNBUFFERED=1
-      - BASYX_URL=http://aas-env:8081
-      - MQTT_BROKER=hivemq-broker
-      - MQTT_PORT=1883
-      - DELEGATION_SERVICE_URL=http://operation-delegation:8087
+      - BASYX_URL=http://${AAS_SERVER:-aas-env}:${AAS_PORT:-8081}
+      - MQTT_BROKER=${MQTT_BROKER:-hivemq-broker}
+      - MQTT_PORT=${MQTT_PORT:-1883}
+      - DELEGATION_SERVICE_URL=http://${DELEGATION_SERVICE:-operation-delegation}:8087
+      - EXTERNAL_HOST=${EXTERNAL_HOST:-localhost}
     volumes:
       # DataBridge config directory for writing configs
       - ./databridge:/databridge
@@ -435,13 +436,13 @@ services:
       - python
       - unified-registration-service.py
       - --mqtt-broker
-      - hivemq-broker
+      - ${MQTT_BROKER:-hivemq-broker}
       - --mqtt-port
-      - "1883"
+      - "${MQTT_PORT:-1883}"
       - --basyx-url
-      - http://aas-env:8081
+      - http://${AAS_SERVER:-aas-env}:${AAS_PORT:-8081}
       - --delegation-url
-      - http://operation-delegation:8087
+      - http://${DELEGATION_SERVICE:-operation-delegation}:8087
       - listen
     restart: unless-stopped
     depends_on:

@@ -67,12 +67,30 @@ public:
 
 private:
     // WiFi and MQTT Configuration
+    // These values are injected at build time from the root .env file
+    // See copy_config.py pre-build script
     struct WiFiMQTTConfig
     {
-        const char *ssid = "AP2030";
-        const char *password = "NovoNordisk";
-        const char *mqttServer = "192.168.0.104";
-        int mqttPort = 1883;
+#ifdef WIFI_SSID_ENV
+        const char *ssid = WIFI_SSID_ENV;
+#else
+        const char *ssid = "AP2030";  // Fallback default
+#endif
+#ifdef WIFI_PASSWORD_ENV
+        const char *password = WIFI_PASSWORD_ENV;
+#else
+        const char *password = "NovoNordisk";  // Fallback default
+#endif
+#ifdef MQTT_SERVER
+        const char *mqttServer = MQTT_SERVER;
+#else
+        const char *mqttServer = "192.168.0.104";  // Fallback default
+#endif
+#ifdef MQTT_PORT_NUM
+        int mqttPort = MQTT_PORT_NUM;
+#else
+        int mqttPort = 1883;  // Fallback default
+#endif
     };
 
     // Instance members

@@ -25,8 +25,8 @@ RUN mkdir -p /operation-delegation/config
 
 ENV PYTHONUNBUFFERED=1
 
-# Default command uses the new unified service
+# Default command uses environment variables passed at runtime
+# Override via docker-compose.yml or docker run -e
+# When running inside Docker, MQTT_BROKER defaults to container name
 CMD ["python", "unified-registration-service.py", "listen", \
-     "--mqtt-broker", "192.168.0.104", \
-     "--mqtt-port", "1883", \
      "--databridge-name", "databridge"]

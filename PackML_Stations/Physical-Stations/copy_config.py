@@ -1,15 +1,76 @@
 #!/usr/bin/env python3
 """
-PlatformIO pre-build script to copy config.json from schemas directory
-into the data/ folder for LittleFS filesystem upload.
+PlatformIO pre-build script to:
+1. Copy config.json from schemas directory into the data/ folder for LittleFS
+2. Read network configuration from root .env file and inject as build flags
 """
 import shutil
 import os
 Import("env")  # pylint: disable=undefined-variable
 
+
+def load_env_file(env_path):
+    """Load variables from a .env file."""
+    env_vars = {}
+    if os.path.exists(env_path):
+        with open(env_path, 'r') as f:
+            for line in f:
+                line = line.strip()
+                # Skip comments and empty lines
+                if not line or line.startswith('#'):
+                    continue
+                # Parse KEY=VALUE
+                if '=' in line:
+                    key, value = line.split('=', 1)
+                    # Remove quotes if present
+                    value = value.strip().strip('"').strip("'")
+                    env_vars[key.strip()] = value
+    return env_vars
+
+
 # Get the project directory and build environment
 project_dir = env.get("PROJECT_DIR")
 build_env = env.get("PIOENV")
+
+# =============================================================================
+# PART 1: Load network config from root .env file
+# =============================================================================
+root_env_file = os.path.join(project_dir, "..", "..", ".env")
+root_env_file = os.path.abspath(root_env_file)
+
+env_vars = load_env_file(root_env_file)
+
+# Get MQTT configuration from .env (with defaults)
+mqtt_broker = env_vars.get("EXTERNAL_HOST", "192.168.0.104")
+mqtt_port = env_vars.get("MQTT_PORT", "1883")
+
+# Get WiFi configuration from .env (with defaults)
+wifi_ssid = env_vars.get("WIFI_SSID", "AP2030")
+wifi_password = env_vars.get("WIFI_PASSWORD", "NovoNordisk")
+
+# Inject as build flags so they're available at compile time
+env.Append(CPPDEFINES=[
+    ("MQTT_SERVER", f'\\"{mqtt_broker}\\"'),
+    ("MQTT_PORT_NUM", mqtt_port),
+    ("WIFI_SSID_ENV", f'\\"{wifi_ssid}\\"'),
+    ("WIFI_PASSWORD_ENV", f'\\"{wifi_password}\\"'),
+])
+
+if os.path.exists(root_env_file):
+    print(f"✓ Loaded network config from .env:")
+    print(f"  MQTT_SERVER = {mqtt_broker}")
+    print(f"  MQTT_PORT = {mqtt_port}")
+    print(f"  WIFI_SSID = {wifi_ssid}")
+    print(f"  WIFI_PASSWORD = {'*' * len(wifi_password)}")
+else:
+    print(f"⚠ No .env file found at {root_env_file}, using defaults")
+    print(f"  MQTT_SERVER = {mqtt_broker} (default)")
+    print(f"  MQTT_PORT = {mqtt_port} (default)")
+    print(f"  WIFI_SSID = {wifi_ssid} (default)")
+
+# =============================================================================
+# PART 2: Copy config.json for LittleFS
+# =============================================================================
 
 # Determine which config file to use based on the environment
 config_files = {
