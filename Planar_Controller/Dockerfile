@@ -29,8 +29,8 @@ RUN pip install --no-cache-dir dependencies/pmclib-117.9.1-py3-none-any.whl
 # Copy application source code (including library/ and xbot_planner.py)
 COPY . .
 
-# Make entrypoint script executable
-RUN chmod +x entrypoint.sh
+# Convert line endings and make entrypoint script executable
+RUN sed -i 's/\r$//' entrypoint.sh && chmod +x entrypoint.sh
 
 # Set environment variable to ensure output is flushed immediately
 ENV PYTHONUNBUFFERED=1
