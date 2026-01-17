@@ -1,15 +1,15 @@
 [
   {
-    "uniqueId": "NN_Nybrovej_InnoLab_Stopper_DATA_State",
+    "uniqueId": "NN_Nybrovej_InnoLab_Capping_DATA_State",
     "serverUrl": "hivemq-broker",
     "serverPort": 1883,
-    "topic": "NN/Nybrovej/InnoLab/Stopper/DATA/State"
+    "topic": "NN/Nybrovej/InnoLab/Capping/DATA/State"
   },
   {
-    "uniqueId": "NN_Nybrovej_InnoLab_Stopper_DATA_Occupation",
+    "uniqueId": "NN_Nybrovej_InnoLab_Capping_DATA_Occupation",
     "serverUrl": "hivemq-broker",
     "serverPort": 1883,
-    "topic": "NN/Nybrovej/InnoLab/Stopper/DATA/Occupation"
+    "topic": "NN/Nybrovej/InnoLab/Capping/DATA/Occupation"
   },
   {
     "uniqueId": "NN_Nybrovej_InnoLab_Dispensing_DATA_State",
@@ -40,12 +40,6 @@
     "serverUrl": "hivemq-broker",
     "serverPort": 1883,
     "topic": "NN/Nybrovej/InnoLab/Loading/DATA/Occupation"
-  },
-  {
-    "uniqueId": "NN_Nybrovej_InnoLab_Loading_DATA_Weight",
-    "serverUrl": "hivemq-broker",
-    "serverPort": 1883,
-    "topic": "NN/Nybrovej/InnoLab/Loading/DATA/Weight"
   },
   {
     "uniqueId": "NN_Nybrovej_InnoLab_Camera_DATA_State",
@@ -118,5 +112,29 @@
     "serverUrl": "hivemq-broker",
     "serverPort": 1883,
     "topic": "NN/Nybrovej/InnoLab/Planar/Xbot3/DATA/Occupation"
+  },
+  {
+    "uniqueId": "NN_Nybrovej_InnoLab_Planar_DATA_State",
+    "serverUrl": "hivemq-broker",
+    "serverPort": 1883,
+    "topic": "NN/Nybrovej/InnoLab/Planar/DATA/State"
+  },
+  {
+    "uniqueId": "NN_Nybrovej_InnoLab_Planar_DATA_Occupation",
+    "serverUrl": "hivemq-broker",
+    "serverPort": 1883,
+    "topic": "NN/Nybrovej/InnoLab/Planar/DATA/Occupation"
+  },
+  {
+    "uniqueId": "NN_Nybrovej_InnoLab_Stopper_DATA_State",
+    "serverUrl": "hivemq-broker",
+    "serverPort": 1883,
+    "topic": "NN/Nybrovej/InnoLab/Stopper/DATA/State"
+  },
+  {
+    "uniqueId": "NN_Nybrovej_InnoLab_Stopper_DATA_Occupation",
+    "serverUrl": "hivemq-broker",
+    "serverPort": 1883,
+    "topic": "NN/Nybrovej/InnoLab/Stopper/DATA/Occupation"
   }
 ]

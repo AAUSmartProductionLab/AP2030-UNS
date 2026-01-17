@@ -112,6 +112,7 @@ imaDispensingSystemAAS:
                                 mqv_retain: 'false'
                                 mqv_controlPacket: publish
                                 mqv_qos: '0'
+
     Variables:
         PackMLState:
             semanticId: 'https://www.omac.org/packml/state'
@@ -122,6 +123,7 @@ imaDispensingSystemAAS:
         Weight:
             semanticId: 'https://smartproductionlab.aau.dk/weight'
             InterfaceReference: 'Weight'
+
     Parameters:
     HierarchicalStructures:
         Archetype: 'OneUp'
@@ -129,44 +131,30 @@ imaDispensingSystemAAS:
             - aauFillingLine:
                 globalAssetId: 'https://smartproductionlab.aau.dk/assets/MWQ2ODY5ZDEtZTQ3Yy00NWU4LTlmYTAtNTI3YjVlMDk4MWFi'
     
-    # Capabilities:
-    #     - dispensing:
-    #         realizedBy: "dispensing"
+    Capabilities:
+        Dispensing:
+            realizedBy: "dispensing"
+        halt:
+            realizedBy: "halt"
+        occupy:
+            realizedBy: "occupy"
+        release:
+            realizedBy: "release"
     
-    # Skills:
-        # dispensing:
-        #     description: "dispensing function for pharmaceutical primary packaging"
-        #     semantic_id: "https://smartproductionlab.aau.dk/dispensing"
-        #     input_variable:
-        #         Uuid: "string"
-        #     output_variable:
-        #         State: "string"
-        #     in_ouput_variable:
-        #     interface: "dispensing"
-        # Occupy:
-        #     description: "dispensing function for pharmaceutical primary packaging"
-        #     semantic_id: "https://smartproductionlab.aau.dk/Occupy"
-        #     input_variable:
-        #         Uuid: "string"
-        #     output_variable:
-        #         State: "string"
-        #     in_ouput_variable:
-        #     interface: "occupy"
-        # Release:
-        #     description: "dispensing function for pharmaceutical primary packaging"
-        #     semantic_id: "https://smartproductionlab.aau.dk/Release"
-        #     input_variable:
-        #         Uuid: "string"
-        #     output_variable:
-        #         State: "string"
-        #     in_ouput_variable:
-        #     interface: "release"
-        # Halt:
-        #     description: "dispensing function for pharmaceutical primary packaging"
-        #     semantic_id: "https://smartproductionlab.aau.dk/Halt"
-        #     input_variable:
-        #         Uuid: "string"
-        #     output_variable:
-        #         State: "string"
-        #     in_ouput_variable:
-        #     interface: "halt"
+    Skills:
+        dispensing:
+            description: "Dispensing function for pharmaceutical primary packaging"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/dispensing"
+            interface: "dispensing"
+        halt:
+            description: "Halt the current dispensing operation"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/halt"
+            interface: "halt"
+        occupy:
+            description: "Occupy the dispensing system for exclusive use"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/occupy"
+            interface: "occupy"
+        release:
+            description: "Release the dispensing system from exclusive use"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/release"
+            interface: "release"

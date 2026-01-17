@@ -1,6 +1,6 @@
 [
   {
-    "datasource": "NN_Nybrovej_InnoLab_Stopper_DATA_State",
+    "datasource": "NN_Nybrovej_InnoLab_Capping_DATA_State",
     "transformers": [
       "cytivaCappingSystemAAS_PackMLState_State_transformer"
     ],
@@ -10,7 +10,7 @@
     "trigger": "event"
   },
   {
-    "datasource": "NN_Nybrovej_InnoLab_Stopper_DATA_Occupation",
+    "datasource": "NN_Nybrovej_InnoLab_Capping_DATA_Occupation",
     "transformers": [
       "cytivaCappingSystemAAS_OccupationState_Occupation_transformer"
     ],
@@ -70,16 +70,6 @@
     "trigger": "event"
   },
   {
-    "datasource": "NN_Nybrovej_InnoLab_Loading_DATA_Weight",
-    "transformers": [
-      "imaLoadingSystemAAS_Weight_Weight_transformer"
-    ],
-    "datasinks": [
-      "imaLoadingSystemAAS_Weight_sink_Weight"
-    ],
-    "trigger": "event"
-  },
-  {
     "datasource": "NN_Nybrovej_InnoLab_Camera_DATA_State",
     "transformers": [
       "omronCameraSystemAAS_PackMLState_State_transformer"
@@ -102,20 +92,20 @@
   {
     "datasource": "NN_Nybrovej_InnoLab_Camera_DATA_Image",
     "transformers": [
-      "omronCameraSystemAAS_Image_Format_transformer",
-      "omronCameraSystemAAS_Image_Image_transformer"
+      "omronCameraSystemAAS_Image_Image_transformer",
+      "omronCameraSystemAAS_Image_Format_transformer"
     ],
     "datasinks": [
-      "omronCameraSystemAAS_Image_sink_Format",
-      "omronCameraSystemAAS_Image_sink_Image"
+      "omronCameraSystemAAS_Image_sink_Image",
+      "omronCameraSystemAAS_Image_sink_Format"
     ],
     "trigger": "event",
     "datasinkMappingConfiguration": {
-      "omronCameraSystemAAS_Image_sink_Format": [
-        "omronCameraSystemAAS_Image_Format_transformer"
-      ],
       "omronCameraSystemAAS_Image_sink_Image": [
         "omronCameraSystemAAS_Image_Image_transformer"
+      ],
+      "omronCameraSystemAAS_Image_sink_Format": [
+        "omronCameraSystemAAS_Image_Format_transformer"
       ]
     }
   },
@@ -210,7 +200,7 @@
     "trigger": "event"
   },
   {
-    "datasource": "NN_Nybrovej_InnoLab_Planar_Xbot1_DATA_State",
+    "datasource": "NN_Nybrovej_InnoLab_Planar_DATA_State",
     "transformers": [
       "planarTableAAS_PackMLState_State_transformer"
     ],
@@ -220,7 +210,7 @@
     "trigger": "event"
   },
   {
-    "datasource": "NN_Nybrovej_InnoLab_Planar_Xbot1_DATA_Occupation",
+    "datasource": "NN_Nybrovej_InnoLab_Planar_DATA_Occupation",
     "transformers": [
       "planarTableAAS_OccupationState_Occupation_transformer"
     ],

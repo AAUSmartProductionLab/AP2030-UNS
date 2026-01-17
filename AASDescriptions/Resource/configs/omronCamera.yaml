@@ -130,44 +130,24 @@ omronCameraSystemAAS:
             - aauFillingLine:
                 globalAssetId: 'https://smartproductionlab.aau.dk/assets/MWQ2ODY5ZDEtZTQ3Yy00NWU4LTlmYTAtNTI3YjVlMDk4MWFi'
     
-    # Capabilities:
-    #     - Capture:
-    #         realizedBy: "Capture"
+    Capabilities:
+        Capture:
+            realizedBy: "Capture"
     
-    # Skills:
-        # Capture:
-        #     description: "Capture function for pharmaceutical primary packaging"
-        #     semantic_id: "https://smartproductionlab.aau.dk/Capture"
-        #     input_variable:
-        #         Uuid: "string"
-        #     output_variable:
-        #         State: "string"
-        #     in_ouput_variable:
-        #     interface: "Capture"
-        # Occupy:
-        #     description: "Capture function for pharmaceutical primary packaging"
-        #     semantic_id: "https://smartproductionlab.aau.dk/Occupy"
-        #     input_variable:
-        #         Uuid: "string"
-        #     output_variable:
-        #         State: "string"
-        #     in_ouput_variable:
-        #     interface: "occupy"
-        # Release:
-        #     description: "Capture function for pharmaceutical primary packaging"
-        #     semantic_id: "https://smartproductionlab.aau.dk/Release"
-        #     input_variable:
-        #         Uuid: "string"
-        #     output_variable:
-        #         State: "string"
-        #     in_ouput_variable:
-        #     interface: "release"
-        # Halt:
-        #     description: "Capture function for pharmaceutical primary packaging"
-        #     semantic_id: "https://smartproductionlab.aau.dk/Halt"
-        #     input_variable:
-        #         Uuid: "string"
-        #     output_variable:
-        #         State: "string"
-        #     in_ouput_variable:
-        #     interface: "halt"
+    Skills:
+        Capture:
+            description: "Capture image for quality control"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/Capture"
+            interface: "Capture"
+        halt:
+            description: "Halt the current capture operation"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/halt"
+            interface: "halt"
+        occupy:
+            description: "Occupy the camera system for exclusive use"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/occupy"
+            interface: "occupy"
+        release:
+            description: "Release the camera system from exclusive use"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/release"
+            interface: "release"

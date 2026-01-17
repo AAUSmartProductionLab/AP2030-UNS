@@ -119,7 +119,7 @@ planarTableShuttle1AAS:
                 globalAssetId: 'https://smartproductionlab.aau.dk/assets/51kUZLlDQky3k5Mk6SRb2Q'
     
     Capabilities:
-        MoveToPosition:
+        Transport:
             realizedBy: "MoveToPosition"
         halt:
             realizedBy: "halt"

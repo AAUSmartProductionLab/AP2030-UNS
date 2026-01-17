@@ -10,7 +10,7 @@ planarTableAAS:
         InterfaceMQTT:
             Title: 'Planar Motors Shuttle'
             EndpointMetadata:
-                base: 'mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/Planar/Xbot1/'
+                base: 'mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/Planar/'
                 contentType: 'application/json'
             InteractionMetadata:
                 actions:
@@ -104,44 +104,19 @@ planarTableAAS:
                 globalAssetId: 'https://smartproductionlab.aau.dk/assets/OTZhZGNiZDAtNTNhNS00YmJhLThiNDctMzFjYzM3OGNiNTMw'
             - planarTableShuttle3:
                 globalAssetId: 'https://smartproductionlab.aau.dk/assets/YjY3ZTJjZGEtZDYxMC00ZDJjLTlkYjYtOGUyNGE4NWVlNTBi'
-    # Capabilities:
-    #     - Capture:
-    #         realizedBy: "Capture"
     
-    # Skills:
-        # Capture:
-        #     description: "Capture function for pharmaceutical primary packaging"
-        #     semantic_id: "https://smartproductionlab.aau.dk/Capture"
-        #     input_variable:
-        #         Uuid: "string"
-        #     output_variable:
-        #         State: "string"
-        #     in_ouput_variable:
-        #     interface: "Capture"
-        # Occupy:
-        #     description: "Capture function for pharmaceutical primary packaging"
-        #     semantic_id: "https://smartproductionlab.aau.dk/Occupy"
-        #     input_variable:
-        #         Uuid: "string"
-        #     output_variable:
-        #         State: "string"
-        #     in_ouput_variable:
-        #     interface: "occupy"
-        # Release:
-        #     description: "Capture function for pharmaceutical primary packaging"
-        #     semantic_id: "https://smartproductionlab.aau.dk/Release"
-        #     input_variable:
-        #         Uuid: "string"
-        #     output_variable:
-        #         State: "string"
-        #     in_ouput_variable:
-        #     interface: "release"
-        # Halt:
-        #     description: "Capture function for pharmaceutical primary packaging"
-        #     semantic_id: "https://smartproductionlab.aau.dk/Halt"
-        #     input_variable:
-        #         Uuid: "string"
-        #     output_variable:
-        #         State: "string"
-        #     in_ouput_variable:
-        #     interface: "halt"
+    Capabilities:
+    
+    Skills:
+        halt:
+            description: "Halt all planar table operations"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/halt"
+            interface: "halt"
+        occupy:
+            description: "Occupy the planar table for exclusive use"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/occupy"
+            interface: "occupy"
+        release:
+            description: "Release the planar table from exclusive use"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/release"
+            interface: "release"

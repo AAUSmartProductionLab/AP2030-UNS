@@ -49,13 +49,6 @@
     "outputType": "JsonString"
   },
   {
-    "uniqueId": "imaLoadingSystemAAS_Weight_Weight_transformer",
-    "queryLanguage": "JSONATA",
-    "queryPath": "queries/imaLoadingSystemAAS_Weight_Weight.jsonata",
-    "inputType": "JsonString",
-    "outputType": "JsonString"
-  },
-  {
     "uniqueId": "omronCameraSystemAAS_PackMLState_State_transformer",
     "queryLanguage": "JSONATA",
     "queryPath": "queries/omronCameraSystemAAS_PackMLState_State.jsonata",
@@ -70,16 +63,16 @@
     "outputType": "JsonString"
   },
   {
-    "uniqueId": "omronCameraSystemAAS_Image_Format_transformer",
+    "uniqueId": "omronCameraSystemAAS_Image_Image_transformer",
     "queryLanguage": "JSONATA",
-    "queryPath": "queries/omronCameraSystemAAS_Image_Format.jsonata",
+    "queryPath": "queries/omronCameraSystemAAS_Image_Image.jsonata",
     "inputType": "JsonString",
     "outputType": "JsonString"
   },
   {
-    "uniqueId": "omronCameraSystemAAS_Image_Image_transformer",
+    "uniqueId": "omronCameraSystemAAS_Image_Format_transformer",
     "queryLanguage": "JSONATA",
-    "queryPath": "queries/omronCameraSystemAAS_Image_Image.jsonata",
+    "queryPath": "queries/omronCameraSystemAAS_Image_Format.jsonata",
     "inputType": "JsonString",
     "outputType": "JsonString"
   },
