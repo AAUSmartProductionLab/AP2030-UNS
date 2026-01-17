@@ -92,20 +92,20 @@
   {
     "datasource": "NN_Nybrovej_InnoLab_Camera_DATA_Image",
     "transformers": [
-      "omronCameraSystemAAS_Image_Image_transformer",
-      "omronCameraSystemAAS_Image_Format_transformer"
+      "omronCameraSystemAAS_Image_Format_transformer",
+      "omronCameraSystemAAS_Image_Image_transformer"
     ],
     "datasinks": [
-      "omronCameraSystemAAS_Image_sink_Image",
-      "omronCameraSystemAAS_Image_sink_Format"
+      "omronCameraSystemAAS_Image_sink_Format",
+      "omronCameraSystemAAS_Image_sink_Image"
     ],
     "trigger": "event",
     "datasinkMappingConfiguration": {
-      "omronCameraSystemAAS_Image_sink_Image": [
-        "omronCameraSystemAAS_Image_Image_transformer"
-      ],
       "omronCameraSystemAAS_Image_sink_Format": [
         "omronCameraSystemAAS_Image_Format_transformer"
+      ],
+      "omronCameraSystemAAS_Image_sink_Image": [
+        "omronCameraSystemAAS_Image_Image_transformer"
       ]
     }
   },
