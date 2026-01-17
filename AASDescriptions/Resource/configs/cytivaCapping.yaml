@@ -43,10 +43,7 @@ cytivaCappingSystemAAS:
                             mqv_retain: 'false'
                             mqv_controlPacket: subscribe
                             mqv_qos: '2'
-                            response:
-                                contentType: 'application/json'
-                                href: '/DATA/Halt'
-                                mqv_controlPacket: 'publish'                                                
+                                                                         
                     - occupy:
                         key: 'occupy'
                         title: 'occupy'
