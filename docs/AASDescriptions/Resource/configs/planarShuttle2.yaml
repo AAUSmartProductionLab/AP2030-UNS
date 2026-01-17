@@ -42,11 +42,7 @@ planarTableShuttle2AAS:
                             op: 'invokeAction'
                             mqv_retain: 'false'
                             mqv_controlPacket: subscribe
-                            mqv_qos: '2'
-                            response:
-                                contentType: 'application/json'
-                                href: '/DATA/Halt'
-                                mqv_controlPacket: 'publish'                                                
+                            mqv_qos: '2'                                              
                     - occupy:
                         key: 'occupy'
                         title: 'occupy'
@@ -118,44 +114,25 @@ planarTableShuttle2AAS:
             - planarTable:
                 globalAssetId: 'https://smartproductionlab.aau.dk/assets/51kUZLlDQky3k5Mk6SRb2Q'
     
-    # Capabilities:
-    #     - Capture:
-    #         realizedBy: "Capture"
+    Capabilities:
+        Transport:
+            realizedBy: "MoveToPosition"
+
     
-    # Skills:
-        # Capture:
-        #     description: "Capture function for pharmaceutical primary packaging"
-        #     semantic_id: "https://smartproductionlab.aau.dk/Capture"
-        #     input_variable:
-        #         Uuid: "string"
-        #     output_variable:
-        #         State: "string"
-        #     in_ouput_variable:
-        #     interface: "Capture"
-        # Occupy:
-        #     description: "Capture function for pharmaceutical primary packaging"
-        #     semantic_id: "https://smartproductionlab.aau.dk/Occupy"
-        #     input_variable:
-        #         Uuid: "string"
-        #     output_variable:
-        #         State: "string"
-        #     in_ouput_variable:
-        #     interface: "occupy"
-        # Release:
-        #     description: "Capture function for pharmaceutical primary packaging"
-        #     semantic_id: "https://smartproductionlab.aau.dk/Release"
-        #     input_variable:
-        #         Uuid: "string"
-        #     output_variable:
-        #         State: "string"
-        #     in_ouput_variable:
-        #     interface: "release"
-        # Halt:
-        #     description: "Capture function for pharmaceutical primary packaging"
-        #     semantic_id: "https://smartproductionlab.aau.dk/Halt"
-        #     input_variable:
-        #         Uuid: "string"
-        #     output_variable:
-        #         State: "string"
-        #     in_ouput_variable:
-        #     interface: "halt"
+    Skills:
+        MoveToPosition:
+            description: "Move the planar shuttle to a target position"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/MoveToPosition"
+            interface: "MoveToPosition"
+        halt:
+            description: "Halt the current movement operation"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/halt"
+            interface: "halt"
+        occupy:
+            description: "Occupy the shuttle for exclusive use"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/occupy"
+            interface: "occupy"
+        release:
+            description: "Release the shuttle from exclusive use"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/release"
+            interface: "release"

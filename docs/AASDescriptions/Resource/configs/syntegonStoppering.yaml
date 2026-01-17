@@ -42,11 +42,7 @@ syntegonStopperingSystemAAS:
                             op: 'invokeAction'
                             mqv_retain: 'false'
                             mqv_controlPacket: subscribe
-                            mqv_qos: '2'
-                            response:
-                                contentType: 'application/json'
-                                href: '/DATA/Halt'
-                                mqv_controlPacket: 'publish'                                                
+                            mqv_qos: '2'                                              
                     - occupy:
                         key: 'occupy'
                         title: 'occupy'
@@ -116,44 +112,24 @@ syntegonStopperingSystemAAS:
             - aauFillingLine:
                 globalAssetId: 'https://smartproductionlab.aau.dk/assets/MWQ2ODY5ZDEtZTQ3Yy00NWU4LTlmYTAtNTI3YjVlMDk4MWFi'
     
-    # Capabilities:
-    #     - Stoppering:
-    #         realizedBy: "Stoppering"
+    Capabilities:
+        Stoppering:
+            realizedBy: "Stopper"
     
-    # Skills:
-        # Stopper:
-        #     description: "Stoppering function for pharmaceutical primary packaging"
-        #     semantic_id: "https://smartproductionlab.aau.dk/Stoppering"
-        #     input_variable:
-        #         Uuid: "string"
-        #     output_variable:
-        #         State: "string"
-        #     in_ouput_variable:
-        #     interface: "Stoppering"
-        # Occupy:
-        #     description: "Stoppering function for pharmaceutical primary packaging"
-        #     semantic_id: "https://smartproductionlab.aau.dk/Occupy"
-        #     input_variable:
-        #         Uuid: "string"
-        #     output_variable:
-        #         State: "string"
-        #     in_ouput_variable:
-        #     interface: "occupy"
-        # Release:
-        #     description: "Stoppering function for pharmaceutical primary packaging"
-        #     semantic_id: "https://smartproductionlab.aau.dk/Release"
-        #     input_variable:
-        #         Uuid: "string"
-        #     output_variable:
-        #         State: "string"
-        #     in_ouput_variable:
-        #     interface: "release"
-        # Halt:
-        #     description: "Stoppering function for pharmaceutical primary packaging"
-        #     semantic_id: "https://smartproductionlab.aau.dk/Halt"
-        #     input_variable:
-        #         Uuid: "string"
-        #     output_variable:
-        #         State: "string"
-        #     in_ouput_variable:
-        #     interface: "halt"
+    Skills:
+        Stoppering:
+            description: "Stoppering function for pharmaceutical primary packaging"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/Stoppering"
+            interface: "Stoppering"
+        halt:
+            description: "Halt the current stoppering operation"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/halt"
+            interface: "halt"
+        occupy:
+            description: "Occupy the stoppering system for exclusive use"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/occupy"
+            interface: "occupy"
+        release:
+            description: "Release the stoppering system from exclusive use"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/release"
+            interface: "release"
