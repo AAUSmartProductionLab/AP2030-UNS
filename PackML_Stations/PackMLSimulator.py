@@ -58,16 +58,16 @@ class PackMLStateMachine:
         self.pending_registrations = {}
 
         self.register_topic = ResponseAsync(
-            self.base_topic+"/DATA/Register",
-            self.base_topic+"/CMD/Register",
+            self.base_topic+"/DATA/Occupy",
+            self.base_topic+"/CMD/Occupy",
             "./MQTTSchemas/commandResponse.schema.json",
             "./MQTTSchemas/command.schema.json",
             2,
             self.register_callback
         )
         self.unregister_topic = ResponseAsync(
-            self.base_topic+"/DATA/Unregister",
-            self.base_topic+"/CMD/Unregister",
+            self.base_topic+"/DATA/Release",
+            self.base_topic+"/CMD/Release",
             "./MQTTSchemas/commandResponse.schema.json",
             "./MQTTSchemas/command.schema.json",
             2,

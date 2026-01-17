@@ -11,9 +11,9 @@ BASE_TOPIC = "NN/Nybrovej/InnoLab/Camera"
 uuid=""
 
 image_publisher = Publisher(
-        BASE_TOPIC + "/DATA/Image",
-        "./schemas/image.schema.json", 
-        2)
+    BASE_TOPIC + "/DATA/Image",
+    "./MQTTSchemas/image.schema.json",
+    2)
 
 
 def capture_process(duration=0.5):

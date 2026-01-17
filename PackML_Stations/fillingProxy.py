@@ -102,39 +102,40 @@ def refill_callback(topic, client, message, properties):
         }
         refill.publish(response, fillProxy, False)
 
+
 refill = ResponseAsync(
-    BASE_TOPIC+"/DATA/Refill", 
+    BASE_TOPIC+"/DATA/Refill",
     BASE_TOPIC+"/CMD/Refill",
-    "./schemas/commandResponse.schema.json", 
-    "./schemas/command.schema.json", 
-    2, 
+    "./MQTTSchemas/commandResponse.schema.json",
+    "./MQTTSchemas/command.schema.json",
+    2,
     refill_callback
 )
 
 
 dispense = ResponseAsync(
-    BASE_TOPIC+"/DATA/Dispense", 
+    BASE_TOPIC+"/DATA/Dispense",
     BASE_TOPIC+"/CMD/Dispense",
-    "./schemas/commandResponse.schema.json", 
-    "./schemas/command.schema.json", 
-    2, 
+    "./MQTTSchemas/commandResponse.schema.json",
+    "./MQTTSchemas/command.schema.json",
+    2,
     dispense_callback
 )
 
 tare = ResponseAsync(
-    BASE_TOPIC+"/DATA/Tare", 
+    BASE_TOPIC+"/DATA/Tare",
     BASE_TOPIC+"/CMD/Tare",
-    "./schemas/commandResponse.schema.json", 
-    "./schemas/command.schema.json", 
-    2, 
+    "./MQTTSchemas/commandResponse.schema.json",
+    "./MQTTSchemas/command.schema.json",
+    2,
     tare_callback
 )
 
 
 weigh_publisher = Publisher(
-        BASE_TOPIC + "/DATA/Weight",
-        "./schemas/weight.schema.json", 
-        2)
+    BASE_TOPIC + "/DATA/Weight",
+    "./MQTTSchemas/weight.schema.json",
+    2)
 
 
 fillProxy = Proxy(

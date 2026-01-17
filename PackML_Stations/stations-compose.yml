@@ -19,8 +19,8 @@ services:
       dockerfile: ./dockerfile
     container_name: filling_station
     volumes:
-      - ../schemas:/app/schemas
-      - .:/app  # Mount entire directory
+      - .:/app  # Mount entire directory first
+      - ../MQTTSchemas:/app/MQTTSchemas  # Then overlay schemas
     command: fillingProxy.py
 
   stoppering_station:

@@ -59,16 +59,16 @@ class PackMLStateMachine:
         # Schemas assume . relative path from CWD. In container /app is CWD and schemas are in /app/schemas.
         # So ./MQTTSchema is correct if mapped correctly.
         self.register_topic = ResponseAsync(
-            self.base_topic+"/DATA/Register",
-            self.base_topic+"/CMD/Register",
+            self.base_topic+"/DATA/Occupy",
+            self.base_topic+"/CMD/Occupy",
             "./MQTTSchemacommandResponse.schema.json",
             "./MQTTSchemacommand.schema.json",
             2,
             self.register_callback
         )
         self.unregister_topic = ResponseAsync(
-            self.base_topic+"/DATA/Unregister",
-            self.base_topic+"/CMD/Unregister",
+            self.base_topic+"/DATA/Release",
+            self.base_topic+"/CMD/Release",
             "./MQTTSchemacommandResponse.schema.json",
             "./MQTTSchemacommand.schema.json",
             2,
