@@ -36,10 +36,12 @@ class DataBridgeFromConfig:
     def __init__(self,
                  mqtt_broker: str = DEFAULT_MQTT_BROKER,
                  mqtt_port: int = DEFAULT_MQTT_PORT,
-                 basyx_url: str = DEFAULT_BASYX_INTERNAL_URL):
+                 basyx_url: str = DEFAULT_BASYX_INTERNAL_URL,
+                 output_dir: str = None):
         self.mqtt_broker = mqtt_broker
         self.mqtt_port = mqtt_port
         self.basyx_url = basyx_url
+        self.output_dir = Path(output_dir) if output_dir else None
 
         # Configuration accumulators (for multi-asset generation)
         self.consumers: List[Dict] = []
@@ -49,10 +51,72 @@ class DataBridgeFromConfig:
 
         # Track topics to avoid duplicates
         self._topic_ids: Dict[str, str] = {}
+        
+        # Track transformer and sink IDs to avoid duplicates
+        self._transformer_ids: set = set()
+        self._sink_ids: set = set()
 
         # Track transformer metadata for JSONATA generation
         # Maps transformer_id -> {variable_name, field_name, mqtt_field}
         self._transformer_metadata: Dict[str, Dict] = {}
+        
+        # Load existing configurations if output_dir provided
+        if self.output_dir:
+            self._load_existing()
+    
+    def _load_existing(self):
+        """Load existing databridge configurations to prevent duplicates."""
+        if not self.output_dir or not self.output_dir.exists():
+            return
+            
+        # Load existing consumers
+        consumers_path = self.output_dir / 'mqttconsumer.json'
+        if consumers_path.exists():
+            try:
+                with open(consumers_path, 'r') as f:
+                    self.consumers = json.load(f)
+                    for c in self.consumers:
+                        topic = c.get('topic', '')
+                        unique_id = c.get('uniqueId', '')
+                        if topic and unique_id:
+                            self._topic_ids[topic] = unique_id
+                logger.info(f"Loaded {len(self.consumers)} existing consumers")
+            except Exception as e:
+                logger.warning(f"Could not load existing consumers: {e}")
+        
+        # Load existing transformers
+        transformers_path = self.output_dir / 'jsonatatransformer.json'
+        if transformers_path.exists():
+            try:
+                with open(transformers_path, 'r') as f:
+                    self.transformers = json.load(f)
+                    for t in self.transformers:
+                        self._transformer_ids.add(t.get('uniqueId', ''))
+                logger.info(f"Loaded {len(self.transformers)} existing transformers")
+            except Exception as e:
+                logger.warning(f"Could not load existing transformers: {e}")
+        
+        # Load existing sinks
+        sinks_path = self.output_dir / 'aasserver.json'
+        if sinks_path.exists():
+            try:
+                with open(sinks_path, 'r') as f:
+                    self.sinks = json.load(f)
+                    for s in self.sinks:
+                        self._sink_ids.add(s.get('uniqueId', ''))
+                logger.info(f"Loaded {len(self.sinks)} existing sinks")
+            except Exception as e:
+                logger.warning(f"Could not load existing sinks: {e}")
+        
+        # Load existing routes
+        routes_path = self.output_dir / 'routes.json'
+        if routes_path.exists():
+            try:
+                with open(routes_path, 'r') as f:
+                    self.routes = json.load(f)
+                logger.info(f"Loaded {len(self.routes)} existing routes")
+            except Exception as e:
+                logger.warning(f"Could not load existing routes: {e}")
 
     def add_from_config(self, config: ConfigParser) -> Dict[str, int]:
         """
@@ -205,6 +269,12 @@ class DataBridgeFromConfig:
         # Create unique ID including the field
         transformer_id = f"{sanitize_id(system_id)}_{sanitize_id(variable_name)}_{sanitize_id(field)}_transformer"
 
+        # Check if already exists
+        if transformer_id in self._transformer_ids:
+            return transformer_id
+        
+        self._transformer_ids.add(transformer_id)
+
         # Create JSONATA query file name
         query_file = f"{sanitize_id(system_id)}_{sanitize_id(variable_name)}_{sanitize_id(field)}.jsonata"
 
@@ -241,6 +311,12 @@ class DataBridgeFromConfig:
         # Create unique ID including the field
         sink_id = f"{sanitize_id(system_id)}_{sanitize_id(variable_name)}_sink_{sanitize_id(field)}"
 
+        # Check if already exists
+        if sink_id in self._sink_ids:
+            return sink_id
+        
+        self._sink_ids.add(sink_id)
+
         # Build the submodel element path
         submodel_id = f"https://smartproductionlab.aau.dk/submodels/instances/{system_id}/Variables"
         id_short_path = f"{variable_name}.{field}"
@@ -268,10 +344,16 @@ class DataBridgeFromConfig:
             datasink_mapping: Mapping of sink_id -> [transformer_ids]
 
         Returns:
-            Number of routes generated (always 1)
+            Number of routes generated (0 if duplicate, 1 if new)
         """
         if not sinks:
             return 0
+
+        # Check if a route for this datasource already exists
+        for existing_route in self.routes:
+            if existing_route.get('datasource') == consumer_id:
+                logger.debug(f"Route for datasource {consumer_id} already exists, skipping")
+                return 0
 
         route = {
             "datasource": consumer_id,
@@ -357,6 +439,8 @@ class DataBridgeFromConfig:
         self.sinks = []
         self.routes = []
         self._topic_ids = {}
+        self._transformer_ids = set()
+        self._sink_ids = set()
         self._transformer_metadata = {}
 
 
@@ -378,7 +462,8 @@ def generate_databridge_from_configs(config_paths: List[str],
     Returns:
         Dict with total counts of generated configurations
     """
-    generator = DataBridgeFromConfig(mqtt_broker, mqtt_port, basyx_url)
+    # Pass output_dir to load existing configs and prevent duplicates
+    generator = DataBridgeFromConfig(mqtt_broker, mqtt_port, basyx_url, output_dir)
 
     total_counts = {'consumers': 0, 'transformers': 0, 'sinks': 0, 'routes': 0}
 
