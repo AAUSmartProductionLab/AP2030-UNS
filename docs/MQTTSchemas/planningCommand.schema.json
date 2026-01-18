@@ -1,0 +1,28 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Planning Command",
+    "type": "object",
+    "allOf": [
+        {
+            "$ref": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json"
+        },
+        {
+            "type": "object",
+            "properties": {
+                "Assets": {
+                    "type": "array",
+                    "description": "Assets to use for planning",
+                    "items": {
+                    "type": "string"
+                    },
+                    "minItems": 1
+                },
+                "Product": {
+                    "type": "string",
+                    "description": "The product to produce"
+                }
+            },
+            "required": ["TargetPos"]
+        }
+    ]
+}
