@@ -176,6 +176,9 @@ All schemas are automatically synchronized from the `schemas/` directory. Click 
   - The station configuration of the production line
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/planarStations.schema.json)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/MQTTSchemas/planarStations.schema.json)
+- **[planningCommand.schema.json](MQTTSchemas/planningCommand.schema.json)**
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/planningCommand.schema.json)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/MQTTSchemas/planningCommand.schema.json)
 - **[productId.schema.json](MQTTSchemas/productId.schema.json)**
   - JSON Schema for the status the Id of a product. Usefull to associate stations with a product when they process it
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/productId.schema.json)
@@ -333,6 +336,12 @@ YAML configuration files for AAS resource definitions.
   - Location: InnoLab, Nybrovej, AAU
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/configs/planarTable.yaml)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/configs/planarTable.yaml)
+
+- **[productionPlanner.yaml](configs/productionPlanner.yaml)**
+  - Resource: `productionPlanner`
+  - Location: InnoLab, Nybrovej, AAU
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/configs/productionPlanner.yaml)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/configs/productionPlanner.yaml)
 
 - **[syntegonStoppering.yaml](configs/syntegonStoppering.yaml)**
   - Resource: `syntegonStopperingSystemAAS`

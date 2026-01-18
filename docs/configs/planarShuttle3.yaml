@@ -112,7 +112,7 @@ planarTableShuttle3AAS:
         Archetype: 'OneUp'
         IsPartOf:
             - planarTable:
-                globalAssetId: 'https://smartproductionlab.aau.dk/assets/51kUZLlDQky3k5Mk6SRb2Q'
+                globalAssetId: 'https://smartproductionlab.aau.dk/assets/ZTM1NTAzNzQtMDZkNi00N2Q4LWI1YTktMGNhMmY0MDEyNTk4'
     
     Capabilities:
         Transport:

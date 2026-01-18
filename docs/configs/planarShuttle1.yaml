@@ -1,7 +1,7 @@
 planarTableShuttle1AAS:
     idShort: planarTableShuttle1AAS
     id: 'https://smartproductionlab.aau.dk/aas/planarTableShuttle1'
-    globalAssetId: 'https://smartproductionlab.aau.dk/assets/Ufy3NZolQZi6yRmdMmJ9fQ'
+    globalAssetId: 'https://smartproductionlab.aau.dk/assets/ODYwM2Q2YjYtYmUzOS00NTAxLWFhZDktYjc1MjhhMzUzOGNm'
     derivedFrom: 'https://smartproductionlab.aau.dk/aas/templates/resource'
     assetType: 'https://smartproductionlab.aau.dk/Resource/CPS/MotionSystem/planarTableShuttle1'
     serialNumber: 'PM-S1-2024-001'
@@ -111,7 +111,7 @@ planarTableShuttle1AAS:
         Archetype: 'OneUp'
         IsPartOf:
             - planarTable:
-                globalAssetId: 'https://smartproductionlab.aau.dk/assets/51kUZLlDQky3k5Mk6SRb2Q'
+                globalAssetId: 'https://smartproductionlab.aau.dk/assets/ZTM1NTAzNzQtMDZkNi00N2Q4LWI1YTktMGNhMmY0MDEyNTk4'
     
     Capabilities:
         Transport:
