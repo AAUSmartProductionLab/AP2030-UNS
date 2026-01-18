@@ -1,7 +1,7 @@
 planarTableAAS:
     idShort: planarTableAAS
     id: 'https://smartproductionlab.aau.dk/aas/planarTable'
-    globalAssetId: 'https://smartproductionlab.aau.dk/assets/51kUZLlDQky3k5Mk6SRb2Q'
+    globalAssetId: 'https://smartproductionlab.aau.dk/assets/ZTM1NTAzNzQtMDZkNi00N2Q4LWI1YTktMGNhMmY0MDEyNTk4'
     derivedFrom: 'https://smartproductionlab.aau.dk/aas/templates/resource'
     assetType: 'https://smartproductionlab.aau.dk/Resource/CPS/MotionSystem/planarTable'
     serialNumber: 'PM-S1-2024-001'
@@ -95,7 +95,7 @@ planarTableAAS:
         Archetype: 'OneDown'
         HasPart:
             - planarTableShuttle1:
-                globalAssetId: 'https://smartproductionlab.aau.dk/assets/Ufy3NZolQZi6yRmdMmJ9fQ'
+                globalAssetId: 'https://smartproductionlab.aau.dk/assets/ODYwM2Q2YjYtYmUzOS00NTAxLWFhZDktYjc1MjhhMzUzOGNm'
             - planarTableShuttle2:
                 globalAssetId: 'https://smartproductionlab.aau.dk/assets/OTZhZGNiZDAtNTNhNS00YmJhLThiNDctMzFjYzM3OGNiNTMw'
             - planarTableShuttle3:

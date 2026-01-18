@@ -1,48 +1,36 @@
-planarTableShuttle2AAS:
-    idShort: planarTableShuttle2AAS
-    id: 'https://smartproductionlab.aau.dk/aas/planarTableShuttle2'
-    globalAssetId: 'https://smartproductionlab.aau.dk/assets/OTZhZGNiZDAtNTNhNS00YmJhLThiNDctMzFjYzM3OGNiNTMw'
+productionPlanner:
+    idShort: productionPlanner
+    id: 'https://smartproductionlab.aau.dk/aas/productionPlanner'
+    globalAssetId: 'https://smartproductionlab.aau.dk/assets/YWY0MjA2MjYtMzg2Ni00M2NjLTkyN2ItM2VjNDg4MzNlMTJm'
     derivedFrom: 'https://smartproductionlab.aau.dk/aas/templates/resource'
-    assetType: 'https://smartproductionlab.aau.dk/Resource/CPS/MotionSystem/planarTableShuttle2'
-    serialNumber: 'PM-S1-2024-001'
+    assetType: 'https://smartproductionlab.aau.dk/Resource/CPPM/DispensingSystem/productionPlanner'
+    serialNumber: 'AAU-PP-2024-001'
     location: 'InnoLab, Nybrovej, AAU'
     AssetInterfacesDescription:
         InterfaceMQTT:
-            Title: 'Planar Motors Shuttle'
+            Title: 'AAU Production Planner'
             EndpointMetadata:
-                base: 'mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/Planar/Xbot2/'
+                base: 'mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/ProductionPlanner'
                 contentType: 'application/json'
             InteractionMetadata:
                 actions:
-                    MoveToPosition:
-                        key: 'MoveToPosition'
-                        title: 'MoveToPosition'
+                    Plan:
+                        key: 'Plan'
+                        title: 'Plan'
                         synchronous: 'true'
-                        input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/moveToPosition.schema.json'
+                        input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/planningCommand.schema.json'
                         output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
                         forms:
                             contentType: 'application/json'
-                            href: '/CMD/XYMotion'
+                            href: '/CMD/Plan'
                             op: 'invokeAction'
                             mqv_retain: 'false'
                             mqv_controlPacket: subscribe
                             mqv_qos: '2'
                             response:
                                 contentType: 'application/json'
-                                href: '/DATA/XYMotion'
+                                href: '/DATA/Plan'
                                 mqv_controlPacket: 'publish'
-                    halt:
-                        key: 'halt'
-                        title: 'halt'
-                        synchronous: 'true'
-                        input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
-                        forms:
-                            contentType: 'application/json'
-                            href: '/CMD/Halt'
-                            op: 'invokeAction'
-                            mqv_retain: 'false'
-                            mqv_controlPacket: subscribe
-                            mqv_qos: '2'                                              
                     occupy:
                         key: 'occupy'
                         title: 'occupy'
@@ -98,7 +86,6 @@ planarTableShuttle2AAS:
                             mqv_retain: 'false'
                             mqv_controlPacket: publish
                             mqv_qos: '0'
-
     Variables:
         PackMLState:
             semanticId: 'https://www.omac.org/packml/state'
@@ -109,30 +96,22 @@ planarTableShuttle2AAS:
 
     Parameters:
     HierarchicalStructures:
-        Archetype: 'OneUp'
-        IsPartOf:
-            - planarTable:
-                globalAssetId: 'https://smartproductionlab.aau.dk/assets/ZTM1NTAzNzQtMDZkNi00N2Q4LWI1YTktMGNhMmY0MDEyNTk4'
     
     Capabilities:
-        Transport:
-            realizedBy: "MoveToPosition"
+        ProductionPlanning:
+            realizedBy: "Plan"
 
     
     Skills:
-        MoveToPosition:
-            description: "Move the planar shuttle to a target position"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/MoveToPosition"
-            interface: "MoveToPosition"
-        halt:
-            description: "Halt the current movement operation"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/halt"
-            interface: "halt"
+        Plan:
+            description: "Generate a production plan for the provided product using the available assets"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/productionPlanning"
+            interface: "Plan"
         occupy:
-            description: "Occupy the shuttle for exclusive use"
+            description: "Occupy the planner for exclusive use"
             semantic_id: "https://smartproductionlab.aau.dk/skills/occupy"
             interface: "occupy"
         release:
-            description: "Release the shuttle from exclusive use"
+            description: "Release the planner from exclusive use"
             semantic_id: "https://smartproductionlab.aau.dk/skills/release"
             interface: "release"
