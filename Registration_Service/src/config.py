@@ -26,6 +26,8 @@ class BaSyxConfig:
                  base_url: str = DEFAULT_BASYX_URL,
                  internal_url: Optional[str] = None,
                  external_host: Optional[str] = None,
+                 aas_registry_url: Optional[str] = None,
+                 sm_registry_url: Optional[str] = None,
                  aas_registry_host: str = "aas-registry",
                  sm_registry_host: str = "sm-registry"):
         """
@@ -35,17 +37,27 @@ class BaSyxConfig:
             base_url: External BaSyx server URL (default: http://localhost:8081)
             internal_url: Internal Docker network URL (default: http://aas-env:8081)
             external_host: External host for registry descriptors (default: 192.168.0.104)
-            aas_registry_host: AAS registry hostname (default: aas-registry)
-            sm_registry_host: Submodel registry hostname (default: sm-registry)
+            aas_registry_url: Full AAS registry URL (overrides aas_registry_host if provided)
+            sm_registry_url: Full submodel registry URL (overrides sm_registry_host if provided)
+            aas_registry_host: AAS registry hostname (default: aas-registry, used if aas_registry_url not provided)
+            sm_registry_host: Submodel registry hostname (default: sm-registry, used if sm_registry_url not provided)
         """
         self.base_url = base_url
         self.internal_url = internal_url or DEFAULT_BASYX_INTERNAL_URL
         self.external_host = external_host or EXTERNAL_BASYX_HOST
 
-        # Registry URLs - use separate registry containers on their internal ports
+        # Registry URLs - use provided URLs or fall back to Docker container hostnames
+        # When running outside Docker, pass full URLs (e.g., http://localhost:8082, http://localhost:8083)
         # In Docker network: aas-registry:8080, sm-registry:8080
-        self.aas_registry_url = f"http://{aas_registry_host}:8080{BaSyxEndpoints.SHELL_DESCRIPTORS}"
-        self.submodel_registry_url = f"http://{sm_registry_host}:8080{BaSyxEndpoints.SUBMODEL_DESCRIPTORS}"
+        if aas_registry_url:
+            self.aas_registry_url = f"{aas_registry_url.rstrip('/')}{BaSyxEndpoints.SHELL_DESCRIPTORS}"
+        else:
+            self.aas_registry_url = f"http://{aas_registry_host}:8080{BaSyxEndpoints.SHELL_DESCRIPTORS}"
+
+        if sm_registry_url:
+            self.submodel_registry_url = f"{sm_registry_url.rstrip('/')}{BaSyxEndpoints.SUBMODEL_DESCRIPTORS}"
+        else:
+            self.submodel_registry_url = f"http://{sm_registry_host}:8080{BaSyxEndpoints.SUBMODEL_DESCRIPTORS}"
 
         # Repository URLs
         self.aas_repo_url = f"{base_url}{BaSyxEndpoints.SHELLS}"

@@ -357,6 +357,16 @@ Examples:
         help=f'Operation delegation service URL (default: {DEFAULT_DELEGATION_URL})'
     )
     parser.add_argument(
+        '--aas-registry-url',
+        default=f'http://{EXTERNAL_BASYX_HOST}:8082',
+        help=f'AAS registry URL (default: http://{EXTERNAL_BASYX_HOST}:8082)'
+    )
+    parser.add_argument(
+        '--sm-registry-url',
+        default=f'http://{EXTERNAL_BASYX_HOST}:8083',
+        help=f'Submodel registry URL (default: http://{EXTERNAL_BASYX_HOST}:8083)'
+    )
+    parser.add_argument(
         '--validate',
         action='store_true',
         help='Validate AAS before registration'
@@ -457,7 +467,11 @@ Examples:
     service = None
     if not args.dry_run:
         try:
-            config = BaSyxConfig(base_url=args.basyx_url)
+            config = BaSyxConfig(
+                base_url=args.basyx_url,
+                aas_registry_url=args.aas_registry_url,
+                sm_registry_url=args.sm_registry_url
+            )
             service = UnifiedRegistrationService(
                 config=config,
                 mqtt_broker=args.mqtt_broker,
