@@ -17,7 +17,7 @@ syntegonStopperingSystemAAS:
                     Stoppering:
                         key: 'Stoppering'
                         title: 'Stoppering'
-                        synchronous: 'true'
+                        synchronous: 'false'
                         input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
                         output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
                         forms:
@@ -34,7 +34,6 @@ syntegonStopperingSystemAAS:
                     halt:
                         key: 'halt'
                         title: 'halt'
-                        synchronous: 'true'
                         input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
                         forms:
                             contentType: 'application/json'
