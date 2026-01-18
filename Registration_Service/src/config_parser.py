@@ -135,16 +135,28 @@ class ConfigParser:
             forms = action_config.get('forms', {}) or {}
             response_forms = forms.get('response', {}) or {}
 
-            # Build full topics
+            # Build command topic
             cmd_href = forms.get('href', f'/CMD/{action_name}')
-            resp_href = response_forms.get('href', f'/DATA/{action_name}')
-
-            # Remove leading slash for joining
             cmd_suffix = cmd_href.lstrip('/')
-            resp_suffix = resp_href.lstrip('/')
-
             command_topic = f"{base_topic}/{cmd_suffix}" if base_topic else cmd_suffix
-            response_topic = f"{base_topic}/{resp_suffix}" if base_topic else resp_suffix
+
+            # Check if this action has a response (not one-way)
+            # An action has a response if it has a 'response' form OR an 'output' schema
+            has_response = bool(response_forms) or bool(
+                action_config.get('output'))
+
+            # Build response topic only if there's a response
+            response_topic = None
+            if has_response:
+                resp_href = response_forms.get('href', f'/DATA/{action_name}')
+                resp_suffix = resp_href.lstrip('/')
+                response_topic = f"{base_topic}/{resp_suffix}" if base_topic else resp_suffix
+
+            # Determine if synchronous (only relevant for actions with responses)
+            # Default is 'true' for synchronous if not specified
+            synchronous_str = str(action_config.get(
+                'synchronous', 'true')).lower()
+            is_synchronous = synchronous_str == 'true'
 
             actions.append({
                 'name': action_name,
@@ -154,7 +166,9 @@ class ConfigParser:
                 'response_topic': response_topic,
                 'input_schema': action_config.get('input'),
                 'output_schema': action_config.get('output'),
-                'synchronous': str(action_config.get('synchronous', 'false')).lower() == 'true',
+                'has_response': has_response,
+                'is_one_way': not has_response,
+                'synchronous': is_synchronous,
                 'qos': int(forms.get('mqv_qos', 2)),
                 'retain': str(forms.get('mqv_retain', 'false')).lower() == 'true'
             })
@@ -315,6 +329,11 @@ class ConfigParser:
         """
         Generate topics.json entry for Operation Delegation Service.
 
+        Operation types:
+        - One-way: No response expected (fire-and-forget). Only command_topic.
+        - Synchronous: Wait for single response. Has command_topic and response_topic.
+        - Asynchronous: Updates StateMachine property. Has synchronous=false.
+
         Returns:
             Dict in the format expected by topics.json
         """
@@ -323,13 +342,30 @@ class ConfigParser:
 
         skills = {}
         for action in actions:
-            skills[action['name']] = {
-                'command_topic': action['command_topic'],
-                'response_topic': action['response_topic']
+            skill_entry = {
+                'command_topic': action['command_topic']
             }
+
+            # Only include response_topic if action expects a response
+            if action.get('has_response') and action.get('response_topic'):
+                skill_entry['response_topic'] = action['response_topic']
+
+                # Include synchronous flag for async operations (synchronous=false)
+                # The operation delegation service uses this to update StateMachine
+                # Only applies to operations with responses (not one-way)
+                if not action.get('synchronous', True):
+                    skill_entry['synchronous'] = False
+
+            skills[action['name']] = skill_entry
+
+        # Build submodel_id for async state updates
+        # Format must match skills_builder.py: {base_url}/submodels/instances/{system_id}/Skills
+        aas_id = self.id_short
+        submodel_id = f"https://smartproductionlab.aau.dk/submodels/instances/{aas_id}/Skills"
 
         return {
             'base_topic': endpoint.get('base_topic', ''),
+            'submodel_id': submodel_id,
             'skills': skills
         }
 
