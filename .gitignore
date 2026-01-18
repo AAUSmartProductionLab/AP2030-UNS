@@ -189,3 +189,4 @@ logs/
 .idea/
 .vscode/
 offlineResponse_1656FB-A61627-4A4CB2-F0C0CA-8531ED-BD332C.dat
+Grafana/grafana-data/grafana.db
