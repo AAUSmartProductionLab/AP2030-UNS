@@ -128,8 +128,8 @@ refill = ResponseAsync(
 
 
 dispense = ResponseAsync(
-    BASE_TOPIC+"/DATA/Dispense",
-    BASE_TOPIC+"/CMD/Dispense",
+    BASE_TOPIC+"/DATA/Dispensing",
+    BASE_TOPIC+"/CMD/Dispensing",
     "./MQTTSchemas/commandResponse.schema.json",
     "./MQTTSchemas/command.schema.json",
     2,
