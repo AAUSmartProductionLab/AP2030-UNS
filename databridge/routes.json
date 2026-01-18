@@ -30,26 +30,6 @@
     "trigger": "event"
   },
   {
-    "datasource": "NN_Nybrovej_InnoLab_Loading_DATA_State",
-    "transformers": [
-      "imaLoadingSystemAAS_PackMLState_State_transformer"
-    ],
-    "datasinks": [
-      "imaLoadingSystemAAS_PackMLState_sink_State"
-    ],
-    "trigger": "event"
-  },
-  {
-    "datasource": "NN_Nybrovej_InnoLab_Loading_DATA_Occupation",
-    "transformers": [
-      "imaLoadingSystemAAS_OccupationState_Occupation_transformer"
-    ],
-    "datasinks": [
-      "imaLoadingSystemAAS_OccupationState_sink_Occupation"
-    ],
-    "trigger": "event"
-  },
-  {
     "datasource": "NN_Nybrovej_InnoLab_Stoppering_DATA_State",
     "transformers": [
       "syntegonStopperingSystemAAS_PackMLState_State_transformer"
@@ -96,6 +76,46 @@
     ],
     "datasinks": [
       "imaDispensingSystemAAS_Weight_sink_Weight"
+    ],
+    "trigger": "event"
+  },
+  {
+    "datasource": "NN_Nybrovej_InnoLab_Loading_DATA_State",
+    "transformers": [
+      "imaLoadingSystemAAS_PackMLState_State_transformer"
+    ],
+    "datasinks": [
+      "imaLoadingSystemAAS_PackMLState_sink_State"
+    ],
+    "trigger": "event"
+  },
+  {
+    "datasource": "NN_Nybrovej_InnoLab_Loading_DATA_Occupation",
+    "transformers": [
+      "imaLoadingSystemAAS_OccupationState_Occupation_transformer"
+    ],
+    "datasinks": [
+      "imaLoadingSystemAAS_OccupationState_sink_Occupation"
+    ],
+    "trigger": "event"
+  },
+  {
+    "datasource": "NN_Nybrovej_InnoLab_ProductionPlanner_DATA_State",
+    "transformers": [
+      "productionPlanner_PackMLState_State_transformer"
+    ],
+    "datasinks": [
+      "productionPlanner_PackMLState_sink_State"
+    ],
+    "trigger": "event"
+  },
+  {
+    "datasource": "NN_Nybrovej_InnoLab_ProductionPlanner_DATA_Occupation",
+    "transformers": [
+      "productionPlanner_OccupationState_Occupation_transformer"
+    ],
+    "datasinks": [
+      "productionPlanner_OccupationState_sink_Occupation"
     ],
     "trigger": "event"
   }

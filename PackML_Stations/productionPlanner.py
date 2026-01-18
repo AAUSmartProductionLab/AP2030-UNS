@@ -1,7 +1,6 @@
 from MQTT_classes import Proxy, ResponseAsync
 from PackMLSimulator import PackMLStateMachine
-from xml.etree import ElementTree as ET
-from PackML_Stations.planning_standalone import planning_process as generate_bt
+from planning_standalone import planning_process as generate_bt
 from aas_client import AASClient
 import traceback
 import os
@@ -71,8 +70,12 @@ productionPlanner = Proxy(
     [plan]
 )
 
-state_machine = PackMLStateMachine(BASE_TOPIC, productionPlanner, None)
+state_machine = PackMLStateMachine(
+    BASE_TOPIC, productionPlanner, None, config_path="productionPlanner.yaml")
 state_machine.failureChance = 0
+
+# Register asset after MQTT connection is established
+productionPlanner.on_ready(state_machine.register_asset)
 
 
 def main():

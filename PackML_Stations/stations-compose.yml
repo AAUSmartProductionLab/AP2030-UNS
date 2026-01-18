@@ -12,6 +12,19 @@ services:
   #   depends_on:
   #     - filling_station
   #     - stoppering_station
+  production_planner:
+    build:
+      context: .
+      dockerfile: ./planner.dockerfile
+    container_name: production_planner
+    environment:
+      - MQTT_BROKER=${MQTT_BROKER:-hivemq-broker}
+      - MQTT_PORT=${MQTT_PORT:-1883}
+    volumes:
+      - .:/app  # Mount entire directory first
+      - ../MQTTSchemas:/app/MQTTSchemas  # Then overlay schemas
+      - ../AASDescriptions:/app/AASDescriptions  # Mount AAS configs for registration
+    command: productionPlanner.py
 
   filling_station:
     build:

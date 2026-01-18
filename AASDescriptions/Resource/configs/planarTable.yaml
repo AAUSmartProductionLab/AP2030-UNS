@@ -10,7 +10,7 @@ planarTableAAS:
         InterfaceMQTT:
             Title: 'Planar Motors Shuttle'
             EndpointMetadata:
-                base: 'mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/Planar/'
+                base: 'mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/Planar'
                 contentType: 'application/json'
             InteractionMetadata:
                 actions:

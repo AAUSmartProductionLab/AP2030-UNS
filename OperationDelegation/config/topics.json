@@ -186,13 +186,32 @@
             }
         }
     },
+    "productionPlanner": {
+        "base_topic": "NN/Nybrovej/InnoLab/ProductionPlanner",
+        "submodel_id": "https://smartproductionlab.aau.dk/submodels/instances/productionPlanner/Skills",
+        "skills": {
+            "Plan": {
+                "command_topic": "NN/Nybrovej/InnoLab/ProductionPlanner/CMD/Plan",
+                "response_topic": "NN/Nybrovej/InnoLab/ProductionPlanner/DATA/Plan"
+            },
+            "occupy": {
+                "command_topic": "NN/Nybrovej/InnoLab/ProductionPlanner/CMD/Occupy",
+                "response_topic": "NN/Nybrovej/InnoLab/ProductionPlanner/DATA/Occupy"
+            },
+            "release": {
+                "command_topic": "NN/Nybrovej/InnoLab/ProductionPlanner/CMD/Release",
+                "response_topic": "NN/Nybrovej/InnoLab/ProductionPlanner/DATA/Release"
+            }
+        }
+    },
     "syntegonStopperingSystemAAS": {
         "base_topic": "NN/Nybrovej/InnoLab/Stoppering",
         "submodel_id": "https://smartproductionlab.aau.dk/submodels/instances/syntegonStopperingSystemAAS/Skills",
         "skills": {
             "Stoppering": {
                 "command_topic": "NN/Nybrovej/InnoLab/Stoppering/CMD/Stoppering",
-                "response_topic": "NN/Nybrovej/InnoLab/Stoppering/DATA/Stoppering"
+                "response_topic": "NN/Nybrovej/InnoLab/Stoppering/DATA/Stoppering",
+                "synchronous": false
             },
             "halt": {
                 "command_topic": "NN/Nybrovej/InnoLab/Stoppering/CMD/Halt"

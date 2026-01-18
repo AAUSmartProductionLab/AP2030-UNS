@@ -163,6 +163,24 @@ services:
       - hivemq-broker
     restart: unless-stopped
 
+  production_planner:
+    extends:
+      file: ./PackML_Stations/stations-compose.yml
+      service: production_planner
+    networks:
+      - hivemq-network
+    depends_on:
+      hivemq-broker:
+        condition: service_started
+      aas-env:
+        condition: service_started
+      databridge:
+        condition: service_started
+      operation-delegation:
+        condition: service_started
+      registration-service:
+        condition: service_started
+
   filling_station:
     extends:
       file: ./PackML_Stations/stations-compose.yml

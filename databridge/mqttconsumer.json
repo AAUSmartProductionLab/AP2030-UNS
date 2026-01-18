@@ -18,18 +18,6 @@
     "topic": "NN/Nybrovej/InnoLab/Unloading/DATA/Weight"
   },
   {
-    "uniqueId": "NN_Nybrovej_InnoLab_Loading_DATA_State",
-    "serverUrl": "hivemq-broker",
-    "serverPort": 1883,
-    "topic": "NN/Nybrovej/InnoLab/Loading/DATA/State"
-  },
-  {
-    "uniqueId": "NN_Nybrovej_InnoLab_Loading_DATA_Occupation",
-    "serverUrl": "hivemq-broker",
-    "serverPort": 1883,
-    "topic": "NN/Nybrovej/InnoLab/Loading/DATA/Occupation"
-  },
-  {
     "uniqueId": "NN_Nybrovej_InnoLab_Stoppering_DATA_State",
     "serverUrl": "hivemq-broker",
     "serverPort": 1883,
@@ -58,5 +46,29 @@
     "serverUrl": "hivemq-broker",
     "serverPort": 1883,
     "topic": "NN/Nybrovej/InnoLab/Dispensing/DATA/Weight"
+  },
+  {
+    "uniqueId": "NN_Nybrovej_InnoLab_Loading_DATA_State",
+    "serverUrl": "hivemq-broker",
+    "serverPort": 1883,
+    "topic": "NN/Nybrovej/InnoLab/Loading/DATA/State"
+  },
+  {
+    "uniqueId": "NN_Nybrovej_InnoLab_Loading_DATA_Occupation",
+    "serverUrl": "hivemq-broker",
+    "serverPort": 1883,
+    "topic": "NN/Nybrovej/InnoLab/Loading/DATA/Occupation"
+  },
+  {
+    "uniqueId": "NN_Nybrovej_InnoLab_ProductionPlanner_DATA_State",
+    "serverUrl": "hivemq-broker",
+    "serverPort": 1883,
+    "topic": "NN/Nybrovej/InnoLab/ProductionPlanner/DATA/State"
+  },
+  {
+    "uniqueId": "NN_Nybrovej_InnoLab_ProductionPlanner_DATA_Occupation",
+    "serverUrl": "hivemq-broker",
+    "serverPort": 1883,
+    "topic": "NN/Nybrovej/InnoLab/ProductionPlanner/DATA/Occupation"
   }
 ]
