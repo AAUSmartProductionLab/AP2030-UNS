@@ -14,7 +14,7 @@ cytivaCappingSystemAAS:
                 contentType: 'application/json'
             InteractionMetadata:
                 actions:
-                    - Capping:
+                    Capping:
                         key: 'Capping'
                         title: 'Capping'
                         synchronous: 'true'
@@ -31,7 +31,7 @@ cytivaCappingSystemAAS:
                                 contentType: 'application/json'
                                 href: '/DATA/Capping'
                                 mqv_controlPacket: 'publish'
-                    - halt:
+                    halt:
                         key: 'halt'
                         title: 'halt'
                         synchronous: 'true'
@@ -44,7 +44,7 @@ cytivaCappingSystemAAS:
                             mqv_controlPacket: subscribe
                             mqv_qos: '2'
                                                                          
-                    - occupy:
+                    occupy:
                         key: 'occupy'
                         title: 'occupy'
                         synchronous: 'true'
@@ -61,7 +61,7 @@ cytivaCappingSystemAAS:
                                 contentType: 'application/json'
                                 href: '/DATA/Occupy'
                                 mqv_controlPacket: 'publish'
-                    - release:
+                    release:
                         key: 'release'
                         title: 'release'
                         synchronous: 'true'
@@ -79,7 +79,7 @@ cytivaCappingSystemAAS:
                                 href: '/DATA/Release'
                                 mqv_controlPacket: 'publish'
                 properties:
-                    - PackMLState:
+                    PackMLState:
                         key: 'PackMLState'
                         title: 'PackMLState'
                         output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/state.schema.json'
@@ -89,16 +89,16 @@ cytivaCappingSystemAAS:
                             mqv_retain: 'false'
                             mqv_controlPacket: publish
                             mqv_qos: '0'                                
-                    - OccupationState:
-                            key: 'OccupationState'
-                            title: 'OccupationState'
-                            output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/stationOccupation.schema.json'
-                            forms:
-                                contentType: 'application/json'
-                                href: '/DATA/Occupation'
-                                mqv_retain: 'false'
-                                mqv_controlPacket: publish
-                                mqv_qos: '0'
+                    OccupationState:
+                        key: 'OccupationState'
+                        title: 'OccupationState'
+                        output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/stationOccupation.schema.json'
+                        forms:
+                            contentType: 'application/json'
+                            href: '/DATA/Occupation'
+                            mqv_retain: 'false'
+                            mqv_controlPacket: publish
+                            mqv_qos: '0'
     Variables:
         PackMLState:
             semanticId: 'https://www.omac.org/packml/state'
