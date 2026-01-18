@@ -27,8 +27,8 @@ state = Publisher(
 )
 
 stopper = ResponseAsync(
-    BASE_TOPIC+"/DATA/Stopper",
-    BASE_TOPIC+"/CMD/Stopper",
+    BASE_TOPIC+"/DATA/Stoppering",
+    BASE_TOPIC+"/CMD/Stoppering",
     "./MQTTSchemas/commandResponse.schema.json",
     "./MQTTSchemas/command.schema.json",
     2,
