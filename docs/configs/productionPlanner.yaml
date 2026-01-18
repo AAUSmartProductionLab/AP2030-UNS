@@ -66,33 +66,25 @@ productionPlanner:
                                 href: '/DATA/Release'
                                 mqv_controlPacket: 'publish'
                 properties:
-                    PackMLState:
-                        key: 'PackMLState'
-                        title: 'PackMLState'
-                        output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/state.schema.json'
+                    StationState:
+                        key: 'StationState'
+                        title: 'StationState'
+                        output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/stationState.schema.json'
                         forms:
                             contentType: 'application/json'
                             href: '/DATA/State'
-                            mqv_retain: 'false'
-                            mqv_controlPacket: publish
-                            mqv_qos: '0'                                
-                    OccupationState:
-                        key: 'OccupationState'
-                        title: 'OccupationState'
-                        output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/stationOccupation.schema.json'
-                        forms:
-                            contentType: 'application/json'
-                            href: '/DATA/Occupation'
                             mqv_retain: 'false'
                             mqv_controlPacket: publish
                             mqv_qos: '0'
     Variables:
         PackMLState:
             semanticId: 'https://www.omac.org/packml/state'
-            InterfaceReference: 'PackMLState'
+            InterfaceReference: 'StationState'
+            Field: 'State'
         OccupationState:
             semanticId: 'https://smartproductionlab.aau.dk/stationOccupation'
-            InterfaceReference: 'OccupationState'
+            InterfaceReference: 'StationState'
+            Field: 'ProcessQueue'
 
     Parameters:
     HierarchicalStructures:
