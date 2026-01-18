@@ -154,9 +154,10 @@ class MqttService {
     console.log('MqttService: Attempting to connect...');
     const savedSettings = localStorage.getItem('appSettings');
     
-    // Default to the hostname of the page origin (localhost or network IP)
-    let brokerHost = window.location.hostname;
-    let brokerPort = "8000";       
+    // Default to env vars, then hostname of the page origin (localhost or network IP)
+    // Note: Mosquitto uses port 9001 for WebSocket, HiveMQ uses port 8000
+    let brokerHost = import.meta.env.VITE_MQTT_BROKER_HOST || window.location.hostname;
+    let brokerPort = import.meta.env.VITE_MQTT_BROKER_PORT || "9001";       
     // Use more specific client IDs to avoid conflicts
     let clientId = `configurator-${window.location.hostname}-${Date.now()}-${Math.random().toString(16).substring(2, 8)}`;
 

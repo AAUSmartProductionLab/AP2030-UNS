@@ -3,10 +3,11 @@ import '../styles/Settings.css';
 import mqttService from '../services/MqttService';
 
 export default function Settings() {
-  // Default values - use window.location.hostname to auto-detect server
+  // Default values - use environment variables if available, otherwise auto-detect
+  // Note: Mosquitto uses port 9001 for WebSocket, HiveMQ uses port 8000
   const defaultSettings = {
-    mqttBrokerHost: window.location.hostname || "localhost",
-    mqttBrokerPort: "8000",
+    mqttBrokerHost: import.meta.env.VITE_MQTT_BROKER_HOST || window.location.hostname || "localhost",
+    mqttBrokerPort: import.meta.env.VITE_MQTT_BROKER_PORT || "9001",
     clientId: "configurator-" + Math.random().toString(16).substring(2, 8),
     autoSaveInterval: 5,
     theme: "Light"

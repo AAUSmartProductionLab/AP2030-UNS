@@ -43,6 +43,10 @@ services:
       - /app/node_modules
     environment:
       - NODE_ENV=development
+      - VITE_MQTT_BROKER_HOST=${EXTERNAL_HOST:-localhost}
+      - VITE_MQTT_BROKER_PORT=${MQTT_WS_PORT:-9001}
+      - VITE_AAS_REPOSITORY_URL=http://${EXTERNAL_HOST:-localhost}:8081
+      - VITE_AAS_SHELL_REGISTRY_URL=http://${EXTERNAL_HOST:-localhost}:8082
     networks:
       - hivemq-network
     depends_on:
