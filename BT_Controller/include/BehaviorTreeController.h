@@ -42,6 +42,11 @@ struct BtControllerParameters
 
     // AAS Configuration
     std::vector<std::string> asset_ids_to_resolve;
+
+    // Registration Service Configuration
+    std::string registration_config_path;      // Path to orchestrator's AAS description YAML
+    std::string registration_topic_pattern;    // MQTT topic pattern for registration
+    std::string registration_topic;            // Resolved registration topic
 };
 
 class BehaviorTreeController
@@ -104,4 +109,7 @@ private:
                                      std::set<std::string> &visited_assets);
     std::string getArchetype(const nlohmann::json &hierarchy_submodel);
     void populateBlackboard(BT::Blackboard::Ptr blackboard);
+
+    // Methods for AAS registration
+    bool publishConfigToRegistrationService();
 };

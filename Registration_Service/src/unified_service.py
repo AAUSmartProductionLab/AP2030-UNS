@@ -87,8 +87,12 @@ class UnifiedRegistrationService:
         self.docker_service = DockerService()
 
         # Paths
+        # In container: __file__ = /app/src/unified_service.py
+        # script_dir = /app (Registration_Service root, which contains src/, OperationDelegation/, etc.)
         self.script_dir = Path(__file__).resolve().parent.parent
-        self.project_root = self.script_dir.parent
+        # In container, OperationDelegation is mounted at /app/OperationDelegation
+        # so project_root should be the same as script_dir
+        self.project_root = self.script_dir
         self.databridge_dir = self.project_root / 'databridge'
         self.topics_json_path = self.project_root / \
             'OperationDelegation' / 'config' / 'topics.json'

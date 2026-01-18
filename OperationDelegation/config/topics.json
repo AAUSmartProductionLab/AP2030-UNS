@@ -225,5 +225,31 @@
                 "response_topic": "NN/Nybrovej/InnoLab/Stoppering/DATA/Release"
             }
         }
+    },
+    "orchestrator": {
+        "base_topic": "NN/Nybrovej/InnoLab/Orchestrator",
+        "submodel_id": "https://smartproductionlab.aau.dk/submodels/instances/orchestrator/Skills",
+        "skills": {
+            "Start": {
+                "command_topic": "NN/Nybrovej/InnoLab/Orchestrator/CMD/Start",
+                "response_topic": "NN/Nybrovej/InnoLab/Orchestrator/DATA/Start"
+            },
+            "Stop": {
+                "command_topic": "NN/Nybrovej/InnoLab/Orchestrator/CMD/Stop",
+                "response_topic": "NN/Nybrovej/InnoLab/Orchestrator/DATA/Stop"
+            },
+            "Suspend": {
+                "command_topic": "NN/Nybrovej/InnoLab/Orchestrator/CMD/Suspend",
+                "response_topic": "NN/Nybrovej/InnoLab/Orchestrator/DATA/Suspend"
+            },
+            "Unsuspend": {
+                "command_topic": "NN/Nybrovej/InnoLab/Orchestrator/CMD/Unsuspend",
+                "response_topic": "NN/Nybrovej/InnoLab/Orchestrator/DATA/Unsuspend"
+            },
+            "Reset": {
+                "command_topic": "NN/Nybrovej/InnoLab/Orchestrator/CMD/Reset",
+                "response_topic": "NN/Nybrovej/InnoLab/Orchestrator/DATA/Reset"
+            }
+        }
     }
 }

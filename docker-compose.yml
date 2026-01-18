@@ -143,12 +143,16 @@ services:
     volumes:
       - ./BT_Controller/config:/AP2030-UNS/BT_Controller/config
       - ./BTDescriptions:/AP2030-UNS/MQTTSchemas
+      - ./AASDescriptions:/AP2030-UNS/AASDescriptions
     ports:
     - "1667:1667"
     networks:
       - hivemq-network
     depends_on:
-      - hivemq-broker
+      hivemq-broker:
+        condition: service_started
+      registration-service:
+        condition: service_started
 
   planar_controller:
     build:
@@ -485,7 +489,7 @@ services:
       # DataBridge config directory for writing configs
       - ./databridge:/databridge
       # Operation Delegation config for writing topics.json
-      - ./OperationDelegation/config:/operation-delegation/config
+      - ./OperationDelegation/config:/app/OperationDelegation/config
       # AAS configs for registration
       - ./AASDescriptions/Resource/configs:/app/configs:ro
       # Docker socket for container restarts

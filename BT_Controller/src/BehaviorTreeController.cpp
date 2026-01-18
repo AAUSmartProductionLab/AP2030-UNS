@@ -14,6 +14,8 @@
 #include <thread>
 #include <iostream>
 #include <algorithm>
+#include <fstream>
+#include <sstream>
 
 BehaviorTreeController *g_controller_instance = nullptr;
 
@@ -449,7 +451,9 @@ void BehaviorTreeController::loadAppConfiguration(int argc, char *argv[])
         app_params_.groot2_port,
         app_params_.bt_description_path,
         app_params_.bt_nodes_path,
-        app_params_.asset_ids_to_resolve);
+        app_params_.asset_ids_to_resolve,
+        app_params_.registration_config_path,
+        app_params_.registration_topic_pattern);
 
     for (int i = 1; i < argc; ++i)
     {
@@ -465,6 +469,18 @@ void BehaviorTreeController::loadAppConfiguration(int argc, char *argv[])
     app_params_.suspend_topic = app_params_.unsTopicPrefix + "/" + app_params_.clientId + "/CMD/Suspend";
     app_params_.unsuspend_topic = app_params_.unsTopicPrefix + "/" + app_params_.clientId + "/CMD/Unsuspend";
     app_params_.reset_topic = app_params_.unsTopicPrefix + "/" + app_params_.clientId + "/CMD/Reset";
+
+    // Resolve registration topic by replacing {client_id} placeholder
+    if (!app_params_.registration_topic_pattern.empty())
+    {
+        app_params_.registration_topic = app_params_.registration_topic_pattern;
+        size_t pos = app_params_.registration_topic.find("{client_id}");
+        if (pos != std::string::npos)
+        {
+            app_params_.registration_topic.replace(pos, 11, app_params_.clientId);
+        }
+        std::cout << "  Registration Topic: " << app_params_.registration_topic << std::endl;
+    }
 
     std::string state_topic_str = app_params_.unsTopicPrefix + "/" + app_params_.clientId + "/DATA/State";
     std::string state_schema_url = "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/state.schema.json";
@@ -576,6 +592,13 @@ void BehaviorTreeController::initializeMqttControlInterface()
     mqtt_client_->subscribe_topic(app_params_.reset_topic, 2);
 
     std::cout << "MQTT control interface initialized." << std::endl;
+
+    // Publish orchestrator config to registration service for AAS generation
+    if (!publishConfigToRegistrationService())
+    {
+        std::cerr << "Warning: Failed to publish config to registration service" << std::endl;
+        std::cerr << "         The AAS may not be generated/updated" << std::endl;
+    }
 
     publishCurrentState();
 }
@@ -918,6 +941,66 @@ void BehaviorTreeController::manageRunningBehaviorTree()
                 setStateAndPublish(PackML::State::EXECUTE, tick_result);
             }
         }
+    }
+}
+
+bool BehaviorTreeController::publishConfigToRegistrationService()
+{
+    // Check if registration is configured
+    if (app_params_.registration_config_path.empty() || app_params_.registration_topic.empty())
+    {
+        std::cout << "Registration not configured, skipping config publication" << std::endl;
+        return true; // Not an error, just not configured
+    }
+
+    if (!mqtt_client_ || !mqtt_client_->is_connected())
+    {
+        std::cerr << "Cannot publish registration config: MQTT client not connected" << std::endl;
+        return false;
+    }
+
+    std::cout << "Loading AAS description config from: " << app_params_.registration_config_path << std::endl;
+
+    // Load the YAML config file and send it as-is (raw YAML)
+    // The registration service can parse raw YAML directly
+    std::ifstream config_file(app_params_.registration_config_path);
+    if (!config_file.is_open())
+    {
+        std::cerr << "Failed to open AAS description config: " << app_params_.registration_config_path << std::endl;
+        return false;
+    }
+
+    std::stringstream buffer;
+    buffer << config_file.rdbuf();
+    std::string yaml_content = buffer.str();
+    config_file.close();
+
+    if (yaml_content.empty())
+    {
+        std::cerr << "AAS description config file is empty: " << app_params_.registration_config_path << std::endl;
+        return false;
+    }
+
+    std::cout << "Publishing registration config to: " << app_params_.registration_topic << std::endl;
+
+    // Publish raw YAML content with QoS 2 (exactly once) and retain=false
+    // The registration service will parse the YAML directly
+    try
+    {
+        auto msg = mqtt::message::create(
+            app_params_.registration_topic,
+            yaml_content,
+            2,     // QoS 2 for reliable delivery
+            false  // Don't retain
+        );
+        mqtt_client_->publish(msg)->wait();
+        std::cout << "Successfully published registration config to registration service" << std::endl;
+        return true;
+    }
+    catch (const mqtt::exception &e)
+    {
+        std::cerr << "Failed to publish registration config: " << e.what() << std::endl;
+        return false;
     }
 }
 

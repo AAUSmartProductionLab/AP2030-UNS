@@ -4,6 +4,8 @@
 #include <filesystem>
 #include <memory>
 #include <map>
+#include <regex>
+#include <cstdlib>
 #include <uuid/uuid.h>
 #include <curl/curl.h>
 #include <nlohmann/json-schema.hpp>
@@ -42,6 +44,50 @@ namespace bt_utils
             return 1;
         }
     }
+
+    // Helper function to expand environment variables in a string
+    // Supports ${VAR} and ${VAR:-default} syntax
+    static std::string expandEnvVars(const std::string &input)
+    {
+        std::string result = input;
+        std::regex env_regex(R"(\$\{([^}:]+)(:-([^}]*))?\})");
+        std::smatch match;
+        
+        std::string::const_iterator searchStart(result.cbegin());
+        std::string temp = result;
+        
+        while (std::regex_search(temp, match, env_regex))
+        {
+            std::string var_name = match[1].str();
+            std::string default_value = match[3].str();
+            std::string full_match = match[0].str();
+            
+            // Get environment variable value
+            const char *env_value = std::getenv(var_name.c_str());
+            std::string replacement;
+            
+            if (env_value != nullptr && strlen(env_value) > 0)
+            {
+                replacement = env_value;
+            }
+            else
+            {
+                replacement = default_value;
+            }
+            
+            // Replace in result
+            size_t pos = result.find(full_match);
+            if (pos != std::string::npos)
+            {
+                result.replace(pos, full_match.length(), replacement);
+            }
+            
+            temp = match.suffix().str();
+        }
+        
+        return result;
+    }
+
     bool loadConfigFromYaml(const std::string &filename,
                             bool &generate_xml_models,
                             std::string &serverURI,
@@ -52,7 +98,9 @@ namespace bt_utils
                             int &groot2_port,
                             std::string &bt_description_path,
                             std::string &bt_nodes_path,
-                            std::vector<std::string> &asset_ids_to_resolve)
+                            std::vector<std::string> &asset_ids_to_resolve,
+                            std::string &registration_config_path,
+                            std::string &registration_topic_pattern)
     {
         try
         {
@@ -71,7 +119,7 @@ namespace bt_utils
 
                 if (mqtt["broker_uri"])
                 {
-                    serverURI = mqtt["broker_uri"].as<std::string>();
+                    serverURI = expandEnvVars(mqtt["broker_uri"].as<std::string>());
                     // Add "tcp://" prefix if not present
                     if (serverURI.find("://") == std::string::npos)
                     {
@@ -81,12 +129,12 @@ namespace bt_utils
 
                 if (mqtt["client_id"])
                 {
-                    clientId = mqtt["client_id"].as<std::string>();
+                    clientId = expandEnvVars(mqtt["client_id"].as<std::string>());
                 }
 
                 if (mqtt["uns_topic"])
                 {
-                    unsTopicPrefix = mqtt["uns_topic"].as<std::string>();
+                    unsTopicPrefix = expandEnvVars(mqtt["uns_topic"].as<std::string>());
                 }
             }
 
@@ -97,12 +145,12 @@ namespace bt_utils
 
                 if (aas["server_url"])
                 {
-                    aasServerUri = aas["server_url"].as<std::string>();
+                    aasServerUri = expandEnvVars(aas["server_url"].as<std::string>());
                 }
 
                 if (aas["registry_url"])
                 {
-                    aasRegistryUrl = aas["registry_url"].as<std::string>();
+                    aasRegistryUrl = expandEnvVars(aas["registry_url"].as<std::string>());
                 }
 
                 if (aas["asset_ids"])
@@ -112,7 +160,7 @@ namespace bt_utils
                     {
                         for (const auto &id : asset_ids_node)
                         {
-                            asset_ids_to_resolve.push_back(id.as<std::string>());
+                            asset_ids_to_resolve.push_back(expandEnvVars(id.as<std::string>()));
                         }
                     }
                 }
@@ -141,12 +189,28 @@ namespace bt_utils
 
                 if (bt["description_path"])
                 {
-                    bt_description_path = bt["description_path"].as<std::string>();
+                    bt_description_path = expandEnvVars(bt["description_path"].as<std::string>());
                 }
 
                 if (bt["nodes_path"])
                 {
-                    bt_nodes_path = bt["nodes_path"].as<std::string>();
+                    bt_nodes_path = expandEnvVars(bt["nodes_path"].as<std::string>());
+                }
+            }
+
+            // Parse Registration section
+            if (config["registration"])
+            {
+                auto reg = config["registration"];
+
+                if (reg["config_path"])
+                {
+                    registration_config_path = expandEnvVars(reg["config_path"].as<std::string>());
+                }
+
+                if (reg["topic_pattern"])
+                {
+                    registration_topic_pattern = expandEnvVars(reg["topic_pattern"].as<std::string>());
                 }
             }
 
@@ -162,6 +226,11 @@ namespace bt_utils
                 std::cout << "    - " << asset_id << std::endl;
             }
             std::cout << "  Groot2 Port: " << groot2_port << std::endl;
+            if (!registration_config_path.empty())
+            {
+                std::cout << "  Registration Config: " << registration_config_path << std::endl;
+                std::cout << "  Registration Topic Pattern: " << registration_topic_pattern << std::endl;
+            }
 
             return true;
         }

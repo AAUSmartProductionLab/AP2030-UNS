@@ -1,56 +1,8 @@
 [
   {
-    "uniqueId": "syntegonStopperingSystemAAS_PackMLState_sink_State",
-    "submodelEndpoint": "http://aas-env:8081/submodels/aHR0cHM6Ly9zbWFydHByb2R1Y3Rpb25sYWIuYWF1LmRrL3N1Ym1vZGVscy9pbnN0YW5jZXMvc3ludGVnb25TdG9wcGVyaW5nU3lzdGVtQUFTL1ZhcmlhYmxlcw==",
+    "uniqueId": "orchestrator_PackMLState_sink_State",
+    "submodelEndpoint": "http://aas-env:8081/submodels/aHR0cHM6Ly9zbWFydHByb2R1Y3Rpb25sYWIuYWF1LmRrL3N1Ym1vZGVscy9pbnN0YW5jZXMvb3JjaGVzdHJhdG9yL1ZhcmlhYmxlcw==",
     "idShortPath": "PackMLState.State",
-    "api": "DotAasV3"
-  },
-  {
-    "uniqueId": "syntegonStopperingSystemAAS_OccupationState_sink_ProcessQueue",
-    "submodelEndpoint": "http://aas-env:8081/submodels/aHR0cHM6Ly9zbWFydHByb2R1Y3Rpb25sYWIuYWF1LmRrL3N1Ym1vZGVscy9pbnN0YW5jZXMvc3ludGVnb25TdG9wcGVyaW5nU3lzdGVtQUFTL1ZhcmlhYmxlcw==",
-    "idShortPath": "OccupationState.ProcessQueue",
-    "api": "DotAasV3"
-  },
-  {
-    "uniqueId": "imaDispensingSystemAAS_PackMLState_sink_State",
-    "submodelEndpoint": "http://aas-env:8081/submodels/aHR0cHM6Ly9zbWFydHByb2R1Y3Rpb25sYWIuYWF1LmRrL3N1Ym1vZGVscy9pbnN0YW5jZXMvaW1hRGlzcGVuc2luZ1N5c3RlbUFBUy9WYXJpYWJsZXM=",
-    "idShortPath": "PackMLState.State",
-    "api": "DotAasV3"
-  },
-  {
-    "uniqueId": "imaDispensingSystemAAS_OccupationState_sink_ProcessQueue",
-    "submodelEndpoint": "http://aas-env:8081/submodels/aHR0cHM6Ly9zbWFydHByb2R1Y3Rpb25sYWIuYWF1LmRrL3N1Ym1vZGVscy9pbnN0YW5jZXMvaW1hRGlzcGVuc2luZ1N5c3RlbUFBUy9WYXJpYWJsZXM=",
-    "idShortPath": "OccupationState.ProcessQueue",
-    "api": "DotAasV3"
-  },
-  {
-    "uniqueId": "imaDispensingSystemAAS_Weight_sink_Weight",
-    "submodelEndpoint": "http://aas-env:8081/submodels/aHR0cHM6Ly9zbWFydHByb2R1Y3Rpb25sYWIuYWF1LmRrL3N1Ym1vZGVscy9pbnN0YW5jZXMvaW1hRGlzcGVuc2luZ1N5c3RlbUFBUy9WYXJpYWJsZXM=",
-    "idShortPath": "Weight.Weight",
-    "api": "DotAasV3"
-  },
-  {
-    "uniqueId": "imaLoadingSystemAAS_PackMLState_sink_State",
-    "submodelEndpoint": "http://aas-env:8081/submodels/aHR0cHM6Ly9zbWFydHByb2R1Y3Rpb25sYWIuYWF1LmRrL3N1Ym1vZGVscy9pbnN0YW5jZXMvaW1hTG9hZGluZ1N5c3RlbUFBUy9WYXJpYWJsZXM=",
-    "idShortPath": "PackMLState.State",
-    "api": "DotAasV3"
-  },
-  {
-    "uniqueId": "imaLoadingSystemAAS_OccupationState_sink_ProcessQueue",
-    "submodelEndpoint": "http://aas-env:8081/submodels/aHR0cHM6Ly9zbWFydHByb2R1Y3Rpb25sYWIuYWF1LmRrL3N1Ym1vZGVscy9pbnN0YW5jZXMvaW1hTG9hZGluZ1N5c3RlbUFBUy9WYXJpYWJsZXM=",
-    "idShortPath": "OccupationState.ProcessQueue",
-    "api": "DotAasV3"
-  },
-  {
-    "uniqueId": "optimaUnloadingSystemAAS_PackMLState_sink_State",
-    "submodelEndpoint": "http://aas-env:8081/submodels/aHR0cHM6Ly9zbWFydHByb2R1Y3Rpb25sYWIuYWF1LmRrL3N1Ym1vZGVscy9pbnN0YW5jZXMvb3B0aW1hVW5sb2FkaW5nU3lzdGVtQUFTL1ZhcmlhYmxlcw==",
-    "idShortPath": "PackMLState.State",
-    "api": "DotAasV3"
-  },
-  {
-    "uniqueId": "optimaUnloadingSystemAAS_OccupationState_sink_ProcessQueue",
-    "submodelEndpoint": "http://aas-env:8081/submodels/aHR0cHM6Ly9zbWFydHByb2R1Y3Rpb25sYWIuYWF1LmRrL3N1Ym1vZGVscy9pbnN0YW5jZXMvb3B0aW1hVW5sb2FkaW5nU3lzdGVtQUFTL1ZhcmlhYmxlcw==",
-    "idShortPath": "OccupationState.ProcessQueue",
     "api": "DotAasV3"
   }
 ]
