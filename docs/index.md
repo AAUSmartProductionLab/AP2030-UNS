@@ -313,6 +313,12 @@ YAML configuration files for AAS resource definitions.
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/configs/optimaUnloading.yaml)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/configs/optimaUnloading.yaml)
 
+- **[orchestrator.yaml](configs/orchestrator.yaml)**
+  - Resource: `orchestrator`
+  - Location: InnoLab, Nybrovej, AAU
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/configs/orchestrator.yaml)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/configs/orchestrator.yaml)
+
 - **[planarShuttle1.yaml](configs/planarShuttle1.yaml)**
   - Resource: `planarTableShuttle1AAS`
   - Location: InnoLab, Nybrovej, AAU

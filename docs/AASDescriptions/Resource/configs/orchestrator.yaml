@@ -1,0 +1,146 @@
+orchestrator:
+    idShort: orchestrator
+    id: 'https://smartproductionlab.aau.dk/aas/orchestrator'
+    globalAssetId: 'https://smartproductionlab.aau.dk/assets/YTZiYjcwOWMtZTI3YS00YmU0LWJkMzEtYjVmYzFlZDQ3NWQ1'
+    derivedFrom: 'https://smartproductionlab.aau.dk/aas/templates/resource'
+    assetType: 'https://smartproductionlab.aau.dk/Resource/Orchestrator'
+    serialNumber: 'AAU-BT-2024-001'
+    location: 'InnoLab, Nybrovej, AAU'
+    AssetInterfacesDescription:
+        InterfaceMQTT:
+            Title: 'AAU Orchestrator'
+            EndpointMetadata:
+                base: 'mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/Orchestrator'
+                contentType: 'application/json'
+            InteractionMetadata:
+                actions:
+                    Start:
+                        key: 'Start'
+                        title: 'Plan'
+                        synchronous: 'true'
+                        input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
+                        output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
+                        forms:
+                            contentType: 'application/json'
+                            href: '/CMD/Start'
+                            op: 'invokeAction'
+                            mqv_retain: 'false'
+                            mqv_controlPacket: subscribe
+                            mqv_qos: '2'
+                            response:
+                                contentType: 'application/json'
+                                href: '/DATA/Start'
+                                mqv_controlPacket: 'publish'
+                    Stop:
+                        key: 'Stop'
+                        title: 'Stop'
+                        synchronous: 'true'
+                        input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
+                        output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
+                        forms:
+                            contentType: 'application/json'
+                            href: '/CMD/Stop'
+                            op: 'invokeAction'
+                            mqv_retain: 'false'
+                            mqv_controlPacket: subscribe
+                            mqv_qos: '2'
+                            response:
+                                contentType: 'application/json'
+                                href: '/DATA/Stop'
+                                mqv_controlPacket: 'publish'
+                    Suspend:
+                        key: 'Suspend'
+                        title: 'Suspend'
+                        synchronous: 'true'
+                        input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
+                        output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
+                        forms:
+                            contentType: 'application/json'
+                            href: '/CMD/Suspend'
+                            op: 'invokeAction'
+                            mqv_retain: 'false'
+                            mqv_controlPacket: subscribe
+                            mqv_qos: '2'
+                            response:
+                                contentType: 'application/json'
+                                href: '/DATA/Suspend'
+                                mqv_controlPacket: 'publish'
+                    Unsuspend:
+                        key: 'Unsuspend'
+                        title: 'Unsuspend'
+                        synchronous: 'true'
+                        input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
+                        output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
+                        forms:
+                            contentType: 'application/json'
+                            href: '/CMD/Unsuspend'
+                            op: 'invokeAction'
+                            mqv_retain: 'false'
+                            mqv_controlPacket: subscribe
+                            mqv_qos: '2'
+                            response:
+                                contentType: 'application/json'
+                                href: '/DATA/Unsuspend'
+                                mqv_controlPacket: 'publish'
+                    Reset:
+                        key: 'Reset'
+                        title: 'Reset'
+                        synchronous: 'true'
+                        input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
+                        output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
+                        forms:
+                            contentType: 'application/json'
+                            href: '/CMD/Reset'
+                            op: 'invokeAction'
+                            mqv_retain: 'false'
+                            mqv_controlPacket: subscribe
+                            mqv_qos: '2'
+                            response:
+                                contentType: 'application/json'
+                                href: '/DATA/Reset'
+                                mqv_controlPacket: 'publish'
+                properties:
+                    State:
+                        key: 'State'
+                        title: 'State'
+                        output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/state.schema.json'
+                        forms:
+                            contentType: 'application/json'
+                            href: '/DATA/State'
+                            mqv_retain: 'false'
+                            mqv_controlPacket: publish
+                            mqv_qos: '0'
+
+    Variables:
+        PackMLState:
+            semanticId: 'https://www.omac.org/packml/state'
+            InterfaceReference: 'State'
+
+    Parameters:
+    HierarchicalStructures:
+    
+    Capabilities:
+        Orchestrate:
+            realizedBy: "Start"
+
+    Skills:
+        Start:
+            description: "Start Orchestration"
+            semantic_id: "https://www.omac.org/packml/transition/start"
+            interface: "Start"
+        Stop:
+            description: "Stop Orchestration"
+            semantic_id: "https://www.omac.org/packml/transition/stop"
+            interface: "Stop"
+        Suspend:
+            description: "Suspend Orchestration"
+            semantic_id: "https://www.omac.org/packml/transition/suspend"
+            interface: "Suspend"
+        Unsuspend:
+            description: "Continue Orchestration"
+            semantic_id: "https://www.omac.org/packml/transition/unsuspend"
+            interface: "Unsuspend"
+        Reset:
+            description: "Resets the Orchestrator"
+            semantic_id: "https://www.omac.org/packml/transition/reset"
+            interface: "Reset"

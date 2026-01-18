@@ -3,7 +3,7 @@ productionPlanner:
     id: 'https://smartproductionlab.aau.dk/aas/productionPlanner'
     globalAssetId: 'https://smartproductionlab.aau.dk/assets/YWY0MjA2MjYtMzg2Ni00M2NjLTkyN2ItM2VjNDg4MzNlMTJm'
     derivedFrom: 'https://smartproductionlab.aau.dk/aas/templates/resource'
-    assetType: 'https://smartproductionlab.aau.dk/Resource/CPPM/DispensingSystem/productionPlanner'
+    assetType: 'https://smartproductionlab.aau.dk/Resource/ProductionPlanner'
     serialNumber: 'AAU-PP-2024-001'
     location: 'InnoLab, Nybrovej, AAU'
     AssetInterfacesDescription:
