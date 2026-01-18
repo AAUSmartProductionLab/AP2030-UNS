@@ -232,8 +232,10 @@ class ConfigParser:
                 'name': var_name,
                 'semantic_id': var_config.get('semanticId', ''),
                 'interface_reference': var_config.get('InterfaceReference'),
+                # Optional: specific field from the MQTT message
+                'field': var_config.get('Field'),
                 'values': {k: v for k, v in var_config.items()
-                           if k not in ['semanticId', 'InterfaceReference']}
+                           if k not in ['semanticId', 'InterfaceReference', 'Field']}
             })
 
         return variables
@@ -262,6 +264,8 @@ class ConfigParser:
         enriched_variables = []
         for var in variables:
             interface_ref = var.get('interface_reference')
+            # Optional: specific field from schema
+            specific_field = var.get('field')
 
             # Start with config-defined values as defaults
             fields = var.get('values', {})
@@ -276,22 +280,37 @@ class ConfigParser:
                     schema_fields = self._schema_handler.extract_data_fields(
                         schema_url)
 
-                    # Use schema fields, with config values as overrides for defaults
-                    fields = {}
-                    for field_name, field_def in schema_fields.items():
-                        fields[field_name] = {
-                            'type': field_def['type'],
-                            'aas_type': field_def['aas_type'],
-                            'default_value': var.get('values', {}).get(
-                                field_name, field_def['default_value']
-                            ),
-                            'description': field_def.get('description', '')
+                    # If a specific field is specified, only include that field
+                    if specific_field and specific_field in schema_fields:
+                        field_def = schema_fields[specific_field]
+                        fields = {
+                            specific_field: {
+                                'type': field_def['type'],
+                                'aas_type': field_def['aas_type'],
+                                'default_value': var.get('values', {}).get(
+                                    specific_field, field_def['default_value']
+                                ),
+                                'description': field_def.get('description', '')
+                            }
                         }
+                    else:
+                        # Use all schema fields, with config values as overrides for defaults
+                        fields = {}
+                        for field_name, field_def in schema_fields.items():
+                            fields[field_name] = {
+                                'type': field_def['type'],
+                                'aas_type': field_def['aas_type'],
+                                'default_value': var.get('values', {}).get(
+                                    field_name, field_def['default_value']
+                                ),
+                                'description': field_def.get('description', '')
+                            }
 
             enriched_variables.append({
                 'name': var['name'],
                 'semantic_id': var.get('semantic_id', ''),
                 'interface_reference': interface_ref,
+                'field': specific_field,
                 'fields': fields
             })
 
@@ -377,13 +396,18 @@ class ConfigParser:
         MQTT -> AAS synchronization. Field names are derived from the
         MQTT schema - the single source of truth.
 
+        When a Variable specifies a 'Field', only that field is mapped.
+        This allows multiple Variables to reference the same MQTT property
+        but extract different fields from the message (e.g., 'State' and 
+        'ProcessQueue' from a single stationState message).
+
         Returns:
             List of mapping dictionaries with:
             - variable_name: Name of the variable in Variables submodel
             - property_name: Name of the interface property
             - mqtt_topic: Full MQTT topic for the property
             - schema: Schema URL for the property data
-            - value_fields: List of field names derived from the MQTT schema
+            - value_fields: List of field names to extract (may be subset if Field specified)
         """
         variables = self.get_variables()
         properties = self.get_properties()
@@ -398,8 +422,14 @@ class ConfigParser:
                 prop = property_lookup[interface_ref]
                 schema_url = prop.get('schema')
 
-                # Extract field names from the MQTT schema (single source of truth)
-                if schema_url:
+                # Check if variable specifies a specific field to extract
+                specific_field = var.get('field')
+
+                if specific_field:
+                    # Use only the specified field
+                    value_fields = [specific_field]
+                elif schema_url:
+                    # Extract all field names from the MQTT schema (single source of truth)
                     data_fields = self._schema_handler.extract_data_fields(
                         schema_url)
                     value_fields = list(data_fields.keys())

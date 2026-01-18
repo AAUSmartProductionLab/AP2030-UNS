@@ -9,19 +9,19 @@ from ..schema_handler import SchemaHandler
 class VariablesSubmodelBuilder:
     """
     Builder class for creating Variables submodel.
-    
+
     The Variables submodel contains collections of variable definitions
     with their properties and optional interface references.
-    
+
     Field names and types are derived from the MQTT schemas referenced
     in the interface properties - the schemas are the single source of truth.
     """
-    
-    def __init__(self, base_url: str, semantic_factory, element_factory, 
+
+    def __init__(self, base_url: str, semantic_factory, element_factory,
                  schema_handler: SchemaHandler = None):
         """
         Initialize the Variables submodel builder.
-        
+
         Args:
             base_url: Base URL for AAS identifiers
             semantic_factory: SemanticIdFactory instance for semantic IDs
@@ -34,86 +34,103 @@ class VariablesSubmodelBuilder:
         self.schema_handler = schema_handler or SchemaHandler()
         self.current_system_id = None
         self._properties_cache = None
-    
+
     def build(self, system_id: str, config: Dict, properties: List[Dict] = None) -> model.Submodel:
         """
         Create the Variables submodel.
-        
+
         Args:
             system_id: Unique identifier for the system
             config: Configuration dictionary containing Variables section
             properties: Optional list of interface property dicts with schema URLs
-            
+
         Returns:
             Variables submodel instance
         """
         self.current_system_id = system_id
         variables_config = config.get('Variables', {}) or {}
         variable_elements = []
-        
+
         # Build property lookup for schema-driven field extraction
         self._properties_cache = {}
         if properties:
             self._properties_cache = {p['name']: p for p in properties}
-        
+
         # Handle dict format (no dashes): Variables: { VarName: {...}, ... }
         for var_name, var_config in variables_config.items():
-            var_collection = self._create_variable_collection(var_name, var_config or {})
+            var_collection = self._create_variable_collection(
+                var_name, var_config or {})
             if var_collection:
                 variable_elements.append(var_collection)
-        
+
         submodel = model.Submodel(
             id_=f"{self.base_url}/submodels/instances/{system_id}/Variables",
             id_short="Variables",
             kind=model.ModellingKind.INSTANCE,
             semantic_id=self.semantic_factory.VARIABLES_SUBMODEL,
-            administration=model.AdministrativeInformation(version="1", revision="0"),
+            administration=model.AdministrativeInformation(
+                version="1", revision="0"),
             submodel_element=variable_elements
         )
-        
+
         return submodel
-    
-    def _create_variable_collection(self, var_name: str, 
-                                   var_config: Dict) -> Optional[model.SubmodelElementCollection]:
+
+    def _create_variable_collection(self, var_name: str,
+                                    var_config: Dict) -> Optional[model.SubmodelElementCollection]:
         """
         Create a variable collection from config format.
-        
+
         Field names and types are derived from the MQTT schema if an
         InterfaceReference is present and the referenced property has a schema.
-        
+
+        If a 'Field' is specified in the config, only that field from the schema
+        is included. This allows multiple Variables to reference the same MQTT
+        property but extract different fields (e.g., 'State' vs 'ProcessQueue'
+        from a single stationState message).
+
         Args:
             var_name: Name of the variable
             var_config: Configuration dictionary for the variable
-            
+
         Returns:
             SubmodelElementCollection for the variable or None if no elements
         """
         elements = []
-        
+
         # Add semantic ID if present
         semantic_id = var_config.get('semanticId')
         interface_ref = var_config.get('InterfaceReference')
-        
+        # Optional: extract only this field
+        specific_field = var_config.get('Field')
+
         # Try to get fields from schema if interface reference exists
         schema_fields = {}
         if interface_ref and self._properties_cache:
             prop = self._properties_cache.get(interface_ref)
             if prop and prop.get('schema'):
-                schema_fields = self.schema_handler.extract_data_fields(prop['schema'])
-        
+                all_schema_fields = self.schema_handler.extract_data_fields(
+                    prop['schema'])
+
+                # If a specific field is requested, filter to just that field
+                if specific_field and specific_field in all_schema_fields:
+                    schema_fields = {
+                        specific_field: all_schema_fields[specific_field]}
+                else:
+                    schema_fields = all_schema_fields
+
         # Use schema-derived fields if available, otherwise fall back to config
         if schema_fields:
             for field_name, field_def in schema_fields.items():
                 # Get default value from config if provided, otherwise use schema default
                 config_value = None
                 for key, value in var_config.items():
-                    if key not in ['semanticId', 'InterfaceReference'] and key == field_name:
+                    if key not in ['semanticId', 'InterfaceReference', 'Field'] and key == field_name:
                         config_value = value
                         break
-                
+
                 value = config_value if config_value is not None else field_def['default_value']
                 value_type = field_def['aas_type']
-                
+
                 elements.append(
                     self.element_factory.create_property(
                         id_short=field_name,
@@ -124,9 +141,9 @@ class VariablesSubmodelBuilder:
         else:
             # Fallback: use fields defined directly in config
             for key, value in var_config.items():
-                if key in ['semanticId', 'InterfaceReference']:
+                if key in ['semanticId', 'InterfaceReference', 'Field']:
                     continue
-                
+
                 # Determine value type
                 if isinstance(value, bool):
                     value_type = model.datatypes.Boolean
@@ -137,7 +154,7 @@ class VariablesSubmodelBuilder:
                 else:
                     value_type = model.datatypes.String
                     value = str(value)
-                
+
                 elements.append(
                     self.element_factory.create_property(
                         id_short=key,
@@ -145,34 +162,35 @@ class VariablesSubmodelBuilder:
                         value=value
                     )
                 )
-        
+
         # Add InterfaceReference as ReferenceElement if present
         if interface_ref:
             ref_element = self._create_interface_reference(interface_ref)
             if ref_element:
                 elements.append(ref_element)
-        
+
         if not elements:
             return None
-        
+
         # Build semantic ID for collection if provided
         collection_semantic_id = None
         if semantic_id:
-            collection_semantic_id = self.semantic_factory.create_external_reference(semantic_id)
-        
+            collection_semantic_id = self.semantic_factory.create_external_reference(
+                semantic_id)
+
         return self.element_factory.create_collection(
             id_short=var_name,
             elements=elements,
             semantic_id=collection_semantic_id
         )
-    
+
     def _create_interface_reference(self, interface_ref_name: str) -> Optional[model.ReferenceElement]:
         """
         Create an interface reference element.
-        
+
         Args:
             interface_ref_name: Name of the interface property to reference
-            
+
         Returns:
             ReferenceElement pointing to the interface property
         """
@@ -183,19 +201,19 @@ class VariablesSubmodelBuilder:
                     type_=model.KeyTypes.SUBMODEL,
                     value=f"{self.base_url}/submodels/instances/{self.current_system_id}/AssetInterfacesDescription"
                 ),
-                model.Key(
+                    model.Key(
                     type_=model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION,
                     value="InterfaceMQTT"
                 ),
-                model.Key(
+                    model.Key(
                     type_=model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION,
                     value="InteractionMetadata"
                 ),
-                model.Key(
+                    model.Key(
                     type_=model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION,
                     value="properties"
                 ),
-                model.Key(
+                    model.Key(
                     type_=model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION,
                     value=interface_ref_name
                 )),
