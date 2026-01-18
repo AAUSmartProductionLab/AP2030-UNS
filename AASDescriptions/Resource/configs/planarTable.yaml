@@ -14,7 +14,7 @@ planarTableAAS:
                 contentType: 'application/json'
             InteractionMetadata:
                 actions:
-                    - halt:
+                    halt:
                         key: 'halt'
                         title: 'halt'
                         synchronous: 'true'
@@ -26,7 +26,7 @@ planarTableAAS:
                             mqv_retain: 'false'
                             mqv_controlPacket: subscribe
                             mqv_qos: '2'                                              
-                    - occupy:
+                    occupy:
                         key: 'occupy'
                         title: 'occupy'
                         synchronous: 'true'
@@ -43,7 +43,7 @@ planarTableAAS:
                                 contentType: 'application/json'
                                 href: '/DATA/Occupy'
                                 mqv_controlPacket: 'publish'
-                    - release:
+                    release:
                         key: 'release'
                         title: 'release'
                         synchronous: 'true'
@@ -61,7 +61,7 @@ planarTableAAS:
                                 href: '/DATA/Release'
                                 mqv_controlPacket: 'publish'
                 properties:
-                    - PackMLState:
+                    PackMLState:
                         key: 'PackMLState'
                         title: 'PackMLState'
                         output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/state.schema.json'
@@ -71,16 +71,16 @@ planarTableAAS:
                             mqv_retain: 'false'
                             mqv_controlPacket: publish
                             mqv_qos: '0'                                
-                    - OccupationState:
-                            key: 'OccupationState'
-                            title: 'OccupationState'
-                            output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/stationOccupation.schema.json'
-                            forms:
-                                contentType: 'application/json'
-                                href: '/DATA/Occupation'
-                                mqv_retain: 'false'
-                                mqv_controlPacket: publish
-                                mqv_qos: '0'
+                    OccupationState:
+                        key: 'OccupationState'
+                        title: 'OccupationState'
+                        output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/stationOccupation.schema.json'
+                        forms:
+                            contentType: 'application/json'
+                            href: '/DATA/Occupation'
+                            mqv_retain: 'false'
+                            mqv_controlPacket: publish
+                            mqv_qos: '0'
 
     Variables:
         PackMLState:

@@ -202,18 +202,16 @@ class AASGenerator:
             'AssetInterfacesDescription', {}) or {}
         mqtt_config = interface_config.get('InterfaceMQTT', {}) or {}
         interaction_config = mqtt_config.get('InteractionMetadata', {}) or {}
-        properties_list = interaction_config.get('properties', []) or []
+        properties_dict = interaction_config.get('properties', {}) or {}
 
         properties = []
-        for prop_item in properties_list:
-            # Handle list format: [{ PropName: {...} }, ...]
-            if isinstance(prop_item, dict):
-                for prop_name, prop_config in prop_item.items():
-                    if isinstance(prop_config, dict):
-                        properties.append({
-                            'name': prop_name,
-                            'schema': prop_config.get('output')
-                        })
+        # Handle dict format: { PropName: {...}, ... }
+        for prop_name, prop_config in properties_dict.items():
+            if isinstance(prop_config, dict):
+                properties.append({
+                    'name': prop_name,
+                    'schema': prop_config.get('output')
+                })
 
         return properties
 

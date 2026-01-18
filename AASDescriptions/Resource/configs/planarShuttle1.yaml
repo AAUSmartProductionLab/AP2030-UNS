@@ -14,7 +14,7 @@ planarTableShuttle1AAS:
                 contentType: 'application/json'
             InteractionMetadata:
                 actions:
-                    - MoveToPosition:
+                    MoveToPosition:
                         key: 'MoveToPosition'
                         title: 'MoveToPosition'
                         synchronous: 'false'
@@ -31,7 +31,7 @@ planarTableShuttle1AAS:
                                 contentType: 'application/json'
                                 href: '/DATA/XYMotion'
                                 mqv_controlPacket: 'publish'
-                    - halt:
+                    halt:
                         key: 'halt'
                         title: 'halt'
                         input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
@@ -42,7 +42,7 @@ planarTableShuttle1AAS:
                             mqv_retain: 'false'
                             mqv_controlPacket: subscribe
                             mqv_qos: '2'                                              
-                    - occupy:
+                    occupy:
                         key: 'occupy'
                         title: 'occupy'
                         synchronous: 'true'
@@ -59,7 +59,7 @@ planarTableShuttle1AAS:
                                 contentType: 'application/json'
                                 href: '/DATA/Occupy'
                                 mqv_controlPacket: 'publish'
-                    - release:
+                    release:
                         key: 'release'
                         title: 'release'
                         synchronous: 'true'
@@ -77,7 +77,7 @@ planarTableShuttle1AAS:
                                 href: '/DATA/Release'
                                 mqv_controlPacket: 'publish'
                 properties:
-                    - PackMLState:
+                    PackMLState:
                         key: 'PackMLState'
                         title: 'PackMLState'
                         output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/state.schema.json'
@@ -87,16 +87,16 @@ planarTableShuttle1AAS:
                             mqv_retain: 'false'
                             mqv_controlPacket: publish
                             mqv_qos: '0'                                
-                    - OccupationState:
-                            key: 'OccupationState'
-                            title: 'OccupationState'
-                            output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/stationOccupation.schema.json'
-                            forms:
-                                contentType: 'application/json'
-                                href: '/DATA/Occupation'
-                                mqv_retain: 'false'
-                                mqv_controlPacket: publish
-                                mqv_qos: '0'
+                    OccupationState:
+                        key: 'OccupationState'
+                        title: 'OccupationState'
+                        output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/stationOccupation.schema.json'
+                        forms:
+                            contentType: 'application/json'
+                            href: '/DATA/Occupation'
+                            mqv_retain: 'false'
+                            mqv_controlPacket: publish
+                            mqv_qos: '0'
 
     Variables:
         PackMLState:

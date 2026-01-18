@@ -55,13 +55,10 @@ class SkillsSubmodelBuilder:
         interface_config = config.get('AssetInterfacesDescription', {}) or {}
         mqtt_config = interface_config.get('InterfaceMQTT', {}) or {}
         interaction_metadata = mqtt_config.get('InteractionMetadata', {}) or {}
-        actions = interaction_metadata.get('actions', [])
+        actions = interaction_metadata.get('actions', {}) or {}
 
-        # Build a map of action name -> action config for easy lookup
-        action_map = {}
-        for action_dict in actions:
-            action_name = list(action_dict.keys())[0]
-            action_map[action_name] = action_dict[action_name]
+        # Actions is already a dict with action names as keys
+        action_map = actions
 
         # If explicit Skills are configured, use them
         if skills_config:

@@ -216,16 +216,15 @@ def extract_topics_from_config(config_path: Path) -> Tuple[str, Dict]:
 
         # Get actions from interaction metadata
         interaction_meta = mqtt_interface.get('InteractionMetadata', {})
-        actions = interaction_meta.get('actions', [])
+        actions = interaction_meta.get('actions', {}) or {}
 
         if not actions:
             return None, None
 
         # Build skills config
         skills = {}
-        for action_dict in actions:
-            action_name = list(action_dict.keys())[0]
-            action_config = action_dict[action_name]
+        # Actions is a dict with action names as keys
+        for action_name, action_config in actions.items():
 
             # Get the href from forms
             forms = action_config.get('forms', {})
