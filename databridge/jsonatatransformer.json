@@ -1,19 +1,5 @@
 [
   {
-    "uniqueId": "syntegonStopperingSystemAAS_PackMLState_State_transformer",
-    "queryLanguage": "JSONATA",
-    "queryPath": "queries/syntegonStopperingSystemAAS_PackMLState_State.jsonata",
-    "inputType": "JsonString",
-    "outputType": "JsonString"
-  },
-  {
-    "uniqueId": "syntegonStopperingSystemAAS_OccupationState_Occupation_transformer",
-    "queryLanguage": "JSONATA",
-    "queryPath": "queries/syntegonStopperingSystemAAS_OccupationState_Occupation.jsonata",
-    "inputType": "JsonString",
-    "outputType": "JsonString"
-  },
-  {
     "uniqueId": "optimaUnloadingSystemAAS_PackMLState_State_transformer",
     "queryLanguage": "JSONATA",
     "queryPath": "queries/optimaUnloadingSystemAAS_PackMLState_State.jsonata",
@@ -45,6 +31,20 @@
     "uniqueId": "imaLoadingSystemAAS_OccupationState_Occupation_transformer",
     "queryLanguage": "JSONATA",
     "queryPath": "queries/imaLoadingSystemAAS_OccupationState_Occupation.jsonata",
+    "inputType": "JsonString",
+    "outputType": "JsonString"
+  },
+  {
+    "uniqueId": "syntegonStopperingSystemAAS_PackMLState_State_transformer",
+    "queryLanguage": "JSONATA",
+    "queryPath": "queries/syntegonStopperingSystemAAS_PackMLState_State.jsonata",
+    "inputType": "JsonString",
+    "outputType": "JsonString"
+  },
+  {
+    "uniqueId": "syntegonStopperingSystemAAS_OccupationState_Occupation_transformer",
+    "queryLanguage": "JSONATA",
+    "queryPath": "queries/syntegonStopperingSystemAAS_OccupationState_Occupation.jsonata",
     "inputType": "JsonString",
     "outputType": "JsonString"
   },

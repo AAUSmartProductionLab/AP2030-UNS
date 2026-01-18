@@ -1,0 +1,142 @@
+cytivaCappingSystemAAS:
+    idShort: cytivaCappingSystemAAS
+    id: 'https://smartproductionlab.aau.dk/aas/cytivaCappingSystem'
+    globalAssetId: 'https://smartproductionlab.aau.dk/assets/NGQ5ZWE4ZmUtY2Q3OS00Nzc5LWE5YjEtNGEzZGRkODRhNzQ2'
+    derivedFrom: 'https://smartproductionlab.aau.dk/aas/templates/resource'
+    assetType: 'https://smartproductionlab.aau.dk/Resource/CPPM/CappingSystem/cytivaCappingSystem'
+    serialNumber: 'SYN-SS-2024-001'
+    location: 'InnoLab, Nybrovej, AAU'
+    AssetInterfacesDescription:
+        InterfaceMQTT:
+            Title: 'Cytiva Capping System'
+            EndpointMetadata:
+                base: 'mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/Capping'
+                contentType: 'application/json'
+            InteractionMetadata:
+                actions:
+                    Capping:
+                        key: 'Capping'
+                        title: 'Capping'
+                        synchronous: 'true'
+                        input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
+                        output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
+                        forms:
+                            contentType: 'application/json'
+                            href: '/CMD/Capping'
+                            op: 'invokeAction'
+                            mqv_retain: 'false'
+                            mqv_controlPacket: subscribe
+                            mqv_qos: '2'
+                            response:
+                                contentType: 'application/json'
+                                href: '/DATA/Capping'
+                                mqv_controlPacket: 'publish'
+                    halt:
+                        key: 'halt'
+                        title: 'halt'
+                        synchronous: 'true'
+                        input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
+                        forms:
+                            contentType: 'application/json'
+                            href: '/CMD/Halt'
+                            op: 'invokeAction'
+                            mqv_retain: 'false'
+                            mqv_controlPacket: subscribe
+                            mqv_qos: '2'
+                                                                         
+                    occupy:
+                        key: 'occupy'
+                        title: 'occupy'
+                        synchronous: 'true'
+                        input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
+                        output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
+                        forms:
+                            contentType: 'application/json'
+                            href: '/CMD/Occupy'
+                            op: 'invokeAction'
+                            mqv_retain: 'false'
+                            mqv_controlPacket: subscribe
+                            mqv_qos: '2'
+                            response:
+                                contentType: 'application/json'
+                                href: '/DATA/Occupy'
+                                mqv_controlPacket: 'publish'
+                    release:
+                        key: 'release'
+                        title: 'release'
+                        synchronous: 'true'
+                        input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
+                        output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
+                        forms:
+                            contentType: 'application/json'
+                            href: '/CMD/Release'
+                            op: 'invokeAction'
+                            mqv_retain: 'false'
+                            mqv_controlPacket: subscribe
+                            mqv_qos: '2'
+                            response:
+                                contentType: 'application/json'
+                                href: '/DATA/Release'
+                                mqv_controlPacket: 'publish'
+                properties:
+                    PackMLState:
+                        key: 'PackMLState'
+                        title: 'PackMLState'
+                        output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/state.schema.json'
+                        forms:
+                            contentType: 'application/json'
+                            href: '/DATA/State'
+                            mqv_retain: 'false'
+                            mqv_controlPacket: publish
+                            mqv_qos: '0'                                
+                    OccupationState:
+                        key: 'OccupationState'
+                        title: 'OccupationState'
+                        output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/stationOccupation.schema.json'
+                        forms:
+                            contentType: 'application/json'
+                            href: '/DATA/Occupation'
+                            mqv_retain: 'false'
+                            mqv_controlPacket: publish
+                            mqv_qos: '0'
+    Variables:
+        PackMLState:
+            semanticId: 'https://www.omac.org/packml/state'
+            InterfaceReference: 'PackMLState'
+        OccupationState:
+            semanticId: 'https://smartproductionlab.aau.dk/stationOccupation'
+            InterfaceReference: 'OccupationState'
+    Parameters:
+    HierarchicalStructures:
+        Archetype: 'OneUp'
+        IsPartOf:
+            - aauFillingLine:
+                globalAssetId: 'https://smartproductionlab.aau.dk/assets/MWQ2ODY5ZDEtZTQ3Yy00NWU4LTlmYTAtNTI3YjVlMDk4MWFi'
+    
+    Capabilities:
+        Capping:
+            realizedBy: "Capping"
+        halt:
+            realizedBy: "halt"
+        occupy:
+            realizedBy: "occupy"
+        release:
+            realizedBy: "release"
+    
+    Skills:
+        Capping:
+            description: "Capping function for pharmaceutical primary packaging"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/Capping"
+            interface: "Capping"
+        halt:
+            description: "Halt the current capping operation"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/halt"
+            interface: "halt"
+        occupy:
+            description: "Occupy the capping system for exclusive use"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/occupy"
+            interface: "occupy"
+        release:
+            description: "Release the capping system from exclusive use"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/release"
+            interface: "release"

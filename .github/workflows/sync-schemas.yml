@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'AASDescriptions/**'
+      - 'AASDescriptions/Resource/configs/**'
       - 'MQTTSchemas/**'
       - 'BTDescriptions/**'
       - 'docs/**'
@@ -32,7 +33,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Sync schemas and BT XMLs to docs
+      - name: Sync schemas, configs and BT XMLs to docs
         run: |
           rm -rf docs/AASDescriptions
           cp -r AASDescriptions docs/AASDescriptions
@@ -40,11 +41,17 @@ jobs:
           cp -r MQTTSchemas docs/MQTTSchemas
           rm -rf docs/BTDescriptions
           cp -r BTDescriptions docs/BTDescriptions
+          rm -rf docs/configs
+          cp -r AASDescriptions/Resource/configs docs/configs
       
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.x'
+      
+      - name: Install dependencies
+        run: |
+          pip install pyyaml
       
       - name: Generate schema and BT links
         run: |
@@ -54,8 +61,8 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add docs/AASDescriptions docs/MQTTSchemas docs/BTDescriptions docs/index.md
-          git diff --quiet && git diff --staged --quiet || git commit -m "Auto-sync AAS descriptions, MQTT schemas, and BT descriptions to docs folder and update links"
+          git add docs/AASDescriptions docs/MQTTSchemas docs/BTDescriptions docs/configs docs/index.md
+          git diff --quiet && git diff --staged --quiet || git commit -m "Auto-sync AAS descriptions, MQTT schemas, configs, and BT descriptions to docs folder and update links"
           
       - name: Push changes
         uses: ad-m/github-push-action@master

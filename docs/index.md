@@ -269,6 +269,79 @@ The behavior tree XML files define the control logic for the production line con
 
 <!-- AUTO-GENERATED-BT-END -->
 
+## Resource Configurations
+
+YAML configuration files for AAS resource definitions.
+
+<!-- AUTO-GENERATED-CONFIGS-START -->
+- **[aauFillingLine.yaml](configs/aauFillingLine.yaml)**
+  - Resource: `aauFillingLine`
+  - Location: InnoLab, Nybrovej, AAU
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/configs/aauFillingLine.yaml)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/configs/aauFillingLine.yaml)
+
+- **[cytivaCapping.yaml](configs/cytivaCapping.yaml)**
+  - Resource: `cytivaCappingSystemAAS`
+  - Location: InnoLab, Nybrovej, AAU
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/configs/cytivaCapping.yaml)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/configs/cytivaCapping.yaml)
+
+- **[imaDispensing.yaml](configs/imaDispensing.yaml)**
+  - Resource: `imaDispensingSystemAAS`
+  - Location: InnoLab, Nybrovej, AAU
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/configs/imaDispensing.yaml)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/configs/imaDispensing.yaml)
+
+- **[imaLoadingSystem.yaml](configs/imaLoadingSystem.yaml)**
+  - Resource: `imaLoadingSystemAAS`
+  - Location: InnoLab, Nybrovej, AAU
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/configs/imaLoadingSystem.yaml)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/configs/imaLoadingSystem.yaml)
+
+- **[omronCamera.yaml](configs/omronCamera.yaml)**
+  - Resource: `omronCameraSystemAAS`
+  - Location: InnoLab, Nybrovej, AAU
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/configs/omronCamera.yaml)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/configs/omronCamera.yaml)
+
+- **[optimaUnloading.yaml](configs/optimaUnloading.yaml)**
+  - Resource: `optimaUnloadingSystemAAS`
+  - Location: InnoLab, Nybrovej, AAU
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/configs/optimaUnloading.yaml)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/configs/optimaUnloading.yaml)
+
+- **[planarShuttle1.yaml](configs/planarShuttle1.yaml)**
+  - Resource: `planarTableShuttle1AAS`
+  - Location: InnoLab, Nybrovej, AAU
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/configs/planarShuttle1.yaml)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/configs/planarShuttle1.yaml)
+
+- **[planarShuttle2.yaml](configs/planarShuttle2.yaml)**
+  - Resource: `planarTableShuttle2AAS`
+  - Location: InnoLab, Nybrovej, AAU
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/configs/planarShuttle2.yaml)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/configs/planarShuttle2.yaml)
+
+- **[planarShuttle3.yaml](configs/planarShuttle3.yaml)**
+  - Resource: `planarTableShuttle3AAS`
+  - Location: InnoLab, Nybrovej, AAU
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/configs/planarShuttle3.yaml)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/configs/planarShuttle3.yaml)
+
+- **[planarTable.yaml](configs/planarTable.yaml)**
+  - Resource: `planarTableAAS`
+  - Location: InnoLab, Nybrovej, AAU
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/configs/planarTable.yaml)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/configs/planarTable.yaml)
+
+- **[syntegonStoppering.yaml](configs/syntegonStoppering.yaml)**
+  - Resource: `syntegonStopperingSystemAAS`
+  - Location: InnoLab, Nybrovej, AAU
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/configs/syntegonStoppering.yaml)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/configs/syntegonStoppering.yaml)
+
+<!-- AUTO-GENERATED-CONFIGS-END -->
+
 ## Usage
 
 ### Schemas

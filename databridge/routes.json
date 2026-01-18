@@ -1,25 +1,5 @@
 [
   {
-    "datasource": "NN_Nybrovej_InnoLab_Stoppering_DATA_State",
-    "transformers": [
-      "syntegonStopperingSystemAAS_PackMLState_State_transformer"
-    ],
-    "datasinks": [
-      "syntegonStopperingSystemAAS_PackMLState_sink_State"
-    ],
-    "trigger": "event"
-  },
-  {
-    "datasource": "NN_Nybrovej_InnoLab_Stoppering_DATA_Occupation",
-    "transformers": [
-      "syntegonStopperingSystemAAS_OccupationState_Occupation_transformer"
-    ],
-    "datasinks": [
-      "syntegonStopperingSystemAAS_OccupationState_sink_Occupation"
-    ],
-    "trigger": "event"
-  },
-  {
     "datasource": "NN_Nybrovej_InnoLab_Unloading_DATA_State",
     "transformers": [
       "optimaUnloadingSystemAAS_PackMLState_State_transformer"
@@ -66,6 +46,26 @@
     ],
     "datasinks": [
       "imaLoadingSystemAAS_OccupationState_sink_Occupation"
+    ],
+    "trigger": "event"
+  },
+  {
+    "datasource": "NN_Nybrovej_InnoLab_Stoppering_DATA_State",
+    "transformers": [
+      "syntegonStopperingSystemAAS_PackMLState_State_transformer"
+    ],
+    "datasinks": [
+      "syntegonStopperingSystemAAS_PackMLState_sink_State"
+    ],
+    "trigger": "event"
+  },
+  {
+    "datasource": "NN_Nybrovej_InnoLab_Stoppering_DATA_Occupation",
+    "transformers": [
+      "syntegonStopperingSystemAAS_OccupationState_Occupation_transformer"
+    ],
+    "datasinks": [
+      "syntegonStopperingSystemAAS_OccupationState_sink_Occupation"
     ],
     "trigger": "event"
   },
