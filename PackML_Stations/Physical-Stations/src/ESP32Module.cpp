@@ -11,7 +11,7 @@ ESP32Module::ESP32Module()
       config(),
       baseTopic(""),
       initialized(false),
-      configFilePath("/config.json")
+      configFilePath("/config.yaml")
 {
 }
 
@@ -135,11 +135,11 @@ void ESP32Module::publishDescriptionFromFile()
     String content = readConfig(configFilePath);
     if (content.length() == 0)
     {
-        Serial.println("No AAS Description found to publish");
+        Serial.println("No YAML config found to publish");
         return;
     }
 
-    Serial.print("Publishing AAS Description (");
+    Serial.print("Publishing YAML config (");
     Serial.print(content.length());
     Serial.println(" bytes)");
 
@@ -147,18 +147,19 @@ void ESP32Module::publishDescriptionFromFile()
     delay(500);
     esp_task_wdt_reset();
 
-    String fullTopic = baseTopic + "/Registration/Request";
+    // Publish to the Config topic for YAML-based registration
+    String fullTopic = baseTopic + "/Registration/Config";
 
     // AsyncMqttClient can handle large payloads without QoS issues
     uint16_t packetId = mqttClient.publish(fullTopic.c_str(), 2, false, content.c_str(), content.length());
 
     if (packetId > 0)
     {
-        Serial.println("Published Module AAS description to " + fullTopic);
+        Serial.println("Published YAML config to " + fullTopic);
     }
     else
     {
-        Serial.println("Failed to publish AAS description");
+        Serial.println("Failed to publish YAML config");
     }
 }
 

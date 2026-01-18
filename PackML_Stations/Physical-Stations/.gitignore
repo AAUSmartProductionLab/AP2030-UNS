@@ -4,5 +4,5 @@
 .vscode/launch.json
 .vscode/ipch
 
-# Data folder is auto-generated from schemas directory
+# Data folder is auto-generated from AASDescriptions/Resource/configs/ YAML files
 data/

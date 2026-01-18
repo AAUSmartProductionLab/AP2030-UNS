@@ -36,7 +36,7 @@ import sys
 from pathlib import Path
 
 from src import (
-    BaSyxConfig, 
+    BaSyxConfig,
     UnifiedRegistrationService,
     MQTTConfigRegistrationService,
     TopicsGenerator,
@@ -101,11 +101,12 @@ Examples:
                         help='Enable debug logging')
 
     # Subcommands
-    subparsers = parser.add_subparsers(dest='command', help='Command to execute')
+    subparsers = parser.add_subparsers(
+        dest='command', help='Command to execute')
 
     # Register from YAML config (primary command)
     config_parser = subparsers.add_parser('register-config',
-                                           help='Register asset from YAML config file')
+                                          help='Register asset from YAML config file')
     config_parser.add_argument('config_file', type=str,
                                help='Path to YAML configuration file')
     config_parser.add_argument('--no-validate', action='store_true',
@@ -117,7 +118,7 @@ Examples:
 
     # Register from directory
     dir_parser = subparsers.add_parser('register-dir',
-                                        help='Register all assets from config directory')
+                                       help='Register all assets from config directory')
     dir_parser.add_argument('config_dir', type=str,
                             help='Directory containing YAML config files')
     dir_parser.add_argument('--no-validate', action='store_true',
@@ -127,7 +128,7 @@ Examples:
 
     # Generate topics.json only
     topics_parser = subparsers.add_parser('generate-topics',
-                                           help='Generate Operation Delegation topics.json')
+                                          help='Generate Operation Delegation topics.json')
     topics_parser.add_argument('config_dir', type=str,
                                help='Directory containing YAML config files')
     topics_parser.add_argument('--output', type=str,
@@ -135,7 +136,7 @@ Examples:
 
     # Generate DataBridge configs only
     databridge_parser = subparsers.add_parser('generate-databridge',
-                                               help='Generate DataBridge configurations')
+                                              help='Generate DataBridge configurations')
     databridge_parser.add_argument('config_dir', type=str,
                                    help='Directory containing YAML config files')
     databridge_parser.add_argument('--output-dir', type=str, default='../databridge',
@@ -143,7 +144,7 @@ Examples:
 
     # MQTT Listener
     listen_parser = subparsers.add_parser('listen',
-                                           help='Start MQTT listener for registration')
+                                          help='Start MQTT listener for registration')
     listen_parser.add_argument('--config-topic', default=MQTTTopics.REGISTRATION_CONFIG,
                                help='MQTT topic for config registration')
     listen_parser.add_argument('--legacy-topic', default=MQTTTopics.REGISTRATION_LEGACY,
@@ -158,7 +159,7 @@ Examples:
 
     # Configure
     configure_parser = subparsers.add_parser('configure',
-                                              help='Show/update configuration')
+                                             help='Show/update configuration')
 
     args = parser.parse_args()
 
@@ -182,7 +183,7 @@ Examples:
             if not config_path.exists():
                 logger.error(f"Config file not found: {config_path}")
                 sys.exit(1)
-            
+
             service = UnifiedRegistrationService(
                 config=basyx_config,
                 mqtt_broker=args.mqtt_broker,
@@ -191,13 +192,13 @@ Examples:
                 operation_delegation_container=args.delegation_container,
                 delegation_service_url=args.delegation_url
             )
-            
+
             logger.info(f"Registering from config: {config_path}")
             success = service.register_from_yaml_config(
                 config_path=str(config_path),
                 validate_aas=not args.no_validate
             )
-            
+
             if success:
                 logger.info("✓ Registration completed successfully")
                 sys.exit(0)
@@ -211,12 +212,13 @@ Examples:
             if not config_dir.exists():
                 logger.error(f"Config directory not found: {config_dir}")
                 sys.exit(1)
-            
-            config_paths = list(config_dir.glob('*.yaml')) + list(config_dir.glob('*.yml'))
+
+            config_paths = list(config_dir.glob('*.yaml')) + \
+                list(config_dir.glob('*.yml'))
             if not config_paths:
                 logger.error(f"No YAML files found in {config_dir}")
                 sys.exit(1)
-            
+
             service = UnifiedRegistrationService(
                 config=basyx_config,
                 mqtt_broker=args.mqtt_broker,
@@ -224,19 +226,21 @@ Examples:
                 databridge_container_name=args.databridge_name,
                 delegation_service_url=args.delegation_url
             )
-            
-            logger.info(f"Registering {len(config_paths)} configs from {config_dir}")
+
+            logger.info(
+                f"Registering {len(config_paths)} configs from {config_dir}")
             results = service.register_multiple_configs(
                 [str(p) for p in config_paths],
                 validate_aas=not args.no_validate
             )
-            
+
             successful = sum(1 for s in results.values() if s)
             if successful == len(results):
                 logger.info(f"✓ All {successful} registrations completed")
                 sys.exit(0)
             elif successful > 0:
-                logger.warning(f"⚠ {successful}/{len(results)} registrations completed")
+                logger.warning(
+                    f"⚠ {successful}/{len(results)} registrations completed")
                 sys.exit(0)
             else:
                 logger.error("✗ All registrations failed")
@@ -248,10 +252,11 @@ Examples:
             if not config_dir.exists():
                 logger.error(f"Config directory not found: {config_dir}")
                 sys.exit(1)
-            
+
             output_path = args.output if args.output else None
-            success = generate_topics_from_directory(str(config_dir), output_path)
-            
+            success = generate_topics_from_directory(
+                str(config_dir), output_path)
+
             if success:
                 logger.info("✓ topics.json generated successfully")
                 sys.exit(0)
@@ -265,7 +270,7 @@ Examples:
             if not config_dir.exists():
                 logger.error(f"Config directory not found: {config_dir}")
                 sys.exit(1)
-            
+
             output_dir = args.output_dir
             counts = generate_databridge_from_directory(
                 str(config_dir),
@@ -274,11 +279,12 @@ Examples:
                 args.mqtt_port,
                 f"http://aas-env:{args.basyx_url.split(':')[-1].rstrip('/')}"
             )
-            
+
             if counts:
                 logger.info(f"✓ DataBridge configs generated:")
                 logger.info(f"  - {counts.get('consumers', 0)} consumers")
-                logger.info(f"  - {counts.get('transformers', 0)} transformers")
+                logger.info(
+                    f"  - {counts.get('transformers', 0)} transformers")
                 logger.info(f"  - {counts.get('sinks', 0)} sinks")
                 logger.info(f"  - {counts.get('routes', 0)} routes")
                 sys.exit(0)
@@ -295,7 +301,7 @@ Examples:
                 databridge_container_name=args.databridge_name,
                 delegation_service_url=args.delegation_url
             )
-            
+
             mqtt_service = MQTTConfigRegistrationService(
                 registration_service=service,
                 mqtt_broker=args.mqtt_broker,
@@ -304,37 +310,43 @@ Examples:
                 legacy_topic=args.legacy_topic,
                 response_topic=args.response_topic
             )
-            
+
             logger.info("Starting MQTT registration listener...")
             logger.info(f"MQTT Broker: {args.mqtt_broker}:{args.mqtt_port}")
             logger.info(f"Config Topic: {args.config_topic}")
             logger.info(f"Legacy Topic: {args.legacy_topic}")
-            
+
             try:
                 mqtt_service.start()
                 logger.info("✓ MQTT listener started. Press Ctrl+C to stop.")
-                logger.info("\nConfig message format:")
+                logger.info("\nSupported config message formats:")
+                logger.info("1. Raw YAML (from ESP32 devices):")
+                logger.info("   syntegonStopperingSystemAAS:")
+                logger.info("     idShort: syntegonStopperingSystemAAS")
+                logger.info("     ...")
+                logger.info("")
+                logger.info("2. JSON wrapper (from other clients):")
                 logger.info('{')
                 logger.info('  "requestId": "unique-id",')
                 logger.info('  "assetId": "asset-identifier",')
                 logger.info('  "config": { ... yaml config as JSON ... }')
                 logger.info('}\n')
-                
+
                 while True:
                     import time
                     time.sleep(1)
-                    
+
             except KeyboardInterrupt:
                 logger.info("\nShutting down...")
                 mqtt_service.stop()
-                
+
                 stats = mqtt_service.get_stats()
                 logger.info(f"\nStatistics:")
                 logger.info(f"  Config received: {stats['config_received']}")
                 logger.info(f"  Legacy received: {stats['legacy_received']}")
                 logger.info(f"  Processed: {stats['processed']}")
                 logger.info(f"  Failed: {stats['failed']}")
-                
+
                 sys.exit(0)
 
         elif args.command == 'list':
@@ -343,11 +355,11 @@ Examples:
                 mqtt_broker=args.mqtt_broker,
                 mqtt_port=args.mqtt_port
             )
-            
+
             registered = service.list_registered_assets()
             shells = registered.get('aas_shells', [])
             submodels = registered.get('submodels', [])
-            
+
             if shells:
                 logger.info(f"\nRegistered AAS Shells ({len(shells)}):")
                 for shell in shells:
@@ -355,12 +367,12 @@ Examples:
                     logger.info(f"    ID: {shell.get('id', 'Unknown')}")
             else:
                 logger.info("\nNo AAS shells registered")
-            
+
             if submodels:
                 logger.info(f"\nRegistered Submodels ({len(submodels)}):")
                 for sm in submodels:
                     logger.info(f"  • {sm.get('idShort', 'Unknown')}")
-            
+
             sys.exit(0)
 
         elif args.command == 'configure':

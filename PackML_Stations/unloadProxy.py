@@ -43,7 +43,11 @@ unloadProxy = Proxy(
     [unload]
 )
 
-state_machine = PackMLStateMachine(BASE_TOPIC, unloadProxy, None)
+state_machine = PackMLStateMachine(
+    BASE_TOPIC, unloadProxy, None, config_path="optimaUnloading.yaml")
+
+# Register asset after MQTT connection is established
+unloadProxy.on_ready(state_machine.register_asset)
 
 
 def main():

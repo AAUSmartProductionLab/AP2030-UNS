@@ -121,8 +121,10 @@ class PathDefaults:
 
 class MQTTTopics:
     """Default MQTT topics."""
-    REGISTRATION_CONFIG: Final[str] = "NN/Nybrovej/InnoLab/Registration/Config"
-    REGISTRATION_LEGACY: Final[str] = "NN/Nybrovej/InnoLab/Registration/Request"
+    # Wildcard patterns to match station-specific registration topics
+    # e.g., NN/Nybrovej/InnoLab/Dispensing/Registration/Config
+    REGISTRATION_CONFIG: Final[str] = "NN/Nybrovej/InnoLab/+/Registration/Config"
+    REGISTRATION_LEGACY: Final[str] = "NN/Nybrovej/InnoLab/+/Registration/Request"
     REGISTRATION_RESPONSE: Final[str] = "NN/Nybrovej/InnoLab/Registration/Response"
 
 

@@ -77,13 +77,16 @@ cameraProxy = Proxy(
     [capture, image_publisher]
 )
 
-state_machine = PackMLStateMachine(BASE_TOPIC, cameraProxy, None)
+state_machine = PackMLStateMachine(
+    BASE_TOPIC, cameraProxy, None, config_path="omronCamera.yaml")
 state_machine.failureChance = 0
+
+# Register asset after MQTT connection is established
+cameraProxy.on_ready(state_machine.register_asset)
 
 
 def main():
     """Main entry point for the filling proxy"""
-
     cameraProxy.loop_forever()
 
 

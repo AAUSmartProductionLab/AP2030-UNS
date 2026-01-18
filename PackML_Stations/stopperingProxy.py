@@ -43,7 +43,11 @@ stopperProxy = Proxy(
     [stopper]
 )
 
-state_machine = PackMLStateMachine(BASE_TOPIC, stopperProxy, None)
+state_machine = PackMLStateMachine(
+    BASE_TOPIC, stopperProxy, None, config_path="syntegonStoppering.yaml")
+
+# Register asset after MQTT connection is established
+stopperProxy.on_ready(state_machine.register_asset)
 
 
 def main():

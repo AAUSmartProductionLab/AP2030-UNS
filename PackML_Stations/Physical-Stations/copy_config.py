@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 """
 PlatformIO pre-build script to:
-1. Copy config.json from schemas directory into the data/ folder for LittleFS
+1. Copy YAML config from AASDescriptions/Resource/configs/ into the data/ folder for LittleFS
 2. Read network configuration from root .env file and inject as build flags
+
+The YAML config is a lightweight asset description that the Registration Service
+will use to generate the full AAS description.
 """
 import shutil
 import os
@@ -69,24 +72,25 @@ else:
     print(f"  WIFI_SSID = {wifi_ssid} (default)")
 
 # =============================================================================
-# PART 2: Copy config.json for LittleFS
+# PART 2: Copy YAML config for LittleFS
 # =============================================================================
 
-# Determine which config file to use based on the environment
+# Determine which YAML config file to use based on the environment
+# These files are located in AASDescriptions/Resource/configs/
 config_files = {
-    "filling": "imaFillingSystem.json",
-    "filling_wrover": "imaFillingSystem.json",
-    "stoppering": "syntegonStopperingSystem.json"
+    "filling": "aauFillingLine.yaml",
+    "filling_wrover": "aauFillingLine.yaml",
+    "stoppering": "syntegonStoppering.yaml"
 }
 
-# Source config file path (relative to project root)
-source_config = os.path.join(project_dir, "..", "..", "MQTTSchemas", "ResourceDescription",
+# Source config file path (from AASDescriptions/Resource/configs/)
+source_config = os.path.join(project_dir, "..", "..", "AASDescriptions", "Resource", "configs",
                              config_files[build_env])
 source_config = os.path.abspath(source_config)
 
 # Target data directory
 data_dir = os.path.join(project_dir, "data")
-target_config = os.path.join(data_dir, "config.json")
+target_config = os.path.join(data_dir, "config.yaml")
 
 # Create data directory if it doesn't exist
 os.makedirs(data_dir, exist_ok=True)
@@ -95,11 +99,11 @@ os.makedirs(data_dir, exist_ok=True)
 if os.path.exists(source_config):
     shutil.copy2(source_config, target_config)
     print(
-        f"✓ Copied config for '{build_env}': {config_files.get(build_env)} → config.json")
+        f"✓ Copied YAML config for '{build_env}': {config_files.get(build_env)} → config.yaml")
     file_size = os.path.getsize(target_config)
     print(f"  Config size: {file_size:,} bytes ({file_size/1024:.1f} KB)")
 else:
-    print(f"⚠ WARNING: Config file not found at {source_config}")
+    print(f"⚠ WARNING: YAML config file not found at {source_config}")
     print(
         f"  Expected: {config_files.get(build_env)} for environment '{build_env}'")
-    print("  LittleFS will be uploaded without config.json")
+    print("  LittleFS will be uploaded without config.yaml")

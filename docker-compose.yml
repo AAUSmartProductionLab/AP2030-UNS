@@ -170,7 +170,16 @@ services:
     networks:
       - hivemq-network
     depends_on:
-      - hivemq-broker
+      hivemq-broker:
+        condition: service_started
+      aas-env:
+        condition: service_started
+      databridge:
+        condition: service_started
+      operation-delegation:
+        condition: service_started
+      registration-service:
+        condition: service_started
 
   # camera_station:
   #   extends:
@@ -188,7 +197,16 @@ services:
     networks:
       - hivemq-network
     depends_on:
-      - hivemq-broker
+      hivemq-broker:
+        condition: service_started
+      aas-env:
+        condition: service_started
+      databridge:
+        condition: service_started
+      operation-delegation:
+        condition: service_started
+      registration-service:
+        condition: service_started
 
   load_station:
     extends:
@@ -197,7 +215,16 @@ services:
     networks:
       - hivemq-network
     depends_on:
-      - hivemq-broker
+      hivemq-broker:
+        condition: service_started
+      aas-env:
+        condition: service_started
+      databridge:
+        condition: service_started
+      operation-delegation:
+        condition: service_started
+      registration-service:
+        condition: service_started
 
   unload_station:
     extends:
@@ -206,7 +233,16 @@ services:
     networks:
       - hivemq-network
     depends_on:
-      - hivemq-broker
+      hivemq-broker:
+        condition: service_started
+      aas-env:
+        condition: service_started
+      databridge:
+        condition: service_started
+      operation-delegation:
+        condition: service_started
+      registration-service:
+        condition: service_started
 
 
 

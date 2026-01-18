@@ -44,7 +44,11 @@ loadProxy = Proxy(
     [load]
 )
 
-state_machine = PackMLStateMachine(BASE_TOPIC, loadProxy, None)
+state_machine = PackMLStateMachine(
+    BASE_TOPIC, loadProxy, None, config_path="imaLoadingSystem.yaml")
+
+# Register asset after MQTT connection is established
+loadProxy.on_ready(state_machine.register_asset)
 
 
 def main():

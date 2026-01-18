@@ -158,7 +158,11 @@ fillProxy = Proxy(
     "DispensingProxy",
     [dispense, weigh_publisher, tare, refill]
 )
-state_machine = PackMLStateMachine(BASE_TOPIC, fillProxy, None)
+state_machine = PackMLStateMachine(
+    BASE_TOPIC, fillProxy, None, config_path="imaDispensing.yaml")
+
+# Register asset after MQTT connection is established
+fillProxy.on_ready(state_machine.register_asset)
 
 
 def main():

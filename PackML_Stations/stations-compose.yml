@@ -24,6 +24,7 @@ services:
     volumes:
       - .:/app  # Mount entire directory first
       - ../MQTTSchemas:/app/MQTTSchemas  # Then overlay schemas
+      - ../AASDescriptions:/app/AASDescriptions  # Mount AAS configs for registration
     command: fillingProxy.py
 
   stoppering_station:
@@ -37,6 +38,7 @@ services:
     volumes:
       - .:/app  # Mount entire directory first
       - ../MQTTSchemas:/app/MQTTSchemas  # Then overlay schemas
+      - ../AASDescriptions:/app/AASDescriptions  # Mount AAS configs for registration
     command: stopperingProxy.py
 
   load_station:
@@ -50,6 +52,7 @@ services:
     volumes:
       - .:/app  # Mount entire directory first
       - ../MQTTSchemas:/app/MQTTSchemas  # Then overlay schemas
+      - ../AASDescriptions:/app/AASDescriptions  # Mount AAS configs for registration
     command: loadProxy.py
 
   unload_station:
@@ -63,6 +66,7 @@ services:
     volumes:
       - .:/app  # Mount entire directory first
       - ../MQTTSchemas:/app/MQTTSchemas  # Then overlay schemas
+      - ../AASDescriptions:/app/AASDescriptions  # Mount AAS configs for registration
     command: unloadProxy.py
     
   camera_station:
@@ -77,6 +81,7 @@ services:
     volumes:
       - .:/app  # Mount entire directory first
       - ../MQTTSchemas:/app/MQTTSchemas  # Then overlay schemas
+      - ../AASDescriptions:/app/AASDescriptions  # Mount AAS configs for registration
     devices:
       - /dev/video0:/dev/video0
     command: cameraProxy.py

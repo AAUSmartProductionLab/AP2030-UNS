@@ -192,16 +192,37 @@ class Proxy(mqtt.Client):
         self.topics: List[Topic] = pubsubs
         self.on_connect = self.on_connect_callback
         self.on_disconnect = self.on_disconnect_callback
+        self._on_ready_callbacks = []  # Callbacks to invoke after connection
+        self._is_connected = False  # Track connection state
 
         print(f"[Proxy:{id}] Connecting to {address}:{port}...", flush=True)
         self.connect(self.address, self.port)
 
     def on_connect_callback(self, client, userdata, flags, rc, properties):
         print(f"[Proxy] Connected to Broker! Result code: {rc}", flush=True)
+        self._is_connected = True
         for topic in self.topics:
             topic.registerCallback(self)
             topic.subscribe(self)
         print(f"[Proxy] Subscribed to {len(self.topics)} topics", flush=True)
+
+        # Execute any registered on-ready callbacks
+        for callback in self._on_ready_callbacks:
+            try:
+                callback()
+            except Exception as e:
+                print(f"[Proxy] Error in on_ready callback: {e}", flush=True)
+
+    def on_ready(self, callback):
+        """Register a callback to be invoked after MQTT connection is established.
+        If already connected, the callback is executed immediately."""
+        self._on_ready_callbacks.append(callback)
+        # If already connected, execute immediately
+        if self._is_connected:
+            try:
+                callback()
+            except Exception as e:
+                print(f"[Proxy] Error in on_ready callback: {e}", flush=True)
 
     def register_topic(self, topic: Topic):
         # Register a new topic to the client

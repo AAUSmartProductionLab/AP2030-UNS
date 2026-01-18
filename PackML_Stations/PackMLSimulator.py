@@ -2,6 +2,8 @@ import enum
 import datetime
 import threading  # Add this import
 import inspect   # Add this import
+import os        # Add this import for file path handling
+from typing import Optional
 from MQTT_classes import Proxy, Publisher, ResponseAsync, Topic
 
 
@@ -33,7 +35,7 @@ class PackMLState(enum.Enum):
 
 
 class PackMLStateMachine:
-    def __init__(self,  base_topic, client: Proxy, properties):
+    def __init__(self,  base_topic, client: Proxy, properties, config_path: Optional[str] = None):
         self.state = PackMLState.IDLE
         self.base_topic = base_topic
         # Keep if used elsewhere, otherwise consider removing
@@ -42,6 +44,9 @@ class PackMLStateMachine:
         self.client = client
         self.properties = properties
         self.Uuid = None
+
+        # YAML config path for registration
+        self.config_path = config_path
 
         # ProcessQueue
         self.is_processing = False
@@ -490,3 +495,59 @@ class PackMLStateMachine:
             "ProcessQueue": self.uuids
         }
         self.state_topic.publish(response, self.client, True)
+
+    def register_asset(self):
+        """
+        Publish YAML config to Registration/Config topic for asset registration.
+
+        The Registration Service will receive the raw YAML and generate
+        the full AAS description server-side.
+        """
+        if not self.config_path:
+            return False
+
+        # Resolve config path - try multiple locations
+        config_file = None
+        possible_paths = []
+
+        if os.path.isabs(self.config_path):
+            possible_paths = [self.config_path]
+        else:
+            possible_paths = [
+                self.config_path,
+                os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                             "..", "AASDescriptions", "Resource", "configs", self.config_path),
+                os.path.join("/app", "AASDescriptions", "Resource",
+                             "configs", self.config_path),
+                os.path.join("AASDescriptions", "Resource",
+                             "configs", self.config_path),
+            ]
+
+        for path in possible_paths:
+            if os.path.exists(path):
+                config_file = path
+                break
+
+        if not config_file:
+            print(
+                f"[Registration] Config file not found: {self.config_path}", flush=True)
+            return False
+
+        try:
+            with open(config_file, 'r', encoding='utf-8') as f:
+                yaml_content = f.read()
+
+            registration_topic = self.base_topic + "/Registration/Config"
+            self.client.publish(registration_topic,
+                                yaml_content, qos=2, retain=False)
+
+            print(
+                f"[Registration] Published {len(yaml_content)} bytes to {registration_topic}", flush=True)
+            return True
+
+        except Exception as e:
+            print(f"[Registration] Error: {e}", flush=True)
+            return False
+            import traceback
+            traceback.print_exc()
+            return False

@@ -54,16 +54,19 @@ public:
      */
     void setStateMachine(PackMLStateMachine *sm);
     /**
-     * @brief Publish the stored configuration JSON (from filesystem) to MQTT
+     * @brief Publish the stored YAML configuration (from filesystem) to MQTT
+     * 
+     * Sends the YAML config to the Registration/Config topic where the
+     * Registration Service will generate the full AAS description.
      */
     void publishDescriptionFromFile();
 
     /**
-     * @brief Read configuration JSON from filesystem (LittleFS)
-     * @param path Optional path (default: "/config.json")
-     * @return The JSON string, or empty String if failed
+     * @brief Read configuration YAML from filesystem (LittleFS)
+     * @param path Optional path (default: "/config.yaml")
+     * @return The YAML string, or empty String if failed
      */
-    String readConfig(const char *path = "/config.json");
+    String readConfig(const char *path = "/config.yaml");
 
 private:
     // WiFi and MQTT Configuration
