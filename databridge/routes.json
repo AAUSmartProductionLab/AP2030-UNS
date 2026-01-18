@@ -1,5 +1,25 @@
 [
   {
+    "datasource": "NN_Nybrovej_InnoLab_Stoppering_DATA_State",
+    "transformers": [
+      "syntegonStopperingSystemAAS_PackMLState_State_transformer",
+      "syntegonStopperingSystemAAS_OccupationState_ProcessQueue_transformer"
+    ],
+    "datasinks": [
+      "syntegonStopperingSystemAAS_PackMLState_sink_State",
+      "syntegonStopperingSystemAAS_OccupationState_sink_ProcessQueue"
+    ],
+    "trigger": "event",
+    "datasinkMappingConfiguration": {
+      "syntegonStopperingSystemAAS_PackMLState_sink_State": [
+        "syntegonStopperingSystemAAS_PackMLState_State_transformer"
+      ],
+      "syntegonStopperingSystemAAS_OccupationState_sink_ProcessQueue": [
+        "syntegonStopperingSystemAAS_OccupationState_ProcessQueue_transformer"
+      ]
+    }
+  },
+  {
     "datasource": "NN_Nybrovej_InnoLab_Dispensing_DATA_State",
     "transformers": [
       "imaDispensingSystemAAS_PackMLState_State_transformer",
@@ -28,5 +48,45 @@
       "imaDispensingSystemAAS_Weight_sink_Weight"
     ],
     "trigger": "event"
+  },
+  {
+    "datasource": "NN_Nybrovej_InnoLab_Loading_DATA_State",
+    "transformers": [
+      "imaLoadingSystemAAS_PackMLState_State_transformer",
+      "imaLoadingSystemAAS_OccupationState_ProcessQueue_transformer"
+    ],
+    "datasinks": [
+      "imaLoadingSystemAAS_PackMLState_sink_State",
+      "imaLoadingSystemAAS_OccupationState_sink_ProcessQueue"
+    ],
+    "trigger": "event",
+    "datasinkMappingConfiguration": {
+      "imaLoadingSystemAAS_PackMLState_sink_State": [
+        "imaLoadingSystemAAS_PackMLState_State_transformer"
+      ],
+      "imaLoadingSystemAAS_OccupationState_sink_ProcessQueue": [
+        "imaLoadingSystemAAS_OccupationState_ProcessQueue_transformer"
+      ]
+    }
+  },
+  {
+    "datasource": "NN_Nybrovej_InnoLab_Unloading_DATA_State",
+    "transformers": [
+      "optimaUnloadingSystemAAS_PackMLState_State_transformer",
+      "optimaUnloadingSystemAAS_OccupationState_ProcessQueue_transformer"
+    ],
+    "datasinks": [
+      "optimaUnloadingSystemAAS_PackMLState_sink_State",
+      "optimaUnloadingSystemAAS_OccupationState_sink_ProcessQueue"
+    ],
+    "trigger": "event",
+    "datasinkMappingConfiguration": {
+      "optimaUnloadingSystemAAS_PackMLState_sink_State": [
+        "optimaUnloadingSystemAAS_PackMLState_State_transformer"
+      ],
+      "optimaUnloadingSystemAAS_OccupationState_sink_ProcessQueue": [
+        "optimaUnloadingSystemAAS_OccupationState_ProcessQueue_transformer"
+      ]
+    }
   }
 ]

@@ -1,5 +1,19 @@
 [
   {
+    "uniqueId": "syntegonStopperingSystemAAS_PackMLState_State_transformer",
+    "queryLanguage": "JSONATA",
+    "queryPath": "queries/syntegonStopperingSystemAAS_PackMLState_State.jsonata",
+    "inputType": "JsonString",
+    "outputType": "JsonString"
+  },
+  {
+    "uniqueId": "syntegonStopperingSystemAAS_OccupationState_ProcessQueue_transformer",
+    "queryLanguage": "JSONATA",
+    "queryPath": "queries/syntegonStopperingSystemAAS_OccupationState_ProcessQueue.jsonata",
+    "inputType": "JsonString",
+    "outputType": "JsonString"
+  },
+  {
     "uniqueId": "imaDispensingSystemAAS_PackMLState_State_transformer",
     "queryLanguage": "JSONATA",
     "queryPath": "queries/imaDispensingSystemAAS_PackMLState_State.jsonata",
@@ -17,6 +31,34 @@
     "uniqueId": "imaDispensingSystemAAS_Weight_Weight_transformer",
     "queryLanguage": "JSONATA",
     "queryPath": "queries/imaDispensingSystemAAS_Weight_Weight.jsonata",
+    "inputType": "JsonString",
+    "outputType": "JsonString"
+  },
+  {
+    "uniqueId": "imaLoadingSystemAAS_PackMLState_State_transformer",
+    "queryLanguage": "JSONATA",
+    "queryPath": "queries/imaLoadingSystemAAS_PackMLState_State.jsonata",
+    "inputType": "JsonString",
+    "outputType": "JsonString"
+  },
+  {
+    "uniqueId": "imaLoadingSystemAAS_OccupationState_ProcessQueue_transformer",
+    "queryLanguage": "JSONATA",
+    "queryPath": "queries/imaLoadingSystemAAS_OccupationState_ProcessQueue.jsonata",
+    "inputType": "JsonString",
+    "outputType": "JsonString"
+  },
+  {
+    "uniqueId": "optimaUnloadingSystemAAS_PackMLState_State_transformer",
+    "queryLanguage": "JSONATA",
+    "queryPath": "queries/optimaUnloadingSystemAAS_PackMLState_State.jsonata",
+    "inputType": "JsonString",
+    "outputType": "JsonString"
+  },
+  {
+    "uniqueId": "optimaUnloadingSystemAAS_OccupationState_ProcessQueue_transformer",
+    "queryLanguage": "JSONATA",
+    "queryPath": "queries/optimaUnloadingSystemAAS_OccupationState_ProcessQueue.jsonata",
     "inputType": "JsonString",
     "outputType": "JsonString"
   }

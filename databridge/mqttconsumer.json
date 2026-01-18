@@ -1,5 +1,11 @@
 [
   {
+    "uniqueId": "NN_Nybrovej_InnoLab_Stoppering_DATA_State",
+    "serverUrl": "hivemq-broker",
+    "serverPort": 1883,
+    "topic": "NN/Nybrovej/InnoLab/Stoppering/DATA/State"
+  },
+  {
     "uniqueId": "NN_Nybrovej_InnoLab_Dispensing_DATA_State",
     "serverUrl": "hivemq-broker",
     "serverPort": 1883,
@@ -10,5 +16,17 @@
     "serverUrl": "hivemq-broker",
     "serverPort": 1883,
     "topic": "NN/Nybrovej/InnoLab/Dispensing/DATA/Weight"
+  },
+  {
+    "uniqueId": "NN_Nybrovej_InnoLab_Loading_DATA_State",
+    "serverUrl": "hivemq-broker",
+    "serverPort": 1883,
+    "topic": "NN/Nybrovej/InnoLab/Loading/DATA/State"
+  },
+  {
+    "uniqueId": "NN_Nybrovej_InnoLab_Unloading_DATA_State",
+    "serverUrl": "hivemq-broker",
+    "serverPort": 1883,
+    "topic": "NN/Nybrovej/InnoLab/Unloading/DATA/State"
   }
 ]

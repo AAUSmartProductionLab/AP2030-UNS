@@ -51,7 +51,7 @@ class DataBridgeFromConfig:
 
         # Track topics to avoid duplicates
         self._topic_ids: Dict[str, str] = {}
-        
+
         # Track transformer and sink IDs to avoid duplicates
         self._transformer_ids: set = set()
         self._sink_ids: set = set()
@@ -59,16 +59,16 @@ class DataBridgeFromConfig:
         # Track transformer metadata for JSONATA generation
         # Maps transformer_id -> {variable_name, field_name, mqtt_field}
         self._transformer_metadata: Dict[str, Dict] = {}
-        
+
         # Load existing configurations if output_dir provided
         if self.output_dir:
             self._load_existing()
-    
+
     def _load_existing(self):
         """Load existing databridge configurations to prevent duplicates."""
         if not self.output_dir or not self.output_dir.exists():
             return
-            
+
         # Load existing consumers
         consumers_path = self.output_dir / 'mqttconsumer.json'
         if consumers_path.exists():
@@ -83,7 +83,7 @@ class DataBridgeFromConfig:
                 logger.info(f"Loaded {len(self.consumers)} existing consumers")
             except Exception as e:
                 logger.warning(f"Could not load existing consumers: {e}")
-        
+
         # Load existing transformers
         transformers_path = self.output_dir / 'jsonatatransformer.json'
         if transformers_path.exists():
@@ -92,10 +92,11 @@ class DataBridgeFromConfig:
                     self.transformers = json.load(f)
                     for t in self.transformers:
                         self._transformer_ids.add(t.get('uniqueId', ''))
-                logger.info(f"Loaded {len(self.transformers)} existing transformers")
+                logger.info(
+                    f"Loaded {len(self.transformers)} existing transformers")
             except Exception as e:
                 logger.warning(f"Could not load existing transformers: {e}")
-        
+
         # Load existing sinks
         sinks_path = self.output_dir / 'aasserver.json'
         if sinks_path.exists():
@@ -107,7 +108,7 @@ class DataBridgeFromConfig:
                 logger.info(f"Loaded {len(self.sinks)} existing sinks")
             except Exception as e:
                 logger.warning(f"Could not load existing sinks: {e}")
-        
+
         # Load existing routes
         routes_path = self.output_dir / 'routes.json'
         if routes_path.exists():
@@ -272,7 +273,7 @@ class DataBridgeFromConfig:
         # Check if already exists
         if transformer_id in self._transformer_ids:
             return transformer_id
-        
+
         self._transformer_ids.add(transformer_id)
 
         # Create JSONATA query file name
@@ -314,7 +315,7 @@ class DataBridgeFromConfig:
         # Check if already exists
         if sink_id in self._sink_ids:
             return sink_id
-        
+
         self._sink_ids.add(sink_id)
 
         # Build the submodel element path
@@ -352,7 +353,8 @@ class DataBridgeFromConfig:
         # Check if a route for this datasource already exists
         for existing_route in self.routes:
             if existing_route.get('datasource') == consumer_id:
-                logger.debug(f"Route for datasource {consumer_id} already exists, skipping")
+                logger.debug(
+                    f"Route for datasource {consumer_id} already exists, skipping")
                 return 0
 
         route = {
@@ -463,7 +465,8 @@ def generate_databridge_from_configs(config_paths: List[str],
         Dict with total counts of generated configurations
     """
     # Pass output_dir to load existing configs and prevent duplicates
-    generator = DataBridgeFromConfig(mqtt_broker, mqtt_port, basyx_url, output_dir)
+    generator = DataBridgeFromConfig(
+        mqtt_broker, mqtt_port, basyx_url, output_dir)
 
     total_counts = {'consumers': 0, 'transformers': 0, 'sinks': 0, 'routes': 0}
 
