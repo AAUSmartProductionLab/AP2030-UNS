@@ -15,6 +15,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
+# Remove the copied databridge directory to avoid confusion
+# The actual databridge configs should be in the mounted volume at /databridge
+RUN rm -rf /app/databridge
+
 # Create mount points for databridge and operation-delegation configs
 RUN mkdir -p /databridge
 RUN mkdir -p /operation-delegation/config

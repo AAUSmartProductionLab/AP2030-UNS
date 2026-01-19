@@ -93,7 +93,9 @@ class UnifiedRegistrationService:
         # In container, OperationDelegation is mounted at /app/OperationDelegation
         # so project_root should be the same as script_dir
         self.project_root = self.script_dir
-        self.databridge_dir = self.project_root / 'databridge'
+        # Use mounted databridge directory (/databridge) instead of /app/databridge
+        # This ensures files are written to the shared volume for databridge container
+        self.databridge_dir = Path('/databridge')
         self.topics_json_path = self.project_root / \
             'OperationDelegation' / 'config' / 'topics.json'
 

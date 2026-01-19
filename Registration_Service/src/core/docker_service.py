@@ -54,10 +54,13 @@ class DockerService:
     
     def restart_container(self, container_name: str, timeout: int = TimeoutDefaults.DOCKER_RESTART) -> bool:
         """
-        Restart a Docker container.
+        Restart a Docker container by service name.
+        
+        First tries to find the container by compose service label,
+        then falls back to direct name match.
         
         Args:
-            container_name: Name of the container to restart
+            container_name: Name of the container service to restart
             timeout: Timeout for the restart operation
             
         Returns:
@@ -69,6 +72,25 @@ class DockerService:
         
         try:
             logger.info(f"Restarting container: {container_name}")
+            
+            # First, try to find the actual container name using compose label
+            try:
+                result = subprocess.run(
+                    ['docker', 'ps', '--filter', f'label=com.docker.compose.service={container_name}', 
+                     '--format', '{{.Names}}'],
+                    capture_output=True,
+                    text=True,
+                    timeout=5
+                )
+                
+                if result.returncode == 0 and result.stdout.strip():
+                    actual_name = result.stdout.strip().split('\n')[0]
+                    logger.debug(f"Found container by label: {actual_name}")
+                    container_name = actual_name
+            except Exception as e:
+                logger.debug(f"Could not find container by label: {e}")
+            
+            # Now restart using the actual container name
             result = subprocess.run(
                 ['docker', 'restart', container_name],
                 capture_output=True,
@@ -80,7 +102,7 @@ class DockerService:
                 logger.info(f"✓ Restarted {container_name}")
                 return True
             else:
-                logger.warning(f"Failed to restart {container_name}: {result.stderr}")
+                logger.warning(f"Failed to restart {container_name}: {result.stderr.strip()}")
                 return False
                 
         except subprocess.TimeoutExpired:
