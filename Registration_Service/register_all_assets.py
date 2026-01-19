@@ -1,20 +1,23 @@
 #!/usr/bin/env python3
 """
-Register All Assets Script
+Register All Assets via MQTT
 
-Registers all assets that have configuration files in the configs folder.
-Processes each YAML config file and registers it with BaSyx.
+Publishes all asset configuration files to MQTT so the registration service
+can process them and register with BaSyx.
 
 Usage:
     python register_all_assets.py
     python register_all_assets.py --config-dir ../AASDescriptions/Resource/configs
-    python register_all_assets.py --basyx-url http://localhost:8081 --dry-run
-    python register_all_assets.py --validate --keep-output
+    python register_all_assets.py --mqtt-broker 192.168.0.104 --dry-run
 """
 
 import sys
 import os
+import time
+import json
 from pathlib import Path
+from typing import List, Dict, Tuple
+import argparse
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -25,28 +28,15 @@ env_path = Path(__file__).parent.parent / '.env'
 if env_path.exists():
     load_dotenv(env_path)
 
+import yaml
+import paho.mqtt.client as mqtt
+
 # Now import after .env is loaded
 from src.core.constants import (
-    DEFAULT_BASYX_URL,
     DEFAULT_MQTT_BROKER,
     DEFAULT_MQTT_PORT,
-    DEFAULT_DELEGATION_URL,
-    DEFAULT_AAS_REGISTRY_URL,
-    DEFAULT_SM_REGISTRY_URL,
-    EXTERNAL_BASYX_HOST,
     PathDefaults
 )
-from src import (
-    UnifiedRegistrationService,
-    BaSyxConfig,
-    ConfigParser
-)
-import json
-import tempfile
-import shutil
-import yaml
-from typing import List, Dict, Tuple
-import argparse
 
 
 class Colors:
@@ -105,38 +95,48 @@ def find_config_files(config_dir: str) -> List[Path]:
 def get_asset_info(config_path: Path) -> Dict[str, str]:
     """Extract basic asset information from config file"""
     try:
-        parser = ConfigParser(config_path=str(config_path))
+        with open(config_path, 'r') as f:
+            config = yaml.safe_load(f)
+        
+        # Config contains a single system with the system ID as the top-level key
+        system_id = list(config.keys())[0]
+        system_config = config[system_id]
+        
         return {
-            'id_short': parser.id_short,
-            'aas_id': parser.aas_id,
-            'global_asset_id': parser.global_asset_id,
+            'system_id': system_id,
+            'id_short': system_config.get('idShort', system_id),
+            'aas_id': system_config.get('id', ''),
             'file_name': config_path.name
         }
     except Exception as e:
         return {
+            'system_id': 'UNKNOWN',
             'id_short': 'UNKNOWN',
             'aas_id': 'UNKNOWN',
-            'global_asset_id': 'UNKNOWN',
             'file_name': config_path.name,
             'error': str(e)
         }
 
 
-def register_asset(
+def publish_config(
     config_path: Path,
-    service: UnifiedRegistrationService,
-    validate: bool = True,
-    output_dir: str = None
+    mqtt_client: mqtt.Client,
+    base_topic: str = "NN/Nybrovej/InnoLab",
+    delay: float = 0.5
 ) -> Tuple[bool, Dict]:
     """
-    Register a single asset from its config file
+    Publish a config file to MQTT for registration.
+
+    Args:
+        config_path: Path to the YAML config file
+        mqtt_client: Connected MQTT client
+        base_topic: Base MQTT topic prefix
+        delay: Delay after publishing (seconds)
 
     Returns:
         Tuple of (success, result_info)
     """
     try:
-        print_info(f"Processing {config_path.name}...")
-
         # Get asset info
         asset_info = get_asset_info(config_path)
 
@@ -144,131 +144,93 @@ def register_asset(
             print_failure(f"Failed to parse config: {asset_info['error']}")
             return False, {'error': 'Config parsing failed', **asset_info}
 
+        system_id = asset_info['system_id']
+        
+        # Read the raw YAML content
+        with open(config_path, 'r') as f:
+            yaml_content = f.read()
+
+        # Build the topic: NN/Nybrovej/InnoLab/{systemId}/Registration/Config
+        topic = f"{base_topic}/{system_id}/Registration/Config"
+
+        print_info(f"Publishing to: {topic}")
         print_info(f"  ID Short: {asset_info['id_short']}")
-        print_info(f"  AAS ID: {asset_info['aas_id']}")
 
-        # Register (without restarting services for each asset)
-        success = service.register_from_yaml_config(
-            config_path=str(config_path),
-            validate_aas=validate,
-            restart_services=False
-        )
+        # Publish the raw YAML content
+        result = mqtt_client.publish(topic, yaml_content, qos=2)
+        result.wait_for_publish()
 
-        if success:
-            print_success(f"Successfully registered {asset_info['id_short']}")
-            return True, {'registered': True, **asset_info}
+        if result.rc == mqtt.MQTT_ERR_SUCCESS:
+            print_success(f"Published {asset_info['id_short']}")
+            # Small delay to allow registration service to process
+            time.sleep(delay)
+            return True, {'published': True, **asset_info}
         else:
-            print_failure(f"Registration failed for {asset_info['id_short']}")
-            return False, {'registered': False, 'error': 'Registration failed', **asset_info}
+            print_failure(f"Failed to publish: {result.rc}")
+            return False, {'published': False, 'error': f'MQTT error: {result.rc}', **asset_info}
 
     except Exception as e:
-        print_failure(f"Error registering {config_path.name}: {e}")
+        print_failure(f"Error publishing {config_path.name}: {e}")
         import traceback
         traceback.print_exc()
         return False, {'error': str(e), 'file_name': config_path.name}
 
 
-def check_basyx_connection(basyx_url: str) -> bool:
-    """Check if BaSyx server is reachable"""
-    import requests
-    try:
-        response = requests.get(f"{basyx_url}/shells", timeout=5)
-        if response.status_code in [200, 401]:
-            return True
-        else:
-            print_warning(f"BaSyx returned status {response.status_code}")
-            return False
-    except requests.exceptions.ConnectionError:
-        print_failure(f"Cannot connect to BaSyx at {basyx_url}")
-        return False
-    except Exception as e:
-        print_failure(f"Error checking BaSyx connection: {e}")
-        return False
-
-
-def extract_topics_from_config(config_path: Path) -> Tuple[str, Dict]:
+def check_mqtt_connection(broker: str, port: int) -> Tuple[bool, mqtt.Client]:
     """
-    Extract MQTT topic mappings from a config file for the Operation Delegation Service.
-
+    Connect to MQTT broker.
+    
     Returns:
-        Tuple of (asset_id_short, topics_config) or (None, None) if extraction fails
+        Tuple of (success, client)
     """
     try:
-        with open(config_path, 'r') as f:
-            config = yaml.safe_load(f)
-
-        # Use ConfigParser to extract topics (schemas are referenced, mappings auto-determined at runtime)
-        from src.config_parser import ConfigParser
-        parser = ConfigParser(config_data=config)
+        client = mqtt.Client(
+            mqtt.CallbackAPIVersion.VERSION2,
+            client_id=f"asset-publisher-{os.getpid()}"
+        )
         
-        # Get the idShort as the asset ID
-        asset_id = parser.id_short
+        connected = False
         
-        # Get the operation delegation entry (includes schema URLs for auto-mapping)
-        topics_dict = parser.get_operation_delegation_entry()
+        def on_connect(client, userdata, flags, reason_code, properties):
+            nonlocal connected
+            if reason_code == 0:
+                connected = True
         
-        return asset_id, topics_dict
-
+        client.on_connect = on_connect
+        client.connect(broker, port, keepalive=60)
+        client.loop_start()
+        
+        # Wait for connection
+        for _ in range(50):  # 5 seconds timeout
+            if connected:
+                return True, client
+            time.sleep(0.1)
+        
+        print_failure(f"Connection timeout to {broker}:{port}")
+        return False, None
+        
     except Exception as e:
-        print_warning(f"Failed to extract topics from {config_path.name}: {e}")
-        return None, None
-
-
-def generate_topics_config(config_files: List[Path], output_path: Path) -> bool:
-    """
-    Generate topics.json for the Operation Delegation Service from all config files.
-
-    Args:
-        config_files: List of YAML config file paths
-        output_path: Path to write the topics.json file
-
-    Returns:
-        True if successful, False otherwise
-    """
-    topics_config = {}
-
-    for config_file in config_files:
-        asset_id, asset_topics = extract_topics_from_config(config_file)
-        if asset_id and asset_topics:
-            topics_config[asset_id] = asset_topics
-
-    if not topics_config:
-        print_warning("No topic configurations extracted")
-        return False
-
-    try:
-        # Ensure output directory exists
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-
-        with open(output_path, 'w') as f:
-            json.dump(topics_config, f, indent=4)
-
-        print_success(
-            f"Generated topics.json with {len(topics_config)} assets at {output_path}")
-        return True
-
-    except Exception as e:
-        print_failure(f"Failed to write topics.json: {e}")
-        return False
+        print_failure(f"Cannot connect to MQTT broker at {broker}:{port}: {e}")
+        return False, None
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Register all assets from config files',
+        description='Publish all asset configs to MQTT for registration',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Register all assets with default settings
+  # Publish all assets with default settings
   python register_all_assets.py
   
   # Use custom config directory
   python register_all_assets.py --config-dir /path/to/configs
   
-  # Dry run (no actual registration)
+  # Dry run (no actual publishing)
   python register_all_assets.py --dry-run
   
-  # Custom BaSyx URL with validation
-  python register_all_assets.py --basyx-url http://192.168.0.104:8081 --validate
+  # Custom MQTT broker
+  python register_all_assets.py --mqtt-broker 192.168.0.104
         """
     )
 
@@ -276,11 +238,6 @@ Examples:
         '--config-dir',
         default=f'../{PathDefaults.CONFIG_DIR}',
         help=f'Directory containing config YAML files (default: ../{PathDefaults.CONFIG_DIR})'
-    )
-    parser.add_argument(
-        '--basyx-url',
-        default=DEFAULT_BASYX_URL,
-        help=f'BaSyx server URL (default: {DEFAULT_BASYX_URL})'
     )
     parser.add_argument(
         '--mqtt-broker',
@@ -294,34 +251,20 @@ Examples:
         help=f'MQTT broker port (default: {DEFAULT_MQTT_PORT})'
     )
     parser.add_argument(
-        '--delegation-url',
-        default=DEFAULT_DELEGATION_URL,
-        help=f'Operation delegation service URL (default: {DEFAULT_DELEGATION_URL})'
+        '--base-topic',
+        default='NN/Nybrovej/InnoLab',
+        help='Base MQTT topic prefix (default: NN/Nybrovej/InnoLab)'
     )
     parser.add_argument(
-        '--aas-registry-url',
-        default=DEFAULT_AAS_REGISTRY_URL,
-        help=f'AAS registry URL (default: {DEFAULT_AAS_REGISTRY_URL})'
-    )
-    parser.add_argument(
-        '--sm-registry-url',
-        default=DEFAULT_SM_REGISTRY_URL,
-        help=f'Submodel registry URL (default: {DEFAULT_SM_REGISTRY_URL})'
-    )
-    parser.add_argument(
-        '--validate',
-        action='store_true',
-        help='Validate AAS before registration'
+        '--delay',
+        type=float,
+        default=1.0,
+        help='Delay between publishing each config in seconds (default: 1.0)'
     )
     parser.add_argument(
         '--dry-run',
         action='store_true',
-        help='Show what would be registered without actually registering'
-    )
-    parser.add_argument(
-        '--keep-output',
-        action='store_true',
-        help='Keep generated output files'
+        help='Show what would be published without actually publishing'
     )
     parser.add_argument(
         '--continue-on-error',
@@ -333,17 +276,6 @@ Examples:
         '--filter',
         help='Only process config files matching this pattern (e.g., "planar*")'
     )
-    parser.add_argument(
-        '--generate-topics',
-        action='store_true',
-        default=True,
-        help='Generate topics.json for Operation Delegation Service (default: True)'
-    )
-    parser.add_argument(
-        '--topics-output',
-        default='../OperationDelegation/config/topics.json',
-        help='Output path for topics.json (default: ../OperationDelegation/config/topics.json)'
-    )
 
     args = parser.parse_args()
 
@@ -351,13 +283,12 @@ Examples:
     script_dir = Path(__file__).parent
     config_dir = script_dir / args.config_dir
 
-    print_header("Asset Registration Service")
+    print_header("Asset Registration via MQTT")
     print(f"{Colors.BOLD}Configuration:{Colors.END}")
     print(f"  Config Dir: {config_dir}")
-    print(f"  BaSyx URL: {args.basyx_url}")
     print(f"  MQTT Broker: {args.mqtt_broker}:{args.mqtt_port}")
-    print(f"  Delegation Service: {args.delegation_url}")
-    print(f"  Validate: {args.validate}")
+    print(f"  Base Topic: {args.base_topic}")
+    print(f"  Delay: {args.delay}s")
     print(f"  Dry Run: {args.dry_run}")
     if args.filter:
         print(f"  Filter: {args.filter}")
@@ -384,49 +315,18 @@ Examples:
         print_info(f"  - {f.name}")
     print()
 
-    # Generate topics.json for Operation Delegation Service
-    if args.generate_topics:
-        print_info("Generating topics.json for Operation Delegation Service...")
-        topics_output_path = script_dir / args.topics_output
-        generate_topics_config(config_files, topics_output_path)
-        print()
-
-    # Create temp output directory if keeping output
-    output_dir = None
-    if args.keep_output:
-        output_dir = tempfile.mkdtemp(prefix='asset_registration_')
-        print_info(f"Output directory: {output_dir}\n")
-
-    # Check BaSyx connection (unless dry run)
+    # Connect to MQTT (unless dry run)
+    mqtt_client = None
     if not args.dry_run:
-        print_info("Checking BaSyx connection...")
-        if not check_basyx_connection(args.basyx_url):
-            print_failure("Cannot connect to BaSyx server. Exiting.")
+        print_info("Connecting to MQTT broker...")
+        success, mqtt_client = check_mqtt_connection(args.mqtt_broker, args.mqtt_port)
+        if not success:
+            print_failure("Cannot connect to MQTT broker. Exiting.")
             return 1
-        print_success("BaSyx server is reachable\n")
-
-    # Initialize service (unless dry run)
-    service = None
-    if not args.dry_run:
-        try:
-            config = BaSyxConfig(
-                base_url=args.basyx_url,
-                aas_registry_url=args.aas_registry_url,
-                sm_registry_url=args.sm_registry_url
-            )
-            service = UnifiedRegistrationService(
-                config=config,
-                mqtt_broker=args.mqtt_broker,
-                mqtt_port=args.mqtt_port,
-                delegation_service_url=args.delegation_url
-            )
-            print_success("Registration service initialized\n")
-        except Exception as e:
-            print_failure(f"Failed to initialize service: {e}")
-            return 1
+        print_success("Connected to MQTT broker\n")
 
     # Process each config file
-    print_header("Processing Assets")
+    print_header("Publishing Configs")
 
     results = {
         'total': len(config_files),
@@ -436,27 +336,26 @@ Examples:
     }
 
     for idx, config_file in enumerate(config_files, 1):
-        print_progress(idx, len(config_files),
-                       f"Processing {config_file.name}")
-        print()
+        print_progress(idx, len(config_files), f"Processing {config_file.name}")
 
         if args.dry_run:
-            # Just show what would be registered
+            # Just show what would be published
             asset_info = get_asset_info(config_file)
             if 'error' in asset_info:
                 print_failure(f"Cannot parse config: {asset_info['error']}")
                 results['failed'].append(asset_info)
             else:
-                print_info(f"Would register: {asset_info['id_short']}")
-                print_info(f"  AAS ID: {asset_info['aas_id']}")
+                topic = f"{args.base_topic}/{asset_info['system_id']}/Registration/Config"
+                print_info(f"Would publish to: {topic}")
+                print_info(f"  ID Short: {asset_info['id_short']}")
                 results['skipped'].append(asset_info)
         else:
-            # Actual registration
-            success, result_info = register_asset(
+            # Actual publishing
+            success, result_info = publish_config(
                 config_file,
-                service,
-                validate=args.validate,
-                output_dir=output_dir
+                mqtt_client,
+                base_topic=args.base_topic,
+                delay=args.delay
             )
 
             if success:
@@ -470,39 +369,41 @@ Examples:
 
         print()  # Spacing between assets
 
+    # Cleanup MQTT connection
+    if mqtt_client:
+        mqtt_client.loop_stop()
+        mqtt_client.disconnect()
+
     # Summary
-    print_header("Registration Summary")
+    print_header("Publishing Summary")
 
     if args.dry_run:
-        print(
-            f"{Colors.BOLD}Dry Run - No assets were actually registered{Colors.END}\n")
+        print(f"{Colors.BOLD}Dry Run - No configs were actually published{Colors.END}\n")
         print(f"Total configs found: {results['total']}")
         print(f"  Valid configs: {len(results['skipped'])}")
         print(f"  Invalid configs: {len(results['failed'])}")
     else:
         print(f"{Colors.BOLD}Total: {results['total']}{Colors.END}")
-        print(
-            f"{Colors.GREEN}Successful: {len(results['successful'])}{Colors.END}")
+        print(f"{Colors.GREEN}Published: {len(results['successful'])}{Colors.END}")
         print(f"{Colors.RED}Failed: {len(results['failed'])}{Colors.END}")
         print()
 
         if results['successful']:
-            print(f"{Colors.BOLD}Successfully Registered Assets:{Colors.END}")
+            print(f"{Colors.BOLD}Successfully Published:{Colors.END}")
             for asset in results['successful']:
                 print_success(f"{asset['id_short']} ({asset['file_name']})")
             print()
 
         if results['failed']:
-            print(f"{Colors.BOLD}Failed Registrations:{Colors.END}")
+            print(f"{Colors.BOLD}Failed:{Colors.END}")
             for asset in results['failed']:
                 file_name = asset.get('file_name', 'unknown')
                 error = asset.get('error', 'Unknown error')
                 print_failure(f"{file_name}: {error}")
             print()
 
-    # Show output directory if kept
-    if args.keep_output and output_dir:
-        print(f"{Colors.YELLOW}Output files kept at: {output_dir}{Colors.END}\n")
+        print_info("Check registration-service logs for registration results:")
+        print_info("  docker compose logs registration-service --tail 100")
 
     # Return exit code
     if args.dry_run:

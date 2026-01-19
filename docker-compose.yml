@@ -168,7 +168,14 @@ services:
     networks:
       - hivemq-network
     depends_on:
-      - hivemq-broker
+      hivemq-broker:
+        condition: service_started
+      aas-env:
+        condition: service_started
+      databridge:
+        condition: service_started
+      registration-service:
+        condition: service_healthy
     restart: unless-stopped
 
   production_planner:
@@ -263,39 +270,6 @@ services:
 
 
 ################################### BASYX CONTAINERS ####################################
-
-  # Note: Operation Delegation is now integrated into the registration-service container
-  # The unified service handles both MQTT registration and Operation Delegation HTTP API
-  # 
-  # Legacy standalone operation-delegation service (kept for reference):
-  # operation-delegation:
-  #   build:
-  #     context: ./OperationDelegation
-  #     dockerfile: Dockerfile
-  #   container_name: operation-delegation
-  #   environment:
-  #     - MQTT_BROKER=${MQTT_BROKER:-hivemq-broker}
-  #     - MQTT_PORT=${MQTT_PORT:-1883}
-  #     - PORT=8087
-  #     - OPERATION_TIMEOUT=30
-  #     - TOPIC_CONFIG_PATH=/app/config/topics.json
-  #     - AAS_SERVER_URL=http://${AAS_SERVER:-aas-env}:${AAS_PORT:-8081}
-  #     - AAS_BASE_URL=https://smartproductionlab.aau.dk
-  #   volumes:
-  #     - ./OperationDelegation/config:/app/config:ro
-  #   ports:
-  #     - '8087:8087'
-  #   restart: unless-stopped
-  #   depends_on:
-  #     - hivemq-broker
-  #   networks:
-  #     - hivemq-network
-  #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:8087/health"]
-  #     interval: 30s
-  #     timeout: 3s
-  #     retries: 3
-  #     start_period: 10s
 
   aas-env:
     image: eclipsebasyx/aas-environment:2.0.0-SNAPSHOT

@@ -119,7 +119,7 @@ class DataTypes:
 
 class PathDefaults:
     """Default paths for configuration files."""
-    TOPICS_JSON: Final[str] = "OperationDelegation/config/topics.json"
+    TOPICS_JSON: Final[str] = "config/topics.json"
     DATABRIDGE_DIR: Final[str] = "databridge"
     DATABRIDGE_QUERIES: Final[str] = "databridge/queries"
     CONFIG_DIR: Final[str] = "AASDescriptions/Resource/configs"

@@ -299,18 +299,22 @@ Examples:
                 sys.exit(1)
 
         elif args.command == 'listen':
-            # Load existing topics.json into in-memory config if provided
-            if args.topics_json:
-                topics_path = Path(args.topics_json)
-                if topics_path.exists():
-                    import json
-                    try:
-                        with open(topics_path, 'r') as f:
-                            existing_config = json.load(f)
-                        set_full_topic_config(existing_config)
-                        logger.info(f"Loaded {len(existing_config)} topic configs from {topics_path}")
-                    except Exception as e:
-                        logger.warning(f"Failed to load topics.json: {e}")
+            # Always load existing topics.json for persistence across restarts
+            # Default path is /app/config/topics.json in container
+            default_topics_path = Path('/app/config/topics.json')
+            topics_path = Path(args.topics_json) if args.topics_json else default_topics_path
+            
+            if topics_path.exists():
+                import json
+                try:
+                    with open(topics_path, 'r') as f:
+                        existing_config = json.load(f)
+                    set_full_topic_config(existing_config)
+                    logger.info(f"Loaded {len(existing_config)} topic configs from {topics_path}")
+                except Exception as e:
+                    logger.warning(f"Failed to load topics.json: {e}")
+            else:
+                logger.info(f"No existing topics.json found at {topics_path} - starting with empty config")
             
             # Start Operation Delegation Flask API in background thread
             logger.info(f"Starting Operation Delegation API on port {args.delegation_port}...")

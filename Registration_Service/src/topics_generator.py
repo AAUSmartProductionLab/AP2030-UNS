@@ -29,14 +29,14 @@ class TopicsGenerator:
         Initialize the topics generator.
         
         Args:
-            output_path: Path to topics.json file (default: ../OperationDelegation/config/topics.json)
+            output_path: Path to topics.json file (default: ../config/topics.json)
         """
         if output_path:
             self.output_path = Path(output_path)
         else:
-            # Default to OperationDelegation/config/topics.json relative to Registration_Service
+            # Default to config/topics.json relative to Registration_Service
             script_dir = Path(__file__).resolve().parent.parent
-            self.output_path = script_dir.parent / 'OperationDelegation' / 'config' / 'topics.json'
+            self.output_path = script_dir.parent / 'config' / 'topics.json'
         
         # Current topics configuration
         self.topics: Dict[str, Any] = {}
