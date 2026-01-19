@@ -58,10 +58,17 @@ class HierarchicalStructuresSubmodelBuilder:
         # Create EntryNode with relationships
         entry_node = self._create_entry_node(system_id, global_asset_id, hs_config, archetype)
         
+        # Create display name as LangStringSet
+        display_name_value = hs_config.get('Name', 'HierarchicalStructures')
+        if isinstance(display_name_value, str):
+            display_name = model.LangStringSet({"en": display_name_value})
+        else:
+            display_name = display_name_value
+        
         submodel = model.Submodel(
             id_=f"{self.base_url}/submodels/instances/{system_id}/HierarchicalStructures",
             id_short="HierarchicalStructures",
-            display_name=hs_config.get('Name', 'HierarchicalStructures'),
+            display_name=display_name,
             kind=model.ModellingKind.INSTANCE,
             semantic_id=self.semantic_factory.HIERARCHICAL_STRUCTURES,
             administration=model.AdministrativeInformation(version="1", revision="1"),
