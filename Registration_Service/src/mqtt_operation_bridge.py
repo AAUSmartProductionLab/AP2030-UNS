@@ -330,9 +330,13 @@ class MQTTOperationBridge:
             command_message = self._build_command_message(
                 correlation_id, input_variables, array_mappings, schema_url)
 
-            # Log the generated message for schema compliance verification
-            logger.info(f"Generated MQTT message for topic {command_topic}:")
-            logger.info(f"  Schema-compliant message: {json.dumps(command_message, indent=2)}")
+            # Log the generated message with schema compliance info
+            if schema_url:
+                logger.info(f"Generated MQTT message for topic {command_topic} (schema: {schema_url}):")
+                logger.info(f"  Message: {json.dumps(command_message, indent=2)}")
+            else:
+                logger.warning(f"No schema available for {command_topic} - message may not be schema-compliant!")
+                logger.info(f"  Unvalidated message: {json.dumps(command_message, indent=2)}")
 
             # Compute simple_mappings from output schema for response type conversion
             output_simple_mappings = {}

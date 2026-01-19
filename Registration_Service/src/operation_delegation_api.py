@@ -253,8 +253,9 @@ def invoke_asset_skill(asset_id: str, skill_name: str):
         output_schema_url = skill_config.get('output_schema')  # The MQTT output schema URL
 
         # Check if this is a one-way (fire-and-forget) operation
-        # One-way operations have no response_topic in the config
-        is_one_way = 'response_topic' not in skill_config
+        # One-way operations explicitly have no response_topic in the config
+        # If skill_config is empty (asset not registered), assume synchronous operation
+        is_one_way = skill_config and 'response_topic' not in skill_config
         
         if is_one_way:
             # Fire-and-forget: publish and return immediately

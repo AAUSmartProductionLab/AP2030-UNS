@@ -476,8 +476,8 @@ services:
       - BASYX_URL=http://${AAS_SERVER:-aas-env}:${AAS_PORT:-8081}
       - MQTT_BROKER=${MQTT_BROKER:-hivemq-broker}
       - MQTT_PORT=${MQTT_PORT:-1883}
-      # Delegation URL points to itself since it's now unified
-      - DELEGATION_SERVICE_URL=http://localhost:8087
+      # Delegation URL for BaSyx to call - must be reachable from aas-env container
+      - DELEGATION_SERVICE_URL=http://registration-service:8087
       - EXTERNAL_HOST=${EXTERNAL_HOST:-localhost}
       - AAS_SERVER_URL=http://${AAS_SERVER:-aas-env}:${AAS_PORT:-8081}
       - AAS_BASE_URL=https://smartproductionlab.aau.dk
