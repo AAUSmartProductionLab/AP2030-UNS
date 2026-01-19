@@ -100,9 +100,10 @@ planarTableShuttle1AAS:
 
     Parameters:
     HierarchicalStructures:
+        Name: 'BillOfMaterials'
         Archetype: 'OneUp'
         IsPartOf:
-            - planarTable:
+            planarTable:
                 globalAssetId: 'https://smartproductionlab.aau.dk/assets/ZTM1NTAzNzQtMDZkNi00N2Q4LWI1YTktMGNhMmY0MDEyNTk4'
     
     Capabilities:

@@ -10,6 +10,7 @@ aauFillingLine:
     Variables:
     Parameters:
     HierarchicalStructures:
+        Name: 'BillOfMaterials'
 
     # Capabilities:
     #     - dispenseing:
