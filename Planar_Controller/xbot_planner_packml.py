@@ -5,7 +5,7 @@ import threading
 import os
 import numpy as np
 from math import sqrt
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 
 # Ensure we can import from local library and PackML_Stations
@@ -342,7 +342,7 @@ def publish_positions_loop(proxy):
     print("Starting Position Publisher Loop...", flush=True)
     while True:
         try:
-            timestamp = datetime.now(datetime.timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
+            timestamp = datetime.now(timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
             
             # We iterate 1-10. 
             # Note: Checking status for disconnected bots might timeout or fail fast.
@@ -365,9 +365,9 @@ def publish_positions_loop(proxy):
                     
                     if s and hasattr(s, 'feedback_position_si'):
                         pos = s.feedback_position_si
-                        x = float(pos[0])
-                        y = float(pos[1])
-                        theta = np.degrees(float(pos[5])) # Convert Rad to Deg for MQTT
+                        x = round(float(pos[0]), 3)
+                        y = round(float(pos[1]), 3)
+                        theta = round(np.degrees(float(pos[5])), 3) # Convert Rad to Deg for MQTT, round to 3
                         
                         current_pos_list = [x, y, theta]
                         
@@ -438,7 +438,23 @@ def main():
     
     # 4. XBot SMs
     xbot_sms = {}
-    for i in range(1, 11): # 1 to 10
+    
+    # Dynamic detection via global function or updated lib function
+    print("Scanning for detected XBots...", flush=True)
+    detected_ids = get_active_xbot_ids()
+    
+    # Handle Case where XBot reports ID 0 (Map to 1)
+    if detected_ids and 0 in detected_ids:
+        print("Detected ID 0. Mapping to ID 1.", flush=True)
+        detected_ids = [1 if x == 0 else x for x in detected_ids]
+    
+    if not detected_ids:
+        print("No XBots detected! Defaulting to 1-10 scan...", flush=True)
+        detected_ids = list(range(1, 11))
+    else:
+        print(f"Detected XBots: {detected_ids}", flush=True)
+        
+    for i in detected_ids: 
         xb_topic_base = f"{MQTT_BASE_TOPIC}/Xbot{i}"
         
         # XBot SM (Use Occupation Logic)
@@ -456,7 +472,7 @@ def main():
         mot_topic = ResponseAsync(
             f"{xb_topic_base}/DATA/XYMotion",
             f"{xb_topic_base}/CMD/XYMotion",
-            "./MQTTSchemas/moveToPosition.schema.json", # Response Schema? Using Data schema for output?
+            "./MQTTSchemas/commandResponse.schema.json", # Standard PackML Response
             "./MQTTSchemas/moveToPosition.schema.json", # Command Schema
             2,
             # Callback is wrapped to include sm and id
