@@ -26,40 +26,6 @@ planarTableAAS:
                             mqv_retain: 'false'
                             mqv_controlPacket: subscribe
                             mqv_qos: '2'                                              
-                    occupy:
-                        key: 'occupy'
-                        title: 'occupy'
-                        synchronous: 'true'
-                        input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
-                        output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
-                        forms:
-                            contentType: 'application/json'
-                            href: '/CMD/Occupy'
-                            op: 'invokeAction'
-                            mqv_retain: 'false'
-                            mqv_controlPacket: subscribe
-                            mqv_qos: '2'
-                            response:
-                                contentType: 'application/json'
-                                href: '/DATA/Occupy'
-                                mqv_controlPacket: 'publish'
-                    release:
-                        key: 'release'
-                        title: 'release'
-                        synchronous: 'true'
-                        input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
-                        output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
-                        forms:
-                            contentType: 'application/json'
-                            href: '/CMD/Release'
-                            op: 'invokeAction'
-                            mqv_retain: 'false'
-                            mqv_controlPacket: subscribe
-                            mqv_qos: '2'
-                            response:
-                                contentType: 'application/json'
-                                href: '/DATA/Release'
-                                mqv_controlPacket: 'publish'
                 properties:
                     StationState:
                         key: 'StationState'
@@ -77,10 +43,6 @@ planarTableAAS:
             semanticId: 'https://www.omac.org/packml/state'
             InterfaceReference: 'StationState'
             Field: 'State'
-        OccupationState:
-            semanticId: 'https://smartproductionlab.aau.dk/stationOccupation'
-            InterfaceReference: 'StationState'
-            Field: 'ProcessQueue'
 
     Parameters:
     HierarchicalStructures:
@@ -101,11 +63,3 @@ planarTableAAS:
             description: "Halt all planar table operations"
             semantic_id: "https://smartproductionlab.aau.dk/skills/halt"
             interface: "halt"
-        occupy:
-            description: "Occupy the planar table for exclusive use"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/occupy"
-            interface: "occupy"
-        release:
-            description: "Release the planar table from exclusive use"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/release"
-            interface: "release"
