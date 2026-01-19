@@ -61,6 +61,7 @@ class HierarchicalStructuresSubmodelBuilder:
         submodel = model.Submodel(
             id_=f"{self.base_url}/submodels/instances/{system_id}/HierarchicalStructures",
             id_short="HierarchicalStructures",
+            display_name=hs_config.get('Name', 'HierarchicalStructures'),
             kind=model.ModellingKind.INSTANCE,
             semantic_id=self.semantic_factory.HIERARCHICAL_STRUCTURES,
             administration=model.AdministrativeInformation(version="1", revision="1"),

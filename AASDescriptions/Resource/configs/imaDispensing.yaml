@@ -114,6 +114,7 @@ imaDispensingSystemAAS:
 
     Parameters:
     HierarchicalStructures:
+        Name: 'BillOfMaterials'
         Archetype: 'OneUp'
         IsPartOf:
             - aauFillingLine:

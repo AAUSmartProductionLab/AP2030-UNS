@@ -101,6 +101,7 @@ planarTableShuttle3AAS:
 
     Parameters:
     HierarchicalStructures:
+        Name: 'BillOfMaterials'
         Archetype: 'OneUp'
         IsPartOf:
             - planarTable:

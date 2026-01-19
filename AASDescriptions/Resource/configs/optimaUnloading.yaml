@@ -100,6 +100,7 @@ optimaUnloadingSystemAAS:
             Field: 'ProcessQueue'
     Parameters:
     HierarchicalStructures:
+        Name: 'BillOfMaterials'
         Archetype: 'OneUp'
         IsPartOf:
             - aauFillingLine:

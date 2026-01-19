@@ -113,6 +113,7 @@ omronCameraSystemAAS:
             InterfaceReference: 'Image'
     Parameters:
     HierarchicalStructures:
+        Name: 'BillOfMaterials'
         Archetype: 'OneUp'
         IsPartOf:
             - aauFillingLine:
