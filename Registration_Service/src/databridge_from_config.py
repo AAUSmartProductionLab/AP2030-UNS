@@ -91,7 +91,24 @@ class DataBridgeFromConfig:
                 with open(transformers_path, 'r') as f:
                     self.transformers = json.load(f)
                     for t in self.transformers:
-                        self._transformer_ids.add(t.get('uniqueId', ''))
+                        transformer_id = t.get('uniqueId', '')
+                        self._transformer_ids.add(transformer_id)
+                        
+                        # Reconstruct metadata from transformer ID
+                        # Format: {systemId}_{variableName}_{field}_transformer
+                        if transformer_id.endswith('_transformer'):
+                            parts = transformer_id[:-12].split('_')  # Remove '_transformer' and split
+                            if len(parts) >= 3:
+                                # Last part is the field, second-to-last might be part of variable name
+                                field = parts[-1]
+                                # Reconstruct variable name from remaining parts (could be multi-word)
+                                variable_name = '_'.join(parts[1:-1]) if len(parts) > 3 else parts[-2] if len(parts) == 3 else ''
+                                
+                                self._transformer_metadata[transformer_id] = {
+                                    'field': field,
+                                    'variable_name': variable_name
+                                }
+                                
                 logger.info(
                     f"Loaded {len(self.transformers)} existing transformers")
             except Exception as e:
@@ -425,8 +442,12 @@ class DataBridgeFromConfig:
             return '$'
 
         # Simple, direct field extraction - field names match MQTT schema
-        # Use $string() wrapper to ensure proper string formatting for AAS
-        return f'$string($.{field})'
+        # For arrays (like ProcessQueue), convert to JSON string
+        # For primitives (like State), just extract the value
+        if 'ProcessQueue' in field or 'Queue' in field:
+            return f'$string($.{field})'
+        else:
+            return f'$.{field}'
 
     def _write_json(self, path: Path, data: Any):
         """Write JSON data to file"""

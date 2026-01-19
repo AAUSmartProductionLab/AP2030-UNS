@@ -1,0 +1,35 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Position Data",
+    "type": "object",
+    "allOf": [
+        {
+            "type": "object",
+            "properties": {
+                "Position": {
+                    "type": "array",
+                    "prefixItems": [
+                        {
+                            "title": "X",
+                            "type": "number",
+                            "description": "X position in mm"
+                        },
+                        {
+                            "title": "Y",
+                            "type": "number",
+                            "description": "Y position in mm"
+                        },
+                        {
+                            "title": "Theta",
+                            "type": "number",
+                            "description": "Theta (rotation angle in radians)"
+                        }
+                    ],
+                    "minItems": 2,
+                    "maxItems": 3
+                }
+            },
+            "required": ["Position"]
+        }
+    ]
+}

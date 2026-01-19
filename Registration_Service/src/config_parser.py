@@ -365,9 +365,41 @@ class ConfigParser:
                 'command_topic': action['command_topic']
             }
 
+            # Add input schema for automatic array mapping detection
+            if action.get('input_schema'):
+                skill_entry['input_schema'] = action['input_schema']
+                
+                # Extract array mappings from input schema
+                input_schema = self._schema_handler.load_schema(action['input_schema'])
+                if input_schema:
+                    array_mappings = self._extract_array_mappings(input_schema)
+                    if array_mappings:
+                        skill_entry['array_mappings'] = array_mappings
+
             # Only include response_topic if action expects a response
             if action.get('has_response') and action.get('response_topic'):
                 skill_entry['response_topic'] = action['response_topic']
+                
+                # Add output schema for automatic array mapping detection
+                if action.get('output_schema'):
+                    skill_entry['output_schema'] = action['output_schema']
+                    
+                    # Extract array mappings from output schema (merge with input)
+                    output_schema = self._schema_handler.load_schema(action['output_schema'])
+                    if output_schema:
+                        output_array_mappings = self._extract_array_mappings(output_schema)
+                        if output_array_mappings:
+                            if 'array_mappings' not in skill_entry:
+                                skill_entry['array_mappings'] = {}
+                            # Merge output mappings
+                            for parent_field, mappings in output_array_mappings.items():
+                                if parent_field not in skill_entry['array_mappings']:
+                                    skill_entry['array_mappings'][parent_field] = mappings
+                                else:
+                                    # Merge field mappings
+                                    for mapping in mappings:
+                                        if mapping not in skill_entry['array_mappings'][parent_field]:
+                                            skill_entry['array_mappings'][parent_field].append(mapping)
 
                 # Include synchronous flag for async operations (synchronous=false)
                 # The operation delegation service uses this to update StateMachine
@@ -387,6 +419,45 @@ class ConfigParser:
             'submodel_id': submodel_id,
             'skills': skills
         }
+    
+    def _extract_array_mappings(self, schema: Dict) -> Dict[str, List[Dict[str, str]]]:
+        """
+        Extract array mappings from a JSON schema.
+        
+        Looks for array properties with prefixItems (tuple arrays).
+        Creates mappings from flattened field names (e.g., Position_X) to the original
+        positional array structure.
+        
+        Args:
+            schema: JSON schema dictionary
+            
+        Returns:
+            Dict mapping parent_field -> [{aas_field, json_field, index}, ...]
+        """
+        array_mappings = {}
+        
+        # Get all properties including from allOf
+        properties = self._schema_handler.extract_properties(schema, include_inherited=True)
+        
+        for prop_name, prop_def in properties.items():
+            prop_type = prop_def.get('type', 'string')
+            
+            if prop_type == 'array':
+                # Check for prefixItems (tuple-like arrays)
+                prefix_items = prop_def.get('prefixItems')
+                if prefix_items:
+                    # This is a tuple array that will be unpacked
+                    mappings = []
+                    for idx, item_def in enumerate(prefix_items):
+                        item_title = item_def.get('title', f'Item{idx}')
+                        mappings.append({
+                            'aas_field': f"{prop_name}_{item_title}",
+                            'json_field': item_title,
+                            'index': idx
+                        })
+                    array_mappings[prop_name] = mappings
+        
+        return array_mappings
 
     def get_databridge_property_mappings(self) -> List[Dict[str, Any]]:
         """

@@ -32,7 +32,12 @@ class SchemaHandler:
         Args:
             project_root: Root directory of the project (for locating schema files)
         """
-        self.project_root = project_root or Path(__file__).parent.parent.parent
+        # Default to the workspace root (parent of Registration_Service)
+        if project_root is None:
+            # schema_handler.py is in src/aas_generation, so go up 3 levels to workspace root
+            self.project_root = Path(__file__).parent.parent.parent.parent
+        else:
+            self.project_root = project_root
         self._schema_cache: Dict[str, Dict] = {}
 
     def load_schema(self, schema_url: str) -> Optional[Dict]:
@@ -143,6 +148,65 @@ class SchemaHandler:
                         properties[prop_name] = prop_def
 
         return properties
+
+    def extract_operation_variables(self, schema: Dict, include_inherited: bool = True) -> Dict[str, Dict]:
+        """
+        Extract operation variables from a JSON schema.
+        
+        Recursively unpacks arrays with prefixItems (tuples) into individual named fields.
+        For example: Position[x, y, theta] → Position_X, Position_Y, Position_Theta
+        Uses 'title' property from prefixItems for field names.
+        
+        Args:
+            schema: The JSON schema dictionary
+            include_inherited: Whether to include properties from referenced schemas
+            
+        Returns:
+            Dictionary of variable name -> {type, description, array_info}
+            array_info contains: {parent_field, item_field, is_array_item, index}
+        """
+        # Get all properties
+        properties = self.extract_properties(schema, include_inherited)
+        
+        variables = {}
+        
+        for prop_name, prop_def in properties.items():
+            prop_type = prop_def.get('type', 'string')
+            
+            if prop_type == 'array':
+                # Check for prefixItems (tuple-like arrays)
+                prefix_items = prop_def.get('prefixItems')
+                if prefix_items:
+                    # Unpack tuple array into individual fields using titles
+                    for idx, item_def in enumerate(prefix_items):
+                        item_title = item_def.get('title', f'Item{idx}')
+                        var_name = f"{prop_name}_{item_title}"
+                        variables[var_name] = {
+                            'type': item_def.get('type', 'string'),
+                            'description': item_def.get('description', ''),
+                            'array_info': {
+                                'parent_field': prop_name,
+                                'item_field': item_title,
+                                'is_array_item': True,
+                                'index': idx
+                            }
+                        }
+                else:
+                    # Array without prefixItems - keep as string
+                    variables[prop_name] = {
+                        'type': prop_type,
+                        'description': prop_def.get('description', ''),
+                        'array_info': None
+                    }
+            else:
+                # Regular property
+                variables[prop_name] = {
+                    'type': prop_type,
+                    'description': prop_def.get('description', ''),
+                    'array_info': None
+                }
+        
+        return variables
 
     def get_aas_type(self, json_type: str) -> type:
         """

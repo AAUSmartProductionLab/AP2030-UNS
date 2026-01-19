@@ -7,22 +7,7 @@
             "$ref": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json"
         },
         {
-            "type": "object",
-            "properties": {
-                "X": {
-                    "type": "number",
-                    "description": "Target X position in mm"
-                },
-                "Y": {
-                    "type": "number",
-                    "description": "Target Y position in mm"
-                },
-                "Velocity": {
-                    "type": "number",
-                    "description": "Movement velocity in mm/s"
-                }
-            },
-            "required": ["X", "Y"]
+            "$ref": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/positionStamped.schema.json"
         }
     ]
 }
