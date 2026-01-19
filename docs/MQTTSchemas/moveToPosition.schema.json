@@ -7,6 +7,9 @@
             "$ref": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json"
         },
         {
+            "$ref": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/data.schema.json"
+        },
+        {
             "type": "object",
             "properties": {
                 "Position": {
@@ -18,9 +21,6 @@
                     ],
                     "minItems": 2,
                     "maxItems": 3
-                },
-                "TimeStamp": {
-                    "type": "string"
                 }
             },
             "required": ["Position"]
