@@ -182,6 +182,9 @@ All schemas are automatically synchronized from the `schemas/` directory. Click 
 - **[position.schema.json](MQTTSchemas/position.schema.json)**
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/position.schema.json)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/MQTTSchemas/position.schema.json)
+- **[positionStamped.schema.json](MQTTSchemas/positionStamped.schema.json)**
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/positionStamped.schema.json)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/MQTTSchemas/positionStamped.schema.json)
 - **[productId.schema.json](MQTTSchemas/productId.schema.json)**
   - JSON Schema for the status the Id of a product. Usefull to associate stations with a product when they process it
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/productId.schema.json)
