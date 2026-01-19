@@ -124,18 +124,13 @@ def activate_xbot(xbot_id):
 
 def get_active_xbot_ids():
     """Get list of all active XBot IDs in the system."""
-    active_xbots = []
-    # Try XBot IDs 1-4 (typical range)
-    for xbot_id in range(1, 5):
-        try:
-            status = xbot.get_xbot_status(
-                xbot_id=xbot_id, feedback_type=pm.FEEDBACKOPTION.POSITION)
-            # If we get here without exception, XBot is active
-            active_xbots.append(xbot_id)
-        except:
-            # XBot doesn't exist or isn't active
-            pass
-    return active_xbots
+    try:
+        rtn = xbot.get_xbot_ids()
+        # access attributes using snake_case as per pmclib conventions
+        return [rtn.xbot_ids_array[i] for i in range(rtn.xbot_count)]
+    except Exception as e:
+        print(f"ERROR: Failed to get active XBot IDs: {e}")
+        return []
 
 
 def get_xbot_position(xbot_id):

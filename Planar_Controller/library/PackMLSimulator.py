@@ -90,6 +90,8 @@ class PackMLStateMachine:
         from MQTT_classes import Subscriber
         self.command_topic = Subscriber(
             self.base_topic + "/CMD/Command",
+            "./MQTTSchemas/command.schema.json",
+            2,
             self.button_command_callback
         )
         topics.append(self.command_topic)
