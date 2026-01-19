@@ -84,7 +84,7 @@ class Subscriber(Topic):
     # A class handling responding to requests on a topic described in the user property ResponseTopic
     # The callback is executed in a seperate thread so time.sleep can be used to wait for processes to finish without blocking the paho loop
     def __init__(self, subscribe_topic: str, subscribe_schema_path: str, qos: int = 2, callback_method: callable = None):
-        super().__init__("", subscribe_topic, "", subscribe_schema_path, qos, callback_method)
+        super().__init__("", subscribe_topic, None, subscribe_schema_path, qos, callback_method)
 
     def callback(self, client, userdata, message):
         # run callback function in seperate thread
