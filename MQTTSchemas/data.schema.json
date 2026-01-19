@@ -6,7 +6,8 @@
     "properties": {
         "TimeStamp": {
             "type": "string",
-            "description": "The time stamp of the message"
+            "format": "date-time",
+            "description": "The time stamp of the message in ISO 8601 format (xs:dateTime)"
         }
     },
     "required": ["TimeStamp"]
