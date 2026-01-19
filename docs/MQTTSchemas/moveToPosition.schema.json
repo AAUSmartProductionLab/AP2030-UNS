@@ -9,20 +9,21 @@
         {
             "type": "object",
             "properties": {
-                "X": {
-                    "type": "number",
-                    "description": "Target X position in mm"
+                "Position": {
+                    "type": "array",
+                    "prefixItems": [
+                        { "type": "number", "description": "X position" },
+                        { "type": "number", "description": "Y position" },
+                        { "type": "number", "description": "Theta (rotation)" }
+                    ],
+                    "minItems": 2,
+                    "maxItems": 3
                 },
-                "Y": {
-                    "type": "number",
-                    "description": "Target Y position in mm"
-                },
-                "Velocity": {
-                    "type": "number",
-                    "description": "Movement velocity in mm/s"
+                "TimeStamp": {
+                    "type": "string"
                 }
             },
-            "required": ["X", "Y"]
+            "required": ["Position"]
         }
     ]
 }
