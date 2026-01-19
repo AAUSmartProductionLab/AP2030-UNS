@@ -32,8 +32,8 @@ class HierarchicalStructuresSubmodelBuilder:
         Simplified config format:
             HierarchicalStructures:
                 Archetype: 'OneUp'  # or 'OneDown'
-                IsPartOf:  # or HasPart for OneDown
-                    - systemName:
+                IsPartOf:  # or HasPart for OneDown - dict format
+                    systemName:
                         globalAssetId: 'required-unique-id'
                         systemId: 'optional-config-key'  # defaults to systemName + 'AAS'
         
@@ -85,32 +85,26 @@ class HierarchicalStructuresSubmodelBuilder:
         node_entities = []
         entry_node_statements = []
         
-        # Handle both IsPartOf and HasPart
-        is_part_of = hs_config.get('IsPartOf', [])
-        has_part = hs_config.get('HasPart', [])
+        # Handle both IsPartOf and HasPart (now as dicts)
+        is_part_of = hs_config.get('IsPartOf', {})
+        has_part = hs_config.get('HasPart', {})
         
         # Determine which statements to process based on archetype
-        statements_to_process = []
+        statements_to_process = {}
         relationship_prefix = ""
         
         if archetype == 'OneUp':
-            statements_to_process = is_part_of
+            statements_to_process = is_part_of if isinstance(is_part_of, dict) else {}
             relationship_prefix = "IsPartOf"
         elif archetype == 'OneDown':
-            statements_to_process = has_part
+            statements_to_process = has_part if isinstance(has_part, dict) else {}
             relationship_prefix = "HasPart"
         
-        # Process each entity in the hierarchy
-        for entity_item in statements_to_process:
-            # Support both string format (just system name) and dict format (with details)
-            if isinstance(entity_item, str):
-                entity_name = entity_item
+        # Process each entity in the hierarchy (dict format)
+        for entity_name, entity_config in statements_to_process.items():
+            # entity_config should be a dict with globalAssetId, systemId, etc.
+            if not isinstance(entity_config, dict):
                 entity_config = {}
-            elif isinstance(entity_item, dict):
-                entity_name = list(entity_item.keys())[0]
-                entity_config = entity_item[entity_name] or {}
-            else:
-                continue
             
             # Auto-derive missing IDs
             entity_system_id = entity_config.get('systemId', f"{entity_name}AAS")

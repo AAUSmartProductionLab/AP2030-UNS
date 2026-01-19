@@ -101,7 +101,7 @@ syntegonStopperingSystemAAS:
         Name: 'BillOfMaterials'
         Archetype: 'OneUp'
         IsPartOf:
-            - aauFillingLine:
+            aauFillingLine:
                 globalAssetId: 'https://smartproductionlab.aau.dk/assets/MWQ2ODY5ZDEtZTQ3Yy00NWU4LTlmYTAtNTI3YjVlMDk4MWFi'
     
     Capabilities:

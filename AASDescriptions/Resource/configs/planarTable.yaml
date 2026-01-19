@@ -87,11 +87,11 @@ planarTableAAS:
         Name: 'BillOfMaterials'
         Archetype: 'OneDown'
         HasPart:
-            - planarTableShuttle1:
+            planarTableShuttle1:
                 globalAssetId: 'https://smartproductionlab.aau.dk/assets/ODYwM2Q2YjYtYmUzOS00NTAxLWFhZDktYjc1MjhhMzUzOGNm'
-            - planarTableShuttle2:
+            planarTableShuttle2:
                 globalAssetId: 'https://smartproductionlab.aau.dk/assets/OTZhZGNiZDAtNTNhNS00YmJhLThiNDctMzFjYzM3OGNiNTMw'
-            - planarTableShuttle3:
+            planarTableShuttle3:
                 globalAssetId: 'https://smartproductionlab.aau.dk/assets/YjY3ZTJjZGEtZDYxMC00ZDJjLTlkYjYtOGUyNGE4NWVlNTBi'
     
     Capabilities:
