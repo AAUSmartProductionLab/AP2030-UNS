@@ -1,0 +1,42 @@
+hGh:
+    idShort: hGh
+    id: 'https://smartproductionlab.aau.dk/aas/hGh'
+    globalAssetId: 'https://smartproductionlab.aau.dk/assets/ODMzNWFhZTAtMTQ0Yy00NDQxLWJkN2YtNWY5YTAzMjg1YjEx'
+    derivedFrom: 'https://smartproductionlab.aau.dk/aas/templates/resource'
+    assetType: 'https://smartproductionlab.aau.dk/Resource/CPPM/StopperingSystem/hGh'
+    serialNumber: 'NN-hGh-2024-001'
+    location: 'InnoLab, Nybrovej, AAU'
+    Variables:
+        PackMLState:
+            semanticId: 'https://www.omac.org/packml/state'
+            InterfaceReference: 'StationState'
+            Field: 'State'
+        OccupationState:
+            semanticId: 'https://smartproductionlab.aau.dk/stationOccupation'
+            InterfaceReference: 'StationState'
+            Field: 'ProcessQueue'
+    Parameters:
+    HierarchicalStructures:
+        Name: 'BillOfMaterials'
+        Archetype: 'OneUp'
+        IsPartOf:
+            - aauFillingLine:
+                globalAssetId: 'https://smartproductionlab.aau.dk/assets/MWQ2ODY5ZDEtZTQ3Yy00NWU4LTlmYTAtNTI3YjVlMDk4MWFi'
+
+    Skills:
+        Stoppering:
+            description: "Stoppering function for pharmaceutical primary packaging"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/Stoppering"
+            interface: "Stoppering"
+        halt:
+            description: "Halt the current stoppering operation"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/halt"
+            interface: "halt"
+        occupy:
+            description: "Occupy the stoppering system for exclusive use"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/occupy"
+            interface: "occupy"
+        release:
+            description: "Release the stoppering system from exclusive use"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/release"
+            interface: "release"

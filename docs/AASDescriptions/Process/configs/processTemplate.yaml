@@ -1,0 +1,64 @@
+processTemplate:
+    idShort: processTemplate
+    id: 'https://smartproductionlab.aau.dk/aas/processTemplate'
+    globalAssetId: 'https://smartproductionlab.aau.dk/assets/ZGUyNzVkMmItZjJjYy00NTI3LThiNDQtNTA0MDAwNTc1YmE5'
+    derivedFrom: 'https://smartproductionlab.aau.dk/aas/templates/resource'
+    assetType: 'https://smartproductionlab.aau.dk/Process/Production'
+    serialNumber: 'AAU-PT-2024-001'
+    location: 'InnoLab, Nybrovej, AAU'
+    Process:
+        ProduceHgH:
+            realizedBy:
+                - Move:
+                    semantic_id: "https://smartproductionlab.aau.dk/Capability/MoveToStation"
+                    parameters: ""
+                    asset: "robotArm1"
+                - Loading:
+                    semantic_id: "https://smartproductionlab.aau.dk/Capability/Loading"
+                    parameters: ""
+                    asset: "robotArm1"
+                - Dispensing:
+                    semantic_id: "https://smartproductionlab.aau.dk/Capabilities/Dispensing"
+                    parameters: ""
+                    asset: "planarShuttle2"
+                - Stoppering:
+                    semantic_id: "https://smartproductionlab.aau.dk/Capability/Place"
+                    parameters: ""
+                    asset: "robotArm1"
+                - QualityControl:
+                    semantic_id: "https://smartproductionlab.aau.dk/Capability/QualityControl"
+                    parameters: ""
+                    asset: "robotArm1"
+                - Unloading:
+                    semantic_id: "https://smartproductionlab.aau.dk/Capability/Unloading"
+                    parameters: ""
+                    asset: "robotArm1"
+            comment: "Pick and place capability"
+            policy: "https:github.com"
+            relations:
+                requires:
+                    target: "https://smartproductionlab.aau.dk/aas/Resource/CPS/MotionSystem"
+                    target: "https://smartproductionlab.aau.dk/aas/Resource/CPPM/FillingModule"
+            properties:
+                MaxVelocity:
+                    min: 0
+                    max: 500
+                    description: "Maximum velocity in mm/s"
+    
+    Skills:
+        Capping:
+            description: "Capping function for pharmaceutical primary packaging"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/Capping"
+            interface: "Capping"
+        halt:
+            description: "Halt the current capping operation"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/halt"
+            interface: "halt"
+        occupy:
+            description: "Occupy the capping system for exclusive use"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/occupy"
+            interface: "occupy"
+        release:
+            description: "Release the capping system from exclusive use"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/release"
+            interface: "release"
