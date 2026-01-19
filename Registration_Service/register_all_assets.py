@@ -12,11 +12,27 @@ Usage:
     python register_all_assets.py --validate --keep-output
 """
 
+import sys
+import os
+from pathlib import Path
+
+# Add src to path
+sys.path.insert(0, str(Path(__file__).parent))
+
+# Load environment variables from .env file BEFORE importing anything else
+from dotenv import load_dotenv
+env_path = Path(__file__).parent.parent / '.env'
+if env_path.exists():
+    load_dotenv(env_path)
+
+# Now import after .env is loaded
 from src.core.constants import (
     DEFAULT_BASYX_URL,
     DEFAULT_MQTT_BROKER,
     DEFAULT_MQTT_PORT,
     DEFAULT_DELEGATION_URL,
+    DEFAULT_AAS_REGISTRY_URL,
+    DEFAULT_SM_REGISTRY_URL,
     EXTERNAL_BASYX_HOST,
     PathDefaults
 )
@@ -25,18 +41,12 @@ from src import (
     BaSyxConfig,
     ConfigParser
 )
-import sys
-import os
 import json
 import tempfile
 import shutil
 import yaml
-from pathlib import Path
 from typing import List, Dict, Tuple
 import argparse
-
-# Add src to path
-sys.path.insert(0, str(Path(__file__).parent))
 
 
 class Colors:
@@ -269,8 +279,8 @@ Examples:
     )
     parser.add_argument(
         '--basyx-url',
-        default=f'http://{EXTERNAL_BASYX_HOST}:8081',
-        help=f'BaSyx server URL (default: http://{EXTERNAL_BASYX_HOST}:8081)'
+        default=DEFAULT_BASYX_URL,
+        help=f'BaSyx server URL (default: {DEFAULT_BASYX_URL})'
     )
     parser.add_argument(
         '--mqtt-broker',
@@ -290,13 +300,13 @@ Examples:
     )
     parser.add_argument(
         '--aas-registry-url',
-        default=f'http://{EXTERNAL_BASYX_HOST}:8082',
-        help=f'AAS registry URL (default: http://{EXTERNAL_BASYX_HOST}:8082)'
+        default=DEFAULT_AAS_REGISTRY_URL,
+        help=f'AAS registry URL (default: {DEFAULT_AAS_REGISTRY_URL})'
     )
     parser.add_argument(
         '--sm-registry-url',
-        default=f'http://{EXTERNAL_BASYX_HOST}:8083',
-        help=f'Submodel registry URL (default: http://{EXTERNAL_BASYX_HOST}:8083)'
+        default=DEFAULT_SM_REGISTRY_URL,
+        help=f'Submodel registry URL (default: {DEFAULT_SM_REGISTRY_URL})'
     )
     parser.add_argument(
         '--validate',

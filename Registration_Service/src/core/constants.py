@@ -23,6 +23,12 @@ DEFAULT_DELEGATION_URL: Final[str] = os.environ.get(
     "DELEGATION_SERVICE_URL", "http://operation-delegation:8087")
 DEFAULT_GITHUB_PAGES_URL: Final[str] = "https://aausmartproductionlab.github.io/AP2030-UNS"
 
+# Registry URLs (for descriptor registration when running outside Docker)
+DEFAULT_AAS_REGISTRY_URL: Final[str] = os.environ.get(
+    "BASYX_AAS_REGISTRY_URL", "http://aas-registry:8080")
+DEFAULT_SM_REGISTRY_URL: Final[str] = os.environ.get(
+    "BASYX_SM_REGISTRY_URL", "http://sm-registry:8080")
+
 # External URL for registry descriptors (used for URLs that need to be accessed from outside Docker)
 EXTERNAL_BASYX_HOST: Final[str] = os.environ.get("EXTERNAL_HOST", "localhost")
 

@@ -14,6 +14,7 @@ This consolidates OperationDelegation config and RegistrationService functionali
 import copy
 import json
 import logging
+import os
 import sys
 import tempfile
 from pathlib import Path
@@ -93,9 +94,12 @@ class UnifiedRegistrationService:
         # In container, OperationDelegation is mounted at /app/OperationDelegation
         # so project_root should be the same as script_dir
         self.project_root = self.script_dir
-        # Use mounted databridge directory (/databridge) instead of /app/databridge
-        # This ensures files are written to the shared volume for databridge container
-        self.databridge_dir = Path('/databridge')
+        # Use mounted databridge directory (/databridge) when in container,
+        # otherwise use local databridge directory
+        if Path('/databridge').exists() and os.access('/databridge', os.W_OK):
+            self.databridge_dir = Path('/databridge')
+        else:
+            self.databridge_dir = self.project_root.parent / 'databridge'
         self.topics_json_path = self.project_root / \
             'OperationDelegation' / 'config' / 'topics.json'
 
