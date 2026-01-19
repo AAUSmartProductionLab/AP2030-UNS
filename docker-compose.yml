@@ -184,8 +184,6 @@ services:
         condition: service_started
       databridge:
         condition: service_started
-      operation-delegation:
-        condition: service_started
       registration-service:
         condition: service_healthy
 
@@ -201,8 +199,6 @@ services:
       aas-env:
         condition: service_started
       databridge:
-        condition: service_started
-      operation-delegation:
         condition: service_started
       registration-service:
         condition: service_healthy
@@ -229,8 +225,6 @@ services:
         condition: service_started
       databridge:
         condition: service_started
-      operation-delegation:
-        condition: service_started
       registration-service:
         condition: service_healthy
 
@@ -246,8 +240,6 @@ services:
       aas-env:
         condition: service_started
       databridge:
-        condition: service_started
-      operation-delegation:
         condition: service_started
       registration-service:
         condition: service_healthy
@@ -265,8 +257,6 @@ services:
         condition: service_started
       databridge:
         condition: service_started
-      operation-delegation:
-        condition: service_started
       registration-service:
         condition: service_healthy
 
@@ -274,35 +264,38 @@ services:
 
 ################################### BASYX CONTAINERS ####################################
 
-  # Operation Delegation Service - translates AAS Operations to MQTT commands
-  operation-delegation:
-    build:
-      context: ./OperationDelegation
-      dockerfile: Dockerfile
-    container_name: operation-delegation
-    environment:
-      - MQTT_BROKER=${MQTT_BROKER:-hivemq-broker}
-      - MQTT_PORT=${MQTT_PORT:-1883}
-      - PORT=8087
-      - OPERATION_TIMEOUT=30
-      - TOPIC_CONFIG_PATH=/app/config/topics.json
-      - AAS_SERVER_URL=http://${AAS_SERVER:-aas-env}:${AAS_PORT:-8081}
-      - AAS_BASE_URL=https://smartproductionlab.aau.dk
-    volumes:
-      - ./OperationDelegation/config:/app/config:ro
-    ports:
-      - '8087:8087'
-    restart: unless-stopped
-    depends_on:
-      - hivemq-broker
-    networks:
-      - hivemq-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8087/health"]
-      interval: 30s
-      timeout: 3s
-      retries: 3
-      start_period: 10s
+  # Note: Operation Delegation is now integrated into the registration-service container
+  # The unified service handles both MQTT registration and Operation Delegation HTTP API
+  # 
+  # Legacy standalone operation-delegation service (kept for reference):
+  # operation-delegation:
+  #   build:
+  #     context: ./OperationDelegation
+  #     dockerfile: Dockerfile
+  #   container_name: operation-delegation
+  #   environment:
+  #     - MQTT_BROKER=${MQTT_BROKER:-hivemq-broker}
+  #     - MQTT_PORT=${MQTT_PORT:-1883}
+  #     - PORT=8087
+  #     - OPERATION_TIMEOUT=30
+  #     - TOPIC_CONFIG_PATH=/app/config/topics.json
+  #     - AAS_SERVER_URL=http://${AAS_SERVER:-aas-env}:${AAS_PORT:-8081}
+  #     - AAS_BASE_URL=https://smartproductionlab.aau.dk
+  #   volumes:
+  #     - ./OperationDelegation/config:/app/config:ro
+  #   ports:
+  #     - '8087:8087'
+  #   restart: unless-stopped
+  #   depends_on:
+  #     - hivemq-broker
+  #   networks:
+  #     - hivemq-network
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:8087/health"]
+  #     interval: 30s
+  #     timeout: 3s
+  #     retries: 3
+  #     start_period: 10s
 
   aas-env:
     image: eclipsebasyx/aas-environment:2.0.0-SNAPSHOT
@@ -475,25 +468,31 @@ services:
   
   registration-service:
     build:
-      context: ./Registration_Service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./Registration_Service/Dockerfile
     container_name: registration-service
     environment:
       - PYTHONUNBUFFERED=1
       - BASYX_URL=http://${AAS_SERVER:-aas-env}:${AAS_PORT:-8081}
       - MQTT_BROKER=${MQTT_BROKER:-hivemq-broker}
       - MQTT_PORT=${MQTT_PORT:-1883}
-      - DELEGATION_SERVICE_URL=http://${DELEGATION_SERVICE:-operation-delegation}:8087
+      # Delegation URL points to itself since it's now unified
+      - DELEGATION_SERVICE_URL=http://localhost:8087
       - EXTERNAL_HOST=${EXTERNAL_HOST:-localhost}
+      - AAS_SERVER_URL=http://${AAS_SERVER:-aas-env}:${AAS_PORT:-8081}
+      - AAS_BASE_URL=https://smartproductionlab.aau.dk
     volumes:
       # DataBridge config directory for writing configs
       - ./databridge:/databridge
-      # Operation Delegation config for writing topics.json
-      - ./OperationDelegation/config:/app/OperationDelegation/config
       # AAS configs for registration
       - ./AASDescriptions/Resource/configs:/app/configs:ro
-      # Docker socket for container restarts
+      # MQTT Schemas for schema-based message generation
+      - ./MQTTSchemas:/app/MQTTSchemas:ro
+      # Docker socket for container restarts (DataBridge)
       - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      # Operation Delegation HTTP API port
+      - '8087:8087'
     command:
       - python
       - unified-registration-service.py
@@ -504,8 +503,10 @@ services:
       - --basyx-url
       - http://${AAS_SERVER:-aas-env}:${AAS_PORT:-8081}
       - --delegation-url
-      - http://${DELEGATION_SERVICE:-operation-delegation}:8087
+      - http://localhost:8087
       - listen
+      - --delegation-port
+      - "8087"
     restart: unless-stopped
     depends_on:
       hivemq-broker:
@@ -513,7 +514,7 @@ services:
       aas-env:
         condition: service_started
     healthcheck:
-      test: ["CMD-SHELL", "pgrep -f unified-registration-service.py || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8087/health || exit 1"]
       interval: 5s
       timeout: 3s
       retries: 12

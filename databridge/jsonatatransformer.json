@@ -63,16 +63,16 @@
     "outputType": "JsonString"
   },
   {
-    "uniqueId": "omronCameraSystemAAS_Image_Image_transformer",
+    "uniqueId": "omronCameraSystemAAS_Image_Format_transformer",
     "queryLanguage": "JSONATA",
-    "queryPath": "queries/omronCameraSystemAAS_Image_Image.jsonata",
+    "queryPath": "queries/omronCameraSystemAAS_Image_Format.jsonata",
     "inputType": "JsonString",
     "outputType": "JsonString"
   },
   {
-    "uniqueId": "omronCameraSystemAAS_Image_Format_transformer",
+    "uniqueId": "omronCameraSystemAAS_Image_Image_transformer",
     "queryLanguage": "JSONATA",
-    "queryPath": "queries/omronCameraSystemAAS_Image_Format.jsonata",
+    "queryPath": "queries/omronCameraSystemAAS_Image_Image.jsonata",
     "inputType": "JsonString",
     "outputType": "JsonString"
   },
@@ -143,13 +143,6 @@
     "uniqueId": "planarTableAAS_PackMLState_State_transformer",
     "queryLanguage": "JSONATA",
     "queryPath": "queries/planarTableAAS_PackMLState_State.jsonata",
-    "inputType": "JsonString",
-    "outputType": "JsonString"
-  },
-  {
-    "uniqueId": "planarTableAAS_OccupationState_ProcessQueue_transformer",
-    "queryLanguage": "JSONATA",
-    "queryPath": "queries/planarTableAAS_OccupationState_ProcessQueue.jsonata",
     "inputType": "JsonString",
     "outputType": "JsonString"
   },

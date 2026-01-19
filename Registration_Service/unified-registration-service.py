@@ -42,7 +42,9 @@ from src import (
     TopicsGenerator,
     DataBridgeFromConfig,
     generate_topics_from_directory,
-    generate_databridge_from_directory
+    generate_databridge_from_directory,
+    start_delegation_api_background,
+    set_full_topic_config
 )
 from src.core.constants import (
     DEFAULT_MQTT_BROKER,
@@ -153,6 +155,10 @@ Examples:
                                help='MQTT topic for responses')
     listen_parser.add_argument('--databridge-name', default=ContainerNames.DATABRIDGE,
                                help='DataBridge container name')
+    listen_parser.add_argument('--delegation-port', type=int, default=8087,
+                               help='Port for Operation Delegation HTTP API (default: 8087)')
+    listen_parser.add_argument('--topics-json', type=str,
+                               help='Path to existing topics.json to load at startup')
 
     # List registered AAS
     list_parser = subparsers.add_parser('list', help='List all registered AAS')
@@ -293,6 +299,29 @@ Examples:
                 sys.exit(1)
 
         elif args.command == 'listen':
+            # Load existing topics.json into in-memory config if provided
+            if args.topics_json:
+                topics_path = Path(args.topics_json)
+                if topics_path.exists():
+                    import json
+                    try:
+                        with open(topics_path, 'r') as f:
+                            existing_config = json.load(f)
+                        set_full_topic_config(existing_config)
+                        logger.info(f"Loaded {len(existing_config)} topic configs from {topics_path}")
+                    except Exception as e:
+                        logger.warning(f"Failed to load topics.json: {e}")
+            
+            # Start Operation Delegation Flask API in background thread
+            logger.info(f"Starting Operation Delegation API on port {args.delegation_port}...")
+            start_delegation_api_background(
+                host='0.0.0.0',
+                port=args.delegation_port,
+                mqtt_broker=args.mqtt_broker,
+                mqtt_port=args.mqtt_port
+            )
+            logger.info(f"✓ Operation Delegation API running on http://0.0.0.0:{args.delegation_port}")
+            
             # Start MQTT listener
             service = UnifiedRegistrationService(
                 config=basyx_config,
@@ -315,10 +344,14 @@ Examples:
             logger.info(f"MQTT Broker: {args.mqtt_broker}:{args.mqtt_port}")
             logger.info(f"Config Topic: {args.config_topic}")
             logger.info(f"Legacy Topic: {args.legacy_topic}")
+            logger.info(f"Delegation API: http://0.0.0.0:{args.delegation_port}")
 
             try:
                 mqtt_service.start()
                 logger.info("✓ MQTT listener started. Press Ctrl+C to stop.")
+                logger.info("\nUnified Service running with:")
+                logger.info("  - MQTT registration listener")
+                logger.info(f"  - Operation Delegation API on port {args.delegation_port}")
                 logger.info("\nSupported config message formats:")
                 logger.info("1. Raw YAML (from ESP32 devices):")
                 logger.info("   syntegonStopperingSystemAAS:")

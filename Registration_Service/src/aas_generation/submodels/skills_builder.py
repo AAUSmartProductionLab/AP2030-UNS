@@ -158,9 +158,6 @@ class SkillsSubmodelBuilder:
 
         # Track property names to avoid duplicates between input and output
         input_prop_names = set()
-        
-        # Track array mappings for delegation service
-        array_mappings = {}
 
         # Parse input schema if present - expand arrays into individual variables
         input_schema_url = action_config.get('input')
@@ -172,17 +169,6 @@ class SkillsSubmodelBuilder:
                 for var_name, var_info in vars.items():
                     var_type = var_info.get('type', 'string')
                     var_desc = var_info.get('description', '')
-                    
-                    # Track array mapping info
-                    array_info = var_info.get('array_info')
-                    if array_info and array_info.get('is_array_item'):
-                        parent = array_info['parent_field']
-                        if parent not in array_mappings:
-                            array_mappings[parent] = []
-                        array_mappings[parent].append({
-                            'aas_field': var_name,
-                            'json_field': array_info['item_field']
-                        })
                     
                     input_variables.append(
                         self._create_operation_variable(
@@ -200,20 +186,6 @@ class SkillsSubmodelBuilder:
                 for var_name, var_info in vars.items():
                     var_type = var_info.get('type', 'string')
                     var_desc = var_info.get('description', '')
-                    
-                    # Track array mapping info
-                    array_info = var_info.get('array_info')
-                    if array_info and array_info.get('is_array_item'):
-                        parent = array_info['parent_field']
-                        if parent not in array_mappings:
-                            array_mappings[parent] = []
-                        # Check if not already added from input
-                        mapping = {
-                            'aas_field': var_name,
-                            'json_field': array_info['item_field']
-                        }
-                        if mapping not in array_mappings[parent]:
-                            array_mappings[parent].append(mapping)
 
                     # If property exists in both input and output, it becomes in-output
                     if var_name in input_prop_names:
@@ -240,7 +212,7 @@ class SkillsSubmodelBuilder:
 
         # Build the qualifiers for the operation
         qualifiers = self._create_operation_qualifiers(
-            action_config, system_id, action_name, array_mappings)
+            action_config, system_id, action_name)
 
         # Use element factory to create the operation
         return self.element_factory.create_operation(
@@ -335,7 +307,7 @@ class SkillsSubmodelBuilder:
         return prop
 
     def _create_operation_qualifiers(self, action_config: Dict, system_id: str,
-                                     action_name: str, array_mappings: Dict = None) -> List[model.Qualifier]:
+                                     action_name: str) -> List[model.Qualifier]:
         """
         Create qualifiers for an operation.
 
@@ -343,7 +315,6 @@ class SkillsSubmodelBuilder:
             action_config: Action configuration
             system_id: System identifier
             action_name: Name of the action
-            array_mappings: Dictionary of array field mappings for unpacking/packing
 
         Returns:
             List of qualifiers
@@ -368,17 +339,6 @@ class SkillsSubmodelBuilder:
                     type_="invocationDelegation",
                     value_type=model.datatypes.String,
                     value=delegation_url
-                )
-            )
-        
-        # Add array mappings qualifier if present
-        if array_mappings:
-            import json
-            qualifiers.append(
-                model.Qualifier(
-                    type_="arrayMappings",
-                    value_type=model.datatypes.String,
-                    value=json.dumps(array_mappings)
                 )
             )
 

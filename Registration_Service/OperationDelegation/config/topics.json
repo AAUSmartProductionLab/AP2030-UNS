@@ -183,25 +183,6 @@
             "MoveToPosition": {
                 "command_topic": "NN/Nybrovej/InnoLab/Planar/Xbot1/CMD/XYMotion",
                 "input_schema": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/moveToPosition.schema.json",
-                "array_mappings": {
-                    "Position": [
-                        {
-                            "aas_field": "Position_X",
-                            "json_field": "X",
-                            "index": 0
-                        },
-                        {
-                            "aas_field": "Position_Y",
-                            "json_field": "Y",
-                            "index": 1
-                        },
-                        {
-                            "aas_field": "Position_Theta",
-                            "json_field": "Theta",
-                            "index": 2
-                        }
-                    ]
-                },
                 "response_topic": "NN/Nybrovej/InnoLab/Planar/Xbot1/DATA/XYMotion",
                 "output_schema": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json",
                 "synchronous": false
@@ -231,25 +212,6 @@
             "MoveToPosition": {
                 "command_topic": "NN/Nybrovej/InnoLab/Planar/Xbot2/CMD/XYMotion",
                 "input_schema": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/moveToPosition.schema.json",
-                "array_mappings": {
-                    "Position": [
-                        {
-                            "aas_field": "Position_X",
-                            "json_field": "X",
-                            "index": 0
-                        },
-                        {
-                            "aas_field": "Position_Y",
-                            "json_field": "Y",
-                            "index": 1
-                        },
-                        {
-                            "aas_field": "Position_Theta",
-                            "json_field": "Theta",
-                            "index": 2
-                        }
-                    ]
-                },
                 "response_topic": "NN/Nybrovej/InnoLab/Planar/Xbot2/DATA/XYMotion",
                 "output_schema": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json"
             },
@@ -278,25 +240,6 @@
             "MoveToPosition": {
                 "command_topic": "NN/Nybrovej/InnoLab/Planar/Xbot3/CMD/XYMotion",
                 "input_schema": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/moveToPosition.schema.json",
-                "array_mappings": {
-                    "Position": [
-                        {
-                            "aas_field": "Position_X",
-                            "json_field": "X",
-                            "index": 0
-                        },
-                        {
-                            "aas_field": "Position_Y",
-                            "json_field": "Y",
-                            "index": 1
-                        },
-                        {
-                            "aas_field": "Position_Theta",
-                            "json_field": "Theta",
-                            "index": 2
-                        }
-                    ]
-                },
                 "response_topic": "NN/Nybrovej/InnoLab/Planar/Xbot3/DATA/XYMotion",
                 "output_schema": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json"
             },
@@ -325,18 +268,6 @@
             "halt": {
                 "command_topic": "NN/Nybrovej/InnoLab/Planar/CMD/Halt",
                 "input_schema": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json"
-            },
-            "occupy": {
-                "command_topic": "NN/Nybrovej/InnoLab/Planar/CMD/Occupy",
-                "input_schema": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json",
-                "response_topic": "NN/Nybrovej/InnoLab/Planar/DATA/Occupy",
-                "output_schema": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json"
-            },
-            "release": {
-                "command_topic": "NN/Nybrovej/InnoLab/Planar/CMD/Release",
-                "input_schema": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json",
-                "response_topic": "NN/Nybrovej/InnoLab/Planar/DATA/Release",
-                "output_schema": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json"
             }
         }
     },

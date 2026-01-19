@@ -26,6 +26,7 @@ from .config_parser import ConfigParser, parse_config_file
 from .topics_generator import TopicsGenerator
 from .databridge_from_config import DataBridgeFromConfig
 from .generate_aas import AASGenerator
+from .operation_delegation_api import update_topic_config
 from .core import (
     HTTPClient,
     DockerService,
@@ -155,8 +156,12 @@ class UnifiedRegistrationService:
             system_id = config.system_id
             logger.info(f"Registering asset: {system_id}")
 
-            # Step 2: Update Operation Delegation topics.json
+            # Step 2: Update Operation Delegation config (in-memory + file)
             logger.info("Updating Operation Delegation topics...")
+            topics_entry = config.get_operation_delegation_entry()
+            # Update in-memory config (no restart needed!)
+            update_topic_config(system_id, topics_entry)
+            # Also write to file for persistence across restarts
             self.topics_generator.add_from_config(config)
             self.topics_generator.save()
 
@@ -181,11 +186,11 @@ class UnifiedRegistrationService:
                 logger.error("Failed to register with BaSyx")
                 return False
 
-            # Step 6: Restart services (if requested)
+            # Step 6: Restart DataBridge (if requested)
+            # Note: Operation Delegation no longer needs restart - config is updated in-memory
             if restart_services:
-                logger.info("Restarting services...")
+                logger.info("Restarting DataBridge...")
                 self._restart_databridge()
-                self._restart_operation_delegation()
             else:
                 logger.info("Skipping service restarts")
 

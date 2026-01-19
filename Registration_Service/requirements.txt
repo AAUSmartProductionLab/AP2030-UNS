@@ -14,3 +14,7 @@ paho-mqtt>=2.1.0
 
 # YAML parsing for config-based registration
 PyYAML>=6.0.0
+
+# Flask for Operation Delegation HTTP API
+flask>=2.0.0
+gunicorn>=21.0.0

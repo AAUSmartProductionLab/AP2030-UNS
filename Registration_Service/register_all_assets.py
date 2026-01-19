@@ -197,14 +197,14 @@ def extract_topics_from_config(config_path: Path) -> Tuple[str, Dict]:
         with open(config_path, 'r') as f:
             config = yaml.safe_load(f)
 
-        # Use ConfigParser to extract topics (includes array_mappings)
+        # Use ConfigParser to extract topics (schemas are referenced, mappings auto-determined at runtime)
         from src.config_parser import ConfigParser
         parser = ConfigParser(config_data=config)
         
         # Get the idShort as the asset ID
         asset_id = parser.id_short
         
-        # Get the operation delegation entry (includes array_mappings)
+        # Get the operation delegation entry (includes schema URLs for auto-mapping)
         topics_dict = parser.get_operation_delegation_entry()
         
         return asset_id, topics_dict
