@@ -187,85 +187,17 @@ def extract_topics_from_config(config_path: Path) -> Tuple[str, Dict]:
         with open(config_path, 'r') as f:
             config = yaml.safe_load(f)
 
-        # Get the root key (AAS name)
-        root_key = list(config.keys())[0]
-        aas_config = config[root_key]
-        id_short = aas_config.get('idShort', root_key)
-
-        # Get interface description
-        interface_desc = aas_config.get('AssetInterfacesDescription', {})
-        mqtt_interface = interface_desc.get('InterfaceMQTT', {})
-
-        # Get base topic from endpoint metadata
-        endpoint_meta = mqtt_interface.get('EndpointMetadata', {})
-        base_url = endpoint_meta.get('base', '')
-
-        # Parse base topic from MQTT URL (e.g., "mqtt://host:port/NN/Nybrovej/...")
-        base_topic = ''
-        if base_url:
-            # Remove mqtt:// prefix and host:port
-            parts = base_url.split('/')
-            # Find the part after the host:port
-            for i, part in enumerate(parts):
-                if ':' in part and i > 0:  # This is likely the host:port
-                    base_topic = '/'.join(parts[i+1:])
-                    break
-            if not base_topic and len(parts) > 2:
-                # Fallback: assume format mqtt://host:port/topic/path
-                base_topic = '/'.join(parts[3:]) if len(parts) > 3 else ''
-
-        # Get actions from interaction metadata
-        interaction_meta = mqtt_interface.get('InteractionMetadata', {})
-        actions = interaction_meta.get('actions', {}) or {}
-
-        if not actions:
-            return None, None
-
-        # Build skills config
-        skills = {}
-        # Actions is a dict with action names as keys
-        for action_name, action_config in actions.items():
-
-            # Get the href from forms
-            forms = action_config.get('forms', {})
-            cmd_href = forms.get('href', f'/CMD/{action_name}')
-
-            # Get response href - if no response in forms, this is a one-way operation
-            response = forms.get('response')
-            has_output = 'output' in action_config
-
-            # Build command topic
-            command_topic = base_topic + \
-                cmd_href if base_topic else cmd_href.lstrip('/')
-
-            # Infer one-way: no output schema AND no response in forms
-            is_one_way = not has_output and response is None
-
-            skill_config = {
-                "command_topic": command_topic
-            }
-
-            # Only add response_topic for two-way operations
-            if not is_one_way:
-                data_href = response.get('href', cmd_href.replace(
-                    '/CMD/', '/DATA/')) if response else cmd_href.replace('/CMD/', '/DATA/')
-                response_topic = base_topic + \
-                    data_href if base_topic else data_href.lstrip('/')
-                skill_config["response_topic"] = response_topic
-
-                # Check if async (synchronous=false)
-                is_synchronous = str(action_config.get(
-                    'synchronous', 'true')).lower() == 'true'
-                if not is_synchronous:
-                    skill_config["synchronous"] = False
-
-            skills[action_name] = skill_config
-
-        return id_short, {
-            "base_topic": base_topic,
-            "submodel_id": f"https://smartproductionlab.aau.dk/submodels/instances/{id_short}/Skills",
-            "skills": skills
-        }
+        # Use ConfigParser to extract topics (includes array_mappings)
+        from src.config_parser import ConfigParser
+        parser = ConfigParser(config_data=config)
+        
+        # Get the idShort as the asset ID
+        asset_id = parser.id_short
+        
+        # Get the operation delegation entry (includes array_mappings)
+        topics_dict = parser.get_operation_delegation_entry()
+        
+        return asset_id, topics_dict
 
     except Exception as e:
         print_warning(f"Failed to extract topics from {config_path.name}: {e}")

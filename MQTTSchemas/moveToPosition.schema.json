@@ -7,23 +7,7 @@
             "$ref": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json"
         },
         {
-            "$ref": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/data.schema.json"
-        },
-        {
-            "type": "object",
-            "properties": {
-                "Position": {
-                    "type": "array",
-                    "prefixItems": [
-                        { "type": "number", "description": "X position" },
-                        { "type": "number", "description": "Y position" },
-                        { "type": "number", "description": "Theta (rotation)" }
-                    ],
-                    "minItems": 2,
-                    "maxItems": 3
-                }
-            },
-            "required": ["Position"]
+            "$ref": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/positionStamped.schema.json"
         }
     ]
 }

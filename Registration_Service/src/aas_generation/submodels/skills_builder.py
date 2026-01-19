@@ -158,48 +158,77 @@ class SkillsSubmodelBuilder:
 
         # Track property names to avoid duplicates between input and output
         input_prop_names = set()
+        
+        # Track array mappings for delegation service
+        array_mappings = {}
 
-        # Parse input schema if present
+        # Parse input schema if present - expand arrays into individual variables
         input_schema_url = action_config.get('input')
         if input_schema_url:
             schema = self.schema_handler.load_schema(input_schema_url)
             if schema:
-                # extract_properties handles both direct 'properties' and 'allOf' compositions
-                props = self.schema_handler.extract_properties(schema)
-                for prop_name, prop_info in props.items():
-                    prop_type = prop_info.get('type', 'string')
-                    prop_desc = prop_info.get('description', '')
+                # Use extract_operation_variables to expand arrays (e.g., Position -> X, Y, Theta)
+                vars = self.schema_handler.extract_operation_variables(schema)
+                for var_name, var_info in vars.items():
+                    var_type = var_info.get('type', 'string')
+                    var_desc = var_info.get('description', '')
+                    
+                    # Track array mapping info
+                    array_info = var_info.get('array_info')
+                    if array_info and array_info.get('is_array_item'):
+                        parent = array_info['parent_field']
+                        if parent not in array_mappings:
+                            array_mappings[parent] = []
+                        array_mappings[parent].append({
+                            'aas_field': var_name,
+                            'json_field': array_info['item_field']
+                        })
+                    
                     input_variables.append(
                         self._create_operation_variable(
-                            prop_name, prop_type, prop_desc)
+                            var_name, var_type, var_desc)
                     )
-                    input_prop_names.add(prop_name)
+                    input_prop_names.add(var_name)
 
-        # Parse output schema if present
+        # Parse output schema if present - expand arrays into individual variables
         output_schema_url = action_config.get('output')
         if output_schema_url:
             schema = self.schema_handler.load_schema(output_schema_url)
             if schema:
-                # extract_properties handles both direct 'properties' and 'allOf' compositions
-                props = self.schema_handler.extract_properties(schema)
-                for prop_name, prop_info in props.items():
-                    prop_type = prop_info.get('type', 'string')
-                    prop_desc = prop_info.get('description', '')
+                # Use extract_operation_variables to expand arrays
+                vars = self.schema_handler.extract_operation_variables(schema)
+                for var_name, var_info in vars.items():
+                    var_type = var_info.get('type', 'string')
+                    var_desc = var_info.get('description', '')
+                    
+                    # Track array mapping info
+                    array_info = var_info.get('array_info')
+                    if array_info and array_info.get('is_array_item'):
+                        parent = array_info['parent_field']
+                        if parent not in array_mappings:
+                            array_mappings[parent] = []
+                        # Check if not already added from input
+                        mapping = {
+                            'aas_field': var_name,
+                            'json_field': array_info['item_field']
+                        }
+                        if mapping not in array_mappings[parent]:
+                            array_mappings[parent].append(mapping)
 
                     # If property exists in both input and output, it becomes in-output
-                    if prop_name in input_prop_names:
+                    if var_name in input_prop_names:
                         # Move from input to in-output
                         inoutput_variables.append(
                             self._create_operation_variable(
-                                prop_name, prop_type, prop_desc)
+                                var_name, var_type, var_desc)
                         )
                         # Remove from input_variables
                         input_variables = [
-                            v for v in input_variables if v.id_short != prop_name]
+                            v for v in input_variables if v.id_short != var_name]
                     else:
                         output_variables.append(
                             self._create_operation_variable(
-                                prop_name, prop_type, prop_desc)
+                                var_name, var_type, var_desc)
                         )
 
         # Get description from action title or key
@@ -211,11 +240,11 @@ class SkillsSubmodelBuilder:
 
         # Build the qualifiers for the operation
         qualifiers = self._create_operation_qualifiers(
-            action_config, system_id, action_name)
+            action_config, system_id, action_name, array_mappings)
 
         # Use element factory to create the operation
         return self.element_factory.create_operation(
-            id_short="Operation",
+            id_short=action_name,
             input_vars=input_variables if input_variables else None,
             output_vars=output_variables if output_variables else None,
             inoutput_vars=inoutput_variables if inoutput_variables else None,
@@ -306,7 +335,7 @@ class SkillsSubmodelBuilder:
         return prop
 
     def _create_operation_qualifiers(self, action_config: Dict, system_id: str,
-                                     action_name: str) -> List[model.Qualifier]:
+                                     action_name: str, array_mappings: Dict = None) -> List[model.Qualifier]:
         """
         Create qualifiers for an operation.
 
@@ -314,6 +343,7 @@ class SkillsSubmodelBuilder:
             action_config: Action configuration
             system_id: System identifier
             action_name: Name of the action
+            array_mappings: Dictionary of array field mappings for unpacking/packing
 
         Returns:
             List of qualifiers
@@ -338,6 +368,17 @@ class SkillsSubmodelBuilder:
                     type_="invocationDelegation",
                     value_type=model.datatypes.String,
                     value=delegation_url
+                )
+            )
+        
+        # Add array mappings qualifier if present
+        if array_mappings:
+            import json
+            qualifiers.append(
+                model.Qualifier(
+                    type_="arrayMappings",
+                    value_type=model.datatypes.String,
+                    value=json.dumps(array_mappings)
                 )
             )
 
