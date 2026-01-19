@@ -47,6 +47,7 @@ MQTT_BASE_TOPIC = "NN/Nybrovej/InnoLab/Planar"
 WORKSPACE = None
 ACTIVE_XBOT_IDS = set()
 PMC_LOCK = threading.Lock()
+XBOT_POS_PUBLISHERS = {}
 
 def get_flyway_centers():
     """Get all valid flyway centers."""
@@ -312,9 +313,9 @@ def handle_xbot_motion_cmd(topic, client, message, properties, xbot_sm, xbot_id)
     goal_pos = (float(pos[0]), float(pos[1]))
     goal_rot = np.radians(float(pos[2])) if len(pos) > 2 else None
     
-    # 2. Register (Occupy)
-    print(f"XBot {xbot_id}: Registering Task {uuid}", flush=True)
-    xbot_sm.register_command(uuid)
+    # 2. Register (Occupy) - REMOVED
+    # Logic is now: Occupy first (via CMD/Occupy), then Execute Motion
+    # We rely on PackMLSimulator to verify occupation (uuids not empty)
     
     # 3. Trigger Execute
     # We define the process function
@@ -334,6 +335,70 @@ def handle_xbot_motion_cmd(topic, client, message, properties, xbot_sm, xbot_id)
     # So state should be EXECUTE by now.
     
     xbot_sm.execute_command(message, topic, process_func)
+
+def publish_positions_loop(proxy):
+    """Background thread to publish XBot positions"""
+    last_positions = {}
+    print("Starting Position Publisher Loop...", flush=True)
+    while True:
+        try:
+            timestamp = datetime.now(datetime.timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
+            
+            # We iterate 1-10. 
+            # Note: Checking status for disconnected bots might timeout or fail fast.
+            # We can use ACTIVE_XBOT_IDS to limit checks if performance is bad, 
+            # but user might move bots manually/outside this script.
+            # For now, let's try checking all keys in publishers dict.
+            
+            for xbot_id, publisher in XBOT_POS_PUBLISHERS.items():
+                try:
+                    # feedback_type=1 is POSITION (check pmc_types if available, assuming 1)
+                    # Using xbot.get_xbot_status(xbot_id, feedback_type=pm.FEEDBACKOPTION.POSITION)
+                    # We need to acquire lock? PMC calls are likely thread-safe in C++ lib but let's be careful.
+                    # xbot_controller functions don't use lock except for activation in our code.
+                    
+                    s = xbot.get_xbot_status(xbot_id=xbot_id, feedback_type=pm.FEEDBACKOPTION.POSITION)
+                    
+                    # Check if valid
+                    # If xbot_state is error or not connected, maybe skip?
+                    # s.feedback_position_si is [x, y, z, rx, ry, rz]
+                    
+                    if s and hasattr(s, 'feedback_position_si'):
+                        pos = s.feedback_position_si
+                        x = float(pos[0])
+                        y = float(pos[1])
+                        theta = np.degrees(float(pos[5])) # Convert Rad to Deg for MQTT
+                        
+                        current_pos_list = [x, y, theta]
+                        
+                        # Check change (Threshold: 1mm, 0.1 deg)
+                        last = last_positions.get(xbot_id)
+                        changed = False
+                        if last is None:
+                            changed = True
+                        elif (abs(last[0]-x) > 0.001 or 
+                              abs(last[1]-y) > 0.001 or 
+                              abs(last[2]-theta) > 0.1):
+                            changed = True
+                            
+                        if changed:
+                            payload = {
+                                "Position": current_pos_list,
+                                "TimeStamp": timestamp
+                            }
+                            # Publisher.publish(payload, client, retain)
+                            publisher.publish(payload, proxy, False)
+                            last_positions[xbot_id] = current_pos_list
+
+                except Exception as inner_e:
+                    # Often fails if bot not connected
+                    pass
+                    
+            time.sleep(0.1) # 10Hz limit
+            
+        except Exception as e:
+            print(f"Position Loop Error: {e}", flush=True)
+            time.sleep(1)
 
 def main():
     print("=== Planar Controller V2 (PackML) ===", flush=True)
@@ -399,7 +464,20 @@ def main():
         )
         proxy.register_topic(mot_topic)
         
-    # 5. Loop
+        # Position Publisher
+        pos_topic = Publisher(
+            f"{xb_topic_base}/DATA/Position",
+            "./MQTTSchemas/position.schema.json",
+            0
+        )
+        proxy.register_topic(pos_topic)
+        XBOT_POS_PUBLISHERS[i] = pos_topic
+        
+    # 5. Position Thread
+    pos_thread = threading.Thread(target=publish_positions_loop, args=(proxy,), daemon=True)
+    pos_thread.start()
+
+    # 6. Loop
     print("Starting MQTT Loop...", flush=True)
     proxy.loop_forever()
 

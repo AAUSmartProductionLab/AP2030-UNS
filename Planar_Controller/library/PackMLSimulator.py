@@ -273,8 +273,8 @@ class PackMLStateMachine:
 
             self.publish_state()
             if not self.uuids:  # Queue is now empty
-                # Signal to go to IDLE
-                self.transition_to(PackMLState.COMPLETING, "#")
+                # Signal to go to IDLE (Handled by final block)
+                pass 
             else:  # More items in queue
                 self.transition_to(PackMLState.STARTING)
 
@@ -291,10 +291,7 @@ class PackMLStateMachine:
                     self.register_topic, reg_cmd_uuid, "FAILURE")
 
             self.publish_state()
-            # If the machine was in EXECUTE and the queue becomes empty (should not happen if not head),
-            # or if it was IDLE and an item was removed.
-            if not self.uuids and self.state not in [PackMLState.IDLE, PackMLState.RESETTING, PackMLState.COMPLETING, PackMLState.COMPLETE]:
-                self.transition_to(PackMLState.COMPLETING, "#")
+            # If the machine was in EXECUTE and the queue becomes empty, final block handles it.
 
         # Case 4: UUID not found in active processing or queue.
         else:
@@ -351,9 +348,12 @@ class PackMLStateMachine:
 
     def execute_command(self, message, execute_topic: Topic, process_function, *args):
         if self.state == PackMLState.EXECUTE:
-            if self.uuids and message.get("Uuid") == self.uuids[0] and not self.is_processing:
+            # Allow execution if UUID matches head (Strict) OR if Occupation Logic is active (Session Mode)
+            # Ensure uuids is not empty (must have at least one registered command/occupation)
+            if self.uuids and (message.get("Uuid") == self.uuids[0] or self.use_occupation_logic) and not self.is_processing:
                 # Do not pop from self.uuids here; completing_state will.
-                active_uuid = self.uuids[0]
+                # Use message UUID for process tracking to support distinct commands under one occupation
+                active_uuid = message.get("Uuid")
 
                 self.current_processing_uuid = active_uuid
                 self.interruption_requested_for_uuid[active_uuid] = False
@@ -501,7 +501,7 @@ class PackMLStateMachine:
             self.is_processing = False
 
         self.Uuid = None
-        self.publish_state()
+        # self.publish_state() # Removed excessive publish causing double messages
         self.transition_to(PackMLState.COMPLETE)
 
     def aborting_state(self, aborted_task_uuid):

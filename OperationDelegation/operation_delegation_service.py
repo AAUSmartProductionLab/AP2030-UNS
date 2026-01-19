@@ -284,7 +284,8 @@ class MQTTOperationBridge:
         response_topic: str,
         input_variables: List[Dict[str, Any]],
         is_async: bool = False,
-        state_property_path: Optional[str] = None
+        state_property_path: Optional[str] = None,
+        array_mappings: Optional[Dict[str, List[str]]] = None
     ) -> List[Dict[str, Any]]:
         """
         Invoke an operation by publishing an MQTT command and waiting for response.
@@ -294,6 +295,7 @@ class MQTTOperationBridge:
             response_topic: The MQTT topic to listen for the response
             input_variables: List of AAS OperationVariable objects
             is_async: Whether this is an asynchronous operation (updates AAS state property)
+            array_mappings: Optional dict mapping array names to field names for transformation
             state_property_path: For async ops, the path to update state: "submodel_id|skill_name"
 
         Returns:
@@ -325,9 +327,7 @@ class MQTTOperationBridge:
         logger.info(f"Subscribed to response topic: {response_topic}")
 
         try:
-            # Build MQTT command message from input variables
-            command_message = self._build_command_message(
-                correlation_id, input_variables)
+            # Build MQTT command message from i, array_mappings)
 
             # Publish command
             logger.info(
@@ -343,6 +343,8 @@ class MQTTOperationBridge:
                 # For async operations, reset state to IDLE after completion
                 if is_async and state_property_path:
                     # State was already updated by _on_message, now set to IDLE
+                    self._update_aas_state_async(state_property_path, "IDLE")
+                return self._build_response_variables(pending_op.response_data, array_mappingsE
                     self._update_aas_state_async(state_property_path, "IDLE")
                 return self._build_response_variables(pending_op.response_data)
             else:
@@ -362,9 +364,8 @@ class MQTTOperationBridge:
             self.client.unsubscribe(response_topic)
 
     def invoke_one_way(
-        self,
-        command_topic: str,
-        input_variables: List[Dict[str, Any]]
+        self,,
+        array_mappings: Optional[Dict[str, List[str]]] = None
     ) -> None:
         """
         Invoke a one-way (fire-and-forget) operation.
@@ -375,11 +376,14 @@ class MQTTOperationBridge:
         Args:
             command_topic: The MQTT topic to publish the command to
             input_variables: List of AAS OperationVariable objects
+            array_mappings: Optional dict mapping array names to field names for transformation
         """
         # Generate correlation ID (still useful for logging/tracking)
         correlation_id = str(uuid.uuid4())
 
         # Build MQTT command message from input variables
+        command_message = self._build_command_message(
+            correlation_id, input_variables, array_mappinginput variables
         command_message = self._build_command_message(
             correlation_id, input_variables)
 
@@ -395,7 +399,8 @@ class MQTTOperationBridge:
     def _build_command_message(
         self,
         correlation_id: str,
-        input_variables: List[Dict[str, Any]]
+        input_variables: List[Dict[str, Any]],
+        array_mappings: Optional[Dict[str, List[str]]] = None
     ) -> Dict[str, Any]:
         """
         Build an MQTT command message from AAS OperationVariables.
@@ -412,12 +417,26 @@ class MQTTOperationBridge:
             },
             ...
         ]
+        
+        Args:
+            correlation_id: UUID for the command
+            input_variables: AAS OperationVariables
+            array_mappings: Optional dict mapping array names to their component fields.
+                           Example: {"Position": ["X", "Y", "Theta"]}
+                           Fields are combined in the order specified.
         """
         command = {
             "Uuid": correlation_id
         }
 
-        # Extract values from OperationVariables
+        # Default array mappings if not provided
+        if array_mappings is None:
+            array_mappings = {
+                "Position": ["X", "Y", "Theta"]
+            }
+
+        # Collect all values first
+        values = {}
         for var in input_variables:
             if "value" in var:
                 value_obj = var["value"]
@@ -433,13 +452,28 @@ class MQTTOperationBridge:
                 elif value_type == "xs:boolean":
                     value = str(value).lower() == "true"
 
-                command[id_short] = value
+                values[id_short] = value
+
+        # Apply array mappings: combine individual fields into arrays
+        for array_name, field_names in array_mappings.items():
+            array_values = []
+            for field_name in field_names:
+                if field_name in values:
+                    array_values.append(values.pop(field_name))
+            
+            # Only add the array if at least one component was present
+            if array_values:
+                command[array_name] = array_values
+
+        # Add remaining values to command
+        command.update(values)
 
         return command
 
     def _build_response_variables(
         self,
-        response_data: Dict[str, Any]
+        response_data: Dict[str, Any],
+        array_mappings: Optional[Dict[str, List[str]]] = None
     ) -> List[Dict[str, Any]]:
         """
         Build AAS OperationVariable response from MQTT response data.
@@ -456,10 +490,32 @@ class MQTTOperationBridge:
             },
             ...
         ]
+        
+        Args:
+            response_data: MQTT response data
+            array_mappings: Optional dict mapping array names to their component fields.
+                           Example: {"Position": ["X", "Y", "Theta"]}
+                           Arrays are unpacked into individual fields in the order specified.
         """
-        output_variables = []
+        # Default array mappings if not provided
+        if array_mappings is None:
+            array_mappings = {
+                "Position": ["X", "Y", "Theta"]
+            }
+        
+        # Make a copy to avoid modifying the original
+        data = dict(response_data)
 
-        for key, value in response_data.items():
+        # Unpack arrays into individual fields based on mappings
+        for array_name, field_names in array_mappings.items():
+            if array_name in data and isinstance(data[array_name], list):
+                array_values = data.pop(array_name)
+                for i, field_name in enumerate(field_names):
+                    if i < len(array_values):
+                        data[field_name] = array_values[i]
+
+        output_variables = []
+        for key, value in data.items():
             # Determine value type
             if isinstance(value, bool):
                 value_type = "xs:boolean"
@@ -661,13 +717,13 @@ def invoke_asset_skill(asset_id: str, skill_name: str):
         # Check if this is a one-way (fire-and-forget) operation
         # One-way operations have no response_topic in the config
         is_one_way = 'response_topic' not in skill_config
-        logger.info(f"Operation mode - oneWay: {is_one_way}")
-        logger.info(f"Skill config for {skill_name}: {skill_config}")
-
+        # Get array mappings from skill config
+        array_mappings = skill_config.get('array_mappings')
+        
         if is_one_way:
             # Fire-and-forget: publish and return immediately
             bridge = get_mqtt_bridge()
-            bridge.invoke_one_way(command_topic, input_variables)
+            bridge.invoke_one_way(command_topic, input_variables, array_mappings)
             logger.info(f"One-way operation sent to {command_topic}")
             return jsonify([]), 200
 
@@ -695,6 +751,10 @@ def invoke_asset_skill(asset_id: str, skill_name: str):
         result = bridge.invoke_operation(
             command_topic,
             response_topic,
+            input_variables,
+            is_async=is_async,
+            state_property_path=state_property_path,
+            array_mappings=array_mappings
             input_variables,
             is_async=is_async,
             state_property_path=state_property_path

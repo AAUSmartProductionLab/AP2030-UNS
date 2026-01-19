@@ -138,7 +138,10 @@
             "MoveToPosition": {
                 "command_topic": "NN/Nybrovej/InnoLab/Planar/Xbot1/CMD/XYMotion",
                 "response_topic": "NN/Nybrovej/InnoLab/Planar/Xbot1/DATA/XYMotion",
-                "synchronous": false
+                "synchronous": false,
+                "array_mappings": {
+                    "Position": ["X", "Y", "Theta"]
+                }
             },
             "halt": {
                 "command_topic": "NN/Nybrovej/InnoLab/Planar/Xbot1/CMD/Halt"
@@ -159,7 +162,10 @@
         "skills": {
             "MoveToPosition": {
                 "command_topic": "NN/Nybrovej/InnoLab/Planar/Xbot2/CMD/XYMotion",
-                "response_topic": "NN/Nybrovej/InnoLab/Planar/Xbot2/DATA/XYMotion"
+                "response_topic": "NN/Nybrovej/InnoLab/Planar/Xbot2/DATA/XYMotion",
+                "array_mappings": {
+                    "Position": ["X", "Y", "Theta"]
+                }
             },
             "halt": {
                 "command_topic": "NN/Nybrovej/InnoLab/Planar/Xbot2/CMD/Halt"
@@ -180,7 +186,10 @@
         "skills": {
             "MoveToPosition": {
                 "command_topic": "NN/Nybrovej/InnoLab/Planar/Xbot3/CMD/XYMotion",
-                "response_topic": "NN/Nybrovej/InnoLab/Planar/Xbot3/DATA/XYMotion"
+                "response_topic": "NN/Nybrovej/InnoLab/Planar/Xbot3/DATA/XYMotion",
+                "array_mappings": {
+                    "Position": ["X", "Y", "Theta"]
+                }
             },
             "halt": {
                 "command_topic": "NN/Nybrovej/InnoLab/Planar/Xbot3/CMD/Halt"
