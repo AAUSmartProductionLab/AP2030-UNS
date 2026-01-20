@@ -141,6 +141,11 @@ The behavior tree XML files define the control logic for the production line con
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/BTDescriptions/productionTask.xml)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/BTDescriptions/productionTask.xml)
 
+- **[production_HgH.xml](BTDescriptions/production_HgH.xml)**
+  - Tree ID: `Production`
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/BTDescriptions/production_HgH.xml)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/BTDescriptions/production_HgH.xml)
+
 - **[qualityControl.xml](BTDescriptions/qualityControl.xml)**
   - Tree ID: `QualityControl`
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/BTDescriptions/qualityControl.xml)
