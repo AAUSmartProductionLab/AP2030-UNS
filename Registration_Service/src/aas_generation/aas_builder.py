@@ -155,6 +155,14 @@ class AASBuilder:
         if has_explicit_skills or has_actions:
             submodel_names.append('Skills')
         
+        # Add Process AAS specific submodels if they exist in config
+        if 'ProcessInformation' in config:
+            submodel_names.append('ProcessInformation')
+        if 'RequiredCapabilities' in config:
+            submodel_names.append('RequiredCapabilities')
+        if 'Policy' in config:
+            submodel_names.append('Policy')
+        
         return submodel_names
     
     def _has_interface_actions(self, config: Dict) -> bool:

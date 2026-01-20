@@ -467,6 +467,8 @@ class UnifiedRegistrationService:
         """Register shell descriptor in AAS registry"""
         try:
             external_url = self.basyx_config.get_external_url()
+            
+            logger.info(f"Registering shell descriptor with {len(submodels)} submodels")
 
             shell_descriptor = {
                 "id": shell_data['id'],
@@ -505,13 +507,30 @@ class UnifiedRegistrationService:
                         if 'semanticId' in sm:
                             sm_descriptor['semanticId'] = sm['semanticId']
                         submodel_descriptors.append(sm_descriptor)
+                        logger.debug(f"Added submodel descriptor: {sm['idShort']}")
+                    else:
+                        logger.warning(f"Skipping invalid submodel: {sm}")
 
+                logger.info(f"Built {len(submodel_descriptors)} submodel descriptors")
                 if submodel_descriptors:
                     shell_descriptor['submodelDescriptors'] = submodel_descriptors
 
             response = self.http_client.post(
                 self.basyx_config.aas_registry_url, shell_descriptor)
-            return response.status_code in [HTTPStatus.OK, HTTPStatus.CREATED, HTTPStatus.CONFLICT]
+            logger.info(f"Shell descriptor registration response: {response.status_code}")
+            
+            if self.http_client.is_conflict(response):
+                # Already exists - delete and re-register
+                logger.info(f"Shell descriptor exists, updating...")
+                delete_url = f"{self.basyx_config.aas_registry_url}/{encoded_id}"
+                self.http_client.delete(delete_url)
+                
+                # Re-register
+                response = self.http_client.post(
+                    self.basyx_config.aas_registry_url, shell_descriptor)
+                logger.info(f"Shell descriptor re-registration response: {response.status_code}")
+            
+            return response.status_code in [HTTPStatus.OK, HTTPStatus.CREATED]
 
         except Exception as e:
             logger.error(f"Failed to register shell descriptor: {e}")
