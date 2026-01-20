@@ -127,10 +127,8 @@ class PathDefaults:
 
 class MQTTTopics:
     """Default MQTT topics."""
-    # Wildcard patterns to match station-specific registration topics
-    # e.g., NN/Nybrovej/InnoLab/Dispensing/Registration/Config
-    REGISTRATION_CONFIG: Final[str] = "NN/Nybrovej/InnoLab/+/Registration/Config"
-    REGISTRATION_LEGACY: Final[str] = "NN/Nybrovej/InnoLab/+/Registration/Request"
+    # Single registration topic - asset identity is determined from YAML payload
+    REGISTRATION_CONFIG: Final[str] = "NN/Nybrovej/InnoLab/Registration/Config"
     REGISTRATION_RESPONSE: Final[str] = "NN/Nybrovej/InnoLab/Registration/Response"
 
 

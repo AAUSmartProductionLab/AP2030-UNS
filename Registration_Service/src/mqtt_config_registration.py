@@ -32,8 +32,7 @@ class MQTTConfigRegistrationService:
                  registration_service: UnifiedRegistrationService,
                  mqtt_broker: str = "192.168.0.104",
                  mqtt_port: int = 1883,
-                 config_topic: str = "NN/Nybrovej/InnoLab/+/Registration/Config",
-                 legacy_topic: str = "NN/Nybrovej/InnoLab/+/Registration/Request",
+                 config_topic: str = "NN/Nybrovej/InnoLab/Registration/Config",
                  response_topic: str = "NN/Nybrovej/InnoLab/Registration/Response",
                  client_id: str = "unified-registration-service"):
         """
@@ -43,8 +42,7 @@ class MQTTConfigRegistrationService:
             registration_service: UnifiedRegistrationService instance
             mqtt_broker: MQTT broker hostname/IP
             mqtt_port: MQTT broker port
-            config_topic: Topic pattern for YAML config registration (supports + wildcard)
-            legacy_topic: Topic pattern for legacy AAS JSON registration (supports + wildcard)
+            config_topic: Topic for YAML config registration
             response_topic: Topic for registration responses
             client_id: MQTT client ID
         """
@@ -52,7 +50,6 @@ class MQTTConfigRegistrationService:
         self.mqtt_broker = mqtt_broker
         self.mqtt_port = mqtt_port
         self.config_topic = config_topic
-        self.legacy_topic = legacy_topic
         self.response_topic = response_topic
         self.client_id = client_id
 
@@ -72,7 +69,6 @@ class MQTTConfigRegistrationService:
         # Statistics
         self.stats = {
             'config_received': 0,
-            'legacy_received': 0,
             'processed': 0,
             'failed': 0
         }
@@ -97,7 +93,6 @@ class MQTTConfigRegistrationService:
         logger.info(
             f"MQTT registration service started on {self.mqtt_broker}:{self.mqtt_port}")
         logger.info(f"Config topic: {self.config_topic}")
-        logger.info(f"Legacy topic: {self.legacy_topic}")
 
     def stop(self):
         """Stop MQTT listener and worker thread"""
@@ -142,11 +137,9 @@ class MQTTConfigRegistrationService:
         """Callback when connected to MQTT broker"""
         if reason_code == 0:
             logger.info("Connected to MQTT broker")
-            # Subscribe to both topics
+            # Subscribe to config topic
             client.subscribe(self.config_topic, qos=2)
-            client.subscribe(self.legacy_topic, qos=2)
-            logger.info(
-                f"Subscribed to: {self.config_topic}, {self.legacy_topic}")
+            logger.info(f"Subscribed to: {self.config_topic}")
         else:
             logger.error(f"Failed to connect: {reason_code}")
 
@@ -155,44 +148,16 @@ class MQTTConfigRegistrationService:
         if reason_code != 0:
             logger.warning(f"Unexpected disconnect: {reason_code}")
 
-    def _topic_matches_pattern(self, topic: str, pattern: str) -> bool:
-        """
-        Check if a topic matches an MQTT pattern with + wildcard.
-
-        Args:
-            topic: The actual topic received
-            pattern: The pattern with potential + wildcards
-
-        Returns:
-            True if topic matches pattern
-        """
-        topic_parts = topic.split('/')
-        pattern_parts = pattern.split('/')
-
-        if len(topic_parts) != len(pattern_parts):
-            return False
-
-        for topic_part, pattern_part in zip(topic_parts, pattern_parts):
-            if pattern_part == '+':
-                continue  # Single-level wildcard matches any single level
-            if topic_part != pattern_part:
-                return False
-
-        return True
-
     def _on_message(self, client, userdata, msg):
         """Handle incoming MQTT messages"""
         try:
             topic = msg.topic
             payload_str = msg.payload.decode('utf-8')
 
-            # Determine message type based on topic pattern matching
-            if self._topic_matches_pattern(topic, self.config_topic):
+            # Handle config registration messages
+            if topic == self.config_topic:
                 self.stats['config_received'] += 1
                 self._handle_config_message(payload_str)
-            elif self._topic_matches_pattern(topic, self.legacy_topic):
-                self.stats['legacy_received'] += 1
-                self._handle_legacy_message(payload_str)
             else:
                 logger.warning(f"Unknown topic: {topic}")
 

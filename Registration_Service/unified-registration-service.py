@@ -149,8 +149,6 @@ Examples:
                                           help='Start MQTT listener for registration')
     listen_parser.add_argument('--config-topic', default=MQTTTopics.REGISTRATION_CONFIG,
                                help='MQTT topic for config registration')
-    listen_parser.add_argument('--legacy-topic', default=MQTTTopics.REGISTRATION_LEGACY,
-                               help='MQTT topic for legacy registration')
     listen_parser.add_argument('--response-topic', default=MQTTTopics.REGISTRATION_RESPONSE,
                                help='MQTT topic for responses')
     listen_parser.add_argument('--databridge-name', default=ContainerNames.DATABRIDGE,
@@ -340,14 +338,12 @@ Examples:
                 mqtt_broker=args.mqtt_broker,
                 mqtt_port=args.mqtt_port,
                 config_topic=args.config_topic,
-                legacy_topic=args.legacy_topic,
                 response_topic=args.response_topic
             )
 
             logger.info("Starting MQTT registration listener...")
             logger.info(f"MQTT Broker: {args.mqtt_broker}:{args.mqtt_port}")
             logger.info(f"Config Topic: {args.config_topic}")
-            logger.info(f"Legacy Topic: {args.legacy_topic}")
             logger.info(f"Delegation API: http://0.0.0.0:{args.delegation_port}")
 
             try:
@@ -380,7 +376,6 @@ Examples:
                 stats = mqtt_service.get_stats()
                 logger.info(f"\nStatistics:")
                 logger.info(f"  Config received: {stats['config_received']}")
-                logger.info(f"  Legacy received: {stats['legacy_received']}")
                 logger.info(f"  Processed: {stats['processed']}")
                 logger.info(f"  Failed: {stats['failed']}")
 

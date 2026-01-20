@@ -537,7 +537,7 @@ class PackMLStateMachine:
             with open(config_file, 'r', encoding='utf-8') as f:
                 yaml_content = f.read()
 
-            registration_topic = self.base_topic + "/Registration/Config"
+            registration_topic = "NN/Nybrovej/InnoLab/Registration/Config" #self.base_topic + "/Registration/Config"
             self.client.publish(registration_topic,
                                 yaml_content, qos=2, retain=False)
 
