@@ -830,7 +830,7 @@ class AasService {
       assetType: `${baseUrl}/product/productFamily/${sanitizedFamily}/${sanitizedProduct}`,
       batchInfoSubmodelId: `${baseUrl}/submodels/products/${orderUuid}/BatchInformation`,
       requirementsSubmodelId: `${baseUrl}/submodels/products/${orderUuid}/Requirements`,
-      billOfMaterialsSubmodelId: `${baseUrl}/submodels/products/${orderUuid}/BillOfMaterials`
+      billOfMaterialsSubmodelId: `${baseUrl}/submodels/products/${orderUuid}/HierarchicalStructures`
     };
   }
 
@@ -1040,7 +1040,7 @@ class AasService {
     
     const elements = [archetypeProperty, entryNode, ...relationships];
     
-    return this.createSubmodel(submodelId, 'BillOfMaterials', elements, semanticId);
+    return this.createSubmodel(submodelId,'HierarchicalStructures','BillOfMaterials', elements, semanticId);
   }
 
   /**
@@ -1400,7 +1400,7 @@ class AasService {
       assetType: `${baseUrl}/product/productFamily/${sanitizedFamily}/${sanitizedName}`,
       batchInfoSubmodelId: `${baseUrl}/submodels/instances/${sanitizedName}/BatchInformation`,
       requirementsSubmodelId: `${baseUrl}/submodels/instances/${sanitizedName}/Requirements`,
-      billOfMaterialsSubmodelId: `${baseUrl}/submodels/instances/${sanitizedName}/BillOfMaterials`
+      billOfMaterialsSubmodelId: `${baseUrl}/submodels/instances/${sanitizedName}/HierarchicalStructures`
     };
   }
 
@@ -1498,7 +1498,7 @@ class AasService {
     
     const elements = [archetypeProperty, entryNode, ...relationships];
     
-    return this.createSubmodel(submodelId, 'BillOfMaterials', elements, semanticId);
+    return this.createSubmodel(submodelId,'HierarchicalStructures', 'BillOfMaterials', elements, semanticId);
   }
 
   /**
@@ -1882,7 +1882,7 @@ class AasService {
     
     const submodelElements = [archetypeProperty, entryNode, ...relationships];
     
-    return this.createSubmodel(submodelId, 'HierarchicalStructures', submodelElements, submodelSemanticId);
+    return this.createSubmodel(submodelId, 'HierarchicalStructures', 'BillOfMaterials',  submodelElements, submodelSemanticId);
   }
 
   transformHierarchicalStructuresToLayoutData(hierarchicalStructures, moduleCatalog) {
