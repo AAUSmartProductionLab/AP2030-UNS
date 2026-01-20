@@ -31,13 +31,11 @@ HgHAAS:
         semantic_id: 'https://smartproductionlab.aau.dk/submodels/BillOfProcesses/1/0'
         Processes:
             - Loading:
-                step: 1
                 semantic_id: 'https://smartproductionlab.aau.dk/Capability/Loading'
                 description: 'Load empty primary container onto shuttle'
                 estimatedDuration: 5.0  # seconds
                 
             - Dispensing:
-                step: 2
                 semantic_id: 'https://smartproductionlab.aau.dk/Capability/Dispensing'
                 description: 'Dispense product into primary container'
                 estimatedDuration: 8.0
@@ -45,19 +43,16 @@ HgHAAS:
                     fillVolume: 2.5  # mL
                     
             - Stoppering:
-                step: 3
                 semantic_id: 'https://smartproductionlab.aau.dk/Capability/Stoppering'
                 description: 'Insert stopper into container'
                 estimatedDuration: 3.0
                 
             - Inspection:
-                step: 4
                 semantic_id: 'https://smartproductionlab.aau.dk/Capability/QualityControl'
                 description: 'Visual inspection of filled container'
                 estimatedDuration: 2.0
                 
             - Unloading:
-                step: 5
                 semantic_id: 'https://smartproductionlab.aau.dk/Capability/Unloading'
                 description: 'Unload finished product from shuttle'
                 estimatedDuration: 4.0
