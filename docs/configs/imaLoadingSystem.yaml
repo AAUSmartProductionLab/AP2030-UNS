@@ -109,21 +109,22 @@ imaLoadingSystemAAS:
     Capabilities:
         Loading:
             realizedBy: "Load"
+            semantic_id: https://smartproductionlab.aau.dk/Capability/Loading
     
     Skills:
         loading:
             description: "Loading function for pharmaceutical primary packaging"
             semantic_id: "https://smartproductionlab.aau.dk/skills/loading"
             interface: "loading"
-        halt:
-            description: "Halt the current loading operation"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/halt"
-            interface: "halt"
-        occupy:
-            description: "Occupy the loading system for exclusive use"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/occupy"
-            interface: "occupy"
-        release:
-            description: "Release the loading system from exclusive use"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/release"
-            interface: "release"
+        Halt:
+            description: "Halt the current operation"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/Halt"
+            interface: "Halt"
+        Occupy:
+            description: "Occupy the system for exclusive use"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/Occupy"
+            interface: "Occupy"
+        Release:
+            description: "Release the system from exclusive use"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/Release"
+            interface: "Release"

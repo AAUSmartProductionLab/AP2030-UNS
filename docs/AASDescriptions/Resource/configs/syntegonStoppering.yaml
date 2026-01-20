@@ -107,21 +107,22 @@ syntegonStopperingSystemAAS:
     Capabilities:
         Stoppering:
             realizedBy: "Stopper"
+            semantic_id: https://smartproductionlab.aau.dk/Capability/Stoppering
     
     Skills:
         Stoppering:
             description: "Stoppering function for pharmaceutical primary packaging"
             semantic_id: "https://smartproductionlab.aau.dk/skills/Stoppering"
             interface: "Stoppering"
-        halt:
-            description: "Halt the current stoppering operation"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/halt"
-            interface: "halt"
-        occupy:
-            description: "Occupy the stoppering system for exclusive use"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/occupy"
-            interface: "occupy"
-        release:
-            description: "Release the stoppering system from exclusive use"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/release"
-            interface: "release"
+        Halt:
+            description: "Halt the current stoppeng operation"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/Halt"
+            interface: "Halt"
+        Occupy:
+            description: "Occupy the system for exclusive use"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/Occupy"
+            interface: "Occupy"
+        Release:
+            description: "Release the system from exclusive use"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/Release"
+            interface: "Release"
