@@ -1,6 +1,7 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "title": "Planning Command",
+    "description": "Command to trigger production planning for a product using specified assets",
     "type": "object",
     "allOf": [
         {
@@ -11,18 +12,26 @@
             "properties": {
                 "Assets": {
                     "type": "array",
-                    "description": "Assets to use for planning",
+                    "description": "AAS IDs of assets to use for planning. Hierarchical structures will be resolved to find all available resources.",
                     "items": {
-                    "type": "string"
+                        "type": "string",
+                        "format": "uri"
                     },
-                    "minItems": 1
+                    "minItems": 1,
+                    "examples": [
+                        ["https://smartproductionlab.aau.dk/aas/aauFillingLine"]
+                    ]
                 },
                 "Product": {
                     "type": "string",
-                    "description": "The product to produce"
+                    "format": "uri",
+                    "description": "AAS ID of the product to produce. Must contain BillOfProcesses and Requirements submodels.",
+                    "examples": [
+                        "https://smartproductionlab.aau.dk/aas/HgHAAS"
+                    ]
                 }
             },
-            "required": ["TargetPos"]
+            "required": ["Assets", "Product"]
         }
     ]
 }

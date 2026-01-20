@@ -66,6 +66,7 @@ All schemas are automatically synchronized from the `schemas/` directory. Click 
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/planarStations.schema.json)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/MQTTSchemas/planarStations.schema.json)
 - **[planningCommand.schema.json](MQTTSchemas/planningCommand.schema.json)**
+  - Command to trigger production planning for a product using specified assets
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/planningCommand.schema.json)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/MQTTSchemas/planningCommand.schema.json)
 - **[position.schema.json](MQTTSchemas/position.schema.json)**
@@ -82,6 +83,10 @@ All schemas are automatically synchronized from the `schemas/` directory. Click 
   - JSON Schema for the status of a module. The current Uuid is expected when the module is not in a IDLE or RESETTING state
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/state.schema.json)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/MQTTSchemas/state.schema.json)
+- **[stateCommand.schema.json](MQTTSchemas/stateCommand.schema.json)**
+  - A command to transition a system or subsystem to a specific state
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/stateCommand.schema.json)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/MQTTSchemas/stateCommand.schema.json)
 - **[stationOccupation.schema.json](MQTTSchemas/stationOccupation.schema.json)**
   - JSON Schema for the status of a module. The current Uuid is expected when the module is not in a IDLE or RESETTING state
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/stationOccupation.schema.json)
