@@ -12,39 +12,6 @@ This repository contains Asset Administration Shell (AAS) definitions and JSON s
 All schemas are automatically synchronized from the `schemas/` directory. Click on any schema below to view its details.
 
 <!-- AUTO-GENERATED-SCHEMAS-START -->
-### AAS Process Descriptions
-
-- **[asepticFilling.json](AASDescriptions/Process/asepticFilling.json)**
-  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Process/asepticFilling.json)
-  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Process/asepticFilling.json)
-- **[dispensing.json](AASDescriptions/Process/dispensing.json)**
-  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Process/dispensing.json)
-  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Process/dispensing.json)
-- **[loading.json](AASDescriptions/Process/loading.json)**
-  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Process/loading.json)
-  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Process/loading.json)
-- **[planarSOP.json](AASDescriptions/Process/planarSOP.json)**
-  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Process/planarSOP.json)
-  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Process/planarSOP.json)
-- **[processTemplate.json](AASDescriptions/Process/processTemplate.json)**
-  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Process/processTemplate.json)
-  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Process/processTemplate.json)
-- **[production.json](AASDescriptions/Process/production.json)**
-  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Process/production.json)
-  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Process/production.json)
-- **[qualityControl.json](AASDescriptions/Process/qualityControl.json)**
-  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Process/qualityControl.json)
-  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Process/qualityControl.json)
-- **[scraping.json](AASDescriptions/Process/scraping.json)**
-  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Process/scraping.json)
-  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Process/scraping.json)
-- **[stoppering.json](AASDescriptions/Process/stoppering.json)**
-  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Process/stoppering.json)
-  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Process/stoppering.json)
-- **[unloading.json](AASDescriptions/Process/unloading.json)**
-  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Process/unloading.json)
-  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Process/unloading.json)
-
 ### MQTT Schemas
 
 - **[amrArclRequest.schema.json](MQTTSchemas/amrArclRequest.schema.json)**
