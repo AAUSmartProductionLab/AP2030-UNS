@@ -109,27 +109,22 @@ cytivaCappingSystemAAS:
     Capabilities:
         Capping:
             realizedBy: "Capping"
-        halt:
-            realizedBy: "halt"
-        occupy:
-            realizedBy: "occupy"
-        release:
-            realizedBy: "release"
+            semantic_id: https://smartproductionlab.aau.dk/Capability/Capping
     
     Skills:
         Capping:
             description: "Capping function for pharmaceutical primary packaging"
             semantic_id: "https://smartproductionlab.aau.dk/skills/Capping"
             interface: "Capping"
-        halt:
-            description: "Halt the current capping operation"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/halt"
-            interface: "halt"
-        occupy:
-            description: "Occupy the capping system for exclusive use"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/occupy"
-            interface: "occupy"
-        release:
-            description: "Release the capping system from exclusive use"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/release"
-            interface: "release"
+        Halt:
+            description: "Halt the current operation"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/Halt"
+            interface: "Halt"
+        Occupy:
+            description: "Occupy the system for exclusive use"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/Occupy"
+            interface: "Occupy"
+        Release:
+            description: "Release the system from exclusive use"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/Release"
+            interface: "Release"
