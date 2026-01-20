@@ -4,7 +4,7 @@ FROM python:3.9-slim
 WORKDIR /app
 
 # Install dependencies
-RUN pip install --no-cache-dir paho-mqtt jsonschema numpy opencv-python basyx-python-sdk requests
+RUN pip install --no-cache-dir paho-mqtt jsonschema numpy opencv-python basyx-python-sdk requests pyyaml
 RUN apt-get update && apt-get install ffmpeg libsm6 libxext6  -y
 
 # Define entrypoint with a default command that can be overridden

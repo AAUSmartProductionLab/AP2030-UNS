@@ -89,10 +89,10 @@ class PackMLStateMachine:
         # Command topic for manual state control (Start, Stop, Reset, etc.)
         from MQTT_classes import Subscriber
         self.command_topic = Subscriber(
-            self.base_topic + "/CMD/Command",
-            "./MQTTSchemas/command.schema.json",
+            self.base_topic + "/CMD/State",
+            "./MQTTSchemas/stateCommand.schema.json",
             2,
-            self.button_command_callback
+            self.state_command_callback
         )
         topics.append(self.command_topic)
 
@@ -108,21 +108,25 @@ class PackMLStateMachine:
 
         self.publish_state()
 
-    def button_command_callback(self, topic, client, message, properties):
-        """Callback for external button commands like Start, Stop, Reset."""
-        button_id = message.get("ButtonId")
-        if not button_id:
+    def state_command_callback(self, topic, client, message, properties):
+        """Callback for external state commands like Start, Stop, Reset."""
+        state_id = message.get("StateId")
+        if not state_id:
+            # Fallback to ButtonId for backward compatibility
+            state_id = message.get("ButtonId")
+        if not state_id:
+            print(f"PackML: Received state command without StateId or ButtonId: {message}")
             return
             
-        cmd = str(button_id).lower()
-        print(f"PackML Command received: {cmd} (Current State: {self.state.value})")
+        cmd = str(state_id).lower()
+        print(f"PackML State Command received: {state_id} (Current State: {self.state.value})")
 
         if cmd == "start":
             if self.state == PackMLState.IDLE:
                 self.transition_to(PackMLState.STARTING)
         
         elif cmd == "stop":
-            if self.state not in [PackMLState.STOPPED, PackMLState.STOPPING, PackMLState.ABORTED, PackMLState.ABORTING, PackMLState.CLEARED]:
+            if self.state not in [PackMLState.STOPPED, PackMLState.STOPPING, PackMLState.ABORTED, PackMLState.ABORTING]:
                 self.transition_to(PackMLState.STOPPING)
                 
         elif cmd == "hold":
@@ -148,6 +152,10 @@ class PackMLStateMachine:
         elif cmd == "unsuspend":
             if self.state in [PackMLState.SUSPENDED, PackMLState.SUSPENDING]:
                 self.transition_to(PackMLState.UNSUSPENDING)
+        
+        elif cmd == "abort":
+            if self.state not in [PackMLState.ABORTED, PackMLState.ABORTING]:
+                self.abort_command()
 
     def _publish_command_status(self, status_topic_publisher, command_uuid, state_value):
         timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat(
@@ -488,6 +496,26 @@ class PackMLStateMachine:
             self.custom_handlers['on_stopping']()
         self.transition_to(PackMLState.STOPPED)
 
+    def holding_state(self):
+        if 'on_holding' in self.custom_handlers:
+            self.custom_handlers['on_holding']()
+        self.transition_to(PackMLState.HELD)
+
+    def unholding_state(self):
+        if 'on_unholding' in self.custom_handlers:
+            self.custom_handlers['on_unholding']()
+        self.transition_to(PackMLState.EXECUTE)
+
+    def suspending_state(self):
+        if 'on_suspending' in self.custom_handlers:
+            self.custom_handlers['on_suspending']()
+        self.transition_to(PackMLState.SUSPENDED)
+
+    def unsuspending_state(self):
+        if 'on_unsuspending' in self.custom_handlers:
+            self.custom_handlers['on_unsuspending']()
+        self.transition_to(PackMLState.EXECUTE)
+
     def completing_state(self, uuid_completed):
         if uuid_completed == "#":
             self.uuids.clear()
@@ -543,8 +571,18 @@ class PackMLStateMachine:
         if new_state == PackMLState.IDLE:
             self.idle_state()
         elif new_state == PackMLState.STARTING:
-            if self.uuids:
+            if self.uuids or not self.use_occupation_logic:
                 self.starting_state()
+        elif new_state == PackMLState.STOPPING:
+            self.stopping_state()
+        elif new_state == PackMLState.HOLDING:
+            self.holding_state()
+        elif new_state == PackMLState.UNHOLDING:
+            self.unholding_state()
+        elif new_state == PackMLState.SUSPENDING:
+            self.suspending_state()
+        elif new_state == PackMLState.UNSUSPENDING:
+            self.unsuspending_state()
         elif new_state == PackMLState.COMPLETING:
             self.completing_state(uuid_param)
         elif new_state == PackMLState.COMPLETE:
