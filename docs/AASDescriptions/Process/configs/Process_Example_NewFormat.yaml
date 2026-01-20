@@ -1,0 +1,85 @@
+# Example Process AAS configuration - Simplified Format
+# 
+# Structure:
+# - ProcessInformation: Basic metadata with ReferenceElement to product
+# - RequiredCapabilities: Grouped by capability type, with resource AAS IDs
+# - Policy: Behavior tree reference
+#
+# Key simplifications:
+# - No step numbers or durations (ordering is in Policy/BT)
+# - No parameters or requirements here (specified in Product AAS, embedded in Policy)
+# - Capabilities grouped by type with resource AAS IDs
+# - Registration service derives capability reference from AAS ID (no BaSyx query needed)
+#
+# YAML convention:
+# - Dict style (no dashes) for SubmodelElementCollections
+
+Process_HumanGrowthHormone_ExampleAAS:
+  idShort: Process_HumanGrowthHormone_ExampleAAS
+  id: https://smartproductionlab.aau.dk/aas/Process_HumanGrowthHormone_Example
+  globalAssetId: https://smartproductionlab.aau.dk/assets/process-hgh-example
+  derivedFrom: https://smartproductionlab.aau.dk/aas/templates/process
+  assetType: https://smartproductionlab.aau.dk/Process/Production/HumanGrowthHormone
+  serialNumber: PROC-20260120130843
+  location: InnoLab, Nybrovej, AAU
+  
+  # ProcessInformation submodel
+  ProcessInformation:
+    ProcessName: Production of Human Growth Hormone (Somatropin)
+    ProcessType: AsepticFilling
+    CreatedAt: '2026-01-20T13:08:43.965505+00:00'
+    Status: planned
+    ProductReference: https://smartproductionlab.aau.dk/aas/HgHAAS
+  
+  # RequiredCapabilities submodel
+  # Each capability type contains resources identified by AAS ID
+  # The registration service derives capability references from the AAS ID:
+  #   AAS ID → idShort → submodel_id + capability_path
+  RequiredCapabilities:
+    Loading:
+      semantic_id: https://smartproductionlab.aau.dk/Capability/Loading
+      description: Load empty primary container onto shuttle
+      resources:
+        imaLoadingSystem: https://smartproductionlab.aau.dk/aas/imaLoadingSystemAAS
+    
+    Dispensing:
+      semantic_id: https://smartproductionlab.aau.dk/Capability/Dispensing
+      description: Dispense product into primary container
+      resources:
+        imaDispensingSystem: https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS
+    
+    Stoppering:
+      semantic_id: https://smartproductionlab.aau.dk/Capability/Stoppering
+      description: Insert stopper into container
+      resources:
+        syntegonStopperingSystem: https://smartproductionlab.aau.dk/aas/syntegonStopperingSystemAAS
+    
+    QualityControl:
+      semantic_id: https://smartproductionlab.aau.dk/Capability/QualityControl
+      description: Visual inspection of filled container
+      resources:
+        omronCameraSystem: https://smartproductionlab.aau.dk/aas/omronCameraSystemAAS
+    
+    Unloading:
+      semantic_id: https://smartproductionlab.aau.dk/Capability/Unloading
+      description: Unload finished product from shuttle
+      resources:
+        optimaUnloadingSystem: https://smartproductionlab.aau.dk/aas/optimaUnloadingSystemAAS
+    
+    # Multiple resources providing same capability
+    MoveToPosition:
+      semantic_id: https://smartproductionlab.aau.dk/Capability/MoveToPosition
+      description: Movement capability for product transport
+      resources:
+        planarShuttle1: https://smartproductionlab.aau.dk/aas/planarShuttle1AAS
+        planarShuttle2: https://smartproductionlab.aau.dk/aas/planarShuttle2AAS
+        planarShuttle3: https://smartproductionlab.aau.dk/aas/planarShuttle3AAS
+  
+  # Policy submodel
+  Policy:
+    semantic_id: https://smartproductionlab.aau.dk/submodels/Policy/1/0
+    Policy:
+      semantic_id: https://www.behaviortree.dev/BehaviourTree
+      File: https://aausmartproductionlab.github.io/AP2030-UNS/BTDescriptions/production_HgH.xml
+      contentType: application/xml
+      description: Production behavior tree policy
