@@ -1,0 +1,134 @@
+# Product AAS Configuration: Human Growth Hormone (HgH)
+# This defines the product requirements and bill of processes for production planning
+
+HgHAAS:
+    idShort: HgHAAS
+    id: 'https://smartproductionlab.aau.dk/aas/HgHAAS'
+    globalAssetId: 'https://smartproductionlab.aau.dk/assets/ODMzNWFhZTAtMTQ0Yy00NDQxLWJkN2YtNWY5YTAzMjg1YjEx'
+    derivedFrom: 'https://smartproductionlab.aau.dk/aas/templates/product'
+    assetType: 'https://smartproductionlab.aau.dk/Product/Pharmaceutical/HgH'
+    serialNumber: 'HGH-BATCH-2026-001'
+    location: 'InnoLab, Nybrovej, AAU'
+
+    # Product identification and batch information
+    ProductInformation:
+        ProductName: 'Human Growth Hormone (Somatropin)'
+        ProductFamily: 'Growth Hormones'
+        ProductCode: 'HGH-001'
+        Description: 'Recombinant human growth hormone for injection'
+        
+    BatchInformation:
+        OrderNumber: '654df9d6-2d93-42a9-ad88-f01f7ee06e3a'
+        OrderTimestamp: '2026-01-20T10:00:00.000Z'
+        Quantity: 40000
+        Unit: 'units'
+        Packaging: 'Prefilled Syringe (2.5mL)'
+        Status: 'planned'
+
+    # Bill of Processes - Ordered sequence of production steps
+    # Each process maps to a capability semantic ID for matching with resources
+    BillOfProcesses:
+        semantic_id: 'https://smartproductionlab.aau.dk/submodels/BillOfProcesses/1/0'
+        Processes:
+            - Loading:
+                step: 1
+                semantic_id: 'https://smartproductionlab.aau.dk/Capability/Loading'
+                description: 'Load empty primary container onto shuttle'
+                estimatedDuration: 5.0  # seconds
+                
+            - Dispensing:
+                step: 2
+                semantic_id: 'https://smartproductionlab.aau.dk/Capability/Dispensing'
+                description: 'Dispense product into primary container'
+                estimatedDuration: 8.0
+                parameters:
+                    fillVolume: 2.5  # mL
+                    
+            - Stoppering:
+                step: 3
+                semantic_id: 'https://smartproductionlab.aau.dk/Capability/Stoppering'
+                description: 'Insert stopper into container'
+                estimatedDuration: 3.0
+                
+            - Inspection:
+                step: 4
+                semantic_id: 'https://smartproductionlab.aau.dk/Capability/QualityControl'
+                description: 'Visual inspection of filled container'
+                estimatedDuration: 2.0
+                
+            - Unloading:
+                step: 5
+                semantic_id: 'https://smartproductionlab.aau.dk/Capability/Unloading'
+                description: 'Unload finished product from shuttle'
+                estimatedDuration: 4.0
+
+    # Production Requirements - Constraints and quality specifications
+    # References to BillOfProcesses steps via semantic IDs
+    Requirements:
+        semantic_id: 'https://smartproductionlab.aau.dk/submodels/Requirements/1/0'
+        
+        Environmental:
+            Temperature:
+                semantic_id: 'https://smartproductionlab.aau.dk/Requirements/Temperature'
+                value: 18
+                unit: '°C'
+                tolerance: 2
+            Humidity:
+                semantic_id: 'https://smartproductionlab.aau.dk/Requirements/Humidity'
+                value: 40
+                unit: '%'
+                tolerance: 5
+            Cleanroom:
+                semantic_id: 'https://smartproductionlab.aau.dk/Requirements/Cleanroom'
+                value: 'ISO 5'
+                
+        # In-Process Controls - applied to specific process steps
+        InProcessControl:
+            Weighing:
+                semantic_id: 'https://smartproductionlab.aau.dk/Capability/Weighing'
+                appliesTo: 'https://smartproductionlab.aau.dk/Capability/Dispensing'
+                rate: 100
+                unit: '%'
+                description: '100% weight check after dispensing'
+                
+        # Quality Control - sampling requirements
+        QualityControl:
+            VisualInspection:
+                semantic_id: 'https://smartproductionlab.aau.dk/Capability/QualityControl'
+                appliesTo: 'https://smartproductionlab.aau.dk/Capability/QualityControl'
+                rate: 85
+                unit: '%'
+                description: '85% of units undergo visual inspection'
+                sampleSize: 34000  # 85% of 40000
+                
+            # Additional QC samples for laboratory testing
+            LabSamples:
+                semantic_id: 'https://smartproductionlab.aau.dk/Requirements/LabSamples'
+                quantity: 150
+                unit: 'units'
+                description: 'Samples retained for laboratory analysis'
+
+    # Hierarchical structure - Bill of Materials
+    HierarchicalStructures:
+        Name: 'BillOfMaterials'
+        Archetype: 'OneDown'
+        HasPart:
+            PrimaryContainer:
+                globalAssetId: 'https://smartproductionlab.aau.dk/assets/prefilled-syringe-2.5ml'
+                description: 'Empty prefilled syringe body'
+            Stopper:
+                globalAssetId: 'https://smartproductionlab.aau.dk/assets/syringe-stopper-std'
+                description: 'Rubber stopper for syringe'
+            Product:
+                globalAssetId: 'https://smartproductionlab.aau.dk/assets/hgh-bulk-solution'
+                description: 'Bulk HgH solution for filling'
+
+    # Error handling / recovery process
+    ErrorRecovery:
+        Scraping:
+            semantic_id: 'https://smartproductionlab.aau.dk/Capability/Scraping'
+            description: 'Remove defective product from production line'
+            triggeredBy:
+                - 'QualityControl.Fail'
+                - 'Dispensing.Error'
+                - 'Stoppering.Error'

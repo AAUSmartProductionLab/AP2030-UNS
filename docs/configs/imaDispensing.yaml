@@ -122,28 +122,24 @@ imaDispensingSystemAAS:
     
     Capabilities:
         Dispensing:
-            realizedBy: "dispensing"
-        halt:
-            realizedBy: "halt"
-        occupy:
-            realizedBy: "occupy"
-        release:
-            realizedBy: "release"
+            realizedBy: "Dispensing"
+            semantic_id: https://smartproductionlab.aau.dk/Capability/Dispensing
+
     
     Skills:
-        dispensing:
+        Dispensing:
             description: "Dispensing function for pharmaceutical primary packaging"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/dispensing"
-            interface: "dispensing"
-        halt:
-            description: "Halt the current dispensing operation"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/halt"
-            interface: "halt"
-        occupy:
-            description: "Occupy the dispensing system for exclusive use"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/occupy"
-            interface: "occupy"
-        release:
-            description: "Release the dispensing system from exclusive use"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/release"
-            interface: "release"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/Dispensing"
+            interface: "Dispensing"
+        Halt:
+            description: "Halt the current operation"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/Halt"
+            interface: "Halt"
+        Occupy:
+            description: "Occupy the system for exclusive use"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/Occupy"
+            interface: "Occupy"
+        Release:
+            description: "Release the system from exclusive use"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/Release"
+            interface: "Release"
