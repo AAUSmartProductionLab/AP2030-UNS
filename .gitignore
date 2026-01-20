@@ -190,3 +190,7 @@ logs/
 .vscode/
 offlineResponse_1656FB-A61627-4A4CB2-F0C0CA-8531ED-BD332C.dat
 Grafana/grafana-data/grafana.db
+databridge/aasserver.json
+databridge/jsonatatransformer.json
+databridge/mqttconsumer.json
+databridge/routes.json
