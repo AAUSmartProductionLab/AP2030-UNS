@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef, useCallback } from "react"
 import { usePlanarMotorContext } from '../contexts/PlanarMotorContext';
 import { unstable_batchedUpdates } from 'react-dom';
 import mqttService from '../services/MqttService';
+import systemControlService, { SystemControlService } from '../services/SystemControlService';
 import "../styles/XbotTracker.css";
 
 // Memoized Xbot Component for better performance
@@ -244,10 +245,13 @@ const XbotTracker = () => {
 
   const [mqttConnected, setMqttConnected] = useState(mqttService.isConnected);
   const [stationLiveStates, setStationLiveStates] = useState({});
+  const [systemState, setSystemState] = useState(systemControlService.getState());
   const [btControllerState, setBtControllerState] = useState(null);
   const [planarSystemState, setPlanarSystemState] = useState(null);
   const [isBtSuspended, setIsBtSuspended] = useState(false);
   const [isPlanarHolding, setIsPlanarHolding] = useState(false);
+  const [isSystemHeld, setIsSystemHeld] = useState(false);
+  const [isSystemSuspended, setIsSystemSuspended] = useState(false);
 
   // Add new state for Planar button states
   const [planarButtonStates, setPlanarButtonStates] = useState({
@@ -289,6 +293,25 @@ const XbotTracker = () => {
   useEffect(() => {
     const unsubscribeConnection = mqttService.onConnectionChange(setMqttConnected);
     return () => unsubscribeConnection();
+  }, []);
+
+  // Subscribe to SystemControlService state changes
+  useEffect(() => {
+    const unsubscribe = systemControlService.onStateChange((state, results) => {
+      setSystemState(state);
+      // Sync toggle states based on actual system state
+      if (state === 'Held' || state === 'Holding') {
+        setIsSystemHeld(true);
+      } else if (state === 'Execute' || state === 'Unholding') {
+        setIsSystemHeld(false);
+      }
+      if (state === 'Suspended' || state === 'Suspending') {
+        setIsSystemSuspended(true);
+      } else if (state === 'Execute' || state === 'Unsuspending') {
+        setIsSystemSuspended(false);
+      }
+    });
+    return () => unsubscribe();
   }, []);
 
   // MQTT Subscription for BT Controller State
@@ -693,41 +716,47 @@ const XbotTracker = () => {
     };
   }, [xbots, LERP_FACTOR, SNAP_THRESHOLD]);
 
-  // Behavior Tree Control Handlers
-  const handleBtStartSystem = useCallback(() => mqttService.startSystem(), []);
-  const handleBtStopSystem = useCallback(() => mqttService.stopSystem(), []);
-  const handleBtResetSystem = useCallback(() => mqttService.resetSystem(), []);
+  // Behavior Tree Control Handlers - using unified state commands
+  const handleBtStartSystem = useCallback(() => {
+    mqttService.publishStateCommand(SystemControlService.SUBSYSTEMS.BT_CONTROLLER, 'Start');
+  }, []);
+  const handleBtStopSystem = useCallback(() => {
+    mqttService.publishStateCommand(SystemControlService.SUBSYSTEMS.BT_CONTROLLER, 'Stop');
+  }, []);
+  const handleBtResetSystem = useCallback(() => {
+    mqttService.publishStateCommand(SystemControlService.SUBSYSTEMS.BT_CONTROLLER, 'Reset');
+  }, []);
   const handleBtToggleSuspendSystem = useCallback(() => {
     if (isBtSuspended) {
-      mqttService.unsuspendSystem();
+      mqttService.publishStateCommand(SystemControlService.SUBSYSTEMS.BT_CONTROLLER, 'Unsuspend');
     } else {
-      mqttService.suspendSystem();
+      mqttService.publishStateCommand(SystemControlService.SUBSYSTEMS.BT_CONTROLLER, 'Suspend');
     }
     setIsBtSuspended(!isBtSuspended);
   }, [isBtSuspended]);
 
-  // Planar Control Handlers
+  // Planar Control Handlers - using unified state commands
   const handlePlanarStartSystem = useCallback(() => {
-    mqttService.publishPlanarCommand("Start");
+    mqttService.publishStateCommand(SystemControlService.SUBSYSTEMS.PLANAR, 'Start');
   }, []);
 
   const handlePlanarStopSystem = useCallback(() => {
-    mqttService.publishPlanarCommand("Stop");
+    mqttService.publishStateCommand(SystemControlService.SUBSYSTEMS.PLANAR, 'Stop');
   }, []);
 
   const handlePlanarClearSystem = useCallback(() => {
-    mqttService.publishPlanarCommand("Clear");
+    mqttService.publishStateCommand(SystemControlService.SUBSYSTEMS.PLANAR, 'Clear');
   }, []);
 
   const handlePlanarResetSystem = useCallback(() => {
-    mqttService.publishPlanarCommand("Reset");
+    mqttService.publishStateCommand(SystemControlService.SUBSYSTEMS.PLANAR, 'Reset');
   }, []);
 
   const handlePlanarToggleHoldSystem = useCallback(() => {
     if (isPlanarHolding) {
-      mqttService.publishPlanarCommand("UnHold");
+      mqttService.publishStateCommand(SystemControlService.SUBSYSTEMS.PLANAR, 'Unhold');
     } else {
-      mqttService.publishPlanarCommand("Hold");
+      mqttService.publishStateCommand(SystemControlService.SUBSYSTEMS.PLANAR, 'Hold');
     }
     setIsPlanarHolding(!isPlanarHolding);
   }, [isPlanarHolding]);
@@ -847,9 +876,44 @@ const XbotTracker = () => {
     );
   }, [stationDisplayStates]);
 
+  const renderOverallSystemState = useCallback((stateKey, label) => {
+    // PackML state colors matching stationDisplayStates
+    const stateColors = {
+      // Stable states
+      'Stopped': '#FF4D4D',
+      'Idle': '#FFD700',
+      'Execute': '#3478F6',
+      'Complete': '#4CD964',
+      'Held': '#8E8E93',
+      'Suspended': '#FFBF00',
+      'Aborted': '#FF3B30',
+      // Transitioning states
+      'Starting': '#5AC8FA',
+      'Stopping': '#FFBF00',
+      'Resetting': '#FF9500',
+      'Holding': '#8E8E93',
+      'Unholding': '#5AC8FA',
+      'Suspending': '#FFBF00',
+      'Unsuspending': '#5AC8FA',
+      'Completing': '#4CD964',
+      'Aborting': '#FF3B30',
+      'Clearing': '#3478F6',
+    };
+    
+    const displayLabel = stateKey || 'Stopped';
+    const displayColor = stateColors[stateKey] || '#888';
+    
+    return (
+      <div className="system-state-item">
+        {label}: <span style={{ color: displayColor, fontWeight: 'bold', border: `1px solid ${displayColor}`, padding: '2px 5px', borderRadius: '4px', backgroundColor: `${displayColor}20` }}>{displayLabel}</span>
+      </div>
+    );
+  }, []);
+
   return (
     <div className="xbot-tracker-page">
       <div className="system-state-display-container">
+        {renderOverallSystemState(systemState, "System")}
         {renderSystemState(btControllerState, "BT Controller")}
         {renderSystemState(planarSystemState, "Planar System")}
       </div>
@@ -858,6 +922,66 @@ const XbotTracker = () => {
       
       <div className="main-layout-container">
         <div className="control-sidebar">
+          <div className="control-section">
+            <h3>System Controls</h3>
+            <button 
+              className="control-button start-button" 
+              onClick={() => systemControlService.startSystem()}
+              disabled={!mqttConnected}
+            >
+              Start
+            </button>
+            <button 
+              className="control-button stop-button" 
+              onClick={() => systemControlService.stopSystem()}
+              disabled={!mqttConnected}
+            >
+              Stop
+            </button>
+            <button 
+              className="control-button reset-button-system" 
+              onClick={() => systemControlService.resetSystem()}
+              disabled={!mqttConnected}
+            >
+              Reset
+            </button>
+            <button 
+              className={`control-button hold-button ${isSystemHeld ? 'unhold-active' : 'hold-active'}`}
+              onClick={() => {
+                if (isSystemHeld) {
+                  systemControlService.unholdSystem();
+                } else {
+                  systemControlService.holdSystem();
+                }
+                setIsSystemHeld(!isSystemHeld);
+              }}
+              disabled={!mqttConnected}
+            >
+              {isSystemHeld ? 'Unhold' : 'Hold'}
+            </button>
+            <button 
+              className={`control-button suspend-button ${isSystemSuspended ? 'unsuspend-active' : 'suspend-active'}`}
+              onClick={() => {
+                if (isSystemSuspended) {
+                  systemControlService.unsuspendSystem();
+                } else {
+                  systemControlService.suspendSystem();
+                }
+                setIsSystemSuspended(!isSystemSuspended);
+              }}
+              disabled={!mqttConnected}
+            >
+              {isSystemSuspended ? 'Unsuspend' : 'Suspend'}
+            </button>
+            <button 
+              className="control-button abort-button" 
+              onClick={() => systemControlService.abortSystem()}
+              disabled={!mqttConnected}
+            >
+              Abort
+            </button>
+          </div>
+          
           <div className="control-section">
             <h3>Behavior Tree Controls</h3>
             <button 

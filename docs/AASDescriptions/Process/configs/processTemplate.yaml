@@ -8,57 +8,44 @@ processTemplate:
     location: 'InnoLab, Nybrovej, AAU'
     Process:
         ProduceHgH:
-            realizedBy:
+            requiredCapabilities:
                 - Move:
-                    semantic_id: "https://smartproductionlab.aau.dk/Capability/MoveToStation"
-                    parameters: ""
-                    asset: "robotArm1"
+                    semantic_id: "https://smartproductionlab.aau.dk/Capability/MoveToPosition"
+                    asset: "planarShuttle2"
                 - Loading:
                     semantic_id: "https://smartproductionlab.aau.dk/Capability/Loading"
-                    parameters: ""
-                    asset: "robotArm1"
+                    asset: "loadingModule"
                 - Dispensing:
                     semantic_id: "https://smartproductionlab.aau.dk/Capabilities/Dispensing"
-                    parameters: ""
-                    asset: "planarShuttle2"
+                    asset: "dispensingModule"
                 - Stoppering:
-                    semantic_id: "https://smartproductionlab.aau.dk/Capability/Place"
-                    parameters: ""
-                    asset: "robotArm1"
+                    semantic_id: "https://smartproductionlab.aau.dk/Capability/Stoppering"
+                    asset: "stopperingModule"
                 - QualityControl:
                     semantic_id: "https://smartproductionlab.aau.dk/Capability/QualityControl"
-                    parameters: ""
-                    asset: "robotArm1"
+                    asset: "cameraModule"
                 - Unloading:
                     semantic_id: "https://smartproductionlab.aau.dk/Capability/Unloading"
-                    parameters: ""
-                    asset: "robotArm1"
+                    asset: "unloadingModule"
             comment: "Pick and place capability"
-            policy: "https:github.com"
+            policy: "https://aausmartproductionlab.github.io/AP2030-UNS/BTDescriptions/productionTask.xml"
             relations:
                 requires:
-                    target: "https://smartproductionlab.aau.dk/aas/Resource/CPS/MotionSystem"
-                    target: "https://smartproductionlab.aau.dk/aas/Resource/CPPM/FillingModule"
+                    target: "https://smartproductionlab.aau.dk/aas/Resource/CPPM/MotionSystem"
+                    target: "https://smartproductionlab.aau.dk/aas/Resource/CPS/MotionUnit"
+                    target: "https://smartproductionlab.aau.dk/aas/Resource/CPPM/LoadingModule"
+                    target: "https://smartproductionlab.aau.dk/aas/Resource/CPPM/DispensingModule"
+                    target: "https://smartproductionlab.aau.dk/aas/Resource/CPPM/StopperingModule"
+                    target: "https://smartproductionlab.aau.dk/aas/Resource/CPPM/QCModule"
+                    target: "https://smartproductionlab.aau.dk/aas/Resource/CPPM/UnloadingModule"
+                    target: "https://smartproductionlab.aau.dk/Capability/MoveToPosition"
+                    target: "https://smartproductionlab.aau.dk/Capability/Loading"
+                    target: "https://smartproductionlab.aau.dk/Capabilities/Dispensing"
+                    target: "https://smartproductionlab.aau.dk/Capability/Stoppering"
+                    target: "https://smartproductionlab.aau.dk/Capability/QualityControl"
+                    target: "https://smartproductionlab.aau.dk/Capability/Unloading"
             properties:
                 MaxVelocity:
                     min: 0
                     max: 500
                     description: "Maximum velocity in mm/s"
-    
-    Skills:
-        Capping:
-            description: "Capping function for pharmaceutical primary packaging"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/Capping"
-            interface: "Capping"
-        halt:
-            description: "Halt the current capping operation"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/halt"
-            interface: "halt"
-        occupy:
-            description: "Occupy the capping system for exclusive use"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/occupy"
-            interface: "occupy"
-        release:
-            description: "Release the capping system from exclusive use"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/release"
-            interface: "release"

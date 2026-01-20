@@ -120,23 +120,27 @@ omronCameraSystemAAS:
                 globalAssetId: 'https://smartproductionlab.aau.dk/assets/MWQ2ODY5ZDEtZTQ3Yy00NWU4LTlmYTAtNTI3YjVlMDk4MWFi'
     
     Capabilities:
+        QualityControl:
+            realizedBy: "Capture"
+            semantic_id: https://smartproductionlab.aau.dk/Capability/QualityControl
         Capture:
             realizedBy: "Capture"
+            semantic_id: https://smartproductionlab.aau.dk/Capability/Capture
     
     Skills:
         Capture:
             description: "Capture image for quality control"
             semantic_id: "https://smartproductionlab.aau.dk/skills/Capture"
             interface: "Capture"
-        halt:
-            description: "Halt the current capture operation"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/halt"
-            interface: "halt"
-        occupy:
-            description: "Occupy the camera system for exclusive use"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/occupy"
-            interface: "occupy"
-        release:
-            description: "Release the camera system from exclusive use"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/release"
-            interface: "release"
+        Halt:
+            description: "Halt the current operation"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/Halt"
+            interface: "Halt"
+        Occupy:
+            description: "Occupy the system for exclusive use"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/Occupy"
+            interface: "Occupy"
+        Release:
+            description: "Release the system from exclusive use"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/Release"
+            interface: "Release"

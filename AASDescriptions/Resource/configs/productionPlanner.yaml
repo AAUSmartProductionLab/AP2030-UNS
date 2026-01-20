@@ -99,11 +99,11 @@ productionPlanner:
             description: "Generate a production plan for the provided product using the available assets"
             semantic_id: "https://smartproductionlab.aau.dk/skills/productionPlanning"
             interface: "Plan"
-        occupy:
-            description: "Occupy the planner for exclusive use"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/occupy"
-            interface: "occupy"
-        release:
-            description: "Release the planner from exclusive use"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/release"
-            interface: "release"
+        Occupy:
+            description: "Occupy the system for exclusive use"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/Occupy"
+            interface: "Occupy"
+        Release:
+            description: "Release the system from exclusive use"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/Release"
+            interface: "Release"

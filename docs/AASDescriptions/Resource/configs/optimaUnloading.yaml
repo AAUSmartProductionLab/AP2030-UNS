@@ -109,21 +109,22 @@ optimaUnloadingSystemAAS:
     Capabilities:
         Unloading:
             realizedBy: "Unload"
+            semantic_id: https://smartproductionlab.aau.dk/Capability/Unloading
     
     Skills:
         Unloading:
             description: "Unloading function for pharmaceutical primary packaging"
             semantic_id: "https://smartproductionlab.aau.dk/skills/Unloading"
             interface: "Unloading"
-        halt:
-            description: "Halt the current unloading operation"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/halt"
-            interface: "halt"
-        occupy:
-            description: "Occupy the unloading system for exclusive use"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/occupy"
-            interface: "occupy"
-        release:
-            description: "Release the unloading system from exclusive use"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/release"
-            interface: "release"
+        Halt:
+            description: "Halt the current operation"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/Halt"
+            interface: "Halt"
+        Occupy:
+            description: "Occupy the system for exclusive use"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/Occupy"
+            interface: "Occupy"
+        Release:
+            description: "Release the system from exclusive use"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/Release"
+            interface: "Release"

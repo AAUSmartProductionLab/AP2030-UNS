@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root BTCPP_format="4">
+  <include path="./lineSOP.xml"/>
+  <include path="./product.xml"/>
+  <BehaviorTree ID="Production">
+    <Sequence>
+      <Configure ProductIDs="{ProductIDs}"/>
+      <ReactiveSequence>
+        <Fallback>
+          <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="PackMLState" Asset="https://smartproductionlab.aau.dk/aas/planarTable"/>
+          <SubTree ID="PlanarSOP" Asset="Operator" _autoremap="true"/>
+        </Fallback>
+        <Parallel failure_count="-1" success_count="1">
+          <SubTree ID="AsepticFilling" Xbot="{Xbot1}" ProductID="" _autoremap="true"/>
+          <SubTree ID="AsepticFilling" Xbot="{Xbot2}" ProductID="" _autoremap="true"/>
+          <SubTree ID="AsepticFilling" Xbot="{Xbot3}" ProductID="" _autoremap="true"/>
+        </Parallel>
+      </ReactiveSequence>
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="AsepticFilling">
+    <Occupy Uuid="{Uuid}" Asset="{Xbot}">
+      <KeepRunningUntilEmpty if_empty="SUCCESS" Queue="{ProductIDs}">
+        <ReactiveSequence>
+          <ReactiveFallback>
+            <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="PackMLState" Asset="{Xbot}"/>
+            <Sleep msec="10000"/>
+          </ReactiveFallback>
+          <Fallback>
+            <SequenceWithMemory>
+              <SubTree ID="Loading" LoadingSystem="{LoadingSystem}"/>
+              <SubTree ID="Dispensing" DispensingSystem="{DispensingSystem}"/>
+              <SubTree ID="Stoppering" StopperingSystem="{StopperingSystem}"/>
+              <SubTree ID="Inspection" InspectionSystem="{InspectionSystem}"/>
+              <SubTree ID="Unloading" UnloadingSystem="{UnloadingSystem}"/>
+            </SequenceWithMemory>
+            <SubTree ID="Scraping"/>
+          </Fallback>
+        </ReactiveSequence>
+      </KeepRunningUntilEmpty>
+    </Occupy>
+  </BehaviorTree>
+  <BehaviorTree ID="Loading">
+    <SequenceWithMemory>
+      <PopElement ProductID="{ProductID}" if_empty="SUCCESS" Queue="{ProductIDs}" _onSuccess="scrap:= false" _onFailure="scrap:= true"/>
+      <Occupy Uuid="{ProductID}" Asset="{LoadingSystem}" _skipIf="scrap == true">
+        <ReactiveSequence>
+          <ReactiveFallback>
+            <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="PackMLState" Asset="{LoadingSystem}"/>
+            <Sleep msec="10000"/>
+          </ReactiveFallback>
+          <Sequence>
+            <moveToPosition Uuid="{ProductID}" TargetPosition="{Station}" Asset="{Xbot}"/>
+            <Command_Execution Parameters="'{}'" Uuid="{ProductID}" Operation="load" Asset="{LoadingSystem}"/>
+          </Sequence>
+        </ReactiveSequence>
+      </Occupy>
+    </SequenceWithMemory>
+  </BehaviorTree>
+  <BehaviorTree ID="Stoppering">
+    <Occupy Uuid="{ProductID}" Asset="{StopperingSystem}" _skipIf="scrap == true">
+      <ReactiveSequence>
+        <ReactiveFallback>
+          <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="PackMLState" Asset="{StopperingSystem}"/>
+          <Sleep msec="10000"/>
+        </ReactiveFallback>
+        <Sequence>
+          <moveToPosition Uuid="{ProductID}" TargetPosition="{Station}" Asset="{Xbot}"/>
+          <Command_Execution Parameters="'{}'" Uuid="{ProductID}" Operation="stopper" Asset="{StopperingSystem}"/>
+        </Sequence>
+      </ReactiveSequence>
+    </Occupy>
+  </BehaviorTree>
+  <BehaviorTree ID="QualityControl">
+    <Occupy Uuid="{ProductID}" Asset="{QualityControlSystem}" _skipIf="scrap == true">
+      <ReactiveSequence>
+        <ReactiveFallback>
+          <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="PackMLState" Asset="{QualityControlSystem}"/>
+          <Sleep msec="10000"/>
+        </ReactiveFallback>
+        <Sequence>
+          <moveToPosition Uuid="{ProductID}" TargetPosition="{Station}" Asset="{Xbot}"/>
+          <Command_Execution Parameters="'{}'" Uuid="{ProductID}" Operation="capture" Asset="{QualityControlSystem}"/>
+        </Sequence>
+      </ReactiveSequence>
+    </Occupy>
+  </BehaviorTree>
+  <BehaviorTree ID="Unloading">
+    <Occupy Uuid="{ProductID}" Asset="{UnloadingSystem}" _skipIf="scrap == true">
+      <ReactiveSequence>
+        <ReactiveFallback>
+          <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="PackMLState" Asset="{UnloadingSystem}"/>
+          <Sleep msec="10000"/>
+        </ReactiveFallback>
+        <Sequence>
+          <moveToPosition Uuid="{ProductID}" TargetPosition="{Station}" Asset="{Xbot}"/>
+          <Command_Execution Parameters="'{}'" Uuid="{ProductID}" Operation="unload" Asset="{UnloadingSystem}"/>
+        </Sequence>
+      </ReactiveSequence>
+    </Occupy>
+  </BehaviorTree>
+  <BehaviorTree ID="Scraping">
+    <Occupy Uuid="{ProductID}" Asset="{UnloadSystem}">
+      <ReactiveSequence>
+        <ReactiveFallback>
+          <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="PackMLState" Asset="{UnloadSystem}"/>
+          <Sleep msec="10000"/>
+        </ReactiveFallback>
+        <Sequence>
+          <moveToPosition Uuid="{ProductID}" TargetPosition="{Station}" Asset="{Xbot}"/>
+          <Command_Execution Parameters="'{}'" Uuid="{ProductID}" Operation="unload" Asset="{UnloadSystem}" _onSuccess="scrap:=false"/>
+        </Sequence>
+      </ReactiveSequence>
+    </Occupy>
+  </BehaviorTree>
+  <BehaviorTree ID="Dispensing">
+    <Occupy Uuid="{ProductID}" Asset="{DispensingSystem}" _skipIf="scrap == true">
+      <ReactiveSequence>
+        <ReactiveFallback>
+          <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="PackMLState" Asset="{DispensingSystem}"/>
+          <Sleep msec="10000"/>
+        </ReactiveFallback>
+        <Sequence>
+          <moveToPosition Uuid="{ProductID}" TargetPosition="{Station}" Asset="{Xbot}"/>
+          <Command_Execution Parameters="'{}'" Uuid="{ProductID}" Operation="dispense" Asset="{DispensingSystem}"/>
+        </Sequence>
+      </ReactiveSequence>
+    </Occupy>
+  </BehaviorTree>
+</root>
