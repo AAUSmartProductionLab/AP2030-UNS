@@ -76,6 +76,11 @@ class SystemControlService {
   enabledSubsystems = new Set([
     'PLANAR',
     'BT_CONTROLLER',
+    'FILLING',
+    'LOADING',
+    'STOPPERING',
+    'UNLOADING',
+    'CAMERA',
   ]);
 
   // Current system state (PackML state)
