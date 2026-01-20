@@ -5,7 +5,7 @@ import os
 
 BROKER_ADDRESS = os.getenv("MQTT_BROKER", "hivemq-broker")
 BROKER_PORT = int(os.getenv("MQTT_PORT", "1883"))
-BASE_TOPIC = "NN/Nybrovej/InnoLab/Unload"
+BASE_TOPIC = "NN/Nybrovej/InnoLab/Unloading"
 
 
 def unload_process(duration=2.0):
@@ -27,8 +27,8 @@ state = Publisher(
 )
 
 unload = ResponseAsync(
-    BASE_TOPIC+"/DATA/Unload",
-    BASE_TOPIC+"/CMD/Unload",
+    BASE_TOPIC+"/DATA/Unloading",
+    BASE_TOPIC+"/CMD/Unloading",
     "./MQTTSchemas/commandResponse.schema.json",
     "./MQTTSchemas/command.schema.json",
     2,

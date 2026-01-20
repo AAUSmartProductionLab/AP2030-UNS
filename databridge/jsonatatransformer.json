@@ -1,15 +1,15 @@
 [
   {
-    "uniqueId": "imaLoadingSystemAAS_PackMLState_State_transformer",
+    "uniqueId": "optimaUnloadingSystemAAS_PackMLState_State_transformer",
     "queryLanguage": "JSONATA",
-    "queryPath": "queries/imaLoadingSystemAAS_PackMLState_State.jsonata",
+    "queryPath": "queries/optimaUnloadingSystemAAS_PackMLState_State.jsonata",
     "inputType": "JsonString",
     "outputType": "JsonString"
   },
   {
-    "uniqueId": "imaLoadingSystemAAS_OccupationState_ProcessQueue_transformer",
+    "uniqueId": "optimaUnloadingSystemAAS_OccupationState_ProcessQueue_transformer",
     "queryLanguage": "JSONATA",
-    "queryPath": "queries/imaLoadingSystemAAS_OccupationState_ProcessQueue.jsonata",
+    "queryPath": "queries/optimaUnloadingSystemAAS_OccupationState_ProcessQueue.jsonata",
     "inputType": "JsonString",
     "outputType": "JsonString"
   }

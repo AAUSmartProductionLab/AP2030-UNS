@@ -342,10 +342,15 @@ class MQTTOperationBridge:
             output_simple_mappings = {}
             if output_schema_url:
                 try:
-                    output_parser = SchemaParser(output_schema_url)
-                    output_structure = output_parser.extract_message_structure()
-                    _, output_simple_mappings, _ = determine_field_mappings(
-                        output_structure, input_variables)
+                    output_structure = self.schema_parser.extract_message_structure(output_schema_url)
+                    # For output, we just need the field types for response conversion
+                    # Build mappings from output schema field types
+                    for field_name, field_info in output_structure.get("field_types", {}).items():
+                        output_simple_mappings[field_name] = {
+                            "aas_field": field_name,
+                            "type": field_info.get("type"),
+                            "format": field_info.get("format")
+                        }
                     logger.info(f"Output schema simple mappings: {output_simple_mappings}")
                 except Exception as e:
                     logger.warning(f"Failed to parse output schema {output_schema_url}: {e}")

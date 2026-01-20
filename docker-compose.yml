@@ -477,7 +477,7 @@ services:
       - --basyx-url
       - http://${AAS_SERVER:-aas-env}:${AAS_PORT:-8081}
       - --delegation-url
-      - http://localhost:8087
+      - ${DELEGATION_SERVICE_URL:-http://localhost:8087}
       - listen
       - --delegation-port
       - "8087"

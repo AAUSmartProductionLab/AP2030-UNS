@@ -1,8 +1,8 @@
 [
   {
-    "uniqueId": "NN_Nybrovej_InnoLab_Loading_DATA_State",
+    "uniqueId": "NN_Nybrovej_InnoLab_Unloading_DATA_State",
     "serverUrl": "hivemq-broker",
     "serverPort": 1883,
-    "topic": "NN/Nybrovej/InnoLab/Loading/DATA/State"
+    "topic": "NN/Nybrovej/InnoLab/Unloading/DATA/State"
   }
 ]

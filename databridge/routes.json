@@ -1,21 +1,21 @@
 [
   {
-    "datasource": "NN_Nybrovej_InnoLab_Loading_DATA_State",
+    "datasource": "NN_Nybrovej_InnoLab_Unloading_DATA_State",
     "transformers": [
-      "imaLoadingSystemAAS_PackMLState_State_transformer",
-      "imaLoadingSystemAAS_OccupationState_ProcessQueue_transformer"
+      "optimaUnloadingSystemAAS_PackMLState_State_transformer",
+      "optimaUnloadingSystemAAS_OccupationState_ProcessQueue_transformer"
     ],
     "datasinks": [
-      "imaLoadingSystemAAS_PackMLState_sink_State",
-      "imaLoadingSystemAAS_OccupationState_sink_ProcessQueue"
+      "optimaUnloadingSystemAAS_PackMLState_sink_State",
+      "optimaUnloadingSystemAAS_OccupationState_sink_ProcessQueue"
     ],
     "trigger": "event",
     "datasinkMappingConfiguration": {
-      "imaLoadingSystemAAS_PackMLState_sink_State": [
-        "imaLoadingSystemAAS_PackMLState_State_transformer"
+      "optimaUnloadingSystemAAS_PackMLState_sink_State": [
+        "optimaUnloadingSystemAAS_PackMLState_State_transformer"
       ],
-      "imaLoadingSystemAAS_OccupationState_sink_ProcessQueue": [
-        "imaLoadingSystemAAS_OccupationState_ProcessQueue_transformer"
+      "optimaUnloadingSystemAAS_OccupationState_sink_ProcessQueue": [
+        "optimaUnloadingSystemAAS_OccupationState_ProcessQueue_transformer"
       ]
     }
   }
