@@ -427,6 +427,7 @@ def main():
         MQTT_BASE_TOPIC, 
         proxy, 
         None, 
+        config_path="planarTable.yaml",
         use_occupation_logic=False,
         custom_handlers={
             'on_starting': sys_handlers.on_starting,
@@ -435,6 +436,7 @@ def main():
         }
     )
     sys_handlers.sm = system_sm
+    proxy.on_ready(system_sm.register_asset)
     
     # 4. XBot SMs
     xbot_sms = {}
@@ -462,9 +464,11 @@ def main():
             xb_topic_base,
             proxy,
             None,
+            config_path=f"planarShuttle{i}.yaml",
             use_occupation_logic=True
         )
         xbot_sms[i] = xb_sm
+        proxy.on_ready(xb_sm.register_asset)
         
         # XBot Motion Topic
         # We need a Topic object to subscribe

@@ -165,6 +165,7 @@ services:
       - PMC_IP=${PMC_IP:-192.168.0.199}
     volumes:
       - ./MQTTSchemas:/app/MQTTSchemas
+      - ./AASDescriptions:/app/AASDescriptions
     networks:
       - hivemq-network
     depends_on:
