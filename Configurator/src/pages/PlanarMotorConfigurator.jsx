@@ -593,6 +593,7 @@ export default function PlanarMotorConfigurator() {
         "Approach Position": positions.approach,
         "Process Position": positions.process,
         "AssetId": node.assetId,
+        "AasId": node.aasId,
         "SubmodelId": node.submodelId,
         "AssetType": node.assetType
       };

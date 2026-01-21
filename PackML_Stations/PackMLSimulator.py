@@ -35,7 +35,7 @@ class PackMLState(enum.Enum):
 
 
 class PackMLStateMachine:
-    def __init__(self,  base_topic, client: Proxy, properties, config_path: Optional[str] = None):
+    def __init__(self,  base_topic, client: Proxy, properties, config_path: Optional[str] = None, custom_handlers=None):
         self.state = PackMLState.IDLE
         self.base_topic = base_topic
         # Keep if used elsewhere, otherwise consider removing
@@ -44,6 +44,8 @@ class PackMLStateMachine:
         self.client = client
         self.properties = properties
         self.Uuid = None
+        
+        self.custom_handlers = custom_handlers or {}
 
         # YAML config path for registration
         self.config_path = config_path
@@ -78,17 +80,75 @@ class PackMLStateMachine:
             2,
             self.unregister_callback
         )
+        
+        # Command topic for manual state control (Start, Stop, Reset, etc.)
+        from MQTT_classes import Subscriber
+        self.command_topic = Subscriber(
+            self.base_topic + "/CMD/State",
+            "./MQTTSchemas/stateCommand.schema.json",
+            2,
+            self.state_command_callback
+        )
 
         self.state_topic = Publisher(
             self.base_topic+"/DATA/State",
             "./MQTTSchemas/stationState.schema.json",
             2
         )
-        topics = [self.register_topic, self.unregister_topic, self.state_topic]
+        topics = [self.register_topic, self.unregister_topic, self.command_topic, self.state_topic]
         for topic in topics:
             client.register_topic(topic)
 
         self.publish_state()
+
+    def state_command_callback(self, topic, client, message, properties):
+        """Callback for external state commands like Start, Stop, Reset."""
+        state_id = message.get("StateId")
+        if not state_id:
+            # Fallback to ButtonId for backward compatibility
+            state_id = message.get("ButtonId")
+        if not state_id:
+            print(f"PackML: Received state command without StateId or ButtonId: {message}")
+            return
+            
+        cmd = str(state_id).lower()
+        print(f"PackML State Command received: {state_id} (Current State: {self.state.value})")
+
+        if cmd == "start":
+            if self.state == PackMLState.IDLE:
+                self.transition_to(PackMLState.STARTING)
+        
+        elif cmd == "stop":
+            if self.state not in [PackMLState.STOPPED, PackMLState.STOPPING, PackMLState.ABORTED, PackMLState.ABORTING]:
+                self.transition_to(PackMLState.STOPPING)
+                
+        elif cmd == "hold":
+            if self.state == PackMLState.EXECUTE:
+                self.transition_to(PackMLState.HOLDING)
+                
+        elif cmd == "unhold":
+            if self.state in [PackMLState.HELD, PackMLState.HOLDING]:
+                self.transition_to(PackMLState.UNHOLDING)
+        
+        elif cmd == "clear":
+            if self.state == PackMLState.ABORTED:
+                self.transition_to(PackMLState.CLEARING)
+
+        elif cmd == "reset":
+            if self.state in [PackMLState.STOPPED, PackMLState.ABORTED, PackMLState.COMPLETE]:
+                self.transition_to(PackMLState.RESETTING)
+        
+        elif cmd == "suspend":
+            if self.state == PackMLState.EXECUTE:
+                self.transition_to(PackMLState.SUSPENDING)
+                
+        elif cmd == "unsuspend":
+            if self.state in [PackMLState.SUSPENDED, PackMLState.SUSPENDING]:
+                self.transition_to(PackMLState.UNSUSPENDING)
+        
+        elif cmd == "abort":
+            if self.state not in [PackMLState.ABORTED, PackMLState.ABORTING]:
+                self.abort_command()
 
     def _publish_command_status(self, status_topic_publisher, command_uuid, state_value):
         timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat(
@@ -407,6 +467,10 @@ class PackMLStateMachine:
             self.transition_to(PackMLState.STARTING)
 
     def starting_state(self):
+        # Call custom handler
+        if 'on_starting' in self.custom_handlers:
+            self.custom_handlers['on_starting']()
+            
         if not self.uuids:
             self.transition_to(PackMLState.IDLE)
             return
@@ -417,6 +481,31 @@ class PackMLStateMachine:
             self._publish_command_status(
                 self.register_topic, original_reg_cmd_uuid, "SUCCESS")
 
+        self.transition_to(PackMLState.EXECUTE)
+
+    def stopping_state(self):
+        if 'on_stopping' in self.custom_handlers:
+            self.custom_handlers['on_stopping']()
+        self.transition_to(PackMLState.STOPPED)
+
+    def holding_state(self):
+        if 'on_holding' in self.custom_handlers:
+            self.custom_handlers['on_holding']()
+        self.transition_to(PackMLState.HELD)
+
+    def unholding_state(self):
+        if 'on_unholding' in self.custom_handlers:
+            self.custom_handlers['on_unholding']()
+        self.transition_to(PackMLState.EXECUTE)
+
+    def suspending_state(self):
+        if 'on_suspending' in self.custom_handlers:
+            self.custom_handlers['on_suspending']()
+        self.transition_to(PackMLState.SUSPENDED)
+
+    def unsuspending_state(self):
+        if 'on_unsuspending' in self.custom_handlers:
+            self.custom_handlers['on_unsuspending']()
         self.transition_to(PackMLState.EXECUTE)
 
     def completing_state(self, uuid_completed):
@@ -476,6 +565,16 @@ class PackMLStateMachine:
         elif new_state == PackMLState.STARTING:
             if self.uuids:
                 self.starting_state()
+        elif new_state == PackMLState.STOPPING:
+            self.stopping_state()
+        elif new_state == PackMLState.HOLDING:
+            self.holding_state()
+        elif new_state == PackMLState.UNHOLDING:
+            self.unholding_state()
+        elif new_state == PackMLState.SUSPENDING:
+            self.suspending_state()
+        elif new_state == PackMLState.UNSUSPENDING:
+            self.unsuspending_state()
         elif new_state == PackMLState.COMPLETING:
             self.completing_state(uuid_param)
         elif new_state == PackMLState.COMPLETE:
@@ -485,7 +584,7 @@ class PackMLStateMachine:
         elif new_state == PackMLState.ABORTING:
             self.aborting_state(uuid_param)
         elif new_state == PackMLState.CLEARING:
-            self.clearing_state()  # Renamed from self.clearing() for consistency
+            self.clearing_state()
 
     def publish_state(self):
         """Publish the current state"""

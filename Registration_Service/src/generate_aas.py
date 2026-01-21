@@ -24,7 +24,11 @@ from .aas_generation.submodels import (
     SkillsSubmodelBuilder,
     ParametersSubmodelBuilder,
     HierarchicalStructuresSubmodelBuilder,
-    CapabilitiesSubmodelBuilder
+    CapabilitiesSubmodelBuilder,
+    # Process AAS specific builders
+    ProcessInformationSubmodelBuilder,
+    RequiredCapabilitiesSubmodelBuilder,
+    PolicySubmodelBuilder,
 )
 
 
@@ -110,6 +114,17 @@ class AASGenerator:
             self.base_url, self.semantic_factory, self.element_factory
         )
         self.capabilities_builder = CapabilitiesSubmodelBuilder(
+            self.base_url, self.semantic_factory, self.element_factory
+        )
+        
+        # Process AAS specific builders
+        self.process_info_builder = ProcessInformationSubmodelBuilder(
+            self.base_url, self.semantic_factory, self.element_factory
+        )
+        self.required_capabilities_builder = RequiredCapabilitiesSubmodelBuilder(
+            self.base_url, self.semantic_factory, self.element_factory
+        )
+        self.policy_builder = PolicySubmodelBuilder(
             self.base_url, self.semantic_factory, self.element_factory
         )
 
@@ -232,7 +247,7 @@ class AASGenerator:
         # Extract interface properties for schema-driven field extraction
         interface_properties = self._extract_interface_properties()
 
-        # Generate all submodels
+        # Generate standard submodels
         submodels = [
             self.asset_interfaces_builder.build(
                 self.system_id, self.system_config),
@@ -248,8 +263,42 @@ class AASGenerator:
 
         for submodel in submodels:
             obj_store.add(submodel)
+        
+        # Generate Process AAS specific submodels (if config contains them)
+        process_submodels = self._build_process_submodels()
+        for submodel in process_submodels:
+            if submodel is not None:
+                obj_store.add(submodel)
 
         return obj_store
+    
+    def _build_process_submodels(self) -> list:
+        """
+        Build Process AAS specific submodels if the config contains them.
+        
+        Returns:
+            List of Process-specific submodels (may contain None values)
+        """
+        submodels = []
+        
+        # Check if this is a Process AAS by looking for Process-specific sections
+        has_process_info = 'ProcessInformation' in self.system_config
+        has_required_caps = 'RequiredCapabilities' in self.system_config
+        has_policy = 'Policy' in self.system_config
+        
+        if has_process_info:
+            submodels.append(self.process_info_builder.build(
+                self.system_id, self.system_config))
+        
+        if has_required_caps:
+            submodels.append(self.required_capabilities_builder.build(
+                self.system_id, self.system_config))
+        
+        if has_policy:
+            submodels.append(self.policy_builder.build(
+                self.system_id, self.system_config))
+        
+        return submodels
 
     # ==================== Serialization Methods ====================
 
