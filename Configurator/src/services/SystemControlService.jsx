@@ -27,12 +27,12 @@ class SystemControlService {
   // Define subsystem topics that should receive state commands
   static SUBSYSTEMS = {
     PLANAR: 'NN/Nybrovej/InnoLab/Planar/CMD/State',
-    BT_CONTROLLER: 'NN/Nybrovej/InnoLab/bt_controller/CMD/State',
-    FILLING: 'NN/Nybrovej/InnoLab/Filling/CMD/State',
-    LOADING: 'NN/Nybrovej/InnoLab/Loading/CMD/State',
-    STOPPERING: 'NN/Nybrovej/InnoLab/Stoppering/CMD/State',
-    UNLOADING: 'NN/Nybrovej/InnoLab/Unloading/CMD/State',
-    CAMERA: 'NN/Nybrovej/InnoLab/Camera/CMD/State',
+    BT_CONTROLLER: 'NN/Nybrovej/InnoLab/bt_controller/CMD/State'
+    // FILLING: 'NN/Nybrovej/InnoLab/Filling/CMD/State',
+    // LOADING: 'NN/Nybrovej/InnoLab/Loading/CMD/State',
+    // STOPPERING: 'NN/Nybrovej/InnoLab/Stoppering/CMD/State',
+    // UNLOADING: 'NN/Nybrovej/InnoLab/Unloading/CMD/State',
+    // CAMERA: 'NN/Nybrovej/InnoLab/Camera/CMD/State',
   };
 
   // Valid PackML commands (what the user sends)

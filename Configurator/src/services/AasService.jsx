@@ -41,6 +41,8 @@ class AasService {
     this.shellRegistryUrl = import.meta.env.VITE_AAS_SHELL_REGISTRY_URL || 'http://localhost:8082';
     
     // Root AAS configuration
+    this.rootAasId = import.meta.env.VITE_ROOT_AAS_ID ||
+      'https://smartproductionlab.aau.dk/aas/aauFillingLine';
     this.rootSubmodelId = import.meta.env.VITE_ROOT_SUBMODEL_ID || 
       'https://smartproductionlab.aau.dk/submodels/instances/aauFillingLine/HierarchicalStructures';
     
@@ -1311,7 +1313,8 @@ class AasService {
         `Has${material.idShort}`,
         submodelId,
         'Product',
-        material.idShort
+        material.idShort,
+        ids?.aasId || null
       );
     });
     
@@ -1390,11 +1393,12 @@ class AasService {
    * Create relationship for bill of materials using IDTA 02011-1-1 HasPart semantic
    * HasPart: first = parent entity, second = child entity (parent has part child)
    */
-  createBillOfMaterialsRelationship(idShort, submodelId, parentId, childId) {
+  createBillOfMaterialsRelationship(idShort, submodelId, parentId, childId, aasId = null) {
     // First reference points to the parent entity
     const firstRef = this.createReference(
       ReferenceTypes.ModelReference,
       [
+        ...(aasId ? [this.createKey(KeyTypes.AssetAdministrationShell, aasId)] : []),
         this.createKey(KeyTypes.Submodel, submodelId),
         this.createKey(KeyTypes.Entity, parentId)
       ]
@@ -1404,6 +1408,7 @@ class AasService {
     const secondRef = this.createReference(
       ReferenceTypes.ModelReference,
       [
+        ...(aasId ? [this.createKey(KeyTypes.AssetAdministrationShell, aasId)] : []),
         this.createKey(KeyTypes.Submodel, submodelId),
         this.createKey(KeyTypes.Entity, parentId),
         this.createKey(KeyTypes.Entity, childId)
@@ -1769,7 +1774,8 @@ class AasService {
         `Has${material.idShort}`,
         submodelId,
         'Product',
-        material.idShort
+        material.idShort,
+        ids?.aasId || null
       );
     });
     
@@ -1907,7 +1913,7 @@ class AasService {
   /**
    * Create a ReferenceElement using SDK types
    */
-  createReferenceElement(idShort, reference, semanticId = null) {
+  createReferenceElement(idShort, reference, semanticId = null, supplementalSemanticIds = null) {
     return new ReferenceElement(
       null,  // extensions
       null,  // category
@@ -1915,7 +1921,7 @@ class AasService {
       null,  // displayName
       null,  // description
       semanticId,
-      null,  // supplementalSemanticIds
+      supplementalSemanticIds,
       null,  // qualifiers
       null,  // embeddedDataSpecifications
       reference
@@ -2039,7 +2045,7 @@ class AasService {
   /**
    * Create an Entity node for a station
    */
-  createEntityNode(idShort, globalAssetId, x, y, yaw = 0, instanceSubmodelId = null) {
+  createEntityNode(idShort, globalAssetId, x, y, yaw = 0, instanceSubmodelId = null, instanceAasId = null) {
     // Create Location collection with x, y, yaw properties
     const locationSemanticId = this.createReference(
       ReferenceTypes.ExternalReference,
@@ -2062,16 +2068,30 @@ class AasService {
         ReferenceTypes.ExternalReference,
         [this.createKey(KeyTypes.GlobalReference, 'https://admin-shell.io/idta/HierarchicalStructures/SameAs/1/0')]
       );
-      
-      const sameAsReference = this.createReference(
-        ReferenceTypes.ModelReference,
-        [
-          this.createKey(KeyTypes.Submodel, instanceSubmodelId),
-          this.createKey(KeyTypes.Entity, 'EntryNode')
-        ]
+
+      const entryNodeSemanticId = this.createReference(
+        ReferenceTypes.ExternalReference,
+        [this.createKey(KeyTypes.GlobalReference, 'https://admin-shell.io/idta/HierarchicalStructures/EntryNode/1/0')]
       );
       
-      const sameAsElement = this.createReferenceElement('SameAs', sameAsReference, sameAsSemanticId);
+      const sameAsKeys = [];
+      if (instanceAasId) {
+        sameAsKeys.push(this.createKey(KeyTypes.AssetAdministrationShell, instanceAasId));
+      }
+      sameAsKeys.push(this.createKey(KeyTypes.Submodel, instanceSubmodelId));
+      sameAsKeys.push(this.createKey(KeyTypes.Entity, 'EntryNode'));
+
+      const sameAsReference = this.createReference(
+        ReferenceTypes.ModelReference,
+        sameAsKeys
+      );
+      
+      const sameAsElement = this.createReferenceElement(
+        'SameAs',
+        sameAsReference,
+        sameAsSemanticId,
+        [entryNodeSemanticId]
+      );
       statements.push(sameAsElement);
     }
     
@@ -2101,6 +2121,7 @@ class AasService {
     const firstRef = this.createReference(
       ReferenceTypes.ModelReference,
       [
+        this.createKey(KeyTypes.AssetAdministrationShell, this.rootAasId),
         this.createKey(KeyTypes.Submodel, submodelId),
         this.createKey(KeyTypes.Entity, parentNodeId)
       ]
@@ -2109,6 +2130,7 @@ class AasService {
     const secondRef = this.createReference(
       ReferenceTypes.ModelReference,
       [
+        this.createKey(KeyTypes.AssetAdministrationShell, this.rootAasId),
         this.createKey(KeyTypes.Submodel, submodelId),
         this.createKey(KeyTypes.Entity, parentNodeId),
         this.createKey(KeyTypes.Entity, childNodeId)
@@ -2137,13 +2159,14 @@ class AasService {
       const globalAssetId = station['AssetId'] || 
         `https://smartproductionlab.aau.dk/assets/${genericName.toLowerCase()}`;
       const instanceSubmodelId = station['SubmodelId'];
+      const instanceAasId = station['AasId'] || null;
       
       const approachPos = station["Approach Position"] || [0, 0, 0];
       const xMM = Array.isArray(approachPos) ? approachPos[0] : 0;
       const yMM = Array.isArray(approachPos) ? approachPos[1] : 0;
       const yaw = Array.isArray(approachPos) ? approachPos[2] : 0;
       
-      return this.createEntityNode(genericName, globalAssetId, xMM, yMM, yaw, instanceSubmodelId);
+      return this.createEntityNode(genericName, globalAssetId, xMM, yMM, yaw, instanceSubmodelId, instanceAasId);
     });
     
     // Build relationships
@@ -2227,6 +2250,7 @@ class AasService {
           );
           
           const submodelId = sameAsRef?.value?.keys?.find(k => k.type === 'Submodel')?.value || null;
+          const aasId = sameAsRef?.value?.keys?.find(k => k.type === 'AssetAdministrationShell')?.value || null;
           
           // Get asset ID (either globalAssetId or from specificAssetId)
           let assetId = entity.globalAssetId;
@@ -2246,7 +2270,7 @@ class AasService {
             Name: entity.idShort,
             'Instance Name': module?.name || entity.idShort,
             StationId: index,
-            AasId: assetId,
+            AasId: aasId || assetId,
             AssetType: module?.assetType || entity.idShort,
             SubmodelId: submodelId,
             'Approach Position': approachPosition,
