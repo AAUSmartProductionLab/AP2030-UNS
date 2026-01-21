@@ -151,7 +151,7 @@ def publish_config(
             yaml_content = f.read()
 
         # Build the topic: NN/Nybrovej/InnoLab/{systemId}/Registration/Config
-        topic = f"{base_topic}/{system_id}/Registration/Config"
+        topic = f"NN/Nybrovej/InnoLab/Registration/Config"
 
         print_info(f"Publishing to: {topic}")
         print_info(f"  ID Short: {asset_info['id_short']}")
