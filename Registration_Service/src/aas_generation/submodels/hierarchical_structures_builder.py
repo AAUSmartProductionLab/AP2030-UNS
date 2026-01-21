@@ -56,7 +56,8 @@ class HierarchicalStructuresSubmodelBuilder:
         archetype_property = self._create_archetype_property(archetype)
         
         # Create EntryNode with relationships
-        entry_node = self._create_entry_node(system_id, global_asset_id, hs_config, archetype)
+        aas_id = config.get('id', f"{self.base_url}/aas/{system_id}")
+        entry_node = self._create_entry_node(system_id, global_asset_id, hs_config, archetype, aas_id)
         
         # Create display name as LangStringSet
         display_name_value = hs_config.get('Name', 'HierarchicalStructures')
@@ -87,7 +88,7 @@ class HierarchicalStructuresSubmodelBuilder:
         )
     
     def _create_entry_node(self, system_id: str, global_asset_id: str,
-                          hs_config: Dict, archetype: str) -> model.Entity:
+                          hs_config: Dict, archetype: str, aas_id: str) -> model.Entity:
         """Create the EntryNode entity with Node children and relationships."""
         node_entities = []
         entry_node_statements = []
@@ -109,27 +110,31 @@ class HierarchicalStructuresSubmodelBuilder:
         
         # Process each entity in the hierarchy (dict format)
         for entity_name, entity_config in statements_to_process.items():
-            # entity_config should be a dict with globalAssetId, systemId, etc.
+            # entity_config should be a dict with globalAssetId, systemId, aasId, etc.
             if not isinstance(entity_config, dict):
                 entity_config = {}
             
             # Auto-derive missing IDs
-            entity_system_id = entity_config.get('systemId', f"{entity_name}AAS")
+            entity_system_id = entity_config.get('systemId', entity_name)
+            entity_aas_id = entity_config.get(
+                'aasId',
+                f"{self.base_url}/aas/{entity_system_id}"
+            )
             entity_submodel_id = entity_config.get(
                 'submodelId',
                 f"{self.base_url}/submodels/instances/{entity_system_id}/HierarchicalStructures"
             )
             entity_global_asset_id = entity_config.get('globalAssetId', '')
             
-            # Create Node entity with SameAs reference
+            # Create Node entity with SameAs reference (includes target AAS ID for jump button)
             node_entity = self._create_node_entity(
-                entity_name, entity_global_asset_id, entity_submodel_id
+                entity_name, entity_global_asset_id, entity_submodel_id, entity_aas_id
             )
             node_entities.append(node_entity)
             
-            # Create relationship element
+            # Create relationship element (uses current submodel, not target)
             relationship = self._create_relationship(
-                system_id, entity_name, relationship_prefix
+                system_id, entity_name, relationship_prefix, aas_id
             )
             entry_node_statements.append(relationship)
         
@@ -147,27 +152,31 @@ class HierarchicalStructuresSubmodelBuilder:
         return entry_node
     
     def _create_node_entity(self, entity_name: str, global_asset_id: str,
-                           submodel_id: str) -> model.Entity:
-        """Create a Node entity with optional SameAs reference."""
+                           submodel_id: str, aas_id: str = None) -> model.Entity:
+        """Create a Node entity with optional SameAs reference.
+        
+        Args:
+            entity_name: Name/idShort for the entity
+            global_asset_id: Global asset ID for the entity
+            submodel_id: Target HierarchicalStructures submodel ID
+            aas_id: Unused, kept for API compatibility
+        """
         node_statements = []
         
         # Create SameAs reference if submodel ID is provided
+        # AASd-125 compliant: First key is AasIdentifiable (SUBMODEL),
+        # subsequent keys are FragmentKeys (ENTITY)
         if submodel_id:
+            same_as_reference = model.ModelReference(
+                (
+                    model.Key(model.KeyTypes.SUBMODEL, submodel_id),
+                    model.Key(model.KeyTypes.ENTITY, "EntryNode")
+                ),
+                model.Entity
+            )
             same_as = self.element_factory.create_reference_element(
                 id_short="SameAs",
-                reference=model.ModelReference(
-                    (
-                        model.Key(
-                            type_=model.KeyTypes.SUBMODEL,
-                            value=submodel_id
-                        ),
-                        model.Key(
-                            type_=model.KeyTypes.ENTITY,
-                            value="EntryNode"
-                        )
-                    ),
-                    model.Entity
-                ),
+                reference=same_as_reference,
                 semantic_id=self.semantic_factory.HIERARCHICAL_SAME_AS,
                 supplemental_semantic_ids=[
                     self.semantic_factory.ENTRY_NODE
@@ -187,37 +196,33 @@ class HierarchicalStructuresSubmodelBuilder:
         )
     
     def _create_relationship(self, system_id: str, entity_name: str,
-                            relationship_prefix: str) -> model.RelationshipElement:
-        """Create a relationship element between EntryNode and a child Node."""
+                            relationship_prefix: str, aas_id: str = None) -> model.RelationshipElement:
+        """Create a relationship element between EntryNode and a child Node.
+        
+        Args:
+            system_id: System ID for deriving submodel path
+            entity_name: Name of the child entity
+            relationship_prefix: 'IsPartOf' or 'HasPart'
+            aas_id: Unused, kept for API compatibility
+        """
+        # AASd-125 compliant: First key is AasIdentifiable (SUBMODEL),
+        # subsequent keys are FragmentKeys (ENTITY)
+        submodel_id = f"{self.base_url}/submodels/instances/{system_id}/HierarchicalStructures"
+        
         return self.element_factory.create_relationship(
             id_short=f"{relationship_prefix}_{entity_name}",
             first=model.ModelReference(
                 (
-                    model.Key(
-                        type_=model.KeyTypes.SUBMODEL,
-                        value=f"{self.base_url}/submodels/instances/{system_id}/HierarchicalStructures"
-                    ),
-                    model.Key(
-                        type_=model.KeyTypes.ENTITY,
-                        value="EntryNode"
-                    )
+                    model.Key(model.KeyTypes.SUBMODEL, submodel_id),
+                    model.Key(model.KeyTypes.ENTITY, "EntryNode")
                 ),
                 model.Entity
             ),
             second=model.ModelReference(
                 (
-                    model.Key(
-                        type_=model.KeyTypes.SUBMODEL,
-                        value=f"{self.base_url}/submodels/instances/{system_id}/HierarchicalStructures"
-                    ),
-                    model.Key(
-                        type_=model.KeyTypes.ENTITY,
-                        value="EntryNode"
-                    ),
-                    model.Key(
-                        type_=model.KeyTypes.ENTITY,
-                        value=entity_name
-                    )
+                    model.Key(model.KeyTypes.SUBMODEL, submodel_id),
+                    model.Key(model.KeyTypes.ENTITY, "EntryNode"),
+                    model.Key(model.KeyTypes.ENTITY, entity_name)
                 ),
                 model.Entity
             ),
