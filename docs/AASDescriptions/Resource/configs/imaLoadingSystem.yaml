@@ -1,7 +1,7 @@
 imaLoadingSystemAAS:
     idShort: imaLoadingSystemAAS
     id: 'https://smartproductionlab.aau.dk/aas/imaLoadingSystem'
-    globalAssetId: 'https://smartproductionlab.aau.dk/assets/MGYwYjcxOTUtNTEzNC00MjE0LTlmMTYtYTI5YWQwN2IyODBm'
+    globalAssetId: 'https://smartproductionlab.aau.dk/assets/ZDNlYmVhZjItZTAyMC00NWMwLTg5NjEtODRiNTFkOWE0NzVl'
     derivedFrom: 'https://smartproductionlab.aau.dk/aas/templates/resource'
     assetType: 'https://smartproductionlab.aau.dk/Resource/CPPM/LoadingSystem/imaLoadingSystem'
     serialNumber: 'IMA-LS-2024-001'

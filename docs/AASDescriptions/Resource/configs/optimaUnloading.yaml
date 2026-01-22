@@ -1,7 +1,7 @@
 optimaUnloadingSystemAAS:
     idShort: optimaUnloadingSystemAAS
     id: 'https://smartproductionlab.aau.dk/aas/optimaUnloadingSystem'
-    globalAssetId: 'https://smartproductionlab.aau.dk/assets/NWM1MmUxOTMtOWM4MC00MGUzLWIxYWEtYWY2ZmFjYzljZGI2'
+    globalAssetId: 'https://smartproductionlab.aau.dk/assets/NGRjZjc0ODUtZTIxMi00ZGQxLWE3MzAtYmEzMDc1NTBlNmMx'
     derivedFrom: 'https://smartproductionlab.aau.dk/aas/templates/resource'
     assetType: 'https://smartproductionlab.aau.dk/Resource/CPPM/UnloadingSystem/optimaUnloadingSystem'
     serialNumber: 'OPTIMA-ULS-2024-001'
