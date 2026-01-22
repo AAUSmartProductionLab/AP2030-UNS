@@ -1,7 +1,7 @@
 omronCameraSystemAAS:
     idShort: omronCameraSystemAAS
     id: 'https://smartproductionlab.aau.dk/aas/omronCameraSystem'
-    globalAssetId: 'https://smartproductionlab.aau.dk/assets/ODdiN2JiYTItYzE5Ni00M2RiLTk3N2YtZjU5ZTcxNzBjZDlh'
+    globalAssetId: 'https://smartproductionlab.aau.dk/assets/M2VmNjk0OTgtNmE0YS00MzA4LWE4NjMtM2JjZDZjZDhkMTBl'
     derivedFrom: 'https://smartproductionlab.aau.dk/aas/templates/resource'
     assetType: 'https://smartproductionlab.aau.dk/Resource/CPPM/QualityControlSystem/omronCameraSystem'
     serialNumber: 'OMRON-CAM-2024-001'
