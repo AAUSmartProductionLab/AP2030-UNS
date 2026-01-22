@@ -122,6 +122,59 @@ class AASClient:
             print(f"Error fetching submodel {submodel_id}: {e}")
             return None
     
+    def get_submodel_raw(self, submodel_id: str) -> Optional[dict]:
+        """
+        Get a specific Submodel by ID as raw JSON dict.
+        
+        This is useful when the BaSyx SDK fails to parse complex submodel elements.
+        
+        Args:
+            submodel_id: The identifier of the submodel
+            
+        Returns:
+            Submodel as dict or None
+        """
+        try:
+            encoded_id = base64.urlsafe_b64encode(submodel_id.encode()).decode().rstrip('=')
+            response = requests.get(f"{self.server_url}/submodels/{encoded_id}")
+            
+            if response.status_code != 200:
+                return None
+            
+            return response.json()
+            
+        except Exception as e:
+            print(f"Error fetching submodel {submodel_id}: {e}")
+            return None
+    
+    def get_submodel_ids_from_aas(self, aas_id: str) -> List[str]:
+        """
+        Get all submodel IDs referenced by an AAS
+        
+        Args:
+            aas_id: The identifier of the AAS
+            
+        Returns:
+            List of submodel ID strings
+        """
+        try:
+            shell = self.get_aas_by_id(aas_id)
+            if not shell or not shell.submodel:
+                return []
+            
+            submodel_ids: List[str] = []
+            for submodel_ref in shell.submodel:
+                if submodel_ref.key:
+                    for key in submodel_ref.key:
+                        submodel_ids.append(key.value)
+                        break
+            
+            return submodel_ids
+            
+        except Exception as e:
+            print(f"Error fetching submodel IDs for AAS {aas_id}: {e}")
+            return []
+    
     def lookup_aas_by_asset_id(self, asset_id: str) -> Optional[str]:
         """
         Lookup AAS shell ID from global asset ID

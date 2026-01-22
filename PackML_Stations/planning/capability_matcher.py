@@ -96,6 +96,19 @@ class CapabilityMatcher:
         'xbot'
     ]
     
+    # Semantic aliases for capability matching
+    # Maps process step names to equivalent capability names
+    # This allows matching e.g., "Inspection" to "QualityControl"
+    CAPABILITY_ALIASES = {
+        'inspection': ['qualitycontrol', 'visualinspection', 'capture'],
+        'qualitycontrol': ['inspection', 'visualinspection', 'capture'],
+        'capping': ['stoppering'],
+        'sealing': ['stoppering', 'capping'],
+        'filling': ['dispensing'],
+        'picking': ['loading'],
+        'placing': ['unloading'],
+    }
+    
     # Known station asset type patterns
     STATION_PATTERNS = [
         'loadingsystem',
@@ -202,6 +215,7 @@ class CapabilityMatcher:
         Matching strategy:
         1. Exact match (preferred)
         2. Exact match on final path segment (e.g., /Loading matches /Loading)
+        3. Alias match (e.g., /Inspection matches /QualityControl)
         
         Args:
             semantic_id: The semantic ID to match
@@ -212,9 +226,13 @@ class CapabilityMatcher:
         """
         exact_matches = []
         segment_matches = []
+        alias_matches = []
         
         # Extract the final path segment from target
         target_segment = semantic_id.rstrip('/').split('/')[-1].lower()
+        
+        # Get aliases for the target segment
+        target_aliases = self.CAPABILITY_ALIASES.get(target_segment, [])
         
         for cap in capabilities:
             cap_semantic = cap.semantic_id.strip() if cap.semantic_id else ''
@@ -232,9 +250,19 @@ class CapabilityMatcher:
             cap_segment = cap_semantic.rstrip('/').split('/')[-1].lower()
             if cap_segment == target_segment:
                 segment_matches.append(cap)
+                continue
+            
+            # Check alias match
+            if cap_segment in target_aliases:
+                alias_matches.append(cap)
         
-        # Prefer exact matches, fall back to segment matches
-        return exact_matches if exact_matches else segment_matches
+        # Prefer exact matches, then segment matches, then alias matches
+        if exact_matches:
+            return exact_matches
+        elif segment_matches:
+            return segment_matches
+        else:
+            return alias_matches
     
     def _normalize_semantic_id(self, semantic_id: str) -> str:
         """Normalize semantic ID for comparison"""

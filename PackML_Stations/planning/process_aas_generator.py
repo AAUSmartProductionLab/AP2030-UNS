@@ -100,7 +100,7 @@ class ProcessAASGenerator:
                 'Policy': {
                     'semantic_id': f"{self.config.base_url}/submodels/Policy/1/0",
                     'Policy': {
-                        'semantic_id': 'https://www.behaviortree.dev/BehaviourTree'
+                        'semantic_id': 'https://www.behaviortree.dev/BehaviourTree',
                         'File': f"{self.config.bt_base_url}/{bt_filename}",
                         'contentType': 'application/xml',
                         'description': 'Production behavior tree policy'

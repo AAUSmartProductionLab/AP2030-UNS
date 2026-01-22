@@ -2,8 +2,9 @@
 """
 Test script for the planning package.
 
-This script tests the planning modules without requiring MQTT or AAS server connectivity.
-It uses mock data to validate the capability matching, BT generation, and process AAS generation.
+This script tests the planning modules using real AAS data from BaSyx.
+It queries the AAS server to validate the capability matching, BT generation, 
+and process AAS generation.
 """
 
 import os
@@ -14,46 +15,181 @@ from dataclasses import asdict
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
+from aas_client import AASClient
 from planning.capability_matcher import CapabilityMatcher, ProcessStep
 from planning.bt_generator import BTGenerator, BTGeneratorConfig
 from planning.process_aas_generator import ProcessAASGenerator
+from planning.planner_service import PlannerService, PlannerConfig
 
 
-def test_capability_matching():
-    """Test capability matching with mock data"""
+# BaSyx server configuration
+AAS_SERVER_URL = os.getenv("AAS_SERVER_URL", "http://192.168.0.104:8081")
+AAS_REGISTRY_URL = os.getenv("AAS_REGISTRY_URL", "http://192.168.0.104:8082")
+
+
+def test_aas_connection():
+    """Test AAS server connectivity"""
     print("=" * 60)
+    print("Testing AAS Server Connectivity")
+    print("=" * 60)
+    
+    client = AASClient(AAS_SERVER_URL, AAS_REGISTRY_URL)
+    
+    # List all shells
+    shells = client.get_all_aas()
+    print(f"\nFound {len(shells)} AAS shells:")
+    for shell in shells[:10]:  # Show first 10
+        print(f"  - {shell.id_short}: {shell.id}")
+    
+    if len(shells) > 10:
+        print(f"  ... and {len(shells) - 10} more")
+    
+    return client
+
+
+def test_product_aas_structure(client: AASClient, product_aas_id: str):
+    """Test fetching and parsing product AAS structure"""
+    print("\n" + "=" * 60)
+    print(f"Testing Product AAS Structure: {product_aas_id}")
+    print("=" * 60)
+    
+    # Get the AAS
+    shell = client.get_aas_by_id(product_aas_id)
+    if not shell:
+        print(f"ERROR: Could not find AAS: {product_aas_id}")
+        return None
+    
+    print(f"\nAAS: {shell.id_short}")
+    print(f"  ID: {shell.id}")
+    print(f"  Asset Type: {shell.asset_information.asset_type if shell.asset_information else 'N/A'}")
+    
+    # Get submodels
+    submodels = client.get_submodels_from_aas(product_aas_id)
+    print(f"\nSubmodels ({len(submodels)}):")
+    
+    bill_of_processes = None
+    for sm in submodels:
+        print(f"  - {sm.id_short}: {sm.id}")
+        if 'billofprocess' in sm.id_short.lower():
+            bill_of_processes = sm
+    
+    return bill_of_processes
+
+
+def test_bill_of_processes_parsing(client: AASClient, product_aas_id: str):
+    """Test parsing BillOfProcesses from product AAS"""
+    print("\n" + "=" * 60)
+    print("Testing BillOfProcesses Parsing")
+    print("=" * 60)
+    
+    # Create planner service
+    config = PlannerConfig(
+        aas_server_url=AAS_SERVER_URL,
+        aas_registry_url=AAS_REGISTRY_URL,
+        save_intermediate_files=False
+    )
+    planner = PlannerService(client, config=config)
+    
+    # Fetch product config
+    product_config = planner._fetch_product_config(product_aas_id)
+    
+    if not product_config:
+        print(f"ERROR: Could not fetch product config for {product_aas_id}")
+        return None, None
+    
+    print(f"\nProduct: {product_config.get('idShort', 'Unknown')}")
+    print(f"ID: {product_config.get('id', 'Unknown')}")
+    
+    # Extract process steps
+    process_steps = planner.capability_matcher.extract_process_steps(product_config)
+    
+    print(f"\nProcess Steps ({len(process_steps)}):")
+    for step in process_steps:
+        print(f"  {step.step}. {step.name}")
+        print(f"     Semantic ID: {step.semantic_id}")
+        print(f"     Description: {step.description}")
+        print(f"     Duration: {step.estimated_duration}s")
+    
+    # Extract requirements
+    requirements = planner.capability_matcher.extract_requirements(product_config)
+    
+    print(f"\nRequirements:")
+    print(f"  Environmental: {list(requirements.get('environmental', {}).keys())}")
+    print(f"  In-Process Control: {list(requirements.get('in_process_control', {}).keys())}")
+    print(f"  Quality Control: {list(requirements.get('quality_control', {}).keys())}")
+    
+    return process_steps, requirements
+
+
+def test_resource_capabilities(client: AASClient, resource_aas_ids: list):
+    """Test fetching resource capabilities"""
+    print("\n" + "=" * 60)
+    print("Testing Resource Capability Extraction")
+    print("=" * 60)
+    
+    # Create planner service
+    config = PlannerConfig(
+        aas_server_url=AAS_SERVER_URL,
+        aas_registry_url=AAS_REGISTRY_URL,
+        save_intermediate_files=False
+    )
+    planner = PlannerService(client, config=config)
+    
+    # Resolve hierarchies
+    print(f"\nInitial resource IDs: {len(resource_aas_ids)}")
+    all_resources = planner._resolve_asset_hierarchies(resource_aas_ids)
+    print(f"Resolved to {len(all_resources)} resources")
+    
+    # Fetch capabilities
+    resources_with_caps = planner._fetch_resource_capabilities(all_resources)
+    
+    print(f"\nResources with capabilities:")
+    for resource in resources_with_caps:
+        caps = resource.get('capabilities', [])
+        print(f"\n  {resource['name']} ({resource['aas_id']})")
+        print(f"  Asset Type: {resource.get('asset_type', 'N/A')}")
+        if caps:
+            print(f"  Capabilities ({len(caps)}):")
+            for cap in caps:
+                print(f"    - {cap['name']}")
+                if cap.get('semantic_id'):
+                    print(f"      Semantic ID: {cap['semantic_id']}")
+                if cap.get('realized_by'):
+                    print(f"      Realized by skill: {cap['realized_by']}")
+        else:
+            print(f"  Capabilities: None")
+    
+    return resources_with_caps
+
+
+def test_capability_matching(client: AASClient, product_aas_id: str, resource_aas_ids: list):
+    """Test capability matching with real AAS data"""
+    print("\n" + "=" * 60)
     print("Testing Capability Matching")
     print("=" * 60)
     
-    # Mock process steps from product BillOfProcesses
-    process_steps = [
-        ProcessStep(name="Loading", step=1, 
-                    semantic_id="https://smartproductionlab.aau.dk/Capability/Loading",
-                    description="Load container onto shuttle"),
-        ProcessStep(name="Dispensing", step=2,
-                    semantic_id="https://smartproductionlab.aau.dk/Capability/Dispensing",
-                    description="Dispense product"),
-        ProcessStep(name="Stoppering", step=3,
-                    semantic_id="https://smartproductionlab.aau.dk/Capability/Stoppering",
-                    description="Insert stopper"),
-        ProcessStep(name="Inspection", step=4,
-                    semantic_id="https://smartproductionlab.aau.dk/Capability/QualityControl",
-                    description="Visual inspection"),
-        ProcessStep(name="Unloading", step=5,
-                    semantic_id="https://smartproductionlab.aau.dk/Capability/Unloading",
-                    description="Unload finished product"),
-    ]
+    # Create planner service
+    config = PlannerConfig(
+        aas_server_url=AAS_SERVER_URL,
+        aas_registry_url=AAS_REGISTRY_URL,
+        save_intermediate_files=False
+    )
+    planner = PlannerService(client, config=config)
     
-    # Mock available resources with capabilities
-    available_resources = [
-        "https://smartproductionlab.aau.dk/aas/aauFillingLine"
-    ]
+    # Get product config and process steps
+    product_config = planner._fetch_product_config(product_aas_id)
+    if not product_config:
+        print(f"ERROR: Could not fetch product config")
+        return None
     
-    # Create matcher (with None aas_client since we're using mock data)
-    matcher = CapabilityMatcher(aas_client=None)
+    process_steps = planner.capability_matcher.extract_process_steps(product_config)
+    
+    # Resolve resources and get capabilities
+    all_resource_ids = planner._resolve_asset_hierarchies(resource_aas_ids)
+    available_resources = planner._fetch_resource_capabilities(all_resource_ids)
     
     # Perform matching
-    result = matcher.match_capabilities(process_steps, available_resources)
+    result = planner.capability_matcher.match_capabilities(process_steps, available_resources)
     
     print(f"\nMatching Results:")
     print(f"  Total process steps: {len(process_steps)}")
@@ -68,15 +204,22 @@ def test_capability_matching():
         status = "✓" if match.is_matched else "✗"
         resource = match.primary_resource.resource_name if match.primary_resource else "None"
         print(f"  {status} {match.process_step.name} -> {resource}")
+        if match.is_matched:
+            print(f"      Matched via semantic ID: {match.process_step.semantic_id}")
+    
+    if result.unmatched_steps:
+        print("\nUnmatched Steps:")
+        for step in result.unmatched_steps:
+            print(f"  ✗ {step.name} (semantic ID: {step.semantic_id})")
     
     print("\nMovers:")
     for mover in result.movers:
         print(f"  - {mover.name} ({mover.aas_id})")
     
-    return result
+    return result, product_config
 
 
-def test_bt_generation(matching_result):
+def test_bt_generation(matching_result, product_config: dict):
     """Test behavior tree generation"""
     print("\n" + "=" * 60)
     print("Testing Behavior Tree Generation")
@@ -89,20 +232,10 @@ def test_bt_generation(matching_result):
     )
     generator = BTGenerator(config)
     
-    # Mock product info
-    product_info = {
-        "ProductInformation": {
-            "ProductName": "HgH"
-        },
-        "BatchInformation": {
-            "Quantity": 40000
-        }
-    }
-    
     # Generate BT
     bt_xml = generator.generate_production_bt(
         matching_result,
-        product_info,
+        product_config,
         planar_table_id="https://smartproductionlab.aau.dk/aas/planarTable"
     )
     
@@ -125,7 +258,7 @@ def test_bt_generation(matching_result):
     return bt_xml
 
 
-def test_process_aas_generation(matching_result):
+def test_process_aas_generation(matching_result, product_config: dict, requirements: dict):
     """Test Process AAS configuration generation"""
     print("\n" + "=" * 60)
     print("Testing Process AAS Generation")
@@ -133,47 +266,13 @@ def test_process_aas_generation(matching_result):
     
     generator = ProcessAASGenerator()
     
-    # Mock product info
-    product_info = {
-        "id": "https://smartproductionlab.aau.dk/aas/HgHAAS",
-        "idShort": "HgHAAS",
-        "ProductInformation": {
-            "ProductName": "Human Growth Hormone"
-        },
-        "BatchInformation": {
-            "OrderNumber": "ORD-2026-001",
-            "Quantity": 40000,
-            "Unit": "units"
-        }
-    }
-    
-    # Mock requirements
-    requirements = {
-        "environmental": {
-            "Temperature": {"value": 18, "unit": "°C"}
-        },
-        "in_process_control": {
-            "Weighing": {
-                "semantic_id": "https://smartproductionlab.aau.dk/Capability/Weighing",
-                "applies_to": "Dispensing",
-                "rate": 100,
-                "unit": "%"
-            }
-        },
-        "quality_control": {
-            "VisualInspection": {
-                "semantic_id": "https://smartproductionlab.aau.dk/Capability/QualityControl",
-                "rate": 85,
-                "unit": "%"
-            }
-        }
-    }
+    product_aas_id = product_config.get('id', '')
     
     # Generate config
     config = generator.generate_config(
         matching_result,
-        "https://smartproductionlab.aau.dk/aas/HgHAAS",
-        product_info,
+        product_aas_id,
+        product_config,
         requirements,
         "production_HgH.xml"
     )
@@ -196,81 +295,41 @@ def test_process_aas_generation(matching_result):
     return config
 
 
-def test_extract_from_yaml():
-    """Test extraction of process steps from YAML config"""
-    print("\n" + "=" * 60)
-    print("Testing YAML Config Extraction")
-    print("=" * 60)
-    
-    # Load the HgH product config
-    import yaml
-    
-    # Try multiple possible paths
-    possible_paths = [
-        "../AASDescriptions/Product/configs/HgH.yaml",
-        "../../AASDescriptions/Product/configs/HgH.yaml",
-        os.path.join(os.path.dirname(__file__), "..", "..", "AASDescriptions", "Product", "configs", "HgH.yaml"),
-    ]
-    
-    config_path = None
-    for path in possible_paths:
-        if os.path.exists(path):
-            config_path = path
-            break
-    
-    if not config_path:
-        print(f"  Config file not found in any of: {possible_paths}")
-        return None, None
-    
-    try:
-        with open(config_path, 'r') as f:
-            config = yaml.safe_load(f)
-        
-        # Get the product config
-        product_key = list(config.keys())[0]
-        product_config = config[product_key]
-        
-        # Create matcher and extract
-        matcher = CapabilityMatcher(aas_client=None)
-        steps = matcher.extract_process_steps(product_config)
-        requirements = matcher.extract_requirements(product_config)
-        
-        print(f"\nExtracted from {config_path}:")
-        print(f"\nProcess Steps ({len(steps)}):")
-        for step in steps:
-            print(f"  {step.step}. {step.name}")
-            print(f"     Semantic ID: {step.semantic_id}")
-            print(f"     Duration: {step.estimated_duration}s")
-        
-        print(f"\nRequirements:")
-        print(f"  Environmental: {list(requirements['environmental'].keys())}")
-        print(f"  In-Process Control: {list(requirements['in_process_control'].keys())}")
-        print(f"  Quality Control: {list(requirements['quality_control'].keys())}")
-        
-        return steps, requirements
-        
-    except Exception as e:
-        print(f"  Error loading config: {e}")
-        return None, None
-
-
 def main():
     """Run all tests"""
     print("\n" + "=" * 60)
     print("Production Planning Package Test Suite")
+    print(f"Using AAS Server: {AAS_SERVER_URL}")
     print("=" * 60)
     
+    # Test AAS IDs
+    product_aas_id = "https://smartproductionlab.aau.dk/aas/HgHAAS"
+    resource_aas_ids = [
+        "https://smartproductionlab.aau.dk/aas/aauFillingLine"
+    ]
+    
+    # Test AAS connection
+    client = test_aas_connection()
+    
+    # Test product AAS structure
+    bill_of_processes = test_product_aas_structure(client, product_aas_id)
+    
+    # Test BillOfProcesses parsing
+    process_steps, requirements = test_bill_of_processes_parsing(client, product_aas_id)
+    
+    # Test resource capability extraction
+    resources_with_caps = test_resource_capabilities(client, resource_aas_ids)
+    
     # Test capability matching
-    matching_result = test_capability_matching()
-    
-    # Test BT generation
-    bt_xml = test_bt_generation(matching_result)
-    
-    # Test Process AAS generation
-    process_config = test_process_aas_generation(matching_result)
-    
-    # Test YAML extraction
-    test_extract_from_yaml()
+    result = test_capability_matching(client, product_aas_id, resource_aas_ids)
+    if result:
+        matching_result, product_config = result
+        
+        # Test BT generation
+        bt_xml = test_bt_generation(matching_result, product_config)
+        
+        # Test Process AAS generation
+        process_config = test_process_aas_generation(matching_result, product_config, requirements or {})
     
     print("\n" + "=" * 60)
     print("All Tests Completed!")

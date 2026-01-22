@@ -194,7 +194,9 @@ class PlannerService:
         return process_aas_id, process_config
     
     def _fetch_product_config(self, product_aas_id: str) -> Optional[Dict[str, Any]]:
-        """Fetch product AAS and convert to config format"""
+        """Fetch product AAS and convert to config format using BaSyx SDK."""
+        from basyx.aas import model
+        
         try:
             shell = self.aas_client.get_aas_by_id(product_aas_id)
             if not shell:
@@ -210,20 +212,24 @@ class PlannerService:
                 'Requirements': {}
             }
             
-            # Fetch submodels
-            submodels = self.aas_client.get_submodels_from_aas(product_aas_id)
+            # Fetch submodels by semantic ID
+            bill_of_processes = self.aas_client.find_submodel_by_semantic_id(
+                product_aas_id, 'BillOfProcesses'
+            )
+            if bill_of_processes:
+                config['BillOfProcesses'] = self._parse_bill_of_processes(bill_of_processes)
             
-            for submodel in submodels:
-                submodel_type = self._identify_submodel_type(submodel)
-                
-                if submodel_type == 'BillOfProcesses':
-                    config['BillOfProcesses'] = self._parse_bill_of_processes(submodel)
-                elif submodel_type == 'Requirements':
-                    config['Requirements'] = self._parse_requirements(submodel)
-                elif submodel_type == 'ProductInformation':
-                    config['ProductInformation'] = self._parse_product_info(submodel)
-                elif submodel_type == 'BatchInformation':
-                    config['BatchInformation'] = self._parse_batch_info(submodel)
+            requirements = self.aas_client.find_submodel_by_semantic_id(
+                product_aas_id, 'Requirements'
+            )
+            if requirements:
+                config['Requirements'] = self._parse_requirements(requirements)
+            
+            batch_info = self.aas_client.find_submodel_by_semantic_id(
+                product_aas_id, 'BatchInformation'
+            )
+            if batch_info:
+                config['BatchInformation'] = self._parse_batch_info(batch_info)
             
             return config
             
@@ -249,7 +255,11 @@ class PlannerService:
         return 'Unknown'
     
     def _parse_bill_of_processes(self, submodel) -> Dict[str, Any]:
-        """Parse BillOfProcesses submodel into config format"""
+        """Parse BillOfProcesses submodel into config format using BaSyx SDK.
+        
+        The BillOfProcesses contains a 'Processes' SubmodelElementCollection
+        which contains individual process step collections (Loading, Dispensing, etc.)
+        """
         from basyx.aas import model
         
         result = {'Processes': [], 'semantic_id': ''}
@@ -270,16 +280,32 @@ class PlannerService:
                             result['Processes'].append(step_info)
                             step_counter += 1
             elif isinstance(element, model.SubmodelElementCollection):
-                # Direct collection of steps
-                step_info = self._parse_process_step(element, step_counter)
-                if step_info:
-                    result['Processes'].append(step_info)
-                    step_counter += 1
+                # Check if this is the 'Processes' container or a direct process step
+                if element.id_short.lower() == 'processes':
+                    # This is the container holding all process steps
+                    for step_elem in element.value:
+                        if isinstance(step_elem, model.SubmodelElementCollection):
+                            step_info = self._parse_process_step(step_elem, step_counter)
+                            if step_info:
+                                result['Processes'].append(step_info)
+                                step_counter += 1
+                else:
+                    # Direct process step at top level
+                    step_info = self._parse_process_step(element, step_counter)
+                    if step_info:
+                        result['Processes'].append(step_info)
+                        step_counter += 1
         
         return result
     
     def _parse_process_step(self, collection, step_num: int) -> Optional[Dict[str, Any]]:
-        """Parse a single process step from SubmodelElementCollection"""
+        """Parse a single process step from SubmodelElementCollection
+        
+        The BillOfProcesses structure from BaSyx:
+        - Each process step is a SubmodelElementCollection
+        - The capability semantic ID is on the collection's semantic_id attribute
+        - Child properties include Description, EstimatedDuration, Parameters, Requirements
+        """
         from basyx.aas import model
         
         name = collection.id_short
@@ -291,23 +317,26 @@ class PlannerService:
             'parameters': {}
         }
         
-        # Get semantic ID
+        # Get semantic ID from the collection itself (this is the capability identifier)
         if collection.semantic_id:
             for key in collection.semantic_id.key:
                 step_config['semantic_id'] = key.value
                 break
         
-        # Parse properties
+        # Parse child properties
         for elem in collection.value:
             if isinstance(elem, model.Property):
-                if elem.id_short.lower() == 'step':
+                id_short_lower = elem.id_short.lower()
+                if id_short_lower == 'step':
                     step_config['step'] = int(elem.value) if elem.value else step_num
-                elif elem.id_short.lower() == 'description':
+                elif id_short_lower == 'description':
                     step_config['description'] = str(elem.value) if elem.value else ''
-                elif elem.id_short.lower() in ['estimatedduration', 'duration']:
+                elif id_short_lower in ['estimatedduration', 'duration']:
                     step_config['estimatedDuration'] = float(elem.value) if elem.value else 0.0
-                elif elem.id_short.lower() == 'semantic_id':
-                    step_config['semantic_id'] = str(elem.value) if elem.value else ''
+            elif isinstance(elem, model.SubmodelElementCollection):
+                # Parse parameters collection
+                if elem.id_short.lower() == 'parameters':
+                    step_config['parameters'] = self._parse_parameters_collection(elem)
         
         return {name: step_config}
     
@@ -379,18 +408,51 @@ class PlannerService:
         
         return result
     
+    def _parse_parameters_collection(self, collection) -> Dict[str, Any]:
+        """Parse a Parameters SubmodelElementCollection from a process step"""
+        from basyx.aas import model
+        
+        params = {}
+        for elem in collection.value:
+            if isinstance(elem, model.Property):
+                # Extract value and unit from qualifiers if present
+                value = elem.value
+                unit = ''
+                if hasattr(elem, 'qualifier') and elem.qualifier:
+                    for q in elem.qualifier:
+                        if q.type == 'Unit':
+                            unit = q.value
+                            break
+                
+                params[elem.id_short] = {
+                    'value': float(value) if value else 0.0,
+                    'unit': unit
+                }
+        
+        return params
+    
     def _resolve_asset_hierarchies(self, asset_ids: List[str]) -> List[str]:
-        """Resolve hierarchical structures to find all available assets"""
+        """Resolve hierarchical structures to find all available assets recursively.
+        
+        Uses BaSyx SDK to properly follow SameAs references through
+        the hierarchy tree. Also recursively resolves hierarchies of
+        discovered child assets.
+        """
         all_assets = []
         seen = set()
         
-        for aas_id in asset_ids:
+        # Use a queue for breadth-first traversal
+        queue = list(asset_ids)
+        
+        while queue:
+            aas_id = queue.pop(0)
+            
             if aas_id in seen:
                 continue
             seen.add(aas_id)
             all_assets.append(aas_id)
             
-            # Find hierarchical structure
+            # Find hierarchical structure submodel for this asset
             try:
                 hierarchy_submodel = self.aas_client.find_submodel_by_semantic_id(
                     aas_id, 'HierarchicalStructures'
@@ -398,59 +460,123 @@ class PlannerService:
                 
                 if hierarchy_submodel:
                     child_ids = self._resolve_hierarchy_submodel(hierarchy_submodel)
+                    # Add newly discovered children to the queue for processing
                     for child_id in child_ids:
                         if child_id not in seen:
-                            seen.add(child_id)
-                            all_assets.append(child_id)
-                            # Recursively resolve children
-                            child_children = self._resolve_asset_hierarchies([child_id])
-                            for cc in child_children:
-                                if cc not in seen:
-                                    seen.add(cc)
-                                    all_assets.append(cc)
+                            queue.append(child_id)
+                else:
+                    logger.debug(f"No HierarchicalStructures found for {aas_id}")
+                    
             except Exception as e:
                 logger.warning(f"Could not resolve hierarchy for {aas_id}: {e}")
+                import traceback
+                traceback.print_exc()
         
         return all_assets
     
     def _resolve_hierarchy_submodel(self, submodel) -> List[str]:
-        """Extract child AAS IDs from a HierarchicalStructures submodel"""
+        """Recursively resolve hierarchical structure to extract all AAS IDs.
+        
+        Follows SameAs references to resolve nested hierarchies.
+        """
         from basyx.aas import model
         
         aas_ids = []
         
         try:
-            # Check archetype
+            # Check archetype - only process "OneDown" (downward hierarchy)
             archetype = None
             for element in submodel.submodel_element:
                 if element.id_short in ['ArcheType', 'Archetype'] and isinstance(element, model.Property):
                     archetype = str(element.value)
                     break
             
-            # Only process OneDown (children)
             if archetype != 'OneDown':
                 return aas_ids
             
-            # Find EntryNode
+            # Find EntryNode entity
             for element in submodel.submodel_element:
                 if element.id_short == 'EntryNode' and isinstance(element, model.Entity):
+                    # Process all child entities in statements
                     for statement in element.statement:
                         if isinstance(statement, model.Entity):
-                            if statement.global_asset_id:
-                                # Look up AAS ID from global asset ID
-                                aas_id = self.aas_client.lookup_aas_by_asset_id(
+                            child_aas_id = None
+                            child_hierarchy_submodel_id = None
+                            
+                            # First, check for SameAs reference - this is more reliable
+                            # as it points to the actual child's hierarchy submodel
+                            for sub_statement in statement.statement:
+                                if isinstance(sub_statement, model.ReferenceElement) and sub_statement.id_short == 'SameAs':
+                                    if sub_statement.value:
+                                        for key in sub_statement.value.key:
+                                            if key.type == model.KeyTypes.SUBMODEL:
+                                                child_hierarchy_submodel_id = key.value
+                                                # Extract AAS ID from submodel ID pattern
+                                                child_aas_id = self._extract_aas_id_from_submodel_id(
+                                                    child_hierarchy_submodel_id
+                                                )
+                                                break
+                            
+                            # Fallback: try globalAssetId lookup
+                            if not child_aas_id and statement.global_asset_id:
+                                child_aas_id = self.aas_client.lookup_aas_by_asset_id(
                                     statement.global_asset_id
                                 )
-                                if aas_id:
-                                    aas_ids.append(aas_id)
+                            
+                            if child_aas_id:
+                                aas_ids.append(child_aas_id)
+                            
+                            # Follow SameAs to recursively resolve deeper hierarchies
+                            if child_hierarchy_submodel_id:
+                                try:
+                                    referenced_submodel = self.aas_client.get_submodel_by_id(
+                                        child_hierarchy_submodel_id
+                                    )
+                                    if referenced_submodel:
+                                        child_aas_ids = self._resolve_hierarchy_submodel(referenced_submodel)
+                                        aas_ids.extend(child_aas_ids)
+                                except Exception as e:
+                                    logger.debug(f"Could not follow SameAs reference: {e}")
                     break
+                    
         except Exception as e:
-            logger.warning(f"Error resolving hierarchy: {e}")
+            logger.warning(f"Error in _resolve_hierarchy_submodel: {e}")
+            import traceback
+            traceback.print_exc()
         
         return aas_ids
     
+    def _extract_aas_id_from_submodel_id(self, submodel_id: str) -> Optional[str]:
+        """Extract AAS ID from a submodel ID pattern.
+        
+        e.g., ".../instances/imaDispensingSystemAAS/HierarchicalStructures"
+        -> "https://smartproductionlab.aau.dk/aas/imaDispensingSystem"
+        """
+        try:
+            parts = submodel_id.split('/')
+            if 'instances' in parts:
+                idx = parts.index('instances')
+                if idx + 1 < len(parts):
+                    aas_id_short = parts[idx + 1]
+                    # Try to find AAS by idShort pattern
+                    possible_aas_ids = [
+                        f"https://smartproductionlab.aau.dk/aas/{aas_id_short}",
+                        f"https://smartproductionlab.aau.dk/aas/{aas_id_short.replace('AAS', '')}",
+                    ]
+                    for possible_id in possible_aas_ids:
+                        try:
+                            shell = self.aas_client.get_aas_by_id(possible_id)
+                            if shell:
+                                return possible_id
+                        except:
+                            continue
+        except Exception as e:
+            logger.debug(f"Could not extract AAS ID from submodel ID: {e}")
+        
+        return None
+    
     def _fetch_resource_capabilities(self, asset_ids: List[str]) -> List[Dict[str, Any]]:
-        """Fetch capabilities from all resource AAS"""
+        """Fetch capabilities from all resource AAS using BaSyx SDK."""
         from basyx.aas import model
         
         resources = []
@@ -468,14 +594,19 @@ class PlannerService:
                     'capabilities': []
                 }
                 
-                # Find capabilities submodel
-                submodels = self.aas_client.get_submodels_from_aas(aas_id)
-                for submodel in submodels:
-                    if 'capabilit' in submodel.id_short.lower():
-                        # Parse capabilities
-                        caps = self._parse_capabilities_submodel(submodel)
-                        resource_info['capabilities'] = caps
-                        break
+                # Find capabilities submodel using semantic ID
+                capabilities_submodel = self.aas_client.find_submodel_by_semantic_id(
+                    aas_id, 'OfferedCapabilityDescription'
+                )
+                if not capabilities_submodel:
+                    # Try alternative naming
+                    capabilities_submodel = self.aas_client.find_submodel_by_semantic_id(
+                        aas_id, 'Capability'
+                    )
+                
+                if capabilities_submodel:
+                    caps = self._parse_capabilities(capabilities_submodel)
+                    resource_info['capabilities'] = caps
                 
                 resources.append(resource_info)
                 
@@ -484,16 +615,17 @@ class PlannerService:
         
         return resources
     
-    def _parse_capabilities_submodel(self, submodel) -> List[Dict[str, Any]]:
-        """Parse capabilities from a submodel"""
+    def _parse_capabilities(self, submodel) -> List[Dict[str, Any]]:
+        """Parse capabilities from submodel using BaSyx SDK."""
         from basyx.aas import model
         
         capabilities = []
         
         for element in submodel.submodel_element:
-            # Look for CapabilitySet
             if isinstance(element, model.SubmodelElementCollection):
-                if 'capabilityset' in element.id_short.lower():
+                id_short = element.id_short.lower() if element.id_short else ''
+                if 'capabilityset' in id_short:
+                    # Parse each capability container
                     for cap_container in element.value:
                         if isinstance(cap_container, model.SubmodelElementCollection):
                             cap_info = self._parse_capability_container(cap_container)
@@ -508,26 +640,26 @@ class PlannerService:
         return capabilities
     
     def _parse_capability_container(self, container) -> Optional[Dict[str, Any]]:
-        """Parse a single capability container"""
+        """Parse a single capability container using BaSyx SDK.
+        
+        The capability name (idShort) is used to construct a semantic ID
+        that matches the product's process step semantic IDs.
+        """
         from basyx.aas import model
         
-        # Find the Capability element
-        cap_name = container.id_short.replace('Container', '')
-        semantic_id = ''
+        cap_name = container.id_short.replace('Container', '') if container.id_short else ''
         realized_by = None
         
         for elem in container.value:
             if isinstance(elem, model.Capability):
-                cap_name = elem.id_short
-                if elem.semantic_id:
-                    for key in elem.semantic_id.key:
-                        semantic_id = key.value
-                        break
+                # The Capability element's idShort is the actual capability name
+                cap_name = elem.id_short or cap_name
+                
             elif isinstance(elem, model.SubmodelElementList):
                 if elem.id_short == 'realizedBy':
+                    # Extract skill name from relationship
                     for rel in elem.value:
                         if isinstance(rel, model.RelationshipElement):
-                            # Extract skill name from reference
                             if rel.second:
                                 for key in rel.second.key:
                                     if key.type == model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION:
@@ -535,6 +667,9 @@ class PlannerService:
                                         break
         
         if cap_name:
+            # Construct a semantic ID that matches the product's process steps
+            semantic_id = f"https://smartproductionlab.aau.dk/Capability/{cap_name}"
+            
             return {
                 'name': cap_name,
                 'semantic_id': semantic_id,
