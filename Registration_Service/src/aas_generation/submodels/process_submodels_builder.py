@@ -369,7 +369,7 @@ class PolicySubmodelBuilder:
             elements.append(model.File(
                 id_short="Policy",
                 content_type=content_type,
-                semantic_id=policy_config.get('semanticId', '')
+                semantic_id=policy_config.get('semanticId', ''),
                 value=policy_file,
                 description=model.MultiLanguageNameType({"en": description}) if description else None
             ))
