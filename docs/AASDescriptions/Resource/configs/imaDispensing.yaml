@@ -14,8 +14,8 @@ imaDispensingSystemAAS:
                 contentType: 'application/json'
             InteractionMetadata:
                 actions:
-                    dispensing:
-                        key: 'dispensing'
+                    Dispensing:
+                        key: 'Dispensing'
                         title: 'Dispensing'
                         synchronous: 'true'
                         input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
@@ -31,9 +31,9 @@ imaDispensingSystemAAS:
                                 contentType: 'application/json'
                                 href: '/DATA/Dispensing'
                                 mqv_controlPacket: 'publish'
-                    halt:
-                        key: 'halt'
-                        title: 'halt'
+                    Halt:
+                        key: 'Halt'
+                        title: 'Halt'
                         synchronous: 'true'
                         input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
                         forms:
@@ -43,9 +43,9 @@ imaDispensingSystemAAS:
                             mqv_retain: 'false'
                             mqv_controlPacket: subscribe
                             mqv_qos: '2'                                   
-                    occupy:
-                        key: 'occupy'
-                        title: 'occupy'
+                    Occupy:
+                        key: 'Occupy'
+                        title: 'Occupy'
                         synchronous: 'true'
                         input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
                         output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
@@ -60,9 +60,9 @@ imaDispensingSystemAAS:
                                 contentType: 'application/json'
                                 href: '/DATA/Occupy'
                                 mqv_controlPacket: 'publish'
-                    release:
-                        key: 'release'
-                        title: 'release'
+                    Release:
+                        key: 'Release'
+                        title: 'Release'
                         synchronous: 'true'
                         input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
                         output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
