@@ -282,7 +282,6 @@ class PlannerService:
                 'id': shell.id,
                 'idShort': shell.id_short,
                 'globalAssetId': shell.asset_information.global_asset_id if shell.asset_information else '',
-                'ProductInformation': {},
                 'BatchInformation': {},
                 'BillOfProcesses': {'Processes': []},
                 'Requirements': {}
@@ -345,22 +344,6 @@ class PlannerService:
                     return sm
         
         return None
-    
-    def _identify_submodel_type(self, submodel) -> str:
-        """Identify submodel type from id_short or semantic_id"""
-        id_short = submodel.id_short.lower() if submodel.id_short else ''
-        
-        if 'billofprocess' in id_short or 'process' in id_short:
-            return 'BillOfProcesses'
-        elif 'requirement' in id_short:
-            return 'Requirements'
-        elif 'productinfo' in id_short or 'product' in id_short:
-            return 'ProductInformation'
-        elif 'batchinfo' in id_short or 'batch' in id_short:
-            return 'BatchInformation'
-        
-        return 'Unknown'
-    
     def _parse_bill_of_processes(self, submodel) -> Dict[str, Any]:
         """Parse BillOfProcesses submodel into config format using BaSyx SDK.
         
@@ -504,18 +487,7 @@ class PlannerService:
                 result[elem.id_short] = req_config
         
         return result
-    
-    def _parse_product_info(self, submodel) -> Dict[str, Any]:
-        """Parse ProductInformation submodel"""
-        from basyx.aas import model
-        
-        result = {}
-        for element in submodel.submodel_element:
-            if isinstance(element, model.Property):
-                result[element.id_short] = str(element.value) if element.value else ''
-        
-        return result
-    
+
     def _parse_batch_info(self, submodel) -> Dict[str, Any]:
         """Parse BatchInformation submodel"""
         from basyx.aas import model

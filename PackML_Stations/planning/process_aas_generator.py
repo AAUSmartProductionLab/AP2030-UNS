@@ -113,7 +113,7 @@ class ProcessAASGenerator:
     
     def _generate_process_id(self, product_info: Dict[str, Any]) -> str:
         """Generate a unique process ID based on product info"""
-        product_name = product_info.get('ProductInformation', {}).get('ProductName', 'Unknown')
+        product_name = product_info.get('BatchInformation', {}).get('ProductName', 'Unknown')
         # Clean up product name for ID
         clean_name = ''.join(c for c in product_name if c.isalnum())[:20]
         timestamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
@@ -144,10 +144,10 @@ class ProcessAASGenerator:
         Returns:
             ProcessInformation config dictionary
         """
-        product_info_section = product_info.get('ProductInformation', {})
+        product_name = product_info.get('BatchInformation', {}).get('ProductName', 'Unknown')
         
         return {
-            'ProcessName': f"Production of {product_info_section.get('ProductName', 'Unknown')}",
+            'ProcessName': f"Production of {product_name}",
             'ProcessType': 'AsepticFilling',
             'CreatedAt': timestamp,
             'Status': 'planned',
