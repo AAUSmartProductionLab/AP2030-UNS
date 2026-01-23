@@ -143,7 +143,9 @@ def planning_callback(topic, client, message, properties):
     }
     """
     try:
-        logger.info(f"Received planning command: {json.dumps(message, indent=2)}")
+        # Extract Uuid for tracking duplicate messages
+        request_uuid = message.get('Uuid', 'no-uuid') if isinstance(message, dict) else 'no-uuid'
+        logger.info(f"[{request_uuid}] Received planning command: {json.dumps(message, indent=2)}")
         
         # Parse message according to planningCommand schema
         asset_ids = None

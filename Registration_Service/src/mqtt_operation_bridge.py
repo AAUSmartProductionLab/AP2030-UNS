@@ -302,6 +302,7 @@ class MQTTOperationBridge:
         """
         # Generate correlation ID (Uuid in our command schema)
         correlation_id = str(uuid.uuid4())
+        logger.info(f"[{correlation_id}] Starting invoke_operation to {command_topic}")
 
         # Create pending operation
         pending_op = PendingOperation(

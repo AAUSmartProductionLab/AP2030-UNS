@@ -211,6 +211,10 @@ def invoke_asset_skill(asset_id: str, skill_name: str):
 
     Body: Array of OperationVariable objects
     """
+    import uuid as uuid_module
+    request_id = str(uuid_module.uuid4())[:8]
+    logger.info(f"[{request_id}] HTTP POST /operations/{asset_id}/{skill_name} received")
+    
     try:
         # Load topic mapping from in-memory config
         topic_config = get_topic_config()
