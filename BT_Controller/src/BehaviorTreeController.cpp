@@ -926,9 +926,6 @@ void BehaviorTreeController::processStartingState()
 
         std::cout << "Successfully fetched BT description (" << bt_xml_content.size() << " bytes)" << std::endl;
 
-        // Register the behavior tree from the fetched XML content
-        bt_factory_->registerBehaviorTreeFromText(bt_xml_content);
-
         // Create blackboard and populate with equipment mapping
         auto root_blackboard = BT::Blackboard::create();
         populateBlackboard(root_blackboard);
@@ -936,8 +933,9 @@ void BehaviorTreeController::processStartingState()
         // Store the process ID in blackboard for nodes to access
         root_blackboard->set("ProcessAASId", process_id);
 
-        // Pass empty string to use main_tree_to_execute attribute from XML
-        bt_tree_ = bt_factory_->createTree({}, root_blackboard);
+        // createTreeFromText parses XML, registers the tree, and creates it in one call
+        // It automatically uses the main_tree_to_execute attribute from the XML
+        bt_tree_ = bt_factory_->createTreeFromText(bt_xml_content, root_blackboard);
     }
     catch (const BT::RuntimeError &e)
     {
