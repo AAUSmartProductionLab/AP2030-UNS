@@ -35,7 +35,7 @@ class PackMLState(enum.Enum):
 
 
 class PackMLStateMachine:
-    def __init__(self,  base_topic, client: Proxy, properties, config_path: Optional[str] = None, custom_handlers=None):
+    def __init__(self,  base_topic, client: Proxy, properties, config_path: Optional[str] = None, custom_handlers=None, enable_occupation: bool = True):
         self.state = PackMLState.IDLE
         self.base_topic = base_topic
         # Keep if used elsewhere, otherwise consider removing
@@ -46,6 +46,7 @@ class PackMLStateMachine:
         self.Uuid = None
         
         self.custom_handlers = custom_handlers or {}
+        self.enable_occupation = enable_occupation
 
         # YAML config path for registration
         self.config_path = config_path
@@ -64,22 +65,27 @@ class PackMLStateMachine:
         # Key: UUID of the item in queue, Value: UUID of the original registration command
         self.pending_registrations = {}
 
-        self.register_topic = ResponseAsync(
-            self.base_topic+"/DATA/Occupy",
-            self.base_topic+"/CMD/Occupy",
-            "./MQTTSchemas/commandResponse.schema.json",
-            "./MQTTSchemas/command.schema.json",
-            2,
-            self.register_callback
-        )
-        self.unregister_topic = ResponseAsync(
-            self.base_topic+"/DATA/Release",
-            self.base_topic+"/CMD/Release",
-            "./MQTTSchemas/commandResponse.schema.json",
-            "./MQTTSchemas/command.schema.json",
-            2,
-            self.unregister_callback
-        )
+        # Occupation topics (optional - can be disabled for services like planners)
+        self.register_topic = None
+        self.unregister_topic = None
+        
+        if self.enable_occupation:
+            self.register_topic = ResponseAsync(
+                self.base_topic+"/DATA/Occupy",
+                self.base_topic+"/CMD/Occupy",
+                "./MQTTSchemas/commandResponse.schema.json",
+                "./MQTTSchemas/command.schema.json",
+                2,
+                self.register_callback
+            )
+            self.unregister_topic = ResponseAsync(
+                self.base_topic+"/DATA/Release",
+                self.base_topic+"/CMD/Release",
+                "./MQTTSchemas/commandResponse.schema.json",
+                "./MQTTSchemas/command.schema.json",
+                2,
+                self.unregister_callback
+            )
         
         # Command topic for manual state control (Start, Stop, Reset, etc.)
         from MQTT_classes import Subscriber
@@ -95,7 +101,11 @@ class PackMLStateMachine:
             "./MQTTSchemas/stationState.schema.json",
             2
         )
-        topics = [self.register_topic, self.unregister_topic, self.command_topic, self.state_topic]
+        
+        # Build list of topics to register
+        topics = [self.command_topic, self.state_topic]
+        if self.enable_occupation:
+            topics.extend([self.register_topic, self.unregister_topic])
         for topic in topics:
             client.register_topic(topic)
 
