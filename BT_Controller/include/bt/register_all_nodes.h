@@ -7,6 +7,7 @@
 #include "mqtt/node_message_distributor.h"
 #include "bt/mqtt_action_node.h"
 #include "bt/mqtt_sync_action_node.h"
+#include "bt/mqtt_sync_condition_node.h"
 #include "bt/mqtt_decorator.h"
 #include "bt/actions/move_to_position.h"
 #include "bt/actions/generic_action_node.h"
@@ -53,7 +54,7 @@ void registerAllNodes(
         aas_client,
         "Refill_Node");
 
-    MqttActionNode::registerNodeType<GenericConditionNode>(
+    MqttSyncConditionNode::registerNodeType<GenericConditionNode>(
         factory,
         node_message_distributor,
         mqtt_client,
