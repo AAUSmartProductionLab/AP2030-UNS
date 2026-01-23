@@ -69,6 +69,10 @@ All schemas are automatically synchronized from the `schemas/` directory. Click 
   - Command to trigger production planning for a product using specified assets
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/planningCommand.schema.json)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/MQTTSchemas/planningCommand.schema.json)
+- **[planningResponse.schema.json](MQTTSchemas/planningResponse.schema.json)**
+  - Response to a planning command with capability matching results
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/planningResponse.schema.json)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/MQTTSchemas/planningResponse.schema.json)
 - **[position.schema.json](MQTTSchemas/position.schema.json)**
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/position.schema.json)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/MQTTSchemas/position.schema.json)

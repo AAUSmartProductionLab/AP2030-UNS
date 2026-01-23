@@ -19,7 +19,7 @@ productionPlanner:
                         title: 'Plan'
                         synchronous: 'true'
                         input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/planningCommand.schema.json'
-                        output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
+                        output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/planningResponse.schema.json'
                         forms:
                             contentType: 'application/json'
                             href: '/CMD/Plan'
