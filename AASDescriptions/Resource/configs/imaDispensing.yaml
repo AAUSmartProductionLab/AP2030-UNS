@@ -1,6 +1,6 @@
 imaDispensingSystemAAS:
     idShort: imaDispensingSystemAAS
-    id: 'https://smartproductionlab.aau.dk/aas/imaDispensingSystem'
+    id: 'https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS'
     globalAssetId: 'https://smartproductionlab.aau.dk/assets/MzFiZTU1YzAtODc0ZC00YTRmLTkzYzItMDQ5ZDZjZDdhZTYw'
     derivedFrom: 'https://smartproductionlab.aau.dk/aas/templates/resource'
     assetType: 'https://smartproductionlab.aau.dk/Resource/CPPM/DispensingSystem/imaDispensingSystem'

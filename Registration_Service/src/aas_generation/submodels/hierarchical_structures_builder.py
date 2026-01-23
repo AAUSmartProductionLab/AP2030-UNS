@@ -115,14 +115,21 @@ class HierarchicalStructuresSubmodelBuilder:
                 entity_config = {}
             
             # Auto-derive missing IDs
+            # Convention: systemId should include 'AAS' suffix for submodel path consistency
             entity_system_id = entity_config.get('systemId', entity_name)
+            # Ensure AAS suffix is present for submodel ID consistency
+            if not entity_system_id.endswith('AAS'):
+                entity_system_id_for_submodel = entity_system_id + 'AAS'
+            else:
+                entity_system_id_for_submodel = entity_system_id
+                
             entity_aas_id = entity_config.get(
                 'aasId',
                 f"{self.base_url}/aas/{entity_system_id}"
             )
             entity_submodel_id = entity_config.get(
                 'submodelId',
-                f"{self.base_url}/submodels/instances/{entity_system_id}/HierarchicalStructures"
+                f"{self.base_url}/submodels/instances/{entity_system_id_for_submodel}/HierarchicalStructures"
             )
             entity_global_asset_id = entity_config.get('globalAssetId', '')
             

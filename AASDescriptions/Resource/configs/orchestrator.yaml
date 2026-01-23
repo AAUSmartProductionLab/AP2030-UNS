@@ -1,6 +1,6 @@
 orchestrator:
     idShort: orchestrator
-    id: 'https://smartproductionlab.aau.dk/aas/orchestrator'
+    id: 'https://smartproductionlab.aau.dk/aas/orchestratorAAS'
     globalAssetId: 'https://smartproductionlab.aau.dk/assets/YTZiYjcwOWMtZTI3YS00YmU0LWJkMzEtYjVmYzFlZDQ3NWQ1'
     derivedFrom: 'https://smartproductionlab.aau.dk/aas/templates/resource'
     assetType: 'https://smartproductionlab.aau.dk/Resource/Orchestrator'
@@ -16,7 +16,7 @@ orchestrator:
                 actions:
                     Start:
                         key: 'Start'
-                        title: 'Plan'
+                        title: 'Start'
                         synchronous: 'true'
                         input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/orchestrationCommand.schema.json'
                         output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
