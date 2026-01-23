@@ -28,8 +28,9 @@
             <input_port name="Queue" type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;" default="{ProductIDs}">The queue to monitor. Node runs child while this queue is not empty.</input_port>
         </Decorator>
         <Decorator ID="Occupy">
-            <inout_port name="Uuid" type="std::string" default="{Uuid}">UUID Used for registration</inout_port>
-            <input_port name="Asset" type="std::string" default="{Asset}">The Asset to register with</input_port>
+            <inout_port name="Uuid" type="std::string" default="{Uuid}">UUID of the selected asset's occupation request</inout_port>
+            <output_port name="SelectedAsset" type="std::string">The asset ID that was successfully occupied</output_port>
+            <input_port name="Assets" type="std::vector&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt;">List of asset IDs to attempt occupation on</input_port>
         </Decorator>
         <Action ID="PopElement">
             <output_port name="ProductID" type="std::string" default="{ProductID}">The product ID popped from the queue.</output_port>
@@ -40,7 +41,7 @@
             <input_port name="Uuid" type="std::string" default="{ID}">UUID for the command to execute</input_port>
             <input_port name="Asset" type="std::string" default="{Asset}">The asset used for refilling</input_port>
         </Action>
-        <Action ID="getAASProperty">
+        <Action ID="Retrieve_AAS_Property">
             <inout_port name="output_key" type="std::string">Name of the blackboard entry where the value should be written</inout_port>
             <input_port name="Property" type="std::string">The property idShort or path (use | as delimiter, e.g., 'Filling|Location|x')</input_port>
             <input_port name="Submodel" type="std::string">The submodel idShort containing the property</input_port>
