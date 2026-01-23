@@ -581,7 +581,9 @@ class MQTTOperationBridge:
                 
                 # Handle type coercion when schema expects array/object but input is string
                 if isinstance(value, str) and expected_type in ("array", "object"):
+                    logger.info(f"Coercing field '{schema_field}' from string to {expected_type}: {value[:100] if len(value) > 100 else value}")
                     value = self._coerce_string_to_type(value, expected_type, schema_field)
+                    logger.info(f"Coerced result for '{schema_field}': {value} (type: {type(value).__name__})")
                 
                 command[schema_field] = value
 
