@@ -1,6 +1,6 @@
 imaLoadingSystemAAS:
     idShort: imaLoadingSystemAAS
-    id: 'https://smartproductionlab.aau.dk/aas/imaLoadingSystem'
+    id: 'https://smartproductionlab.aau.dk/aas/imaLoadingSystemAAS'
     globalAssetId: 'https://smartproductionlab.aau.dk/assets/ZDNlYmVhZjItZTAyMC00NWMwLTg5NjEtODRiNTFkOWE0NzVl'
     derivedFrom: 'https://smartproductionlab.aau.dk/aas/templates/resource'
     assetType: 'https://smartproductionlab.aau.dk/Resource/CPPM/LoadingSystem/imaLoadingSystem'

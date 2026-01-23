@@ -1,9 +1,9 @@
 planarTableShuttle2AAS:
     idShort: planarTableShuttle2AAS
-    id: 'https://smartproductionlab.aau.dk/aas/planarTableShuttle2'
+    id: 'https://smartproductionlab.aau.dk/aas/planarTableShuttle2AAS'
     globalAssetId: 'https://smartproductionlab.aau.dk/assets/OTZhZGNiZDAtNTNhNS00YmJhLThiNDctMzFjYzM3OGNiNTMw'
     derivedFrom: 'https://smartproductionlab.aau.dk/aas/templates/resource'
-    assetType: 'https://smartproductionlab.aau.dk/Resource/CPS/MotionSystem/planarTableShuttle2'
+    assetType: 'https://smartproductionlab.aau.dk/Resource/CPS/MotionSystem/planarTableShuttle'
     serialNumber: 'PM-S1-2024-001'
     location: 'InnoLab, Nybrovej, AAU'
     AssetInterfacesDescription:

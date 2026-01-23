@@ -511,7 +511,8 @@ export default function PlanarMotorConfigurator() {
       const layoutData = prepareLayoutData();
       
       // Save station layout to HierarchicalStructures submodel
-      const hierarchicalStructures = aasService.transformLayoutDataToHierarchicalStructures(layoutData);
+      // Fetches globalAssetIds from registry to ensure consistency with existing AAS descriptors
+      const hierarchicalStructures = await aasService.transformLayoutDataToHierarchicalStructures(layoutData);
       await aasService.putHierarchicalStructures(hierarchicalStructures);
       
       // Save motor config to planarTable Parameters submodel

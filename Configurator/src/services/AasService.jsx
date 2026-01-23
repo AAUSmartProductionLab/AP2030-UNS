@@ -42,13 +42,13 @@ class AasService {
     
     // Root AAS configuration
     this.rootAasId = import.meta.env.VITE_ROOT_AAS_ID ||
-      'https://smartproductionlab.aau.dk/aas/aauFillingLine';
+      'https://smartproductionlab.aau.dk/aas/aauFillingLineAAS';
     this.rootSubmodelId = import.meta.env.VITE_ROOT_SUBMODEL_ID || 
-      'https://smartproductionlab.aau.dk/submodels/instances/aauFillingLine/HierarchicalStructures';
+      'https://smartproductionlab.aau.dk/submodels/instances/aauFillingLineAAS/HierarchicalStructures';
     
     // Planar Table AAS configuration (default child of aauFillingLine)
-    this.planarTableAasId = 'https://smartproductionlab.aau.dk/aas/planarTable';
-    this.planarTableHierarchicalStructuresId = 'https://smartproductionlab.aau.dk/submodels/instances/planarTable/HierarchicalStructures';
+    this.planarTableAasId = 'https://smartproductionlab.aau.dk/aas/planarTableAAS';
+    this.planarTableHierarchicalStructuresId = 'https://smartproductionlab.aau.dk/submodels/instances/planarTableAAS/HierarchicalStructures';
     
     // SDK Clients
     this.registryClient = new AasRegistryClient();
@@ -367,6 +367,40 @@ class AasService {
       console.error('Failed to fetch shell descriptors:', error);
       toast.error(`Failed to fetch AAS modules: ${error.message}`);
       return [];
+    }
+  }
+
+  /**
+   * Build a lookup map from AAS ID and idShort to globalAssetId
+   * Fetches shell descriptors from registry and creates lookup maps
+   * @returns {Promise<Object>} Object with byId and byIdShort maps
+   */
+  async buildGlobalAssetIdLookup() {
+    try {
+      const shellDescriptors = await this.getAllShells();
+      const byId = {};
+      const byIdShort = {};
+      
+      for (const descriptor of shellDescriptors) {
+        if (descriptor.globalAssetId) {
+          if (descriptor.id) {
+            byId[descriptor.id] = descriptor.globalAssetId;
+          }
+          if (descriptor.idShort) {
+            byIdShort[descriptor.idShort] = descriptor.globalAssetId;
+            // Also map without 'AAS' suffix for convenience
+            const shortName = descriptor.idShort.replace(/AAS$/i, '');
+            if (shortName !== descriptor.idShort) {
+              byIdShort[shortName] = descriptor.globalAssetId;
+            }
+          }
+        }
+      }
+      
+      return { byId, byIdShort };
+    } catch (error) {
+      console.error('Failed to build globalAssetId lookup:', error);
+      return { byId: {}, byIdShort: {} };
     }
   }
 
@@ -812,9 +846,12 @@ class AasService {
    */
   async putSubmodel(submodelId, submodelData) {
     try {
+      console.log('putSubmodel - input submodelData:', JSON.stringify(submodelData, null, 2));
       const normalizedSubmodel = this.normalizeSubmodel(submodelData);
+      console.log('putSubmodel - normalizedSubmodel:', JSON.stringify(normalizedSubmodel, null, 2));
       try {
         const rawPayload = await this.buildRawUpdatePayload(submodelId, normalizedSubmodel);
+        console.log('putSubmodel - rawPayload:', JSON.stringify(rawPayload, null, 2));
         return await this.putSubmodelRaw(submodelId, rawPayload);
       } catch (rawError) {
         const rawMessage = rawError?.message || '';
@@ -1023,13 +1060,15 @@ class AasService {
 
   /**
    * Planar Table AAS and Parameters submodel IDs
+   * globalAssetId from registry: base64-encoded UUID format
    */
   get planarTableAssetId() {
-    return 'https://smartproductionlab.aau.dk/assets/planarTable';
+    // Correct globalAssetId from BaSyx registry (base64-encoded UUID)
+    return 'https://smartproductionlab.aau.dk/assets/ZTM1NTAzNzQtMDZkNi00N2Q4LWI1YTktMGNhMmY0MDEyNTk4';
   }
 
   get planarTableParametersSubmodelId() {
-    return 'https://smartproductionlab.aau.dk/submodels/instances/planarTable/Parameters';
+    return 'https://smartproductionlab.aau.dk/submodels/instances/planarTableAAS/Parameters';
   }
 
   /**
@@ -1154,15 +1193,17 @@ class AasService {
     const baseUrl = 'https://smartproductionlab.aau.dk';
     const sanitizedFamily = productFamily ? productFamily.toLowerCase().replace(/\s+/g, '-') : 'unknown';
     const sanitizedProduct = productName ? productName.replace(/\s+/g, '') : 'unknown';
+    // idShort includes AAS suffix, used in submodel paths
+    const idShort = `products/${orderUuid}AAS`;
     return {
-      aasId: `${baseUrl}/aas/products/${orderUuid}`,
+      aasId: `${baseUrl}/aas/${idShort}`,
       assetId: this.generateGlobalAssetId(orderUuid),
       // AssetType uses ontology URL structure: role/category/specific-type/product
       assetType: `${baseUrl}/product/productFamily/${sanitizedFamily}/${sanitizedProduct}`,
-      batchInfoSubmodelId: `${baseUrl}/submodels/products/${orderUuid}/BatchInformation`,
-      requirementsSubmodelId: `${baseUrl}/submodels/products/${orderUuid}/Requirements`,
-      billOfMaterialsSubmodelId: `${baseUrl}/submodels/products/${orderUuid}/HierarchicalStructures`,
-      billOfProcessesSubmodelId: `${baseUrl}/submodels/products/${orderUuid}/BillOfProcesses`
+      batchInfoSubmodelId: `${baseUrl}/submodels/instances/${idShort}/BatchInformation`,
+      requirementsSubmodelId: `${baseUrl}/submodels/instances/${idShort}/Requirements`,
+      billOfMaterialsSubmodelId: `${baseUrl}/submodels/instances/${idShort}/HierarchicalStructures`,
+      billOfProcessesSubmodelId: `${baseUrl}/submodels/instances/${idShort}/BillOfProcesses`
     };
   }
 
@@ -2440,17 +2481,21 @@ class AasService {
     const baseUrl = 'https://smartproductionlab.aau.dk';
     const sanitizedName = productName.replace(/\s+/g, '');
     const sanitizedFamily = productFamily ? productFamily.toLowerCase().replace(/\s+/g, '-') : 'unknown';
-    // Use batch UUID for unique asset ID, or generate placeholder if not provided
-    const assetId = batchUuid ? this.generateGlobalAssetId(batchUuid) : `${baseUrl}/assets/${sanitizedName.toLowerCase()}`;
+    // Use batch UUID for unique asset ID, or generate a new UUID if not provided
+    const assetId = batchUuid 
+      ? this.generateGlobalAssetId(batchUuid) 
+      : this.generateGlobalAssetId(crypto.randomUUID());
+    // idShort includes AAS suffix, used in submodel paths
+    const idShort = `${sanitizedName}AAS`;
     return {
-      aasId: `${baseUrl}/aas/${sanitizedName}AAS`,
+      aasId: `${baseUrl}/aas/${idShort}`,
       assetId,
       // AssetType uses ontology URL structure: role/category/specific-type/product
       assetType: `${baseUrl}/product/productFamily/${sanitizedFamily}/${sanitizedName}`,
-      batchInfoSubmodelId: `${baseUrl}/submodels/instances/${sanitizedName}/BatchInformation`,
-      requirementsSubmodelId: `${baseUrl}/submodels/instances/${sanitizedName}/Requirements`,
-      billOfMaterialsSubmodelId: `${baseUrl}/submodels/instances/${sanitizedName}/HierarchicalStructures`,
-      billOfProcessesSubmodelId: `${baseUrl}/submodels/instances/${sanitizedName}/BillOfProcesses`
+      batchInfoSubmodelId: `${baseUrl}/submodels/instances/${idShort}/BatchInformation`,
+      requirementsSubmodelId: `${baseUrl}/submodels/instances/${idShort}/Requirements`,
+      billOfMaterialsSubmodelId: `${baseUrl}/submodels/instances/${idShort}/HierarchicalStructures`,
+      billOfProcessesSubmodelId: `${baseUrl}/submodels/instances/${idShort}/BillOfProcesses`
     };
   }
 
@@ -2953,9 +2998,12 @@ class AasService {
     return this.createRelationshipElement(idShort, firstRef, secondRef, semanticId);
   }
 
-  transformLayoutDataToHierarchicalStructures(layoutData) {
+  async transformLayoutDataToHierarchicalStructures(layoutData) {
     const submodelId = this.rootSubmodelId;
-    const rootAssetId = 'https://smartproductionlab.aau.dk/assets/aauFillingLine';
+    const rootAssetId = 'https://smartproductionlab.aau.dk/assets/MWQ2ODY5ZDEtZTQ3Yy00NWU4LTlmYTAtNTI3YjVlMDk4MWFi';
+    
+    // Build globalAssetId lookup from registry shell descriptors
+    const assetIdLookup = await this.buildGlobalAssetIdLookup();
     
     // Create the PlanarTable entity as a default child (always included)
     const planarTableEntity = this.createEntityNode(
@@ -2974,10 +3022,26 @@ class AasService {
       const assetType = station['AssetType'];
       const genericName = this.getGenericName(assetType, instanceName);
       
-      const globalAssetId = station['AssetId'] || 
-        `https://smartproductionlab.aau.dk/assets/${genericName.toLowerCase()}`;
-      const instanceSubmodelId = station['SubmodelId'];
+      // Lookup globalAssetId from registry: first try explicit AssetId, then AasId lookup, then idShort lookup
       const instanceAasId = station['AasId'] || null;
+      let globalAssetId = station['AssetId'];
+      
+      if (!globalAssetId && instanceAasId) {
+        // Try to find globalAssetId by AAS ID from registry
+        globalAssetId = assetIdLookup.byId[instanceAasId];
+      }
+      if (!globalAssetId) {
+        // Try to find globalAssetId by idShort (station name) from registry
+        globalAssetId = assetIdLookup.byIdShort[genericName] || 
+                        assetIdLookup.byIdShort[`${genericName}AAS`];
+      }
+      if (!globalAssetId) {
+        // Final fallback: generate a new UUID-based asset ID for consistency
+        console.warn(`No globalAssetId found in registry for station ${genericName}, generating new UUID`);
+        globalAssetId = this.generateGlobalAssetId(crypto.randomUUID());
+      }
+      
+      const instanceSubmodelId = station['SubmodelId'];
       
       const approachPos = station["Approach Position"] || [0, 0, 0];
       const xMM = Array.isArray(approachPos) ? approachPos[0] : 0;

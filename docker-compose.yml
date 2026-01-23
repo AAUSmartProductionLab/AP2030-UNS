@@ -68,23 +68,23 @@ services:
     networks:
       - hivemq-network
     restart: unless-stopped
-  grafana:
-    image: grafana/grafana:latest
-    container_name: grafana
-    user: "472"
-    volumes:
-      - ./Grafana/grafana-data:/var/lib/grafana
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
-      - GF_USERS_ALLOW_SIGN_UP=false
-      - GF_PLUGINS_PREINSTALL=grafana-clock-panel,grafana-simple-json-datasource, volkovlabs-image-panel
-    ports:
-      - "3000:3000"
-    networks:
-      - hivemq-network
-    depends_on:
-      - timescaledb
-    restart: unless-stopped
+  # grafana:
+  #   image: grafana/grafana:latest
+  #   container_name: grafana
+  #   user: "472"
+  #   volumes:
+  #     - ./Grafana/grafana-data:/var/lib/grafana
+  #   environment:
+  #     - GF_SECURITY_ADMIN_PASSWORD=admin
+  #     - GF_USERS_ALLOW_SIGN_UP=false
+  #     - GF_PLUGINS_PREINSTALL=grafana-clock-panel,grafana-simple-json-datasource, volkovlabs-image-panel
+  #   ports:
+  #     - "3000:3000"
+  #   networks:
+  #     - hivemq-network
+  #   depends_on:
+  #     - timescaledb
+  #   restart: unless-stopped
  
   groot:
     build:

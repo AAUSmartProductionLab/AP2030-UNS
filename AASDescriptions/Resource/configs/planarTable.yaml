@@ -1,6 +1,6 @@
 planarTableAAS:
     idShort: planarTableAAS
-    id: 'https://smartproductionlab.aau.dk/aas/planarTable'
+    id: 'https://smartproductionlab.aau.dk/aas/planarTableAAS'
     globalAssetId: 'https://smartproductionlab.aau.dk/assets/ZTM1NTAzNzQtMDZkNi00N2Q4LWI1YTktMGNhMmY0MDEyNTk4'
     derivedFrom: 'https://smartproductionlab.aau.dk/aas/templates/resource'
     assetType: 'https://smartproductionlab.aau.dk/Resource/CPS/MotionSystem/planarTable'
