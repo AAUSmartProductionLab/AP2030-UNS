@@ -217,14 +217,14 @@ bool BehaviorTreeController::fetchAndBuildEquipmentMapping(BT::Blackboard::Ptr b
                             if (id_end != std::string::npos)
                             {
                                 std::string id_short = submodel_id.substr(id_start, id_end - id_start);
-                                
+
                                 // Derive system name by removing "AAS" suffix if present
                                 std::string system_name = id_short;
                                 if (system_name.size() > 3 && system_name.substr(system_name.size() - 3) == "AAS")
                                 {
                                     system_name = system_name.substr(0, system_name.size() - 3);
                                 }
-                                
+
                                 // Construct AAS shell ID
                                 size_t base_end = submodel_id.find("/submodels/");
                                 if (base_end != std::string::npos)
