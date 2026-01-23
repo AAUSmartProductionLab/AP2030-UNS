@@ -46,6 +46,10 @@ class AasService {
     this.rootSubmodelId = import.meta.env.VITE_ROOT_SUBMODEL_ID || 
       'https://smartproductionlab.aau.dk/submodels/instances/aauFillingLine/HierarchicalStructures';
     
+    // Planar Table AAS configuration (default child of aauFillingLine)
+    this.planarTableAasId = 'https://smartproductionlab.aau.dk/aas/planarTable';
+    this.planarTableHierarchicalStructuresId = 'https://smartproductionlab.aau.dk/submodels/instances/planarTable/HierarchicalStructures';
+    
     // SDK Clients
     this.registryClient = new AasRegistryClient();
     this.aasRepositoryClient = new AasRepositoryClient();
@@ -91,7 +95,56 @@ class AasService {
   normalizeEnumValue(enumObj, value) {
     if (value === null || value === undefined) return null;
     if (typeof value === 'string') return value;
-    return enumObj?.[value] || value;
+    
+    // aas-core3 TypeScript enums are numeric, so enumObj[numericValue] gives the string name
+    // For example: ReferenceTypes[0] => "ExternalReference"
+    const enumName = enumObj?.[value];
+    if (typeof enumName === 'string') {
+      return enumName;
+    }
+    
+    // Fallback: if enumObj is not indexed properly, use known mappings
+    // This handles ReferenceTypes specifically
+    if (enumObj === ReferenceTypes) {
+      const refTypeMap = {
+        0: 'ExternalReference',
+        1: 'ModelReference'
+      };
+      return refTypeMap[value] || String(value);
+    }
+    
+    // Handle KeyTypes
+    if (enumObj === KeyTypes) {
+      const keyTypeMap = {
+        0: 'AnnotatedRelationshipElement',
+        1: 'AssetAdministrationShell',
+        2: 'BasicEventElement',
+        3: 'Blob',
+        4: 'Capability',
+        5: 'ConceptDescription',
+        6: 'DataElement',
+        7: 'Entity',
+        8: 'EventElement',
+        9: 'File',
+        10: 'FragmentReference',
+        11: 'GlobalReference',
+        12: 'Identifiable',
+        13: 'MultiLanguageProperty',
+        14: 'Operation',
+        15: 'Property',
+        16: 'Range',
+        17: 'Referable',
+        18: 'ReferenceElement',
+        19: 'RelationshipElement',
+        20: 'Submodel',
+        21: 'SubmodelElement',
+        22: 'SubmodelElementCollection',
+        23: 'SubmodelElementList'
+      };
+      return keyTypeMap[value] || String(value);
+    }
+    
+    return String(value);
   }
 
   /**
@@ -825,20 +878,19 @@ class AasService {
       return result;
     }
     
-    // Create new submodel
+    // Create new submodel using raw method for better error messages
     console.log(`Creating new submodel: ${submodelId}`);
     try {
-      const result = await this.submodelClient.postSubmodel({
-        configuration: this.repositoryConfig,
-        submodel: submodelData
-      });
+      // If submodel already has modelType, it's pre-normalized JSON - use as-is
+      // Otherwise normalize from SDK types to JSON
+      const submodelJson = submodelData.modelType === 'Submodel' 
+        ? submodelData 
+        : this.normalizeSubmodel(submodelData);
       
-      if (result.success) {
-        console.log(`Successfully created submodel: ${submodelId}`);
-        return result.data || submodelData;
-      }
-      
-      throw new Error(result.error?.message || 'Failed to create submodel');
+      console.log('Posting submodel JSON:', JSON.stringify(submodelJson, null, 2));
+      const result = await this.postSubmodelRaw(submodelJson);
+      console.log(`Successfully created submodel: ${submodelId}`);
+      return result;
     } catch (createError) {
       console.error(`Failed to create submodel ${submodelId}:`, createError);
       throw createError;
@@ -1109,7 +1161,8 @@ class AasService {
       assetType: `${baseUrl}/product/productFamily/${sanitizedFamily}/${sanitizedProduct}`,
       batchInfoSubmodelId: `${baseUrl}/submodels/products/${orderUuid}/BatchInformation`,
       requirementsSubmodelId: `${baseUrl}/submodels/products/${orderUuid}/Requirements`,
-      billOfMaterialsSubmodelId: `${baseUrl}/submodels/products/${orderUuid}/HierarchicalStructures`
+      billOfMaterialsSubmodelId: `${baseUrl}/submodels/products/${orderUuid}/HierarchicalStructures`,
+      billOfProcessesSubmodelId: `${baseUrl}/submodels/products/${orderUuid}/BillOfProcesses`
     };
   }
 
@@ -1127,13 +1180,15 @@ class AasService {
     const batchInfoSubmodel = this.createBatchInformationSubmodel(batchData, ids.batchInfoSubmodelId);
     const requirementsSubmodel = this.createRequirementsSubmodel(batchData, ids.requirementsSubmodelId);
     const billOfMaterialsSubmodel = this.createBillOfMaterialsSubmodel(batchData, ids.billOfMaterialsSubmodelId);
+    const billOfProcessesSubmodel = this.createBillOfProcessesSubmodel(batchData, ids.billOfProcessesSubmodelId);
     
     return {
       ids,
       submodels: {
         batchInfo: batchInfoSubmodel,
         requirements: requirementsSubmodel,
-        billOfMaterials: billOfMaterialsSubmodel
+        billOfMaterials: billOfMaterialsSubmodel,
+        billOfProcesses: billOfProcessesSubmodel
       }
     };
   }
@@ -1288,7 +1343,7 @@ class AasService {
     );
     const archetypeProperty = this.createProperty('ArcheType', 'OneDown', DataTypeDefXsd.String, archetypeSemanticId);
     
-    // Create material entities based on packaging type
+    // Create material entities based on packaging type (as separate entities)
     const materialEntities = this.createMaterialEntities(batchData);
     
     // Create EntryNode for the product (IDTA 02011-1-1)
@@ -1299,26 +1354,28 @@ class AasService {
     
     const productFamily = batchData.productFamily || batchData.product;
     const productAssetId = this.getProductAasIds(batchData.Uuid, productFamily).assetId;
+    
+    // Product entity without nested children - relationships define the hierarchy
     const entryNode = this.createEntity(
       'Product',
       EntityType.SelfManagedEntity,
       productAssetId,
-      materialEntities,
+      [], // No nested statements - use relationships instead
       entryNodeSemanticId
     );
     
-    // Create relationships for bill of materials (HasPart naming convention)
+    // Create relationships for bill of materials using flat structure
     const relationships = materialEntities.map(material => {
-      return this.createBillOfMaterialsRelationship(
+      return this.createFlatBillOfMaterialsRelationship(
         `Has${material.idShort}`,
         submodelId,
         'Product',
-        material.idShort,
-        ids?.aasId || null
+        material.idShort
       );
     });
     
-    const elements = [archetypeProperty, entryNode, ...relationships];
+    // All entities are direct children of submodel, relationships define hierarchy
+    const elements = [archetypeProperty, entryNode, ...materialEntities, ...relationships];
     
     return this.createSubmodel(submodelId, 'HierarchicalStructures', elements, semanticId, 'BillOfMaterials');
   }
@@ -1394,11 +1451,12 @@ class AasService {
    * HasPart: first = parent entity, second = child entity (parent has part child)
    */
   createBillOfMaterialsRelationship(idShort, submodelId, parentId, childId, aasId = null) {
+    // AASd-125 compliant: First key is AasIdentifiable (Submodel),
+    // subsequent keys are FragmentKeys (Entity)
     // First reference points to the parent entity
     const firstRef = this.createReference(
       ReferenceTypes.ModelReference,
       [
-        ...(aasId ? [this.createKey(KeyTypes.AssetAdministrationShell, aasId)] : []),
         this.createKey(KeyTypes.Submodel, submodelId),
         this.createKey(KeyTypes.Entity, parentId)
       ]
@@ -1408,7 +1466,6 @@ class AasService {
     const secondRef = this.createReference(
       ReferenceTypes.ModelReference,
       [
-        ...(aasId ? [this.createKey(KeyTypes.AssetAdministrationShell, aasId)] : []),
         this.createKey(KeyTypes.Submodel, submodelId),
         this.createKey(KeyTypes.Entity, parentId),
         this.createKey(KeyTypes.Entity, childId)
@@ -1422,6 +1479,711 @@ class AasService {
     );
     
     return this.createRelationshipElement(idShort, firstRef, secondRef, semanticId);
+  }
+
+  // ========================================
+  // Bill of Processes Submodel (IDTA BoP pattern)
+  // Structure: BoP(SM) → Processes(SML) → Process(SMC) → Properties & nested SMCs
+  // ========================================
+
+  /**
+   * Standard semantic IDs from ECLASS and custom definitions
+   */
+  static BOP_SEMANTIC_IDS = {
+    // Submodel
+    BILL_OF_PROCESS: 'https://admin-shell.io/idta/BillOfProcess/1/0',
+    
+    // ECLASS property semantic IDs
+    DURATION: '0173-1#02-AAB381#003',           // Duration
+    VOLUME: '0173-1#02-AAB713#004',             // Volume
+    FLOW_RATE: '0173-1#02-AAK230#002',          // Flow rate
+    FORCE: '0173-1#02-AAB930#005',              // Force
+    TEMPERATURE: '0173-1#02-AAB048#003',        // Temperature
+    HUMIDITY: '0173-1#02-AAB046#003',           // Relative humidity
+    ACCURACY: '0173-1#02-AAI836#002',           // Accuracy
+    RESOLUTION: '0173-1#02-AAB991#004',         // Resolution
+    FREQUENCY: '0173-1#02-AAB942#004',          // Frequency
+    STANDARD_COMPLIANCE: '0173-1#02-AAQ325#001', // Standard compliance
+    
+    // ECLASS unit semantic IDs
+    UNIT_MILLILITRE: '0173-1#05-AAA689#002',
+    UNIT_CELSIUS: '0173-1#05-AAA567#002',
+    UNIT_SECOND: '0173-1#05-AAA153#002',
+    
+    // Custom capability semantic IDs
+    CAPABILITY_LOADING: 'https://smartproductionlab.aau.dk/Capability/Loading',
+    CAPABILITY_DISPENSING: 'https://smartproductionlab.aau.dk/Capability/Dispensing',
+    CAPABILITY_STOPPERING: 'https://smartproductionlab.aau.dk/Capability/Stoppering',
+    CAPABILITY_QC: 'https://smartproductionlab.aau.dk/Capability/QualityControl',
+    CAPABILITY_UNLOADING: 'https://smartproductionlab.aau.dk/Capability/Unloading',
+    CAPABILITY_WEIGHING: 'https://smartproductionlab.aau.dk/Capability/Weighing',
+    CAPABILITY_SCRAPING: 'https://smartproductionlab.aau.dk/Capability/Scraping'
+  };
+
+  /**
+   * Create Bill of Processes submodel
+   * @param {Object} batchData - Batch configuration data
+   * @param {string} submodelId - The submodel ID
+   * @returns {Object} The BillOfProcesses submodel - Pure JSON, no SDK types
+   */
+  createBillOfProcessesSubmodel(batchData, submodelId) {
+    // Create a simple Bill of Processes submodel using plain JSON
+    // This avoids SDK enum serialization issues
+    const fillVolume = this.extractFillVolume(batchData);
+    
+    // ECLASS and standard semantic IDs for physical quantities
+    const SEM = {
+      // Physical quantities (ECLASS)
+      FORCE: '0173-1#02-AAB930#005',
+      ACCURACY: '0173-1#02-AAI836#002',
+      VOLUME: '0173-1#02-AAB713#004',
+      FLOW_RATE: '0173-1#02-AAK230#002',
+      TEMPERATURE: '0173-1#02-AAB048#003',
+      SPEED: '0173-1#02-AAB966#004',
+      RESOLUTION: '0173-1#02-AAB991#004',
+      TIME: '0173-1#02-AAB381#003',
+      FREQUENCY: '0173-1#02-AAK299#003',
+      LENGTH: '0173-1#02-AAB001#006',
+      // Abstract Process types (semantic ID for Process SMC)
+      PROC_LOADING: 'https://smartproductionlab.aau.dk/Process/Loading',
+      PROC_DISPENSING: 'https://smartproductionlab.aau.dk/Process/Dispensing',
+      PROC_STOPPERING: 'https://smartproductionlab.aau.dk/Process/Stoppering',
+      PROC_INSPECTION: 'https://smartproductionlab.aau.dk/Process/Inspection',
+      PROC_UNLOADING: 'https://smartproductionlab.aau.dk/Process/Unloading',
+      // Capabilities (linked inside Process SMC)
+      CAP_LOADING: 'https://smartproductionlab.aau.dk/Capability/Loading',
+      CAP_DISPENSING: 'https://smartproductionlab.aau.dk/Capability/Dispensing',
+      CAP_STOPPERING: 'https://smartproductionlab.aau.dk/Capability/Stoppering',
+      CAP_QC: 'https://smartproductionlab.aau.dk/Capability/QualityControl',
+      CAP_UNLOADING: 'https://smartproductionlab.aau.dk/Capability/Unloading',
+      // Container semantic IDs
+      PROCESSES_LIST: 'https://smartproductionlab.aau.dk/Processes',
+      PROCESS: 'https://smartproductionlab.aau.dk/Process'
+    };
+
+    // UNECE unit codes for proper unit representation
+    const UNIT = {
+      NEWTON: 'N',           // Force
+      MILLIMETER: 'mm',      // Length
+      MILLILITER: 'mL',      // Volume (MLT)
+      ML_PER_SEC: 'mL/s',    // Flow rate
+      CELSIUS: '°C',         // Temperature (CEL)
+      MM_PER_SEC: 'mm/s',    // Speed
+      MEGAPIXEL: 'MP',       // Resolution
+      MILLISECOND: 'ms',     // Time
+      SECOND: 's',           // Time (SEC)
+      PERCENT: '%'           // Percentage (P1)
+    };
+
+    return {
+      modelType: 'Submodel',
+      id: submodelId,
+      idShort: 'BillOfProcesses',
+      kind: 'Instance',
+      semanticId: {
+        type: 'ExternalReference',
+        keys: [{ type: 'GlobalReference', value: 'https://admin-shell.io/idta/BillOfProcess/1/0' }]
+      },
+      submodelElements: [
+        {
+          modelType: 'SubmodelElementList',
+          idShort: 'Processes',
+          orderRelevant: true,
+          semanticId: {
+            type: 'ExternalReference',
+            keys: [{ type: 'GlobalReference', value: SEM.PROCESSES_LIST }]
+          },
+          semanticIdListElement: {
+            type: 'ExternalReference',
+            keys: [{ type: 'GlobalReference', value: SEM.PROCESS }]
+          },
+          typeValueListElement: 'SubmodelElementCollection',
+          value: [
+            // Process 1: Loading
+            this.createProcessSMC('Loading', SEM.PROC_LOADING, SEM.CAP_LOADING, 5.0, 
+              'Load empty primary container onto production shuttle', {
+              parameters: [
+                { name: 'GripForce', value: '10', unit: UNIT.NEWTON, type: 'xs:double', semanticId: SEM.FORCE }
+              ],
+              requirements: [
+                { 
+                  name: 'PositionAccuracy', 
+                  value: '0.5', 
+                  unit: UNIT.MILLIMETER, 
+                  type: 'xs:double', 
+                  semanticId: SEM.ACCURACY,
+                  assessment: { method: 'sensor', sensor: 'EncoderFeedback', standard: 'ISO 230-2' }
+                }
+              ]
+            }),
+            // Process 2: Dispensing
+            this.createProcessSMC('Dispensing', SEM.PROC_DISPENSING, SEM.CAP_DISPENSING, 8.0, 
+              `Dispense ${fillVolume}mL pharmaceutical product into container`, {
+              parameters: [
+                { name: 'FillVolume', value: String(fillVolume), unit: UNIT.MILLILITER, type: 'xs:double', semanticId: SEM.VOLUME },
+                { name: 'FlowRate', value: '1.0', unit: UNIT.ML_PER_SEC, type: 'xs:double', semanticId: SEM.FLOW_RATE },
+                { name: 'Temperature', value: '20', unit: UNIT.CELSIUS, type: 'xs:double', semanticId: SEM.TEMPERATURE }
+              ],
+              requirements: [
+                { 
+                  name: 'VolumeAccuracy', 
+                  value: '0.05', 
+                  unit: UNIT.MILLILITER, 
+                  type: 'xs:double', 
+                  semanticId: SEM.ACCURACY,
+                  assessment: { method: 'sensor', sensor: 'GravimetricBalance', standard: 'USP <1251>' }
+                },
+                { 
+                  name: 'Sterility', 
+                  value: 'compliant', 
+                  type: 'xs:string',
+                  assessment: { method: 'guideline', standard: 'ISO 13408-1', verification: 'EnvironmentalMonitoring' }
+                }
+              ]
+            }),
+            // Process 3: Stoppering
+            this.createProcessSMC('Stoppering', SEM.PROC_STOPPERING, SEM.CAP_STOPPERING, 3.0, 
+              'Insert elastomeric stopper to seal primary container', {
+              parameters: [
+                { name: 'InsertionForce', value: '50', unit: UNIT.NEWTON, type: 'xs:double', semanticId: SEM.FORCE },
+                { name: 'InsertionSpeed', value: '10', unit: UNIT.MM_PER_SEC, type: 'xs:double', semanticId: SEM.SPEED }
+              ],
+              requirements: [
+                { 
+                  name: 'SealIntegrity', 
+                  value: 'pass', 
+                  type: 'xs:string',
+                  assessment: { method: 'inspection', inspection: 'ContainerClosureIntegrity', standard: 'USP <1207>' }
+                },
+                { 
+                  name: 'InsertionForceMax', 
+                  value: '80', 
+                  unit: UNIT.NEWTON, 
+                  type: 'xs:double', 
+                  semanticId: SEM.FORCE,
+                  assessment: { method: 'sensor', sensor: 'ForceSensor', tolerance: '±10N' }
+                }
+              ]
+            }),
+            // Process 4: Inspection
+            this.createProcessSMC('Inspection', SEM.PROC_INSPECTION, SEM.CAP_QC, 2.0, 
+              'Automated visual inspection of filled and stoppered container', {
+              parameters: [
+                { name: 'CameraResolution', value: '5', unit: UNIT.MEGAPIXEL, type: 'xs:double', semanticId: SEM.RESOLUTION },
+                { name: 'ExposureTime', value: '10', unit: UNIT.MILLISECOND, type: 'xs:double', semanticId: SEM.TIME },
+                { name: 'FrameRate', value: '30', unit: 'fps', type: 'xs:int', semanticId: SEM.FREQUENCY }
+              ],
+              requirements: [
+                { 
+                  name: 'DefectDetectionSize', 
+                  value: '0.1', 
+                  unit: UNIT.MILLIMETER, 
+                  type: 'xs:double', 
+                  semanticId: SEM.LENGTH,
+                  assessment: { method: 'inspection', inspection: 'MachineVision', standard: 'ISO 21570' }
+                },
+                { 
+                  name: 'PassRate', 
+                  value: '99.5', 
+                  unit: UNIT.PERCENT, 
+                  type: 'xs:double',
+                  assessment: { method: 'statistical', verification: 'SPC', confidence: '95%' }
+                },
+                { 
+                  name: 'ParticulateMatter', 
+                  value: 'compliant', 
+                  type: 'xs:string',
+                  assessment: { method: 'guideline', standard: 'USP <788>', verification: 'VisualInspection' }
+                }
+              ]
+            }),
+            // Process 5: Unloading
+            this.createProcessSMC('Unloading', SEM.PROC_UNLOADING, SEM.CAP_UNLOADING, 4.0, 
+              'Transfer finished product from shuttle to output conveyor', {
+              parameters: [
+                { name: 'GripForce', value: '8', unit: UNIT.NEWTON, type: 'xs:double', semanticId: SEM.FORCE }
+              ],
+              requirements: [
+                { 
+                  name: 'PlacementAccuracy', 
+                  value: '1.0', 
+                  unit: UNIT.MILLIMETER, 
+                  type: 'xs:double', 
+                  semanticId: SEM.ACCURACY,
+                  assessment: { method: 'sensor', sensor: 'VisionSystem', standard: 'ISO 9283' }
+                }
+              ]
+            })
+          ]
+        }
+      ]
+    };
+  }
+
+  /**
+   * Create a Process SMC with semantic IDs and assessment criteria
+   * @param {string} name - Process name (idShort)
+   * @param {string} processSemanticId - Semantic ID for the abstract process type
+   * @param {string} capabilitySemanticId - Semantic ID for the required capability
+   * @param {number} duration - Estimated duration in seconds
+   * @param {string} description - Process description
+   * @param {Object} options - Parameters and requirements with semantic IDs
+   */
+  createProcessSMC(name, processSemanticId, capabilitySemanticId, duration, description, options = {}) {
+    const elements = [
+      {
+        modelType: 'Property',
+        idShort: 'Description',
+        valueType: 'xs:string',
+        value: description
+      },
+      {
+        modelType: 'Property',
+        idShort: 'EstimatedDuration',
+        valueType: 'xs:double',
+        value: String(duration),
+        semanticId: {
+          type: 'ExternalReference',
+          keys: [{ type: 'GlobalReference', value: '0173-1#02-AAB381#003' }]
+        },
+        qualifiers: [{ type: 'Unit', valueType: 'xs:string', value: 's' }]
+      },
+      {
+        modelType: 'ReferenceElement',
+        idShort: 'RequiredCapability',
+        value: {
+          type: 'ExternalReference',
+          keys: [{ type: 'GlobalReference', value: capabilitySemanticId }]
+        }
+      }
+    ];
+
+    // Add Parameters SMC if provided
+    if (options.parameters && options.parameters.length > 0) {
+      elements.push({
+        modelType: 'SubmodelElementCollection',
+        idShort: 'Parameters',
+        value: options.parameters.map(p => this.createParameterProperty(p))
+      });
+    }
+
+    // Add Requirements SMC if provided
+    if (options.requirements && options.requirements.length > 0) {
+      elements.push({
+        modelType: 'SubmodelElementCollection',
+        idShort: 'Requirements',
+        value: options.requirements.map(r => this.createRequirementSMC(r))
+      });
+    }
+
+    return {
+      modelType: 'SubmodelElementCollection',
+      idShort: name,
+      semanticId: {
+        type: 'ExternalReference',
+        keys: [{ type: 'GlobalReference', value: processSemanticId }]
+      },
+      value: elements
+    };
+  }
+
+  /**
+   * Create a Parameter Property with semantic ID and unit
+   */
+  createParameterProperty(param) {
+    const prop = {
+      modelType: 'Property',
+      idShort: param.name,
+      valueType: param.type,
+      value: param.value
+    };
+
+    if (param.semanticId) {
+      prop.semanticId = {
+        type: 'ExternalReference',
+        keys: [{ type: 'GlobalReference', value: param.semanticId }]
+      };
+    }
+
+    if (param.unit) {
+      prop.qualifiers = [{ type: 'Unit', valueType: 'xs:string', value: param.unit }];
+    }
+
+    return prop;
+  }
+
+  /**
+   * Create a Requirement SMC with value, assessment criteria, and semantic ID
+   * Assessment can include: method, sensor, inspection, standard, verification, tolerance
+   */
+  createRequirementSMC(req) {
+    const elements = [
+      {
+        modelType: 'Property',
+        idShort: 'Value',
+        valueType: req.type,
+        value: req.value,
+        ...(req.unit ? { qualifiers: [{ type: 'Unit', valueType: 'xs:string', value: req.unit }] } : {}),
+        ...(req.semanticId ? {
+          semanticId: {
+            type: 'ExternalReference',
+            keys: [{ type: 'GlobalReference', value: req.semanticId }]
+          }
+        } : {})
+      }
+    ];
+
+    // Add assessment criteria if provided
+    if (req.assessment) {
+      const assessmentElements = [];
+      
+      // Assessment method (sensor, inspection, guideline, statistical)
+      if (req.assessment.method) {
+        assessmentElements.push({
+          modelType: 'Property',
+          idShort: 'Method',
+          valueType: 'xs:string',
+          value: req.assessment.method
+        });
+      }
+
+      // Sensor name for sensor-based assessment
+      if (req.assessment.sensor) {
+        assessmentElements.push({
+          modelType: 'Property',
+          idShort: 'Sensor',
+          valueType: 'xs:string',
+          value: req.assessment.sensor
+        });
+      }
+
+      // Inspection type for inspection-based assessment
+      if (req.assessment.inspection) {
+        assessmentElements.push({
+          modelType: 'Property',
+          idShort: 'InspectionType',
+          valueType: 'xs:string',
+          value: req.assessment.inspection
+        });
+      }
+
+      // Standard reference (ISO, USP, etc.)
+      if (req.assessment.standard) {
+        assessmentElements.push({
+          modelType: 'Property',
+          idShort: 'Standard',
+          valueType: 'xs:string',
+          value: req.assessment.standard
+        });
+      }
+
+      // Verification method
+      if (req.assessment.verification) {
+        assessmentElements.push({
+          modelType: 'Property',
+          idShort: 'Verification',
+          valueType: 'xs:string',
+          value: req.assessment.verification
+        });
+      }
+
+      // Tolerance specification
+      if (req.assessment.tolerance) {
+        assessmentElements.push({
+          modelType: 'Property',
+          idShort: 'Tolerance',
+          valueType: 'xs:string',
+          value: req.assessment.tolerance
+        });
+      }
+
+      // Confidence level for statistical methods
+      if (req.assessment.confidence) {
+        assessmentElements.push({
+          modelType: 'Property',
+          idShort: 'Confidence',
+          valueType: 'xs:string',
+          value: req.assessment.confidence
+        });
+      }
+
+      elements.push({
+        modelType: 'SubmodelElementCollection',
+        idShort: 'Assessment',
+        value: assessmentElements
+      });
+    }
+
+    return {
+      modelType: 'SubmodelElementCollection',
+      idShort: req.name,
+      ...(req.semanticId ? {
+        semanticId: {
+          type: 'ExternalReference',
+          keys: [{ type: 'GlobalReference', value: req.semanticId }]
+        }
+      } : {}),
+      value: elements
+    };
+  }
+
+  /**
+   * Extract fill volume from packaging string
+   * @param {Object} batchData - Batch data with packaging info
+   * @returns {number} Fill volume in mL
+   */
+  extractFillVolume(batchData) {
+    const packaging = batchData.packaging || '';
+    const match = packaging.match(/(\d+(?:\.\d+)?)\s*mL/i);
+    return match ? parseFloat(match[1]) : 3.0; // Default to 3mL
+  }
+
+  /**
+   * Create a Process SubmodelElementCollection
+   * @param {Object} processConfig - Process configuration
+   * @returns {Object} Process SMC
+   */
+  createProcessElement(processConfig) {
+    const elements = [];
+
+    // Capability reference (semantic ID)
+    const capabilitySemanticId = this.createReference(
+      ReferenceTypes.ExternalReference,
+      [this.createKey(KeyTypes.GlobalReference, processConfig.semanticId)]
+    );
+
+    // Description property
+    elements.push(this.createProperty(
+      'Description',
+      processConfig.description,
+      DataTypeDefXsd.String,
+      this.createReference(ReferenceTypes.ExternalReference,
+        [this.createKey(KeyTypes.GlobalReference, 'https://admin-shell.io/aas/3/0/Description')]
+      )
+    ));
+
+    // Sequence number property
+    elements.push(this.createProperty(
+      'SequenceNumber',
+      processConfig.sequenceNumber,
+      DataTypeDefXsd.Int,
+      this.createReference(ReferenceTypes.ExternalReference,
+        [this.createKey(KeyTypes.GlobalReference, 'https://admin-shell.io/idta/BillOfProcess/1/0/SequenceNumber')]
+      )
+    ));
+
+    // Estimated duration with unit qualifier
+    if (processConfig.estimatedDuration) {
+      const durationProp = this.createPropertyWithUnit(
+        'EstimatedDuration',
+        processConfig.estimatedDuration.value,
+        DataTypeDefXsd.Double,
+        processConfig.estimatedDuration.unit,
+        this.createReference(ReferenceTypes.ExternalReference,
+          [this.createKey(KeyTypes.GlobalReference, AasService.BOP_SEMANTIC_IDS.DURATION)]
+        )
+      );
+      elements.push(durationProp);
+    }
+
+    // Parameters SMC (optional)
+    if (processConfig.parameters && processConfig.parameters.length > 0) {
+      const paramElements = processConfig.parameters.map(param => this.createParameterElement(param));
+      const paramsSMC = this.createSubmodelElementCollection(
+        'Parameters',
+        paramElements,
+        this.createReference(ReferenceTypes.ExternalReference,
+          [this.createKey(KeyTypes.GlobalReference, 'https://admin-shell.io/idta/BillOfProcess/1/0/Parameters')]
+        )
+      );
+      elements.push(paramsSMC);
+    }
+
+    // Requirements SMC (optional)
+    if (processConfig.requirements && processConfig.requirements.length > 0) {
+      const reqElements = processConfig.requirements.map(req => this.createRequirementElement(req));
+      const reqsSMC = this.createSubmodelElementCollection(
+        'Requirements',
+        reqElements,
+        this.createReference(ReferenceTypes.ExternalReference,
+          [this.createKey(KeyTypes.GlobalReference, 'https://admin-shell.io/idta/BillOfProcess/1/0/Requirements')]
+        )
+      );
+      elements.push(reqsSMC);
+    }
+
+    // Create the Process SMC with semantic ID referencing capability
+    return this.createSubmodelElementCollection(
+      processConfig.idShort,
+      elements,
+      capabilitySemanticId
+    );
+  }
+
+  /**
+   * Create a Parameter SubmodelElementCollection
+   * @param {Object} paramConfig - Parameter configuration
+   * @returns {Object} Parameter SMC
+   */
+  createParameterElement(paramConfig) {
+    const elements = [];
+    const paramSemanticId = this.createReference(
+      ReferenceTypes.ExternalReference,
+      [this.createKey(KeyTypes.GlobalReference, paramConfig.semanticId)]
+    );
+
+    // Description
+    elements.push(this.createProperty(
+      'Description',
+      paramConfig.description,
+      DataTypeDefXsd.String
+    ));
+
+    // Value with appropriate type
+    const valueType = this.xsdStringToDataType(paramConfig.valueType || 'xs:double');
+    elements.push(this.createPropertyWithUnit(
+      'Value',
+      paramConfig.value,
+      valueType,
+      paramConfig.unit,
+      paramSemanticId
+    ));
+
+    return this.createSubmodelElementCollection(
+      paramConfig.idShort,
+      elements,
+      paramSemanticId
+    );
+  }
+
+  /**
+   * Create a Requirement SubmodelElementCollection
+   * Supports both simple value requirements and tolerance-based requirements
+   * @param {Object} reqConfig - Requirement configuration
+   * @returns {Object} Requirement SMC
+   */
+  createRequirementElement(reqConfig) {
+    const elements = [];
+    const reqSemanticId = this.createReference(
+      ReferenceTypes.ExternalReference,
+      [this.createKey(KeyTypes.GlobalReference, reqConfig.semanticId)]
+    );
+
+    // Description
+    elements.push(this.createProperty(
+      'Description',
+      reqConfig.description,
+      DataTypeDefXsd.String
+    ));
+
+    // For tolerance-based requirements
+    if (reqConfig.nominalValue !== undefined) {
+      const valueType = this.xsdStringToDataType(reqConfig.valueType || 'xs:double');
+      
+      elements.push(this.createPropertyWithUnit(
+        'NominalValue',
+        reqConfig.nominalValue,
+        valueType,
+        reqConfig.unit,
+        this.createReference(ReferenceTypes.ExternalReference,
+          [this.createKey(KeyTypes.GlobalReference, '0173-1#02-AAM955#002')] // ECLASS: Nominal value
+        )
+      ));
+
+      elements.push(this.createPropertyWithUnit(
+        'Tolerance',
+        reqConfig.tolerance,
+        valueType,
+        reqConfig.unit,
+        this.createReference(ReferenceTypes.ExternalReference,
+          [this.createKey(KeyTypes.GlobalReference, '0173-1#02-AAI023#002')] // ECLASS: Tolerance
+        )
+      ));
+
+      elements.push(this.createProperty(
+        'ToleranceType',
+        reqConfig.toleranceType || 'absolute',
+        DataTypeDefXsd.String,
+        this.createReference(ReferenceTypes.ExternalReference,
+          [this.createKey(KeyTypes.GlobalReference, 'https://admin-shell.io/idta/BillOfProcess/1/0/ToleranceType')]
+        )
+      ));
+    }
+    // For simple value requirements (e.g., compliance standards)
+    else if (reqConfig.value !== undefined) {
+      const valueType = this.xsdStringToDataType(reqConfig.valueType || 'xs:string');
+      elements.push(this.createProperty(
+        'Value',
+        reqConfig.value,
+        valueType,
+        reqSemanticId
+      ));
+
+      if (reqConfig.complianceType) {
+        elements.push(this.createProperty(
+          'ComplianceType',
+          reqConfig.complianceType,
+          DataTypeDefXsd.String,
+          this.createReference(ReferenceTypes.ExternalReference,
+            [this.createKey(KeyTypes.GlobalReference, 'https://admin-shell.io/idta/BillOfProcess/1/0/ComplianceType')]
+          )
+        ));
+      }
+    }
+
+    return this.createSubmodelElementCollection(
+      reqConfig.idShort,
+      elements,
+      reqSemanticId
+    );
+  }
+
+  /**
+   * Create a Property with Unit qualifier
+   * @param {string} idShort - Property ID
+   * @param {any} value - Property value
+   * @param {DataTypeDefXsd} valueType - XSD data type
+   * @param {string} unit - Unit string
+   * @param {Object} semanticId - Semantic ID reference
+   * @returns {Object} Property with unit qualifier
+   */
+  createPropertyWithUnit(idShort, value, valueType, unit, semanticId = null) {
+    const prop = this.createProperty(idShort, value, valueType, semanticId);
+    
+    // Add unit qualifier
+    if (unit) {
+      prop.qualifiers = [
+        {
+          type: 'Unit',
+          valueType: 'xs:string',
+          value: unit,
+          semanticId: this.createReference(ReferenceTypes.ExternalReference,
+            [this.createKey(KeyTypes.GlobalReference, 'https://admin-shell.io/aas/3/0/Qualifier/Unit')]
+          )
+        }
+      ];
+    }
+    
+    return prop;
+  }
+
+  /**
+   * Convert XSD type string to DataTypeDefXsd enum
+   * @param {string} xsdString - XSD type string (e.g., 'xs:double')
+   * @returns {DataTypeDefXsd} Enum value
+   */
+  xsdStringToDataType(xsdString) {
+    const mapping = {
+      'xs:string': DataTypeDefXsd.String,
+      'xs:double': DataTypeDefXsd.Double,
+      'xs:float': DataTypeDefXsd.Float,
+      'xs:int': DataTypeDefXsd.Int,
+      'xs:integer': DataTypeDefXsd.Int,
+      'xs:boolean': DataTypeDefXsd.Boolean,
+      'xs:dateTime': DataTypeDefXsd.DateTime,
+      'xs:long': DataTypeDefXsd.Long
+    };
+    return mapping[xsdString] || DataTypeDefXsd.String;
   }
 
   /**
@@ -1438,6 +2200,7 @@ class AasService {
       await this.saveOrUpdateSubmodel(ids.batchInfoSubmodelId, submodels.batchInfo);
       await this.saveOrUpdateSubmodel(ids.requirementsSubmodelId, submodels.requirements);
       await this.saveOrUpdateSubmodel(ids.billOfMaterialsSubmodelId, submodels.billOfMaterials);
+      await this.saveOrUpdateSubmodel(ids.billOfProcessesSubmodelId, submodels.billOfProcesses);
       
       // Create the AAS shell with submodel references
       const aasShell = this.createProductAasShell(batchData, ids);
@@ -1488,6 +2251,10 @@ class AasService {
       this.createReference(
         ReferenceTypes.ModelReference,
         [this.createKey(KeyTypes.Submodel, ids.billOfMaterialsSubmodelId)]
+      ),
+      this.createReference(
+        ReferenceTypes.ModelReference,
+        [this.createKey(KeyTypes.Submodel, ids.billOfProcessesSubmodelId)]
       )
     ];
     
@@ -1682,7 +2449,8 @@ class AasService {
       assetType: `${baseUrl}/product/productFamily/${sanitizedFamily}/${sanitizedName}`,
       batchInfoSubmodelId: `${baseUrl}/submodels/instances/${sanitizedName}/BatchInformation`,
       requirementsSubmodelId: `${baseUrl}/submodels/instances/${sanitizedName}/Requirements`,
-      billOfMaterialsSubmodelId: `${baseUrl}/submodels/instances/${sanitizedName}/HierarchicalStructures`
+      billOfMaterialsSubmodelId: `${baseUrl}/submodels/instances/${sanitizedName}/HierarchicalStructures`,
+      billOfProcessesSubmodelId: `${baseUrl}/submodels/instances/${sanitizedName}/BillOfProcesses`
     };
   }
 
@@ -1707,11 +2475,13 @@ class AasService {
       const batchInfoSubmodel = this.createBatchInformationSubmodel(batchData, ids.batchInfoSubmodelId);
       const requirementsSubmodel = this.createRequirementsSubmodel(batchData, ids.requirementsSubmodelId);
       const billOfMaterialsSubmodel = this.createActiveBillOfMaterialsSubmodel(batchData, ids);
+      const billOfProcessesSubmodel = this.createBillOfProcessesSubmodel(batchData, ids.billOfProcessesSubmodelId);
       
       // Save each submodel to the repository (create or update)
       await this.saveOrUpdateSubmodel(ids.batchInfoSubmodelId, batchInfoSubmodel);
       await this.saveOrUpdateSubmodel(ids.requirementsSubmodelId, requirementsSubmodel);
       await this.saveOrUpdateSubmodel(ids.billOfMaterialsSubmodelId, billOfMaterialsSubmodel);
+      await this.saveOrUpdateSubmodel(ids.billOfProcessesSubmodelId, billOfProcessesSubmodel);
       
       // Create the AAS shell with submodel references
       const aasShell = this.createProductAasShell(batchData, ids);
@@ -1751,37 +2521,71 @@ class AasService {
     );
     const archetypeProperty = this.createProperty('ArcheType', 'OneDown', DataTypeDefXsd.String, archetypeSemanticId);
     
-    // Create material entities based on packaging type
+    // Create material entities based on packaging type (as separate entities, not nested)
     const materialEntities = this.createMaterialEntities(batchData);
     
-    // Create EntryNode for the product (IDTA 02011-1-1)
+    // Create EntryNode for the product (IDTA 02011-1-1) - without nested materials
     const entryNodeSemanticId = this.createReference(
       ReferenceTypes.ExternalReference,
       [this.createKey(KeyTypes.GlobalReference, 'https://admin-shell.io/idta/HierarchicalStructures/EntryNode/1/0')]
     );
     
+    // Product entity without nested children - relationships define the hierarchy
     const entryNode = this.createEntity(
       'Product',
       EntityType.SelfManagedEntity,
       ids.assetId,
-      materialEntities,
+      [], // No nested statements - use relationships instead
       entryNodeSemanticId
     );
     
     // Create relationships for bill of materials (HasPart naming convention)
+    // In flat structure, both parent and child are direct submodel elements
     const relationships = materialEntities.map(material => {
-      return this.createBillOfMaterialsRelationship(
+      return this.createFlatBillOfMaterialsRelationship(
         `Has${material.idShort}`,
         submodelId,
         'Product',
-        material.idShort,
-        ids?.aasId || null
+        material.idShort
       );
     });
     
-    const elements = [archetypeProperty, entryNode, ...relationships];
+    // All entities are direct children of submodel, relationships define hierarchy
+    const elements = [archetypeProperty, entryNode, ...materialEntities, ...relationships];
     
     return this.createSubmodel(submodelId, 'HierarchicalStructures', elements, semanticId, 'BillOfMaterials');
+  }
+
+  /**
+   * Create relationship for flat bill of materials structure
+   * Both parent and child are direct submodel elements, referenced by idPath
+   */
+  createFlatBillOfMaterialsRelationship(idShort, submodelId, parentIdShort, childIdShort) {
+    // First reference points to the parent entity
+    const firstRef = this.createReference(
+      ReferenceTypes.ModelReference,
+      [
+        this.createKey(KeyTypes.Submodel, submodelId),
+        this.createKey(KeyTypes.Entity, parentIdShort)
+      ]
+    );
+    
+    // Second reference points to the child entity (sibling in submodel)
+    const secondRef = this.createReference(
+      ReferenceTypes.ModelReference,
+      [
+        this.createKey(KeyTypes.Submodel, submodelId),
+        this.createKey(KeyTypes.Entity, childIdShort)
+      ]
+    );
+    
+    // Use official IDTA 02011-1-1 HasPart semantic ID
+    const semanticId = this.createReference(
+      ReferenceTypes.ExternalReference,
+      [this.createKey(KeyTypes.GlobalReference, 'https://admin-shell.io/idta/HierarchicalStructures/HasPart/1/0')]
+    );
+    
+    return this.createRelationshipElement(idShort, firstRef, secondRef, semanticId);
   }
 
   /**
@@ -1932,6 +2736,9 @@ class AasService {
    * Create an Entity using SDK types
    */
   createEntity(idShort, entityType, globalAssetId, statements, semanticId = null, specificAssetId = null) {
+    // Pass null instead of empty arrays for statements (AAS server requirement)
+    const statementsToUse = (statements && statements.length > 0) ? statements : null;
+    
     return new Entity(
       entityType,
       null,  // extensions
@@ -1943,7 +2750,7 @@ class AasService {
       null,  // supplementalSemanticIds
       null,  // qualifiers
       null,  // embeddedDataSpecifications
-      statements,
+      statementsToUse,
       globalAssetId,
       specificAssetId ? [specificAssetId] : null   // specificAssetIds
     );
@@ -2074,12 +2881,12 @@ class AasService {
         [this.createKey(KeyTypes.GlobalReference, 'https://admin-shell.io/idta/HierarchicalStructures/EntryNode/1/0')]
       );
       
-      const sameAsKeys = [];
-      if (instanceAasId) {
-        sameAsKeys.push(this.createKey(KeyTypes.AssetAdministrationShell, instanceAasId));
-      }
-      sameAsKeys.push(this.createKey(KeyTypes.Submodel, instanceSubmodelId));
-      sameAsKeys.push(this.createKey(KeyTypes.Entity, 'EntryNode'));
+      // AASd-125 compliant: First key is AasIdentifiable (Submodel),
+      // subsequent keys are FragmentKeys (Entity)
+      const sameAsKeys = [
+        this.createKey(KeyTypes.Submodel, instanceSubmodelId),
+        this.createKey(KeyTypes.Entity, 'EntryNode')
+      ];
 
       const sameAsReference = this.createReference(
         ReferenceTypes.ModelReference,
@@ -2118,10 +2925,11 @@ class AasService {
   createRelationshipElementForHierarchy(idShort, parentNodeId, childNodeId) {
     const submodelId = this.rootSubmodelId;
     
+    // AASd-125 compliant: First key is AasIdentifiable (Submodel),
+    // subsequent keys are FragmentKeys (Entity)
     const firstRef = this.createReference(
       ReferenceTypes.ModelReference,
       [
-        this.createKey(KeyTypes.AssetAdministrationShell, this.rootAasId),
         this.createKey(KeyTypes.Submodel, submodelId),
         this.createKey(KeyTypes.Entity, parentNodeId)
       ]
@@ -2130,7 +2938,6 @@ class AasService {
     const secondRef = this.createReference(
       ReferenceTypes.ModelReference,
       [
-        this.createKey(KeyTypes.AssetAdministrationShell, this.rootAasId),
         this.createKey(KeyTypes.Submodel, submodelId),
         this.createKey(KeyTypes.Entity, parentNodeId),
         this.createKey(KeyTypes.Entity, childNodeId)
@@ -2149,6 +2956,17 @@ class AasService {
   transformLayoutDataToHierarchicalStructures(layoutData) {
     const submodelId = this.rootSubmodelId;
     const rootAssetId = 'https://smartproductionlab.aau.dk/assets/aauFillingLine';
+    
+    // Create the PlanarTable entity as a default child (always included)
+    const planarTableEntity = this.createEntityNode(
+      'PlanarTable',
+      this.planarTableAssetId,
+      0, // x position (center of table)
+      0, // y position (center of table)
+      0, // yaw
+      this.planarTableHierarchicalStructuresId,
+      this.planarTableAasId
+    );
     
     // Build child entities from stations
     const childEntities = layoutData.Stations.map(station => {
@@ -2169,11 +2987,18 @@ class AasService {
       return this.createEntityNode(genericName, globalAssetId, xMM, yMM, yaw, instanceSubmodelId, instanceAasId);
     });
     
-    // Build relationships
-    const relationships = layoutData.Stations.map(station => {
+    // Add planarTable as the first child entity (always included by default)
+    const allChildEntities = [planarTableEntity, ...childEntities];
+    
+    // Build relationships - include planarTable relationship first
+    const planarTableRelationship = this.createRelationshipElementForHierarchy('HasPlanarTable', 'EntryNode', 'PlanarTable');
+    
+    const stationRelationships = layoutData.Stations.map(station => {
       const genericName = this.getGenericName(station['AssetType'], station['Instance Name']);
       return this.createRelationshipElementForHierarchy(`Has${genericName}`, 'EntryNode', genericName);
     });
+    
+    const relationships = [planarTableRelationship, ...stationRelationships];
     
     // Create ArcheType property (IDTA 02011-1-1 uses "ArcheType" spelling)
     const archetypeSemanticId = this.createReference(
@@ -2187,7 +3012,7 @@ class AasService {
       ReferenceTypes.ExternalReference,
       [this.createKey(KeyTypes.GlobalReference, 'https://admin-shell.io/idta/HierarchicalStructures/EntryNode/1/0')]
     );
-    const entryNode = this.createEntity('EntryNode', EntityType.SelfManagedEntity, rootAssetId, childEntities, entryNodeSemanticId);
+    const entryNode = this.createEntity('EntryNode', EntityType.SelfManagedEntity, rootAssetId, allChildEntities, entryNodeSemanticId);
     
     // Create the Submodel with official IDTA 02011-1-1 semantic ID
     const submodelSemanticId = this.createReference(

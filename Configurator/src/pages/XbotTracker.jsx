@@ -161,11 +161,22 @@ const XbotTracker = () => {
     "executing": { color: "#3478F6", label: "Executing" },
     "execute": { color: "#3478F6", label: "Execute" },
     "complete": { color: "#4CD964", label: "Complete" },
+    "completing": { color: "#32CD32", label: "Completing" },
     "resetting": { color: "#FF9500", label: "Resetting" },
     "error": { color: "#FF3B30", label: "Error" },
     "waiting": { color: "#8E8E93", label: "Waiting" },
     "starting": { color: "#5AC8FA", label: "Starting" },
-    "stopping": { color: "#FFBF00", label: "Stopping" }
+    "stopping": { color: "#FFBF00", label: "Stopping" },
+    // Additional PackML states
+    "holding": { color: "#9B59B6", label: "Holding" },
+    "held": { color: "#8E44AD", label: "Held" },
+    "unholding": { color: "#A569BD", label: "Unholding" },
+    "suspending": { color: "#E67E22", label: "Suspending" },
+    "suspended": { color: "#D35400", label: "Suspended" },
+    "unsuspending": { color: "#F39C12", label: "Unsuspending" },
+    "aborting": { color: "#C0392B", label: "Aborting" },
+    "aborted": { color: "#922B21", label: "Aborted" },
+    "clearing": { color: "#1ABC9C", label: "Clearing" }
   }), []);
 
   // Default state for Xbots before MQTT update
