@@ -1,5 +1,5 @@
-orchestrator:
-    idShort: orchestrator
+orchestratorAAS:
+    idShort: orchestratorAAS
     id: 'https://smartproductionlab.aau.dk/aas/orchestratorAAS'
     globalAssetId: 'https://smartproductionlab.aau.dk/assets/YTZiYjcwOWMtZTI3YS00YmU0LWJkMzEtYjVmYzFlZDQ3NWQ1'
     derivedFrom: 'https://smartproductionlab.aau.dk/aas/templates/resource'

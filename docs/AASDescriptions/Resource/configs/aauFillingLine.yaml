@@ -1,5 +1,5 @@
-aauFillingLine:
-    idShort: aauFillingLine
+aauFillingLineAAS:
+    idShort: aauFillingLineAAS
     id: 'https://smartproductionlab.aau.dk/aas/aauFillingLineAAS'
     globalAssetId: 'https://smartproductionlab.aau.dk/assets/MWQ2ODY5ZDEtZTQ3Yy00NWU4LTlmYTAtNTI3YjVlMDk4MWFi'
     derivedFrom: 'https://smartproductionlab.aau.dk/aas/templates/resource'

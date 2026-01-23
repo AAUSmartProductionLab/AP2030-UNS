@@ -196,7 +196,7 @@ YAML configuration files for AAS resource definitions.
 
 <!-- AUTO-GENERATED-CONFIGS-START -->
 - **[aauFillingLine.yaml](configs/aauFillingLine.yaml)**
-  - Resource: `aauFillingLine`
+  - Resource: `aauFillingLineAAS`
   - Location: InnoLab, Nybrovej, AAU
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/configs/aauFillingLine.yaml)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/configs/aauFillingLine.yaml)
@@ -232,7 +232,7 @@ YAML configuration files for AAS resource definitions.
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/configs/optimaUnloading.yaml)
 
 - **[orchestrator.yaml](configs/orchestrator.yaml)**
-  - Resource: `orchestrator`
+  - Resource: `orchestratorAAS`
   - Location: InnoLab, Nybrovej, AAU
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/configs/orchestrator.yaml)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/configs/orchestrator.yaml)
@@ -262,7 +262,7 @@ YAML configuration files for AAS resource definitions.
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/configs/planarTable.yaml)
 
 - **[productionPlanner.yaml](configs/productionPlanner.yaml)**
-  - Resource: `productionPlanner`
+  - Resource: `productionPlannerAAS`
   - Location: InnoLab, Nybrovej, AAU
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/configs/productionPlanner.yaml)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/configs/productionPlanner.yaml)
