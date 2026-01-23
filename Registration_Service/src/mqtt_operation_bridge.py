@@ -422,6 +422,64 @@ class MQTTOperationBridge:
         logger.info(
             f"One-way operation {correlation_id} published successfully")
 
+    def _coerce_string_to_type(
+        self,
+        value: str,
+        expected_type: str,
+        field_name: str
+    ) -> Any:
+        """
+        Coerce a string value to the expected type (array or object).
+        
+        BaSyx UI may send arrays/objects as JSON strings, or single values
+        that need to be wrapped in an array.
+        
+        Args:
+            value: The string value from AAS input
+            expected_type: The expected type from schema ('array' or 'object')
+            field_name: Field name for logging purposes
+            
+        Returns:
+            The coerced value (list, dict, or original string on failure)
+        """
+        stripped = value.strip()
+        
+        if expected_type == "array":
+            # Try to parse as JSON array first
+            if stripped.startswith('['):
+                try:
+                    parsed = json.loads(stripped)
+                    if isinstance(parsed, list):
+                        logger.debug(f"Parsed JSON array string for '{field_name}': {parsed}")
+                        return parsed
+                except json.JSONDecodeError:
+                    pass
+            
+            # If not parseable as array, wrap single value in array
+            # (e.g., "https://example.com" -> ["https://example.com"])
+            logger.debug(f"Wrapping single string value in array for '{field_name}'")
+            return [value]
+            
+        elif expected_type == "object":
+            # Try to parse as JSON object
+            if stripped.startswith('{'):
+                try:
+                    parsed = json.loads(stripped)
+                    if isinstance(parsed, dict):
+                        logger.debug(f"Parsed JSON object string for '{field_name}': {parsed}")
+                        return parsed
+                except json.JSONDecodeError:
+                    logger.warning(
+                        f"Field '{field_name}' looks like JSON object but failed to parse: {stripped[:100]}"
+                    )
+            else:
+                logger.warning(
+                    f"Field '{field_name}' expected object type but received non-JSON string"
+                )
+        
+        # Return original value if coercion fails
+        return value
+
     def _build_command_message(
         self,
         correlation_id: str,
@@ -512,7 +570,14 @@ class MQTTOperationBridge:
         for schema_field, mapping_info in simple_mappings.items():
             aas_field = mapping_info["aas_field"]
             if aas_field in field_values:
-                command[schema_field] = field_values[aas_field]
+                value = field_values[aas_field]
+                expected_type = mapping_info.get("type")
+                
+                # Handle type coercion when schema expects array/object but input is string
+                if isinstance(value, str) and expected_type in ("array", "object"):
+                    value = self._coerce_string_to_type(value, expected_type, schema_field)
+                
+                command[schema_field] = value
 
         # Pack arrays if array_mappings is provided
         packed_fields = set(m["aas_field"] for m in simple_mappings.values())  # Track fields already used
