@@ -874,9 +874,55 @@ void BehaviorTreeController::processStartingState()
 
     try
     {
-        // TODO: In future, fetch BT description from process AAS
-        // For now, use the configured bt_description_path
-        bt_factory_->registerBehaviorTreeFromFile(app_params_.bt_description_path);
+        // Fetch BT description URL from the process AAS Policy submodel
+        auto bt_url_opt = aas_client_->fetchPolicyBTUrl(process_id);
+        if (!bt_url_opt.has_value())
+        {
+            std::cerr << "Failed to fetch BT description URL from process AAS Policy submodel" << std::endl;
+            if (mqtt_client_)
+            {
+                mqtt_client_->set_message_handler(main_mqtt_message_handler_);
+            }
+            setStateAndPublish(PackML::State::ABORTED);
+            
+            std::string uuid;
+            {
+                std::lock_guard<std::mutex> lock(pending_command_mutex_);
+                uuid = pending_start_uuid_;
+                pending_start_uuid_.clear();
+            }
+            publishCommandResponse(app_params_.start_response_topic, uuid, false);
+            return;
+        }
+
+        std::string bt_url = bt_url_opt.value();
+        std::cout << "Fetching BT description from: " << bt_url << std::endl;
+
+        // Fetch the BT XML content from the URL
+        std::string bt_xml_content = schema_utils::fetchContentFromUrl(bt_url);
+        if (bt_xml_content.empty())
+        {
+            std::cerr << "Failed to fetch BT description XML from URL: " << bt_url << std::endl;
+            if (mqtt_client_)
+            {
+                mqtt_client_->set_message_handler(main_mqtt_message_handler_);
+            }
+            setStateAndPublish(PackML::State::ABORTED);
+            
+            std::string uuid;
+            {
+                std::lock_guard<std::mutex> lock(pending_command_mutex_);
+                uuid = pending_start_uuid_;
+                pending_start_uuid_.clear();
+            }
+            publishCommandResponse(app_params_.start_response_topic, uuid, false);
+            return;
+        }
+
+        std::cout << "Successfully fetched BT description (" << bt_xml_content.size() << " bytes)" << std::endl;
+
+        // Register the behavior tree from the fetched XML content
+        bt_factory_->registerBehaviorTreeFromText(bt_xml_content);
 
         // Create blackboard and populate with equipment mapping
         auto root_blackboard = BT::Blackboard::create();

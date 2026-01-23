@@ -655,4 +655,53 @@ namespace schema_utils
             }
         }
     }
+
+    std::string fetchContentFromUrl(const std::string &url)
+    {
+        std::cout << "Fetching content from: " << url << std::endl;
+
+        CURL *curl = curl_easy_init();
+        if (!curl)
+        {
+            std::cerr << "Failed to initialize CURL for content fetch" << std::endl;
+            return "";
+        }
+
+        std::string content_buffer;
+        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &content_buffer);
+        curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30L);
+        curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+
+        CURLcode res = curl_easy_perform(curl);
+        long response_code;
+        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
+        curl_easy_cleanup(curl);
+
+        if (res != CURLE_OK)
+        {
+            std::cerr << "Failed to fetch content from URL: " << url 
+                      << ", CURL error: " << curl_easy_strerror(res) << std::endl;
+            return "";
+        }
+
+        if (response_code != 200)
+        {
+            std::cerr << "Failed to fetch content from URL: " << url 
+                      << ", HTTP status: " << response_code << std::endl;
+            return "";
+        }
+
+        if (content_buffer.empty())
+        {
+            std::cerr << "Empty response from URL: " << url << std::endl;
+            return "";
+        }
+
+        std::cout << "Successfully fetched content from: " << url 
+                  << " (" << content_buffer.size() << " bytes)" << std::endl;
+
+        return content_buffer;
+    }
 }

@@ -803,6 +803,104 @@ std::optional<nlohmann::json> AASClient::fetchRequiredCapabilities(const std::st
     }
 }
 
+std::optional<std::string> AASClient::fetchPolicyBTUrl(const std::string &aas_shell_id)
+{
+    try
+    {
+        std::cout << "Fetching Policy submodel for AAS: " << aas_shell_id << std::endl;
+
+        // Step 1: Fetch the full shell to get submodel references
+        std::string encoded_id = base64url_encode(aas_shell_id);
+        std::string shell_endpoint = "/shells/" + encoded_id;
+        nlohmann::json shell_data = makeGetRequest(shell_endpoint);
+
+        if (!shell_data.contains("submodels") || !shell_data["submodels"].is_array())
+        {
+            std::cerr << "Shell missing submodels array" << std::endl;
+            return std::nullopt;
+        }
+
+        // Step 2: Find the Policy submodel reference
+        std::string submodel_id;
+        for (const auto &submodel_ref : shell_data["submodels"])
+        {
+            if (submodel_ref.contains("keys") && submodel_ref["keys"].is_array())
+            {
+                std::string ref_value = submodel_ref["keys"][0]["value"];
+                if (ref_value.find("Policy") != std::string::npos)
+                {
+                    submodel_id = ref_value;
+                    break;
+                }
+            }
+        }
+
+        if (submodel_id.empty())
+        {
+            std::cerr << "Policy submodel reference not found for AAS: " << aas_shell_id << std::endl;
+            return std::nullopt;
+        }
+
+        std::cout << "Found Policy submodel reference: " << submodel_id << std::endl;
+
+        // Step 3: Fetch the submodel using base64url-encoded ID
+        std::string submodel_id_b64 = base64url_encode(submodel_id);
+        std::string submodel_url = "/submodels/" + submodel_id_b64;
+
+        nlohmann::json submodel_data = makeGetRequest(submodel_url);
+
+        // Step 4: Navigate through submodel to find the Policy element with File property
+        // Structure: Policy submodel -> submodelElements -> Policy (SMC) -> value -> File
+        if (!submodel_data.contains("submodelElements") || !submodel_data["submodelElements"].is_array())
+        {
+            std::cerr << "Policy submodel missing submodelElements array" << std::endl;
+            return std::nullopt;
+        }
+
+        for (const auto &element : submodel_data["submodelElements"])
+        {
+            if (!element.contains("idShort"))
+                continue;
+
+            std::string id_short = element["idShort"].get<std::string>();
+            std::string model_type = element.value("modelType", "");
+
+            // Check for File type element (AAS File element with modelType: "File")
+            // The File element can have any idShort (commonly "Policy" or "File")
+            if (model_type == "File" && element.contains("value"))
+            {
+                std::string bt_url = element["value"].get<std::string>();
+                std::cout << "Found BT description URL in File element '" << id_short << "': " << bt_url << std::endl;
+                return bt_url;
+            }
+
+            // Also check for SubmodelElementCollection containing a File element
+            if (model_type == "SubmodelElementCollection" && 
+                element.contains("value") && element["value"].is_array())
+            {
+                for (const auto &nested_elem : element["value"])
+                {
+                    std::string nested_model_type = nested_elem.value("modelType", "");
+                    if (nested_model_type == "File" && nested_elem.contains("value"))
+                    {
+                        std::string bt_url = nested_elem["value"].get<std::string>();
+                        std::cout << "Found BT description URL in nested File element: " << bt_url << std::endl;
+                        return bt_url;
+                    }
+                }
+            }
+        }
+
+        std::cerr << "Could not find File property in Policy submodel" << std::endl;
+        return std::nullopt;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Error fetching Policy BT URL: " << e.what() << std::endl;
+        return std::nullopt;
+    }
+}
+
 std::optional<nlohmann::json> AASClient::lookupAssetById(const std::string &asset_id)
 {
     try

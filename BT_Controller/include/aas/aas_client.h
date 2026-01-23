@@ -42,6 +42,9 @@ public:
     // Fetch the RequiredCapabilities submodel from a process AAS
     std::optional<nlohmann::json> fetchRequiredCapabilities(const std::string &aas_shell_id);
 
+    // Fetch the BT description URL from the Policy submodel of a process AAS
+    std::optional<std::string> fetchPolicyBTUrl(const std::string &aas_shell_id);
+
     // Fetch the shell descriptor to get the asset ID from registry
     std::optional<nlohmann::json> lookupAssetById(const std::string &asset_id);
 

@@ -39,6 +39,10 @@ class BTGeneratorConfig:
                 "Unloading": "unloading.xml",
                 "Scraping": "scraping.xml",
                 "Capping": "capping.xml",
+                # Standard subtrees that were previously included via <include>
+                "LineSOP": "lineSOP.xml",
+                "PlanarSOP": "planarSOP.xml",
+                "Product": "product.xml",
             }
 
 
@@ -82,10 +86,6 @@ class BTGenerator:
         root = ET.Element("root")
         root.set("BTCPP_format", "4")
         
-        # Add includes for SOP trees
-        ET.SubElement(root, "include", path="./lineSOP.xml")
-        ET.SubElement(root, "include", path="./product.xml")
-        
         # Generate main production tree
         self._generate_main_tree(
             root, matching_result, product_info, planar_table_id
@@ -94,7 +94,7 @@ class BTGenerator:
         # Generate AsepticFilling subtree
         self._generate_aseptic_filling_tree(root, matching_result)
         
-        # Load and append pre-built subtrees
+        # Load and embed pre-built subtrees directly (no includes)
         if self.config.use_prebuilt_subtrees:
             self._append_prebuilt_subtrees(root, matching_result)
         
@@ -222,7 +222,7 @@ class BTGenerator:
         root: ET.Element,
         matching_result: MatchingResult
     ) -> None:
-        """Load and append pre-built subtree files"""
+        """Load and embed pre-built subtree files directly into the BT XML"""
         loaded_subtrees = set()
         
         # Collect all needed subtree names
@@ -235,6 +235,14 @@ class BTGenerator:
         if self.config.include_error_recovery:
             needed_subtrees.add("Scraping")
         
+        # Always include standard subtrees that were previously referenced via <include>
+        needed_subtrees.add("LineSOP")
+        needed_subtrees.add("PlanarSOP")
+        needed_subtrees.add("Product")
+        
+        # Track loaded files to avoid loading the same file multiple times
+        loaded_files = set()
+        
         # Load each needed subtree
         for subtree_id in needed_subtrees:
             if subtree_id in loaded_subtrees:
@@ -246,32 +254,44 @@ class BTGenerator:
                 filename = self.config.subtree_file_mapping.get(subtree_id.lower())
             
             if filename:
-                subtree_element = self._load_subtree_from_file(filename)
-                if subtree_element is not None:
-                    root.append(subtree_element)
+                # Skip if we already loaded this file (it may contain multiple subtrees)
+                if filename in loaded_files:
                     loaded_subtrees.add(subtree_id)
-                    logger.debug(f"Loaded subtree {subtree_id} from {filename}")
+                    continue
+                    
+                subtree_elements = self._load_subtree_from_file(filename)
+                if subtree_elements:
+                    for subtree_element in subtree_elements:
+                        root.append(subtree_element)
+                        # Mark the ID of this subtree as loaded
+                        bt_id = subtree_element.get("ID", "")
+                        if bt_id:
+                            loaded_subtrees.add(bt_id)
+                    loaded_files.add(filename)
+                    loaded_subtrees.add(subtree_id)
+                    logger.debug(f"Loaded {len(subtree_elements)} subtree(s) from {filename}")
                 else:
                     logger.warning(f"Could not load subtree {subtree_id} from {filename}")
             else:
                 logger.warning(f"No subtree file mapping for {subtree_id}")
     
-    def _load_subtree_from_file(self, filename: str) -> Optional[ET.Element]:
-        """Load a subtree from an XML file"""
+    def _load_subtree_from_file(self, filename: str) -> List[ET.Element]:
+        """Load all subtrees from an XML file (a file may contain multiple BehaviorTree elements)"""
         try:
             filepath = os.path.join(self.config.subtrees_dir, filename)
             tree = ET.parse(filepath)
             root = tree.getroot()
             
-            # Find and return the BehaviorTree element
+            # Find and return all BehaviorTree elements
+            subtrees = []
             for child in root:
                 if child.tag == "BehaviorTree":
-                    return child
+                    subtrees.append(child)
             
-            return None
+            return subtrees if subtrees else []
         except Exception as e:
             logger.warning(f"Could not load {filename}: {e}")
-            return None
+            return []
     
     def _append_tree_nodes_model(self, root: ET.Element) -> None:
         """Load and append the TreeNodesModel from the model file"""
