@@ -629,8 +629,8 @@ class MQTTOperationBridge:
                     f"AAS fields not in MQTT schema (will be dropped): {sorted(unmapped)}. "
                     f"These fields are defined in the AAS but not in the MQTT schema '{schema_url}'."
                 )
-        else:
-            # No array packing - when no schema is parsed, pass through all fields
+        elif not simple_mappings:
+            # No array packing AND no simple mappings - when no schema is parsed, pass through all fields
             # This maintains backward compatibility for operations without schemas
             command.update(field_values)
 
