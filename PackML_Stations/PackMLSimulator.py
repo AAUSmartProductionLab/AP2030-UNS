@@ -313,8 +313,15 @@ class PackMLStateMachine:
             # Use "#" to signify a general clear down
             self.transition_to(PackMLState.COMPLETING, "#")
 
-    def _handle_process_completion(self, completed_uuid, final_command_state, execute_topic: Topic):
-        """Handles post-processing after a command's process_function finishes or fails."""
+    def _handle_process_completion(self, completed_uuid, final_command_state, execute_topic: Topic, additional_response_data=None):
+        """Handles post-processing after a command's process_function finishes or fails.
+        
+        Args:
+            completed_uuid: UUID of the completed command
+            final_command_state: "SUCCESS" or "FAILURE"
+            execute_topic: Topic to publish response to
+            additional_response_data: Optional dict with additional fields to include in response
+        """
         # Publish final command status
         timestamp_final = datetime.datetime.now(datetime.timezone.utc).isoformat(
             timespec='milliseconds').replace('+00:00', 'Z')
@@ -323,6 +330,18 @@ class PackMLStateMachine:
             "TimeStamp": timestamp_final,
             "Uuid": completed_uuid
         }
+        
+        # Merge additional response data if provided (e.g., planning results)
+        if additional_response_data and isinstance(additional_response_data, dict):
+            # Override State from additional_response_data if present
+            if 'State' in additional_response_data:
+                response_final['State'] = additional_response_data['State']
+                final_command_state = additional_response_data['State']
+            # Merge other fields
+            for key, value in additional_response_data.items():
+                if key not in ['Uuid', 'TimeStamp']:  # Don't override these
+                    response_final[key] = value
+        
         execute_topic.publish(response_final, self.client, False)
 
         # Cleanup processing-specific attributes
@@ -395,12 +414,22 @@ class PackMLStateMachine:
                         *process_func_args):
                     """Target function for the processing thread."""
                     final_state_thread = "SUCCESS"
+                    response_data = None  # Additional response data from process function
                     try:
                         if can_interrupt:
-                            func_for_thread(event_for_thread,
+                            result = func_for_thread(event_for_thread,
                                             *process_func_args)
                         else:
-                            func_for_thread(*process_func_args)
+                            result = func_for_thread(*process_func_args)
+                        
+                        # If the process function returns a dict, use it as additional response data
+                        if isinstance(result, dict):
+                            response_data = result
+                            # Check if the result indicates failure
+                            if result.get('State') == 'FAILURE':
+                                final_state_thread = "FAILURE"
+                            elif result.get('State') == 'SUCCESS':
+                                final_state_thread = "SUCCESS"
 
                         # Check if interruption was requested externally during non-interruptible execution
                         # or if an interruptible function completed but was still marked for interruption.
@@ -413,10 +442,11 @@ class PackMLStateMachine:
                         print(
                             f"Exception in process_function thread for {uuid_for_thread}: {e}")
                         final_state_thread = "FAILURE"
+                        response_data = {"ErrorMessage": str(e)}
                     finally:
                         # This ensures completion handling occurs even if process_function errors out.
                         current_self._handle_process_completion(
-                            uuid_for_thread, final_state_thread, topic_for_thread)
+                            uuid_for_thread, final_state_thread, topic_for_thread, response_data)
 
                 processing_thread = threading.Thread(
                     target=process_wrapper_thread_target,

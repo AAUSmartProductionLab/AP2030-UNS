@@ -27,6 +27,64 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
+class PlanningResult:
+    """Result of the planning operation"""
+    success: bool
+    process_aas_id: Optional[str] = None
+    product_aas_id: Optional[str] = None
+    matching_result: Optional['MatchingResult'] = None
+    error_message: Optional[str] = None
+    process_config: Optional[Dict[str, Any]] = None
+    
+    def to_response_dict(self) -> Dict[str, Any]:
+        """Convert to MQTT response format matching planningResponse.schema.json"""
+        response = {
+            'State': 'SUCCESS' if self.success else 'FAILURE',
+            'ProductAasId': self.product_aas_id,
+        }
+        
+        if self.success and self.process_aas_id:
+            response['ProcessAasId'] = self.process_aas_id
+        
+        if self.error_message:
+            response['ErrorMessage'] = self.error_message
+        
+        if self.matching_result:
+            response['MatchingSummary'] = {
+                'TotalSteps': len(self.matching_result.process_matches),
+                'MatchedSteps': len(self.matching_result.process_matches) - len(self.matching_result.unmatched_steps),
+                'UnmatchedSteps': len(self.matching_result.unmatched_steps),
+                'AvailableMovers': len(self.matching_result.movers),
+                'IsComplete': self.matching_result.is_complete
+            }
+            
+            # Include unmatched capabilities
+            if self.matching_result.unmatched_steps:
+                response['UnmatchedCapabilities'] = [
+                    {
+                        'ProcessStep': step.name,
+                        'RequiredCapability': step.semantic_id
+                    }
+                    for step in self.matching_result.unmatched_steps
+                ]
+            
+            # Include matched capabilities
+            matched = []
+            for match in self.matching_result.process_matches:
+                if match.is_matched and match.primary_resource:
+                    matched.append({
+                        'ProcessStep': match.process_step.name,
+                        'RequiredCapability': match.process_step.semantic_id,
+                        'MatchedResource': match.primary_resource.resource_name,
+                        'ResourceAasId': match.primary_resource.aas_id
+                    })
+            if matched:
+                response['MatchedCapabilities'] = matched
+        
+        return response
+
+
+@dataclass
 class PlannerConfig:
     """Configuration for the planner service"""
     # AAS server settings
@@ -90,7 +148,7 @@ class PlannerService:
         self,
         asset_ids: List[str],
         product_aas_id: str
-    ) -> Tuple[str, Dict[str, Any]]:
+    ) -> PlanningResult:
         """
         Execute complete planning workflow and register the Process AAS.
         
@@ -99,7 +157,7 @@ class PlannerService:
             product_aas_id: AAS ID of the product to produce
             
         Returns:
-            Tuple of (Process AAS ID, generated config dict)
+            PlanningResult with success status, process AAS ID, and matching details
         """
         logger.info(f"Starting planning for product: {product_aas_id}")
         logger.info(f"Initial asset IDs: {asset_ids}")
@@ -108,7 +166,11 @@ class PlannerService:
         logger.info("Step 1: Fetching product information...")
         product_config = self._fetch_product_config(product_aas_id)
         if not product_config:
-            raise ValueError(f"Could not fetch product AAS: {product_aas_id}")
+            return PlanningResult(
+                success=False,
+                product_aas_id=product_aas_id,
+                error_message=f"Could not fetch product AAS: {product_aas_id}"
+            )
         
         # Step 2: Extract process steps and requirements
         logger.info("Step 2: Extracting process steps and requirements...")
@@ -133,14 +195,22 @@ class PlannerService:
             process_steps, available_resources
         )
         
+        # Check for incomplete matching - this is a failure condition
         if not matching_result.is_complete:
+            unmatched_names = [s.name for s in matching_result.unmatched_steps]
+            unmatched_caps = [s.semantic_id for s in matching_result.unmatched_steps]
             logger.warning(
-                f"Incomplete matching! Unmatched steps: "
-                f"{[s.name for s in matching_result.unmatched_steps]}"
+                f"Incomplete matching! Unmatched steps: {unmatched_names}"
             )
-        else:
-            logger.info("All process steps matched successfully")
+            return PlanningResult(
+                success=False,
+                product_aas_id=product_aas_id,
+                matching_result=matching_result,
+                error_message=f"Cannot find resources for required capabilities: {', '.join(unmatched_names)}. "
+                             f"Missing capability semantic IDs: {', '.join(unmatched_caps)}"
+            )
         
+        logger.info("All process steps matched successfully")
         logger.info(f"Found {len(matching_result.movers)} movers for parallel execution")
         
         # Step 6: Find planar table (motion system)
@@ -191,7 +261,13 @@ class PlannerService:
         
         logger.info(f"Planning complete! Process AAS ID: {process_aas_id}")
         
-        return process_aas_id, process_config
+        return PlanningResult(
+            success=True,
+            process_aas_id=process_aas_id,
+            product_aas_id=product_aas_id,
+            matching_result=matching_result,
+            process_config=process_config
+        )
     
     def _fetch_product_config(self, product_aas_id: str) -> Optional[Dict[str, Any]]:
         """Fetch product AAS and convert to config format using BaSyx SDK."""
@@ -212,21 +288,32 @@ class PlannerService:
                 'Requirements': {}
             }
             
-            # Fetch submodels by semantic ID
-            bill_of_processes = self.aas_client.find_submodel_by_semantic_id(
-                product_aas_id, 'BillOfProcesses'
+            # Get all submodels
+            submodels = self.aas_client.get_submodels_from_aas(product_aas_id)
+            
+            # Find BillOfProcesses (try semantic_id patterns, then id_short)
+            bill_of_processes = self._find_submodel(
+                submodels, 
+                semantic_patterns=['BillOfProcess', 'billofprocess'],
+                id_short_patterns=['BillOfProcesses', 'billofprocesses']
             )
             if bill_of_processes:
                 config['BillOfProcesses'] = self._parse_bill_of_processes(bill_of_processes)
             
-            requirements = self.aas_client.find_submodel_by_semantic_id(
-                product_aas_id, 'Requirements'
+            # Find Requirements submodel
+            requirements = self._find_submodel(
+                submodels,
+                semantic_patterns=['Requirements', 'ProductionRequirements'],
+                id_short_patterns=['Requirements']
             )
             if requirements:
                 config['Requirements'] = self._parse_requirements(requirements)
             
-            batch_info = self.aas_client.find_submodel_by_semantic_id(
-                product_aas_id, 'BatchInformation'
+            # Find BatchInformation submodel
+            batch_info = self._find_submodel(
+                submodels,
+                semantic_patterns=['BatchInformation'],
+                id_short_patterns=['BatchInformation']
             )
             if batch_info:
                 config['BatchInformation'] = self._parse_batch_info(batch_info)
@@ -238,6 +325,26 @@ class PlannerService:
             import traceback
             traceback.print_exc()
             return None
+    
+    def _find_submodel(self, submodels, semantic_patterns: List[str], id_short_patterns: List[str]):
+        """Find a submodel by semantic_id patterns or id_short patterns."""
+        # First try semantic_id matching
+        for sm in submodels:
+            if sm.semantic_id:
+                for key in sm.semantic_id.key:
+                    sem_value = key.value.lower()
+                    for pattern in semantic_patterns:
+                        if pattern.lower() in sem_value:
+                            return sm
+        
+        # Then try id_short matching
+        for sm in submodels:
+            id_short = sm.id_short.lower() if sm.id_short else ''
+            for pattern in id_short_patterns:
+                if pattern.lower() == id_short:
+                    return sm
+        
+        return None
     
     def _identify_submodel_type(self, submodel) -> str:
         """Identify submodel type from id_short or semantic_id"""
@@ -302,9 +409,11 @@ class PlannerService:
         """Parse a single process step from SubmodelElementCollection
         
         The BillOfProcesses structure from BaSyx:
-        - Each process step is a SubmodelElementCollection
-        - The capability semantic ID is on the collection's semantic_id attribute
+        - Each process step is a SubmodelElementCollection with semantic_id for process type
+        - RequiredCapability ReferenceElement points to the capability semantic ID for matching
         - Child properties include Description, EstimatedDuration, Parameters, Requirements
+        
+        For capability matching, we extract the RequiredCapability reference value.
         """
         from basyx.aas import model
         
@@ -312,18 +421,19 @@ class PlannerService:
         step_config = {
             'step': step_num,
             'semantic_id': '',
+            'process_semantic_id': '',  # The process type (e.g., /Process/Loading)
             'description': '',
             'estimatedDuration': 0.0,
             'parameters': {}
         }
         
-        # Get semantic ID from the collection itself (this is the capability identifier)
+        # Get process semantic ID from the collection itself (describes the process type)
         if collection.semantic_id:
             for key in collection.semantic_id.key:
-                step_config['semantic_id'] = key.value
+                step_config['process_semantic_id'] = key.value
                 break
         
-        # Parse child properties
+        # Parse child elements
         for elem in collection.value:
             if isinstance(elem, model.Property):
                 id_short_lower = elem.id_short.lower()
@@ -333,10 +443,23 @@ class PlannerService:
                     step_config['description'] = str(elem.value) if elem.value else ''
                 elif id_short_lower in ['estimatedduration', 'duration']:
                     step_config['estimatedDuration'] = float(elem.value) if elem.value else 0.0
+            elif isinstance(elem, model.ReferenceElement):
+                # RequiredCapability reference - this is what we use for matching
+                if elem.id_short.lower() == 'requiredcapability':
+                    if elem.value:
+                        for key in elem.value.key:
+                            step_config['semantic_id'] = key.value
+                            break
             elif isinstance(elem, model.SubmodelElementCollection):
                 # Parse parameters collection
                 if elem.id_short.lower() == 'parameters':
                     step_config['parameters'] = self._parse_parameters_collection(elem)
+        
+        # Fallback: if no RequiredCapability found, use the process semantic_id
+        # (for backward compatibility with older BillOfProcesses format)
+        if not step_config['semantic_id'] and step_config['process_semantic_id']:
+            step_config['semantic_id'] = step_config['process_semantic_id']
+            logger.debug(f"Process {name}: No RequiredCapability found, falling back to process semantic_id")
         
         return {name: step_config}
     
@@ -594,15 +717,13 @@ class PlannerService:
                     'capabilities': []
                 }
                 
-                # Find capabilities submodel using semantic ID
-                capabilities_submodel = self.aas_client.find_submodel_by_semantic_id(
-                    aas_id, 'OfferedCapabilityDescription'
+                # Get all submodels and find capabilities submodel
+                submodels = self.aas_client.get_submodels_from_aas(aas_id)
+                capabilities_submodel = self._find_submodel(
+                    submodels,
+                    semantic_patterns=['Capabilities', 'OfferedCapability'],
+                    id_short_patterns=['OfferedCapabilityDescription', 'Capabilities']
                 )
-                if not capabilities_submodel:
-                    # Try alternative naming
-                    capabilities_submodel = self.aas_client.find_submodel_by_semantic_id(
-                        aas_id, 'Capability'
-                    )
                 
                 if capabilities_submodel:
                     caps = self._parse_capabilities(capabilities_submodel)
@@ -642,18 +763,25 @@ class PlannerService:
     def _parse_capability_container(self, container) -> Optional[Dict[str, Any]]:
         """Parse a single capability container using BaSyx SDK.
         
-        The capability name (idShort) is used to construct a semantic ID
-        that matches the product's process step semantic IDs.
+        Extracts the semantic ID directly from the Capability element for
+        matching against product BillOfProcesses semantic IDs.
         """
         from basyx.aas import model
         
         cap_name = container.id_short.replace('Container', '') if container.id_short else ''
+        semantic_id = None
         realized_by = None
         
         for elem in container.value:
             if isinstance(elem, model.Capability):
                 # The Capability element's idShort is the actual capability name
                 cap_name = elem.id_short or cap_name
+                
+                # Extract semantic ID from the Capability element
+                if elem.semantic_id:
+                    for key in elem.semantic_id.key:
+                        semantic_id = key.value
+                        break
                 
             elif isinstance(elem, model.SubmodelElementList):
                 if elem.id_short == 'realizedBy':
@@ -667,8 +795,9 @@ class PlannerService:
                                         break
         
         if cap_name:
-            # Construct a semantic ID that matches the product's process steps
-            semantic_id = f"https://smartproductionlab.aau.dk/Capability/{cap_name}"
+            # Use extracted semantic ID, or construct fallback for backwards compatibility
+            if not semantic_id:
+                semantic_id = f"https://smartproductionlab.aau.dk/Capability/{cap_name}"
             
             return {
                 'name': cap_name,

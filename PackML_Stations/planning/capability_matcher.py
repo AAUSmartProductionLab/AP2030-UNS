@@ -76,6 +76,47 @@ class MatchingResult:
     def parallelism_factor(self) -> int:
         """Suggested number of parallel production subtrees based on mover count"""
         return max(1, len(self.movers))
+    
+    def get_summary(self) -> str:
+        """Get a human-readable summary of matching results."""
+        lines = [
+            "=" * 60,
+            "Capability Matching Summary",
+            "=" * 60,
+            f"Total process steps: {len(self.process_matches)}",
+            f"Matched steps: {len(self.process_matches) - len(self.unmatched_steps)}",
+            f"Unmatched steps: {len(self.unmatched_steps)}",
+            f"Available movers: {len(self.movers)}",
+            f"Parallelism factor: {self.parallelism_factor}",
+            f"Matching complete: {self.is_complete}",
+            "",
+            "Process Step Matches:",
+            "-" * 40,
+        ]
+        
+        for match in self.process_matches:
+            status = "✓" if match.is_matched else "✗"
+            step = match.process_step
+            if match.is_matched:
+                resource = match.primary_resource
+                lines.append(f"  {status} {step.name}")
+                lines.append(f"      Process semantic_id:  {step.semantic_id}")
+                lines.append(f"      Matched resource:     {resource.resource_name}")
+                lines.append(f"      Resource semantic_id: {resource.semantic_id}")
+                if resource.realized_by:
+                    lines.append(f"      Realized by skill:    {resource.realized_by}")
+            else:
+                lines.append(f"  {status} {step.name} - NO MATCH")
+                lines.append(f"      Process semantic_id: {step.semantic_id}")
+        
+        if self.movers:
+            lines.append("")
+            lines.append("Available Movers:")
+            lines.append("-" * 40)
+            for mover in self.movers:
+                lines.append(f"  - {mover.name} ({mover.aas_id})")
+        
+        return "\n".join(lines)
 
 
 class CapabilityMatcher:
@@ -212,23 +253,33 @@ class CapabilityMatcher:
         """
         Find all capabilities that match a given semantic ID.
         
-        Matching strategy:
-        1. Exact match (preferred)
-        2. Exact match on final path segment (e.g., /Loading matches /Loading)
-        3. Alias match (e.g., /Inspection matches /QualityControl)
+        Matching strategy (in order of priority):
+        1. Exact URI match - Full semantic ID matches exactly (preferred)
+        2. Normalized URI match - Case-insensitive comparison
+        3. Path segment match - Final path segment matches (e.g., /Loading == /Loading)
+        4. Alias match - Known equivalent capabilities (e.g., Inspection <-> QualityControl)
+        
+        This enables capability matching between Product BillOfProcesses and
+        Resource OfferedCapabilities using the shared semantic ID ontology.
         
         Args:
-            semantic_id: The semantic ID to match
-            capabilities: List of available capabilities
+            semantic_id: The semantic ID from product's process step
+            capabilities: List of available resource capabilities
             
         Returns:
             List of matching ResourceCapability objects
         """
+        if not semantic_id:
+            logger.warning("Empty semantic_id provided for matching")
+            return []
+        
         exact_matches = []
+        normalized_matches = []
         segment_matches = []
         alias_matches = []
         
-        # Extract the final path segment from target
+        # Normalize target for comparison
+        target_normalized = self._normalize_semantic_id(semantic_id)
         target_segment = semantic_id.rstrip('/').split('/')[-1].lower()
         
         # Get aliases for the target segment
@@ -241,28 +292,47 @@ class CapabilityMatcher:
             if not cap_semantic:
                 continue
             
-            # Check exact match (case-insensitive)
-            if cap_semantic.lower() == semantic_id.lower():
+            # 1. Exact match (case-sensitive)
+            if cap_semantic == semantic_id:
+                logger.debug(f"Exact match: {cap.name} ({cap_semantic})")
                 exact_matches.append(cap)
                 continue
             
-            # Check final path segment match
+            # 2. Normalized match (case-insensitive)
+            cap_normalized = self._normalize_semantic_id(cap_semantic)
+            if cap_normalized == target_normalized:
+                logger.debug(f"Normalized match: {cap.name} ({cap_semantic})")
+                normalized_matches.append(cap)
+                continue
+            
+            # 3. Path segment match (last segment of URI)
             cap_segment = cap_semantic.rstrip('/').split('/')[-1].lower()
             if cap_segment == target_segment:
+                logger.debug(f"Segment match: {cap.name} ({cap_segment} == {target_segment})")
                 segment_matches.append(cap)
                 continue
             
-            # Check alias match
+            # 4. Alias match (known equivalent capabilities)
             if cap_segment in target_aliases:
+                logger.debug(f"Alias match: {cap.name} ({cap_segment} in aliases for {target_segment})")
                 alias_matches.append(cap)
         
-        # Prefer exact matches, then segment matches, then alias matches
+        # Return in priority order
         if exact_matches:
+            logger.info(f"Found {len(exact_matches)} exact match(es) for {semantic_id}")
             return exact_matches
+        elif normalized_matches:
+            logger.info(f"Found {len(normalized_matches)} normalized match(es) for {semantic_id}")
+            return normalized_matches
         elif segment_matches:
+            logger.info(f"Found {len(segment_matches)} segment match(es) for {semantic_id}")
             return segment_matches
-        else:
+        elif alias_matches:
+            logger.info(f"Found {len(alias_matches)} alias match(es) for {semantic_id}")
             return alias_matches
+        else:
+            logger.warning(f"No matches found for semantic ID: {semantic_id}")
+            return []
     
     def _normalize_semantic_id(self, semantic_id: str) -> str:
         """Normalize semantic ID for comparison"""

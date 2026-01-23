@@ -25,7 +25,7 @@ import traceback
 from MQTT_classes import Proxy, ResponseAsync, Subscriber
 from PackMLSimulator import PackMLStateMachine
 from aas_client import AASClient
-from planning import PlannerService, PlannerConfig
+from planning import PlannerService, PlannerConfig, PlanningResult
 
 # Configure logging
 logging.basicConfig(
@@ -81,39 +81,53 @@ def planning_process(duration=0.0, asset_ids=None, product_aas_id=None):
         duration: Simulated duration (unused, for PackML compatibility)
         asset_ids: List of AAS IDs of available assets
         product_aas_id: AAS ID of the product to produce
+        
+    Returns:
+        dict: Response conforming to planningResponse.schema.json
     """
     global planner_service
     
     if not planner_service:
         logger.error("Planner service not initialized")
-        raise RuntimeError("Planner service not initialized")
+        return {
+            'State': 'FAILURE',
+            'ErrorMessage': 'Planner service not initialized'
+        }
     
     if not asset_ids or not product_aas_id:
         logger.error("Missing required parameters: asset_ids and product_aas_id")
-        raise ValueError("Missing required parameters")
+        return {
+            'State': 'FAILURE',
+            'ProductAasId': product_aas_id,
+            'ErrorMessage': 'Missing required parameters: Assets and Product'
+        }
     
     try:
         logger.info(f"Starting planning process for product: {product_aas_id}")
         logger.info(f"Available assets: {asset_ids}")
         
-        # Execute planning workflow
-        process_aas_id, process_config = planner_service.plan_and_register(
+        # Execute planning workflow - returns PlanningResult
+        result = planner_service.plan_and_register(
             asset_ids=asset_ids,
             product_aas_id=product_aas_id
         )
         
-        logger.info(f"Planning complete! Process AAS: {process_aas_id}")
+        if result.success:
+            logger.info(f"Planning complete! Process AAS: {result.process_aas_id}")
+        else:
+            logger.warning(f"Planning failed: {result.error_message}")
         
-        return {
-            'success': True,
-            'process_aas_id': process_aas_id,
-            'message': f'Successfully created process: {process_aas_id}'
-        }
+        # Return response conforming to planningResponse.schema.json
+        return result.to_response_dict()
         
     except Exception as e:
         logger.error(f"Error in planning_process: {e}")
         traceback.print_exc()
-        raise
+        return {
+            'State': 'FAILURE',
+            'ProductAasId': product_aas_id,
+            'ErrorMessage': f'Unexpected error during planning: {str(e)}'
+        }
 
 
 def planning_callback(topic, client, message, properties):
@@ -168,8 +182,8 @@ def planning_callback(topic, client, message, properties):
 plan = ResponseAsync(
     BASE_TOPIC + "/DATA/Plan",
     BASE_TOPIC + "/CMD/Plan",
-    "./MQTTSchemas/commandResponse.schema.json",
-    "./MQTTSchemas/planningCommand.schema.json",  # Use planning-specific schema
+    "./MQTTSchemas/planningResponse.schema.json",  # Extended planning response schema
+    "./MQTTSchemas/planningCommand.schema.json",   # Planning command schema
     2,
     planning_callback
 )
