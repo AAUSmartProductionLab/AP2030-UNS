@@ -208,8 +208,8 @@ state_machine.failureChance = 0
 
 def on_mqtt_ready():
     """Callback when MQTT connection is established"""
-    # Initialize planner with MQTT client
-    initialize_planner(productionPlanner.client)
+    # Initialize planner with MQTT client (Proxy is the client itself)
+    initialize_planner(productionPlanner)
     
     # Register asset
     state_machine.register_asset()
