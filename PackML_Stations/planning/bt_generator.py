@@ -24,6 +24,7 @@ class BTGeneratorConfig:
     subtrees_dir: str = "../BTDescriptions"
     use_prebuilt_subtrees: bool = True
     include_error_recovery: bool = True
+    tree_nodes_model_file: str = "tree_nodes_model.xml"
     # Map process names to subtree files
     subtree_file_mapping: Dict[str, str] = None
     
@@ -96,6 +97,9 @@ class BTGenerator:
         # Load and append pre-built subtrees
         if self.config.use_prebuilt_subtrees:
             self._append_prebuilt_subtrees(root, matching_result)
+        
+        # Append TreeNodesModel for node type definitions
+        self._append_tree_nodes_model(root)
         
         # Format and return XML
         return self._format_xml(root)
@@ -268,6 +272,27 @@ class BTGenerator:
         except Exception as e:
             logger.warning(f"Could not load {filename}: {e}")
             return None
+    
+    def _append_tree_nodes_model(self, root: ET.Element) -> None:
+        """Load and append the TreeNodesModel from the model file"""
+        try:
+            filepath = os.path.join(
+                self.config.subtrees_dir, 
+                self.config.tree_nodes_model_file
+            )
+            tree = ET.parse(filepath)
+            model_root = tree.getroot()
+            
+            # Find and append the TreeNodesModel element
+            for child in model_root:
+                if child.tag == "TreeNodesModel":
+                    root.append(child)
+                    logger.debug(f"Loaded TreeNodesModel from {filepath}")
+                    return
+            
+            logger.warning(f"No TreeNodesModel found in {filepath}")
+        except Exception as e:
+            logger.warning(f"Could not load TreeNodesModel: {e}")
     
     def _format_xml(self, root: ET.Element) -> str:
         """Format XML with proper indentation"""
