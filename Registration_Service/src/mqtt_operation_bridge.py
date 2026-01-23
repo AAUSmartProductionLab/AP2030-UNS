@@ -453,7 +453,13 @@ class MQTTOperationBridge:
                         logger.debug(f"Parsed JSON array string for '{field_name}': {parsed}")
                         return parsed
                 except json.JSONDecodeError:
-                    pass
+                    # Handle bracket-wrapped non-JSON strings like "[https://example.com]"
+                    # Strip brackets and treat content as single array element
+                    if stripped.endswith(']'):
+                        inner_content = stripped[1:-1].strip()
+                        if inner_content:
+                            logger.debug(f"Extracted content from bracket-wrapped string for '{field_name}'")
+                            return [inner_content]
             
             # If not parseable as array, wrap single value in array
             # (e.g., "https://example.com" -> ["https://example.com"])
