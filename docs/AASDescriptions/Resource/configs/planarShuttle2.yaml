@@ -3,7 +3,7 @@ planarTableShuttle2AAS:
     id: 'https://smartproductionlab.aau.dk/aas/planarTableShuttle2AAS'
     globalAssetId: 'https://smartproductionlab.aau.dk/assets/OTZhZGNiZDAtNTNhNS00YmJhLThiNDctMzFjYzM3OGNiNTMw'
     derivedFrom: 'https://smartproductionlab.aau.dk/aas/templates/resource'
-    assetType: 'https://smartproductionlab.aau.dk/Resource/CPS/MotionSystem/planarTableShuttle2'
+    assetType: 'https://smartproductionlab.aau.dk/Resource/CPS/MotionSystem/planarTableShuttle'
     serialNumber: 'PM-S1-2024-001'
     location: 'InnoLab, Nybrovej, AAU'
     AssetInterfacesDescription:
@@ -104,7 +104,7 @@ planarTableShuttle2AAS:
         Name: 'BillOfMaterials'
         Archetype: 'OneUp'
         IsPartOf:
-            planarTable:
+            planarTableAAS:
                 globalAssetId: 'https://smartproductionlab.aau.dk/assets/ZTM1NTAzNzQtMDZkNi00N2Q4LWI1YTktMGNhMmY0MDEyNTk4'
     
     Capabilities:
