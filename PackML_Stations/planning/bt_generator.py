@@ -192,21 +192,24 @@ class BTGenerator:
         
         # Main process flow with error recovery
         process_fallback = ET.SubElement(reactive_seq, "Fallback")
-        seq_mem = ET.SubElement(process_fallback, "SequenceWithMemory")
         
-        # Add subtree call for each process step
-        for match in matching_result.process_matches:
-            step = match.process_step
-            subtree_id = self._get_subtree_id(step.name)
+        # Only create SequenceWithMemory if there are process steps to add
+        if matching_result.process_matches:
+            seq_mem = ET.SubElement(process_fallback, "SequenceWithMemory")
             
-            # Add the subtree call
-            subtree_elem = ET.SubElement(seq_mem, "SubTree", ID=subtree_id)
-            
-            # Add resource parameter if we have a match
-            if match.primary_resource:
-                # Use generic parameter name based on step
-                param_name = f"{step.name}System"
-                subtree_elem.set(param_name, f"{{{param_name}}}")
+            # Add subtree call for each process step
+            for match in matching_result.process_matches:
+                step = match.process_step
+                subtree_id = self._get_subtree_id(step.name)
+                
+                # Add the subtree call
+                subtree_elem = ET.SubElement(seq_mem, "SubTree", ID=subtree_id)
+                
+                # Add resource parameter if we have a match
+                if match.primary_resource:
+                    # Use generic parameter name based on step
+                    param_name = f"{step.name}System"
+                    subtree_elem.set(param_name, f"{{{param_name}}}")
         
         # Error recovery: Scraping
         if self.config.include_error_recovery:
