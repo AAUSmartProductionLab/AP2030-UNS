@@ -38,6 +38,14 @@ struct BtControllerParameters
     std::string suspend_topic;
     std::string unsuspend_topic;
     std::string reset_topic;
+    
+    // Response topics for command acknowledgments
+    std::string start_response_topic;
+    std::string stop_response_topic;
+    std::string suspend_response_topic;
+    std::string unsuspend_response_topic;
+    std::string reset_response_topic;
+    
     mqtt_utils::Topic state_publication_config;
 
     // Registration Service Configuration
@@ -79,6 +87,14 @@ private:
     std::string process_aas_id_;
     std::mutex process_aas_id_mutex_;
 
+    // Pending command UUIDs for responses
+    std::string pending_start_uuid_;
+    std::string pending_stop_uuid_;
+    std::string pending_suspend_uuid_;
+    std::string pending_unsuspend_uuid_;
+    std::string pending_reset_uuid_;
+    std::mutex pending_command_mutex_;
+
     PackML::State current_packml_state_;
     BT::NodeStatus current_bt_tick_status_;
 
@@ -94,6 +110,7 @@ private:
 
     void setStateAndPublish(PackML::State new_packml_state, std::optional<BT::NodeStatus> new_bt_tick_status_opt = std::nullopt);
     void publishCurrentState();
+    void publishCommandResponse(const std::string& response_topic, const std::string& uuid, bool success);
 
     void processBehaviorTreeStart();
     void processStartingState();

@@ -11,7 +11,7 @@ registration:
   # Path to the orchestrator's AAS description config file
   config_path: "../../AASDescriptions/Resource/configs/orchestrator.yaml"
   # MQTT topic to publish config for registration (uses client_id from mqtt section)
-  topic_pattern: "NN/Nybrovej/InnoLab/{client_id}/Registration/Config"
+  topic_pattern: "NN/Nybrovej/InnoLab/Registration/Config"
 
 groot2:
   port: 1667
