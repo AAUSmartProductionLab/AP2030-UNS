@@ -85,6 +85,7 @@ class BTGenerator:
         """
         root = ET.Element("root")
         root.set("BTCPP_format", "4")
+        root.set("main_tree_to_execute", "Production")
         
         # Generate main production tree
         self._generate_main_tree(
