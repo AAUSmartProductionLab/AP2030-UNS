@@ -390,7 +390,14 @@ class PackMLStateMachine:
 
     def execute_command(self, message, execute_topic: Topic, process_function, *args):
         if self.state == PackMLState.EXECUTE:
-            if self.uuids and message.get("Uuid") == self.uuids[0] and not self.is_processing:
+            command_uuid = message.get("Uuid")
+            
+            # Auto-queue for service mode (no occupation) - process commands immediately
+            if self.auto_execute and not self.enable_occupation:
+                if command_uuid and command_uuid not in self.uuids:
+                    self.uuids.append(command_uuid)
+            
+            if self.uuids and command_uuid == self.uuids[0] and not self.is_processing:
                 # Do not pop from self.uuids here; completing_state will.
                 active_uuid = self.uuids[0]
 
