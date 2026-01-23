@@ -522,9 +522,10 @@ void BehaviorTreeController::setupMainMqttMessageHandler()
     {
         if (topic == this->app_params_.start_topic)
         {
-            std::string uuid = (payload.contains("Uuid") && payload["Uuid"].is_string()) 
-                               ? payload["Uuid"].get<std::string>() : "";
-            
+            std::string uuid = (payload.contains("Uuid") && payload["Uuid"].is_string())
+                                   ? payload["Uuid"].get<std::string>()
+                                   : "";
+
             if (!this->sigint_received_.load())
             {
                 // Only allow start from IDLE state
@@ -569,8 +570,9 @@ void BehaviorTreeController::setupMainMqttMessageHandler()
         }
         else if (topic == this->app_params_.stop_topic)
         {
-            std::string uuid = (payload.contains("Uuid") && payload["Uuid"].is_string()) 
-                               ? payload["Uuid"].get<std::string>() : "";
+            std::string uuid = (payload.contains("Uuid") && payload["Uuid"].is_string())
+                                   ? payload["Uuid"].get<std::string>()
+                                   : "";
             {
                 std::lock_guard<std::mutex> lock(this->pending_command_mutex_);
                 this->pending_stop_uuid_ = uuid;
@@ -579,8 +581,9 @@ void BehaviorTreeController::setupMainMqttMessageHandler()
         }
         else if (topic == this->app_params_.suspend_topic)
         {
-            std::string uuid = (payload.contains("Uuid") && payload["Uuid"].is_string()) 
-                               ? payload["Uuid"].get<std::string>() : "";
+            std::string uuid = (payload.contains("Uuid") && payload["Uuid"].is_string())
+                                   ? payload["Uuid"].get<std::string>()
+                                   : "";
             {
                 std::lock_guard<std::mutex> lock(this->pending_command_mutex_);
                 this->pending_suspend_uuid_ = uuid;
@@ -589,8 +592,9 @@ void BehaviorTreeController::setupMainMqttMessageHandler()
         }
         else if (topic == this->app_params_.unsuspend_topic)
         {
-            std::string uuid = (payload.contains("Uuid") && payload["Uuid"].is_string()) 
-                               ? payload["Uuid"].get<std::string>() : "";
+            std::string uuid = (payload.contains("Uuid") && payload["Uuid"].is_string())
+                                   ? payload["Uuid"].get<std::string>()
+                                   : "";
             if (this->current_packml_state_ == PackML::State::SUSPENDED)
             {
                 {
@@ -607,8 +611,9 @@ void BehaviorTreeController::setupMainMqttMessageHandler()
         }
         else if (topic == this->app_params_.reset_topic)
         {
-            std::string uuid = (payload.contains("Uuid") && payload["Uuid"].is_string()) 
-                               ? payload["Uuid"].get<std::string>() : "";
+            std::string uuid = (payload.contains("Uuid") && payload["Uuid"].is_string())
+                                   ? payload["Uuid"].get<std::string>()
+                                   : "";
             if (this->current_packml_state_ == PackML::State::STOPPED ||
                 this->current_packml_state_ == PackML::State::COMPLETE ||
                 this->current_packml_state_ == PackML::State::ABORTED)
@@ -755,9 +760,9 @@ void BehaviorTreeController::publishCurrentState()
     }
 }
 
-void BehaviorTreeController::publishCommandResponse(const std::string& response_topic, 
-                                                     const std::string& uuid, 
-                                                     bool success)
+void BehaviorTreeController::publishCommandResponse(const std::string &response_topic,
+                                                    const std::string &uuid,
+                                                    bool success)
 {
     if (!mqtt_client_ || !mqtt_client_->is_connected())
     {
@@ -771,8 +776,8 @@ void BehaviorTreeController::publishCommandResponse(const std::string& response_
     response_json["TimeStamp"] = bt_utils::getCurrentTimestampISO();
 
     mqtt_client_->publish_message(response_topic, response_json, 2, false);
-    
-    std::cout << "Published command response to " << response_topic 
+
+    std::cout << "Published command response to " << response_topic
               << ": " << (success ? "SUCCESS" : "FAILURE") << std::endl;
 }
 
@@ -828,7 +833,7 @@ void BehaviorTreeController::processStartingState()
         std::cerr << "Failed to fetch equipment mapping from AAS!" << std::endl;
         std::cerr << "Cannot continue without equipment configuration." << std::endl;
         setStateAndPublish(PackML::State::ABORTED);
-        
+
         // Send failure response for Start command
         std::string uuid;
         {
@@ -848,7 +853,7 @@ void BehaviorTreeController::processStartingState()
         std::cerr << "Failed to register nodes with AAS configuration!" << std::endl;
         setStateAndPublish(PackML::State::ABORTED);
         nodes_registered_ = false;
-        
+
         // Send failure response for Start command
         std::string uuid;
         {
@@ -884,7 +889,7 @@ void BehaviorTreeController::processStartingState()
                 mqtt_client_->set_message_handler(main_mqtt_message_handler_);
             }
             setStateAndPublish(PackML::State::ABORTED);
-            
+
             std::string uuid;
             {
                 std::lock_guard<std::mutex> lock(pending_command_mutex_);
@@ -908,7 +913,7 @@ void BehaviorTreeController::processStartingState()
                 mqtt_client_->set_message_handler(main_mqtt_message_handler_);
             }
             setStateAndPublish(PackML::State::ABORTED);
-            
+
             std::string uuid;
             {
                 std::lock_guard<std::mutex> lock(pending_command_mutex_);
@@ -931,7 +936,8 @@ void BehaviorTreeController::processStartingState()
         // Store the process ID in blackboard for nodes to access
         root_blackboard->set("ProcessAASId", process_id);
 
-        bt_tree_ = bt_factory_->createTree("MainTree", root_blackboard);
+        // Pass empty string to use main_tree_to_execute attribute from XML
+        bt_tree_ = bt_factory_->createTree({}, root_blackboard);
     }
     catch (const BT::RuntimeError &e)
     {
@@ -941,7 +947,7 @@ void BehaviorTreeController::processStartingState()
             mqtt_client_->set_message_handler(main_mqtt_message_handler_);
         }
         setStateAndPublish(PackML::State::ABORTED);
-        
+
         // Send failure response for Start command
         std::string uuid;
         {
@@ -977,7 +983,7 @@ void BehaviorTreeController::processStartingState()
         }
         bt_publisher_.reset();
         setStateAndPublish(PackML::State::ABORTED);
-        
+
         // Send failure response for Start command
         std::string uuid;
         {
@@ -997,7 +1003,7 @@ void BehaviorTreeController::processStartingState()
     // Transition to EXECUTE state after successful initialization
     std::cout << "====== Behavior tree fully initialized, transitioning to EXECUTE... ======" << std::endl;
     setStateAndPublish(PackML::State::EXECUTE, BT::NodeStatus::IDLE);
-    
+
     // Send success response for Start command
     std::string uuid;
     {
@@ -1036,7 +1042,7 @@ void BehaviorTreeController::processBehaviorTreeUnsuspend()
     mqtt_unsuspend_bt_flag_ = false;
 
     setStateAndPublish(PackML::State::EXECUTE, BT::NodeStatus::IDLE);
-    
+
     // Send success response for Unsuspend command
     std::string uuid;
     {
@@ -1113,7 +1119,7 @@ void BehaviorTreeController::processResettingState()
 
     std::cout << "====== Reset complete, all BT interfaces purged. Transitioning to IDLE... ======" << std::endl;
     setStateAndPublish(PackML::State::IDLE);
-    
+
     // Send success response for Reset command
     std::string uuid;
     {
@@ -1140,7 +1146,7 @@ void BehaviorTreeController::manageRunningBehaviorTree()
                   << "Halting tree and transitioning to STOPPED..." << std::endl;
         bt_tree_.haltTree();
         setStateAndPublish(PackML::State::STOPPED);
-        
+
         // Send success response for Stop command
         std::string uuid;
         {
@@ -1157,7 +1163,7 @@ void BehaviorTreeController::manageRunningBehaviorTree()
         bt_tree_.haltTree();
         mqtt_suspend_bt_flag_ = false;
         setStateAndPublish(PackML::State::SUSPENDED);
-        
+
         // Send success response for Suspend command
         std::string uuid;
         {
