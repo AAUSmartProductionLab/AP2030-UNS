@@ -24,6 +24,7 @@ services:
       - .:/app  # Mount entire directory first
       - ../MQTTSchemas:/app/MQTTSchemas  # Then overlay schemas
       - ../AASDescriptions:/app/AASDescriptions  # Mount AAS configs for registration
+      - ../BTDescriptions:/app/BTDescriptions  # Mount BT descriptions for subtree loading
     command: productionPlanner.py
 
   filling_station:

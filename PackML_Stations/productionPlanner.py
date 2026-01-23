@@ -59,8 +59,8 @@ def initialize_planner(mqtt_client):
         mqtt_broker=BROKER_ADDRESS,
         mqtt_port=BROKER_PORT,
         registration_topic=REGISTRATION_TOPIC,
-        process_aas_output_dir="../AASDescriptions/Process/configs",
-        bt_output_dir="../BTDescriptions",
+        process_aas_output_dir="./AASDescriptions/Process/configs",
+        bt_output_dir="./BTDescriptions",
         save_intermediate_files=True
     )
     
