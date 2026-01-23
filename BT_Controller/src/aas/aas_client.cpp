@@ -747,6 +747,62 @@ std::optional<nlohmann::json> AASClient::fetchHierarchicalStructure(const std::s
     }
 }
 
+std::optional<nlohmann::json> AASClient::fetchRequiredCapabilities(const std::string &aas_shell_id)
+{
+    try
+    {
+        std::cout << "Fetching RequiredCapabilities submodel for AAS: " << aas_shell_id << std::endl;
+
+        // Step 1: Fetch the full shell to get submodel references
+        std::string encoded_id = base64url_encode(aas_shell_id);
+        std::string shell_endpoint = "/shells/" + encoded_id;
+        nlohmann::json shell_data = makeGetRequest(shell_endpoint);
+
+        if (!shell_data.contains("submodels") || !shell_data["submodels"].is_array())
+        {
+            std::cerr << "Shell missing submodels array" << std::endl;
+            return std::nullopt;
+        }
+
+        // Step 2: Find the RequiredCapabilities submodel reference
+        std::string submodel_id;
+        for (const auto &submodel_ref : shell_data["submodels"])
+        {
+            if (submodel_ref.contains("keys") && submodel_ref["keys"].is_array())
+            {
+                std::string ref_value = submodel_ref["keys"][0]["value"];
+                if (ref_value.find("RequiredCapabilities") != std::string::npos)
+                {
+                    submodel_id = ref_value;
+                    break;
+                }
+            }
+        }
+
+        if (submodel_id.empty())
+        {
+            std::cerr << "RequiredCapabilities submodel reference not found for AAS: " << aas_shell_id << std::endl;
+            return std::nullopt;
+        }
+
+        std::cout << "Found RequiredCapabilities submodel reference: " << submodel_id << std::endl;
+
+        // Step 3: Fetch the submodel using base64url-encoded ID
+        std::string submodel_id_b64 = base64url_encode(submodel_id);
+        std::string submodel_url = "/submodels/" + submodel_id_b64;
+
+        nlohmann::json submodel_data = makeGetRequest(submodel_url);
+        std::cout << "Successfully fetched RequiredCapabilities submodel" << std::endl;
+
+        return submodel_data;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Error fetching RequiredCapabilities: " << e.what() << std::endl;
+        return std::nullopt;
+    }
+}
+
 std::optional<nlohmann::json> AASClient::lookupAssetById(const std::string &asset_id)
 {
     try

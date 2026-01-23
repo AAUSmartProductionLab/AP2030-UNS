@@ -40,9 +40,6 @@ struct BtControllerParameters
     std::string reset_topic;
     mqtt_utils::Topic state_publication_config;
 
-    // AAS Configuration
-    std::vector<std::string> asset_ids_to_resolve;
-
     // Registration Service Configuration
     std::string registration_config_path;      // Path to orchestrator's AAS description YAML
     std::string registration_topic_pattern;    // MQTT topic pattern for registration
@@ -108,11 +105,8 @@ private:
     bool registerNodesWithAASConfig();
     void unregisterAllNodes();
 
-    // Methods for AAS hierarchical structure fetching
+    // Methods for AAS structure fetching from process AAS
     bool fetchAndBuildEquipmentMapping(BT::Blackboard::Ptr blackboard = nullptr);
-    void recursivelyResolveHierarchy(const std::string &asset_id, const std::string &asset_name,
-                                     std::set<std::string> &visited_assets);
-    std::string getArchetype(const nlohmann::json &hierarchy_submodel);
     void populateBlackboard(BT::Blackboard::Ptr blackboard);
 
     // Methods for AAS registration

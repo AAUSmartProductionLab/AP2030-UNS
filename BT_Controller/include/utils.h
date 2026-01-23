@@ -64,7 +64,6 @@ namespace bt_utils
                             int &groot2_port,
                             std::string &bt_description_path,
                             std::string &bt_nodes_path,
-                            std::vector<std::string> &asset_ids_to_resolve,
                             std::string &registration_config_path,
                             std::string &registration_topic_pattern);
 

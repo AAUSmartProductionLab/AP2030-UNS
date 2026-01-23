@@ -98,7 +98,6 @@ namespace bt_utils
                             int &groot2_port,
                             std::string &bt_description_path,
                             std::string &bt_nodes_path,
-                            std::vector<std::string> &asset_ids_to_resolve,
                             std::string &registration_config_path,
                             std::string &registration_topic_pattern)
     {
@@ -151,18 +150,6 @@ namespace bt_utils
                 if (aas["registry_url"])
                 {
                     aasRegistryUrl = expandEnvVars(aas["registry_url"].as<std::string>());
-                }
-
-                if (aas["asset_ids"])
-                {
-                    auto asset_ids_node = aas["asset_ids"];
-                    if (asset_ids_node.IsSequence())
-                    {
-                        for (const auto &id : asset_ids_node)
-                        {
-                            asset_ids_to_resolve.push_back(expandEnvVars(id.as<std::string>()));
-                        }
-                    }
                 }
             }
 
@@ -220,11 +207,6 @@ namespace bt_utils
             std::cout << "  UNS Topic Prefix: " << unsTopicPrefix << std::endl;
             std::cout << "  AAS Server: " << aasServerUri << std::endl;
             std::cout << "  AAS Registry: " << aasRegistryUrl << std::endl;
-            std::cout << "  Asset IDs to resolve: " << asset_ids_to_resolve.size() << " asset(s)" << std::endl;
-            for (const auto &asset_id : asset_ids_to_resolve)
-            {
-                std::cout << "    - " << asset_id << std::endl;
-            }
             std::cout << "  Groot2 Port: " << groot2_port << std::endl;
             if (!registration_config_path.empty())
             {

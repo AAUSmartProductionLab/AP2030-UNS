@@ -39,6 +39,9 @@ public:
     // Fetch the HierarchicalStructure submodel of an asset
     std::optional<nlohmann::json> fetchHierarchicalStructure(const std::string &asset_id);
 
+    // Fetch the RequiredCapabilities submodel from a process AAS
+    std::optional<nlohmann::json> fetchRequiredCapabilities(const std::string &aas_shell_id);
+
     // Fetch the shell descriptor to get the asset ID from registry
     std::optional<nlohmann::json> lookupAssetById(const std::string &asset_id);
 

@@ -90,12 +90,22 @@ void BehaviorTreeController::onSigint()
 
 bool BehaviorTreeController::fetchAndBuildEquipmentMapping(BT::Blackboard::Ptr blackboard)
 {
-    std::cout << "Fetching hierarchical structures from AAS..." << std::endl;
-    std::cout << "Asset IDs to resolve:" << std::endl;
-    for (const auto &asset_id : app_params_.asset_ids_to_resolve)
+    std::cout << "Building equipment mapping from process AAS..." << std::endl;
+
+    // Get the process AAS ID
+    std::string process_id;
     {
-        std::cout << "  - " << asset_id << std::endl;
+        std::lock_guard<std::mutex> lock(process_aas_id_mutex_);
+        process_id = process_aas_id_;
     }
+
+    if (process_id.empty())
+    {
+        std::cerr << "No process AAS ID available!" << std::endl;
+        return false;
+    }
+
+    std::cout << "Process AAS ID: " << process_id << std::endl;
 
     try
     {
@@ -105,13 +115,149 @@ bool BehaviorTreeController::fetchAndBuildEquipmentMapping(BT::Blackboard::Ptr b
             equipment_aas_mapping_.clear();
         }
 
-        // Recursively resolve the hierarchy for each asset in the list
-        std::set<std::string> visited_assets;
-        for (const auto &asset_id : app_params_.asset_ids_to_resolve)
+        // Fetch the RequiredCapabilities submodel from the process AAS
+        auto capabilities_opt = aas_client_->fetchRequiredCapabilities(process_id);
+        if (!capabilities_opt.has_value())
         {
-            // Extract a simple name from the asset ID for logging
-            std::string asset_name = asset_id.substr(asset_id.find_last_of('/') + 1);
-            recursivelyResolveHierarchy(asset_id, asset_name, visited_assets);
+            std::cerr << "Could not fetch RequiredCapabilities from process AAS: " << process_id << std::endl;
+            return false;
+        }
+
+        const auto &capabilities = capabilities_opt.value();
+        std::cout << "Found RequiredCapabilities submodel" << std::endl;
+
+        // Parse each capability and extract the resource references
+        if (!capabilities.contains("submodelElements") || !capabilities["submodelElements"].is_array())
+        {
+            std::cerr << "No submodelElements in RequiredCapabilities" << std::endl;
+            return false;
+        }
+
+        std::set<std::string> processed_resources;
+
+        // Each submodelElement is a capability (SubmodelElementCollection)
+        for (const auto &capability : capabilities["submodelElements"])
+        {
+            if (!capability.contains("modelType") ||
+                capability["modelType"].get<std::string>() != "SubmodelElementCollection")
+            {
+                continue;
+            }
+
+            std::string capability_name = capability.value("idShort", "unknown");
+            std::cout << "  Processing capability: " << capability_name << std::endl;
+
+            // Navigate into the capability's value array to find the References collection
+            if (!capability.contains("value") || !capability["value"].is_array())
+            {
+                continue;
+            }
+
+            for (const auto &element : capability["value"])
+            {
+                // Look for the References SubmodelElementCollection
+                if (!element.contains("modelType") ||
+                    element["modelType"].get<std::string>() != "SubmodelElementCollection")
+                {
+                    continue;
+                }
+
+                if (!element.contains("idShort") || element["idShort"].get<std::string>() != "References")
+                {
+                    continue;
+                }
+
+                // Found the References collection, now extract ReferenceElements
+                if (!element.contains("value") || !element["value"].is_array())
+                {
+                    continue;
+                }
+
+                for (const auto &ref_element : element["value"])
+                {
+                    if (!ref_element.contains("modelType") ||
+                        ref_element["modelType"].get<std::string>() != "ReferenceElement")
+                    {
+                        continue;
+                    }
+
+                    // The idShort of the ReferenceElement is the resource name (e.g., "imaLoadingSystemAAS")
+                    if (!ref_element.contains("idShort"))
+                    {
+                        continue;
+                    }
+
+                    std::string resource_id_short = ref_element["idShort"].get<std::string>();
+
+                    // Skip if already processed
+                    if (processed_resources.find(resource_id_short) != processed_resources.end())
+                    {
+                        continue;
+                    }
+                    processed_resources.insert(resource_id_short);
+
+                    // Derive AAS shell ID from the submodel reference
+                    // Submodel pattern: {base_url}/submodels/instances/{idShort}/...
+                    // AAS pattern: {base_url}/aas/{systemName} where systemName = idShort without "AAS" suffix
+                    std::string aas_shell_id;
+
+                    if (ref_element.contains("value") &&
+                        ref_element["value"].contains("keys") &&
+                        ref_element["value"]["keys"].is_array() &&
+                        !ref_element["value"]["keys"].empty())
+                    {
+                        std::string submodel_id = ref_element["value"]["keys"][0]["value"].get<std::string>();
+
+                        // Extract idShort from submodel path: .../instances/{idShort}/...
+                        size_t instances_pos = submodel_id.find("/instances/");
+                        if (instances_pos != std::string::npos)
+                        {
+                            size_t id_start = instances_pos + 11; // length of "/instances/"
+                            size_t id_end = submodel_id.find('/', id_start);
+                            if (id_end != std::string::npos)
+                            {
+                                std::string id_short = submodel_id.substr(id_start, id_end - id_start);
+                                
+                                // Derive system name by removing "AAS" suffix if present
+                                std::string system_name = id_short;
+                                if (system_name.size() > 3 && system_name.substr(system_name.size() - 3) == "AAS")
+                                {
+                                    system_name = system_name.substr(0, system_name.size() - 3);
+                                }
+                                
+                                // Construct AAS shell ID
+                                size_t base_end = submodel_id.find("/submodels/");
+                                if (base_end != std::string::npos)
+                                {
+                                    std::string base_url = submodel_id.substr(0, base_end);
+                                    aas_shell_id = base_url + "/aas/" + system_name;
+                                }
+                            }
+                        }
+                    }
+
+                    if (aas_shell_id.empty())
+                    {
+                        std::cerr << "    Could not derive AAS shell ID for: " << resource_id_short << std::endl;
+                        continue;
+                    }
+
+                    // Use the resource name (without AAS suffix) as the key
+                    std::string resource_name = resource_id_short;
+                    if (resource_name.size() > 3 && resource_name.substr(resource_name.size() - 3) == "AAS")
+                    {
+                        resource_name = resource_name.substr(0, resource_name.size() - 3);
+                    }
+
+                    std::cout << "    Found resource: " << resource_name << " -> " << aas_shell_id << std::endl;
+
+                    // Add to equipment mapping
+                    {
+                        std::lock_guard<std::mutex> lock(equipment_mapping_mutex_);
+                        equipment_aas_mapping_[resource_name] = aas_shell_id;
+                    }
+                }
+            }
         }
 
         {
@@ -119,7 +265,7 @@ bool BehaviorTreeController::fetchAndBuildEquipmentMapping(BT::Blackboard::Ptr b
 
             if (equipment_aas_mapping_.empty())
             {
-                std::cerr << "No equipment found in hierarchical structure!" << std::endl;
+                std::cerr << "No equipment found in process AAS RequiredCapabilities!" << std::endl;
                 return false;
             }
 
@@ -141,144 +287,8 @@ bool BehaviorTreeController::fetchAndBuildEquipmentMapping(BT::Blackboard::Ptr b
     }
     catch (const std::exception &e)
     {
-        std::cerr << "Error fetching hierarchical structure: " << e.what() << std::endl;
+        std::cerr << "Error fetching equipment from process AAS: " << e.what() << std::endl;
         return false;
-    }
-}
-
-std::string BehaviorTreeController::getArchetype(const nlohmann::json &hierarchy_submodel)
-{
-    if (!hierarchy_submodel.contains("submodelElements") || !hierarchy_submodel["submodelElements"].is_array())
-    {
-        return "";
-    }
-
-    for (const auto &element : hierarchy_submodel["submodelElements"])
-    {
-        if (element.contains("idShort") && element["idShort"].get<std::string>() == "Archetype" &&
-            element.contains("modelType") && element["modelType"].get<std::string>() == "Property")
-        {
-            if (element.contains("value"))
-            {
-                return element["value"].get<std::string>();
-            }
-        }
-    }
-
-    return "";
-}
-
-void BehaviorTreeController::recursivelyResolveHierarchy(const std::string &asset_id, const std::string &asset_name,
-                                                         std::set<std::string> &visited_assets)
-{
-    std::cout << "Resolving hierarchy for: " << asset_name << " (" << asset_id << ")" << std::endl;
-
-    // Check if we've already visited this asset (cycle detection)
-    if (visited_assets.find(asset_id) != visited_assets.end())
-    {
-        std::cout << "  Already visited " << asset_name << ", skipping to avoid circular reference" << std::endl;
-        return;
-    }
-
-    // Mark as visited
-    visited_assets.insert(asset_id);
-
-    // Lookup the AAS shell ID from the asset ID
-    auto aas_id_opt = aas_client_->lookupAasIdFromAssetId(asset_id);
-    if (!aas_id_opt.has_value())
-    {
-        std::cerr << "Could not find AAS shell for asset: " << asset_id << std::endl;
-        return;
-    }
-
-    std::string aas_shell_id = aas_id_opt.value();
-
-    // Add this asset to the mapping using the AAS shell ID
-    {
-        std::lock_guard<std::mutex> lock(equipment_mapping_mutex_);
-        equipment_aas_mapping_[asset_name] = aas_shell_id;
-    }
-
-    // Fetch the HierarchicalStructures submodel using the AAS shell ID
-    auto hierarchy_opt = aas_client_->fetchHierarchicalStructure(aas_shell_id);
-    if (!hierarchy_opt.has_value())
-    {
-        std::cout << "No hierarchical structure found for " << asset_name << std::endl;
-        return;
-    }
-
-    const auto &hierarchy = hierarchy_opt.value();
-
-    // Check the archetype to determine traversal direction
-    std::string archetype = getArchetype(hierarchy);
-    std::cout << "  Archetype: " << (archetype.empty() ? "(not specified)" : archetype) << std::endl;
-
-    // If archetype is "OneUp", this entity points upward in hierarchy
-    // We should NOT traverse its children as they point back to parents
-    if (archetype == "OneUp")
-    {
-        std::cout << "  Archetype is OneUp, skipping child traversal (points to parent)" << std::endl;
-        return;
-    }
-
-    // Look for submodel elements
-    if (!hierarchy.contains("submodelElements") || !hierarchy["submodelElements"].is_array())
-    {
-        std::cout << "No submodelElements in HierarchicalStructures for " << asset_name << std::endl;
-        return;
-    }
-
-    // Find the EntryNode entity which contains the children
-    nlohmann::json entry_node;
-    bool found_entry_node = false;
-
-    for (const auto &element : hierarchy["submodelElements"])
-    {
-        if (element.contains("idShort") && element["idShort"].get<std::string>() == "EntryNode" &&
-            element.contains("modelType") && element["modelType"].get<std::string>() == "Entity")
-        {
-            entry_node = element;
-            found_entry_node = true;
-            break;
-        }
-    }
-
-    if (!found_entry_node)
-    {
-        std::cout << "No EntryNode found in HierarchicalStructures for " << asset_name << std::endl;
-        return;
-    }
-
-    // Check if EntryNode has statements (children)
-    if (!entry_node.contains("statements") || !entry_node["statements"].is_array())
-    {
-        std::cout << "No statements in EntryNode for " << asset_name << std::endl;
-        return;
-    }
-
-    // Iterate through statements to find child entities
-    for (const auto &statement : entry_node["statements"])
-    {
-        // Look for Entity elements (not RelationshipElement, not SubmodelElementCollection)
-        if (!statement.contains("modelType") || statement["modelType"].get<std::string>() != "Entity")
-        {
-            continue;
-        }
-
-        // Skip if it doesn't have the required fields
-        if (!statement.contains("idShort") || !statement.contains("globalAssetId"))
-        {
-            continue;
-        }
-
-        std::string child_name = statement["idShort"].get<std::string>();
-        std::string child_global_asset_id = statement["globalAssetId"].get<std::string>();
-
-        std::cout << "  Found child: " << child_name << " -> " << child_global_asset_id << std::endl;
-
-        // Recursively resolve this child's hierarchy
-        // Pass the visited set to detect cycles
-        recursivelyResolveHierarchy(child_global_asset_id, child_name, visited_assets);
     }
 }
 
@@ -451,7 +461,6 @@ void BehaviorTreeController::loadAppConfiguration(int argc, char *argv[])
         app_params_.groot2_port,
         app_params_.bt_description_path,
         app_params_.bt_nodes_path,
-        app_params_.asset_ids_to_resolve,
         app_params_.registration_config_path,
         app_params_.registration_topic_pattern);
 
@@ -720,7 +729,7 @@ void BehaviorTreeController::processBehaviorTreeStart()
     }
 
     std::cout << "====== Starting behavior tree for process: " << process_id << " ======" << std::endl;
-    
+
     // Transition to STARTING state and initialize the BT
     processStartingState();
 }
@@ -785,7 +794,7 @@ void BehaviorTreeController::processStartingState()
         // Create blackboard and populate with equipment mapping
         auto root_blackboard = BT::Blackboard::create();
         populateBlackboard(root_blackboard);
-        
+
         // Store the process ID in blackboard for nodes to access
         root_blackboard->set("ProcessAASId", process_id);
 
@@ -1038,8 +1047,8 @@ bool BehaviorTreeController::publishConfigToRegistrationService()
         auto msg = mqtt::message::create(
             app_params_.registration_topic,
             yaml_content,
-            2,     // QoS 2 for reliable delivery
-            false  // Don't retain
+            2,    // QoS 2 for reliable delivery
+            false // Don't retain
         );
         mqtt_client_->publish(msg)->wait();
         std::cout << "Successfully published registration config to registration service" << std::endl;
