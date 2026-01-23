@@ -53,6 +53,10 @@ All schemas are automatically synchronized from the `schemas/` directory. Click 
 - **[moveToPosition.schema.json](MQTTSchemas/moveToPosition.schema.json)**
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/moveToPosition.schema.json)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/MQTTSchemas/moveToPosition.schema.json)
+- **[orchestrationCommand.schema.json](MQTTSchemas/orchestrationCommand.schema.json)**
+  - Command to trigger production orchestration for a pre planned process using specified assets
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/orchestrationCommand.schema.json)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/MQTTSchemas/orchestrationCommand.schema.json)
 - **[order.schema.json](MQTTSchemas/order.schema.json)**
   - JSON Schema for an order
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/order.schema.json)
