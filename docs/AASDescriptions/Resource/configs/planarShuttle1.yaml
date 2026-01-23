@@ -1,6 +1,6 @@
 planarTableShuttle1AAS:
     idShort: planarTableShuttle1AAS
-    id: 'https://smartproductionlab.aau.dk/aas/planarTableShuttle1'
+    id: 'https://smartproductionlab.aau.dk/aas/planarTableShuttle1AAS'
     globalAssetId: 'https://smartproductionlab.aau.dk/assets/ODYwM2Q2YjYtYmUzOS00NTAxLWFhZDktYjc1MjhhMzUzOGNm'
     derivedFrom: 'https://smartproductionlab.aau.dk/aas/templates/resource'
     assetType: 'https://smartproductionlab.aau.dk/Resource/CPS/MotionSystem/planarTableShuttle1'

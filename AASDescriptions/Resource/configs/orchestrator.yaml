@@ -16,7 +16,7 @@ orchestratorAAS:
                 actions:
                     Start:
                         key: 'Start'
-                        title: 'Plan'
+                        title: 'Start'
                         synchronous: 'true'
                         input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/orchestrationCommand.schema.json'
                         output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'

@@ -251,8 +251,12 @@ class RequiredCapabilitiesSubmodelBuilder:
     def _extract_id_short_from_aas_id(self, aas_id: str) -> Optional[str]:
         """Extract idShort from AAS ID URL.
         
+        The AAS ID URL typically contains the system name (e.g., imaLoadingSystem),
+        but the idShort convention appends 'AAS' suffix (e.g., imaLoadingSystemAAS).
+        Submodel IDs use the idShort pattern, not the AAS ID path segment.
+        
         Args:
-            aas_id: AAS ID URL (e.g., https://smartproductionlab.aau.dk/aas/imaLoadingSystemAAS)
+            aas_id: AAS ID URL (e.g., https://smartproductionlab.aau.dk/aas/imaLoadingSystem)
             
         Returns:
             idShort (e.g., imaLoadingSystemAAS), or None if parsing fails
@@ -262,10 +266,16 @@ class RequiredCapabilitiesSubmodelBuilder:
         
         # Try to extract from /aas/ pattern
         if '/aas/' in aas_id:
-            return aas_id.split('/aas/')[-1].rstrip('/')
+            extracted = aas_id.split('/aas/')[-1].rstrip('/')
+        else:
+            # Fallback: use last path segment
+            extracted = aas_id.rstrip('/').split('/')[-1]
         
-        # Fallback: use last path segment
-        return aas_id.rstrip('/').split('/')[-1]
+        # Ensure AAS suffix is present (convention: idShort = systemName + "AAS")
+        if extracted and not extracted.endswith('AAS'):
+            extracted = extracted + 'AAS'
+        
+        return extracted
     
     def _build_capability_reference(self, resource_name: str, cap_ref_config: Dict) -> Optional[model.ReferenceElement]:
         """Build ReferenceElement from explicit config (legacy format).

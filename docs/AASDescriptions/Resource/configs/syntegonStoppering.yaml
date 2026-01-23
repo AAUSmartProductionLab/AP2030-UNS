@@ -1,6 +1,6 @@
 syntegonStopperingSystemAAS:
     idShort: syntegonStopperingSystemAAS
-    id: 'https://smartproductionlab.aau.dk/aas/syntegonStopperingSystem'
+    id: 'https://smartproductionlab.aau.dk/aas/syntegonStopperingSystemAAS'
     globalAssetId: 'https://smartproductionlab.aau.dk/assets/NGQ5ZWE4ZmUtY2Q3OS00Nzc5LWE5YjEtNGEzZGRkODRhNzQ2'
     derivedFrom: 'https://smartproductionlab.aau.dk/aas/templates/resource'
     assetType: 'https://smartproductionlab.aau.dk/Resource/CPPM/StopperingSystem/syntegonStopperingSystem'
