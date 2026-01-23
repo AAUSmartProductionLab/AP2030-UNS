@@ -508,18 +508,27 @@ void BehaviorTreeController::setupMainMqttMessageHandler()
         {
             if (!this->sigint_received_.load())
             {
-                // Only allow start if nodes are registered and in IDLE state
-                if (!this->nodes_registered_.load())
-                {
-                    std::cerr << "Cannot start: Nodes not registered yet!" << std::endl;
-                    return;
-                }
+                // Only allow start from IDLE state
                 if (this->current_packml_state_ != PackML::State::IDLE)
                 {
                     std::cerr << "Cannot start from " << PackML::stateToString(this->current_packml_state_)
                               << " state. Must be in IDLE state." << std::endl;
                     return;
                 }
+
+                // Extract Process AAS ID from the Start command payload
+                if (!payload.contains("Process") || !payload["Process"].is_string())
+                {
+                    std::cerr << "Cannot start: Start command must contain 'Process' field with AAS ID" << std::endl;
+                    return;
+                }
+
+                {
+                    std::lock_guard<std::mutex> lock(this->process_aas_id_mutex_);
+                    this->process_aas_id_ = payload["Process"].get<std::string>();
+                }
+                std::cout << "Received Start command with Process: " << payload["Process"].get<std::string>() << std::endl;
+
                 this->shutdown_flag_ = false;
                 this->mqtt_suspend_bt_flag_ = false;
                 this->mqtt_unsuspend_bt_flag_ = false;
@@ -697,71 +706,42 @@ void BehaviorTreeController::processBehaviorTreeStart()
         return;
     }
 
-    // Check if nodes are registered
-    if (!nodes_registered_.load())
+    // Get the process AAS ID from the stored value
+    std::string process_id;
     {
-        std::cerr << "Cannot start behavior tree: Nodes not registered!" << std::endl;
+        std::lock_guard<std::mutex> lock(process_aas_id_mutex_);
+        process_id = process_aas_id_;
+    }
+
+    if (process_id.empty())
+    {
+        std::cerr << "Cannot start: No process AAS ID specified!" << std::endl;
         return;
     }
 
-    // Check if tree is initialized
-    if (!bt_tree_.rootNode())
-    {
-        std::cerr << "Cannot start: Behavior tree not initialized!" << std::endl;
-        return;
-    }
-
-    // Clear flags and start execution
-    shutdown_flag_ = false;
-    mqtt_suspend_bt_flag_ = false;
-    mqtt_unsuspend_bt_flag_ = false;
-    mqtt_reset_bt_flag_ = false;
-
-    std::cout << "====== Behavior tree starting... ======" << std::endl;
-    setStateAndPublish(PackML::State::EXECUTE, BT::NodeStatus::IDLE);
+    std::cout << "====== Starting behavior tree for process: " << process_id << " ======" << std::endl;
+    
+    // Transition to STARTING state and initialize the BT
+    processStartingState();
 }
 
-void BehaviorTreeController::processBehaviorTreeUnsuspend()
+void BehaviorTreeController::processStartingState()
 {
-    if (current_packml_state_ != PackML::State::SUSPENDED)
+    std::cout << "====== Entering STARTING state... ======" << std::endl;
+    setStateAndPublish(PackML::State::STARTING);
+
+    // Get the process AAS ID
+    std::string process_id;
     {
-        std::cerr << "Cannot unsuspend: Not in SUSPENDED state" << std::endl;
-        return;
+        std::lock_guard<std::mutex> lock(process_aas_id_mutex_);
+        process_id = process_aas_id_;
     }
-
-    if (!bt_tree_.rootNode())
-    {
-        std::cerr << "Cannot unsuspend: No behavior tree exists" << std::endl;
-        setStateAndPublish(PackML::State::IDLE);
-        return;
-    }
-
-    std::cout << "====== Resuming suspended behavior tree... ======" << std::endl;
-
-    // Restore message handler if needed
-    if (mqtt_client_)
-    {
-        mqtt_client_->set_message_handler(main_mqtt_message_handler_);
-    }
-
-    shutdown_flag_ = false;
-    mqtt_suspend_bt_flag_ = false;
-    mqtt_unsuspend_bt_flag_ = false;
-
-    setStateAndPublish(PackML::State::EXECUTE, BT::NodeStatus::IDLE);
-}
-
-void BehaviorTreeController::processResettingState()
-{
-    std::cout << "====== Entering RESETTING state... ======" << std::endl;
-    setStateAndPublish(PackML::State::RESETTING);
 
     // Clear any existing flags
-    mqtt_start_bt_flag_ = false;
+    shutdown_flag_ = false;
     mqtt_suspend_bt_flag_ = false;
     mqtt_unsuspend_bt_flag_ = false;
     mqtt_reset_bt_flag_ = false;
-    shutdown_flag_ = false;
 
     // Fetch equipment mapping from AAS hierarchical structure
     std::cout << "Fetching production line structure from AAS..." << std::endl;
@@ -774,41 +754,6 @@ void BehaviorTreeController::processResettingState()
     }
 
     std::cout << "Equipment mapping successfully built from AAS" << std::endl;
-
-    // Unsubscribe from old node topics if any
-    if (node_message_distributor_ && mqtt_client_)
-    {
-        std::vector<std::string> old_topics = node_message_distributor_->getActiveTopicPatterns();
-        if (!old_topics.empty())
-        {
-            std::cout << "Unsubscribing from " << old_topics.size() << " old topics..." << std::endl;
-            for (const auto &topic_str : old_topics)
-            {
-                try
-                {
-                    mqtt_client_->unsubscribe_topic(topic_str);
-                }
-                catch (const std::exception &e)
-                {
-                    std::cerr << "Exception during unsubscribe: " << e.what() << std::endl;
-                }
-            }
-        }
-    }
-
-    // Halt and clear any existing tree and factory
-    if (bt_tree_.rootNode())
-    {
-        bt_tree_.haltTree();
-        bt_publisher_.reset();
-    }
-    // Reset the tree and factory to ensure no duplicate node registration
-    bt_tree_ = BT::Tree();
-    bt_factory_ = std::make_unique<BT::BehaviorTreeFactory>();
-
-    // Recreate node message distributor for fresh start
-    node_message_distributor_ = std::make_unique<NodeMessageDistributor>(*mqtt_client_);
-    MqttSubBase::setNodeMessageDistributor(node_message_distributor_.get());
 
     // Register nodes with the equipment mapping
     if (!registerNodesWithAASConfig())
@@ -823,7 +768,7 @@ void BehaviorTreeController::processResettingState()
     nodes_registered_ = true;
 
     // ===== Initialize Behavior Tree =====
-    std::cout << "Initializing behavior tree..." << std::endl;
+    std::cout << "Initializing behavior tree for process: " << process_id << std::endl;
 
     // Temporarily disable message handler during tree creation
     if (mqtt_client_)
@@ -833,11 +778,16 @@ void BehaviorTreeController::processResettingState()
 
     try
     {
+        // TODO: In future, fetch BT description from process AAS
+        // For now, use the configured bt_description_path
         bt_factory_->registerBehaviorTreeFromFile(app_params_.bt_description_path);
 
         // Create blackboard and populate with equipment mapping
         auto root_blackboard = BT::Blackboard::create();
         populateBlackboard(root_blackboard);
+        
+        // Store the process ID in blackboard for nodes to access
+        root_blackboard->set("ProcessAASId", process_id);
 
         bt_tree_ = bt_factory_->createTree("MainTree", root_blackboard);
     }
@@ -884,8 +834,106 @@ void BehaviorTreeController::processResettingState()
     // Create Groot2 publisher
     bt_publisher_ = std::make_unique<BT::Groot2Publisher>(bt_tree_, app_params_.groot2_port);
 
-    // Automatically transition to IDLE after successful initialization
-    std::cout << "====== Behavior tree fully initialized, transitioning to IDLE... ======" << std::endl;
+    // Transition to EXECUTE state after successful initialization
+    std::cout << "====== Behavior tree fully initialized, transitioning to EXECUTE... ======" << std::endl;
+    setStateAndPublish(PackML::State::EXECUTE, BT::NodeStatus::IDLE);
+}
+
+void BehaviorTreeController::processBehaviorTreeUnsuspend()
+{
+    if (current_packml_state_ != PackML::State::SUSPENDED)
+    {
+        std::cerr << "Cannot unsuspend: Not in SUSPENDED state" << std::endl;
+        return;
+    }
+
+    if (!bt_tree_.rootNode())
+    {
+        std::cerr << "Cannot unsuspend: No behavior tree exists" << std::endl;
+        setStateAndPublish(PackML::State::IDLE);
+        return;
+    }
+
+    std::cout << "====== Resuming suspended behavior tree... ======" << std::endl;
+
+    // Restore message handler if needed
+    if (mqtt_client_)
+    {
+        mqtt_client_->set_message_handler(main_mqtt_message_handler_);
+    }
+
+    shutdown_flag_ = false;
+    mqtt_suspend_bt_flag_ = false;
+    mqtt_unsuspend_bt_flag_ = false;
+
+    setStateAndPublish(PackML::State::EXECUTE, BT::NodeStatus::IDLE);
+}
+
+void BehaviorTreeController::processResettingState()
+{
+    std::cout << "====== Entering RESETTING state... ======" << std::endl;
+    setStateAndPublish(PackML::State::RESETTING);
+
+    // Clear any existing flags
+    mqtt_start_bt_flag_ = false;
+    mqtt_suspend_bt_flag_ = false;
+    mqtt_unsuspend_bt_flag_ = false;
+    mqtt_reset_bt_flag_ = false;
+    shutdown_flag_ = false;
+
+    // Clear stored process AAS ID
+    {
+        std::lock_guard<std::mutex> lock(process_aas_id_mutex_);
+        process_aas_id_.clear();
+    }
+
+    // Unsubscribe from old node topics if any
+    if (node_message_distributor_ && mqtt_client_)
+    {
+        std::vector<std::string> old_topics = node_message_distributor_->getActiveTopicPatterns();
+        if (!old_topics.empty())
+        {
+            std::cout << "Unsubscribing from " << old_topics.size() << " old topics..." << std::endl;
+            for (const auto &topic_str : old_topics)
+            {
+                try
+                {
+                    mqtt_client_->unsubscribe_topic(topic_str);
+                }
+                catch (const std::exception &e)
+                {
+                    std::cerr << "Exception during unsubscribe: " << e.what() << std::endl;
+                }
+            }
+        }
+    }
+
+    // Halt and clear any existing tree and factory
+    if (bt_tree_.rootNode())
+    {
+        std::cout << "Halting existing behavior tree..." << std::endl;
+        bt_tree_.haltTree();
+        bt_publisher_.reset();
+    }
+
+    // Reset the tree and factory to clear all old registrations
+    bt_tree_ = BT::Tree();
+    bt_factory_ = std::make_unique<BT::BehaviorTreeFactory>();
+
+    // Recreate node message distributor for fresh start
+    node_message_distributor_ = std::make_unique<NodeMessageDistributor>(*mqtt_client_);
+    MqttSubBase::setNodeMessageDistributor(node_message_distributor_.get());
+
+    // Clear equipment mapping
+    {
+        std::lock_guard<std::mutex> lock(equipment_mapping_mutex_);
+        equipment_aas_mapping_.clear();
+    }
+
+    // Mark nodes as not registered
+    nodes_registered_ = false;
+
+    std::cout << "====== Reset complete, all BT interfaces purged. Transitioning to IDLE... ======" << std::endl;
     setStateAndPublish(PackML::State::IDLE);
 }
 

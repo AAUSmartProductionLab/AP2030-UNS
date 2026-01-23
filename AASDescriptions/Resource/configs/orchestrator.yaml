@@ -18,7 +18,7 @@ orchestrator:
                         key: 'Start'
                         title: 'Plan'
                         synchronous: 'true'
-                        input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
+                        input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/orchestrationCommand.schema.json'
                         output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
                         forms:
                             contentType: 'application/json'
@@ -69,7 +69,7 @@ orchestrator:
                         key: 'Unsuspend'
                         title: 'Unsuspend'
                         synchronous: 'true'
-                        input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
+                        input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/orchestrationCommand.schema.json'
                         output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
                         forms:
                             contentType: 'application/json'

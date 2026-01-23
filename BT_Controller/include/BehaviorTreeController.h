@@ -78,6 +78,10 @@ private:
     std::atomic<bool> sigint_received_;
     std::atomic<bool> nodes_registered_;
 
+    // Process AAS ID received from Start command
+    std::string process_aas_id_;
+    std::mutex process_aas_id_mutex_;
+
     PackML::State current_packml_state_;
     BT::NodeStatus current_bt_tick_status_;
 
@@ -95,6 +99,7 @@ private:
     void publishCurrentState();
 
     void processBehaviorTreeStart();
+    void processStartingState();
     void processBehaviorTreeUnsuspend();
     void processResettingState();
     void manageRunningBehaviorTree();
