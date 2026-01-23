@@ -1,5 +1,6 @@
 # Product AAS Configuration: Human Growth Hormone (HgH)
 # This defines the product requirements and bill of processes for production planning
+# Follows IDTA and ECLASS standards for semantic identification
 
 HgHAAS:
     idShort: HgHAAS
@@ -25,105 +26,272 @@ HgHAAS:
         Packaging: 'Prefilled Syringe (2.5mL)'
         Status: 'planned'
 
-    # Bill of Processes - Ordered sequence of production steps
-    # Each process maps to a capability semantic ID for matching with resources
+    # ============================================================================
+    # Bill of Processes Submodel
+    # Structure: BoP(SM) → Processes(SML) → Process(SMC) → Properties & nested SMCs
+    # ============================================================================
     BillOfProcesses:
-        semantic_id: 'https://smartproductionlab.aau.dk/submodels/BillOfProcesses/1/0'
+        # Submodel semantic ID - custom based on IDTA patterns
+        semanticId: 'https://admin-shell.io/idta/BillOfProcess/1/0'
+        idShort: 'BillOfProcesses'
+        description: 'Ordered sequence of production processes for HgH manufacturing'
+        
+        # Processes is a SubmodelElementList containing Process SMCs
         Processes:
-            - Loading:
-                semantic_id: 'https://smartproductionlab.aau.dk/Capability/Loading'
-                description: 'Load empty primary container onto shuttle'
-                estimatedDuration: 5.0  # seconds
-                
-            - Dispensing:
-                semantic_id: 'https://smartproductionlab.aau.dk/Capability/Dispensing'
-                description: 'Dispense product into primary container'
-                estimatedDuration: 8.0
-                parameters:
-                    fillVolume: 2.5  # mL
-                    
-            - Stoppering:
-                semantic_id: 'https://smartproductionlab.aau.dk/Capability/Stoppering'
-                description: 'Insert stopper into container'
-                estimatedDuration: 3.0
-                
-            - Inspection:
-                semantic_id: 'https://smartproductionlab.aau.dk/Capability/QualityControl'
-                description: 'Visual inspection of filled container'
-                estimatedDuration: 2.0
-                
-            - Unloading:
-                semantic_id: 'https://smartproductionlab.aau.dk/Capability/Unloading'
-                description: 'Unload finished product from shuttle'
-                estimatedDuration: 4.0
+            # Each process is a SubmodelElementCollection
+            - idShort: 'Loading'
+              semanticId: 'https://smartproductionlab.aau.dk/Capability/Loading'
+              # ECLASS: 0173-1#02-AAO677#002 - Manufacturing process
+              description: 'Load empty primary container onto production shuttle'
+              sequenceNumber: 1
+              estimatedDuration:
+                value: 5.0
+                unit: 's'
+                semanticId: '0173-1#02-AAB381#003'  # ECLASS: Duration
+              
+            - idShort: 'Dispensing'
+              semanticId: 'https://smartproductionlab.aau.dk/Capability/Dispensing'
+              description: 'Dispense pharmaceutical product into primary container'
+              sequenceNumber: 2
+              estimatedDuration:
+                value: 8.0
+                unit: 's'
+                semanticId: '0173-1#02-AAB381#003'
+              parameters:
+                - idShort: 'FillVolume'
+                  semanticId: '0173-1#02-AAB713#004'  # ECLASS: Volume
+                  description: 'Target fill volume for dispensing operation'
+                  value: 2.5
+                  valueType: 'xs:double'
+                  unit: 'mL'
+                  unitSemanticId: '0173-1#05-AAA689#002'  # ECLASS: millilitre
+                  
+                - idShort: 'DispenseSpeed'
+                  semanticId: '0173-1#02-AAK230#002'  # ECLASS: Flow rate
+                  description: 'Volumetric flow rate during dispensing'
+                  value: 1.0
+                  valueType: 'xs:double'
+                  unit: 'mL/s'
+                  unitSemanticId: '0173-1#05-AAA689#002'
+                  
+              requirements:
+                - idShort: 'FillAccuracy'
+                  semanticId: '0173-1#02-AAI836#002'  # ECLASS: Accuracy
+                  description: 'Acceptable tolerance for fill volume'
+                  nominalValue: 2.5
+                  tolerance: 0.05
+                  toleranceType: 'absolute'  # absolute or percentage
+                  unit: 'mL'
+                  valueType: 'xs:double'
+                  
+                - idShort: 'SterilityCompliance'
+                  semanticId: '0173-1#02-AAQ325#001'  # ECLASS: Standard compliance
+                  description: 'Required sterility standard for aseptic filling'
+                  value: 'ISO 13408-1'
+                  valueType: 'xs:string'
+                  complianceType: 'mandatory'
 
-    # Production Requirements - Constraints and quality specifications
-    # References to BillOfProcesses steps via semantic IDs
+            - idShort: 'Stoppering'
+              semanticId: 'https://smartproductionlab.aau.dk/Capability/Stoppering'
+              description: 'Insert elastomeric stopper to seal primary container'
+              sequenceNumber: 3
+              estimatedDuration:
+                value: 3.0
+                unit: 's'
+                semanticId: '0173-1#02-AAB381#003'
+              requirements:
+                - idShort: 'InsertionForce'
+                  semanticId: '0173-1#02-AAB930#005'  # ECLASS: Force
+                  description: 'Maximum force applied during stopper insertion'
+                  nominalValue: 50
+                  tolerance: 10
+                  toleranceType: 'absolute'
+                  unit: 'N'
+                  valueType: 'xs:double'
+                  
+                - idShort: 'SealIntegrity'
+                  semanticId: '0173-1#02-AAQ325#001'
+                  description: 'Container closure integrity requirement'
+                  value: 'USP <1207>'
+                  valueType: 'xs:string'
+                  complianceType: 'mandatory'
+
+            - idShort: 'Inspection'
+              semanticId: 'https://smartproductionlab.aau.dk/Capability/QualityControl'
+              description: 'Automated visual inspection of filled and stoppered container'
+              sequenceNumber: 4
+              estimatedDuration:
+                value: 2.0
+                unit: 's'
+                semanticId: '0173-1#02-AAB381#003'
+              parameters:
+                - idShort: 'CameraResolution'
+                  semanticId: '0173-1#02-AAB991#004'  # ECLASS: Resolution
+                  description: 'Image sensor resolution'
+                  value: 5.0
+                  valueType: 'xs:double'
+                  unit: 'MP'
+                  
+                - idShort: 'FrameRate'
+                  semanticId: '0173-1#02-AAB942#004'  # ECLASS: Frequency
+                  description: 'Camera acquisition frame rate'
+                  value: 30
+                  valueType: 'xs:int'
+                  unit: 'fps'
+                  
+                - idShort: 'LightingType'
+                  semanticId: '0173-1#02-AAK531#002'  # ECLASS: Lighting
+                  description: 'Illumination method for inspection'
+                  value: 'Diffuse white LED'
+                  valueType: 'xs:string'
+                  
+              requirements:
+                - idShort: 'DetectionResolution'
+                  semanticId: '0173-1#02-AAB991#004'
+                  description: 'Minimum detectable defect size'
+                  nominalValue: 0.1
+                  tolerance: 0.02
+                  toleranceType: 'absolute'
+                  unit: 'mm'
+                  valueType: 'xs:double'
+                  
+                - idShort: 'DefectTypes'
+                  semanticId: 'https://smartproductionlab.aau.dk/Requirements/DefectClassification'
+                  description: 'Types of defects to be detected'
+                  value:
+                    - 'Fill Level Deviation'
+                    - 'Stopper Position Error'
+                    - 'Particulate Contamination'
+                    - 'Container Defects'
+                  valueType: 'xs:string[]'
+
+            - idShort: 'Unloading'
+              semanticId: 'https://smartproductionlab.aau.dk/Capability/Unloading'
+              description: 'Transfer finished product from shuttle to output conveyor'
+              sequenceNumber: 5
+              estimatedDuration:
+                value: 4.0
+                unit: 's'
+                semanticId: '0173-1#02-AAB381#003'
+
+    # ============================================================================
+    # Production Requirements Submodel
+    # Environmental and quality control specifications
+    # ============================================================================
     Requirements:
-        semantic_id: 'https://smartproductionlab.aau.dk/submodels/Requirements/1/0'
+        semanticId: 'https://admin-shell.io/idta/Requirements/1/0'
+        idShort: 'ProductionRequirements'
+        description: 'Environmental and quality requirements for batch production'
         
         Environmental:
-            Temperature:
-                semantic_id: 'https://smartproductionlab.aau.dk/Requirements/Temperature'
-                value: 18
-                unit: '°C'
-                tolerance: 2
-            Humidity:
-                semantic_id: 'https://smartproductionlab.aau.dk/Requirements/Humidity'
-                value: 40
-                unit: '%'
-                tolerance: 5
-            Cleanroom:
-                semantic_id: 'https://smartproductionlab.aau.dk/Requirements/Cleanroom'
-                value: 'ISO 5'
-                
-        # In-Process Controls - applied to specific process steps
+            - idShort: 'AmbientTemperature'
+              semanticId: '0173-1#02-AAB048#003'  # ECLASS: Temperature
+              description: 'Required ambient temperature during production'
+              nominalValue: 18.0
+              tolerance: 2.0
+              toleranceType: 'absolute'
+              unit: '°C'
+              unitSemanticId: '0173-1#05-AAA567#002'  # ECLASS: degree Celsius
+              valueType: 'xs:double'
+              
+            - idShort: 'RelativeHumidity'
+              semanticId: '0173-1#02-AAB046#003'  # ECLASS: Relative humidity
+              description: 'Required relative humidity during production'
+              nominalValue: 40.0
+              tolerance: 5.0
+              toleranceType: 'absolute'
+              unit: '%RH'
+              valueType: 'xs:double'
+              
+            - idShort: 'CleanroomClass'
+              semanticId: '0173-1#02-AAQ325#001'  # ECLASS: Standard compliance
+              description: 'Required cleanroom classification'
+              value: 'ISO 14644-1 Class 5'
+              valueType: 'xs:string'
+              complianceType: 'mandatory'
+              
         InProcessControl:
-            Weighing:
-                semantic_id: 'https://smartproductionlab.aau.dk/Capability/Weighing'
-                appliesTo: 'https://smartproductionlab.aau.dk/Capability/Dispensing'
-                rate: 100
-                unit: '%'
-                description: '100% weight check after dispensing'
-                
-        # Quality Control - sampling requirements
+            - idShort: 'WeighingCheck'
+              semanticId: 'https://smartproductionlab.aau.dk/Capability/Weighing'
+              description: 'In-process weight verification after dispensing'
+              appliesTo: 'https://smartproductionlab.aau.dk/Capability/Dispensing'
+              samplingRate: 100
+              unit: '%'
+              
         QualityControl:
-            VisualInspection:
-                semantic_id: 'https://smartproductionlab.aau.dk/Capability/QualityControl'
-                appliesTo: 'https://smartproductionlab.aau.dk/Capability/QualityControl'
-                rate: 85
-                unit: '%'
-                description: '85% of units undergo visual inspection'
-                sampleSize: 34000  # 85% of 40000
-                
-            # Additional QC samples for laboratory testing
-            LabSamples:
-                semantic_id: 'https://smartproductionlab.aau.dk/Requirements/LabSamples'
-                quantity: 150
-                unit: 'units'
-                description: 'Samples retained for laboratory analysis'
+            - idShort: 'VisualInspectionRate'
+              semanticId: 'https://smartproductionlab.aau.dk/Capability/QualityControl'
+              description: 'Percentage of units undergoing visual inspection'
+              appliesTo: 'https://smartproductionlab.aau.dk/Capability/QualityControl'
+              samplingRate: 85
+              unit: '%'
+              calculatedSampleSize: 34000  # 85% of 40000
+              
+            - idShort: 'LabSamples'
+              semanticId: 'https://smartproductionlab.aau.dk/Requirements/LabSamples'
+              description: 'Samples retained for laboratory quality testing'
+              quantity: 150
+              unit: 'units'
 
-    # Hierarchical structure - Bill of Materials
+    # ============================================================================
+    # Bill of Materials (IDTA 02011-1-1 HierarchicalStructures)
+    # ============================================================================
     HierarchicalStructures:
-        Name: 'BillOfMaterials'
-        Archetype: 'OneDown'
-        HasPart:
-            PrimaryContainer:
-                globalAssetId: 'https://smartproductionlab.aau.dk/assets/prefilled-syringe-2.5ml'
-                description: 'Empty prefilled syringe body'
-            Stopper:
-                globalAssetId: 'https://smartproductionlab.aau.dk/assets/syringe-stopper-std'
-                description: 'Rubber stopper for syringe'
-            Product:
-                globalAssetId: 'https://smartproductionlab.aau.dk/assets/hgh-bulk-solution'
-                description: 'Bulk HgH solution for filling'
+        semanticId: 'https://admin-shell.io/idta/HierarchicalStructures/1/0/Submodel'
+        idShort: 'BillOfMaterials'
+        archetype: 'OneDown'
+        entryNode: 'HgHProduct'
+        
+        Nodes:
+            - idShort: 'HgHProduct'
+              semanticId: 'https://admin-shell.io/idta/HierarchicalStructures/1/0/Node'
+              entityType: 'SelfManagedEntity'
+              globalAssetId: 'https://smartproductionlab.aau.dk/assets/hgh-finished-product'
+              description: 'Finished HgH product unit'
+              
+            - idShort: 'PrimaryContainer'
+              semanticId: 'https://admin-shell.io/idta/HierarchicalStructures/1/0/Node'
+              entityType: 'CoManagedEntity'
+              globalAssetId: 'https://smartproductionlab.aau.dk/assets/prefilled-syringe-2.5ml'
+              description: 'Empty prefilled syringe body (2.5mL)'
+              
+            - idShort: 'ElastomericStopper'
+              semanticId: 'https://admin-shell.io/idta/HierarchicalStructures/1/0/Node'
+              entityType: 'CoManagedEntity'
+              globalAssetId: 'https://smartproductionlab.aau.dk/assets/syringe-stopper-std'
+              description: 'Pharmaceutical-grade rubber stopper'
+              
+            - idShort: 'BulkProduct'
+              semanticId: 'https://admin-shell.io/idta/HierarchicalStructures/1/0/Node'
+              entityType: 'CoManagedEntity'
+              globalAssetId: 'https://smartproductionlab.aau.dk/assets/hgh-bulk-solution'
+              description: 'Bulk HgH pharmaceutical solution'
+              
+        Relationships:
+            - idShort: 'ProductHasContainer'
+              semanticId: 'https://admin-shell.io/idta/HierarchicalStructures/1/0/HasPart'
+              first: 'HgHProduct'
+              second: 'PrimaryContainer'
+              
+            - idShort: 'ProductHasStopper'
+              semanticId: 'https://admin-shell.io/idta/HierarchicalStructures/1/0/HasPart'
+              first: 'HgHProduct'
+              second: 'ElastomericStopper'
+              
+            - idShort: 'ProductHasBulk'
+              semanticId: 'https://admin-shell.io/idta/HierarchicalStructures/1/0/HasPart'
+              first: 'HgHProduct'
+              second: 'BulkProduct'
 
-    # Error handling / recovery process
+    # ============================================================================
+    # Error Recovery Processes
+    # ============================================================================
     ErrorRecovery:
-        Scraping:
-            semantic_id: 'https://smartproductionlab.aau.dk/Capability/Scraping'
-            description: 'Remove defective product from production line'
-            triggeredBy:
-                - 'QualityControl.Fail'
-                - 'Dispensing.Error'
-                - 'Stoppering.Error'
+        - idShort: 'Scraping'
+          semanticId: 'https://smartproductionlab.aau.dk/Capability/Scraping'
+          description: 'Remove defective unit from production line'
+          triggeredBy:
+            - 'QualityControl.Fail'
+            - 'Dispensing.Error'
+            - 'Stoppering.Error'
+          targetStation: 'ScrapStation'
