@@ -83,11 +83,13 @@ class CapabilitiesSubmodelBuilder:
         """
         container_elements = []
 
-        # Add Capability element
+        # Add Capability element with semantic_id from config if specified
+        # This enables capability matching based on semantic identifiers
+        capability_semantic_id = cap_config.get('semantic_id', self.semantic_factory.CAPABILITY)
         container_elements.append(
             self.element_factory.create_capability(
                 id_short=cap_name,
-                semantic_id=self.semantic_factory.CAPABILITY
+                semantic_id=capability_semantic_id
             )
         )
 
