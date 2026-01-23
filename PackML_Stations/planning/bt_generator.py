@@ -65,6 +65,66 @@ class BTGenerator:
             config: Generator configuration
         """
         self.config = config or BTGeneratorConfig()
+        # Store capability matches for asset lookup
+        self._capability_assets: Dict[str, List[str]] = {}
+    
+    def _format_assets_array(self, aas_ids: List[str]) -> str:
+        """
+        Format a list of AAS IDs as a BT++ array string.
+        
+        Args:
+            aas_ids: List of AAS ID strings
+            
+        Returns:
+            Formatted array string like "aas1;aas2;aas3"
+        """
+        return ";".join(aas_ids)
+    
+    def _build_capability_assets_map(self, matching_result: MatchingResult) -> None:
+        """
+        Build a mapping from capability/process names to all matching asset IDs.
+        
+        Args:
+            matching_result: Result from capability matching
+        """
+        self._capability_assets.clear()
+        
+        # Map each process step to all its matched resources
+        for match in matching_result.process_matches:
+            step_name = match.process_step.name
+            asset_ids = [res.aas_id for res in match.matched_resources]
+            self._capability_assets[step_name] = asset_ids
+            # Also store with capitalized name
+            self._capability_assets[self._get_subtree_id(step_name)] = asset_ids
+        
+        # Add movers as "Moving" capability
+        mover_ids = [m.aas_id for m in matching_result.movers]
+        self._capability_assets["Moving"] = mover_ids
+        self._capability_assets["Xbot"] = mover_ids
+        
+        # For Scraping/Unloading, use all unloading-capable resources
+        # Check if we have explicit unloading matches, otherwise use all resources
+        if "Unloading" not in self._capability_assets:
+            # Use all station resources as potential unloading points
+            all_station_ids = []
+            for match in matching_result.process_matches:
+                all_station_ids.extend([res.aas_id for res in match.matched_resources])
+            self._capability_assets["Unloading"] = list(set(all_station_ids))
+            self._capability_assets["Scraping"] = self._capability_assets["Unloading"]
+        
+        logger.debug(f"Built capability assets map: {self._capability_assets}")
+    
+    def get_assets_for_capability(self, capability_name: str) -> List[str]:
+        """
+        Get all asset IDs that match a capability.
+        
+        Args:
+            capability_name: Name of the capability (e.g., "Loading", "Moving")
+            
+        Returns:
+            List of AAS IDs
+        """
+        return self._capability_assets.get(capability_name, [])
     
     def generate_production_bt(
         self,
@@ -83,6 +143,9 @@ class BTGenerator:
         Returns:
             Complete BT XML as string
         """
+        # Build capability to assets mapping first
+        self._build_capability_assets_map(matching_result)
+        
         root = ET.Element("root")
         root.set("BTCPP_format", "4")
         root.set("main_tree_to_execute", "Production")
@@ -169,10 +232,11 @@ class BTGenerator:
         """Generate the AsepticFilling subtree that processes one product"""
         aseptic_bt = ET.SubElement(root, "BehaviorTree", ID="AsepticFilling")
         
-        # Occupy the mover for exclusive use
+        # Occupy the mover for exclusive use - use Assets array with all movers
+        mover_assets = self._format_assets_array(self.get_assets_for_capability("Moving"))
         occupy = ET.SubElement(aseptic_bt, "Occupy", 
                                Uuid="{Uuid}", 
-                               Asset="{Xbot}")
+                               Assets=mover_assets)
         
         # Keep running until product queue is empty
         keep_running = ET.SubElement(occupy, "KeepRunningUntilEmpty",
@@ -181,14 +245,14 @@ class BTGenerator:
         
         reactive_seq = ET.SubElement(keep_running, "ReactiveSequence")
         
-        # Mover operational check
+        # Mover operational check - use SelectedAsset from Occupy
         reactive_fallback = ET.SubElement(reactive_seq, "ReactiveFallback")
         ET.SubElement(reactive_fallback, "Data_Condition",
                       comparison_type="equal",
                       Field="State",
                       expected_value="operational",
                       Property="PackMLState",
-                      Asset="{Xbot}")
+                      Asset="{SelectedAsset}")
         ET.SubElement(reactive_fallback, "Sleep", msec="10000")
         
         # Main process flow with error recovery
@@ -203,18 +267,28 @@ class BTGenerator:
                 step = match.process_step
                 subtree_id = self._get_subtree_id(step.name)
                 
-                # Add the subtree call
+                # Add the subtree call with Assets array of all matching resources
                 subtree_elem = ET.SubElement(seq_mem, "SubTree", ID=subtree_id)
                 
-                # Add resource parameter if we have a match
-                if match.primary_resource:
-                    # Use generic parameter name based on step
-                    param_name = f"{step.name}System"
-                    subtree_elem.set(param_name, f"{{{param_name}}}")
+                # Pass all matched resources as Assets array
+                if match.matched_resources:
+                    assets_array = self._format_assets_array(
+                        [res.aas_id for res in match.matched_resources]
+                    )
+                    subtree_elem.set("Assets", assets_array)
+                
+                # Also pass mover reference
+                subtree_elem.set("Xbot", "{SelectedAsset}")
+                subtree_elem.set("_autoremap", "true")
         
-        # Error recovery: Scraping
+        # Error recovery: Scraping - use unloading-capable resources
         if self.config.include_error_recovery:
-            ET.SubElement(process_fallback, "SubTree", ID="Scraping")
+            scraping_subtree = ET.SubElement(process_fallback, "SubTree", ID="Scraping")
+            unload_assets = self.get_assets_for_capability("Unloading")
+            if unload_assets:
+                scraping_subtree.set("Assets", self._format_assets_array(unload_assets))
+            scraping_subtree.set("Xbot", "{SelectedAsset}")
+            scraping_subtree.set("_autoremap", "true")
     
     def _get_subtree_id(self, process_name: str) -> str:
         """Get the subtree ID for a process name"""
@@ -364,39 +438,40 @@ class BTGenerator:
         bt = ET.Element("BehaviorTree", ID=self._get_subtree_id(process_step.name))
         
         # Standard pattern: Occupy -> ReactiveSequence -> Move + Execute
+        # Use Assets (array) - will be filled by caller or from blackboard
         occupy = ET.SubElement(bt, "Occupy",
                                Uuid="{ProductID}",
-                               Asset=f"{{{process_step.name}System}}",
+                               Assets="{Assets}",
                                _skipIf="scrap == true")
         
         reactive_seq = ET.SubElement(occupy, "ReactiveSequence")
         
-        # Operational check
+        # Operational check - use SelectedAsset output from Occupy
         reactive_fallback = ET.SubElement(reactive_seq, "ReactiveFallback")
         ET.SubElement(reactive_fallback, "Data_Condition",
                       comparison_type="equal",
                       Field="State",
                       expected_value="operational",
                       Property="PackMLState",
-                      Asset=f"{{{process_step.name}System}}")
+                      Asset="{SelectedAsset}")
         ET.SubElement(reactive_fallback, "Sleep", msec="10000")
         
         # Execution sequence
         exec_seq = ET.SubElement(reactive_seq, "Sequence")
         
-        # Move to station
+        # Move to station - get station position from selected asset
         ET.SubElement(exec_seq, "moveToPosition",
                       Uuid="{ProductID}",
                       TargetPosition="{Station}",
-                      Asset=mover_param)
+                      Asset="{Xbot}")
         
-        # Execute operation
+        # Execute operation on the selected asset
         operation_name = process_step.name.lower()
         ET.SubElement(exec_seq, "Command_Execution",
                       Parameters="'{}'",
                       Uuid="{ProductID}",
                       Operation=operation_name,
-                      Asset=f"{{{process_step.name}System}}")
+                      Asset="{SelectedAsset}")
         
         return bt
     
@@ -404,31 +479,33 @@ class BTGenerator:
         self,
         matching_result: MatchingResult,
         planar_table_id: Optional[str] = None
-    ) -> Dict[str, str]:
+    ) -> Dict[str, Any]:
         """
         Get the blackboard parameters that need to be initialized.
+        
+        Note: With the new Assets array approach, most parameters are 
+        embedded directly in the BT XML. This method returns supplementary
+        parameters that may still be needed.
         
         Args:
             matching_result: Capability matching result
             planar_table_id: Optional planar table AAS ID
             
         Returns:
-            Dict mapping parameter names to their AAS ID values
+            Dict mapping parameter names to their values (strings or lists)
         """
-        params = {}
+        # Build capability map if not already built
+        if not self._capability_assets:
+            self._build_capability_assets_map(matching_result)
+        
+        params: Dict[str, Any] = {}
         
         # Add planar table
         if planar_table_id:
             params["PlanarTable"] = planar_table_id
         
-        # Add movers
-        for i, mover in enumerate(matching_result.movers):
-            params[f"Xbot{i+1}"] = mover.aas_id
-        
-        # Add stations from matches
-        for match in matching_result.process_matches:
-            if match.primary_resource:
-                param_name = f"{match.process_step.name}System"
-                params[param_name] = match.primary_resource.aas_id
+        # Add all capability asset mappings
+        for capability_name, asset_ids in self._capability_assets.items():
+            params[f"{capability_name}Assets"] = asset_ids
         
         return params

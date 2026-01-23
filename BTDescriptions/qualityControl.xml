@@ -2,7 +2,7 @@
 <root BTCPP_format="4">
   <BehaviorTree ID="QualityControl">
     <Occupy Uuid="{ProductID}"
-            Asset="{QualityControlSystem}"
+            Assets="{Assets}"
             _skipIf="scrap == true">
       <ReactiveSequence>
         <ReactiveFallback>
@@ -10,7 +10,7 @@
                           Field="State"
                           expected_value="operational"
                           Property="PackMLState"
-                          Asset="{QualityControlSystem}"/>
+                          Asset="{SelectedAsset}"/>
           <Sleep msec="10000"/>
         </ReactiveFallback>
         <Sequence>
@@ -20,7 +20,7 @@
           <Command_Execution Parameters="&apos;{}&apos;"
                              Uuid="{ProductID}"
                              Operation="capture"
-                             Asset="{QualityControlSystem}"/>
+                             Asset="{SelectedAsset}"/>
         </Sequence>
       </ReactiveSequence>
     </Occupy>
