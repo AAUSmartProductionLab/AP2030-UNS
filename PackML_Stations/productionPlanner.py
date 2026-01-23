@@ -198,12 +198,14 @@ productionPlanner = Proxy(
 
 # State machine for PackML-style operation
 # Disable occupation for planner - it's a service, not a physical resource
+# Auto-execute mode: planner is always ready to accept commands
 state_machine = PackMLStateMachine(
     BASE_TOPIC, 
     productionPlanner, 
     None, 
     config_path="productionPlanner.yaml",
-    enable_occupation=False
+    enable_occupation=False,
+    auto_execute=True
 )
 state_machine.failureChance = 0
 

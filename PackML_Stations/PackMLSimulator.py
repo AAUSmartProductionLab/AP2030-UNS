@@ -35,7 +35,7 @@ class PackMLState(enum.Enum):
 
 
 class PackMLStateMachine:
-    def __init__(self,  base_topic, client: Proxy, properties, config_path: Optional[str] = None, custom_handlers=None, enable_occupation: bool = True):
+    def __init__(self,  base_topic, client: Proxy, properties, config_path: Optional[str] = None, custom_handlers=None, enable_occupation: bool = True, auto_execute: bool = False):
         self.state = PackMLState.IDLE
         self.base_topic = base_topic
         # Keep if used elsewhere, otherwise consider removing
@@ -47,6 +47,7 @@ class PackMLStateMachine:
         
         self.custom_handlers = custom_handlers or {}
         self.enable_occupation = enable_occupation
+        self.auto_execute = auto_execute
 
         # YAML config path for registration
         self.config_path = config_path
@@ -110,6 +111,12 @@ class PackMLStateMachine:
             client.register_topic(topic)
 
         self.publish_state()
+        
+        # Auto-transition to EXECUTE for service-type stations (no occupation needed)
+        if self.auto_execute:
+            self.state = PackMLState.EXECUTE
+            self.publish_state()
+            print(f"PackML: Auto-started in EXECUTE state (service mode)")
 
     def state_command_callback(self, topic, client, message, properties):
         """Callback for external state commands like Start, Stop, Reset."""
