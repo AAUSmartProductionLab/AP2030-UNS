@@ -31,9 +31,10 @@ syntegonStopperingSystemAAS:
                                 contentType: 'application/json'
                                 href: '/DATA/Stoppering'
                                 mqv_controlPacket: 'publish'
-                    halt:
-                        key: 'halt'
-                        title: 'halt'
+                    Halt:
+                        key: 'Halt'
+                        title: 'Halt'
+                        synchronous: 'true'
                         input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
                         forms:
                             contentType: 'application/json'
@@ -41,10 +42,10 @@ syntegonStopperingSystemAAS:
                             op: 'invokeAction'
                             mqv_retain: 'false'
                             mqv_controlPacket: subscribe
-                            mqv_qos: '2'                                              
-                    occupy:
-                        key: 'occupy'
-                        title: 'occupy'
+                            mqv_qos: '2'                                   
+                    Occupy:
+                        key: 'Occupy'
+                        title: 'Occupy'
                         synchronous: 'true'
                         input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
                         output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
@@ -59,9 +60,9 @@ syntegonStopperingSystemAAS:
                                 contentType: 'application/json'
                                 href: '/DATA/Occupy'
                                 mqv_controlPacket: 'publish'
-                    release:
-                        key: 'release'
-                        title: 'release'
+                    Release:
+                        key: 'Release'
+                        title: 'Release'
                         synchronous: 'true'
                         input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
                         output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'

@@ -31,40 +31,6 @@ productionPlanner:
                                 contentType: 'application/json'
                                 href: '/DATA/Plan'
                                 mqv_controlPacket: 'publish'
-                    occupy:
-                        key: 'occupy'
-                        title: 'occupy'
-                        synchronous: 'true'
-                        input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
-                        output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
-                        forms:
-                            contentType: 'application/json'
-                            href: '/CMD/Occupy'
-                            op: 'invokeAction'
-                            mqv_retain: 'false'
-                            mqv_controlPacket: subscribe
-                            mqv_qos: '2'
-                            response:
-                                contentType: 'application/json'
-                                href: '/DATA/Occupy'
-                                mqv_controlPacket: 'publish'
-                    release:
-                        key: 'release'
-                        title: 'release'
-                        synchronous: 'true'
-                        input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
-                        output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
-                        forms:
-                            contentType: 'application/json'
-                            href: '/CMD/Release'
-                            op: 'invokeAction'
-                            mqv_retain: 'false'
-                            mqv_controlPacket: subscribe
-                            mqv_qos: '2'
-                            response:
-                                contentType: 'application/json'
-                                href: '/DATA/Release'
-                                mqv_controlPacket: 'publish'
                 properties:
                     StationState:
                         key: 'StationState'
