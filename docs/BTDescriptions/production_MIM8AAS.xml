@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<root BTCPP_format="4" main_tree_to_execute = "Production" >
+<root BTCPP_format="4" main_tree_to_execute="Production">
   <BehaviorTree ID="Production">
     <Sequence>
       <Configure ProductIDs="{ProductIDs}"/>
@@ -17,32 +17,18 @@
     </Sequence>
   </BehaviorTree>
   <BehaviorTree ID="AsepticFilling">
-    <Occupy Uuid="{Uuid}" Asset="{Xbot}">
+    <Occupy Uuid="{Uuid}" Assets="https://smartproductionlab.aau.dk/aas/planarTableShuttle1AAS;https://smartproductionlab.aau.dk/aas/planarTableShuttle2AAS;https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS">
       <KeepRunningUntilEmpty if_empty="SUCCESS" Queue="{ProductIDs}">
         <ReactiveSequence>
           <ReactiveFallback>
-            <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="PackMLState" Asset="{Xbot}"/>
+            <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="PackMLState" Asset="{SelectedAsset}"/>
             <Sleep msec="10000"/>
           </ReactiveFallback>
           <Fallback>
-            <SubTree ID="Scraping"/>
+            <SubTree ID="Scraping" Xbot="{SelectedAsset}" _autoremap="true"/>
           </Fallback>
         </ReactiveSequence>
       </KeepRunningUntilEmpty>
-    </Occupy>
-  </BehaviorTree>
-  <BehaviorTree ID="Scraping">
-    <Occupy Uuid="{ProductID}" Asset="{UnloadSystem}">
-      <ReactiveSequence>
-        <ReactiveFallback>
-          <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="PackMLState" Asset="{UnloadSystem}"/>
-          <Sleep msec="10000"/>
-        </ReactiveFallback>
-        <Sequence>
-          <moveToPosition Uuid="{ProductID}" TargetPosition="{Station}" Asset="{Xbot}"/>
-          <Command_Execution Parameters="'{}'" Uuid="{ProductID}" Operation="unload" Asset="{UnloadSystem}" _onSuccess="scrap:=false"/>
-        </Sequence>
-      </ReactiveSequence>
     </Occupy>
   </BehaviorTree>
   <BehaviorTree ID="PlanarSOP">
@@ -53,6 +39,20 @@
       <Command_Execution Parameters="'{ &quot;SopId&quot;: 13 }'" Uuid="{Uuid}" Operation="operation" Asset="{OperatorAsset}"/>
       <Command_Execution Parameters="'{ &quot;SopId&quot;: 0 }'" Uuid="{Uuid}" Operation="operation" Asset="{OperatorAsset}"/>
     </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Scraping">
+    <Occupy Uuid="{ProductID}" Assets="{Assets}">
+      <ReactiveSequence>
+        <ReactiveFallback>
+          <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="PackMLState" Asset="{SelectedAsset}"/>
+          <Sleep msec="10000"/>
+        </ReactiveFallback>
+        <Sequence>
+          <moveToPosition Uuid="{ProductID}" TargetPosition="{Station}" Asset="{Xbot}"/>
+          <Command_Execution Parameters="'{}'" Uuid="{ProductID}" Operation="unload" Asset="{SelectedAsset}" _onSuccess="scrap:=false"/>
+        </Sequence>
+      </ReactiveSequence>
+    </Occupy>
   </BehaviorTree>
   <TreeNodesModel>
     <Control ID="BC_Fallback"/>
