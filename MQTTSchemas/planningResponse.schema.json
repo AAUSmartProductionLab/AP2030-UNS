@@ -1,0 +1,96 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Planning Response Schema",
+    "description": "Response to a planning command with capability matching results",
+    "type": "object",
+    "allOf": [
+        {
+            "$ref": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json"
+        },
+        {
+            "type": "object",
+            "properties": {
+                "ProcessAasId": {
+                    "type": "string",
+                    "description": "The AAS ID of the generated Process AAS (on success)"
+                },
+                "ProductAasId": {
+                    "type": "string",
+                    "description": "The AAS ID of the product that was planned"
+                },
+                "MatchingSummary": {
+                    "type": "object",
+                    "description": "Summary of capability matching results",
+                    "properties": {
+                        "TotalSteps": {
+                            "type": "integer",
+                            "description": "Total number of process steps in BillOfProcesses"
+                        },
+                        "MatchedSteps": {
+                            "type": "integer",
+                            "description": "Number of successfully matched steps"
+                        },
+                        "UnmatchedSteps": {
+                            "type": "integer",
+                            "description": "Number of steps without matching resources"
+                        },
+                        "AvailableMovers": {
+                            "type": "integer",
+                            "description": "Number of available mover/shuttle resources"
+                        },
+                        "IsComplete": {
+                            "type": "boolean",
+                            "description": "Whether all process steps have at least one match"
+                        }
+                    }
+                },
+                "UnmatchedCapabilities": {
+                    "type": "array",
+                    "description": "List of capabilities that could not be matched to any resource",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "ProcessStep": {
+                                "type": "string",
+                                "description": "Name of the process step"
+                            },
+                            "RequiredCapability": {
+                                "type": "string",
+                                "description": "Semantic ID of the required capability"
+                            }
+                        }
+                    }
+                },
+                "MatchedCapabilities": {
+                    "type": "array",
+                    "description": "List of successfully matched capabilities",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "ProcessStep": {
+                                "type": "string",
+                                "description": "Name of the process step"
+                            },
+                            "RequiredCapability": {
+                                "type": "string",
+                                "description": "Semantic ID of the required capability"
+                            },
+                            "MatchedResource": {
+                                "type": "string",
+                                "description": "Name of the matched resource"
+                            },
+                            "ResourceAasId": {
+                                "type": "string",
+                                "description": "AAS ID of the matched resource"
+                            }
+                        }
+                    }
+                },
+                "ErrorMessage": {
+                    "type": "string",
+                    "description": "Human-readable error message on failure"
+                }
+            }
+        }
+    ]
+}
