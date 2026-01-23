@@ -164,13 +164,14 @@ def planning_callback(topic, client, message, properties):
             logger.error("Invalid planning command: missing Assets or Product")
             return
 
-        # Execute planning process with parameters
+        # Execute planning process with parameters passed via *args
         state_machine.execute_command(
             message,
             plan,
-            lambda duration: planning_process(
-                duration, asset_ids, product_aas_id
-            )
+            planning_process,
+            0.0,  # duration (unused, for PackML compatibility)
+            asset_ids,
+            product_aas_id
         )
         
     except Exception as e:
