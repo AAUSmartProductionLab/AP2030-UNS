@@ -25,7 +25,6 @@
             <Sleep msec="10000"/>
           </ReactiveFallback>
           <Fallback>
-            <SequenceWithMemory/>
             <SubTree ID="Scraping"/>
           </Fallback>
         </ReactiveSequence>
