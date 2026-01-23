@@ -101,7 +101,7 @@ class SemanticIds:
     VARIABLES: Final[str] = "http://smartproductionlab.aau.dk/submodels/Variables/1/0"
     PARAMETERS: Final[str] = "http://smartproductionlab.aau.dk/submodels/Parameters/1/0"
     SKILLS: Final[str] = "http://smartproductionlab.aau.dk/submodels/Skills/1/0"
-    CAPABILITIES: Final[str] = "http://smartproductionlab.aau.dk/submodels/OfferedCapabilitiyDescription/1/0"
+    CAPABILITIES: Final[str] = "http://smartproductionlab.aau.dk/submodels/OfferedCapabilityDescription/1/0"
 
     # W3C Thing Description
     WOT_ACTION: Final[str] = "https://www.w3.org/2019/wot/td#ActionAffordance"

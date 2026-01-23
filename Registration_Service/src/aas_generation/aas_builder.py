@@ -144,7 +144,7 @@ class AASBuilder:
         if 'HierarchicalStructures' in config:
             submodel_names.append('HierarchicalStructures')
         if 'Capabilities' in config and config.get('Capabilities'):
-            submodel_names.append('OfferedCapabilitiyDescription')
+            submodel_names.append('OfferedCapabilityDescription')
         
         # Add Skills submodel reference if:
         # 1. Skills are explicitly defined in config, OR

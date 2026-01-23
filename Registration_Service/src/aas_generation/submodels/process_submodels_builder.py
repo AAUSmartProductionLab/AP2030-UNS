@@ -222,7 +222,7 @@ class RequiredCapabilitiesSubmodelBuilder:
         Example:
             AAS ID: https://smartproductionlab.aau.dk/aas/imaLoadingSystemAAS
             → idShort: imaLoadingSystemAAS
-            → submodel_id: {base_url}/submodels/instances/imaLoadingSystemAAS/OfferedCapabilitiyDescription
+            → submodel_id: {base_url}/submodels/instances/imaLoadingSystemAAS/OfferedCapabilityDescription
             → capability_path: ["CapabilitySet", "LoadingContainer", "Loading"]
         
         Args:
@@ -243,7 +243,7 @@ class RequiredCapabilitiesSubmodelBuilder:
             return None
         
         # Construct submodel ID and capability path
-        submodel_id = f"{self.base_url}/submodels/instances/{id_short}/OfferedCapabilitiyDescription"
+        submodel_id = f"{self.base_url}/submodels/instances/{id_short}/OfferedCapabilityDescription"
         capability_path = ["CapabilitySet", f"{capability_name}Container", capability_name]
         
         return self._build_reference_element(resource_name, submodel_id, capability_path)
@@ -273,7 +273,7 @@ class RequiredCapabilitiesSubmodelBuilder:
         Args:
             resource_name: Name of the resource (used as id_short)
             cap_ref_config: Dictionary with:
-                - submodel_id: Full ID of the OfferedCapabilitiyDescription submodel
+                - submodel_id: Full ID of the OfferedCapabilityDescription submodel
                 - capability_path: List of idShorts to reach the capability 
                                    e.g., ["CapabilitySet", "DispensingContainer", "Dispensing"]
         """
@@ -295,7 +295,7 @@ class RequiredCapabilitiesSubmodelBuilder:
         
         Args:
             resource_name: Name of the resource (used as id_short)
-            submodel_id: Full ID of the OfferedCapabilitiyDescription submodel
+            submodel_id: Full ID of the OfferedCapabilityDescription submodel
             capability_path: List of idShorts to reach the capability
             
         Returns:

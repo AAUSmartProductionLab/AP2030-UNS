@@ -57,8 +57,8 @@ class CapabilitiesSubmodelBuilder:
 
         # Create submodel
         submodel = model.Submodel(
-            id_=f"{self.base_url}/submodels/instances/{system_id}/OfferedCapabilitiyDescription",
-            id_short="OfferedCapabilitiyDescription",
+            id_=f"{self.base_url}/submodels/instances/{system_id}/OfferedCapabilityDescription",
+            id_short="OfferedCapabilityDescription",
             kind=model.ModellingKind.INSTANCE,
             semantic_id=self.semantic_factory.CAPABILITIES_SUBMODEL,
             administration=model.AdministrativeInformation(
@@ -177,7 +177,7 @@ class CapabilitiesSubmodelBuilder:
                 first=model.ModelReference(
                     (model.Key(
                         type_=model.KeyTypes.SUBMODEL,
-                        value=f"{self.base_url}/submodels/instances/{system_id}/OfferedCapabilitiyDescription"
+                        value=f"{self.base_url}/submodels/instances/{system_id}/OfferedCapabilityDescription"
                     ),
                         model.Key(
                         type_=model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION,
@@ -246,7 +246,7 @@ class CapabilitiesSubmodelBuilder:
                 first=model.ModelReference(
                     (model.Key(
                         type_=model.KeyTypes.SUBMODEL,
-                        value=f"{self.base_url}/submodels/instances/{system_id}/OfferedCapabilitiyDescription"
+                        value=f"{self.base_url}/submodels/instances/{system_id}/OfferedCapabilityDescription"
                     ),
                         model.Key(
                         type_=model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION,
@@ -262,7 +262,7 @@ class CapabilitiesSubmodelBuilder:
                 second=model.ModelReference(
                     (model.Key(
                         type_=model.KeyTypes.SUBMODEL,
-                        value=f"{self.base_url}/submodels/instances/{system_id}/OfferedCapabilitiyDescription"
+                        value=f"{self.base_url}/submodels/instances/{system_id}/OfferedCapabilityDescription"
                     ),
                         model.Key(
                         type_=model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION,

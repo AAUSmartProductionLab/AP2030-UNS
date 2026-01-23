@@ -371,7 +371,7 @@ class UnifiedRegistrationService:
             submodel_data = self._preprocess_submodel(submodel_data)
 
             # Debug logging for capabilities submodel
-            if submodel_data.get('idShort') == 'OfferedCapabilitiyDescription':
+            if submodel_data.get('idShort') == 'OfferedCapabilityDescription':
                 logger.info(
                     f"Debug: CapabilitySet has {len(submodel_data.get('submodelElements', [])[0].get('value', []))} capability containers")
 
