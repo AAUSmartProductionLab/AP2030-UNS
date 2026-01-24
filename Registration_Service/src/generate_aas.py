@@ -42,7 +42,7 @@ class AASGenerator:
         Args:
             config_path: Path to the YAML configuration file
             delegation_base_url: Base URL for Operation Delegation Service
-                                 (e.g., 'http://operation-delegation:8087')
+                                 (e.g., 'http://registration-service:8087')
         """
         # Load configuration
         with open(config_path, 'r') as f:
@@ -58,7 +58,7 @@ class AASGenerator:
         # Operation Delegation Service URL for BaSyx invocationDelegation
         self.delegation_base_url = delegation_base_url or os.environ.get(
             'DELEGATION_SERVICE_URL',
-            'http://operation-delegation:8087'
+            'http://registration-service:8087'
         )
 
         # Initialize all helper services and builders
@@ -116,7 +116,7 @@ class AASGenerator:
         self.capabilities_builder = CapabilitiesSubmodelBuilder(
             self.base_url, self.semantic_factory, self.element_factory
         )
-        
+
         # Process AAS specific builders
         self.process_info_builder = ProcessInformationSubmodelBuilder(
             self.base_url, self.semantic_factory, self.element_factory
@@ -263,7 +263,7 @@ class AASGenerator:
 
         for submodel in submodels:
             obj_store.add(submodel)
-        
+
         # Generate Process AAS specific submodels (if config contains them)
         process_submodels = self._build_process_submodels()
         for submodel in process_submodels:
@@ -271,33 +271,33 @@ class AASGenerator:
                 obj_store.add(submodel)
 
         return obj_store
-    
+
     def _build_process_submodels(self) -> list:
         """
         Build Process AAS specific submodels if the config contains them.
-        
+
         Returns:
             List of Process-specific submodels (may contain None values)
         """
         submodels = []
-        
+
         # Check if this is a Process AAS by looking for Process-specific sections
         has_process_info = 'ProcessInformation' in self.system_config
         has_required_caps = 'RequiredCapabilities' in self.system_config
         has_policy = 'Policy' in self.system_config
-        
+
         if has_process_info:
             submodels.append(self.process_info_builder.build(
                 self.system_id, self.system_config))
-        
+
         if has_required_caps:
             submodels.append(self.required_capabilities_builder.build(
                 self.system_id, self.system_config))
-        
+
         if has_policy:
             submodels.append(self.policy_builder.build(
                 self.system_id, self.system_config))
-        
+
         return submodels
 
     # ==================== Serialization Methods ====================
@@ -383,7 +383,7 @@ def main():
         '--delegation-url',
         type=str,
         default=None,
-        help='Base URL for Operation Delegation Service (e.g., http://operation-delegation:8087). '
+        help='Base URL for Operation Delegation Service (e.g., http://registration-service:8087). '
              'If not specified, uses DELEGATION_SERVICE_URL env var or default.'
     )
 

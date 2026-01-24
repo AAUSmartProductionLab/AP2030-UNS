@@ -20,7 +20,7 @@ DEFAULT_BASYX_URL: Final[str] = os.environ.get(
 DEFAULT_BASYX_INTERNAL_URL: Final[str] = os.environ.get(
     "BASYX_INTERNAL_URL", "http://aas-env:8081")
 DEFAULT_DELEGATION_URL: Final[str] = os.environ.get(
-    "DELEGATION_SERVICE_URL", "http://operation-delegation:8087")
+    "DELEGATION_SERVICE_URL", "http://registration-service:8087")
 DEFAULT_GITHUB_PAGES_URL: Final[str] = "https://aausmartproductionlab.github.io/AP2030-UNS"
 
 # Registry URLs (for descriptor registration when running outside Docker)
@@ -57,7 +57,7 @@ class HTTPStatus(int, Enum):
 class ContainerNames:
     """Docker container names."""
     DATABRIDGE: Final[str] = "databridge"
-    OPERATION_DELEGATION: Final[str] = "operation-delegation"
+    OPERATION_DELEGATION: Final[str] = "registration-service"
     AAS_ENV: Final[str] = "aas-env"
     AAS_REGISTRY: Final[str] = "aas-registry"
     SUBMODEL_REGISTRY: Final[str] = "submodel-registry"
