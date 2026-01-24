@@ -61,10 +61,8 @@ void registerAllNodes(
         aas_client,
         "Data_Condition");
 
-    MqttActionNode::registerNodeType<ConfigurationNode>(
+    ConfigurationNode::registerNodeType<ConfigurationNode>(
         factory,
-        node_message_distributor,
-        mqtt_client,
         aas_client,
         "Configure");
 

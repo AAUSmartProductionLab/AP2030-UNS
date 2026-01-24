@@ -304,6 +304,58 @@ std::optional<mqtt_utils::Topic> AASClient::fetchInterface(const std::string &as
 
         if (interaction_data.empty())
         {
+            // Interaction not found directly - try to resolve via Variables submodel InterfaceReference
+            std::cout << "Interaction '" << interaction << "' not found directly, checking Variables submodel..." << std::endl;
+
+            auto resolved_interface = resolveInterfaceReference(asset_id, interaction);
+            if (resolved_interface && *resolved_interface != interaction)
+            {
+                // Found an InterfaceReference - search again with the resolved name
+                std::cout << "Retrying with resolved interface name: " << *resolved_interface << std::endl;
+
+                for (const auto &elem : interface_mqtt["value"])
+                {
+                    if (elem["idShort"] == "InteractionMetadata")
+                    {
+                        // Search in actions first
+                        for (const auto &interaction_type_elem : elem["value"])
+                        {
+                            if (interaction_type_elem["idShort"] == "actions")
+                            {
+                                for (const auto &action : interaction_type_elem["value"])
+                                {
+                                    if (action["idShort"] == *resolved_interface)
+                                    {
+                                        interaction_data = action;
+                                        is_action = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            else if (interaction_type_elem["idShort"] == "properties")
+                            {
+                                for (const auto &property : interaction_type_elem["value"])
+                                {
+                                    if (property["idShort"] == *resolved_interface)
+                                    {
+                                        interaction_data = property;
+                                        is_action = false;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            if (!interaction_data.empty())
+                                break;
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (interaction_data.empty())
+        {
             std::cerr << "Could not find interaction: " << interaction << std::endl;
             return std::nullopt;
         }
@@ -536,12 +588,27 @@ std::optional<nlohmann::json> AASClient::fetchSubmodelData(
             return std::nullopt;
         }
 
-        // Find the AAS with matching idShort
-        std::string expected_id_short = asset_id + "AAS";
+        // Find the AAS with matching id (asset_id is the full AAS ID like https://smartproductionlab.aau.dk/aas/MIM8AAS)
         std::string shell_endpoint;
         for (const auto &shell : registry_response["result"])
         {
-            if (shell.contains("idShort") && shell["idShort"] == expected_id_short)
+            // Match by full id first, then try idShort for backwards compatibility
+            bool matches = false;
+            if (shell.contains("id") && shell["id"].get<std::string>() == asset_id)
+            {
+                matches = true;
+            }
+            else if (shell.contains("idShort"))
+            {
+                // Try matching idShort for legacy support (e.g., "MIM8AAS" or adding "AAS" suffix)
+                std::string id_short = shell["idShort"].get<std::string>();
+                if (id_short == asset_id || asset_id.find(id_short) != std::string::npos)
+                {
+                    matches = true;
+                }
+            }
+            
+            if (matches)
             {
                 if (shell.contains("endpoints") && shell["endpoints"].is_array() && !shell["endpoints"].empty())
                 {
@@ -804,6 +871,62 @@ std::optional<nlohmann::json> AASClient::fetchRequiredCapabilities(const std::st
     }
 }
 
+std::optional<nlohmann::json> AASClient::fetchProcessInformation(const std::string &aas_shell_id)
+{
+    try
+    {
+        std::cout << "Fetching ProcessInformation submodel for AAS: " << aas_shell_id << std::endl;
+
+        // Step 1: Fetch the full shell to get submodel references
+        std::string encoded_id = base64url_encode(aas_shell_id);
+        std::string shell_endpoint = "/shells/" + encoded_id;
+        nlohmann::json shell_data = makeGetRequest(shell_endpoint);
+
+        if (!shell_data.contains("submodels") || !shell_data["submodels"].is_array())
+        {
+            std::cerr << "Shell missing submodels array" << std::endl;
+            return std::nullopt;
+        }
+
+        // Step 2: Find the ProcessInformation submodel reference
+        std::string submodel_id;
+        for (const auto &submodel_ref : shell_data["submodels"])
+        {
+            if (submodel_ref.contains("keys") && submodel_ref["keys"].is_array())
+            {
+                std::string ref_value = submodel_ref["keys"][0]["value"];
+                if (ref_value.find("ProcessInformation") != std::string::npos)
+                {
+                    submodel_id = ref_value;
+                    break;
+                }
+            }
+        }
+
+        if (submodel_id.empty())
+        {
+            std::cerr << "ProcessInformation submodel reference not found for AAS: " << aas_shell_id << std::endl;
+            return std::nullopt;
+        }
+
+        std::cout << "Found ProcessInformation submodel reference: " << submodel_id << std::endl;
+
+        // Step 3: Fetch the submodel using base64url-encoded ID
+        std::string submodel_id_b64 = base64url_encode(submodel_id);
+        std::string submodel_url = "/submodels/" + submodel_id_b64;
+
+        nlohmann::json submodel_data = makeGetRequest(submodel_url);
+        std::cout << "Successfully fetched ProcessInformation submodel" << std::endl;
+
+        return submodel_data;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Error fetching ProcessInformation: " << e.what() << std::endl;
+        return std::nullopt;
+    }
+}
+
 std::optional<std::string> AASClient::fetchPolicyBTUrl(const std::string &aas_shell_id)
 {
     try
@@ -956,6 +1079,94 @@ std::optional<std::string> AASClient::lookupAasIdFromAssetId(const std::string &
     catch (const std::exception &e)
     {
         std::cerr << "Error looking up AAS ID from asset ID: " << e.what() << std::endl;
+        return std::nullopt;
+    }
+}
+
+std::optional<std::string> AASClient::resolveInterfaceReference(
+    const std::string &asset_id,
+    const std::string &interaction)
+{
+    try
+    {
+        std::cout << "Resolving interface reference for interaction: " << interaction
+                  << " in Variables submodel of asset: " << asset_id << std::endl;
+
+        // Fetch the Variables submodel
+        auto variables_data = fetchSubmodelData(asset_id, "Variables");
+        if (!variables_data)
+        {
+            std::cout << "No Variables submodel found for asset: " << asset_id << std::endl;
+            return std::nullopt;
+        }
+
+        // Look for a collection with the interaction name
+        if (!variables_data->contains("submodelElements") ||
+            !(*variables_data)["submodelElements"].is_array())
+        {
+            std::cout << "Variables submodel has no submodelElements" << std::endl;
+            return std::nullopt;
+        }
+
+        for (const auto &elem : (*variables_data)["submodelElements"])
+        {
+            if (!elem.contains("idShort") || elem["idShort"] != interaction)
+            {
+                continue;
+            }
+
+            // Found the matching collection, look for InterfaceReference
+            if (!elem.contains("value") || !elem["value"].is_array())
+            {
+                continue;
+            }
+
+            for (const auto &child : elem["value"])
+            {
+                if (!child.contains("idShort") || child["idShort"] != "InterfaceReference")
+                {
+                    continue;
+                }
+
+                // Found InterfaceReference - extract the target interface name from the keys
+                // The value is a ReferenceElement with keys array
+                if (!child.contains("value") || !child["value"].contains("keys") ||
+                    !child["value"]["keys"].is_array())
+                {
+                    std::cerr << "InterfaceReference has invalid structure" << std::endl;
+                    return std::nullopt;
+                }
+
+                // The last key in the path is the actual interface name
+                // Keys structure: Submodel -> InterfaceMQTT -> InteractionMetadata -> properties -> <InterfaceName>
+                const auto &keys = child["value"]["keys"];
+                if (keys.empty())
+                {
+                    std::cerr << "InterfaceReference has no keys" << std::endl;
+                    return std::nullopt;
+                }
+
+                // Get the last key which is the interface name
+                const auto &last_key = keys[keys.size() - 1];
+                if (!last_key.contains("value"))
+                {
+                    std::cerr << "InterfaceReference last key has no value" << std::endl;
+                    return std::nullopt;
+                }
+
+                std::string resolved_interface = last_key["value"].get<std::string>();
+                std::cout << "Resolved interface reference: " << interaction
+                          << " -> " << resolved_interface << std::endl;
+                return resolved_interface;
+            }
+        }
+
+        std::cout << "No InterfaceReference found for interaction: " << interaction << std::endl;
+        return std::nullopt;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Error resolving interface reference: " << e.what() << std::endl;
         return std::nullopt;
     }
 }

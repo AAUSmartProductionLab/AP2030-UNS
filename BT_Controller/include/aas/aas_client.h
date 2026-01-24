@@ -42,6 +42,9 @@ public:
     // Fetch the RequiredCapabilities submodel from a process AAS
     std::optional<nlohmann::json> fetchRequiredCapabilities(const std::string &aas_shell_id);
 
+    // Fetch the ProcessInformation submodel from a process AAS
+    std::optional<nlohmann::json> fetchProcessInformation(const std::string &aas_shell_id);
+
     // Fetch the BT description URL from the Policy submodel of a process AAS
     std::optional<std::string> fetchPolicyBTUrl(const std::string &aas_shell_id);
 
@@ -81,4 +84,11 @@ private:
         const nlohmann::json &elements,
         const std::vector<std::string> &property_path,
         size_t path_idx);
+
+    // Helper to resolve interface reference from Variables submodel
+    // Returns the actual interface name to use when the requested interaction
+    // is defined as a variable with an InterfaceReference
+    std::optional<std::string> resolveInterfaceReference(
+        const std::string &asset_id,
+        const std::string &interaction);
 };

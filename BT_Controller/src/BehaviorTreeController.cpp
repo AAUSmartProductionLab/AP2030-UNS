@@ -266,6 +266,44 @@ bool BehaviorTreeController::fetchAndBuildEquipmentMapping(BT::Blackboard::Ptr b
             }
         }
 
+        // Fetch the ProductReference from ProcessInformation submodel
+        auto process_info_opt = aas_client_->fetchProcessInformation(process_id);
+        if (process_info_opt.has_value())
+        {
+            const auto &process_info = process_info_opt.value();
+            
+            // Look for ProductReference in submodelElements
+            if (process_info.contains("submodelElements") && process_info["submodelElements"].is_array())
+            {
+                for (const auto &element : process_info["submodelElements"])
+                {
+                    if (element.contains("modelType") && 
+                        element["modelType"].get<std::string>() == "ReferenceElement" &&
+                        element.contains("idShort") && 
+                        element["idShort"].get<std::string>() == "ProductReference")
+                    {
+                        // Extract the product AAS ID from the reference
+                        if (element.contains("value") &&
+                            element["value"].contains("keys") &&
+                            element["value"]["keys"].is_array() &&
+                            !element["value"]["keys"].empty())
+                        {
+                            std::string product_aas_id = element["value"]["keys"][0]["value"].get<std::string>();
+                            
+                            std::lock_guard<std::mutex> lock(equipment_mapping_mutex_);
+                            equipment_aas_mapping_["product"] = product_aas_id;
+                            std::cout << "  Found product AAS: product -> " << product_aas_id << std::endl;
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+        else
+        {
+            std::cerr << "Warning: Could not fetch ProcessInformation submodel, product AAS will not be available" << std::endl;
+        }
+
         // Populate blackboard if provided
         if (blackboard)
         {
@@ -293,7 +331,7 @@ void BehaviorTreeController::populateBlackboard(BT::Blackboard::Ptr blackboard)
     std::cout << "Populating blackboard with equipment mapping..." << std::endl;
 
     // Store each equipment mapping in the blackboard
-    // Simple name -> AAS URL (e.g., "LoadingSystem" -> "https://.../imaLoadingSystem")
+    // Simple name -> AAS URL (e.g., "LoadingSystemAAS" -> "https://.../imaLoadingSystemAAS")
     for (const auto &[equipment_name, aas_id] : equipment_aas_mapping_)
     {
         blackboard->set(equipment_name, aas_id);
