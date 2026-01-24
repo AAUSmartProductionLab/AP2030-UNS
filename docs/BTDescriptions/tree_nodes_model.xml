@@ -29,7 +29,7 @@
         </Decorator>
         <Decorator ID="Occupy">
             <inout_port name="Uuid" type="std::string" default="{Uuid}">UUID of the selected asset's occupation request</inout_port>
-            <output_port name="SelectedAsset" type="std::string">The asset ID that was successfully occupied</output_port>
+            <output_port name="SelectedAsset" type="std::string" default="{SelectedAsset}">The Asset that has accepted our request</output_port>
             <input_port name="Assets" type="std::vector&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt;">List of asset IDs to attempt occupation on</input_port>
         </Decorator>
         <Action ID="PopElement">

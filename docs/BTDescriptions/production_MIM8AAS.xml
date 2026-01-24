@@ -29,7 +29,7 @@
               <SubTree ID="Loading" Assets="https://smartproductionlab.aau.dk/aas/imaLoadingSystemAAS" Xbot="{SelectedAsset}" _autoremap="true"/>
               <SubTree ID="Dispensing" Assets="https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS" Xbot="{SelectedAsset}" _autoremap="true"/>
               <SubTree ID="Stoppering" Assets="https://smartproductionlab.aau.dk/aas/syntegonStopperingSystemAAS" Xbot="{SelectedAsset}" _autoremap="true"/>
-              <SubTree ID="Inspection" Assets="https://smartproductionlab.aau.dk/aas/omronCameraSystemAAS" Xbot="{SelectedAsset}" _autoremap="true"/>
+              <SubTree ID="QualityControl" Assets="https://smartproductionlab.aau.dk/aas/omronCameraSystemAAS" Xbot="{SelectedAsset}" _autoremap="true"/>
               <SubTree ID="Unloading" Assets="https://smartproductionlab.aau.dk/aas/optimaUnloadingSystemAAS" Xbot="{SelectedAsset}" _autoremap="true"/>
             </SequenceWithMemory>
             <SubTree ID="Scraping" Assets="https://smartproductionlab.aau.dk/aas/optimaUnloadingSystemAAS" Xbot="{SelectedAsset}" _autoremap="true"/>
@@ -134,58 +134,58 @@
       </ReactiveSequence>
     </Occupy>
   </BehaviorTree>
-  <TreeNodesModel>
-    <Control ID="BC_Fallback"/>
-    <Control ID="BC_Fallback_Async"/>
-    <Action ID="Command_Execution">
-      <input_port name="Parameters" type="nlohmann::json_abi_v3_11_3::basic_json&lt;std::map, std::vector, std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, bool, long, unsigned long, double, std::allocator, nlohmann::json_abi_v3_11_3::adl_serializer, std::vector&lt;unsigned char, std::allocator&lt;unsigned char&gt; &gt;, void&gt;" default="'{}'">The parameters for the operation</input_port>
-      <input_port name="Uuid" type="std::string" default="{Uuid}">UUID for the operation to execute</input_port>
-      <input_port name="Operation" type="std::string" default="Operation">The operation to execute on the asset</input_port>
-      <input_port name="Asset" type="std::string" default="{Asset}">The asset used for execution</input_port>
-    </Action>
-    <Action ID="Configure">
-      <output_port name="ProductIDs" type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;" default="{ProductIDs}">List of product IDs to produce</output_port>
-    </Action>
-    <Condition ID="Data_Condition">
-      <input_port name="comparison_type" type="std::string">Type of comparison: equal, not_equal, greater, less, contains</input_port>
-      <input_port name="Field" type="std::string">Name of the field to monitor in the MQTT message</input_port>
-      <input_port name="expected_value" type="std::string">Value to compare against</input_port>
-      <input_port name="Property" type="std::string">The property interface from the Asset</input_port>
-      <input_port name="Asset" type="std::string" default="{Asset}">The Asset from which to receive a message</input_port>
-    </Condition>
-    <Decorator ID="GetProductFromQueue">
-      <output_port name="ProductID" type="std::string" default="{ProductID}">The product ID of the current product</output_port>
-      <input_port name="if_empty" type="BT::NodeStatus" default="SUCCESS">Status to return if queue is empty: SUCCESS, FAILURE, SKIPPED</input_port>
-      <input_port name="Queue" type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;" default="{ProductIDs}">The queue of all product IDs of the batch</input_port>
-    </Decorator>
-    <Decorator ID="KeepRunningUntilEmpty">
-      <input_port name="if_empty" type="BT::NodeStatus" default="SUCCESS">Status to return if queue is empty: SUCCESS, FAILURE, SKIPPED</input_port>
-      <input_port name="Queue" type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;" default="{ProductIDs}">The queue to monitor. Node runs child while this queue is not empty.</input_port>
-    </Decorator>
-    <Decorator ID="Occupy">
-      <inout_port name="Uuid" type="std::string" default="{Uuid}">UUID of the selected asset's occupation request</inout_port>
-      <output_port name="SelectedAsset" type="std::string">The asset ID that was successfully occupied</output_port>
-      <input_port name="Assets" type="std::vector&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt;">List of asset IDs to attempt occupation on</input_port>
-    </Decorator>
-    <Action ID="PopElement">
-      <output_port name="ProductID" type="std::string" default="{ProductID}">The product ID popped from the queue.</output_port>
-      <input_port name="if_empty" type="BT::NodeStatus" default="SUCCESS">Status to return if the queue is empty or invalid (SUCCESS, FAILURE, SKIPPED).</input_port>
-      <input_port name="Queue" type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;" default="{ProductIDs}">The shared queue of product IDs. An element will be popped from it.</input_port>
-    </Action>
-    <Action ID="Refill_Node">
-      <input_port name="Uuid" type="std::string" default="{ID}">UUID for the command to execute</input_port>
-      <input_port name="Asset" type="std::string" default="{Asset}">The asset used for refilling</input_port>
-    </Action>
-    <Action ID="Retrieve_AAS_Property">
-      <inout_port name="output_key" type="std::string">Name of the blackboard entry where the value should be written</inout_port>
-      <input_port name="Property" type="std::string">The property idShort or path (use | as delimiter, e.g., 'Filling|Location|x')</input_port>
-      <input_port name="Submodel" type="std::string">The submodel idShort containing the property</input_port>
-      <input_port name="Asset" type="std::string">The asset name to retrieve the property from</input_port>
-    </Action>
-    <Action ID="moveToPosition">
-      <input_port name="Uuid" type="std::string" default="{ProductID}">UUID for the command to execute</input_port>
-      <input_port name="TargetPosition" type="std::string" default="{Station}">The name of the station to move to</input_port>
-      <input_port name="Asset" type="std::string" default="{Xbot}">The Asset to execute the movement</input_port>
-    </Action>
-  </TreeNodesModel>
+    <TreeNodesModel>
+        <Control ID="BC_Fallback"/>
+        <Control ID="BC_Fallback_Async"/>
+        <Action ID="Command_Execution">
+            <input_port name="Parameters" type="nlohmann::json_abi_v3_11_3::basic_json&lt;std::map, std::vector, std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, bool, long, unsigned long, double, std::allocator, nlohmann::json_abi_v3_11_3::adl_serializer, std::vector&lt;unsigned char, std::allocator&lt;unsigned char&gt; &gt;, void&gt;" default="&apos;{}&apos;">The parameters for the operation</input_port>
+            <input_port name="Uuid" type="std::string" default="{Uuid}">UUID for the operation to execute</input_port>
+            <input_port name="Operation" type="std::string" default="Operation">The operation to execute on the asset</input_port>
+            <input_port name="Asset" type="std::string" default="{Asset}">The asset used for execution</input_port>
+        </Action>
+        <Action ID="Configure">
+            <output_port name="ProductIDs" type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;" default="{ProductIDs}">List of product IDs to produce</output_port>
+        </Action>
+        <Condition ID="Data_Condition">
+            <input_port name="comparison_type" type="std::string">Type of comparison: equal, not_equal, greater, less, contains</input_port>
+            <input_port name="Field" type="std::string">Name of the field to monitor in the MQTT message</input_port>
+            <input_port name="expected_value" type="std::string">Value to compare against</input_port>
+            <input_port name="Property" type="std::string">The property interface from the Asset</input_port>
+            <input_port name="Asset" type="std::string" default="{Asset}">The Asset from which to receive a message</input_port>
+        </Condition>
+        <Decorator ID="GetProductFromQueue">
+            <output_port name="ProductID" type="std::string" default="{ProductID}">The product ID of the current product</output_port>
+            <input_port name="if_empty" type="BT::NodeStatus" default="SUCCESS">Status to return if queue is empty: SUCCESS, FAILURE, SKIPPED</input_port>
+            <input_port name="Queue" type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;" default="{ProductIDs}">The queue of all product IDs of the batch</input_port>
+        </Decorator>
+        <Decorator ID="KeepRunningUntilEmpty">
+            <input_port name="if_empty" type="BT::NodeStatus" default="SUCCESS">Status to return if queue is empty: SUCCESS, FAILURE, SKIPPED</input_port>
+            <input_port name="Queue" type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;" default="{ProductIDs}">The queue to monitor. Node runs child while this queue is not empty.</input_port>
+        </Decorator>
+        <Decorator ID="Occupy">
+            <inout_port name="Uuid" type="std::string" default="{Uuid}">UUID of the selected asset's occupation request</inout_port>
+            <output_port name="SelectedAsset" type="std::string" default="{SelectedAsset}">The Asset that has accepted our request</output_port>
+            <input_port name="Assets" type="std::vector&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt;">List of asset IDs to attempt occupation on</input_port>
+        </Decorator>
+        <Action ID="PopElement">
+            <output_port name="ProductID" type="std::string" default="{ProductID}">The product ID popped from the queue.</output_port>
+            <input_port name="if_empty" type="BT::NodeStatus" default="SUCCESS">Status to return if the queue is empty or invalid (SUCCESS, FAILURE, SKIPPED).</input_port>
+            <input_port name="Queue" type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;" default="{ProductIDs}">The shared queue of product IDs. An element will be popped from it.</input_port>
+        </Action>
+        <Action ID="Refill_Node">
+            <input_port name="Uuid" type="std::string" default="{ID}">UUID for the command to execute</input_port>
+            <input_port name="Asset" type="std::string" default="{Asset}">The asset used for refilling</input_port>
+        </Action>
+        <Action ID="Retrieve_AAS_Property">
+            <inout_port name="output_key" type="std::string">Name of the blackboard entry where the value should be written</inout_port>
+            <input_port name="Property" type="std::string">The property idShort or path (use | as delimiter, e.g., 'Filling|Location|x')</input_port>
+            <input_port name="Submodel" type="std::string">The submodel idShort containing the property</input_port>
+            <input_port name="Asset" type="std::string">The asset name to retrieve the property from</input_port>
+        </Action>
+        <Action ID="moveToPosition">
+            <input_port name="Uuid" type="std::string" default="{ProductID}">UUID for the command to execute</input_port>
+            <input_port name="TargetPosition" type="std::string" default="{Station}">The name of the station to move to</input_port>
+            <input_port name="Asset" type="std::string" default="{Xbot}">The Asset to execute the movement</input_port>
+        </Action>
+    </TreeNodesModel>
 </root>
