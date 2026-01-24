@@ -317,7 +317,8 @@ std::optional<mqtt_utils::Topic> AASClient::fetchInterface(const std::string &as
 
         for (const auto &elem : interaction_data["value"])
         {
-            if (elem["idShort"] == "forms")
+            // Check for "Forms" (capital F as per AAS convention) or "forms" (lowercase)
+            if (elem["idShort"] == "Forms" || elem["idShort"] == "forms")
             {
                 forms_data = elem;
             }

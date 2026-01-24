@@ -218,19 +218,12 @@ bool BehaviorTreeController::fetchAndBuildEquipmentMapping(BT::Blackboard::Ptr b
                             {
                                 std::string id_short = submodel_id.substr(id_start, id_end - id_start);
 
-                                // Derive system name by removing "AAS" suffix if present
-                                std::string system_name = id_short;
-                                if (system_name.size() > 3 && system_name.substr(system_name.size() - 3) == "AAS")
-                                {
-                                    system_name = system_name.substr(0, system_name.size() - 3);
-                                }
-
-                                // Construct AAS shell ID
+                                // Construct AAS shell ID using the idShort (with AAS suffix)
                                 size_t base_end = submodel_id.find("/submodels/");
                                 if (base_end != std::string::npos)
                                 {
                                     std::string base_url = submodel_id.substr(0, base_end);
-                                    aas_shell_id = base_url + "/aas/" + system_name;
+                                    aas_shell_id = base_url + "/aas/" + id_short;
                                 }
                             }
                         }
@@ -242,12 +235,8 @@ bool BehaviorTreeController::fetchAndBuildEquipmentMapping(BT::Blackboard::Ptr b
                         continue;
                     }
 
-                    // Use the resource name (without AAS suffix) as the key
+                    // Use the resource idShort (with AAS suffix) as the key
                     std::string resource_name = resource_id_short;
-                    if (resource_name.size() > 3 && resource_name.substr(resource_name.size() - 3) == "AAS")
-                    {
-                        resource_name = resource_name.substr(0, resource_name.size() - 3);
-                    }
 
                     std::cout << "    Found resource: " << resource_name << " -> " << aas_shell_id << std::endl;
 

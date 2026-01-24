@@ -49,10 +49,10 @@ void Occupy::initializeTopicsFromAAS()
         {
             std::cout << "  - Fetching interfaces for asset: " << asset_id << std::endl;
 
-            auto occupy_req = aas_client_.fetchInterface(asset_id, "occupy", "input");
-            auto occupy_resp = aas_client_.fetchInterface(asset_id, "occupy", "output");
-            auto release_req = aas_client_.fetchInterface(asset_id, "release", "input");
-            auto release_resp = aas_client_.fetchInterface(asset_id, "release", "output");
+            auto occupy_req = aas_client_.fetchInterface(asset_id, "Occupy", "input");
+            auto occupy_resp = aas_client_.fetchInterface(asset_id, "Occupy", "output");
+            auto release_req = aas_client_.fetchInterface(asset_id, "Release", "input");
+            auto release_resp = aas_client_.fetchInterface(asset_id, "Release", "output");
 
             if (!occupy_req.has_value() || !occupy_resp.has_value() ||
                 !release_req.has_value() || !release_resp.has_value())
@@ -321,9 +321,11 @@ BT::PortsList Occupy::providedPorts()
         BT::InputPort<std::vector<std::string>>(
             "Assets",
             "List of asset IDs to attempt occupation on"),
-        BT::OutputPort<std::string>(
+        BT::details::PortWithDefault<std::string>(
+            BT::PortDirection::OUTPUT,
             "SelectedAsset",
-            "The asset ID that was successfully occupied"),
+            "{SelectedAsset}",
+            "The Asset that has accepted our request"),
         BT::details::PortWithDefault<std::string>(
             BT::PortDirection::INOUT,
             "Uuid",
