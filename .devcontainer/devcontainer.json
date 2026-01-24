@@ -28,5 +28,5 @@
                         ]
                 }
         },
-        "postCreateCommand": "sudo usermod -aG dialout $USER"
+        "postCreateCommand": "sudo usermod -aG dialout $USER && git config core.autocrlf input && git submodule update --init --recursive && git submodule foreach --recursive 'git checkout -- . 2>/dev/null || true'"
 }
