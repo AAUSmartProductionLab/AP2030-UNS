@@ -23,3 +23,6 @@ htmlcov/
 # Temp files
 *.tmp
 *.log
+
+# Generated BT plugin library (built from source in container)
+plugin_library/

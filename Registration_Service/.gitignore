@@ -1,0 +1,40 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Testing
+.pytest_cache/
+*.coverage
+htmlcov/
+.tox/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temp files
+*.tmp
+*.log
+
+# Generated BT plugin outputs (regenerated at runtime)
+plugin_library/aas_action_library/
+plugin_library/plugin_registry.json
+
+# Old generated outputs (deprecated)
+generated_bt_nodes/
+
+# Environment files with secrets
+.env
+.env.local

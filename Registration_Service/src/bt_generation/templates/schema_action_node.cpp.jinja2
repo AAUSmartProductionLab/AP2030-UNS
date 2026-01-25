@@ -1,0 +1,158 @@
+/**
+ * @file {{ library_name }}.cpp
+ * @brief Schema-based BehaviorTree.CPP action nodes implementation
+ * 
+ * DO NOT EDIT - This file is auto-generated from JSON schemas.
+ */
+
+#include "{{ library_name }}.hpp"
+#include "utils.h"
+#include "mqtt/node_message_distributor.h"
+
+namespace {{ library_name }} {
+
+{% for node in nodes %}
+// ============================================================================
+// {{ node.class_name }} - Schema: {{ node.schema_url.split('/')[-1] }}
+// ============================================================================
+
+void {{ node.class_name }}::initializeTopicsFromAAS()
+{
+    if (topics_initialized_) {
+        return;
+    }
+
+    try {
+        auto asset_input = getInput<std::string>("Asset");
+        auto operation_input = getInput<std::string>("Operation");
+        
+        if (!asset_input.has_value()) {
+            std::cerr << "{{ node.class_name }} '" << this->name() 
+                      << "' has no Asset input configured" << std::endl;
+            return;
+        }
+
+        std::string asset_id = asset_input.value();
+        
+        // Use Operation port if set, otherwise use the node's name
+        std::string operation = operation_input.has_value() && !operation_input.value().empty()
+            ? operation_input.value()
+            : this->name();
+        
+        std::cout << "{{ node.class_name }} '" << this->name() 
+                  << "' initializing for Asset: " << asset_id 
+                  << ", Operation: " << operation << std::endl;
+
+        // Fetch interfaces from AAS
+        auto request_opt = aas_client_.fetchInterface(asset_id, operation, "input");
+        auto response_opt = aas_client_.fetchInterface(asset_id, operation, "output");
+
+        if (!request_opt.has_value()) {
+            std::cerr << "Failed to fetch input interface from AAS for: " 
+                      << asset_id << "/" << operation << std::endl;
+            return;
+        }
+
+        MqttPubBase::setTopic("input", request_opt.value());
+        
+        if (response_opt.has_value()) {
+            MqttSubBase::setTopic("output", response_opt.value());
+        }
+        
+        topics_initialized_ = true;
+    }
+    catch (const std::exception& e) {
+        std::cerr << "Exception in {{ node.class_name }}::initializeTopicsFromAAS: " 
+                  << e.what() << std::endl;
+    }
+}
+
+nlohmann::json {{ node.class_name }}::createMessage()
+{
+    nlohmann::json message;
+
+    // Get or generate UUID
+    auto uuid_result = getInput<std::string>("Uuid");
+    if (uuid_result.has_value() && !uuid_result.value().empty()) {
+        current_uuid_ = uuid_result.value();
+    } else {
+        current_uuid_ = mqtt_utils::generate_uuid();
+    }
+    message["Uuid"] = current_uuid_;
+
+    {% for port in node.input_ports if not port.is_array_element %}
+    // {{ port.name }} ({{ port.json_type }})
+    {
+        auto result = getInput<{{ port.cpp_type }}>("{{ port.name }}");
+        if (result.has_value()) {
+            message["{{ port.name }}"] = result.value();
+        }
+        {% if port.is_required %}
+        else {
+            std::cerr << "{{ node.class_name }}: Missing required '{{ port.name }}': " 
+                      << result.error() << std::endl;
+            return nlohmann::json();
+        }
+        {% endif %}
+    }
+    {% endfor %}
+
+    {% for array_name, array_ports in node.array_fields.items() %}
+    // Build {{ array_name }} array from individual ports
+    {
+        nlohmann::json {{ array_name | lower }}_array = nlohmann::json::array();
+        bool array_valid = true;
+        {% for port in array_ports | sort(attribute='array_index') %}
+        
+        if (auto {{ port.name }}_result = getInput<{{ port.cpp_type }}>("{{ port.name }}"); 
+            {{ port.name }}_result.has_value()) {
+            {{ array_name | lower }}_array.push_back({{ port.name }}_result.value());
+        }
+        {% if port.is_required %}
+        else {
+            std::cerr << "{{ node.class_name }}: Missing '{{ port.name }}': " 
+                      << {{ port.name }}_result.error() << std::endl;
+            array_valid = false;
+        }
+        {% endif %}
+        {% endfor %}
+        
+        if (array_valid && !{{ array_name | lower }}_array.empty()) {
+            message["{{ array_name }}"] = {{ array_name | lower }}_array;
+        }
+    }
+    {% endfor %}
+
+    return message;
+}
+
+{% endfor %}
+
+// ============================================================================
+// Registration Function
+// ============================================================================
+
+void registerAllActions(
+    BT::BehaviorTreeFactory& factory,
+    NodeMessageDistributor& distributor,
+    MqttClient& mqtt_client,
+    AASClient& aas_client)
+{
+    MqttSubBase::setNodeMessageDistributor(&distributor);
+    
+{% for node in nodes %}
+    // {{ node.class_name }} - {{ node.schema_url.split('/')[-1] }}
+    factory.registerBuilder<{{ node.class_name }}>(
+        "{{ node.xml_tag }}",
+        [&mqtt_client, &aas_client](const std::string& name, const BT::NodeConfig& config)
+        {
+            auto node = std::make_unique<{{ node.class_name }}>(name, config, mqtt_client, aas_client);
+            node->initialize();
+            return node;
+        });
+{% endfor %}
+    
+    std::cout << "Registered {{ nodes | length }} schema-based action nodes" << std::endl;
+}
+
+} // namespace {{ library_name }}

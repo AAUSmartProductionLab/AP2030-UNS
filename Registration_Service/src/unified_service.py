@@ -7,6 +7,7 @@ A single service that handles the complete registration workflow:
 3. Creates DataBridge configurations directly from config
 4. Generates AAS descriptions using the AAS generator
 5. Posts AAS to BaSyx server
+6. (Optional) Generates BehaviorTree.CPP action nodes from AAS interface descriptions
 
 This consolidates OperationDelegation config and RegistrationService functionality.
 """
@@ -39,6 +40,13 @@ from .core import (
     ContainerNames
 )
 from .utils import encode_aas_id
+
+# Optional BT generation import (may fail if Jinja2 not installed)
+try:
+    from .bt_generation import SchemaBasedGenerator
+    BT_GENERATION_AVAILABLE = True
+except ImportError:
+    BT_GENERATION_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
@@ -117,7 +125,8 @@ class UnifiedRegistrationService:
         config_path: Optional[str] = None,
         config_data: Optional[Dict[str, Any]] = None,
         validate_aas: bool = True,
-        restart_services: bool = True
+        restart_services: bool = True,
+        auto_generate_bt_plugins: bool = True
     ) -> bool:
         """
         Register an asset from its YAML configuration.
@@ -128,13 +137,15 @@ class UnifiedRegistrationService:
         3. Generate DataBridge configs
         4. Generate AAS
         5. Register with BaSyx
-        6. Restart services (optional)
+        6. Check/Generate BT plugins (optional)
+        7. Restart services (optional)
 
         Args:
             config_path: Path to YAML configuration file
             config_data: Already parsed YAML config data (alternative to config_path)
             validate_aas: Whether to validate generated AAS
             restart_services: Whether to restart DataBridge and Operation Delegation containers
+            auto_generate_bt_plugins: Whether to automatically generate missing BT plugins
 
         Returns:
             True if registration successful
@@ -186,7 +197,13 @@ class UnifiedRegistrationService:
                 logger.error("Failed to register with BaSyx")
                 return False
 
-            # Step 6: Restart DataBridge (if requested)
+            # Step 6: Check/Generate BT plugins
+            if auto_generate_bt_plugins:
+                self._process_bt_plugins(config, config_path)
+            else:
+                self._check_bt_plugin_status(config)
+
+            # Step 7: Restart DataBridge (if requested)
             # Note: Operation Delegation no longer needs restart - config is updated in-memory
             if restart_services:
                 logger.info("Restarting DataBridge...")
@@ -200,6 +217,127 @@ class UnifiedRegistrationService:
         except Exception as e:
             logger.error(f"Registration failed: {e}", exc_info=True)
             return False
+
+    def _check_bt_plugin_status(self, config: ConfigParser):
+        """
+        Check if BT plugins exist for the asset's actions.
+
+        This is informational - logs which actions have plugins and which don't.
+        """
+        if not BT_GENERATION_AVAILABLE:
+            return
+
+        try:
+            from .bt_generation import PluginRegistry
+
+            registry = PluginRegistry(
+                str(self.project_root / "plugin_library"))
+            actions = config.get_actions()
+
+            has_plugin = []
+            needs_plugin = []
+
+            for action in actions:
+                schema_url = action.get('input_schema')
+                if schema_url and registry.has_plugin_for_schema(schema_url):
+                    plugin = registry.get_plugin_for_schema(schema_url)
+                    if plugin:
+                        has_plugin.append((action['name'], plugin.class_name))
+                else:
+                    needs_plugin.append(action['name'])
+
+            if has_plugin:
+                logger.info(
+                    f"BT Plugins available for: {', '.join(a[0] for a in has_plugin)}")
+
+            if needs_plugin:
+                logger.warning(
+                    f"No BT plugins for actions: {', '.join(needs_plugin)}. "
+                    f"Run 'manage_bt_library.py generate' to create them."
+                )
+        except Exception as e:
+            logger.debug(f"BT plugin check skipped: {e}")
+
+    def _process_bt_plugins(
+        self,
+        config: ConfigParser,
+        config_path: Optional[str] = None
+    ):
+        """
+        Check and generate BT plugins for the asset's actions.
+
+        This automatically generates missing plugins when new schemas are encountered.
+        The generated plugins are added to the plugin library.
+
+        Args:
+            config: Parsed configuration
+            config_path: Path to config file (for schema-based generator)
+        """
+        if not BT_GENERATION_AVAILABLE:
+            logger.debug("BT generation not available (Jinja2 not installed)")
+            return
+
+        try:
+            # Import here to ensure we use the already-validated import
+            from .bt_generation import SchemaBasedGenerator as Generator
+
+            library_dir = self.project_root / "plugin_library"
+            generator = Generator(
+                library_dir=str(library_dir),
+                schema_base_dir=str(self.project_root.parent / "MQTTSchemas")
+            )
+
+            # Check what plugins are needed
+            actions = config.get_actions()
+            needs_generation, already_exists = generator.registry.get_missing_plugins(
+                actions)
+
+            asset_id = config.id_short
+
+            # Log existing plugins
+            if already_exists:
+                existing_names = []
+                for action in already_exists:
+                    schema_url = action.get('input_schema')
+                    if schema_url:
+                        plugin = generator.registry.get_plugin_for_schema(
+                            schema_url)
+                        if plugin:
+                            existing_names.append(
+                                f"{action['name']}→{plugin.class_name}")
+
+                if existing_names:
+                    logger.info(
+                        f"BT plugins available: {', '.join(existing_names)}")
+
+            # Generate missing plugins
+            if needs_generation:
+                logger.info(
+                    f"Generating BT plugins for {len(needs_generation)} new schema(s)..."
+                )
+
+                new_specs = generator.generate_for_actions(
+                    needs_generation, asset_id)
+
+                if new_specs:
+                    # Write the updated library
+                    lib_path = generator.write_library(
+                        library_name="aas_action_library")
+
+                    new_classes = [s.class_name for s in new_specs]
+                    logger.info(
+                        f"✓ Generated {len(new_specs)} new BT plugin(s): {', '.join(new_classes)}"
+                    )
+                    logger.info(f"  Plugin library updated: {lib_path}")
+                    logger.info(
+                        "  Note: Rebuild BT Controller to use new plugins"
+                    )
+            else:
+                logger.debug(f"All BT plugins already exist for {asset_id}")
+
+        except Exception as e:
+            logger.warning(f"BT plugin generation failed: {e}")
+            logger.debug("Full traceback:", exc_info=True)
 
     def register_multiple_configs(self, config_paths: List[str], validate_aas: bool = True) -> Dict[str, bool]:
         """
@@ -467,8 +605,9 @@ class UnifiedRegistrationService:
         """Register shell descriptor in AAS registry"""
         try:
             external_url = self.basyx_config.get_external_url()
-            
-            logger.info(f"Registering shell descriptor with {len(submodels)} submodels")
+
+            logger.info(
+                f"Registering shell descriptor with {len(submodels)} submodels")
 
             shell_descriptor = {
                 "id": shell_data['id'],
@@ -507,29 +646,33 @@ class UnifiedRegistrationService:
                         if 'semanticId' in sm:
                             sm_descriptor['semanticId'] = sm['semanticId']
                         submodel_descriptors.append(sm_descriptor)
-                        logger.debug(f"Added submodel descriptor: {sm['idShort']}")
+                        logger.debug(
+                            f"Added submodel descriptor: {sm['idShort']}")
                     else:
                         logger.warning(f"Skipping invalid submodel: {sm}")
 
-                logger.info(f"Built {len(submodel_descriptors)} submodel descriptors")
+                logger.info(
+                    f"Built {len(submodel_descriptors)} submodel descriptors")
                 if submodel_descriptors:
                     shell_descriptor['submodelDescriptors'] = submodel_descriptors
 
             response = self.http_client.post(
                 self.basyx_config.aas_registry_url, shell_descriptor)
-            logger.info(f"Shell descriptor registration response: {response.status_code}")
-            
+            logger.info(
+                f"Shell descriptor registration response: {response.status_code}")
+
             if self.http_client.is_conflict(response):
                 # Already exists - delete and re-register
                 logger.info(f"Shell descriptor exists, updating...")
                 delete_url = f"{self.basyx_config.aas_registry_url}/{encoded_id}"
                 self.http_client.delete(delete_url)
-                
+
                 # Re-register
                 response = self.http_client.post(
                     self.basyx_config.aas_registry_url, shell_descriptor)
-                logger.info(f"Shell descriptor re-registration response: {response.status_code}")
-            
+                logger.info(
+                    f"Shell descriptor re-registration response: {response.status_code}")
+
             return response.status_code in [HTTPStatus.OK, HTTPStatus.CREATED]
 
         except Exception as e:

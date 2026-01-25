@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  BehaviorTree.CPP Plugin Manifest for Groot2
+  
+  Schema-based Action Library: {{ library_name }}
+  
+  These nodes work with ANY asset that uses the corresponding input schema.
+  Use the Asset port to specify which asset to communicate with.
+-->
+<root BTCPP_format="4">
+  <TreeNodesModel>
+{% for node in nodes %}
+    <!-- {{ node.class_name }} - Schema: {{ node.schema_url.split('/')[-1] }} -->
+    <Action ID="{{ node.xml_tag }}" editable="true">
+      <description>{{ node.class_name }}: Works with any asset using {{ node.schema_url.split('/')[-1] }}</description>
+      
+      <!-- Standard ports -->
+      <input_port name="Asset" default="{Asset}" type="std::string">The asset to execute this action on</input_port>
+      <input_port name="Operation" default="" type="std::string">Operation name (defaults to node name)</input_port>
+      <input_port name="Uuid" default="{Uuid}" type="std::string">UUID for operation</input_port>
+      
+      <!-- Schema-derived ports -->
+      {% for port in node.input_ports %}
+      <input_port name="{{ port.name }}" {% if port.default_value %}default="{{ port.default_value }}"{% endif %} type="{{ port.cpp_type }}">{{ port.description }}</input_port>
+      {% endfor %}
+    </Action>
+    
+{% endfor %}
+  </TreeNodesModel>
+</root>

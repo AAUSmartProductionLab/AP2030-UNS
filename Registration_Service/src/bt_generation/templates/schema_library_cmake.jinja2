@@ -1,0 +1,105 @@
+cmake_minimum_required(VERSION 3.16)
+project({{ library_name }} VERSION 1.0.0)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+# ============================================================================
+# This is a schema-based action library
+# 
+# It can be:
+# 1. Built as part of the BT_Controller (add_subdirectory)
+# 2. Built as a standalone shared library
+# 3. Cross-compiled for different architectures
+# ============================================================================
+
+option(BUILD_SHARED_LIBS "Build as shared library" ON)
+
+# ============================================================================
+# Dependencies
+# ============================================================================
+
+find_package(behaviortree_cpp REQUIRED)
+find_package(nlohmann_json REQUIRED)
+find_package(PahoMqttCpp REQUIRED)
+
+# ============================================================================
+# Library Target
+# ============================================================================
+
+add_library({{ library_name }}
+    src/{{ library_name }}.cpp
+)
+
+target_include_directories({{ library_name }}
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+)
+
+# If building standalone, need path to BT_Controller headers
+if(DEFINED BT_CONTROLLER_INCLUDE_DIR)
+    target_include_directories({{ library_name }} PRIVATE ${BT_CONTROLLER_INCLUDE_DIR})
+endif()
+
+target_link_libraries({{ library_name }}
+    PUBLIC
+        BT::behaviortree_cpp
+        nlohmann_json::nlohmann_json
+        PahoMqttCpp::paho-mqttpp3
+)
+
+# ============================================================================
+# Installation
+# ============================================================================
+
+include(GNUInstallDirs)
+
+install(TARGETS {{ library_name }}
+    EXPORT {{ library_name }}Targets
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+install(
+    DIRECTORY include/
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
+
+install(
+    FILES {{ library_name }}_manifest.xml
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/{{ library_name }}
+)
+
+# ============================================================================
+# Export for CMake find_package
+# ============================================================================
+
+install(EXPORT {{ library_name }}Targets
+    FILE {{ library_name }}Targets.cmake
+    NAMESPACE {{ library_name }}::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/{{ library_name }}
+)
+
+include(CMakePackageConfigHelpers)
+
+configure_package_config_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/{{ library_name }}Config.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/{{ library_name }}Config.cmake
+    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/{{ library_name }}
+)
+
+write_basic_package_version_file(
+    ${CMAKE_CURRENT_BINARY_DIR}/{{ library_name }}ConfigVersion.cmake
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY SameMajorVersion
+)
+
+install(
+    FILES
+        ${CMAKE_CURRENT_BINARY_DIR}/{{ library_name }}Config.cmake
+        ${CMAKE_CURRENT_BINARY_DIR}/{{ library_name }}ConfigVersion.cmake
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/{{ library_name }}
+)

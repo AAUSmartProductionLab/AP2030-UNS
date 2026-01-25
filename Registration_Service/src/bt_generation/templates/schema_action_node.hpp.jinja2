@@ -1,0 +1,80 @@
+/**
+ * @file {{ library_name }}.hpp
+ * @brief Schema-based BehaviorTree.CPP action nodes library
+ * 
+ * DO NOT EDIT - This file is auto-generated from JSON schemas.
+ * 
+ * This library contains ONE plugin class per unique input schema.
+ * The Asset port determines which asset to communicate with at runtime.
+ * 
+ * Schemas covered:
+ * {% for node in nodes %}
+ *   - {{ node.class_name }}: {{ node.schema_url }}
+ * {% endfor %}
+ */
+
+#pragma once
+
+#include "bt/mqtt_action_node.h"
+#include <behaviortree_cpp/bt_factory.h>
+#include <nlohmann/json.hpp>
+#include <string>
+
+namespace {{ library_name }} {
+
+{% for node in nodes %}
+/**
+ * @brief {{ node.class_name }} - Generic action node for schema: {{ node.schema_url.split('/')[-1] }}
+ * 
+ * Schema: {{ node.schema_url }}
+ * Hash: {{ node.schema_hash }}
+ * 
+ * This node works with ANY asset that uses this input schema.
+ * The Asset port determines which asset's MQTT topics to use.
+ */
+class {{ node.class_name }} : public MqttActionNode
+{
+public:
+    {{ node.class_name }}(
+        const std::string& name,
+        const BT::NodeConfig& config,
+        MqttClient& mqtt_client,
+        AASClient& aas_client)
+        : MqttActionNode(name, config, mqtt_client, aas_client)
+    {
+    }
+
+    static BT::PortsList providedPorts()
+    {
+        return {
+            // Standard ports (same for all schema-based nodes)
+            BT::InputPort<std::string>("Asset", "{Asset}",
+                "The asset to execute this action on"),
+            BT::InputPort<std::string>("Operation", "",
+                "The operation name (defaults to node name if empty)"),
+            BT::InputPort<std::string>("Uuid", "{Uuid}",
+                "UUID for the operation (auto-generated if not provided)"),
+            {% for port in node.input_ports %}
+            {{ type_mapper.generate_port_declaration(port) }}{{ "," if not loop.last else "" }}
+            {% endfor %}
+        };
+    }
+
+    void initializeTopicsFromAAS() override;
+    nlohmann::json createMessage() override;
+};
+
+{% endfor %}
+
+/**
+ * @brief Register all schema-based action nodes
+ * 
+ * Call this from your BT Controller to register all generated nodes.
+ */
+void registerAllActions(
+    BT::BehaviorTreeFactory& factory,
+    NodeMessageDistributor& distributor,
+    MqttClient& mqtt_client,
+    AASClient& aas_client);
+
+} // namespace {{ library_name }}
