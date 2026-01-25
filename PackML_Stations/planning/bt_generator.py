@@ -247,7 +247,8 @@ class BTGenerator:
             self.get_assets_for_capability("Moving"))
         occupy = ET.SubElement(aseptic_bt, "Occupy",
                                Uuid="{Uuid}",
-                               Assets=mover_assets)
+                               Assets=mover_assets,
+                               SelectedAsset="{Xbot}")
 
         # Keep running until product queue is empty
         keep_running = ET.SubElement(occupy, "KeepRunningUntilEmpty",
@@ -288,9 +289,14 @@ class BTGenerator:
                     )
                     subtree_elem.set("Assets", assets_array)
 
-                # Also pass mover reference
-                subtree_elem.set("Xbot", "{SelectedAsset}")
-                subtree_elem.set("_autoremap", "true")
+                # Pass mover reference explicitly (from parent's Xbot, not SelectedAsset)
+                subtree_elem.set("Xbot", "{Xbot}")
+                # Use _autoremap=false to prevent inner SelectedAsset from overwriting Xbot
+                subtree_elem.set("ProductID", "{ProductID}")
+                subtree_elem.set("ProductIDs", "{ProductIDs}")
+                subtree_elem.set("scrap", "{scrap}")
+                subtree_elem.set("Station", "{Station}")
+                subtree_elem.set("_autoremap", "false")
 
         # Error recovery: Scraping - use unloading-capable resources
         if self.config.include_error_recovery:
@@ -300,8 +306,11 @@ class BTGenerator:
             if unload_assets:
                 scraping_subtree.set(
                     "Assets", self._format_assets_array(unload_assets))
-            scraping_subtree.set("Xbot", "{SelectedAsset}")
-            scraping_subtree.set("_autoremap", "true")
+            # Pass mover reference explicitly (from parent's Xbot)
+            scraping_subtree.set("Xbot", "{Xbot}")
+            scraping_subtree.set("ProductID", "{ProductID}")
+            scraping_subtree.set("Station", "{Station}")
+            scraping_subtree.set("_autoremap", "false")
 
     def _get_subtree_id(self, process_name: str) -> str:
         """Get the subtree ID for a process name"""

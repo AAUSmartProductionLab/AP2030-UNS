@@ -15,11 +15,11 @@
         </ReactiveFallback>
         <Sequence>
           <moveToPosition Uuid="{ProductID}"
-                          TargetPosition="{Station}"
+                          TargetPosition="{SelectedAsset}"
                           Asset="{Xbot}"/>
           <Command_Execution Parameters="&apos;{}&apos;"
                              Uuid="{ProductID}"
-                             Operation="capture"
+                             Operation="Capture"
                              Asset="{SelectedAsset}"/>
         </Sequence>
       </ReactiveSequence>
