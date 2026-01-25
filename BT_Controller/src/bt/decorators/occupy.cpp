@@ -94,7 +94,9 @@ BT::NodeStatus Occupy::tick()
     // Ensure lazy initialization is done
     if (!ensureInitialized())
     {
-        std::cerr << "Node '" << this->name() << "' could not be initialized, returning FAILURE" << std::endl;
+        auto assets = getInput<std::vector<std::string>>("Assets");
+        std::cerr << "Node '" << this->name() << "' FAILED - could not initialize. "
+                  << "Assets count=" << (assets.has_value() ? std::to_string(assets.value().size()) : "<not set>") << std::endl;
         return BT::NodeStatus::FAILURE;
     }
 

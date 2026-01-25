@@ -88,12 +88,17 @@ bool MqttDecorator::ensureInitialized()
     }
 
     // Try lazy initialization
+    std::cout << "Node '" << this->name() << "' attempting lazy initialization..." << std::endl;
     initializeTopicsFromAAS();
 
     if (topics_initialized_ && MqttSubBase::node_message_distributor_)
     {
         MqttSubBase::node_message_distributor_->registerDerivedInstance(this);
         std::cout << "Node '" << this->name() << "' lazy initialized successfully" << std::endl;
+    }
+    else if (!topics_initialized_)
+    {
+        std::cerr << "Node '" << this->name() << "' lazy initialization FAILED - topics not configured" << std::endl;
     }
 
     return topics_initialized_;

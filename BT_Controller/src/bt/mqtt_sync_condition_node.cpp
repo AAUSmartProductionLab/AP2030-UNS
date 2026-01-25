@@ -82,12 +82,17 @@ bool MqttSyncConditionNode::ensureInitialized()
     }
 
     // Try lazy initialization
+    std::cout << "Node '" << this->name() << "' attempting lazy initialization..." << std::endl;
     initializeTopicsFromAAS();
 
     if (topics_initialized_ && MqttSubBase::node_message_distributor_)
     {
         MqttSubBase::node_message_distributor_->registerDerivedInstance(this);
         std::cout << "Node '" << this->name() << "' lazy initialized successfully" << std::endl;
+    }
+    else if (!topics_initialized_)
+    {
+        std::cerr << "Node '" << this->name() << "' lazy initialization FAILED - topics not configured" << std::endl;
     }
 
     return topics_initialized_;
@@ -110,7 +115,9 @@ BT::NodeStatus MqttSyncConditionNode::tick()
     // Ensure lazy initialization is done
     if (!ensureInitialized())
     {
-        std::cerr << "Node '" << this->name() << "' could not be initialized, returning FAILURE" << std::endl;
+        auto asset = getInput<std::string>("Asset");
+        std::cerr << "Node '" << this->name() << "' FAILED - could not initialize. "
+                  << "Asset=" << (asset.has_value() ? asset.value() : "<not set>") << std::endl;
         return BT::NodeStatus::FAILURE;
     }
     return BT::NodeStatus::SUCCESS; // Default implementation

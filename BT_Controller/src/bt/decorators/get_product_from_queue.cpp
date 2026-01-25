@@ -51,7 +51,10 @@ BT::NodeStatus GetProductFromQueue::tick()
     // Ensure lazy initialization is done
     if (!ensureInitialized())
     {
-        std::cerr << "Node '" << this->name() << "' could not be initialized, returning FAILURE" << std::endl;
+        auto xbot_topic_opt = this->config().blackboard->getAnyLocked("XbotTopic");
+        std::string xbot_val = xbot_topic_opt ? xbot_topic_opt->cast<std::string>() : "<not set>";
+        std::cerr << "Node '" << this->name() << "' FAILED - could not initialize. "
+                  << "XbotTopic=" << xbot_val << std::endl;
         return BT::NodeStatus::FAILURE;
     }
 

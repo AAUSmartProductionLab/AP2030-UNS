@@ -66,7 +66,11 @@ BT::NodeStatus GenericConditionNode::tick()
     // Ensure lazy initialization is done
     if (!ensureInitialized())
     {
-        std::cerr << "Node '" << this->name() << "' could not be initialized, returning FAILURE" << std::endl;
+        auto asset = getInput<std::string>("Asset");
+        auto property = getInput<std::string>("Property");
+        std::cerr << "Node '" << this->name() << "' FAILED - could not initialize. "
+                  << "Asset=" << (asset.has_value() ? asset.value() : "<not set>") << ", "
+                  << "Property=" << (property.has_value() ? property.value() : "<not set>") << std::endl;
         return BT::NodeStatus::FAILURE;
     }
 
