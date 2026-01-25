@@ -40,21 +40,11 @@ public:
         const std::vector<std::string> &property_path);
 
     // Fetch property value directly from Submodel repository using Submodel ID
-    // This follows ModelReference Submodel-first pattern (AASd-123 with Submodel as first key)
+    // This follows ModelReference pattern (AASd-123 with Submodel as first key)
     // @param submodel_id Full Submodel identifier (URL or URN)
     // @param property_path idShort-based navigation path within the submodel
     std::optional<nlohmann::json> fetchPropertyValueBySubmodelId(
         const std::string &submodel_id,
-        const std::vector<std::string> &property_path);
-
-    // Fetch property value via AAS context (AAS-first pattern)
-    // This follows ModelReference with AAS as first key, then FragmentKeys (idShorts)
-    // @param aas_id Full AAS identifier (AasIdentifiable - global ID)
-    // @param submodel_id_short Submodel idShort (FragmentKey - local within AAS)
-    // @param property_path idShort-based navigation path within the submodel
-    std::optional<nlohmann::json> fetchPropertyValueViaAAS(
-        const std::string &aas_id,
-        const std::string &submodel_id_short,
         const std::vector<std::string> &property_path);
 
     // Fetch the HierarchicalStructure submodel of an asset
