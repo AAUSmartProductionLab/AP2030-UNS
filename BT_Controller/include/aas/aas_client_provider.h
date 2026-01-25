@@ -15,20 +15,31 @@
  * AASClient implementation.
  * 
  * Path format follows basyx ModelReference structure (AASd-123, AASd-125, AASd-128):
- *   - First key: AasIdentifiable (AAS shell ID)
- *   - Second key: Submodel idShort
- *   - Following keys: idShort-based navigation through SMC/SML/Property
+ *   - First key: AasIdentifiable (AAS ID or Submodel ID - both are valid starting points)
+ *   - Following keys: FragmentKeys (idShort-based navigation through SMC/SML/Property)
  * 
- * Format:
- *   "AAS_ID/SubmodelIdShort/SMC1/.../PropertyIdShort"
+ * Two valid path formats:
+ * 
+ * Format 1 - Submodel-first (direct submodel access):
+ *   "SubmodelId/SMC1/.../PropertyIdShort"
+ *   → Fetches directly from Submodel repository
+ *   
+ * Format 2 - AAS-first (navigate via AAS context):
+ *   "AAS_ID/SubmodelId/SMC1/.../PropertyIdShort"
+ *   → Fetches from AAS repository, second key is also a full identifier
  * 
  * Example paths:
- *   "https://smartproductionlab.aau.dk/aas/FillingLine/HierarchicalStructures/EntryNode/Dispensing/Location/x"
- *   "FillingLineAAS/HierarchicalStructures/EntryNode/Dispensing/Location/x"
- *   "MyAAS/SubmodelName/MyList/0/value"  (SML index per AASd-128)
+ *   Submodel-first:
+ *     "https://smartproductionlab.aau.dk/sm/HierarchicalStructures/EntryNode/Dispensing/Location/x"
+ *     "urn:submodel:HierarchicalStructures/EntryNode/Dispensing/Location/x"
+ *   
+ *   AAS-first:
+ *     "https://smartproductionlab.aau.dk/aas/FillingLine/https://smartproductionlab.aau.dk/sm/HierarchicalStructures/EntryNode/Location/x"
+ *     "urn:aas:FillingLine/urn:sm:HierarchicalStructures/EntryNode/Location/x"
  * 
- * The path is split at the boundary between the AAS ID and the submodel idShort.
- * For URL-based IDs, we look for common AAS URL patterns to find this boundary.
+ * Detection: 
+ *   - Contains "/sm/" or "/submodel" → Submodel ID
+ *   - Contains "/aas/" or "/shell" → AAS ID
  */
 class AASClientProvider : public BT::AASProvider
 {
@@ -44,7 +55,7 @@ public:
     /**
      * @brief Fetch a value from AAS following ModelReference path format.
      * 
-     * @param path ModelReference-style path: "AAS_ID/SubmodelIdShort/ElementPath..."
+     * @param path ModelReference-style path
      * @return The value as Any, or empty if not found
      */
     std::optional<BT::Any> get(const std::string& path) override
@@ -56,10 +67,21 @@ public:
             return std::nullopt;
         }
         
-        const auto& [aas_id, submodel_id_short, element_path] = parsed.value();
+        const auto& [first_id, second_id, element_path, is_submodel_first] = parsed.value();
         
-        // Use AASClient's path-based property lookup
-        auto json_result = client_->fetchPropertyValue(aas_id, submodel_id_short, element_path);
+        std::optional<nlohmann::json> json_result;
+        
+        if(is_submodel_first)
+        {
+            // Submodel-first: first_id is Submodel ID, fetch directly from submodel repository
+            json_result = client_->fetchPropertyValueBySubmodelId(first_id, element_path);
+        }
+        else
+        {
+            // AAS-first: first_id is AAS ID, second_id is Submodel ID
+            json_result = client_->fetchPropertyValueViaAAS(first_id, second_id, element_path);
+        }
+        
         if(!json_result.has_value())
         {
             std::cerr << "AASClientProvider: Failed to fetch property: " << path << std::endl;
@@ -82,20 +104,71 @@ private:
     
     struct ParsedPath
     {
-        std::string aas_id;
-        std::string submodel_id_short;
-        std::vector<std::string> element_path;
+        std::string first_id;           // First AasIdentifiable (AAS ID or Submodel ID)
+        std::string second_id;          // Second AasIdentifiable (Submodel ID, only for AAS-first)
+        std::vector<std::string> element_path;  // FragmentKeys (idShort navigation)
+        bool is_submodel_first;         // true if first_id is a Submodel ID
     };
     
     /**
+     * @brief Check if an identifier looks like a Submodel ID.
+     */
+    bool looksLikeSubmodelId(const std::string& id) const
+    {
+        if(id.find("/sm/") != std::string::npos) return true;
+        if(id.find("/submodel") != std::string::npos) return true;
+        if(id.find("urn:sm:") != std::string::npos) return true;
+        if(id.find("Submodel") != std::string::npos) return true;
+        return false;
+    }
+    
+    /**
+     * @brief Check if an identifier looks like an AAS ID.
+     */
+    bool looksLikeAASId(const std::string& id) const
+    {
+        if(id.find("/aas/") != std::string::npos) return true;
+        if(id.find("/shell") != std::string::npos) return true;
+        if(id.find("urn:aas:") != std::string::npos) return true;
+        return false;
+    }
+    
+    /**
+     * @brief Find the boundary where a URL-based identifier ends.
+     * 
+     * For URLs like "https://example.org/aas/MyAAS" or "https://example.org/sm/MySubmodel",
+     * we need to find where the identifier ends and the idShort navigation begins.
+     */
+    size_t findIdentifierEnd(const std::string& path, size_t start) const
+    {
+        // Look for patterns that indicate end of identifier
+        // After /aas/Name or /sm/Name, the next slash starts idShort navigation
+        
+        std::vector<std::string> markers = {"/aas/", "/sm/", "/shell/", "/submodel/"};
+        
+        for(const auto& marker : markers)
+        {
+            size_t pos = path.find(marker, start);
+            if(pos != std::string::npos)
+            {
+                // Find the identifier name after the marker
+                size_t name_start = pos + marker.size();
+                size_t name_end = path.find('/', name_start);
+                if(name_end == std::string::npos)
+                {
+                    return path.size();  // Identifier goes to end
+                }
+                return name_end;
+            }
+        }
+        
+        // No marker found - for simple paths, find first slash
+        size_t slash = path.find('/', start);
+        return (slash != std::string::npos) ? slash : path.size();
+    }
+    
+    /**
      * @brief Parse a ModelReference-style path.
-     * 
-     * For URL-based AAS IDs (starting with http://, https://, or urn:):
-     *   The URL is the AAS ID, followed by SubmodelIdShort, then element path.
-     *   We detect the boundary by looking for "/aas/" pattern in the URL.
-     * 
-     * For simple idShort-based paths:
-     *   First part is AAS idShort, second is Submodel idShort, rest is element path.
      */
     std::optional<ParsedPath> parsePath(const std::string& path)
     {
@@ -107,80 +180,72 @@ private:
         
         if(is_url)
         {
-            // For URLs, we need to find where the AAS ID ends
-            // Look for "/aas/" pattern - the segment after is the AAS name
+            // Find where first identifier ends
+            size_t first_id_end = findIdentifierEnd(path, 0);
+            result.first_id = path.substr(0, first_id_end);
             
-            size_t aas_marker = path.find("/aas/");
-            if(aas_marker != std::string::npos)
+            // Determine if this is Submodel-first or AAS-first
+            result.is_submodel_first = looksLikeSubmodelId(result.first_id);
+            
+            if(first_id_end >= path.size())
             {
-                // Find the AAS name after /aas/
-                size_t aas_name_start = aas_marker + 5;  // After "/aas/"
-                size_t aas_name_end = path.find('/', aas_name_start);
-                
-                if(aas_name_end == std::string::npos)
-                {
-                    // No more slashes - malformed path (need submodel + elements)
-                    return std::nullopt;
-                }
-                
-                // AAS ID is everything up to and including the AAS name
-                result.aas_id = path.substr(0, aas_name_end);
-                
-                // Parse remaining path for submodel and elements
-                std::string remaining = path.substr(aas_name_end + 1);
-                return parseRemainingPath(result, remaining);
+                // No more content after first ID
+                return std::nullopt;
             }
             
-            // No /aas/ pattern found - try to find boundary heuristically
-            // Look for first segment that looks like an idShort after URL base
-            size_t search_start = 0;
-            if(path.find("http://") == 0) search_start = 7;
-            else if(path.find("https://") == 0) search_start = 8;
-            else if(path.find("urn:") == 0) search_start = 4;
+            std::string remaining = path.substr(first_id_end + 1);
             
-            // Find all slash positions
-            std::vector<size_t> slash_positions;
-            for(size_t i = search_start; i < path.size(); ++i)
+            if(result.is_submodel_first)
             {
-                if(path[i] == '/') slash_positions.push_back(i);
+                // Submodel-first: remaining is all element path (idShorts)
+                return parseElementPath(result, remaining);
             }
-            
-            // Look for the transition from URL to idShort navigation
-            for(size_t i = 0; i < slash_positions.size(); ++i)
+            else
             {
-                size_t start = slash_positions[i] + 1;
-                size_t end = (i + 1 < slash_positions.size()) ? slash_positions[i + 1] : path.size();
-                std::string segment = path.substr(start, end - start);
+                // AAS-first: need to find second identifier (Submodel ID)
+                // Check if remaining starts with a URL or identifier pattern
+                bool second_is_url = (remaining.find("http://") == 0 || 
+                                      remaining.find("https://") == 0 || 
+                                      remaining.find("urn:") == 0);
                 
-                // Check if segment looks like an idShort
-                if(!segment.empty() && std::isalpha(static_cast<unsigned char>(segment[0])))
+                if(second_is_url)
                 {
-                    bool is_id_short = std::all_of(segment.begin(), segment.end(), 
-                        [](unsigned char c) { return std::isalnum(c) || c == '_'; });
+                    // Second identifier is also a URL
+                    size_t second_id_end = findIdentifierEnd(remaining, 0);
+                    result.second_id = remaining.substr(0, second_id_end);
                     
-                    // Skip common URL words
-                    if(is_id_short && segment != "aas" && segment != "shells" && 
-                       segment != "submodels" && segment != "api" && segment != "v1" && segment != "v2")
+                    if(second_id_end < remaining.size())
                     {
-                        // Found likely submodel idShort - AAS ID ends before this
-                        result.aas_id = path.substr(0, slash_positions[i]);
-                        std::string remaining = path.substr(start);
-                        return parseRemainingPath(result, remaining);
+                        std::string element_remaining = remaining.substr(second_id_end + 1);
+                        return parseElementPath(result, element_remaining);
+                    }
+                    else
+                    {
+                        // No element path - need at least one element
+                        return std::nullopt;
                     }
                 }
+                else
+                {
+                    // Second identifier might be a simple ID or this is idShort navigation
+                    // Use SubmodelIdShort approach - first segment is submodel idShort
+                    return parseWithSubmodelIdShort(result, remaining);
+                }
             }
-            
-            // Fallback: couldn't parse URL-based path
-            return std::nullopt;
         }
         else
         {
-            // Simple idShort-based path: AASIdShort/SubmodelIdShort/Element/Path
-            return parseRemainingPath(result, path);
+            // Simple path without URL scheme
+            // Could be: SubmodelIdShort/path or AASIdShort/SubmodelIdShort/path
+            // We need context to know which - default to requiring both for safety
+            return parseSimplePath(path);
         }
     }
     
-    std::optional<ParsedPath> parseRemainingPath(ParsedPath& result, const std::string& remaining)
+    /**
+     * @brief Parse remaining path as element path (idShorts).
+     */
+    std::optional<ParsedPath> parseElementPath(ParsedPath& result, const std::string& remaining)
     {
         std::vector<std::string> parts;
         std::istringstream iss(remaining);
@@ -198,15 +263,77 @@ private:
             return std::nullopt;
         }
         
-        // If aas_id is already set (URL case), first part is submodel
-        if(!result.aas_id.empty())
+        result.element_path = std::move(parts);
+        return result;
+    }
+    
+    /**
+     * @brief Parse with SubmodelIdShort as second component (convenience format).
+     * 
+     * This handles: AAS_URL/SubmodelIdShort/element/path
+     * Which is a convenience format, not strictly ModelReference compliant.
+     */
+    std::optional<ParsedPath> parseWithSubmodelIdShort(ParsedPath& result, const std::string& remaining)
+    {
+        std::vector<std::string> parts;
+        std::istringstream iss(remaining);
+        std::string part;
+        while(std::getline(iss, part, '/'))
         {
-            if(parts.size() < 2)
+            if(!part.empty())
             {
-                // Need at least submodel + one element
-                return std::nullopt;
+                parts.push_back(part);
             }
-            result.submodel_id_short = parts[0];
+        }
+        
+        if(parts.size() < 2)
+        {
+            // Need submodel idShort + at least one element
+            return std::nullopt;
+        }
+        
+        // First part is submodel idShort (will need to resolve to full ID)
+        result.second_id = parts[0];
+        
+        for(size_t i = 1; i < parts.size(); ++i)
+        {
+            result.element_path.push_back(parts[i]);
+        }
+        
+        return result;
+    }
+    
+    /**
+     * @brief Parse a simple (non-URL) path.
+     * 
+     * Format: AASIdShort/SubmodelIdShort/element/path
+     * OR: SubmodelId/element/path (if SubmodelId contains special pattern)
+     */
+    std::optional<ParsedPath> parseSimplePath(const std::string& path)
+    {
+        ParsedPath result;
+        
+        std::vector<std::string> parts;
+        std::istringstream iss(path);
+        std::string part;
+        while(std::getline(iss, part, '/'))
+        {
+            if(!part.empty())
+            {
+                parts.push_back(part);
+            }
+        }
+        
+        if(parts.size() < 2)
+        {
+            return std::nullopt;
+        }
+        
+        // Check if first part looks like a submodel identifier
+        if(looksLikeSubmodelId(parts[0]))
+        {
+            result.is_submodel_first = true;
+            result.first_id = parts[0];
             for(size_t i = 1; i < parts.size(); ++i)
             {
                 result.element_path.push_back(parts[i]);
@@ -214,13 +341,18 @@ private:
         }
         else
         {
-            // Simple path: first = AAS, second = Submodel, rest = elements
+            // Assume AAS-first with idShort format
+            result.is_submodel_first = false;
+            
             if(parts.size() < 3)
             {
+                // Need AAS + Submodel + at least one element
                 return std::nullopt;
             }
-            result.aas_id = parts[0];
-            result.submodel_id_short = parts[1];
+            
+            result.first_id = parts[0];      // AAS idShort
+            result.second_id = parts[1];     // Submodel idShort
+            
             for(size_t i = 2; i < parts.size(); ++i)
             {
                 result.element_path.push_back(parts[i]);

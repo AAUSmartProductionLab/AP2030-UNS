@@ -586,6 +586,128 @@ std::optional<nlohmann::json> AASClient::fetchPropertyValue(
     }
 }
 
+std::optional<nlohmann::json> AASClient::fetchPropertyValueBySubmodelId(
+    const std::string &submodel_id,
+    const std::vector<std::string> &property_path)
+{
+    try
+    {
+        std::cout << "Fetching property directly from Submodel - ID: " << submodel_id
+                  << ", Path: [";
+        for (size_t i = 0; i < property_path.size(); ++i)
+        {
+            std::cout << property_path[i];
+            if (i < property_path.size() - 1)
+                std::cout << " -> ";
+        }
+        std::cout << "]" << std::endl;
+
+        // Fetch submodel directly using base64url-encoded Submodel ID
+        std::string submodel_id_b64 = base64url_encode(submodel_id);
+        std::string submodel_url = "/submodels/" + submodel_id_b64;
+
+        nlohmann::json submodel_data = makeGetRequest(submodel_url);
+
+        // Navigate through the path to find the target property
+        if (!submodel_data.contains("submodelElements") || !submodel_data["submodelElements"].is_array())
+        {
+            std::cerr << "Submodel missing submodelElements array" << std::endl;
+            return std::nullopt;
+        }
+
+        // Use the recursive search method
+        auto result = searchPropertyInElements(submodel_data["submodelElements"], property_path, 0);
+        if (result.has_value())
+        {
+            return result;
+        }
+
+        std::cerr << "Could not find property path in submodel" << std::endl;
+        return std::nullopt;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Exception fetching property from Submodel: " << e.what() << std::endl;
+        return std::nullopt;
+    }
+}
+
+std::optional<nlohmann::json> AASClient::fetchPropertyValueViaAAS(
+    const std::string &aas_id,
+    const std::string &submodel_id,
+    const std::vector<std::string> &property_path)
+{
+    try
+    {
+        std::cout << "Fetching property via AAS - AAS: " << aas_id
+                  << ", Submodel: " << submodel_id
+                  << ", Path: [";
+        for (size_t i = 0; i < property_path.size(); ++i)
+        {
+            std::cout << property_path[i];
+            if (i < property_path.size() - 1)
+                std::cout << " -> ";
+        }
+        std::cout << "]" << std::endl;
+
+        // Check if submodel_id looks like a full identifier (URL/URN) or just an idShort
+        bool is_full_id = (submodel_id.find("http://") == 0 || 
+                           submodel_id.find("https://") == 0 || 
+                           submodel_id.find("urn:") == 0);
+
+        std::string resolved_submodel_id;
+        
+        if (is_full_id)
+        {
+            // submodel_id is already a full identifier
+            resolved_submodel_id = submodel_id;
+        }
+        else
+        {
+            // submodel_id is an idShort - need to resolve it via AAS
+            // First, get the AAS shell to find the submodel reference
+            std::string shell_id_b64 = base64url_encode(aas_id);
+            std::string shell_path = "/shells/" + shell_id_b64;
+            
+            nlohmann::json shell_data = makeGetRequest(shell_path);
+            
+            if (!shell_data.contains("submodels") || !shell_data["submodels"].is_array())
+            {
+                std::cerr << "AAS shell missing submodels array" << std::endl;
+                return std::nullopt;
+            }
+
+            // Find the submodel reference matching the idShort
+            for (const auto &submodel_ref : shell_data["submodels"])
+            {
+                if (submodel_ref.contains("keys") && submodel_ref["keys"].is_array())
+                {
+                    std::string ref_value = submodel_ref["keys"][0]["value"];
+                    if (ref_value.find(submodel_id) != std::string::npos)
+                    {
+                        resolved_submodel_id = ref_value;
+                        break;
+                    }
+                }
+            }
+
+            if (resolved_submodel_id.empty())
+            {
+                std::cerr << "Could not find submodel '" << submodel_id << "' in AAS: " << aas_id << std::endl;
+                return std::nullopt;
+            }
+        }
+
+        // Now fetch directly from submodel repository
+        return fetchPropertyValueBySubmodelId(resolved_submodel_id, property_path);
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Exception fetching property via AAS: " << e.what() << std::endl;
+        return std::nullopt;
+    }
+}
+
 std::optional<nlohmann::json> AASClient::fetchSubmodelData(
     const std::string &asset_id,
     const std::string &submodel_id_short)
