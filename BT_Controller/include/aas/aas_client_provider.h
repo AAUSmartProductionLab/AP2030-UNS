@@ -23,7 +23,7 @@
  *   → Fetches directly from Submodel repository
  * 
  * Example paths:
- *   "https://smartproductionlab.aau.dk/sm/HierarchicalStructures/EntryNode/Dispensing/Location/x"
+ *   "https://smartproductionlab.aau.dk/submodels/instances/aauFillingLineAAS/HierarchicalStructures/EntryNode/Dispensing/Location/x"
  *   "urn:submodel:HierarchicalStructures/EntryNode/Dispensing/Location/x"
  * 
  * NOTE: AAS-first paths (starting with AAS ID) are NOT supported for property access.
@@ -91,25 +91,49 @@ private:
     /**
      * @brief Find the boundary where a URL-based Submodel identifier ends.
      * 
-     * For URLs like "https://example.org/sm/MySubmodel",
-     * we need to find where the identifier ends and the idShort navigation begins.
+     * Submodel ID formats:
+     *   - https://example.org/submodels/instances/MyAAS/HierarchicalStructures
+     *   - https://example.org/sm/MySubmodel
+     *   - urn:sm:MySubmodel
+     *   
+     * The Submodel ID ends after the Submodel name (idShort).
      */
     size_t findSubmodelIdEnd(const std::string& path) const
     {
-        // Look for patterns that indicate Submodel identifier
-        std::vector<std::string> markers = {"/sm/", "/submodel/"};
+        // Pattern 1: /submodels/instances/{aasId}/{submodelIdShort}
+        // This is the format used in this project
+        std::string instances_marker = "/submodels/instances/";
+        size_t instances_pos = path.find(instances_marker);
+        if(instances_pos != std::string::npos)
+        {
+            // Skip past /submodels/instances/
+            size_t after_marker = instances_pos + instances_marker.size();
+            // Skip the AAS ID segment
+            size_t aas_id_end = path.find('/', after_marker);
+            if(aas_id_end != std::string::npos)
+            {
+                // Find end of submodel idShort
+                size_t sm_name_end = path.find('/', aas_id_end + 1);
+                if(sm_name_end == std::string::npos)
+                {
+                    return path.size();
+                }
+                return sm_name_end;
+            }
+        }
         
+        // Pattern 2: /sm/{submodelName} or /submodel/{submodelName}
+        std::vector<std::string> markers = {"/sm/", "/submodel/"};
         for(const auto& marker : markers)
         {
             size_t pos = path.find(marker);
             if(pos != std::string::npos)
             {
-                // Find the identifier name after the marker
                 size_t name_start = pos + marker.size();
                 size_t name_end = path.find('/', name_start);
                 if(name_end == std::string::npos)
                 {
-                    return path.size();  // Identifier goes to end
+                    return path.size();
                 }
                 return name_end;
             }

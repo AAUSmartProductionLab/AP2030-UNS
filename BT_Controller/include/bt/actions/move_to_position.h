@@ -12,23 +12,35 @@
  * from AAS properties. Position values can be:
  *   - Literal values: x="1.5"
  *   - Blackboard references: x="{my_x_value}"  
- *   - AAS references: x="$aas{FillingLineAAS/HierarchicalStructures/EntryNode/Dispensing/Location/x}"
+ *   - AAS references: x="$aas{SubmodelId/element/path}"
  * 
- * The path format follows basyx ModelReference structure:
- *   "AAS_ID/SubmodelIdShort/SMC1/.../PropertyIdShort"
+ * The path format follows basyx ModelReference structure (Submodel-first):
+ *   "SubmodelId/SMC1/.../PropertyIdShort"
  * 
- * Example XML usage:
+ * Example XML usage with AAS references:
  * @code
+ * <!-- Dynamic station from blackboard - Station variable contains station idShort -->
+ * <Script code="Station := 'Dispensing'" />
  * <MoveToPosition 
  *     Asset="{Xbot}"
- *     x="$aas{FillingLineAAS/HierarchicalStructures/EntryNode/{Station}/Location/x}"
- *     y="$aas{FillingLineAAS/HierarchicalStructures/EntryNode/{Station}/Location/y}"
- *     yaw="$aas{FillingLineAAS/HierarchicalStructures/EntryNode/{Station}/Location/theta}"
+ *     x="$aas{https://smartproductionlab.aau.dk/submodels/instances/aauFillingLineAAS/HierarchicalStructures/EntryNode/{Station}/Location/x}"
+ *     y="$aas{https://smartproductionlab.aau.dk/submodels/instances/aauFillingLineAAS/HierarchicalStructures/EntryNode/{Station}/Location/y}"
+ *     yaw="$aas{https://smartproductionlab.aau.dk/submodels/instances/aauFillingLineAAS/HierarchicalStructures/EntryNode/{Station}/Location/theta}"
+ *     Uuid="{ProductID}"
+ * />
+ * 
+ * <!-- Or use a blackboard variable for the Submodel ID -->
+ * <MoveToPosition 
+ *     Asset="{Xbot}"
+ *     x="$aas{{HierarchySubmodelId}/EntryNode/{Station}/Location/x}"
+ *     y="$aas{{HierarchySubmodelId}/EntryNode/{Station}/Location/y}"
+ *     yaw="$aas{{HierarchySubmodelId}/EntryNode/{Station}/Location/theta}"
  *     Uuid="{ProductID}"
  * />
  * @endcode
  * 
- * Note: {Station} in the path is substituted from the blackboard before AAS lookup.
+ * Note: {Station} and {HierarchySubmodelId} in the path are substituted from 
+ * the blackboard before AAS lookup.
  */
 class MoveToPosition : public MqttActionNode
 {

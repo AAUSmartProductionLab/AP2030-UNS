@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Example: MoveToPosition with $aas{} syntax
+  
+  This demonstrates fetching position coordinates directly from AAS
+  using the Submodel-first ModelReference path format.
+  
+  Path format: SubmodelId/element/path
+  - First key: Full Submodel identifier (URL/URN)
+  - Following keys: idShorts navigating within the submodel
+-->
+<root BTCPP_format="4">
+  <BehaviorTree ID="MoveToPositionExample">
+    <Sequence>
+      <!-- Set the target station dynamically -->
+      <Script code="Station := 'Dispensing'" />
+      
+      <!-- 
+        MoveToPosition with AAS references
+        The {Station} placeholder is substituted from the blackboard
+        before the AAS lookup is performed.
+        
+        SubmodelId: https://smartproductionlab.aau.dk/submodels/instances/aauFillingLineAAS/HierarchicalStructures
+        Element path: EntryNode/{Station}/Location/x (y, theta)
+      -->
+      <MoveToPosition 
+          Asset="{Xbot}"
+          x="$aas{https://smartproductionlab.aau.dk/submodels/instances/aauFillingLineAAS/HierarchicalStructures/EntryNode/{Station}/Location/x}"
+          y="$aas{https://smartproductionlab.aau.dk/submodels/instances/aauFillingLineAAS/HierarchicalStructures/EntryNode/{Station}/Location/y}"
+          yaw="$aas{https://smartproductionlab.aau.dk/submodels/instances/aauFillingLineAAS/HierarchicalStructures/EntryNode/{Station}/Location/theta}"
+          Uuid="{ProductID}"
+      />
+      
+      <!-- Alternative: Store Submodel ID in blackboard for cleaner paths -->
+      <Script code="HierarchySubmodelId := 'https://smartproductionlab.aau.dk/submodels/instances/aauFillingLineAAS/HierarchicalStructures'" />
+      <Script code="Station := 'Stoppering'" />
+      
+      <MoveToPosition 
+          Asset="{Xbot}"
+          x="$aas{{HierarchySubmodelId}/EntryNode/{Station}/Location/x}"
+          y="$aas{{HierarchySubmodelId}/EntryNode/{Station}/Location/y}"
+          yaw="$aas{{HierarchySubmodelId}/EntryNode/{Station}/Location/theta}"
+          Uuid="{ProductID}"
+      />
+      
+      <!-- Hardcoded position values (no AAS lookup) -->
+      <MoveToPosition 
+          Asset="{Xbot}"
+          x="1.5"
+          y="2.0"
+          yaw="0.0"
+          Uuid="{ProductID}"
+      />
+      
+      <!-- Using blackboard variables for positions -->
+      <Script code="target_x := 3.0; target_y := 4.0; target_yaw := 1.57" />
+      <MoveToPosition 
+          Asset="{Xbot}"
+          x="{target_x}"
+          y="{target_y}"
+          yaw="{target_yaw}"
+          Uuid="{ProductID}"
+      />
+    </Sequence>
+  </BehaviorTree>
+  
+  <!-- TreeNodesModel for Groot2 visualization -->
+  <TreeNodesModel>
+    <Action ID="MoveToPosition">
+      <input_port name="Asset" default="{Xbot}">The asset to move</input_port>
+      <input_port name="x">X position (literal, {bb}, or $aas{SubmodelId/path})</input_port>
+      <input_port name="y">Y position (literal, {bb}, or $aas{SubmodelId/path})</input_port>
+      <input_port name="yaw">Yaw angle (literal, {bb}, or $aas{SubmodelId/path})</input_port>
+      <input_port name="Uuid" default="{ProductID}">Command UUID</input_port>
+    </Action>
+  </TreeNodesModel>
+</root>
