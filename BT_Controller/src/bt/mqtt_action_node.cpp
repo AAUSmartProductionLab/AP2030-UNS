@@ -31,8 +31,17 @@ bool MqttActionNode::ensureInitialized()
 
     if (topics_initialized_ && MqttSubBase::node_message_distributor_)
     {
-        MqttSubBase::node_message_distributor_->registerDerivedInstance(this);
-        std::cout << "Node '" << this->name() << "' lazy initialized successfully" << std::endl;
+        // Use registerLateInitializingNode to subscribe to specific topics
+        // This triggers the broker to resend retained messages
+        bool success = MqttSubBase::node_message_distributor_->registerLateInitializingNode(this);
+        if (success)
+        {
+            std::cout << "Node '" << this->name() << "' lazy initialized and subscribed successfully" << std::endl;
+        }
+        else
+        {
+            std::cerr << "Node '" << this->name() << "' lazy init: subscription failed" << std::endl;
+        }
     }
     else if (!topics_initialized_)
     {

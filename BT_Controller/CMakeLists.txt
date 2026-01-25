@@ -20,6 +20,7 @@ add_library(bt_controller_common STATIC
     src/mqtt/node_message_distributor.cpp
     src/mqtt/mqtt_client.cpp
     src/aas/aas_client.cpp
+    src/aas/aas_interface_cache.cpp
     src/mqtt/mqtt_sub_base.cpp
     src/mqtt/mqtt_pub_base.cpp
     src/bt/mqtt_action_node.cpp

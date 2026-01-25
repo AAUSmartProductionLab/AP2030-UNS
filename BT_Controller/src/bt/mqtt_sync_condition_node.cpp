@@ -1,5 +1,6 @@
 #include "bt/mqtt_sync_condition_node.h"
 #include "mqtt/node_message_distributor.h"
+#include "aas/aas_interface_cache.h"
 #include <iostream>
 
 MqttSyncConditionNode::MqttSyncConditionNode(
@@ -56,7 +57,22 @@ void MqttSyncConditionNode::initializeTopicsFromAAS()
         // Check if already a full URL (starts with https:// or http://)
         std::string asset_id = asset_name;
 
-        // Create Topic objects
+        // First, try to use the cached interface (fast path)
+        auto cache = MqttSubBase::getAASInterfaceCache();
+        if (cache)
+        {
+            auto cached_interface = cache->getInterface(asset_id, this->name(), "output");
+            if (cached_interface.has_value())
+            {
+                std::cout << "Node '" << this->name() << "' using cached interface" << std::endl;
+                MqttSubBase::setTopic("output", cached_interface.value());
+                topics_initialized_ = true;
+                return;
+            }
+        }
+
+        // Fall back to direct AAS query (slow path)
+        std::cout << "Node '" << this->name() << "' falling back to direct AAS query" << std::endl;
         auto response_opt = aas_client_.fetchInterface(asset_id, this->name(), "output");
 
         if (!response_opt.has_value())
@@ -87,8 +103,17 @@ bool MqttSyncConditionNode::ensureInitialized()
 
     if (topics_initialized_ && MqttSubBase::node_message_distributor_)
     {
-        MqttSubBase::node_message_distributor_->registerDerivedInstance(this);
-        std::cout << "Node '" << this->name() << "' lazy initialized successfully" << std::endl;
+        // Use registerLateInitializingNode to subscribe to specific topics
+        // This triggers the broker to resend retained messages
+        bool success = MqttSubBase::node_message_distributor_->registerLateInitializingNode(this);
+        if (success)
+        {
+            std::cout << "Node '" << this->name() << "' lazy initialized and subscribed successfully" << std::endl;
+        }
+        else
+        {
+            std::cerr << "Node '" << this->name() << "' lazy init: subscription failed" << std::endl;
+        }
     }
     else if (!topics_initialized_)
     {

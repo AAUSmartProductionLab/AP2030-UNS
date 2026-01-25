@@ -7,6 +7,7 @@
 #include "mqtt/mqtt_client.h"
 #include "mqtt/node_message_distributor.h"
 #include "aas/aas_client.h"
+#include "aas/aas_interface_cache.h"
 
 #include <behaviortree_cpp/bt_factory.h>
 #include <behaviortree_cpp/basic_types.h>
@@ -71,6 +72,7 @@ private:
     std::function<void(const std::string &, const nlohmann::json &, mqtt::properties)> main_mqtt_message_handler_;
 
     std::unique_ptr<AASClient> aas_client_;
+    std::unique_ptr<AASInterfaceCache> aas_interface_cache_;
     std::unique_ptr<BT::BehaviorTreeFactory> bt_factory_;
     BT::Tree bt_tree_;
     std::unique_ptr<BT::Groot2Publisher> bt_publisher_;
@@ -125,6 +127,12 @@ private:
     // Methods for AAS structure fetching from process AAS
     bool fetchAndBuildEquipmentMapping(BT::Blackboard::Ptr blackboard = nullptr);
     void populateBlackboard(BT::Blackboard::Ptr blackboard);
+
+    // Pre-fetch asset interfaces (for fast node initialization)
+    bool prefetchAssetInterfaces();
+
+    // Subscribe to topics for active nodes (triggers retained message delivery)
+    bool subscribeToTopics();
 
     // Methods for AAS registration
     bool publishConfigToRegistrationService();

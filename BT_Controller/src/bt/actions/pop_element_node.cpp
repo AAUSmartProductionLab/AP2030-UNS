@@ -29,7 +29,7 @@ void PopElementNode::initializeTopicsFromAAS()
         std::string asset_id = xbot_topic;
 
         // Create Topic objects - ProductID property with output endpoint (data being published)
-        auto product_association_opt = aas_client_.fetchInterface(asset_id, "ProductID", "output");
+        auto product_association_opt = aas_client_.fetchInterface(asset_id, "ProductID", "input");
 
         if (!product_association_opt.has_value())
         {

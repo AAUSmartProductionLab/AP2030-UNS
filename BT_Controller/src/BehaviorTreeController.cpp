@@ -6,6 +6,7 @@
 #include "mqtt/mqtt_client.h"
 #include "mqtt/node_message_distributor.h"
 #include "mqtt/mqtt_sub_base.h"
+#include "aas/aas_interface_cache.h"
 #include "bt/register_all_nodes.h"
 #include "utils.h"
 
@@ -43,6 +44,9 @@ BehaviorTreeController::BehaviorTreeController(int argc, char *argv[])
 
     // Initialize AAS client
     aas_client_ = std::make_unique<AASClient>(app_params_.aasServerUrl, app_params_.aasRegistryUrl);
+
+    // Initialize AAS interface cache for pre-fetching
+    aas_interface_cache_ = std::make_unique<AASInterfaceCache>(*aas_client_);
 
     // Initialize BehaviorTreeFactory
     bt_factory_ = std::make_unique<BT::BehaviorTreeFactory>();
@@ -341,15 +345,58 @@ void BehaviorTreeController::populateBlackboard(BT::Blackboard::Ptr blackboard)
     std::cout << "Blackboard populated with " << equipment_aas_mapping_.size() << " equipment entries" << std::endl;
 }
 
+bool BehaviorTreeController::prefetchAssetInterfaces()
+{
+    std::cout << "Pre-fetching asset interfaces..." << std::endl;
+
+    // Get the equipment mapping
+    std::map<std::string, std::string> mapping_copy;
+    {
+        std::lock_guard<std::mutex> lock(equipment_mapping_mutex_);
+        mapping_copy = equipment_aas_mapping_;
+    }
+
+    if (mapping_copy.empty())
+    {
+        std::cerr << "No equipment mapping available for prefetching" << std::endl;
+        return false;
+    }
+
+    // Pre-fetch all asset interface descriptions
+    if (!aas_interface_cache_->prefetchInterfaces(mapping_copy))
+    {
+        std::cerr << "Warning: Failed to prefetch some asset interfaces" << std::endl;
+        // Continue anyway - nodes can still fall back to direct AAS queries
+        return false;
+    }
+
+    std::cout << "Pre-fetch returning true" << std::endl << std::flush;
+    return true;
+}
+
+bool BehaviorTreeController::subscribeToTopics()
+{
+    std::cout << "Subscribing to topics for active nodes..." << std::endl;
+
+    // Use the distributor to subscribe to specific topics for active nodes
+    // This triggers delivery of retained messages
+    return node_message_distributor_->subscribeForActiveNodes(bt_tree_, std::chrono::seconds(5));
+}
+
 bool BehaviorTreeController::registerNodesWithAASConfig()
 {
+    std::cout << "Entering registerNodesWithAASConfig..." << std::endl << std::flush;
     try
     {
         // Register all nodes (they will read equipment mapping from blackboard)
+        std::cout << "  Calling registerAllNodes..." << std::endl << std::flush;
         registerAllNodes(*bt_factory_, *node_message_distributor_, *mqtt_client_, *aas_client_);
+        std::cout << "  registerAllNodes complete" << std::endl << std::flush;
 
-        // Set the node message distributor for base classes
+        // Set the node message distributor and interface cache for base classes
         MqttSubBase::setNodeMessageDistributor(node_message_distributor_.get());
+        MqttSubBase::setAASInterfaceCache(aas_interface_cache_.get());
+        std::cout << "  Node registration complete" << std::endl << std::flush;
         return true;
     }
     catch (const std::exception &e)
@@ -874,6 +921,14 @@ void BehaviorTreeController::processStartingState()
 
     std::cout << "Equipment mapping successfully built from AAS" << std::endl;
 
+    // Pre-fetch asset interface descriptions (but don't subscribe yet)
+    // This allows nodes to get topic info from cache during initialization
+    if (!prefetchAssetInterfaces())
+    {
+        std::cerr << "Warning: Failed to prefetch asset interfaces, nodes will query AAS individually" << std::endl;
+        // Continue anyway - this is a performance optimization, not a hard requirement
+    }
+
     // Register nodes with the equipment mapping
     if (!registerNodesWithAASConfig())
     {
@@ -990,18 +1045,11 @@ void BehaviorTreeController::processStartingState()
         mqtt_client_->set_message_handler(main_mqtt_message_handler_);
     }
 
-    // Subscribe to active node topics
-    bool subscriptions_successful = false;
-    if (node_message_distributor_ && bt_tree_.rootNode())
+    // Subscribe to topics for active nodes - this sets up routing AND subscribes,
+    // which triggers delivery of retained messages
+    if (!subscribeToTopics())
     {
-        std::cout << "Attempting to subscribe to active node topics..." << std::endl;
-        subscriptions_successful = node_message_distributor_->subscribeToActiveNodes(
-            bt_tree_, std::chrono::seconds(5));
-    }
-
-    if (!subscriptions_successful)
-    {
-        std::cerr << "Failed to establish all necessary MQTT subscriptions." << std::endl;
+        std::cerr << "Failed to subscribe to topics for active nodes." << std::endl;
         if (bt_tree_.rootNode())
         {
             bt_tree_.haltTree();
@@ -1020,7 +1068,7 @@ void BehaviorTreeController::processStartingState()
         return;
     }
 
-    std::cout << "All MQTT subscriptions for active nodes established." << std::endl;
+    std::cout << "Topic subscriptions established - retained messages delivered." << std::endl;
 
     // Create Groot2 publisher
     bt_publisher_ = std::make_unique<BT::Groot2Publisher>(bt_tree_, app_params_.groot2_port);

@@ -1,5 +1,6 @@
 #include "bt/conditions/generic_condition_node.h"
 #include "mqtt/node_message_distributor.h"
+#include "aas/aas_interface_cache.h"
 #include "utils.h"
 
 BT::PortsList GenericConditionNode::providedPorts()
@@ -43,7 +44,24 @@ void GenericConditionNode::initializeTopicsFromAAS()
             std::cerr << "Node '" << this->name() << "' has no Property input configured" << std::endl;
             return;
         }
-        // Create Topic objects
+
+        // First, try to use the cached interface (fast path)
+        auto cache = MqttSubBase::getAASInterfaceCache();
+        if (cache)
+        {
+            auto cached_interface = cache->getInterface(asset_id, property_name.value(), "output");
+            if (cached_interface.has_value())
+            {
+                std::cout << "Node '" << this->name() << "' using cached interface for property: " 
+                          << property_name.value() << std::endl;
+                MqttSubBase::setTopic("output", cached_interface.value());
+                topics_initialized_ = true;
+                return;
+            }
+        }
+
+        // Fall back to direct AAS query (slow path)
+        std::cout << "Node '" << this->name() << "' falling back to direct AAS query" << std::endl;
         auto condition_opt = aas_client_.fetchInterface(asset_id, property_name.value(), "output");
 
         if (!condition_opt.has_value())

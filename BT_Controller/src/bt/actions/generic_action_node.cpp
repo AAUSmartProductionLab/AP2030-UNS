@@ -1,6 +1,7 @@
 #include "bt/actions/generic_action_node.h"
 #include "utils.h"
 #include "mqtt/node_message_distributor.h"
+#include "aas/aas_interface_cache.h"
 
 // MoveShuttleToPosition implementation
 GenericActionNode::GenericActionNode(
@@ -32,7 +33,24 @@ void GenericActionNode::initializeTopicsFromAAS()
         std::string asset_id = asset_input.value();
         std::cout << "Node '" << this->name() << "' initializing for Asset: " << asset_id << std::endl;
 
-        // Create Topic objects using the node's name as the interaction
+        // First, try to use the cached interfaces (fast path)
+        auto cache = MqttSubBase::getAASInterfaceCache();
+        if (cache)
+        {
+            auto cached_input = cache->getInterface(asset_id, this->name(), "input");
+            auto cached_output = cache->getInterface(asset_id, this->name(), "output");
+            if (cached_input.has_value() && cached_output.has_value())
+            {
+                std::cout << "Node '" << this->name() << "' using cached interfaces" << std::endl;
+                MqttPubBase::setTopic("input", cached_input.value());
+                MqttSubBase::setTopic("output", cached_output.value());
+                topics_initialized_ = true;
+                return;
+            }
+        }
+
+        // Fall back to direct AAS query (slow path)
+        std::cout << "Node '" << this->name() << "' falling back to direct AAS query" << std::endl;
         auto request_opt = aas_client_.fetchInterface(asset_id, this->name(), "input");
         auto response_opt = aas_client_.fetchInterface(asset_id, this->name(), "output");
 

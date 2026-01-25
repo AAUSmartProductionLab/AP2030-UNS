@@ -11,6 +11,9 @@
 #include "mqtt/mqtt_sub_base.h"
 #include <behaviortree_cpp/bt_factory.h>
 #include <set>
+#include <optional>
+#include <mutex>
+#include <chrono>
 
 using json = nlohmann::json;
 
@@ -45,12 +48,18 @@ public:
     void registerDerivedInstance(MqttSubBase *instance);
     void unregisterInstance(MqttSubBase *instance);
 
-    // New method to subscribe only to topics for nodes in the active tree
-    // MODIFIED: Added timeout parameter and changed return type
-    bool subscribeToActiveNodes(const BT::Tree &tree, std::chrono::milliseconds timeout_per_subscription = std::chrono::seconds(5));
+    // Register a late-initializing node AND subscribe to its specific topics
+    // This triggers the broker to resend retained messages for those topics
+    bool registerLateInitializingNode(MqttSubBase *instance,
+                                      std::chrono::milliseconds timeout = std::chrono::seconds(2));
+
+    // Set up routing AND subscribe to specific topics for nodes in the active tree
+    // Subscribing triggers delivery of retained messages
+    bool subscribeForActiveNodes(const BT::Tree &tree,
+                                 std::chrono::milliseconds timeout_per_subscription = std::chrono::seconds(5));
 
     // Method to get all currently subscribed topic patterns
-    std::vector<std::string> getActiveTopicPatterns() const; // New method
+    std::vector<std::string> getActiveTopicPatterns() const;
 
 private:
     // Modified structure to track subscription status
@@ -70,4 +79,8 @@ private:
     MqttClient &mqtt_client_;
     std::vector<TopicHandler> topic_handlers_;
     std::map<std::type_index, NodeTypeSubscription> node_subscriptions_;
+
+    // Mutex for thread-safe operations
+    mutable std::mutex handlers_mutex_;
+    mutable std::mutex registry_mutex_;
 };

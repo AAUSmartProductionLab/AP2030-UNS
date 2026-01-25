@@ -6,6 +6,20 @@
 #include <openssl/evp.h>
 #include "utils.h"
 
+namespace {
+    // Case-insensitive string comparison helper
+    std::string toLower(const std::string& s) {
+        std::string result = s;
+        std::transform(result.begin(), result.end(), result.begin(),
+                       [](unsigned char c) { return std::tolower(c); });
+        return result;
+    }
+    
+    bool equalsIgnoreCase(const std::string& a, const std::string& b) {
+        return toLower(a) == toLower(b);
+    }
+}
+
 static size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *userp)
 {
     ((std::string *)userp)->append((char *)contents, size * nmemb);
@@ -274,7 +288,7 @@ std::optional<mqtt_utils::Topic> AASClient::fetchInterface(const std::string &as
                     {
                         for (const auto &action : interaction_type_elem["value"])
                         {
-                            if (action["idShort"] == interaction)
+                            if (equalsIgnoreCase(action["idShort"].get<std::string>(), interaction))
                             {
                                 interaction_data = action;
                                 is_action = true;
@@ -286,7 +300,7 @@ std::optional<mqtt_utils::Topic> AASClient::fetchInterface(const std::string &as
                     {
                         for (const auto &property : interaction_type_elem["value"])
                         {
-                            if (property["idShort"] == interaction)
+                            if (equalsIgnoreCase(property["idShort"].get<std::string>(), interaction))
                             {
                                 interaction_data = property;
                                 is_action = false;
@@ -324,7 +338,7 @@ std::optional<mqtt_utils::Topic> AASClient::fetchInterface(const std::string &as
                             {
                                 for (const auto &action : interaction_type_elem["value"])
                                 {
-                                    if (action["idShort"] == *resolved_interface)
+                                    if (equalsIgnoreCase(action["idShort"].get<std::string>(), *resolved_interface))
                                     {
                                         interaction_data = action;
                                         is_action = true;
@@ -336,7 +350,7 @@ std::optional<mqtt_utils::Topic> AASClient::fetchInterface(const std::string &as
                             {
                                 for (const auto &property : interaction_type_elem["value"])
                                 {
-                                    if (property["idShort"] == *resolved_interface)
+                                    if (equalsIgnoreCase(property["idShort"].get<std::string>(), *resolved_interface))
                                     {
                                         interaction_data = property;
                                         is_action = false;
@@ -811,6 +825,156 @@ std::optional<nlohmann::json> AASClient::fetchHierarchicalStructure(const std::s
     catch (const std::exception &e)
     {
         std::cerr << "Error fetching HierarchicalStructures: " << e.what() << std::endl;
+        return std::nullopt;
+    }
+}
+
+std::optional<nlohmann::json> AASClient::fetchStationPosition(
+    const std::string &station_asset_id,
+    const std::string &filling_line_asset_id)
+{
+    try
+    {
+        std::cout << "Fetching position for station: " << station_asset_id 
+                  << " from line: " << filling_line_asset_id << std::endl;
+
+        // Step 1: Fetch the filling line's HierarchicalStructures submodel
+        auto hs_data = fetchHierarchicalStructure(filling_line_asset_id);
+        if (!hs_data.has_value())
+        {
+            std::cerr << "Failed to fetch HierarchicalStructures for filling line" << std::endl;
+            return std::nullopt;
+        }
+
+        // Step 2: Find the EntryNode
+        const auto &submodel_elements = hs_data.value()["submodelElements"];
+        nlohmann::json entry_node;
+        for (const auto &elem : submodel_elements)
+        {
+            if (elem["idShort"] == "EntryNode")
+            {
+                entry_node = elem;
+                break;
+            }
+        }
+
+        if (entry_node.empty())
+        {
+            std::cerr << "EntryNode not found in HierarchicalStructures" << std::endl;
+            return std::nullopt;
+        }
+
+        // Step 3: Search through statements to find the station entity
+        // The station_asset_id is the full AAS ID, we need to find the entity with matching globalAssetId
+        // or find by looking at the SameAs reference that points to the station's HierarchicalStructures
+        if (!entry_node.contains("statements") || !entry_node["statements"].is_array())
+        {
+            std::cerr << "EntryNode has no statements" << std::endl;
+            return std::nullopt;
+        }
+
+        for (const auto &statement : entry_node["statements"])
+        {
+            if (statement["modelType"] != "Entity")
+                continue;
+
+            // Check if this entity references our station
+            // Method 1: Check SameAs reference for the station's submodel ID
+            bool is_matching_station = false;
+            std::string entity_name = statement.value("idShort", "");
+
+            if (statement.contains("statements") && statement["statements"].is_array())
+            {
+                for (const auto &inner_stmt : statement["statements"])
+                {
+                    if (inner_stmt.value("idShort", "") == "SameAs" && 
+                        inner_stmt["modelType"] == "ReferenceElement")
+                    {
+                        // Check if the reference points to our station's submodel
+                        if (inner_stmt.contains("value") && inner_stmt["value"].contains("keys"))
+                        {
+                            for (const auto &key : inner_stmt["value"]["keys"])
+                            {
+                                std::string key_value = key.value("value", "");
+                                // Check if this references the station's AAS (extracting AAS ID from submodel ID)
+                                // Submodel ID format: .../submodels/instances/{systemIdAAS}/HierarchicalStructures
+                                if (key_value.find(station_asset_id) != std::string::npos)
+                                {
+                                    is_matching_station = true;
+                                    break;
+                                }
+                                // Also check by extracting system name from station_asset_id
+                                // station_asset_id: https://...aas/imaDispensingSystemAAS
+                                // key_value: https://...submodels/instances/imaDispensingSystemAAS/HierarchicalStructures
+                                size_t aas_pos = station_asset_id.rfind("/aas/");
+                                if (aas_pos != std::string::npos)
+                                {
+                                    std::string system_id = station_asset_id.substr(aas_pos + 5);
+                                    if (key_value.find(system_id) != std::string::npos)
+                                    {
+                                        is_matching_station = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (!is_matching_station)
+                continue;
+
+            // Found the matching station entity, now extract Location
+            if (statement.contains("statements") && statement["statements"].is_array())
+            {
+                for (const auto &inner_stmt : statement["statements"])
+                {
+                    if (inner_stmt.value("idShort", "") == "Location" && 
+                        inner_stmt["modelType"] == "SubmodelElementCollection")
+                    {
+                        nlohmann::json position;
+                        if (inner_stmt.contains("value") && inner_stmt["value"].is_array())
+                        {
+                            for (const auto &prop : inner_stmt["value"])
+                            {
+                                std::string prop_name = prop.value("idShort", "");
+                                if (prop_name == "x" || prop_name == "X")
+                                {
+                                    position["x"] = std::stof(prop.value("value", "0"));
+                                }
+                                else if (prop_name == "y" || prop_name == "Y")
+                                {
+                                    position["y"] = std::stof(prop.value("value", "0"));
+                                }
+                                else if (prop_name == "yaw" || prop_name == "Yaw" || 
+                                         prop_name == "theta" || prop_name == "Theta")
+                                {
+                                    position["theta"] = std::stof(prop.value("value", "0"));
+                                }
+                            }
+                        }
+
+                        if (position.contains("x") && position.contains("y"))
+                        {
+                            std::cout << "Found position for " << entity_name << ": x=" 
+                                      << position["x"] << ", y=" << position["y"];
+                            if (position.contains("theta"))
+                                std::cout << ", theta=" << position["theta"];
+                            std::cout << std::endl;
+                            return position;
+                        }
+                    }
+                }
+            }
+        }
+
+        std::cerr << "Could not find station " << station_asset_id << " in HierarchicalStructures" << std::endl;
+        return std::nullopt;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Error fetching station position: " << e.what() << std::endl;
         return std::nullopt;
     }
 }

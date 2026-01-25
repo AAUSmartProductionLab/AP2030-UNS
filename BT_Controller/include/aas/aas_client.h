@@ -7,6 +7,9 @@
 #include <curl/curl.h>
 #include "utils.h"
 
+// Forward declaration
+class AASInterfaceCache;
+
 class AASClient
 {
 public:
@@ -39,6 +42,14 @@ public:
     // Fetch the HierarchicalStructure submodel of an asset
     std::optional<nlohmann::json> fetchHierarchicalStructure(const std::string &asset_id);
 
+    // Fetch station position from the filling line's HierarchicalStructures
+    // The station_asset_id is the full AAS ID (e.g., https://...imaDispensingSystemAAS)
+    // The filling_line_asset_id is the parent line's AAS ID
+    // Returns a JSON object with x, y, yaw (or theta) values
+    std::optional<nlohmann::json> fetchStationPosition(
+        const std::string &station_asset_id,
+        const std::string &filling_line_asset_id);
+
     // Fetch the RequiredCapabilities submodel from a process AAS
     std::optional<nlohmann::json> fetchRequiredCapabilities(const std::string &aas_shell_id);
 
@@ -53,6 +64,9 @@ public:
 
     // Lookup AAS shell ID from asset ID using the registry
     std::optional<std::string> lookupAasIdFromAssetId(const std::string &asset_id);
+
+    // Allow AASInterfaceCache to access private helpers for bulk fetching
+    friend class AASInterfaceCache;
 
 private:
     std::string aas_server_url_;

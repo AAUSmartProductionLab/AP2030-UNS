@@ -29,7 +29,7 @@ void GetProductFromQueue::initializeTopicsFromAAS()
         std::string asset_id = xbot_topic;
 
         // Create Topic objects - ProductID property with output endpoint (data being published)
-        auto request_opt = aas_client_.fetchInterface(asset_id, "ProductID", "output");
+        auto request_opt = aas_client_.fetchInterface(asset_id, "ProductID", "input");
 
         if (!request_opt.has_value())
         {

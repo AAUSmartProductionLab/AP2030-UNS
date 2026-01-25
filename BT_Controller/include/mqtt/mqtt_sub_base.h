@@ -5,7 +5,7 @@
 #include <mutex>
 #include <string>
 #include <functional>
-#include <map> // Add this line
+#include <map>
 #include "utils.h"
 
 // Forward declarations
@@ -16,6 +16,7 @@ namespace BT
 
 class MqttClient;
 class NodeMessageDistributor;
+class AASInterfaceCache;
 
 namespace mqtt
 {
@@ -30,6 +31,7 @@ protected:
     MqttClient &mqtt_client_;
     std::mutex mutex_;
     static NodeMessageDistributor *node_message_distributor_;
+    static AASInterfaceCache *aas_interface_cache_;
 
 public:
     MqttSubBase(MqttClient &mqtt_client);
@@ -40,7 +42,12 @@ public:
     void setTopic(const std::string &topic_key, const mqtt_utils::Topic &topic_object);
     virtual void callback(const std::string &topic_key, const nlohmann::json &msg, mqtt::properties props) = 0;
 
+    // Get all configured topics for this node
+    const std::map<std::string, mqtt_utils::Topic>& getTopics() const { return topics_; }
+
     static void setNodeMessageDistributor(NodeMessageDistributor *manager);
+    static void setAASInterfaceCache(AASInterfaceCache *cache);
+    static AASInterfaceCache* getAASInterfaceCache();
 
     virtual std::string getRegistrationName() const
     {
