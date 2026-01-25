@@ -15,18 +15,20 @@
  * AASClient implementation.
  * 
  * Path format follows basyx ModelReference structure (AASd-123, AASd-125, AASd-128):
- *   - First key: AasIdentifiable (AAS ID or Submodel ID - both are valid starting points)
- *   - Following keys: FragmentKeys (idShort-based navigation through SMC/SML/Property)
+ *   - First key: AasIdentifiable (AAS ID or Submodel ID - uses full global identifier)
+ *   - Following keys: FragmentKeys (use idShorts - local identifiers within parent context)
  * 
  * Two valid path formats:
  * 
  * Format 1 - Submodel-first (direct submodel access):
  *   "SubmodelId/SMC1/.../PropertyIdShort"
  *   → Fetches directly from Submodel repository
+ *   → First key is full Submodel ID, rest are idShorts
  *   
  * Format 2 - AAS-first (navigate via AAS context):
- *   "AAS_ID/SubmodelId/SMC1/.../PropertyIdShort"
- *   → Fetches from AAS repository, second key is also a full identifier
+ *   "AAS_ID/SubmodelIdShort/SMC1/.../PropertyIdShort"
+ *   → Fetches from AAS repository
+ *   → First key is full AAS ID, rest are idShorts (including Submodel)
  * 
  * Example paths:
  *   Submodel-first:
@@ -34,12 +36,12 @@
  *     "urn:submodel:HierarchicalStructures/EntryNode/Dispensing/Location/x"
  *   
  *   AAS-first:
- *     "https://smartproductionlab.aau.dk/aas/FillingLine/https://smartproductionlab.aau.dk/sm/HierarchicalStructures/EntryNode/Location/x"
- *     "urn:aas:FillingLine/urn:sm:HierarchicalStructures/EntryNode/Location/x"
+ *     "https://smartproductionlab.aau.dk/aas/FillingLine/HierarchicalStructures/EntryNode/Location/x"
+ *     "urn:aas:FillingLine/HierarchicalStructures/EntryNode/Location/x"
  * 
  * Detection: 
- *   - Contains "/sm/" or "/submodel" → Submodel ID
- *   - Contains "/aas/" or "/shell" → AAS ID
+ *   - Contains "/sm/" or "/submodel" → Submodel-first (Submodel ID)
+ *   - Contains "/aas/" or "/shell" → AAS-first (AAS ID)
  */
 class AASClientProvider : public BT::AASProvider
 {
@@ -104,8 +106,8 @@ private:
     
     struct ParsedPath
     {
-        std::string first_id;           // First AasIdentifiable (AAS ID or Submodel ID)
-        std::string second_id;          // Second AasIdentifiable (Submodel ID, only for AAS-first)
+        std::string first_id;           // First AasIdentifiable (full AAS ID or Submodel ID)
+        std::string second_id;          // Submodel idShort (FragmentKey, only for AAS-first)
         std::vector<std::string> element_path;  // FragmentKeys (idShort navigation)
         bool is_submodel_first;         // true if first_id is a Submodel ID
     };
@@ -202,35 +204,9 @@ private:
             }
             else
             {
-                // AAS-first: need to find second identifier (Submodel ID)
-                // Check if remaining starts with a URL or identifier pattern
-                bool second_is_url = (remaining.find("http://") == 0 || 
-                                      remaining.find("https://") == 0 || 
-                                      remaining.find("urn:") == 0);
-                
-                if(second_is_url)
-                {
-                    // Second identifier is also a URL
-                    size_t second_id_end = findIdentifierEnd(remaining, 0);
-                    result.second_id = remaining.substr(0, second_id_end);
-                    
-                    if(second_id_end < remaining.size())
-                    {
-                        std::string element_remaining = remaining.substr(second_id_end + 1);
-                        return parseElementPath(result, element_remaining);
-                    }
-                    else
-                    {
-                        // No element path - need at least one element
-                        return std::nullopt;
-                    }
-                }
-                else
-                {
-                    // Second identifier might be a simple ID or this is idShort navigation
-                    // Use SubmodelIdShort approach - first segment is submodel idShort
-                    return parseWithSubmodelIdShort(result, remaining);
-                }
+                // AAS-first: remaining is SubmodelIdShort/element/path
+                // Per AASd-125, all keys after first AasIdentifiable are FragmentKeys (idShorts)
+                return parseWithSubmodelIdShort(result, remaining);
             }
         }
         else
@@ -268,10 +244,10 @@ private:
     }
     
     /**
-     * @brief Parse with SubmodelIdShort as second component (convenience format).
+     * @brief Parse with SubmodelIdShort as second component.
      * 
      * This handles: AAS_URL/SubmodelIdShort/element/path
-     * Which is a convenience format, not strictly ModelReference compliant.
+     * Per AASd-125, all keys after the first AasIdentifiable are FragmentKeys (idShorts).
      */
     std::optional<ParsedPath> parseWithSubmodelIdShort(ParsedPath& result, const std::string& remaining)
     {
