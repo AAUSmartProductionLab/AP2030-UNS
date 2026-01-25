@@ -88,6 +88,18 @@ planarTableShuttle1AAS:
                             mqv_retain: 'false'
                             mqv_controlPacket: publish
                             mqv_qos: '0'
+                    ProductID:
+                        key: 'ProductID'
+                        title: 'ProductID'
+                        input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/productId.schema.json'
+                        forms:
+                            contentType: 'application/json'
+                            href: '/DATA/ProductId'
+                            mqv_retain: 'false'
+                            mqv_controlPacket: subscribe
+                            mqv_qos: '0'
+                            mqv_controlPacket: publish
+                            mqv_qos: '0'
 
     Variables:
         PackMLState:
