@@ -22,7 +22,8 @@ void MqttSyncActionNode::initialize()
     // Call the virtual function - safe because construction is complete
     initializeTopicsFromAAS();
 
-    if (MqttSubBase::node_message_distributor_)
+    // Only register if we have topics initialized
+    if (topics_initialized_ && MqttSubBase::node_message_distributor_)
     {
         MqttSubBase::node_message_distributor_->registerDerivedInstance(this);
     }
@@ -48,6 +49,12 @@ json MqttSyncActionNode::createMessage()
 
 BT::NodeStatus MqttSyncActionNode::tick()
 {
+    // Ensure lazy initialization is done
+    if (!ensureInitialized())
+    {
+        std::cerr << "Node '" << this->name() << "' could not be initialized, returning FAILURE" << std::endl;
+        return BT::NodeStatus::FAILURE;
+    }
     publish("input", createMessage());
     return BT::NodeStatus::SUCCESS;
 }
@@ -59,6 +66,12 @@ BT::PortsList MqttSyncActionNode::providedPorts()
 
 void MqttSyncActionNode::initializeTopicsFromAAS()
 {
+    // Already initialized, skip
+    if (topics_initialized_)
+    {
+        return;
+    }
+
     try
     {
         auto asset_input = getInput<std::string>("Asset");
@@ -86,11 +99,31 @@ void MqttSyncActionNode::initializeTopicsFromAAS()
 
         MqttPubBase::setTopic("input", request_opt.value());
         MqttSubBase::setTopic("output", response_opt.value());
+        topics_initialized_ = true;
     }
     catch (const std::exception &e)
     {
         std::cerr << "Exception initializing topics from AAS: " << e.what() << std::endl;
     }
+}
+
+bool MqttSyncActionNode::ensureInitialized()
+{
+    if (topics_initialized_)
+    {
+        return true;
+    }
+
+    // Try lazy initialization
+    initializeTopicsFromAAS();
+
+    if (topics_initialized_ && MqttSubBase::node_message_distributor_)
+    {
+        MqttSubBase::node_message_distributor_->registerDerivedInstance(this);
+        std::cout << "Node '" << this->name() << "' lazy initialized successfully" << std::endl;
+    }
+
+    return topics_initialized_;
 }
 
 // Standard implementation based on PackML override this if needed

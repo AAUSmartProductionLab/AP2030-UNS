@@ -13,6 +13,11 @@ class MqttSyncConditionNode : public BT::ConditionNode, public MqttSubBase
 protected:
     json latest_msg_;
     AASClient &aas_client_;
+    bool topics_initialized_ = false;
+
+    /// @brief Called from tick() to perform lazy initialization if needed
+    /// @return true if initialization is complete, false if still pending
+    bool ensureInitialized();
 
 public:
     MqttSyncConditionNode(const std::string &name,

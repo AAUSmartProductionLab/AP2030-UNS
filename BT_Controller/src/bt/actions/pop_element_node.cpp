@@ -7,6 +7,12 @@
 
 void PopElementNode::initializeTopicsFromAAS()
 {
+    // Already initialized, skip
+    if (topics_initialized_)
+    {
+        return;
+    }
+
     try
     {
         auto xbot_topic_opt = this->config().blackboard->getAnyLocked("Xbot");
@@ -33,6 +39,7 @@ void PopElementNode::initializeTopicsFromAAS()
         }
 
         MqttPubBase::setTopic("input", product_association_opt.value());
+        topics_initialized_ = true;
     }
     catch (const std::exception &e)
     {

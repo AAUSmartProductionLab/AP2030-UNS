@@ -11,10 +11,30 @@ void MqttActionNode::initialize()
     // Call the virtual function - safe because construction is complete
     initializeTopicsFromAAS();
 
-    if (MqttSubBase::node_message_distributor_)
+    // Only register if we have topics initialized
+    if (topics_initialized_ && MqttSubBase::node_message_distributor_)
     {
         MqttSubBase::node_message_distributor_->registerDerivedInstance(this);
     }
+}
+
+bool MqttActionNode::ensureInitialized()
+{
+    if (topics_initialized_)
+    {
+        return true;
+    }
+
+    // Try lazy initialization
+    initializeTopicsFromAAS();
+
+    if (topics_initialized_ && MqttSubBase::node_message_distributor_)
+    {
+        MqttSubBase::node_message_distributor_->registerDerivedInstance(this);
+        std::cout << "Node '" << this->name() << "' lazy initialized successfully" << std::endl;
+    }
+
+    return topics_initialized_;
 }
 
 MqttActionNode::~MqttActionNode()
@@ -27,6 +47,12 @@ MqttActionNode::~MqttActionNode()
 
 BT::NodeStatus MqttActionNode::onStart()
 {
+    // Ensure lazy initialization is done
+    if (!ensureInitialized())
+    {
+        std::cerr << "Node '" << this->name() << "' could not be initialized, returning FAILURE" << std::endl;
+        return BT::NodeStatus::FAILURE;
+    }
     // Create the message to send
     publish("input", createMessage());
 

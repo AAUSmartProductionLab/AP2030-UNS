@@ -4,6 +4,12 @@
 
 void MoveToPosition::initializeTopicsFromAAS()
 {
+    // Already initialized, skip
+    if (topics_initialized_)
+    {
+        return;
+    }
+
     try
     {
         auto asset_input = getInput<std::string>("Asset");
@@ -30,6 +36,7 @@ void MoveToPosition::initializeTopicsFromAAS()
         MqttPubBase::setTopic("input", request_opt.value());
         MqttPubBase::setTopic("halt", halt_opt.value());
         MqttSubBase::setTopic("output", response_opt.value());
+        topics_initialized_ = true;
     }
     catch (const std::exception &e)
     {

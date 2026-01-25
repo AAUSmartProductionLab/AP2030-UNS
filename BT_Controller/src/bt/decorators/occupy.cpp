@@ -31,6 +31,12 @@ std::string Occupy::getReleaseResponseKey(const std::string& asset_id) const
 
 void Occupy::initializeTopicsFromAAS()
 {
+    // Already initialized, skip
+    if (topics_initialized_)
+    {
+        return;
+    }
+
     try
     {
         // Get the list of assets from input
@@ -45,6 +51,7 @@ void Occupy::initializeTopicsFromAAS()
         std::cout << "Node '" << this->name() << "' initializing for " << asset_ids_.size() << " assets" << std::endl;
 
         // Initialize topics for each asset
+        bool all_initialized = true;
         for (const auto& asset_id : asset_ids_)
         {
             std::cout << "  - Fetching interfaces for asset: " << asset_id << std::endl;
@@ -59,6 +66,7 @@ void Occupy::initializeTopicsFromAAS()
             {
                 std::cerr << "Failed to fetch interfaces from AAS for asset: " << asset_id 
                           << " in node: " << this->name() << std::endl;
+                all_initialized = false;
                 continue;
             }
 
@@ -67,6 +75,12 @@ void Occupy::initializeTopicsFromAAS()
             MqttPubBase::setTopic(getReleaseRequestKey(asset_id), release_req.value());
             MqttSubBase::setTopic(getOccupyResponseKey(asset_id), occupy_resp.value());
             MqttSubBase::setTopic(getReleaseResponseKey(asset_id), release_resp.value());
+        }
+        
+        // Only mark initialized if we set up at least one asset
+        if (!asset_ids_.empty() && all_initialized)
+        {
+            topics_initialized_ = true;
         }
     }
     catch (const std::exception &e)
@@ -77,6 +91,13 @@ void Occupy::initializeTopicsFromAAS()
 
 BT::NodeStatus Occupy::tick()
 {
+    // Ensure lazy initialization is done
+    if (!ensureInitialized())
+    {
+        std::cerr << "Node '" << this->name() << "' could not be initialized, returning FAILURE" << std::endl;
+        return BT::NodeStatus::FAILURE;
+    }
+
     if (status() == BT::NodeStatus::IDLE)
     {
         current_phase_ = PackML::State::STARTING;

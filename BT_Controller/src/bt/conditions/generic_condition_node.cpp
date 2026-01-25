@@ -18,6 +18,12 @@ BT::PortsList GenericConditionNode::providedPorts()
 
 void GenericConditionNode::initializeTopicsFromAAS()
 {
+    // Already initialized, skip
+    if (topics_initialized_)
+    {
+        return;
+    }
+
     try
     {
         auto asset_input = getInput<std::string>("Asset");
@@ -47,6 +53,7 @@ void GenericConditionNode::initializeTopicsFromAAS()
         }
 
         MqttSubBase::setTopic("output", condition_opt.value());
+        topics_initialized_ = true;
     }
     catch (const std::exception &e)
     {
@@ -55,7 +62,15 @@ void GenericConditionNode::initializeTopicsFromAAS()
 }
 
 BT::NodeStatus GenericConditionNode::tick()
-{ // Use a unique_lock since we need to wait on a condition variable
+{
+    // Ensure lazy initialization is done
+    if (!ensureInitialized())
+    {
+        std::cerr << "Node '" << this->name() << "' could not be initialized, returning FAILURE" << std::endl;
+        return BT::NodeStatus::FAILURE;
+    }
+
+    // Use a unique_lock since we need to wait on a condition variable
     std::unique_lock<std::mutex> lock(mutex_);
 
     // Wait until a message is received
