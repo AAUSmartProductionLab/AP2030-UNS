@@ -31,6 +31,7 @@ orchestratorAAS:
                                 contentType: 'application/json'
                                 href: '/DATA/Start'
                                 mqv_controlPacket: 'publish'
+                                mqv_retain: 'false'
                     Stop:
                         key: 'Stop'
                         title: 'Stop'
@@ -48,6 +49,7 @@ orchestratorAAS:
                                 contentType: 'application/json'
                                 href: '/DATA/Stop'
                                 mqv_controlPacket: 'publish'
+                                mqv_retain: 'false'
                     Suspend:
                         key: 'Suspend'
                         title: 'Suspend'
@@ -65,6 +67,7 @@ orchestratorAAS:
                                 contentType: 'application/json'
                                 href: '/DATA/Suspend'
                                 mqv_controlPacket: 'publish'
+                                mqv_retain: 'false'
                     Unsuspend:
                         key: 'Unsuspend'
                         title: 'Unsuspend'
@@ -82,6 +85,7 @@ orchestratorAAS:
                                 contentType: 'application/json'
                                 href: '/DATA/Unsuspend'
                                 mqv_controlPacket: 'publish'
+                                mqv_retain: 'false'
                     Reset:
                         key: 'Reset'
                         title: 'Reset'
@@ -99,6 +103,7 @@ orchestratorAAS:
                                 contentType: 'application/json'
                                 href: '/DATA/Reset'
                                 mqv_controlPacket: 'publish'
+                                mqv_retain: 'false'
                 properties:
                     State:
                         key: 'State'
@@ -107,7 +112,7 @@ orchestratorAAS:
                         forms:
                             contentType: 'application/json'
                             href: '/DATA/State'
-                            mqv_retain: 'false'
+                            mqv_retain: 'true'
                             mqv_controlPacket: publish
                             mqv_qos: '0'
 
