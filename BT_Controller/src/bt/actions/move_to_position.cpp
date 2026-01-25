@@ -2,9 +2,6 @@
 #include "utils.h"
 #include "mqtt/node_message_distributor.h"
 
-// Filling line AAS ID - used to look up station positions from HierarchicalStructures
-static const std::string FILLING_LINE_AAS_ID = "https://smartproductionlab.aau.dk/aas/aauFillingLineAAS";
-
 void MoveToPosition::initializeTopicsFromAAS()
 {
     // Already initialized, skip
@@ -50,20 +47,15 @@ void MoveToPosition::initializeTopicsFromAAS()
 BT::PortsList MoveToPosition::providedPorts()
 {
     return {
-        BT::details::PortWithDefault<std::string>(
-            BT::PortDirection::INPUT,
-            "Asset",
-            "{Xbot}",
+        BT::InputPort<std::string>("Asset", "{Xbot}", 
             "The Asset to execute the movement"),
-        BT::details::PortWithDefault<std::string>(
-            BT::PortDirection::INPUT,
-            "TargetPosition",
-            "{Station}",
-            "The name of the station to move to"),
-        BT::details::PortWithDefault<std::string>(
-            BT::PortDirection::INPUT,
-            "Uuid",
-            "{ProductID}",
+        BT::InputPort<double>("x", 
+            "X position - can be literal, {blackboard}, or $aas{AAS/SM/path}"),
+        BT::InputPort<double>("y", 
+            "Y position - can be literal, {blackboard}, or $aas{AAS/SM/path}"),
+        BT::InputPort<double>("yaw", 
+            "Yaw angle (theta) - can be literal, {blackboard}, or $aas{AAS/SM/path}"),
+        BT::InputPort<std::string>("Uuid", "{ProductID}", 
             "UUID for the command to execute"),
     };
 }
@@ -72,7 +64,6 @@ void MoveToPosition::onHalted()
 {
     // Clean up when the node is halted
     std::cout << name() << " node halted" << std::endl;
-    // Additional cleanup as needed
     nlohmann::json message;
     message["TargetPosition"] = 0;
     message["Uuid"] = current_uuid_;
@@ -81,43 +72,45 @@ void MoveToPosition::onHalted()
 
 nlohmann::json MoveToPosition::createMessage()
 {
-    BT::Expected<std::string> TargetPosition = getInput<std::string>("TargetPosition");
-    BT::Expected<std::string> Uuid = getInput<std::string>("Uuid");
+    // Get position values - these automatically resolve $aas{} references
+    auto x_result = getInput<double>("x");
+    auto y_result = getInput<double>("y");
+    auto yaw_result = getInput<double>("yaw");
+    auto uuid_result = getInput<std::string>("Uuid");
 
     nlohmann::json message;
-    if (TargetPosition.has_value() && Uuid.has_value())
+    
+    if (!x_result.has_value())
     {
-        // TargetPosition now contains the station's AAS ID (e.g., https://...imaDispensingSystemAAS)
-        // We need to look up the actual x, y, yaw position from the filling line's HierarchicalStructures
-        std::string station_aas_id = TargetPosition.value();
-        current_uuid_ = Uuid.value();
-        
-        // Fetch position from the filling line's HierarchicalStructures
-        auto position_opt = aas_client_.fetchStationPosition(station_aas_id, FILLING_LINE_AAS_ID);
-        
-        if (position_opt.has_value())
-        {
-            const auto& pos = position_opt.value();
-            float x = pos.value("x", 0.0f);
-            float y = pos.value("y", 0.0f);
-            float theta = pos.value("theta", 0.0f);
-            
-            // Build message according to schema: Position: [x, y, theta]
-            message["Position"] = nlohmann::json::array({x, y, theta});
-            message["Uuid"] = current_uuid_;
-            
-            std::cout << "MoveToPosition: Moving to station " << station_aas_id 
-                      << " at position [" << x << ", " << y << ", " << theta << "]" << std::endl;
-        }
-        else
-        {
-            std::cerr << "MoveToPosition: Failed to fetch position for station: " << station_aas_id << std::endl;
-            // Return empty message to indicate failure
-            return nlohmann::json();
-        }
-        
-        return message;
+        std::cerr << "MoveToPosition: Failed to get x value: " << x_result.error() << std::endl;
+        return nlohmann::json();
     }
-
-    return nlohmann::json();
+    if (!y_result.has_value())
+    {
+        std::cerr << "MoveToPosition: Failed to get y value: " << y_result.error() << std::endl;
+        return nlohmann::json();
+    }
+    if (!yaw_result.has_value())
+    {
+        std::cerr << "MoveToPosition: Failed to get yaw value: " << yaw_result.error() << std::endl;
+        return nlohmann::json();
+    }
+    if (!uuid_result.has_value())
+    {
+        std::cerr << "MoveToPosition: Failed to get Uuid: " << uuid_result.error() << std::endl;
+        return nlohmann::json();
+    }
+    
+    double x = x_result.value();
+    double y = y_result.value();
+    double yaw = yaw_result.value();
+    current_uuid_ = uuid_result.value();
+    
+    // Build message according to schema: Position: [x, y, theta]
+    message["Position"] = nlohmann::json::array({x, y, yaw});
+    message["Uuid"] = current_uuid_;
+    
+    std::cout << "MoveToPosition: Moving to [" << x << ", " << y << ", " << yaw << "]" << std::endl;
+    
+    return message;
 }

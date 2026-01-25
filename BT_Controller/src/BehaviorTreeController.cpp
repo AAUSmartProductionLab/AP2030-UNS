@@ -2,11 +2,13 @@
 
 #include <behaviortree_cpp/loggers/groot2_publisher.h>
 #include <behaviortree_cpp/xml_parsing.h>
+#include <behaviortree_cpp/aas_provider.h>
 
 #include "mqtt/mqtt_client.h"
 #include "mqtt/node_message_distributor.h"
 #include "mqtt/mqtt_sub_base.h"
 #include "aas/aas_interface_cache.h"
+#include "aas/aas_client_provider.h"
 #include "bt/register_all_nodes.h"
 #include "utils.h"
 
@@ -43,7 +45,7 @@ BehaviorTreeController::BehaviorTreeController(int argc, char *argv[])
     node_message_distributor_ = std::make_unique<NodeMessageDistributor>(*mqtt_client_);
 
     // Initialize AAS client
-    aas_client_ = std::make_unique<AASClient>(app_params_.aasServerUrl, app_params_.aasRegistryUrl);
+    aas_client_ = std::make_shared<AASClient>(app_params_.aasServerUrl, app_params_.aasRegistryUrl);
 
     // Initialize AAS interface cache for pre-fetching
     aas_interface_cache_ = std::make_unique<AASInterfaceCache>(*aas_client_);
@@ -1010,6 +1012,12 @@ void BehaviorTreeController::processStartingState()
 
         // Create blackboard and populate with equipment mapping
         auto root_blackboard = BT::Blackboard::create();
+        
+        // Set up AAS provider for $aas{} references in behavior tree
+        auto aas_provider = createCachingAASProvider(aas_client_, std::chrono::seconds(300));
+        root_blackboard->setAASProvider(aas_provider);
+        std::cout << "AAS provider configured on blackboard (TTL: 300s)" << std::endl;
+        
         populateBlackboard(root_blackboard);
 
         // Store the process ID in blackboard for nodes to access

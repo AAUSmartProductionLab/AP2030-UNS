@@ -71,7 +71,7 @@ private:
     std::unique_ptr<NodeMessageDistributor> node_message_distributor_;
     std::function<void(const std::string &, const nlohmann::json &, mqtt::properties)> main_mqtt_message_handler_;
 
-    std::unique_ptr<AASClient> aas_client_;
+    std::shared_ptr<AASClient> aas_client_;  // shared_ptr for use with AAS provider
     std::unique_ptr<AASInterfaceCache> aas_interface_cache_;
     std::unique_ptr<BT::BehaviorTreeFactory> bt_factory_;
     BT::Tree bt_tree_;
