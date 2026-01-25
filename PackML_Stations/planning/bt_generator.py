@@ -263,7 +263,7 @@ class BTGenerator:
                       Field="State",
                       expected_value="operational",
                       Property="PackMLState",
-                      Asset="{SelectedAsset}")
+                      Asset="{Xbot}")
         ET.SubElement(reactive_fallback, "Sleep", msec="10000")
 
         # Main process flow with error recovery
