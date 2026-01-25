@@ -11,6 +11,14 @@ Usage:
     python register_all_assets.py --mqtt-broker 192.168.0.104 --dry-run
 """
 
+from src.core.constants import (
+    DEFAULT_MQTT_BROKER,
+    DEFAULT_MQTT_PORT,
+    PathDefaults
+)
+import paho.mqtt.client as mqtt
+import yaml
+from dotenv import load_dotenv
 import sys
 import os
 import time
@@ -23,20 +31,12 @@ import argparse
 sys.path.insert(0, str(Path(__file__).parent))
 
 # Load environment variables from .env file BEFORE importing anything else
-from dotenv import load_dotenv
 env_path = Path(__file__).parent.parent / '.env'
 if env_path.exists():
     load_dotenv(env_path)
 
-import yaml
-import paho.mqtt.client as mqtt
 
 # Now import after .env is loaded
-from src.core.constants import (
-    DEFAULT_MQTT_BROKER,
-    DEFAULT_MQTT_PORT,
-    PathDefaults
-)
 
 
 class Colors:
@@ -97,11 +97,11 @@ def get_asset_info(config_path: Path) -> Dict[str, str]:
     try:
         with open(config_path, 'r') as f:
             config = yaml.safe_load(f)
-        
+
         # Config contains a single system with the system ID as the top-level key
         system_id = list(config.keys())[0]
         system_config = config[system_id]
-        
+
         return {
             'system_id': system_id,
             'id_short': system_config.get('idShort', system_id),
@@ -145,7 +145,7 @@ def publish_config(
             return False, {'error': 'Config parsing failed', **asset_info}
 
         system_id = asset_info['system_id']
-        
+
         # Read the raw YAML content
         with open(config_path, 'r') as f:
             yaml_content = f.read()
@@ -179,7 +179,7 @@ def publish_config(
 def check_mqtt_connection(broker: str, port: int) -> Tuple[bool, mqtt.Client]:
     """
     Connect to MQTT broker.
-    
+
     Returns:
         Tuple of (success, client)
     """
@@ -188,27 +188,27 @@ def check_mqtt_connection(broker: str, port: int) -> Tuple[bool, mqtt.Client]:
             mqtt.CallbackAPIVersion.VERSION2,
             client_id=f"asset-publisher-{os.getpid()}"
         )
-        
+
         connected = False
-        
+
         def on_connect(client, userdata, flags, reason_code, properties):
             nonlocal connected
             if reason_code == 0:
                 connected = True
-        
+
         client.on_connect = on_connect
         client.connect(broker, port, keepalive=60)
         client.loop_start()
-        
+
         # Wait for connection
         for _ in range(50):  # 5 seconds timeout
             if connected:
                 return True, client
             time.sleep(0.1)
-        
+
         print_failure(f"Connection timeout to {broker}:{port}")
         return False, None
-        
+
     except Exception as e:
         print_failure(f"Cannot connect to MQTT broker at {broker}:{port}: {e}")
         return False, None
@@ -258,7 +258,7 @@ Examples:
     parser.add_argument(
         '--delay',
         type=float,
-        default=1.0,
+        default=0.1,
         help='Delay between publishing each config in seconds (default: 1.0)'
     )
     parser.add_argument(
@@ -319,7 +319,8 @@ Examples:
     mqtt_client = None
     if not args.dry_run:
         print_info("Connecting to MQTT broker...")
-        success, mqtt_client = check_mqtt_connection(args.mqtt_broker, args.mqtt_port)
+        success, mqtt_client = check_mqtt_connection(
+            args.mqtt_broker, args.mqtt_port)
         if not success:
             print_failure("Cannot connect to MQTT broker. Exiting.")
             return 1
@@ -336,7 +337,8 @@ Examples:
     }
 
     for idx, config_file in enumerate(config_files, 1):
-        print_progress(idx, len(config_files), f"Processing {config_file.name}")
+        print_progress(idx, len(config_files),
+                       f"Processing {config_file.name}")
 
         if args.dry_run:
             # Just show what would be published
@@ -378,13 +380,15 @@ Examples:
     print_header("Publishing Summary")
 
     if args.dry_run:
-        print(f"{Colors.BOLD}Dry Run - No configs were actually published{Colors.END}\n")
+        print(
+            f"{Colors.BOLD}Dry Run - No configs were actually published{Colors.END}\n")
         print(f"Total configs found: {results['total']}")
         print(f"  Valid configs: {len(results['skipped'])}")
         print(f"  Invalid configs: {len(results['failed'])}")
     else:
         print(f"{Colors.BOLD}Total: {results['total']}{Colors.END}")
-        print(f"{Colors.GREEN}Published: {len(results['successful'])}{Colors.END}")
+        print(
+            f"{Colors.GREEN}Published: {len(results['successful'])}{Colors.END}")
         print(f"{Colors.RED}Failed: {len(results['failed'])}{Colors.END}")
         print()
 
