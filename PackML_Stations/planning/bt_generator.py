@@ -42,8 +42,8 @@ class BTGeneratorConfig:
                 "Scraping": "scraping.xml",
                 "Capping": "capping.xml",
                 # Standard subtrees that were previously included via <include>
-                "LineSOP": "lineSOP.xml",
-                "PlanarSOP": "planarSOP.xml",
+                # "LineSOP": "lineSOP.xml",
+                # "PlanarSOP": "planarSOP.xml",
                 "Product": "product.xml",
             }
         if self.subtree_id_mapping is None:
@@ -196,18 +196,18 @@ class BTGenerator:
         reactive_seq = ET.SubElement(seq, "ReactiveSequence")
 
         # Planar table operational check with SOP fallback
-        if planar_table_id:
-            fallback = ET.SubElement(reactive_seq, "Fallback")
-            ET.SubElement(fallback, "Data_Condition",
-                          comparison_type="equal",
-                          Field="State",
-                          expected_value="operational",
-                          Property="PackMLState",
-                          Asset=planar_table_id)
-            ET.SubElement(fallback, "SubTree",
-                          ID="PlanarSOP",
-                          Asset="Operator",
-                          _autoremap="true")
+        # if planar_table_id:
+        #     # fallback = ET.SubElement(reactive_seq, "Fallback")
+        #     ET.SubElement(reactive_seq, "Data_Condition",
+        #                   comparison_type="equal",
+        #                   Field="State",
+        #                   expected_value="operational",
+        #                   Property="PackMLState",
+        #                   Asset=planar_table_id)
+        # ET.SubElement(fallback, "SubTree",
+        #               ID="PlanarSOP",
+        #               Asset="Operator",
+        #               _autoremap="true")
 
         # Parallel execution for movers
         movers = matching_result.movers
@@ -338,8 +338,8 @@ class BTGenerator:
             needed_subtrees.add("Scraping")
 
         # Always include standard subtrees that were previously referenced via <include>
-        needed_subtrees.add("LineSOP")
-        needed_subtrees.add("PlanarSOP")
+        # needed_subtrees.add("LineSOP")
+        # needed_subtrees.add("PlanarSOP")
         needed_subtrees.add("Product")
 
         # Track loaded files to avoid loading the same file multiple times
