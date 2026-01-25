@@ -108,6 +108,9 @@ planarTableShuttle2AAS:
             semanticId: 'https://smartproductionlab.aau.dk/stationOccupation'
             InterfaceReference: 'StationState'
             Field: 'ProcessQueue'
+        ProductID:
+            semanticId: 'https://smartproductionlab.aau.dk/productID'
+            InterfaceReference: 'ProductID'
 
     Parameters:
     HierarchicalStructures:
