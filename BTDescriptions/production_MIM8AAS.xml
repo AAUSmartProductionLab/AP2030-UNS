@@ -4,14 +4,12 @@
     <Sequence>
       <Configure Product="{product}" ProductIDs="{ProductIDs}"/>
       <ReactiveSequence>
-        <Fallback>
-          <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="PackMLState" Asset="https://smartproductionlab.aau.dk/aas/planarTableAAS"/>
-          <Parallel failure_count="-1" success_count="1">
-            <SubTree ID="AsepticFilling" Xbot="{Xbot1}" ProductID="" _autoremap="true"/>
-            <SubTree ID="AsepticFilling" Xbot="{Xbot2}" ProductID="" _autoremap="true"/>
-            <SubTree ID="AsepticFilling" Xbot="{Xbot3}" ProductID="" _autoremap="true"/>
-          </Parallel>
-        </Fallback>
+        <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="PackMLState" Asset="https://smartproductionlab.aau.dk/aas/planarTableAAS"/>
+        <Parallel failure_count="-1" success_count="1">
+          <SubTree ID="AsepticFilling" Xbot="{Xbot1}" ProductID="" _autoremap="true"/>
+          <SubTree ID="AsepticFilling" Xbot="{Xbot2}" ProductID="" _autoremap="true"/>
+          <SubTree ID="AsepticFilling" Xbot="{Xbot3}" ProductID="" _autoremap="true"/>
+        </Parallel>
       </ReactiveSequence>
     </Sequence>
   </BehaviorTree>
@@ -37,7 +35,7 @@
       </KeepRunningUntilEmpty>
     </Occupy>
   </BehaviorTree>
-  <BehaviorTree ID="Dispensing">
+  <BehaviorTree ID="Stoppering">
     <Occupy Uuid="{ProductID}" Assets="{Assets}" _skipIf="scrap == true">
       <ReactiveSequence>
         <ReactiveFallback>
@@ -46,7 +44,7 @@
         </ReactiveFallback>
         <Sequence>
           <moveToPosition Uuid="{ProductID}" TargetPosition="{SelectedAsset}" Asset="{Xbot}"/>
-          <Command_Execution Parameters="'{}'" Uuid="{ProductID}" Operation="Dispensing" Asset="{SelectedAsset}"/>
+          <Command_Execution Parameters="'{}'" Uuid="{ProductID}" Operation="Stoppering" Asset="{SelectedAsset}"/>
         </Sequence>
       </ReactiveSequence>
     </Occupy>
@@ -61,6 +59,20 @@
         <Sequence>
           <moveToPosition Uuid="{ProductID}" TargetPosition="{SelectedAsset}" Asset="{Xbot}"/>
           <Command_Execution Parameters="'{}'" Uuid="{ProductID}" Operation="Unloading" Asset="{SelectedAsset}" _onSuccess="scrap:=false"/>
+        </Sequence>
+      </ReactiveSequence>
+    </Occupy>
+  </BehaviorTree>
+  <BehaviorTree ID="Unloading">
+    <Occupy Uuid="{ProductID}" Assets="{Assets}" _skipIf="scrap == true">
+      <ReactiveSequence>
+        <ReactiveFallback>
+          <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="PackMLState" Asset="{SelectedAsset}"/>
+          <Sleep msec="10000"/>
+        </ReactiveFallback>
+        <Sequence>
+          <moveToPosition Uuid="{ProductID}" TargetPosition="{SelectedAsset}" Asset="{Xbot}"/>
+          <Command_Execution Parameters="'{}'" Uuid="{ProductID}" Operation="Unloading" Asset="{SelectedAsset}"/>
         </Sequence>
       </ReactiveSequence>
     </Occupy>
@@ -82,20 +94,6 @@
       </Occupy>
     </SequenceWithMemory>
   </BehaviorTree>
-  <BehaviorTree ID="Stoppering">
-    <Occupy Uuid="{ProductID}" Assets="{Assets}" _skipIf="scrap == true">
-      <ReactiveSequence>
-        <ReactiveFallback>
-          <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="PackMLState" Asset="{SelectedAsset}"/>
-          <Sleep msec="10000"/>
-        </ReactiveFallback>
-        <Sequence>
-          <moveToPosition Uuid="{ProductID}" TargetPosition="{SelectedAsset}" Asset="{Xbot}"/>
-          <Command_Execution Parameters="'{}'" Uuid="{ProductID}" Operation="Stoppering" Asset="{SelectedAsset}"/>
-        </Sequence>
-      </ReactiveSequence>
-    </Occupy>
-  </BehaviorTree>
   <BehaviorTree ID="QualityControl">
     <Occupy Uuid="{ProductID}" Assets="{Assets}" _skipIf="scrap == true">
       <ReactiveSequence>
@@ -110,7 +108,7 @@
       </ReactiveSequence>
     </Occupy>
   </BehaviorTree>
-  <BehaviorTree ID="Unloading">
+  <BehaviorTree ID="Dispensing">
     <Occupy Uuid="{ProductID}" Assets="{Assets}" _skipIf="scrap == true">
       <ReactiveSequence>
         <ReactiveFallback>
@@ -119,7 +117,7 @@
         </ReactiveFallback>
         <Sequence>
           <moveToPosition Uuid="{ProductID}" TargetPosition="{SelectedAsset}" Asset="{Xbot}"/>
-          <Command_Execution Parameters="'{}'" Uuid="{ProductID}" Operation="Unloading" Asset="{SelectedAsset}"/>
+          <Command_Execution Parameters="'{}'" Uuid="{ProductID}" Operation="Dispensing" Asset="{SelectedAsset}"/>
         </Sequence>
       </ReactiveSequence>
     </Occupy>
