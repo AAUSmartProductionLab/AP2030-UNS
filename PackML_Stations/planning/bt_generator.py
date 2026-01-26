@@ -196,14 +196,14 @@ class BTGenerator:
         reactive_seq = ET.SubElement(seq, "ReactiveSequence")
 
         # Planar table operational check with SOP fallback
-        # if planar_table_id:
-        #     # fallback = ET.SubElement(reactive_seq, "Fallback")
-        #     ET.SubElement(reactive_seq, "Data_Condition",
-        #                   comparison_type="equal",
-        #                   Field="State",
-        #                   expected_value="operational",
-        #                   Property="PackMLState",
-        #                   Asset=planar_table_id)
+        if planar_table_id:
+            fallback = ET.SubElement(reactive_seq, "Fallback")
+            ET.SubElement(fallback, "Data_Condition",
+                          comparison_type="equal",
+                          Field="State",
+                          expected_value="operational",
+                          Property="PackMLState",
+                          Asset=planar_table_id)
         # ET.SubElement(fallback, "SubTree",
         #               ID="PlanarSOP",
         #               Asset="Operator",
@@ -214,7 +214,7 @@ class BTGenerator:
         parallelism = matching_result.parallelism_factor
 
         if parallelism > 1:
-            parallel = ET.SubElement(reactive_seq, "Parallel",
+            parallel = ET.SubElement(fallback, "Parallel",
                                      failure_count="-1",
                                      success_count="1")
 
