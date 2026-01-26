@@ -43,8 +43,7 @@ class BTGeneratorConfig:
                 "Capping": "capping.xml",
                 # Standard subtrees that were previously included via <include>
                 # "LineSOP": "lineSOP.xml",
-                # "PlanarSOP": "planarSOP.xml",
-                "Product": "product.xml",
+                # "PlanarSOP": "planarSOP.xml"
             }
         if self.subtree_id_mapping is None:
             # Map capability/process names to actual subtree IDs
@@ -189,8 +188,11 @@ class BTGenerator:
         main_bt = ET.SubElement(root, "BehaviorTree", ID="Production")
         seq = ET.SubElement(main_bt, "Sequence")
 
-        # Configure node - initialize product queue
-        ET.SubElement(seq, "Configure", ProductIDs="{ProductIDs}")
+        # Configure node - initialize product queue with Product AAS ID
+        product_aas_id = product_info.get("aas_id", "{product}")
+        ET.SubElement(seq, "Configure", 
+                      Product=product_aas_id,
+                      ProductIDs="{ProductIDs}")
 
         # Reactive sequence for main production flow
         reactive_seq = ET.SubElement(seq, "ReactiveSequence")
@@ -349,7 +351,6 @@ class BTGenerator:
         # Always include standard subtrees that were previously referenced via <include>
         # needed_subtrees.add("LineSOP")
         # needed_subtrees.add("PlanarSOP")
-        needed_subtrees.add("Product")
 
         # Track loaded files to avoid loading the same file multiple times
         loaded_files = set()

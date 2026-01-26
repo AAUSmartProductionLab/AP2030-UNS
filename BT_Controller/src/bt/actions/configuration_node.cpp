@@ -4,6 +4,7 @@
 BT::PortsList ConfigurationNode::providedPorts()
 {
     return {
+        BT::InputPort<std::string>("Product", "{product}", "Product AAS ID to fetch batch information from"),
         BT::details::PortWithDefault<BT::SharedQueue<std::string>>(BT::PortDirection::OUTPUT,
                                                                    "ProductIDs",
                                                                    "{ProductIDs}",
@@ -12,14 +13,14 @@ BT::PortsList ConfigurationNode::providedPorts()
 
 BT::NodeStatus ConfigurationNode::onStart()
 {
-    // Look up product AAS from blackboard
-    auto product_opt = config().blackboard->getAnyLocked("product");
-    if (!product_opt)
+    // Get product AAS ID from input port
+    auto product_input = getInput<std::string>("Product");
+    if (!product_input.has_value() || product_input.value().empty())
     {
-        std::cerr << "No product AAS mapping found in blackboard" << std::endl;
+        std::cerr << "No Product AAS ID provided" << std::endl;
         return BT::NodeStatus::FAILURE;
     }
-    std::string product_aas_id = product_opt->cast<std::string>();
+    std::string product_aas_id = product_input.value();
 
     // Fetch the Quantity from the BatchInformation submodel
     auto quantity_opt = aas_client_.fetchPropertyValue(product_aas_id, "BatchInformation", "Quantity");

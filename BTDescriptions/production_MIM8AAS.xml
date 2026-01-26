@@ -2,7 +2,7 @@
 <root BTCPP_format="4" main_tree_to_execute="Production">
   <BehaviorTree ID="Production">
     <Sequence>
-      <Configure ProductIDs="{ProductIDs}"/>
+      <Configure Product="{product}" ProductIDs="{ProductIDs}"/>
       <ReactiveSequence>
         <Parallel failure_count="-1" success_count="1">
           <SubTree ID="AsepticFilling" Xbot="{Xbot1}" ProductID="" _autoremap="true"/>

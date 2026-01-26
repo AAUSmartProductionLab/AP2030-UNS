@@ -9,6 +9,7 @@
             <input_port name="Asset" type="std::string" default="{Asset}">The asset used for execution</input_port>
         </Action>
         <Action ID="Configure">
+            <input_port name="Product" type="std::string" default="{product}">Product AAS ID to fetch batch information from</input_port>
             <output_port name="ProductIDs" type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;" default="{ProductIDs}">List of product IDs to produce</output_port>
         </Action>
         <Condition ID="Data_Condition">
