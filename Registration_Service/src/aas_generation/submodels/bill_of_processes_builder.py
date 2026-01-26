@@ -105,8 +105,12 @@ class BillOfProcessesSubmodelBuilder:
         """
         Create a process step element.
         
+        NOTE: Per AASd-120 constraint, items in a SubmodelElementList must NOT have id_short.
+        Instead, we use displayName (a valid Referable attribute) to identify the process.
+        The semanticId on the collection identifies the process type.
+        
         Args:
-            process_name: Name of the process step
+            process_name: Name of the process step (stored in displayName)
             process_config: Configuration for the process step
             
         Returns:
@@ -190,12 +194,15 @@ class BillOfProcessesSubmodelBuilder:
                 )
         
         # Create collection with semantic ID from process config
+        # AASd-120: Items in SubmodelElementList must NOT have id_short
+        # The process is identified by displayName (valid Referable attribute) and semanticId
         collection_semantic_id = None
         if semantic_id:
             collection_semantic_id = self._create_semantic_reference(semantic_id)
         
         return model.SubmodelElementCollection(
-            id_short=process_name,
+            id_short=None,
+            display_name=model.MultiLanguageNameType({"en": process_name}),
             value=elements,
             semantic_id=collection_semantic_id
         )

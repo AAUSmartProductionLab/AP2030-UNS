@@ -289,15 +289,25 @@ class PlannerService:
             
             # Get all submodels
             submodels = self.aas_client.get_submodels_from_aas(product_aas_id)
+            logger.info(f"Found {len(submodels)} submodels for product AAS")
+            for sm in submodels:
+                logger.info(f"  Submodel: {sm.id_short}")
             
-            # Find BillOfProcesses (try semantic_id patterns, then id_short)
-            bill_of_processes = self._find_submodel(
-                submodels, 
-                semantic_patterns=['BillOfProcess', 'billofprocess'],
-                id_short_patterns=['BillOfProcesses', 'billofprocesses']
-            )
-            if bill_of_processes:
-                config['BillOfProcesses'] = self._parse_bill_of_processes(bill_of_processes)
+            # Find BillOfProcesses submodel ID and use raw JSON parsing
+            # (BaSyx SDK fails to parse SubmodelElementList with idShorts due to AASd-120 constraint)
+            bill_of_processes_id = None
+            for sm in submodels:
+                if sm.id_short and sm.id_short.lower() == 'billofprocesses':
+                    bill_of_processes_id = sm.id
+                    break
+            
+            if bill_of_processes_id:
+                logger.info(f"Found BillOfProcesses submodel, fetching raw JSON...")
+                bill_of_processes_raw = self.aas_client.get_submodel_raw(bill_of_processes_id)
+                if bill_of_processes_raw:
+                    config['BillOfProcesses'] = self._parse_bill_of_processes_raw(bill_of_processes_raw)
+            else:
+                logger.warning("BillOfProcesses submodel not found!")
             
             # Find Requirements submodel
             requirements = self._find_submodel(
@@ -344,6 +354,146 @@ class PlannerService:
                     return sm
         
         return None
+    
+    def _parse_bill_of_processes_raw(self, submodel_json: Dict[str, Any]) -> Dict[str, Any]:
+        """Parse BillOfProcesses submodel from raw JSON.
+        
+        This is used instead of BaSyx SDK parsing because the SDK fails with
+        AASd-120 constraint violation when SubmodelElementList items have idShorts.
+        """
+        result = {'Processes': [], 'semantic_id': ''}
+        
+        # Get semantic ID
+        if 'semanticId' in submodel_json:
+            keys = submodel_json['semanticId'].get('keys', [])
+            if keys:
+                result['semantic_id'] = keys[0].get('value', '')
+        
+        logger.info(f"Parsing BillOfProcesses from raw JSON")
+        
+        submodel_elements = submodel_json.get('submodelElements', [])
+        logger.info(f"Raw JSON has {len(submodel_elements)} top-level elements")
+        
+        step_counter = 1
+        for element in submodel_elements:
+            model_type = element.get('modelType', '')
+            id_short = element.get('idShort', '')
+            logger.info(f"  Element: {id_short}, type: {model_type}")
+            
+            if model_type == 'SubmodelElementList':
+                # Process list of steps (this is the Processes list)
+                items = element.get('value', [])
+                logger.info(f"    SubmodelElementList with {len(items)} items")
+                for step_elem in items:
+                    if step_elem.get('modelType') == 'SubmodelElementCollection':
+                        step_info = self._parse_process_step_raw(step_elem, step_counter)
+                        if step_info:
+                            result['Processes'].append(step_info)
+                            step_counter += 1
+            elif model_type == 'SubmodelElementCollection':
+                if id_short.lower() == 'processes':
+                    # Container holding all process steps
+                    items = element.get('value', [])
+                    logger.info(f"    Found 'Processes' container with {len(items)} items")
+                    for step_elem in items:
+                        if step_elem.get('modelType') == 'SubmodelElementCollection':
+                            step_info = self._parse_process_step_raw(step_elem, step_counter)
+                            if step_info:
+                                result['Processes'].append(step_info)
+                                step_counter += 1
+                else:
+                    # Direct process step at top level
+                    step_info = self._parse_process_step_raw(element, step_counter)
+                    if step_info:
+                        result['Processes'].append(step_info)
+                        step_counter += 1
+        
+        logger.info(f"Parsed {len(result['Processes'])} processes from raw JSON")
+        return result
+    
+    def _parse_process_step_raw(self, element: Dict[str, Any], step_num: int) -> Optional[Dict[str, Any]]:
+        """Parse a single process step from raw JSON dict.
+        
+        Note: Per AASd-120, items in SubmodelElementList don't have idShort.
+        The process name is stored in displayName (a valid Referable attribute).
+        Fallback to idShort for legacy data compatibility.
+        """
+        # AASd-120 compliant: get name from displayName, fallback to idShort for legacy data
+        name = element.get('idShort', '')
+        
+        # Try to get name from displayName (multi-language, prefer 'en')
+        display_name = element.get('displayName', [])
+        if display_name:
+            # displayName is a list of {language, text} objects
+            for lang_entry in display_name:
+                if isinstance(lang_entry, dict):
+                    if lang_entry.get('language', '').startswith('en'):
+                        name = lang_entry.get('text', name)
+                        break
+            # If no English found, take the first one
+            if not name and display_name:
+                first_entry = display_name[0]
+                if isinstance(first_entry, dict):
+                    name = first_entry.get('text', '')
+        
+        step_config = {
+            'step': step_num,
+            'semantic_id': '',
+            'process_semantic_id': '',
+            'description': '',
+            'estimatedDuration': 0.0,
+            'parameters': {}
+        }
+        
+        # Get process semantic ID from the element itself
+        if 'semanticId' in element:
+            keys = element['semanticId'].get('keys', [])
+            if keys:
+                step_config['process_semantic_id'] = keys[0].get('value', '')
+        
+        # Parse child elements
+        for child in element.get('value', []):
+            model_type = child.get('modelType', '')
+            child_id = child.get('idShort', '').lower()
+            
+            if model_type == 'Property':
+                if child_id == 'step':
+                    step_config['step'] = int(child.get('value', step_num))
+                elif child_id == 'description':
+                    step_config['description'] = child.get('value', '')
+                elif child_id in ['estimatedduration', 'duration']:
+                    step_config['estimatedDuration'] = float(child.get('value', 0))
+            elif model_type == 'ReferenceElement':
+                if child_id == 'requiredcapability':
+                    ref_value = child.get('value', {})
+                    keys = ref_value.get('keys', [])
+                    if keys:
+                        step_config['semantic_id'] = keys[0].get('value', '')
+            elif model_type == 'SubmodelElementCollection':
+                if child_id == 'parameters':
+                    step_config['parameters'] = self._parse_parameters_raw(child)
+        
+        # Fallback: if no RequiredCapability found, use process semantic_id
+        if not step_config['semantic_id'] and step_config['process_semantic_id']:
+            step_config['semantic_id'] = step_config['process_semantic_id']
+        
+        # If still no name, derive from semantic ID
+        if not name and step_config['process_semantic_id']:
+            name = step_config['process_semantic_id'].split('/')[-1]
+        
+        return {name: step_config}
+    
+    def _parse_parameters_raw(self, collection: Dict[str, Any]) -> Dict[str, Any]:
+        """Parse parameters collection from raw JSON."""
+        params = {}
+        for child in collection.get('value', []):
+            if child.get('modelType') == 'Property':
+                id_short = child.get('idShort', '')
+                value = child.get('value')
+                if id_short:
+                    params[id_short] = value
+        return params
+
     def _parse_bill_of_processes(self, submodel) -> Dict[str, Any]:
         """Parse BillOfProcesses submodel into config format using BaSyx SDK.
         
@@ -359,11 +509,17 @@ class PlannerService:
                 result['semantic_id'] = key.value
                 break
         
+        logger.info(f"Parsing BillOfProcesses submodel: {submodel.id_short}")
+        logger.info(f"Submodel has {len(list(submodel.submodel_element))} top-level elements")
+        
         step_counter = 1
         for element in submodel.submodel_element:
+            logger.info(f"  Element: {element.id_short}, type: {type(element).__name__}")
             if isinstance(element, model.SubmodelElementList):
                 # Process list of steps
+                logger.info(f"    SubmodelElementList with {len(list(element.value))} items")
                 for step_elem in element.value:
+                    logger.info(f"      List item: {step_elem.id_short}, type: {type(step_elem).__name__}")
                     if isinstance(step_elem, model.SubmodelElementCollection):
                         step_info = self._parse_process_step(step_elem, step_counter)
                         if step_info:
@@ -373,7 +529,9 @@ class PlannerService:
                 # Check if this is the 'Processes' container or a direct process step
                 if element.id_short.lower() == 'processes':
                     # This is the container holding all process steps
+                    logger.info(f"    Found 'Processes' container with {len(list(element.value))} items")
                     for step_elem in element.value:
+                        logger.info(f"      Item: {step_elem.id_short}, type: {type(step_elem).__name__}")
                         if isinstance(step_elem, model.SubmodelElementCollection):
                             step_info = self._parse_process_step(step_elem, step_counter)
                             if step_info:
@@ -386,6 +544,7 @@ class PlannerService:
                         result['Processes'].append(step_info)
                         step_counter += 1
         
+        logger.info(f"Parsed {len(result['Processes'])} processes")
         return result
     
     def _parse_process_step(self, collection, step_num: int) -> Optional[Dict[str, Any]]:

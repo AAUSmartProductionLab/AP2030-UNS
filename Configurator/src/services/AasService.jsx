@@ -1763,7 +1763,12 @@ class AasService {
 
   /**
    * Create a Process SMC with semantic IDs and assessment criteria
-   * @param {string} name - Process name (idShort)
+   * 
+   * NOTE: Per AASd-120 constraint, items in a SubmodelElementList must NOT have idShort.
+   * Instead, we use displayName (a valid Referable attribute) to identify the process.
+   * The semanticId on the collection identifies the process type.
+   * 
+   * @param {string} name - Process name (stored in displayName, NOT as idShort)
    * @param {string} processSemanticId - Semantic ID for the abstract process type
    * @param {string} capabilitySemanticId - Semantic ID for the required capability
    * @param {number} duration - Estimated duration in seconds
@@ -1817,9 +1822,11 @@ class AasService {
       });
     }
 
+    // AASd-120: Items in SubmodelElementList must NOT have idShort
+    // The process is identified by displayName (valid Referable attribute) and semanticId
     return {
       modelType: 'SubmodelElementCollection',
-      idShort: name,
+      displayName: [{ language: 'en', text: name }],
       semanticId: {
         type: 'ExternalReference',
         keys: [{ type: 'GlobalReference', value: processSemanticId }]
