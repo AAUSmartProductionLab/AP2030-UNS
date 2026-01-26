@@ -12,8 +12,8 @@ PackMLStateMachine *StopperingModule::stateMachine = nullptr;
 
 const String baseTopic = "NN/Nybrovej/InnoLab";
 const String moduleName = "Stoppering";
-const String StopperingModule::TOPIC_SUB_STOPPERING_CMD = "/CMD/Stopper";
-const String StopperingModule::TOPIC_PUB_STOPPERING_DATA = "/DATA/Stopper";
+const String StopperingModule::TOPIC_SUB_STOPPERING_CMD = "/CMD/Stoppering";
+const String StopperingModule::TOPIC_PUB_STOPPERING_DATA = "/DATA/Stoppering";
 
 void StopperingModule::setup(ESP32Module *moduleInstance)
 {
@@ -21,9 +21,18 @@ void StopperingModule::setup(ESP32Module *moduleInstance)
 
     // Initialize ESP32 (WiFi, MQTT, Time)
     esp32Module->setup(baseTopic, moduleName);
+    
+    // Wait for Serial to be ready
+    delay(500);
+    Serial.println("\n=== Starting Stoppering Module Setup ===");
+    Serial.println("Initializing hardware...");
+    Serial.flush();  // Ensure message is sent
 
     // Initialize stoppering hardware
     initHardware();
+    
+    Serial.println("Hardware initialization complete");
+    Serial.flush();
 
     // Create PackML state machine with MQTT client from ESP32Module
     stateMachine = new PackMLStateMachine(baseTopic, moduleName, &(esp32Module->getMqttClient()));
@@ -94,6 +103,7 @@ void StopperingModule::initHardware()
 void StopperingModule::initServo()
 {
     Serial.println("Initializing servo to home position");
+    Serial.flush();
 
     // Move to intermediate position
     servo.write(90);
@@ -102,6 +112,11 @@ void StopperingModule::initServo()
     // Move to home position (outer)
     servo.write(120);
     delay(SERVO_MOVE_TIME);
+    
+    // Keep servo attached during initialization to avoid PWM conflicts
+    // It will be detached after first use in runServo()
+    Serial.println("Servo initialized to home position");
+    Serial.flush();
 }
 
 void StopperingModule::initLinearActuator()
@@ -188,14 +203,27 @@ void StopperingModule::runLinearActuator()
 void StopperingModule::runServo()
 {
     Serial.println("Moving servo to position stopper");
+    Serial.flush();
+    
+    // Re-attach servo if needed (in case it was detached)
+    if (!servo.attached())
+    {
+        servo.attach(SERVO_PIN);
+        delay(100);
+    }
 
     // Move from outer position to inner position
-    servo.write(0);
+    servo.write(1);
     delay(SERVO_MOVE_TIME);
 
     // Return to home position (outer)
-    servo.write(120);
+    servo.write(121);
     delay(SERVO_MOVE_TIME);
+    
+    // Detach servo to prevent vibration
+    servo.detach();
+    Serial.println("Servo cycle complete, servo detached");
+    Serial.flush();
 }
 
 bool StopperingModule::moveDCDown()
@@ -255,7 +283,7 @@ bool StopperingModule::waitForButton(int buttonPin, unsigned long timeoutMs)
         {
             return false; // Timeout
         }
-        delay(5); // Sample the endswitch at 200Hz
+        //delay(5); // Sample the endswitch at 200Hz
     }
 
     return true; // Button pressed

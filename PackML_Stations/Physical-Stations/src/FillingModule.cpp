@@ -173,7 +173,7 @@ bool FillingModule::waitForButton(int buttonPin, unsigned long timeoutMs)
             Serial.println("  Button wait TIMEOUT");
             return false; // Timeout
         }
-        delay(5); // Sample the endswitch at 200Hz
+        //delay(5); // Sample the endswitch at 200Hz
     }
 
     Serial.print("  Button pressed after ");

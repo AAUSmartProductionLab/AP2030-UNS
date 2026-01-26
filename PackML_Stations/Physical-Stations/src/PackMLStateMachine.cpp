@@ -20,6 +20,18 @@ void PackMLStateMachine::subscribeToTopics()
         return; // Already subscribed
     }
 
+    // Check if MQTT is connected
+    if (!client->connected())
+    {
+        Serial.println("⚠️  WARNING: MQTT client is NOT connected! Subscriptions will fail.");
+        Serial.flush();
+    }
+    else
+    {
+        Serial.println("✓ MQTT client is connected, proceeding with subscriptions");
+        Serial.flush();
+    }
+
     Serial.println("📡 Subscribing to MQTT topics...");
 
     // Subscribe to occupy and release topics

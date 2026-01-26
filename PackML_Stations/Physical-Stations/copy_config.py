@@ -78,9 +78,10 @@ else:
 # Determine which YAML config file to use based on the environment
 # These files are located in AASDescriptions/Resource/configs/
 config_files = {
-    "filling": "aauFillingLine.yaml",
+    "filling": "imaDispensing.yaml",
     "filling_wrover": "aauFillingLine.yaml",
-    "stoppering": "syntegonStoppering.yaml"
+    "stoppering": "syntegonStoppering.yaml",
+    "dispensing": "imaDispensing.yaml"
 }
 
 # Source config file path (from AASDescriptions/Resource/configs/)
@@ -95,13 +96,47 @@ target_config = os.path.join(data_dir, "config.yaml")
 # Create data directory if it doesn't exist
 os.makedirs(data_dir, exist_ok=True)
 
-# Copy the config file
+# Copy the config file with retry logic for OneDrive sync issues
 if os.path.exists(source_config):
-    shutil.copy2(source_config, target_config)
-    print(
-        f"✓ Copied YAML config for '{build_env}': {config_files.get(build_env)} → config.yaml")
-    file_size = os.path.getsize(target_config)
-    print(f"  Config size: {file_size:,} bytes ({file_size/1024:.1f} KB)")
+    import time
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            # Remove existing file first if it exists
+            if os.path.exists(target_config):
+                try:
+                    os.remove(target_config)
+                except PermissionError:
+                    # File is locked, wait and retry
+                    if attempt < max_retries - 1:
+                        print(
+                            f"  File locked, waiting... (attempt {attempt + 1}/{max_retries})")
+                        time.sleep(0.5)
+                        continue
+                    else:
+                        raise
+
+            # Copy the file
+            shutil.copy2(source_config, target_config)
+            print(
+                f"✓ Copied YAML config for '{build_env}': {config_files.get(build_env)} → config.yaml")
+            file_size = os.path.getsize(target_config)
+            print(
+                f"  Config size: {file_size:,} bytes ({file_size/1024:.1f} KB)")
+            break  # Success, exit retry loop
+
+        except PermissionError as e:
+            if attempt < max_retries - 1:
+                print(
+                    f"  Permission error, retrying... (attempt {attempt + 1}/{max_retries})")
+                time.sleep(0.5)
+            else:
+                print(
+                    f"✗ ERROR: Could not copy config file after {max_retries} attempts")
+                print(f"  Error: {e}")
+                print(
+                    "  Tip: Close any programs that might have the file open (OneDrive, editors, etc.)")
+                raise
 else:
     print(f"⚠ WARNING: YAML config file not found at {source_config}")
     print(
