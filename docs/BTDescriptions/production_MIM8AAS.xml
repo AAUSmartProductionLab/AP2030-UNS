@@ -4,7 +4,7 @@
     <Sequence>
       <Configure Product="{product}" ProductIDs="{ProductIDs}"/>
       <ReactiveSequence>
-        <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="PackMLState" Asset="https://smartproductionlab.aau.dk/aas/planarTableAAS"/>
+        <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="StationState" Asset="https://smartproductionlab.aau.dk/aas/planarTableAAS"/>
         <Parallel failure_count="-1" success_count="1">
           <SubTree ID="AsepticFilling" Xbot="{Xbot1}" ProductID="" _autoremap="true"/>
           <SubTree ID="AsepticFilling" Xbot="{Xbot2}" ProductID="" _autoremap="true"/>
@@ -18,7 +18,7 @@
       <KeepRunningUntilEmpty if_empty="SUCCESS" Queue="{ProductIDs}">
         <ReactiveSequence>
           <ReactiveFallback>
-            <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="PackMLState" Asset="{Xbot}"/>
+            <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="StationState" Asset="{Xbot}"/>
             <Sleep msec="10000"/>
           </ReactiveFallback>
           <Fallback>
@@ -39,7 +39,7 @@
     <Occupy Uuid="{ProductID}" Assets="{Assets}" _skipIf="scrap == true">
       <ReactiveSequence>
         <ReactiveFallback>
-          <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="PackMLState" Asset="{SelectedAsset}"/>
+          <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="StationState" Asset="{SelectedAsset}"/>
           <Sleep msec="10000"/>
         </ReactiveFallback>
         <Sequence>
@@ -53,7 +53,7 @@
     <Occupy Uuid="{ProductID}" Assets="{Assets}">
       <ReactiveSequence>
         <ReactiveFallback>
-          <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="PackMLState" Asset="{SelectedAsset}"/>
+          <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="StationState" Asset="{SelectedAsset}"/>
           <Sleep msec="10000"/>
         </ReactiveFallback>
         <Sequence>
@@ -67,7 +67,7 @@
     <Occupy Uuid="{ProductID}" Assets="{Assets}" _skipIf="scrap == true">
       <ReactiveSequence>
         <ReactiveFallback>
-          <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="PackMLState" Asset="{SelectedAsset}"/>
+          <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="StationState" Asset="{SelectedAsset}"/>
           <Sleep msec="10000"/>
         </ReactiveFallback>
         <Sequence>
@@ -83,7 +83,7 @@
       <Occupy Uuid="{ProductID}" Assets="{Assets}" _skipIf="scrap == true">
         <ReactiveSequence>
           <ReactiveFallback>
-            <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="PackMLState" Asset="{SelectedAsset}"/>
+            <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="StationState" Asset="{SelectedAsset}"/>
             <Sleep msec="10000"/>
           </ReactiveFallback>
           <Sequence>
@@ -98,7 +98,7 @@
     <Occupy Uuid="{ProductID}" Assets="{Assets}" _skipIf="scrap == true">
       <ReactiveSequence>
         <ReactiveFallback>
-          <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="PackMLState" Asset="{SelectedAsset}"/>
+          <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="StationState" Asset="{SelectedAsset}"/>
           <Sleep msec="10000"/>
         </ReactiveFallback>
         <Sequence>
@@ -112,7 +112,7 @@
     <Occupy Uuid="{ProductID}" Assets="{Assets}" _skipIf="scrap == true">
       <ReactiveSequence>
         <ReactiveFallback>
-          <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="PackMLState" Asset="{SelectedAsset}"/>
+          <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="StationState" Asset="{SelectedAsset}"/>
           <Sleep msec="10000"/>
         </ReactiveFallback>
         <Sequence>
