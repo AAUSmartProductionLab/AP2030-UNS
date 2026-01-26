@@ -1,10 +1,10 @@
 #include "bt/actions/configuration_node.h"
 #include "utils.h"
-#include "mqtt/node_message_distributor.h"
 
 BT::PortsList ConfigurationNode::providedPorts()
 {
     return {
+        BT::InputPort<std::string>("Product", "{product}", "Product AAS ID to fetch batch information from"),
         BT::details::PortWithDefault<BT::SharedQueue<std::string>>(BT::PortDirection::OUTPUT,
                                                                    "ProductIDs",
                                                                    "{ProductIDs}",
@@ -13,71 +13,60 @@ BT::PortsList ConfigurationNode::providedPorts()
 
 BT::NodeStatus ConfigurationNode::onStart()
 {
-    if (!shared_queue->empty())
+    // Get product AAS ID from input port
+    auto product_input = getInput<std::string>("Product");
+    if (!product_input.has_value() || product_input.value().empty())
     {
-        config().blackboard->set("ProductIDs", shared_queue);
-
-        return BT::NodeStatus::SUCCESS;
+        std::cerr << "No Product AAS ID provided" << std::endl;
+        return BT::NodeStatus::FAILURE;
     }
-    return BT::NodeStatus::RUNNING;
-}
+    std::string product_aas_id = product_input.value();
 
-void ConfigurationNode::callback(const std::string &topic_key, const json &msg, mqtt::properties props)
-{
-    // Use mutex to protect shared state
+    // Fetch the Quantity from the BatchInformation submodel
+    auto quantity_opt = aas_client_.fetchPropertyValue(product_aas_id, "BatchInformation", "Quantity");
+    if (!quantity_opt.has_value())
     {
-        std::lock_guard<std::mutex> lock(mutex_);
-
-        if (msg.contains("Units"))
-        {
-            // Process the message and update
-            int batchSize = msg["Units"];
-            if (batchSize > 0)
-            {
-                for (int i = 0; i < batchSize; ++i)
-                {
-                    std::string id = mqtt_utils::generate_uuid();
-                    shared_queue->push_back(id);
-                }
-            }
-        }
-        if (status() == BT::NodeStatus::RUNNING && !shared_queue->empty())
-        {
-            config().blackboard->set("ProductIDs", shared_queue);
-
-            setStatus(BT::NodeStatus::SUCCESS);
-        }
-        emitWakeUpSignal();
+        std::cerr << "Failed to fetch Quantity from BatchInformation submodel" << std::endl;
+        return BT::NodeStatus::FAILURE;
     }
-}
 
-void ConfigurationNode::initializeTopicsFromAAS()
-{
+    // Parse the quantity value - it comes as a string in the AAS
+    int batchSize = 0;
     try
     {
-
-        // Look up product from blackboard
-        auto product_opt = config().blackboard->getAnyLocked("product");
-        if (!product_opt)
+        const auto &quantity_value = quantity_opt.value();
+        if (quantity_value.is_string())
         {
-            std::cerr << "No equipment mapping found for: product" << std::endl;
-            return;
+            batchSize = std::stoi(quantity_value.get<std::string>());
         }
-        std::string asset_id = product_opt->cast<std::string>();
-
-        // Create Topic objects
-        auto response_opt = aas_client_.fetchInterface(asset_id, "config", "output");
-
-        if (!response_opt.has_value())
+        else if (quantity_value.is_number())
         {
-            std::cerr << "Failed to fetch interface from AAS for node: " << this->name() << std::endl;
-            return;
+            batchSize = quantity_value.get<int>();
         }
-
-        MqttSubBase::setTopic("output", response_opt.value());
     }
     catch (const std::exception &e)
     {
-        std::cerr << "Exception initializing topics from AAS: " << e.what() << std::endl;
+        std::cerr << "Failed to parse Quantity value: " << e.what() << std::endl;
+        return BT::NodeStatus::FAILURE;
     }
+
+    if (batchSize <= 0)
+    {
+        std::cerr << "Invalid batch size: " << batchSize << std::endl;
+        return BT::NodeStatus::FAILURE;
+    }
+
+    std::cout << "ConfigurationNode: Creating queue with " << batchSize << " product IDs" << std::endl;
+
+    // Generate UUIDs for each product in the batch
+    for (int i = 0; i < batchSize; ++i)
+    {
+        std::string id = mqtt_utils::generate_uuid();
+        shared_queue->push_back(id);
+    }
+
+    // Store the queue in the blackboard
+    config().blackboard->set("ProductIDs", shared_queue);
+
+    return BT::NodeStatus::SUCCESS;
 }

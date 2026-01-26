@@ -218,7 +218,7 @@ def test_aas_generation(config_path: str, output_dir: str) -> dict:
     try:
         generator = AASGenerator(
             config_path=config_path,
-            delegation_base_url="http://operation-delegation:8087"
+            delegation_base_url="http://registration-service:8087"
         )
 
         # Load config to get system_id

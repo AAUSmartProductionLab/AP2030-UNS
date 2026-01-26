@@ -31,6 +31,12 @@ std::string Occupy::getReleaseResponseKey(const std::string& asset_id) const
 
 void Occupy::initializeTopicsFromAAS()
 {
+    // Already initialized, skip
+    if (topics_initialized_)
+    {
+        return;
+    }
+
     try
     {
         // Get the list of assets from input
@@ -45,20 +51,22 @@ void Occupy::initializeTopicsFromAAS()
         std::cout << "Node '" << this->name() << "' initializing for " << asset_ids_.size() << " assets" << std::endl;
 
         // Initialize topics for each asset
+        bool all_initialized = true;
         for (const auto& asset_id : asset_ids_)
         {
             std::cout << "  - Fetching interfaces for asset: " << asset_id << std::endl;
 
-            auto occupy_req = aas_client_.fetchInterface(asset_id, "occupy", "input");
-            auto occupy_resp = aas_client_.fetchInterface(asset_id, "occupy", "output");
-            auto release_req = aas_client_.fetchInterface(asset_id, "release", "input");
-            auto release_resp = aas_client_.fetchInterface(asset_id, "release", "output");
+            auto occupy_req = aas_client_.fetchInterface(asset_id, "Occupy", "input");
+            auto occupy_resp = aas_client_.fetchInterface(asset_id, "Occupy", "output");
+            auto release_req = aas_client_.fetchInterface(asset_id, "Release", "input");
+            auto release_resp = aas_client_.fetchInterface(asset_id, "Release", "output");
 
             if (!occupy_req.has_value() || !occupy_resp.has_value() ||
                 !release_req.has_value() || !release_resp.has_value())
             {
                 std::cerr << "Failed to fetch interfaces from AAS for asset: " << asset_id 
                           << " in node: " << this->name() << std::endl;
+                all_initialized = false;
                 continue;
             }
 
@@ -67,6 +75,12 @@ void Occupy::initializeTopicsFromAAS()
             MqttPubBase::setTopic(getReleaseRequestKey(asset_id), release_req.value());
             MqttSubBase::setTopic(getOccupyResponseKey(asset_id), occupy_resp.value());
             MqttSubBase::setTopic(getReleaseResponseKey(asset_id), release_resp.value());
+        }
+        
+        // Only mark initialized if we set up at least one asset
+        if (!asset_ids_.empty() && all_initialized)
+        {
+            topics_initialized_ = true;
         }
     }
     catch (const std::exception &e)
@@ -77,6 +91,15 @@ void Occupy::initializeTopicsFromAAS()
 
 BT::NodeStatus Occupy::tick()
 {
+    // Ensure lazy initialization is done
+    if (!ensureInitialized())
+    {
+        auto assets = getInput<std::vector<std::string>>("Assets");
+        std::cerr << "Node '" << this->name() << "' FAILED - could not initialize. "
+                  << "Assets count=" << (assets.has_value() ? std::to_string(assets.value().size()) : "<not set>") << std::endl;
+        return BT::NodeStatus::FAILURE;
+    }
+
     if (status() == BT::NodeStatus::IDLE)
     {
         current_phase_ = PackML::State::STARTING;
@@ -321,9 +344,11 @@ BT::PortsList Occupy::providedPorts()
         BT::InputPort<std::vector<std::string>>(
             "Assets",
             "List of asset IDs to attempt occupation on"),
-        BT::OutputPort<std::string>(
+        BT::details::PortWithDefault<std::string>(
+            BT::PortDirection::OUTPUT,
             "SelectedAsset",
-            "The asset ID that was successfully occupied"),
+            "{SelectedAsset}",
+            "The Asset that has accepted our request"),
         BT::details::PortWithDefault<std::string>(
             BT::PortDirection::INOUT,
             "Uuid",

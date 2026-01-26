@@ -1,6 +1,6 @@
 imaLoadingSystemAAS:
     idShort: imaLoadingSystemAAS
-    id: 'https://smartproductionlab.aau.dk/aas/imaLoadingSystem'
+    id: 'https://smartproductionlab.aau.dk/aas/imaLoadingSystemAAS'
     globalAssetId: 'https://smartproductionlab.aau.dk/assets/ZDNlYmVhZjItZTAyMC00NWMwLTg5NjEtODRiNTFkOWE0NzVl'
     derivedFrom: 'https://smartproductionlab.aau.dk/aas/templates/resource'
     assetType: 'https://smartproductionlab.aau.dk/Resource/CPPM/LoadingSystem/imaLoadingSystem'
@@ -31,6 +31,7 @@ imaLoadingSystemAAS:
                                 contentType: 'application/json'
                                 href: '/DATA/Loading'
                                 mqv_controlPacket: 'publish'
+                                mqv_retain: 'false'
                     Halt:
                         key: 'Halt'
                         title: 'Halt'
@@ -60,6 +61,7 @@ imaLoadingSystemAAS:
                                 contentType: 'application/json'
                                 href: '/DATA/Occupy'
                                 mqv_controlPacket: 'publish'
+                                mqv_retain: 'false'
                     Release:
                         key: 'Release'
                         title: 'Release'
@@ -77,6 +79,7 @@ imaLoadingSystemAAS:
                                 contentType: 'application/json'
                                 href: '/DATA/Release'
                                 mqv_controlPacket: 'publish'
+                                mqv_retain: 'false'
                 properties:
                     StationState:
                         key: 'StationState'
@@ -85,7 +88,7 @@ imaLoadingSystemAAS:
                         forms:
                             contentType: 'application/json'
                             href: '/DATA/State'
-                            mqv_retain: 'false'
+                            mqv_retain: 'true'
                             mqv_controlPacket: publish
                             mqv_qos: '0'
 
@@ -104,7 +107,7 @@ imaLoadingSystemAAS:
         Name: 'BillOfMaterials'
         Archetype: 'OneUp'
         IsPartOf:
-            aauFillingLine:
+            aauFillingLineAAS:
                 globalAssetId: 'https://smartproductionlab.aau.dk/assets/MWQ2ODY5ZDEtZTQ3Yy00NWU4LTlmYTAtNTI3YjVlMDk4MWFi'
     
     Capabilities:

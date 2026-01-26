@@ -2,8 +2,17 @@
 #include "utils.h"
 #include "mqtt/node_message_distributor.h"
 
+// Filling line AAS ID - used to look up station positions from HierarchicalStructures
+static const std::string FILLING_LINE_AAS_ID = "https://smartproductionlab.aau.dk/aas/aauFillingLineAAS";
+
 void MoveToPosition::initializeTopicsFromAAS()
 {
+    // Already initialized, skip
+    if (topics_initialized_)
+    {
+        return;
+    }
+
     try
     {
         auto asset_input = getInput<std::string>("Asset");
@@ -30,6 +39,7 @@ void MoveToPosition::initializeTopicsFromAAS()
         MqttPubBase::setTopic("input", request_opt.value());
         MqttPubBase::setTopic("halt", halt_opt.value());
         MqttSubBase::setTopic("output", response_opt.value());
+        topics_initialized_ = true;
     }
     catch (const std::exception &e)
     {
@@ -77,12 +87,35 @@ nlohmann::json MoveToPosition::createMessage()
     nlohmann::json message;
     if (TargetPosition.has_value() && Uuid.has_value())
     {
-        // Use the target position directly as the station ID
-        // The blackboard should already contain station names mapped to their AAS IDs
-        std::string stationId = TargetPosition.value();
+        // TargetPosition now contains the station's AAS ID (e.g., https://...imaDispensingSystemAAS)
+        // We need to look up the actual x, y, yaw position from the filling line's HierarchicalStructures
+        std::string station_aas_id = TargetPosition.value();
         current_uuid_ = Uuid.value();
-        message["TargetPosition"] = stationId;
-        message["Uuid"] = current_uuid_;
+        
+        // Fetch position from the filling line's HierarchicalStructures
+        auto position_opt = aas_client_.fetchStationPosition(station_aas_id, FILLING_LINE_AAS_ID);
+        
+        if (position_opt.has_value())
+        {
+            const auto& pos = position_opt.value();
+            float x = pos.value("x", 0.0f);
+            float y = pos.value("y", 0.0f);
+            float theta = pos.value("theta", 0.0f);
+            
+            // Build message according to schema: Position: [x, y, theta]
+            message["Position"] = nlohmann::json::array({x, y, theta});
+            message["Uuid"] = current_uuid_;
+            
+            std::cout << "MoveToPosition: Moving to station " << station_aas_id 
+                      << " at position [" << x << ", " << y << ", " << theta << "]" << std::endl;
+        }
+        else
+        {
+            std::cerr << "MoveToPosition: Failed to fetch position for station: " << station_aas_id << std::endl;
+            // Return empty message to indicate failure
+            return nlohmann::json();
+        }
+        
         return message;
     }
 

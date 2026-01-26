@@ -1,6 +1,6 @@
-productionPlanner:
-    idShort: productionPlanner
-    id: 'https://smartproductionlab.aau.dk/aas/productionPlanner'
+productionPlannerAAS:
+    idShort: productionPlannerAAS
+    id: 'https://smartproductionlab.aau.dk/aas/productionPlannerAAS'
     globalAssetId: 'https://smartproductionlab.aau.dk/assets/YWY0MjA2MjYtMzg2Ni00M2NjLTkyN2ItM2VjNDg4MzNlMTJm'
     derivedFrom: 'https://smartproductionlab.aau.dk/aas/templates/resource'
     assetType: 'https://smartproductionlab.aau.dk/Resource/ProductionPlanner'
@@ -31,6 +31,7 @@ productionPlanner:
                                 contentType: 'application/json'
                                 href: '/DATA/Plan'
                                 mqv_controlPacket: 'publish'
+                                mqv_retain: 'false'
                 properties:
                     StationState:
                         key: 'StationState'
@@ -39,7 +40,7 @@ productionPlanner:
                         forms:
                             contentType: 'application/json'
                             href: '/DATA/State'
-                            mqv_retain: 'false'
+                            mqv_retain: 'true'
                             mqv_controlPacket: publish
                             mqv_qos: '0'
     Variables:

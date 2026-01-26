@@ -98,7 +98,6 @@ namespace bt_utils
                             int &groot2_port,
                             std::string &bt_description_path,
                             std::string &bt_nodes_path,
-                            std::vector<std::string> &asset_ids_to_resolve,
                             std::string &registration_config_path,
                             std::string &registration_topic_pattern)
     {
@@ -151,18 +150,6 @@ namespace bt_utils
                 if (aas["registry_url"])
                 {
                     aasRegistryUrl = expandEnvVars(aas["registry_url"].as<std::string>());
-                }
-
-                if (aas["asset_ids"])
-                {
-                    auto asset_ids_node = aas["asset_ids"];
-                    if (asset_ids_node.IsSequence())
-                    {
-                        for (const auto &id : asset_ids_node)
-                        {
-                            asset_ids_to_resolve.push_back(expandEnvVars(id.as<std::string>()));
-                        }
-                    }
                 }
             }
 
@@ -220,11 +207,6 @@ namespace bt_utils
             std::cout << "  UNS Topic Prefix: " << unsTopicPrefix << std::endl;
             std::cout << "  AAS Server: " << aasServerUri << std::endl;
             std::cout << "  AAS Registry: " << aasRegistryUrl << std::endl;
-            std::cout << "  Asset IDs to resolve: " << asset_ids_to_resolve.size() << " asset(s)" << std::endl;
-            for (const auto &asset_id : asset_ids_to_resolve)
-            {
-                std::cout << "    - " << asset_id << std::endl;
-            }
             std::cout << "  Groot2 Port: " << groot2_port << std::endl;
             if (!registration_config_path.empty())
             {
@@ -672,5 +654,54 @@ namespace schema_utils
                 }
             }
         }
+    }
+
+    std::string fetchContentFromUrl(const std::string &url)
+    {
+        std::cout << "Fetching content from: " << url << std::endl;
+
+        CURL *curl = curl_easy_init();
+        if (!curl)
+        {
+            std::cerr << "Failed to initialize CURL for content fetch" << std::endl;
+            return "";
+        }
+
+        std::string content_buffer;
+        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &content_buffer);
+        curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30L);
+        curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+
+        CURLcode res = curl_easy_perform(curl);
+        long response_code;
+        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response_code);
+        curl_easy_cleanup(curl);
+
+        if (res != CURLE_OK)
+        {
+            std::cerr << "Failed to fetch content from URL: " << url 
+                      << ", CURL error: " << curl_easy_strerror(res) << std::endl;
+            return "";
+        }
+
+        if (response_code != 200)
+        {
+            std::cerr << "Failed to fetch content from URL: " << url 
+                      << ", HTTP status: " << response_code << std::endl;
+            return "";
+        }
+
+        if (content_buffer.empty())
+        {
+            std::cerr << "Empty response from URL: " << url << std::endl;
+            return "";
+        }
+
+        std::cout << "Successfully fetched content from: " << url 
+                  << " (" << content_buffer.size() << " bytes)" << std::endl;
+
+        return content_buffer;
     }
 }

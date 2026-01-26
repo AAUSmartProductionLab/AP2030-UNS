@@ -7,6 +7,7 @@
 #include "mqtt/mqtt_client.h"
 #include "mqtt/node_message_distributor.h"
 #include "aas/aas_client.h"
+#include "aas/aas_interface_cache.h"
 
 #include <behaviortree_cpp/bt_factory.h>
 #include <behaviortree_cpp/basic_types.h>
@@ -38,10 +39,15 @@ struct BtControllerParameters
     std::string suspend_topic;
     std::string unsuspend_topic;
     std::string reset_topic;
+    
+    // Response topics for command acknowledgments
+    std::string start_response_topic;
+    std::string stop_response_topic;
+    std::string suspend_response_topic;
+    std::string unsuspend_response_topic;
+    std::string reset_response_topic;
+    
     mqtt_utils::Topic state_publication_config;
-
-    // AAS Configuration
-    std::vector<std::string> asset_ids_to_resolve;
 
     // Registration Service Configuration
     std::string registration_config_path;      // Path to orchestrator's AAS description YAML
@@ -66,6 +72,7 @@ private:
     std::function<void(const std::string &, const nlohmann::json &, mqtt::properties)> main_mqtt_message_handler_;
 
     std::unique_ptr<AASClient> aas_client_;
+    std::unique_ptr<AASInterfaceCache> aas_interface_cache_;
     std::unique_ptr<BT::BehaviorTreeFactory> bt_factory_;
     BT::Tree bt_tree_;
     std::unique_ptr<BT::Groot2Publisher> bt_publisher_;
@@ -77,6 +84,18 @@ private:
     std::atomic<bool> shutdown_flag_;
     std::atomic<bool> sigint_received_;
     std::atomic<bool> nodes_registered_;
+
+    // Process AAS ID received from Start command
+    std::string process_aas_id_;
+    std::mutex process_aas_id_mutex_;
+
+    // Pending command UUIDs for responses
+    std::string pending_start_uuid_;
+    std::string pending_stop_uuid_;
+    std::string pending_suspend_uuid_;
+    std::string pending_unsuspend_uuid_;
+    std::string pending_reset_uuid_;
+    std::mutex pending_command_mutex_;
 
     PackML::State current_packml_state_;
     BT::NodeStatus current_bt_tick_status_;
@@ -93,8 +112,10 @@ private:
 
     void setStateAndPublish(PackML::State new_packml_state, std::optional<BT::NodeStatus> new_bt_tick_status_opt = std::nullopt);
     void publishCurrentState();
+    void publishCommandResponse(const std::string& response_topic, const std::string& uuid, bool success);
 
     void processBehaviorTreeStart();
+    void processStartingState();
     void processBehaviorTreeUnsuspend();
     void processResettingState();
     void manageRunningBehaviorTree();
@@ -103,12 +124,15 @@ private:
     bool registerNodesWithAASConfig();
     void unregisterAllNodes();
 
-    // Methods for AAS hierarchical structure fetching
+    // Methods for AAS structure fetching from process AAS
     bool fetchAndBuildEquipmentMapping(BT::Blackboard::Ptr blackboard = nullptr);
-    void recursivelyResolveHierarchy(const std::string &asset_id, const std::string &asset_name,
-                                     std::set<std::string> &visited_assets);
-    std::string getArchetype(const nlohmann::json &hierarchy_submodel);
     void populateBlackboard(BT::Blackboard::Ptr blackboard);
+
+    // Pre-fetch asset interfaces (for fast node initialization)
+    bool prefetchAssetInterfaces();
+
+    // Subscribe to topics for active nodes (triggers retained message delivery)
+    bool subscribeToTopics();
 
     // Methods for AAS registration
     bool publishConfigToRegistrationService();

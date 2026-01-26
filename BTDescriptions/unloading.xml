@@ -2,7 +2,7 @@
 <root BTCPP_format="4">
   <BehaviorTree ID="Unloading">
     <Occupy Uuid="{ProductID}"
-            Asset="{UnloadingSystem}"
+            Assets="{Assets}"
             _skipIf="scrap == true">
       <ReactiveSequence>
         <ReactiveFallback>
@@ -10,17 +10,17 @@
                           Field="State"
                           expected_value="operational"
                           Property="PackMLState"
-                          Asset="{UnloadingSystem}"/>
+                          Asset="{SelectedAsset}"/>
           <Sleep msec="10000"/>
         </ReactiveFallback>
         <Sequence>
           <moveToPosition Uuid="{ProductID}"
-                          TargetPosition="{Station}"
+                          TargetPosition="{SelectedAsset}"
                           Asset="{Xbot}"/>
           <Command_Execution Parameters="&apos;{}&apos;"
                              Uuid="{ProductID}"
-                             Operation="unload"
-                             Asset="{UnloadingSystem}"/>
+                             Operation="Unloading"
+                             Asset="{SelectedAsset}"/>
         </Sequence>
       </ReactiveSequence>
     </Occupy>

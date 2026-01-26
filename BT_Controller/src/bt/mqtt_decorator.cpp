@@ -4,6 +4,7 @@
 #include <nlohmann/json.hpp>
 #include <string>
 #include "mqtt/mqtt_pub_base.h"
+#include "aas/aas_interface_cache.h"
 #include <fmt/chrono.h>
 #include <chrono>
 #include <utils.h>
@@ -25,7 +26,8 @@ void MqttDecorator::initialize()
     // Call the virtual function - safe because construction is complete
     initializeTopicsFromAAS();
 
-    if (MqttSubBase::node_message_distributor_)
+    // Only register if we have topics initialized
+    if (topics_initialized_ && MqttSubBase::node_message_distributor_)
     {
         MqttSubBase::node_message_distributor_->registerDerivedInstance(this);
     }
@@ -41,6 +43,12 @@ MqttDecorator::~MqttDecorator()
 
 void MqttDecorator::initializeTopicsFromAAS()
 {
+    // Already initialized, skip
+    if (topics_initialized_)
+    {
+        return;
+    }
+
     try
     {
         auto asset_input = getInput<std::string>("Asset");
@@ -53,7 +61,24 @@ void MqttDecorator::initializeTopicsFromAAS()
         std::string asset_id = asset_input.value();
         std::cout << "Node '" << this->name() << "' initializing for Asset: " << asset_id << std::endl;
 
-        // Create Topic objects
+        // First, try to use the cached interfaces (fast path)
+        auto cache = MqttSubBase::getAASInterfaceCache();
+        if (cache)
+        {
+            auto cached_input = cache->getInterface(asset_id, this->name(), "input");
+            auto cached_output = cache->getInterface(asset_id, this->name(), "output");
+            if (cached_input.has_value() && cached_output.has_value())
+            {
+                std::cout << "Node '" << this->name() << "' using cached interfaces" << std::endl;
+                MqttPubBase::setTopic("input", cached_input.value());
+                MqttSubBase::setTopic("output", cached_output.value());
+                topics_initialized_ = true;
+                return;
+            }
+        }
+
+        // Fall back to direct AAS query (slow path)
+        std::cout << "Node '" << this->name() << "' falling back to direct AAS query" << std::endl;
         auto request_opt = aas_client_.fetchInterface(asset_id, this->name(), "input");
         auto response_opt = aas_client_.fetchInterface(asset_id, this->name(), "output");
 
@@ -65,11 +90,45 @@ void MqttDecorator::initializeTopicsFromAAS()
 
         MqttPubBase::setTopic("input", request_opt.value());
         MqttSubBase::setTopic("output", response_opt.value());
+        topics_initialized_ = true;
     }
     catch (const std::exception &e)
     {
         std::cerr << "Exception initializing topics from AAS: " << e.what() << std::endl;
     }
+}
+
+bool MqttDecorator::ensureInitialized()
+{
+    if (topics_initialized_)
+    {
+        return true;
+    }
+
+    // Try lazy initialization
+    std::cout << "Node '" << this->name() << "' attempting lazy initialization..." << std::endl;
+    initializeTopicsFromAAS();
+
+    if (topics_initialized_ && MqttSubBase::node_message_distributor_)
+    {
+        // Use registerLateInitializingNode to subscribe to specific topics
+        // This triggers the broker to resend retained messages
+        bool success = MqttSubBase::node_message_distributor_->registerLateInitializingNode(this);
+        if (success)
+        {
+            std::cout << "Node '" << this->name() << "' lazy initialized and subscribed successfully" << std::endl;
+        }
+        else
+        {
+            std::cerr << "Node '" << this->name() << "' lazy init: subscription failed" << std::endl;
+        }
+    }
+    else if (!topics_initialized_)
+    {
+        std::cerr << "Node '" << this->name() << "' lazy initialization FAILED - topics not configured" << std::endl;
+    }
+
+    return topics_initialized_;
 }
 
 void MqttDecorator::halt()

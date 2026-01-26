@@ -11,10 +11,44 @@ void MqttActionNode::initialize()
     // Call the virtual function - safe because construction is complete
     initializeTopicsFromAAS();
 
-    if (MqttSubBase::node_message_distributor_)
+    // Only register if we have topics initialized
+    if (topics_initialized_ && MqttSubBase::node_message_distributor_)
     {
         MqttSubBase::node_message_distributor_->registerDerivedInstance(this);
     }
+}
+
+bool MqttActionNode::ensureInitialized()
+{
+    if (topics_initialized_)
+    {
+        return true;
+    }
+
+    // Try lazy initialization
+    std::cout << "Node '" << this->name() << "' attempting lazy initialization..." << std::endl;
+    initializeTopicsFromAAS();
+
+    if (topics_initialized_ && MqttSubBase::node_message_distributor_)
+    {
+        // Use registerLateInitializingNode to subscribe to specific topics
+        // This triggers the broker to resend retained messages
+        bool success = MqttSubBase::node_message_distributor_->registerLateInitializingNode(this);
+        if (success)
+        {
+            std::cout << "Node '" << this->name() << "' lazy initialized and subscribed successfully" << std::endl;
+        }
+        else
+        {
+            std::cerr << "Node '" << this->name() << "' lazy init: subscription failed" << std::endl;
+        }
+    }
+    else if (!topics_initialized_)
+    {
+        std::cerr << "Node '" << this->name() << "' lazy initialization FAILED - topics not configured" << std::endl;
+    }
+
+    return topics_initialized_;
 }
 
 MqttActionNode::~MqttActionNode()
@@ -27,6 +61,14 @@ MqttActionNode::~MqttActionNode()
 
 BT::NodeStatus MqttActionNode::onStart()
 {
+    // Ensure lazy initialization is done
+    if (!ensureInitialized())
+    {
+        auto asset = getInput<std::string>("Asset");
+        std::cerr << "Node '" << this->name() << "' FAILED - could not initialize. "
+                  << "Asset=" << (asset.has_value() ? asset.value() : "<not set>") << std::endl;
+        return BT::NodeStatus::FAILURE;
+    }
     // Create the message to send
     publish("input", createMessage());
 

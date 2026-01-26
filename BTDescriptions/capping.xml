@@ -2,24 +2,25 @@
 <root BTCPP_format="4">
   <BehaviorTree ID="Capping">
     <Occupy Uuid="{ProductID}"
-            Asset="{CappingSystem}"/>     
+            Assets="{Assets}"
+            _skipIf="scrap == true">
       <ReactiveSequence>
         <ReactiveFallback>
           <Data_Condition comparison_type="equal"
                           Field="State"
                           expected_value="operational"
                           Property="PackMLState"
-                          Asset="{CappingSystem}"/>
+                          Asset="{SelectedAsset}"/>
           <Sleep msec="10000"/>
         </ReactiveFallback>
         <Sequence>
           <moveToPosition Uuid="{ProductID}"
-                          TargetPosition="{Station}"
+                          TargetPosition="{SelectedAsset}"
                           Asset="{Xbot}"/>
           <Command_Execution Parameters="&apos;{}&apos;"
                              Uuid="{ProductID}"
-                             Operation="cap"
-                             Asset="{CappingSystem}"/>
+                             Operation="Capping"
+                             Asset="{SelectedAsset}"/>
         </Sequence>
       </ReactiveSequence>
     </Occupy>

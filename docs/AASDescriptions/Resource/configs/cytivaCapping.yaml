@@ -1,6 +1,6 @@
 cytivaCappingSystemAAS:
     idShort: cytivaCappingSystemAAS
-    id: 'https://smartproductionlab.aau.dk/aas/cytivaCappingSystem'
+    id: 'https://smartproductionlab.aau.dk/aas/cytivaCappingSystemAAS'
     globalAssetId: 'https://smartproductionlab.aau.dk/assets/NGQ5ZWE4ZmUtY2Q3OS00Nzc5LWE5YjEtNGEzZGRkODRhNzQ2'
     derivedFrom: 'https://smartproductionlab.aau.dk/aas/templates/resource'
     assetType: 'https://smartproductionlab.aau.dk/Resource/CPPM/CappingSystem/cytivaCappingSystem'
@@ -31,6 +31,7 @@ cytivaCappingSystemAAS:
                                 contentType: 'application/json'
                                 href: '/DATA/Capping'
                                 mqv_controlPacket: 'publish'
+                                mqv_retain: 'false'
                     Halt:
                         key: 'Halt'
                         title: 'Halt'
@@ -60,6 +61,7 @@ cytivaCappingSystemAAS:
                                 contentType: 'application/json'
                                 href: '/DATA/Occupy'
                                 mqv_controlPacket: 'publish'
+                                mqv_retain: 'false'
                     Release:
                         key: 'Release'
                         title: 'Release'
@@ -77,6 +79,7 @@ cytivaCappingSystemAAS:
                                 contentType: 'application/json'
                                 href: '/DATA/Release'
                                 mqv_controlPacket: 'publish'
+                                mqv_retain: 'false'
                 properties:
                     StationState:
                         key: 'StationState'
@@ -85,7 +88,7 @@ cytivaCappingSystemAAS:
                         forms:
                             contentType: 'application/json'
                             href: '/DATA/State'
-                            mqv_retain: 'false'
+                            mqv_retain: 'true'
                             mqv_controlPacket: publish
                             mqv_qos: '0'
     Variables:
@@ -102,7 +105,7 @@ cytivaCappingSystemAAS:
         Name: 'BillOfMaterials'
         Archetype: 'OneUp'
         IsPartOf:
-            aauFillingLine:
+            aauFillingLineAAS:
                 globalAssetId: 'https://smartproductionlab.aau.dk/assets/MWQ2ODY5ZDEtZTQ3Yy00NWU4LTlmYTAtNTI3YjVlMDk4MWFi'
     
     Capabilities:

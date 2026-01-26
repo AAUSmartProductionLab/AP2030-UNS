@@ -53,6 +53,10 @@ All schemas are automatically synchronized from the `schemas/` directory. Click 
 - **[moveToPosition.schema.json](MQTTSchemas/moveToPosition.schema.json)**
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/moveToPosition.schema.json)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/MQTTSchemas/moveToPosition.schema.json)
+- **[orchestrationCommand.schema.json](MQTTSchemas/orchestrationCommand.schema.json)**
+  - Command to trigger production orchestration for a pre planned process using specified assets
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/orchestrationCommand.schema.json)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/MQTTSchemas/orchestrationCommand.schema.json)
 - **[order.schema.json](MQTTSchemas/order.schema.json)**
   - JSON Schema for an order
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/order.schema.json)
@@ -117,6 +121,7 @@ The behavior tree XML files define the control logic for the production line con
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/BTDescriptions/asepticFilling.xml)
 
 - **[capping.xml](BTDescriptions/capping.xml)**
+  - Tree ID: `Capping`
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/BTDescriptions/capping.xml)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/BTDescriptions/capping.xml)
 
@@ -160,6 +165,11 @@ The behavior tree XML files define the control logic for the production line con
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/BTDescriptions/production_HgHAAS.xml)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/BTDescriptions/production_HgHAAS.xml)
 
+- **[production_MIM8AAS.xml](BTDescriptions/production_MIM8AAS.xml)**
+  - Tree ID: `Production`
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/BTDescriptions/production_MIM8AAS.xml)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/BTDescriptions/production_MIM8AAS.xml)
+
 - **[qualityControl.xml](BTDescriptions/qualityControl.xml)**
   - Tree ID: `QualityControl`
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/BTDescriptions/qualityControl.xml)
@@ -192,7 +202,7 @@ YAML configuration files for AAS resource definitions.
 
 <!-- AUTO-GENERATED-CONFIGS-START -->
 - **[aauFillingLine.yaml](configs/aauFillingLine.yaml)**
-  - Resource: `aauFillingLine`
+  - Resource: `aauFillingLineAAS`
   - Location: InnoLab, Nybrovej, AAU
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/configs/aauFillingLine.yaml)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/configs/aauFillingLine.yaml)
@@ -228,7 +238,7 @@ YAML configuration files for AAS resource definitions.
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/configs/optimaUnloading.yaml)
 
 - **[orchestrator.yaml](configs/orchestrator.yaml)**
-  - Resource: `orchestrator`
+  - Resource: `orchestratorAAS`
   - Location: InnoLab, Nybrovej, AAU
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/configs/orchestrator.yaml)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/configs/orchestrator.yaml)
@@ -258,7 +268,7 @@ YAML configuration files for AAS resource definitions.
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/configs/planarTable.yaml)
 
 - **[productionPlanner.yaml](configs/productionPlanner.yaml)**
-  - Resource: `productionPlanner`
+  - Resource: `productionPlannerAAS`
   - Location: InnoLab, Nybrovej, AAU
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/configs/productionPlanner.yaml)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/configs/productionPlanner.yaml)

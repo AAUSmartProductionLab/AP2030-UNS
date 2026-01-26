@@ -1,5 +1,6 @@
 #include "bt/conditions/generic_condition_node.h"
 #include "mqtt/node_message_distributor.h"
+#include "aas/aas_interface_cache.h"
 #include "utils.h"
 
 BT::PortsList GenericConditionNode::providedPorts()
@@ -18,6 +19,12 @@ BT::PortsList GenericConditionNode::providedPorts()
 
 void GenericConditionNode::initializeTopicsFromAAS()
 {
+    // Already initialized, skip
+    if (topics_initialized_)
+    {
+        return;
+    }
+
     try
     {
         auto asset_input = getInput<std::string>("Asset");
@@ -37,7 +44,24 @@ void GenericConditionNode::initializeTopicsFromAAS()
             std::cerr << "Node '" << this->name() << "' has no Property input configured" << std::endl;
             return;
         }
-        // Create Topic objects
+
+        // First, try to use the cached interface (fast path)
+        auto cache = MqttSubBase::getAASInterfaceCache();
+        if (cache)
+        {
+            auto cached_interface = cache->getInterface(asset_id, property_name.value(), "output");
+            if (cached_interface.has_value())
+            {
+                std::cout << "Node '" << this->name() << "' using cached interface for property: " 
+                          << property_name.value() << std::endl;
+                MqttSubBase::setTopic("output", cached_interface.value());
+                topics_initialized_ = true;
+                return;
+            }
+        }
+
+        // Fall back to direct AAS query (slow path)
+        std::cout << "Node '" << this->name() << "' falling back to direct AAS query" << std::endl;
         auto condition_opt = aas_client_.fetchInterface(asset_id, property_name.value(), "output");
 
         if (!condition_opt.has_value())
@@ -47,6 +71,7 @@ void GenericConditionNode::initializeTopicsFromAAS()
         }
 
         MqttSubBase::setTopic("output", condition_opt.value());
+        topics_initialized_ = true;
     }
     catch (const std::exception &e)
     {
@@ -55,7 +80,19 @@ void GenericConditionNode::initializeTopicsFromAAS()
 }
 
 BT::NodeStatus GenericConditionNode::tick()
-{ // Use a unique_lock since we need to wait on a condition variable
+{
+    // Ensure lazy initialization is done
+    if (!ensureInitialized())
+    {
+        auto asset = getInput<std::string>("Asset");
+        auto property = getInput<std::string>("Property");
+        std::cerr << "Node '" << this->name() << "' FAILED - could not initialize. "
+                  << "Asset=" << (asset.has_value() ? asset.value() : "<not set>") << ", "
+                  << "Property=" << (property.has_value() ? property.value() : "<not set>") << std::endl;
+        return BT::NodeStatus::FAILURE;
+    }
+
+    // Use a unique_lock since we need to wait on a condition variable
     std::unique_lock<std::mutex> lock(mutex_);
 
     // Wait until a message is received

@@ -1,6 +1,6 @@
 planarTableAAS:
     idShort: planarTableAAS
-    id: 'https://smartproductionlab.aau.dk/aas/planarTable'
+    id: 'https://smartproductionlab.aau.dk/aas/planarTableAAS'
     globalAssetId: 'https://smartproductionlab.aau.dk/assets/ZTM1NTAzNzQtMDZkNi00N2Q4LWI1YTktMGNhMmY0MDEyNTk4'
     derivedFrom: 'https://smartproductionlab.aau.dk/aas/templates/resource'
     assetType: 'https://smartproductionlab.aau.dk/Resource/CPS/MotionSystem/planarTable'
@@ -34,7 +34,7 @@ planarTableAAS:
                         forms:
                             contentType: 'application/json'
                             href: '/DATA/State'
-                            mqv_retain: 'false'
+                            mqv_retain: 'true'
                             mqv_controlPacket: publish
                             mqv_qos: '0'
 
@@ -49,11 +49,11 @@ planarTableAAS:
         Name: 'BillOfMaterials'
         Archetype: 'OneDown'
         HasPart:
-            planarTableShuttle1:
+            planarTableShuttle1AAS:
                 globalAssetId: 'https://smartproductionlab.aau.dk/assets/ODYwM2Q2YjYtYmUzOS00NTAxLWFhZDktYjc1MjhhMzUzOGNm'
-            planarTableShuttle2:
+            planarTableShuttle2AAS:
                 globalAssetId: 'https://smartproductionlab.aau.dk/assets/OTZhZGNiZDAtNTNhNS00YmJhLThiNDctMzFjYzM3OGNiNTMw'
-            planarTableShuttle3:
+            planarTableShuttle3AAS:
                 globalAssetId: 'https://smartproductionlab.aau.dk/assets/YjY3ZTJjZGEtZDYxMC00ZDJjLTlkYjYtOGUyNGE4NWVlNTBi'
     
     Capabilities:

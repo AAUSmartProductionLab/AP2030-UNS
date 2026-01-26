@@ -1,6 +1,6 @@
 omronCameraSystemAAS:
     idShort: omronCameraSystemAAS
-    id: 'https://smartproductionlab.aau.dk/aas/omronCameraSystem'
+    id: 'https://smartproductionlab.aau.dk/aas/omronCameraSystemAAS'
     globalAssetId: 'https://smartproductionlab.aau.dk/assets/M2VmNjk0OTgtNmE0YS00MzA4LWE4NjMtM2JjZDZjZDhkMTBl'
     derivedFrom: 'https://smartproductionlab.aau.dk/aas/templates/resource'
     assetType: 'https://smartproductionlab.aau.dk/Resource/CPPM/QualityControlSystem/omronCameraSystem'
@@ -31,6 +31,7 @@ omronCameraSystemAAS:
                                 contentType: 'application/json'
                                 href: '/DATA/Capture'
                                 mqv_controlPacket: 'publish'
+                                mqv_retain: 'false'
                     Halt:
                         key: 'Halt'
                         title: 'Halt'
@@ -60,6 +61,7 @@ omronCameraSystemAAS:
                                 contentType: 'application/json'
                                 href: '/DATA/Occupy'
                                 mqv_controlPacket: 'publish'
+                                mqv_retain: 'false'
                     Release:
                         key: 'Release'
                         title: 'Release'
@@ -77,6 +79,7 @@ omronCameraSystemAAS:
                                 contentType: 'application/json'
                                 href: '/DATA/Release'
                                 mqv_controlPacket: 'publish'
+                                mqv_retain: 'false'
                 properties:
                     StationState:
                         key: 'StationState'
@@ -85,7 +88,7 @@ omronCameraSystemAAS:
                         forms:
                             contentType: 'application/json'
                             href: '/DATA/State'
-                            mqv_retain: 'false'
+                            mqv_retain: 'true'
                             mqv_controlPacket: publish
                             mqv_qos: '0'
                     Image:
@@ -116,7 +119,7 @@ omronCameraSystemAAS:
         Name: 'BillOfMaterials'
         Archetype: 'OneUp'
         IsPartOf:
-            aauFillingLine:
+            aauFillingLineAAS:
                 globalAssetId: 'https://smartproductionlab.aau.dk/assets/MWQ2ODY5ZDEtZTQ3Yy00NWU4LTlmYTAtNTI3YjVlMDk4MWFi'
     
     Capabilities:

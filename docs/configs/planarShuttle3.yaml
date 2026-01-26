@@ -1,9 +1,9 @@
 planarTableShuttle3AAS:
     idShort: planarTableShuttle3AAS
-    id: 'https://smartproductionlab.aau.dk/aas/planarTableShuttle3'
+    id: 'https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS'
     globalAssetId: 'https://smartproductionlab.aau.dk/assets/YjY3ZTJjZGEtZDYxMC00ZDJjLTlkYjYtOGUyNGE4NWVlNTBi'
     derivedFrom: 'https://smartproductionlab.aau.dk/aas/templates/resource'
-    assetType: 'https://smartproductionlab.aau.dk/Resource/CPS/MotionSystem/planarTableShuttle3'
+    assetType: 'https://smartproductionlab.aau.dk/Resource/CPS/MotionSystem/planarTableShuttle'
     serialNumber: 'PM-S1-2024-001'
     location: 'InnoLab, Nybrovej, AAU'
     AssetInterfacesDescription:
@@ -31,6 +31,7 @@ planarTableShuttle3AAS:
                                 contentType: 'application/json'
                                 href: '/DATA/XYMotion'
                                 mqv_controlPacket: 'publish'
+                                mqv_retain: 'false'
                     Halt:
                         key: 'Halt'
                         title: 'Halt'
@@ -60,6 +61,7 @@ planarTableShuttle3AAS:
                                 contentType: 'application/json'
                                 href: '/DATA/Occupy'
                                 mqv_controlPacket: 'publish'
+                                mqv_retain: 'false'
                     Release:
                         key: 'Release'
                         title: 'Release'
@@ -77,6 +79,7 @@ planarTableShuttle3AAS:
                                 contentType: 'application/json'
                                 href: '/DATA/Release'
                                 mqv_controlPacket: 'publish'
+                                mqv_retain: 'false'
                 properties:
                     StationState:
                         key: 'StationState'
@@ -85,6 +88,16 @@ planarTableShuttle3AAS:
                         forms:
                             contentType: 'application/json'
                             href: '/DATA/State'
+                            mqv_retain: 'true'
+                            mqv_controlPacket: publish
+                            mqv_qos: '0'
+                    ProductID:
+                        key: 'ProductID'
+                        title: 'ProductID'
+                        input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/productId.schema.json'
+                        forms:
+                            contentType: 'application/json'
+                            href: '/DATA/ProductId'
                             mqv_retain: 'false'
                             mqv_controlPacket: publish
                             mqv_qos: '0'
@@ -98,13 +111,20 @@ planarTableShuttle3AAS:
             semanticId: 'https://smartproductionlab.aau.dk/stationOccupation'
             InterfaceReference: 'StationState'
             Field: 'ProcessQueue'
+        ProductID:
+            semanticId: 'https://smartproductionlab.aau.dk/productID'
+            InterfaceReference: 'ProductID'
 
     Parameters:
+        ProductID:
+            semanticId: 'https://smartproductionlab.aau.dk/productID'
+            InterfaceReference: 'ProductID'
+
     HierarchicalStructures:
         Name: 'BillOfMaterials'
         Archetype: 'OneUp'
         IsPartOf:
-            planarTable:
+            planarTableAAS:
                 globalAssetId: 'https://smartproductionlab.aau.dk/assets/ZTM1NTAzNzQtMDZkNi00N2Q4LWI1YTktMGNhMmY0MDEyNTk4'
     
     Capabilities:

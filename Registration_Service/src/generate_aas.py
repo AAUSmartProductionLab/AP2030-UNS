@@ -42,7 +42,7 @@ class AASGenerator:
         Args:
             config_path: Path to the YAML configuration file
             delegation_base_url: Base URL for Operation Delegation Service
-                                 (e.g., 'http://operation-delegation:8087')
+                                 (e.g., 'http://registration-service:8087')
         """
         # Load configuration
         with open(config_path, 'r') as f:
@@ -58,7 +58,7 @@ class AASGenerator:
         # Operation Delegation Service URL for BaSyx invocationDelegation
         self.delegation_base_url = delegation_base_url or os.environ.get(
             'DELEGATION_SERVICE_URL',
-            'http://operation-delegation:8087'
+            'http://registration-service:8087'
         )
 
         # Initialize all helper services and builders
@@ -108,7 +108,8 @@ class AASGenerator:
             self.semantic_factory, self.element_factory, self.schema_handler
         )
         self.parameters_builder = ParametersSubmodelBuilder(
-            self.base_url, self.semantic_factory
+            self.base_url, self.semantic_factory, self.element_factory,
+            self.schema_handler
         )
         self.hierarchical_structures_builder = HierarchicalStructuresSubmodelBuilder(
             self.base_url, self.semantic_factory, self.element_factory
@@ -116,7 +117,7 @@ class AASGenerator:
         self.capabilities_builder = CapabilitiesSubmodelBuilder(
             self.base_url, self.semantic_factory, self.element_factory
         )
-        
+
         # Process AAS specific builders
         self.process_info_builder = ProcessInformationSubmodelBuilder(
             self.base_url, self.semantic_factory, self.element_factory
@@ -206,12 +207,12 @@ class AASGenerator:
 
     def _extract_interface_properties(self) -> List[Dict]:
         """
-        Extract interface properties with schema URLs from config.
+        Extract interface properties with output schema URLs from config.
 
         These are used for schema-driven field extraction in Variables submodel.
 
         Returns:
-            List of property dicts with name and schema URL
+            List of property dicts with name and schema URL (from output field)
         """
         interface_config = self.system_config.get(
             'AssetInterfacesDescription', {}) or {}
@@ -226,6 +227,33 @@ class AASGenerator:
                 properties.append({
                     'name': prop_name,
                     'schema': prop_config.get('output')
+                })
+
+        return properties
+
+    def _extract_interface_input_properties(self) -> List[Dict]:
+        """
+        Extract interface properties with input schema URLs from config.
+
+        These are used for schema-driven field extraction in Parameters submodel.
+        Parameters use 'input' schemas (for writable values).
+
+        Returns:
+            List of property dicts with name and schema URL (from input field)
+        """
+        interface_config = self.system_config.get(
+            'AssetInterfacesDescription', {}) or {}
+        mqtt_config = interface_config.get('InterfaceMQTT', {}) or {}
+        interaction_config = mqtt_config.get('InteractionMetadata', {}) or {}
+        properties_dict = interaction_config.get('properties', {}) or {}
+
+        properties = []
+        # Handle dict format: { PropName: {...}, ... }
+        for prop_name, prop_config in properties_dict.items():
+            if isinstance(prop_config, dict):
+                properties.append({
+                    'name': prop_name,
+                    'schema': prop_config.get('input')
                 })
 
         return properties
@@ -246,6 +274,8 @@ class AASGenerator:
 
         # Extract interface properties for schema-driven field extraction
         interface_properties = self._extract_interface_properties()
+        # Extract input properties for Parameters submodel
+        interface_input_properties = self._extract_interface_input_properties()
 
         # Generate standard submodels
         submodels = [
@@ -253,7 +283,8 @@ class AASGenerator:
                 self.system_id, self.system_config),
             self.variables_builder.build(
                 self.system_id, self.system_config, interface_properties),
-            self.parameters_builder.build(self.system_id, self.system_config),
+            self.parameters_builder.build(
+                self.system_id, self.system_config, interface_input_properties),
             self.hierarchical_structures_builder.build(
                 self.system_id, self.system_config),
             self.capabilities_builder.build(
@@ -263,7 +294,7 @@ class AASGenerator:
 
         for submodel in submodels:
             obj_store.add(submodel)
-        
+
         # Generate Process AAS specific submodels (if config contains them)
         process_submodels = self._build_process_submodels()
         for submodel in process_submodels:
@@ -271,33 +302,33 @@ class AASGenerator:
                 obj_store.add(submodel)
 
         return obj_store
-    
+
     def _build_process_submodels(self) -> list:
         """
         Build Process AAS specific submodels if the config contains them.
-        
+
         Returns:
             List of Process-specific submodels (may contain None values)
         """
         submodels = []
-        
+
         # Check if this is a Process AAS by looking for Process-specific sections
         has_process_info = 'ProcessInformation' in self.system_config
         has_required_caps = 'RequiredCapabilities' in self.system_config
         has_policy = 'Policy' in self.system_config
-        
+
         if has_process_info:
             submodels.append(self.process_info_builder.build(
                 self.system_id, self.system_config))
-        
+
         if has_required_caps:
             submodels.append(self.required_capabilities_builder.build(
                 self.system_id, self.system_config))
-        
+
         if has_policy:
             submodels.append(self.policy_builder.build(
                 self.system_id, self.system_config))
-        
+
         return submodels
 
     # ==================== Serialization Methods ====================
@@ -383,7 +414,7 @@ def main():
         '--delegation-url',
         type=str,
         default=None,
-        help='Base URL for Operation Delegation Service (e.g., http://operation-delegation:8087). '
+        help='Base URL for Operation Delegation Service (e.g., http://registration-service:8087). '
              'If not specified, uses DELEGATION_SERVICE_URL env var or default.'
     )
 

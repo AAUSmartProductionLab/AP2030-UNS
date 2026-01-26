@@ -1,6 +1,6 @@
 imaDispensingSystemAAS:
     idShort: imaDispensingSystemAAS
-    id: 'https://smartproductionlab.aau.dk/aas/imaDispensingSystem'
+    id: 'https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS'
     globalAssetId: 'https://smartproductionlab.aau.dk/assets/MzFiZTU1YzAtODc0ZC00YTRmLTkzYzItMDQ5ZDZjZDdhZTYw'
     derivedFrom: 'https://smartproductionlab.aau.dk/aas/templates/resource'
     assetType: 'https://smartproductionlab.aau.dk/Resource/CPPM/DispensingSystem/imaDispensingSystem'
@@ -31,6 +31,7 @@ imaDispensingSystemAAS:
                                 contentType: 'application/json'
                                 href: '/DATA/Dispensing'
                                 mqv_controlPacket: 'publish'
+                                mqv_retain: 'false'
                     Halt:
                         key: 'Halt'
                         title: 'Halt'
@@ -60,6 +61,7 @@ imaDispensingSystemAAS:
                                 contentType: 'application/json'
                                 href: '/DATA/Occupy'
                                 mqv_controlPacket: 'publish'
+                                mqv_retain: 'false'
                     Release:
                         key: 'Release'
                         title: 'Release'
@@ -77,6 +79,7 @@ imaDispensingSystemAAS:
                                 contentType: 'application/json'
                                 href: '/DATA/Release'
                                 mqv_controlPacket: 'publish'
+                                mqv_retain: 'false'
                 properties:
                     StationState:
                         key: 'StationState'
@@ -85,7 +88,7 @@ imaDispensingSystemAAS:
                         forms:
                             contentType: 'application/json'
                             href: '/DATA/State'
-                            mqv_retain: 'false'
+                            mqv_retain: 'true'
                             mqv_controlPacket: publish
                             mqv_qos: '0'
                     Weight:
@@ -95,7 +98,7 @@ imaDispensingSystemAAS:
                         forms:
                             contentType: 'application/json'
                             href: '/DATA/Weight'
-                            mqv_retain: 'false'
+                            mqv_retain: 'true'
                             mqv_controlPacket: publish
                             mqv_qos: '0'
 
@@ -117,7 +120,7 @@ imaDispensingSystemAAS:
         Name: 'BillOfMaterials'
         Archetype: 'OneUp'
         IsPartOf:
-            aauFillingLine:
+            aauFillingLineAAS:
                 globalAssetId: 'https://smartproductionlab.aau.dk/assets/MWQ2ODY5ZDEtZTQ3Yy00NWU4LTlmYTAtNTI3YjVlMDk4MWFi'
     
     Capabilities:
