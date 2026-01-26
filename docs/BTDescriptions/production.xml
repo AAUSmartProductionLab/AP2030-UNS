@@ -4,7 +4,7 @@
   <include path="./product.xml" />
   <BehaviorTree ID="Production">
     <Sequence>
-      <Configure ProductIDs="{ProductIDs}"/>
+      <Configure Product="{product}" ProductIDs="{ProductIDs}"/>
       <ReactiveSequence>
         <Fallback>
           <Data_Condition comparison_type="equal"
