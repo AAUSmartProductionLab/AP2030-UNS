@@ -171,7 +171,7 @@ The behavior tree XML files define the control logic for the production line con
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/BTDescriptions/production_MIM8AAS.xml)
 
 - **[qualityControl.xml](BTDescriptions/qualityControl.xml)**
-  - Tree ID: `QualityControl`
+  - Tree ID: `Inspection`
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/BTDescriptions/qualityControl.xml)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/BTDescriptions/qualityControl.xml)
 
