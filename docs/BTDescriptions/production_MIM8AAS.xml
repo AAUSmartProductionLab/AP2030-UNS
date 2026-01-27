@@ -176,5 +176,52 @@
       <input_port name="TargetPosition" type="std::string" default="{Station}">The name of the station to move to</input_port>
       <input_port name="Asset" type="std::string" default="{Xbot}">The Asset to execute the movement</input_port>
     </Action>
+    <!-- SubTree port declarations for Groot visualization -->
+    <SubTree ID="AsepticFilling">
+      <input_port name="Xbot"/>
+      <output_port name="ProductID"/>
+    </SubTree>
+    <SubTree ID="Loading">
+      <input_port name="Assets"/>
+      <input_port name="Xbot"/>
+      <input_port name="ProductIDs"/>
+      <output_port name="ProductID"/>
+      <output_port name="scrap"/>
+      <output_port name="Station"/>
+    </SubTree>
+    <SubTree ID="Dispensing">
+      <input_port name="Assets"/>
+      <input_port name="Xbot"/>
+      <input_port name="ProductID"/>
+      <output_port name="scrap"/>
+      <output_port name="Station"/>
+    </SubTree>
+    <SubTree ID="Stoppering">
+      <input_port name="Assets"/>
+      <input_port name="Xbot"/>
+      <input_port name="ProductID"/>
+      <output_port name="scrap"/>
+      <output_port name="Station"/>
+    </SubTree>
+    <SubTree ID="QualityControl">
+      <input_port name="Assets"/>
+      <input_port name="Xbot"/>
+      <input_port name="ProductID"/>
+      <output_port name="scrap"/>
+      <output_port name="Station"/>
+    </SubTree>
+    <SubTree ID="Unloading">
+      <input_port name="Assets"/>
+      <input_port name="Xbot"/>
+      <input_port name="ProductID"/>
+      <output_port name="scrap"/>
+      <output_port name="Station"/>
+    </SubTree>
+    <SubTree ID="Scraping">
+      <input_port name="Assets"/>
+      <input_port name="Xbot"/>
+      <input_port name="ProductID"/>
+      <output_port name="Station"/>
+    </SubTree>
   </TreeNodesModel>
 </root>
