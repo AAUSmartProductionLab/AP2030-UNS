@@ -3,14 +3,11 @@
   <BehaviorTree ID="Production">
     <Sequence>
       <Configure Product="{product}" ProductIDs="{ProductIDs}"/>
-      <ReactiveSequence>
-        <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="PackMLState" Asset="https://smartproductionlab.aau.dk/aas/planarTableAAS"/>
-        <Parallel failure_count="-1" success_count="1">
-          <SubTree ID="AsepticFilling" Xbot="{Xbot1}" ProductID="" _autoremap="true"/>
-          <SubTree ID="AsepticFilling" Xbot="{Xbot2}" ProductID="" _autoremap="true"/>
-          <SubTree ID="AsepticFilling" Xbot="{Xbot3}" ProductID="" _autoremap="true"/>
-        </Parallel>
-      </ReactiveSequence>
+      <Parallel failure_count="-1" success_count="1">
+        <SubTree ID="AsepticFilling" Xbot="{Xbot1}" ProductID="" _autoremap="true"/>
+        <SubTree ID="AsepticFilling" Xbot="{Xbot2}" ProductID="" _autoremap="true"/>
+        <SubTree ID="AsepticFilling" Xbot="{Xbot3}" ProductID="" _autoremap="true"/>
+      </Parallel>
     </Sequence>
   </BehaviorTree>
   <BehaviorTree ID="AsepticFilling">
