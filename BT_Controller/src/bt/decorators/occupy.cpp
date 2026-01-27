@@ -9,22 +9,22 @@
 #include <algorithm>
 
 // Helper functions to generate unique topic keys per asset
-std::string Occupy::getOccupyRequestKey(const std::string& asset_id) const
+std::string Occupy::getOccupyRequestKey(const std::string &asset_id) const
 {
     return "occupyRequest_" + asset_id;
 }
 
-std::string Occupy::getReleaseRequestKey(const std::string& asset_id) const
+std::string Occupy::getReleaseRequestKey(const std::string &asset_id) const
 {
     return "releaseRequest_" + asset_id;
 }
 
-std::string Occupy::getOccupyResponseKey(const std::string& asset_id) const
+std::string Occupy::getOccupyResponseKey(const std::string &asset_id) const
 {
     return "occupyResponse_" + asset_id;
 }
 
-std::string Occupy::getReleaseResponseKey(const std::string& asset_id) const
+std::string Occupy::getReleaseResponseKey(const std::string &asset_id) const
 {
     return "releaseResponse_" + asset_id;
 }
@@ -52,7 +52,7 @@ void Occupy::initializeTopicsFromAAS()
 
         // Initialize topics for each asset
         bool all_initialized = true;
-        for (const auto& asset_id : asset_ids_)
+        for (const auto &asset_id : asset_ids_)
         {
             std::cout << "  - Fetching interfaces for asset: " << asset_id << std::endl;
 
@@ -64,7 +64,7 @@ void Occupy::initializeTopicsFromAAS()
             if (!occupy_req.has_value() || !occupy_resp.has_value() ||
                 !release_req.has_value() || !release_resp.has_value())
             {
-                std::cerr << "Failed to fetch interfaces from AAS for asset: " << asset_id 
+                std::cerr << "Failed to fetch interfaces from AAS for asset: " << asset_id
                           << " in node: " << this->name() << std::endl;
                 all_initialized = false;
                 continue;
@@ -76,7 +76,7 @@ void Occupy::initializeTopicsFromAAS()
             MqttSubBase::setTopic(getOccupyResponseKey(asset_id), occupy_resp.value());
             MqttSubBase::setTopic(getReleaseResponseKey(asset_id), release_resp.value());
         }
-        
+
         // Only mark initialized if we set up at least one asset
         if (!asset_ids_.empty() && all_initialized)
         {
@@ -138,29 +138,32 @@ BT::NodeStatus Occupy::tick()
         current_phase_ = PackML::State::IDLE;
         return BT::NodeStatus::SUCCESS;
     }
-    
+
     return BT::NodeStatus::RUNNING;
 }
 
 void Occupy::halt()
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    
+
     // Release the selected asset if we have one
     if (!selected_asset_id_.empty())
     {
         sendUnregisterCommand(selected_asset_id_);
     }
-    
-    // Also release any assets that were pending
-    for (const auto& asset_id : pending_assets_)
+
+    // Release any pending assets - they have queued occupy requests that need to be cancelled
+    for (const auto &asset_id : pending_assets_)
     {
-        if (MqttPubBase::topics_.find(getReleaseRequestKey(asset_id)) != MqttPubBase::topics_.end())
-        {
-            sendUnregisterCommand(asset_id);
-        }
+        sendUnregisterCommand(asset_id);
     }
-    
+
+    // Release any assets that were marked for release but not yet released
+    for (const auto &asset_id : assets_to_release_)
+    {
+        sendUnregisterCommand(asset_id);
+    }
+
     DecoratorNode::halt();
 }
 
@@ -168,8 +171,8 @@ void Occupy::sendRegisterCommandToAll()
 {
     // Try to get UUID from input, or generate new ones per asset
     BT::Expected<std::string> base_uuid = getInput<std::string>("Uuid");
-    
-    for (const auto& asset_id : asset_ids_)
+
+    for (const auto &asset_id : asset_ids_)
     {
         // Check if we have valid topics for this asset
         if (MqttPubBase::topics_.find(getOccupyRequestKey(asset_id)) == MqttPubBase::topics_.end())
@@ -177,37 +180,37 @@ void Occupy::sendRegisterCommandToAll()
             std::cerr << "No occupy topic configured for asset: " << asset_id << std::endl;
             continue;
         }
-        
+
         sendRegisterCommand(asset_id);
     }
 }
 
-void Occupy::sendRegisterCommand(const std::string& asset_id)
+void Occupy::sendRegisterCommand(const std::string &asset_id)
 {
     json message;
-    
+
     // Generate a unique UUID for each asset request
     std::string uuid = mqtt_utils::generate_uuid();
     asset_uuids_[asset_id] = uuid;
     pending_assets_.insert(asset_id);
-    
+
     message["Uuid"] = uuid;
-    
+
     std::cout << "Sending occupy request to asset: " << asset_id << " with UUID: " << uuid << std::endl;
     MqttPubBase::publish(getOccupyRequestKey(asset_id), message);
 }
 
-void Occupy::sendUnregisterCommand(const std::string& asset_id)
+void Occupy::sendUnregisterCommand(const std::string &asset_id)
 {
     if (asset_uuids_.find(asset_id) == asset_uuids_.end())
     {
         std::cerr << "No UUID found for asset: " << asset_id << " - cannot send release" << std::endl;
         return;
     }
-    
+
     json message;
     message["Uuid"] = asset_uuids_[asset_id];
-    
+
     std::cout << "Sending release request to asset: " << asset_id << std::endl;
     MqttPubBase::publish(getReleaseRequestKey(asset_id), message);
 }
@@ -215,8 +218,8 @@ void Occupy::sendUnregisterCommand(const std::string& asset_id)
 void Occupy::releaseNonSelectedAssets()
 {
     std::cout << "Releasing " << assets_to_release_.size() << " non-selected assets" << std::endl;
-    
-    for (const auto& asset_id : assets_to_release_)
+
+    for (const auto &asset_id : assets_to_release_)
     {
         sendUnregisterCommand(asset_id);
     }
@@ -236,7 +239,7 @@ void Occupy::callback(const std::string &topic_key, const json &msg, mqtt::prope
 
     // Find which asset this response belongs to
     std::string responding_asset;
-    for (const auto& [asset_id, uuid] : asset_uuids_)
+    for (const auto &[asset_id, uuid] : asset_uuids_)
     {
         if (uuid == received_uuid)
         {
@@ -264,27 +267,28 @@ void Occupy::callback(const std::string &topic_key, const json &msg, mqtt::prope
                 {
                     // First successful response - this is our selected asset
                     selected_asset_id_ = responding_asset;
-                    
+
                     // Set the selected asset as output
                     setOutput("SelectedAsset", selected_asset_id_);
                     setOutput("Uuid", asset_uuids_[selected_asset_id_]);
-                    
+
                     std::cout << "Asset " << selected_asset_id_ << " selected for occupation" << std::endl;
 
-                    // Mark remaining pending assets for release when they respond
-                    // Also add any assets that haven't responded yet
-                    for (const auto& asset_id : pending_assets_)
+                    // Send release to all other pending assets - they have queued requests
+                    for (const auto &asset_id : pending_assets_)
                     {
-                        assets_to_release_.insert(asset_id);
+                        std::cout << "Releasing pending asset: " << asset_id << std::endl;
+                        sendUnregisterCommand(asset_id);
                     }
-                    
+                    pending_assets_.clear();
+
                     // Transition to EXECUTE - we have our asset
                     current_phase_ = PackML::State::EXECUTE;
                 }
                 else
                 {
                     // Already have a selected asset, need to release this one
-                    std::cout << "Asset " << responding_asset << " also succeeded but " 
+                    std::cout << "Asset " << responding_asset << " also succeeded but "
                               << selected_asset_id_ << " was already selected - releasing" << std::endl;
                     sendUnregisterCommand(responding_asset);
                 }
@@ -292,7 +296,7 @@ void Occupy::callback(const std::string &topic_key, const json &msg, mqtt::prope
             else if (state == "FAILURE")
             {
                 std::cout << "Asset " << responding_asset << " failed occupation request" << std::endl;
-                
+
                 // If all assets have failed, transition to STOPPED
                 if (pending_assets_.empty() && selected_asset_id_.empty())
                 {
@@ -306,7 +310,7 @@ void Occupy::callback(const std::string &topic_key, const json &msg, mqtt::prope
     else if (topic_key == getReleaseResponseKey(responding_asset))
     {
         assets_to_release_.erase(responding_asset);
-        
+
         if (responding_asset == selected_asset_id_)
         {
             // This is the release of our main selected asset
@@ -330,7 +334,7 @@ void Occupy::callback(const std::string &topic_key, const json &msg, mqtt::prope
         // For non-selected assets, we just log and continue
         else
         {
-            std::cout << "Released non-selected asset: " << responding_asset 
+            std::cout << "Released non-selected asset: " << responding_asset
                       << " with state: " << state << std::endl;
         }
     }
@@ -353,6 +357,5 @@ BT::PortsList Occupy::providedPorts()
             BT::PortDirection::INOUT,
             "Uuid",
             "{Uuid}",
-            "UUID of the selected asset's occupation request")
-    };
+            "UUID of the selected asset's occupation request")};
 }
