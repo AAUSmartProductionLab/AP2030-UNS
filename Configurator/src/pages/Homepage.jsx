@@ -209,7 +209,16 @@ export default function Homepage() {
           </div>
           <div className="external-indicator">External Link</div>
         </a>
-        
+        {/* AAS */}
+        <a href={`http://${serverIp}:3000`} target="_blank" rel="noopener noreferrer" className="service-card with-bg-image external">
+          <img src="/BasyxAAS.jpeg" alt="" className="card-image-bg" />
+          <div className="card-content">
+            <div className="card-icon"></div>
+            <h2>AAS</h2>
+            <p>Asset Information and Functionalities</p>
+          </div>
+          <div className="external-indicator">External Link</div>
+        </a>
         {/* MQTT Explorer */}
         <a href={`http://${serverIp}:4000`} target="_blank" rel="noopener noreferrer" className="service-card with-bg-image external">
           <img src="/mqttexp.png" alt="" className="card-image-bg" />
