@@ -105,6 +105,7 @@ nlohmann::json MoveToPosition::createMessage()
             // Build message according to schema: Position: [x, y, theta]
             message["Position"] = nlohmann::json::array({x, y, theta});
             message["Uuid"] = current_uuid_;
+            message["TimeStamp"] = bt_utils::getCurrentTimestampISO();
             
             std::cout << "MoveToPosition: Moving to station " << station_aas_id 
                       << " at position [" << x << ", " << y << ", " << theta << "]" << std::endl;
