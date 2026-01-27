@@ -5,9 +5,9 @@
 
 // MQTT topic definitions
 const String baseTopic = "NN/Nybrovej/InnoLab";
-const String moduleName = "Filling";
-const String FillingModule::TOPIC_SUB_FILLING_CMD = "/CMD/Dispense";
-const String FillingModule::TOPIC_PUB_FILLING_DATA = "/DATA/Dispense";
+const String moduleName = "Dispensing";
+const String FillingModule::TOPIC_SUB_FILLING_CMD = "/CMD/Dispensing";
+const String FillingModule::TOPIC_PUB_FILLING_DATA = "/DATA/Dispensing";
 const String FillingModule::TOPIC_SUB_NEEDLE_CMD = "/CMD/Needle";
 const String FillingModule::TOPIC_PUB_NEEDLE_DATA = "/DATA/Needle";
 const String FillingModule::TOPIC_SUB_TARE_CMD = "/CMD/Tare";

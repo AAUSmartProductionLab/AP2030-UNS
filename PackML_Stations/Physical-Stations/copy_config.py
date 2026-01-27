@@ -106,14 +106,14 @@ if os.path.exists(source_config):
             if os.path.exists(target_config):
                 try:
                     os.remove(target_config)
-                except PermissionError:
-                    # File is locked, wait and retry
+                except (PermissionError, FileNotFoundError):
+                    # File is locked or disappeared (OneDrive sync issue)
                     if attempt < max_retries - 1:
                         print(
-                            f"  File locked, waiting... (attempt {attempt + 1}/{max_retries})")
+                            f"  File locked or syncing, waiting... (attempt {attempt + 1}/{max_retries})")
                         time.sleep(0.5)
                         continue
-                    else:
+                    elif isinstance(e, PermissionError):
                         raise
 
             # Copy the file
