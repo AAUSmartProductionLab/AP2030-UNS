@@ -102,6 +102,10 @@ private:
 
     // Cache: asset_id -> interaction_name -> InterfaceData
     std::map<std::string, std::map<std::string, InterfaceData>> interface_cache_;
+    
+    // Variable alias cache: asset_id -> variable_name -> interface_name
+    // Maps Variables submodel entries (like "PackMLState") to their InterfaceReference targets (like "StationState")
+    std::map<std::string, std::map<std::string, std::string>> variable_alias_cache_;
 
     // Base topic patterns per asset (for computing wildcards)
     std::map<std::string, std::string> asset_base_topics_;
@@ -114,4 +118,7 @@ private:
 
     // Helper to fetch all interfaces for a single asset
     bool fetchAssetInterfaces(const std::string &asset_id);
+    
+    // Helper to fetch and cache variable aliases from the Variables submodel
+    void fetchVariableAliases(const std::string &asset_id);
 };

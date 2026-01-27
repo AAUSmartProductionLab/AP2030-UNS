@@ -2,6 +2,8 @@
 #include "mqtt/node_message_distributor.h"
 #include "aas/aas_interface_cache.h"
 #include <iostream>
+#include <thread>
+#include <chrono>
 
 MqttSyncConditionNode::MqttSyncConditionNode(
     const std::string &name,
@@ -109,6 +111,11 @@ bool MqttSyncConditionNode::ensureInitialized()
         if (success)
         {
             std::cout << "Node '" << this->name() << "' lazy initialized and subscribed successfully" << std::endl;
+            
+            // Wait briefly for retained messages to arrive after subscription
+            // The MQTT broker sends retained messages asynchronously after subscription completes,
+            // so we need a small delay to allow them to be delivered before the first tick
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
         }
         else
         {

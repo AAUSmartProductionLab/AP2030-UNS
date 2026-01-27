@@ -19,12 +19,6 @@ BT::PortsList GenericConditionNode::providedPorts()
 
 void GenericConditionNode::initializeTopicsFromAAS()
 {
-    // Already initialized, skip
-    if (topics_initialized_)
-    {
-        return;
-    }
-
     try
     {
         auto asset_input = getInput<std::string>("Asset");
@@ -35,15 +29,35 @@ void GenericConditionNode::initializeTopicsFromAAS()
         }
 
         std::string asset_id = asset_input.value();
-        std::cout << "Node '" << this->name() << "' initializing for Asset: " << asset_id << std::endl;
-
+        
         auto property_name = getInput<std::string>("Property");
-
         if (!property_name.has_value())
         {
             std::cerr << "Node '" << this->name() << "' has no Property input configured" << std::endl;
             return;
         }
+
+        // Check if we're already initialized for this specific asset and property
+        // This handles the case where blackboard variables change between ticks
+        if (topics_initialized_ && 
+            asset_id == initialized_asset_id_ && 
+            property_name.value() == initialized_property_)
+        {
+            return;  // Already initialized for this asset/property combination
+        }
+        
+        // If asset or property changed, we need to reinitialize
+        if (topics_initialized_ && 
+            (asset_id != initialized_asset_id_ || property_name.value() != initialized_property_))
+        {
+            std::cout << "Node '" << this->name() << "' reinitializing: asset/property changed from "
+                      << initialized_asset_id_ << "/" << initialized_property_ << " to "
+                      << asset_id << "/" << property_name.value() << std::endl;
+            topics_initialized_ = false;
+            latest_msg_ = json();  // Clear old message from different asset
+        }
+
+        std::cout << "Node '" << this->name() << "' initializing for Asset: " << asset_id << std::endl;
 
         // First, try to use the cached interface (fast path)
         auto cache = MqttSubBase::getAASInterfaceCache();
@@ -56,6 +70,8 @@ void GenericConditionNode::initializeTopicsFromAAS()
                           << property_name.value() << std::endl;
                 MqttSubBase::setTopic("output", cached_interface.value());
                 topics_initialized_ = true;
+                initialized_asset_id_ = asset_id;
+                initialized_property_ = property_name.value();
                 return;
             }
         }
@@ -72,6 +88,8 @@ void GenericConditionNode::initializeTopicsFromAAS()
 
         MqttSubBase::setTopic("output", condition_opt.value());
         topics_initialized_ = true;
+        initialized_asset_id_ = asset_id;
+        initialized_property_ = property_name.value();
     }
     catch (const std::exception &e)
     {

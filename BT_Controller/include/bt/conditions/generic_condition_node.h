@@ -17,4 +17,8 @@ public:
     virtual void callback(const std::string &topic_key, const json &msg, mqtt::properties props) override;
     bool compare(const json &msg, const std::string &field_name, const std::string &comparison_type,
                  const std::string &expected_value);
+                 
+private:
+    std::string initialized_asset_id_;  // Track which asset we initialized for
+    std::string initialized_property_;  // Track which property we initialized for
 };
