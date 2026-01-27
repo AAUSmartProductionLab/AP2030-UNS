@@ -5,11 +5,14 @@
 #include <algorithm>
 #include <cctype>
 
-namespace {
-    std::string toLower(const std::string& s) {
+namespace
+{
+    std::string toLower(const std::string &s)
+    {
         std::string result = s;
         std::transform(result.begin(), result.end(), result.begin(),
-                       [](unsigned char c) { return std::tolower(c); });
+                       [](unsigned char c)
+                       { return std::tolower(c); });
         return result;
     }
 }
@@ -45,9 +48,11 @@ bool AASInterfaceCache::prefetchInterfaces(const std::map<std::string, std::stri
     }
 
     std::cout << "AASInterfaceCache: Pre-fetch complete. "
-              << success_count << "/" << asset_ids.size() << " assets cached successfully." << std::endl << std::flush;
+              << success_count << "/" << asset_ids.size() << " assets cached successfully." << std::endl
+              << std::flush;
 
-    std::cout << "AASInterfaceCache: Returning from prefetchInterfaces with " << (success_count > 0 ? "true" : "false") << std::endl << std::flush;
+    std::cout << "AASInterfaceCache: Returning from prefetchInterfaces with " << (success_count > 0 ? "true" : "false") << std::endl
+              << std::flush;
 
     return success_count > 0;
 }
@@ -348,7 +353,7 @@ bool AASInterfaceCache::fetchAssetInterfaces(const std::string &asset_id)
 
         size_t num_interfaces = interface_cache_[asset_id].size();
         std::cout << "    Cached " << num_interfaces << " interfaces" << std::endl;
-        
+
         // Also fetch variable aliases for this asset
         fetchVariableAliases(asset_id);
 
@@ -375,7 +380,7 @@ std::optional<mqtt_utils::Topic> AASInterfaceCache::getInterface(
     }
 
     std::string resolved_interaction = toLower(interaction);
-    
+
     // Check if the interaction is a Variable alias that needs to be resolved
     auto alias_asset_it = variable_alias_cache_.find(asset_id);
     if (alias_asset_it != variable_alias_cache_.end())
@@ -383,7 +388,7 @@ std::optional<mqtt_utils::Topic> AASInterfaceCache::getInterface(
         auto alias_it = alias_asset_it->second.find(resolved_interaction);
         if (alias_it != alias_asset_it->second.end())
         {
-            resolved_interaction = alias_it->second;  // Use the resolved interface name
+            resolved_interaction = alias_it->second; // Use the resolved interface name
         }
     }
 
