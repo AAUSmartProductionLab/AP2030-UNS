@@ -20,6 +20,8 @@
 #include "bt/decorators/get_product_from_queue_node.h"
 #include "bt/decorators/keep_running_until_empty.h"
 #include "bt/decorators/occupy.h"
+#include "bt/decorators/quality_control_gate.h"
+#include "bt/decorators/sampling_gate.h"
 #include "bt/controls/bc_fallback_node.h"
 void registerAllNodes(
     BT::BehaviorTreeFactory &factory,
@@ -93,6 +95,9 @@ void registerAllNodes(
         mqtt_client,
         aas_client,
         "PopElement");
+
+    factory.registerNodeType<QualityControlGate>("QualityControlGate");
+    factory.registerNodeType<SamplingGate>("SamplingGate");
 
     factory.registerNodeType<BT::BC_FallbackNode>("BC_Fallback");
     factory.registerNodeType<BT::BC_FallbackNode>("BC_Fallback_Async", true);

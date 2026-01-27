@@ -35,8 +35,8 @@ class BTGeneratorConfig:
                 "Loading": "loading.xml",
                 "Dispensing": "dispensing.xml",
                 "Stoppering": "stoppering.xml",
-                "QualityControl": "qualityControl.xml",
-                "Inspection": "qualityControl.xml",  # Alias
+                "Inspection": "qualityControl.xml",
+                "QualityControl": "qualityControl.xml",  # Alias for backward compatibility
                 "Unloading": "unloading.xml",
                 "Capping": "capping.xml",
                 # Standard subtrees that were previously included via <include>
@@ -46,8 +46,8 @@ class BTGeneratorConfig:
         if self.subtree_id_mapping is None:
             # Map capability/process names to actual subtree IDs
             self.subtree_id_mapping = {
-                "Inspection": "QualityControl",  # Inspection capability uses QualityControl subtree
-                "inspection": "QualityControl",
+                "QualityControl": "Inspection",  # QualityControl capability uses Inspection subtree
+                "qualityControl": "Inspection",
             }
 
 
@@ -185,7 +185,7 @@ class BTGenerator:
 
         # Configure node - initialize product queue with Product AAS ID
         product_aas_id = product_info.get("aas_id", "{product}")
-        ET.SubElement(seq, "Configure", 
+        ET.SubElement(seq, "Configure",
                       Product=product_aas_id,
                       ProductIDs="{ProductIDs}")
 
@@ -291,9 +291,13 @@ class BTGenerator:
                 subtree_elem.set("ProductID", "{ProductID}")
                 subtree_elem.set("ProductIDs", "{ProductIDs}")
                 subtree_elem.set("Station", "{Station}")
+
+                # Pass SamplingGate parameters for Inspection subtree
+                if subtree_id == "Inspection":
+                    subtree_elem.set("IPCInspection", "{IPCInspection}")
+                    subtree_elem.set("BatchSize", "{BatchSize}")
+
                 subtree_elem.set("_autoremap", "false")
-
-
 
     def _get_subtree_id(self, process_name: str) -> str:
         """Get the subtree ID for a process name"""
@@ -324,8 +328,6 @@ class BTGenerator:
         for match in matching_result.process_matches:
             subtree_id = self._get_subtree_id(match.process_step.name)
             needed_subtrees.add(subtree_id)
-
-
 
         # Always include standard subtrees that were previously referenced via <include>
         # needed_subtrees.add("LineSOP")
