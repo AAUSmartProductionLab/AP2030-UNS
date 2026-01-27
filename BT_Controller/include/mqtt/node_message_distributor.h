@@ -62,13 +62,24 @@ public:
     std::vector<std::string> getActiveTopicPatterns() const;
 
 private:
-    // Modified structure to track subscription status
+    // Modified structure to track subscription status and route to multiple instances
     struct TopicHandler
     {
         std::string topic;
-        std::function<void(const std::string &, const json &, mqtt::properties)> callback;
+        std::vector<MqttSubBase*> instances;  // All instances listening to this topic
         int qos;
         bool subscribed;
+        
+        void routeMessage(const std::string &msg_topic, const json &msg, mqtt::properties props) const
+        {
+            for (MqttSubBase *instance : instances)
+            {
+                if (instance)
+                {
+                    instance->processMessage(msg_topic, msg, props);
+                }
+            }
+        }
     };
     struct NodeTypeSubscription
     {
