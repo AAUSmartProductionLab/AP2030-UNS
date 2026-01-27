@@ -1,0 +1,18 @@
+services:
+  camera_station:
+    build:
+      context: .
+      dockerfile: ./dockerfile
+    container_name: camera_station
+    restart: always
+    network_mode: host
+    environment:
+      - MQTT_BROKER=192.168.100.123
+      - MQTT_PORT=1883
+    volumes:
+      - .:/app
+      - ../MQTTSchemas:/app/MQTTSchemas
+      - ../AASDescriptions:/app/AASDescriptions
+    devices:
+      - /dev/video0:/dev/video0
+    command: cameraProxy.py
