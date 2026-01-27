@@ -451,10 +451,10 @@ namespace mqtt_utils
                         // If it's an HTTP(S) URL, fetch it via network
                         if (uri_str.find("http://") == 0 || uri_str.find("https://") == 0)
                         {
-                            schema = fetchSchemaFromUrl(uri_str);
+                            schema = schema_utils::fetchSchemaFromUrl(uri_str);
                             if (!schema.is_null())
                             {
-                                resolveSchemaReferences(schema);
+                                schema_utils::resolveSchemaReferences(schema);
                             }
                             return;
                         }
