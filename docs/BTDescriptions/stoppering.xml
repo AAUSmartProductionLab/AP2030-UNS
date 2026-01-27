@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
 <root BTCPP_format="4">
   <BehaviorTree ID="Stoppering">
     <Occupy Uuid="{ProductID}"
-            Assets="{Assets}"
-            _skipIf="scrap == true">
+            Assets="{Assets}">
       <ReactiveSequence>
         <ReactiveFallback>
           <Data_Condition comparison_type="equal"
@@ -14,7 +14,7 @@
           <Sleep msec="10000"/>
         </ReactiveFallback>
         <Sequence>
-          <moveToPosition Uuid="{ProductID}"
+          <moveToPosition Uuid="{XbotUuid}"
                           TargetPosition="{SelectedAsset}"
                           Asset="{Xbot}"/>
           <Command_Execution Parameters="&apos;{}&apos;"

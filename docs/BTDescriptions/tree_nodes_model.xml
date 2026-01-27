@@ -49,7 +49,7 @@
             <input_port name="Asset" type="std::string">The asset name to retrieve the property from</input_port>
         </Action>
         <Action ID="moveToPosition">
-            <input_port name="Uuid" type="std::string" default="{ProductID}">UUID for the command to execute</input_port>
+            <input_port name="Uuid" type="std::string" default="{XbotUuid}">UUID for the command to execute (should be the Xbot's reservation UUID)</input_port>
             <input_port name="TargetPosition" type="std::string" default="{Station}">The name of the station to move to</input_port>
             <input_port name="Asset" type="std::string" default="{Xbot}">The Asset to execute the movement</input_port>
         </Action>
