@@ -290,6 +290,8 @@ bool AASInterfaceCache::fetchAssetInterfaces(const std::string &asset_id)
                         try
                         {
                             input_schema = schema_utils::fetchSchemaFromUrl(input_schema_url);
+                            // Resolve any $ref references in the schema
+                            schema_utils::resolveSchemaReferences(input_schema);
                         }
                         catch (const std::exception &e)
                         {
@@ -302,6 +304,8 @@ bool AASInterfaceCache::fetchAssetInterfaces(const std::string &asset_id)
                         try
                         {
                             output_schema = schema_utils::fetchSchemaFromUrl(output_schema_url);
+                            // Resolve any $ref references in the schema
+                            schema_utils::resolveSchemaReferences(output_schema);
                         }
                         catch (const std::exception &e)
                         {
