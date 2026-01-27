@@ -5,11 +5,14 @@
 #include <algorithm>
 #include <cctype>
 
-namespace {
-    std::string toLower(const std::string& s) {
+namespace
+{
+    std::string toLower(const std::string &s)
+    {
         std::string result = s;
         std::transform(result.begin(), result.end(), result.begin(),
-                       [](unsigned char c) { return std::tolower(c); });
+                       [](unsigned char c)
+                       { return std::tolower(c); });
         return result;
     }
 }
@@ -45,9 +48,11 @@ bool AASInterfaceCache::prefetchInterfaces(const std::map<std::string, std::stri
     }
 
     std::cout << "AASInterfaceCache: Pre-fetch complete. "
-              << success_count << "/" << asset_ids.size() << " assets cached successfully." << std::endl << std::flush;
+              << success_count << "/" << asset_ids.size() << " assets cached successfully." << std::endl
+              << std::flush;
 
-    std::cout << "AASInterfaceCache: Returning from prefetchInterfaces with " << (success_count > 0 ? "true" : "false") << std::endl << std::flush;
+    std::cout << "AASInterfaceCache: Returning from prefetchInterfaces with " << (success_count > 0 ? "true" : "false") << std::endl
+              << std::flush;
 
     return success_count > 0;
 }
@@ -285,6 +290,8 @@ bool AASInterfaceCache::fetchAssetInterfaces(const std::string &asset_id)
                         try
                         {
                             input_schema = schema_utils::fetchSchemaFromUrl(input_schema_url);
+                            // Resolve any $ref references in the schema
+                            schema_utils::resolveSchemaReferences(input_schema);
                         }
                         catch (const std::exception &e)
                         {
@@ -297,6 +304,8 @@ bool AASInterfaceCache::fetchAssetInterfaces(const std::string &asset_id)
                         try
                         {
                             output_schema = schema_utils::fetchSchemaFromUrl(output_schema_url);
+                            // Resolve any $ref references in the schema
+                            schema_utils::resolveSchemaReferences(output_schema);
                         }
                         catch (const std::exception &e)
                         {
@@ -349,6 +358,9 @@ bool AASInterfaceCache::fetchAssetInterfaces(const std::string &asset_id)
         size_t num_interfaces = interface_cache_[asset_id].size();
         std::cout << "    Cached " << num_interfaces << " interfaces" << std::endl;
 
+        // Also fetch variable aliases for this asset
+        fetchVariableAliases(asset_id);
+
         return num_interfaces > 0;
     }
     catch (const std::exception &e)
@@ -371,7 +383,20 @@ std::optional<mqtt_utils::Topic> AASInterfaceCache::getInterface(
         return std::nullopt;
     }
 
-    auto interaction_it = asset_it->second.find(toLower(interaction));
+    std::string resolved_interaction = toLower(interaction);
+
+    // Check if the interaction is a Variable alias that needs to be resolved
+    auto alias_asset_it = variable_alias_cache_.find(asset_id);
+    if (alias_asset_it != variable_alias_cache_.end())
+    {
+        auto alias_it = alias_asset_it->second.find(resolved_interaction);
+        if (alias_it != alias_asset_it->second.end())
+        {
+            resolved_interaction = alias_it->second; // Use the resolved interface name
+        }
+    }
+
+    auto interaction_it = asset_it->second.find(resolved_interaction);
     if (interaction_it == asset_it->second.end())
     {
         return std::nullopt;
@@ -445,6 +470,7 @@ void AASInterfaceCache::clear()
 {
     // Note: mutex should already be locked by caller
     interface_cache_.clear();
+    variable_alias_cache_.clear();
     asset_base_topics_.clear();
     failed_assets_.clear();
 }
@@ -492,4 +518,77 @@ std::string AASInterfaceCache::extractBaseTopic(const std::string &topic) const
     }
 
     return topic;
+}
+void AASInterfaceCache::fetchVariableAliases(const std::string &asset_id)
+{
+    try
+    {
+        // Fetch the Variables submodel to extract variable-to-interface mappings
+        auto variables_data = aas_client_.fetchSubmodelData(asset_id, "Variables");
+        if (!variables_data)
+        {
+            // No Variables submodel - this is normal for some assets
+            return;
+        }
+
+        if (!variables_data->contains("submodelElements") ||
+            !(*variables_data)["submodelElements"].is_array())
+        {
+            return;
+        }
+
+        std::map<std::string, std::string> aliases;
+
+        for (const auto &elem : (*variables_data)["submodelElements"])
+        {
+            if (!elem.contains("idShort") || !elem.contains("value") || !elem["value"].is_array())
+            {
+                continue;
+            }
+
+            std::string variable_name = toLower(elem["idShort"].get<std::string>());
+
+            // Look for InterfaceReference within the variable's elements
+            for (const auto &child : elem["value"])
+            {
+                if (!child.contains("idShort") || child["idShort"] != "InterfaceReference")
+                {
+                    continue;
+                }
+
+                // InterfaceReference is a ReferenceElement with a keys array
+                if (!child.contains("value") || !child["value"].contains("keys") ||
+                    !child["value"]["keys"].is_array())
+                {
+                    continue;
+                }
+
+                const auto &keys = child["value"]["keys"];
+                if (keys.empty())
+                {
+                    continue;
+                }
+
+                // The last key in the path is the actual interface name
+                const auto &last_key = keys[keys.size() - 1];
+                if (last_key.contains("value"))
+                {
+                    std::string interface_name = toLower(last_key["value"].get<std::string>());
+                    aliases[variable_name] = interface_name;
+                    std::cout << "    Variable alias: " << variable_name << " -> " << interface_name << std::endl;
+                }
+                break;
+            }
+        }
+
+        if (!aliases.empty())
+        {
+            variable_alias_cache_[asset_id] = aliases;
+            std::cout << "    Cached " << aliases.size() << " variable aliases" << std::endl;
+        }
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "    Exception fetching variable aliases: " << e.what() << std::endl;
+    }
 }

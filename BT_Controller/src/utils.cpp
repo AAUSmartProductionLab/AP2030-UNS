@@ -52,20 +52,20 @@ namespace bt_utils
         std::string result = input;
         std::regex env_regex(R"(\$\{([^}:]+)(:-([^}]*))?\})");
         std::smatch match;
-        
+
         std::string::const_iterator searchStart(result.cbegin());
         std::string temp = result;
-        
+
         while (std::regex_search(temp, match, env_regex))
         {
             std::string var_name = match[1].str();
             std::string default_value = match[3].str();
             std::string full_match = match[0].str();
-            
+
             // Get environment variable value
             const char *env_value = std::getenv(var_name.c_str());
             std::string replacement;
-            
+
             if (env_value != nullptr && strlen(env_value) > 0)
             {
                 replacement = env_value;
@@ -74,17 +74,17 @@ namespace bt_utils
             {
                 replacement = default_value;
             }
-            
+
             // Replace in result
             size_t pos = result.find(full_match);
             if (pos != std::string::npos)
             {
                 result.replace(pos, full_match.length(), replacement);
             }
-            
+
             temp = match.suffix().str();
         }
-        
+
         return result;
     }
 
@@ -445,19 +445,27 @@ namespace mqtt_utils
                 auto validator = std::make_unique<nlohmann::json_schema::json_validator>(
                     [](const nlohmann::json_uri &uri, nlohmann::json &schema)
                     {
-                        // Extract the file name from the URI
-                        std::string schema_file = uri.path();
+                        // Get the full URI as a string for HTTP fetch
+                        std::string uri_str = uri.url();
 
-                        // Remove leading slash if present
+                        // If it's an HTTP(S) URL, fetch it via network
+                        if (uri_str.find("http://") == 0 || uri_str.find("https://") == 0)
+                        {
+                            schema = schema_utils::fetchSchemaFromUrl(uri_str);
+                            if (!schema.is_null())
+                            {
+                                schema_utils::resolveSchemaReferences(schema);
+                            }
+                            return;
+                        }
+
+                        // Fallback: try to load as local file (legacy behavior)
+                        std::string schema_file = uri.path();
                         if (!schema_file.empty() && schema_file[0] == '/')
                         {
                             schema_file = schema_file.substr(1);
                         }
-
-                        // Build the full path relative to the schemas directory
-                        std::string schema_path = "../../MQTTSchema" + schema_file;
-
-                        // Load the referenced schema
+                        std::string schema_path = "../../MQTTSchemas/" + schema_file;
                         schema = load_schema(schema_path);
                     },
                     nlohmann::json_schema::default_string_format_check);
@@ -681,14 +689,14 @@ namespace schema_utils
 
         if (res != CURLE_OK)
         {
-            std::cerr << "Failed to fetch content from URL: " << url 
+            std::cerr << "Failed to fetch content from URL: " << url
                       << ", CURL error: " << curl_easy_strerror(res) << std::endl;
             return "";
         }
 
         if (response_code != 200)
         {
-            std::cerr << "Failed to fetch content from URL: " << url 
+            std::cerr << "Failed to fetch content from URL: " << url
                       << ", HTTP status: " << response_code << std::endl;
             return "";
         }
@@ -699,7 +707,7 @@ namespace schema_utils
             return "";
         }
 
-        std::cout << "Successfully fetched content from: " << url 
+        std::cout << "Successfully fetched content from: " << url
                   << " (" << content_buffer.size() << " bytes)" << std::endl;
 
         return content_buffer;

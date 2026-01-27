@@ -328,7 +328,7 @@ const XbotTracker = () => {
   // MQTT Subscription for BT Controller State
   useEffect(() => {
     if (!mqttConnected) return;
-    const topic = "NN/Nybrovej/InnoLab/bt_controller/DATA/State";
+    const topic = "NN/Nybrovej/InnoLab/Orchestrator/DATA/State";
     const unsubscribe = mqttService.onMessage(topic, (message) => {
       try {
         const data = typeof message === 'string' ? JSON.parse(message) : message;

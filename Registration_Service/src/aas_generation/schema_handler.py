@@ -154,8 +154,8 @@ class SchemaHandler:
         Extract operation variables from a JSON schema.
         
         Recursively unpacks arrays with prefixItems (tuples) into individual named fields.
-        For example: Position[x, y, theta] → Position_X, Position_Y, Position_Theta
-        Uses 'title' property from prefixItems for field names.
+        For example: Position[x, y, theta] → X, Y, Theta
+        Uses 'title' property from prefixItems for field names (without parent prefix).
         
         Args:
             schema: The JSON schema dictionary
@@ -178,9 +178,11 @@ class SchemaHandler:
                 prefix_items = prop_def.get('prefixItems')
                 if prefix_items:
                     # Unpack tuple array into individual fields using titles
+                    # Use the item title directly (e.g., "X") not prefixed (e.g., "Position_X")
+                    # This matches the MQTT schema field names for automatic mapping
                     for idx, item_def in enumerate(prefix_items):
                         item_title = item_def.get('title', f'Item{idx}')
-                        var_name = f"{prop_name}_{item_title}"
+                        var_name = item_title  # Use title directly, no prefix
                         variables[var_name] = {
                             'type': item_def.get('type', 'string'),
                             'description': item_def.get('description', ''),

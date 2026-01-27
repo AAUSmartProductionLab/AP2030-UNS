@@ -584,15 +584,19 @@ export default function PlanarMotorConfigurator() {
     const stationsArray = placedNodes.map((node) => {
       const containerName = getContainerName(node.container);
       const stationId = MappingService.nameToId(containerName);
-      const positions = MappingService.getPositions(stationId);
+      const moduleType = node.assetType; // Use assetType URL for offset calculation
+      const offset = MappingService.getModuleOffset(moduleType);
+      const position = MappingService.getPositions(stationId, moduleType);
       
       // Use the node title as the instance name
       const instanceName = node.title || "Unknown System";
       
+      console.log(`[AssetType Debug] ${instanceName}: assetType="${moduleType}", offset=[${offset[0]}, ${offset[1]}], position=[${position[0]}, ${position[1]}, ${position[2]}]`);
+      
       return {
         "Instance Name": instanceName,
-        "Approach Position": positions.approach,
-        "Process Position": positions.process,
+        "Process Position": position,
+        "StationId": stationId,
         "AssetId": node.assetId,
         "AasId": node.aasId,
         "SubmodelId": node.submodelId,

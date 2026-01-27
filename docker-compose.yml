@@ -404,6 +404,7 @@ services:
       SUBMODEL_REPO_PATH: http://${EXTERNAL_HOST:-localhost}:8081/submodels
       CD_REPO_PATH: http://${EXTERNAL_HOST:-localhost}:8081/concept-descriptions
       AAS_DISCOVERY_PATH: http://${EXTERNAL_HOST:-localhost}:8084/lookup/shells
+      LOGO_PATH: novo logo.png
       PRIMARY_COLOR: '#0036AA'
       DASHBOARD_SERVICE_PATH: http://${EXTERNAL_HOST:-localhost}:8085/api/elements
     restart: always
@@ -425,6 +426,8 @@ services:
     depends_on:
       mongo:
         condition: service_healthy
+    volumes:
+      - ./logo:/usr/src/app/dist/Logo
     networks:
       - hivemq-network
   databridge:

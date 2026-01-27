@@ -305,12 +305,12 @@ def handle_xbot_motion_cmd(topic, client, message, properties, xbot_sm, xbot_id)
     # 1. Extract Info
     print(f"XBot {xbot_id} Motion Callback triggered.", flush=True)
     uuid = message.get("Uuid")
-    pos = message.get("Position") # [x, y, (rot)]
+    pos = message.get("Position") # [x, y, (rot)] in mm
     if not uuid or not pos: 
         print(f"XBot {xbot_id}: Invalid Message {message}", flush=True)
         return
     
-    goal_pos = (float(pos[0]), float(pos[1]))
+    goal_pos = (float(pos[0]) / 1000.0, float(pos[1]) / 1000.0)  # Convert mm to m
     goal_rot = np.radians(float(pos[2])) if len(pos) > 2 else None
     
     # 2. Register (Occupy) - REMOVED
@@ -365,8 +365,8 @@ def publish_positions_loop(proxy):
                     
                     if s and hasattr(s, 'feedback_position_si'):
                         pos = s.feedback_position_si
-                        x = round(float(pos[0]), 3)
-                        y = round(float(pos[1]), 3)
+                        x = round(float(pos[0]) * 1000.0, 3)  # Convert m to mm
+                        y = round(float(pos[1]) * 1000.0, 3)  # Convert m to mm
                         theta = round(np.degrees(float(pos[5])), 3) # Convert Rad to Deg for MQTT, round to 3
                         
                         current_pos_list = [x, y, theta]
@@ -376,8 +376,8 @@ def publish_positions_loop(proxy):
                         changed = False
                         if last is None:
                             changed = True
-                        elif (abs(last[0]-x) > 0.001 or 
-                              abs(last[1]-y) > 0.001 or 
+                        elif (abs(last[0]-x) > 1.0 or  # 1mm threshold in mm units
+                              abs(last[1]-y) > 1.0 or  # 1mm threshold in mm units
                               abs(last[2]-theta) > 0.1):
                             changed = True
                             

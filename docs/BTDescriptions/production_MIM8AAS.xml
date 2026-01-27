@@ -4,6 +4,7 @@
     <Sequence>
       <Configure Product="{product}" ProductIDs="{ProductIDs}"/>
       <ReactiveSequence>
+        <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="PackMLState" Asset="https://smartproductionlab.aau.dk/aas/planarTableAAS"/>
         <Parallel failure_count="-1" success_count="1">
           <SubTree ID="AsepticFilling" Xbot="{Xbot1}" ProductID="" _autoremap="true"/>
           <SubTree ID="AsepticFilling" Xbot="{Xbot2}" ProductID="" _autoremap="true"/>
@@ -22,19 +23,19 @@
           </ReactiveFallback>
           <Fallback>
             <SequenceWithMemory>
-              <SubTree ID="Loading" Assets="https://smartproductionlab.aau.dk/aas/imaLoadingSystemAAS" Xbot="{Xbot}" ProductID="{ProductID}" ProductIDs="{ProductIDs}" scrap="{scrap}" Station="{Station}" _autoremap="false"/>
-              <SubTree ID="Dispensing" Assets="https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS" Xbot="{Xbot}" ProductID="{ProductID}" scrap="{scrap}" Station="{Station}" _autoremap="false"/>
-              <SubTree ID="Stoppering" Assets="https://smartproductionlab.aau.dk/aas/syntegonStopperingSystemAAS" Xbot="{Xbot}" ProductID="{ProductID}" scrap="{scrap}" Station="{Station}" _autoremap="false"/>
-              <SubTree ID="QualityControl" Assets="https://smartproductionlab.aau.dk/aas/omronCameraSystemAAS" Xbot="{Xbot}" ProductID="{ProductID}" scrap="{scrap}" Station="{Station}" _autoremap="false"/>
-              <SubTree ID="Unloading" Assets="https://smartproductionlab.aau.dk/aas/optimaUnloadingSystemAAS" Xbot="{Xbot}" ProductID="{ProductID}" scrap="{scrap}" Station="{Station}" _autoremap="false"/>
+              <SubTree ID="Loading" Assets="https://smartproductionlab.aau.dk/aas/imaLoadingSystemAAS" Xbot="{Xbot}" XbotUuid="{Uuid}" ProductID="{ProductID}" ProductIDs="{ProductIDs}" scrap="{scrap}" Station="{Station}" _autoremap="false"/>
+              <SubTree ID="Dispensing" Assets="https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS" Xbot="{Xbot}" XbotUuid="{Uuid}" ProductID="{ProductID}" ProductIDs="{ProductIDs}" scrap="{scrap}" Station="{Station}" _autoremap="false"/>
+              <SubTree ID="Stoppering" Assets="https://smartproductionlab.aau.dk/aas/syntegonStopperingSystemAAS" Xbot="{Xbot}" XbotUuid="{Uuid}" ProductID="{ProductID}" ProductIDs="{ProductIDs}" scrap="{scrap}" Station="{Station}" _autoremap="false"/>
+              <SubTree ID="QualityControl" Assets="https://smartproductionlab.aau.dk/aas/omronCameraSystemAAS" Xbot="{Xbot}" XbotUuid="{Uuid}" ProductID="{ProductID}" ProductIDs="{ProductIDs}" scrap="{scrap}" Station="{Station}" _autoremap="false"/>
+              <SubTree ID="Unloading" Assets="https://smartproductionlab.aau.dk/aas/optimaUnloadingSystemAAS" Xbot="{Xbot}" XbotUuid="{Uuid}" ProductID="{ProductID}" ProductIDs="{ProductIDs}" scrap="{scrap}" Station="{Station}" _autoremap="false"/>
             </SequenceWithMemory>
-            <SubTree ID="Scraping" Assets="https://smartproductionlab.aau.dk/aas/optimaUnloadingSystemAAS" Xbot="{Xbot}" ProductID="{ProductID}" Station="{Station}" _autoremap="false"/>
+            <SubTree ID="Scraping" Assets="https://smartproductionlab.aau.dk/aas/optimaUnloadingSystemAAS" Xbot="{Xbot}" XbotUuid="{Uuid}" ProductID="{ProductID}" Station="{Station}" _autoremap="false"/>
           </Fallback>
         </ReactiveSequence>
       </KeepRunningUntilEmpty>
     </Occupy>
   </BehaviorTree>
-  <BehaviorTree ID="Unloading">
+  <BehaviorTree ID="Stoppering">
     <Occupy Uuid="{ProductID}" Assets="{Assets}" _skipIf="scrap == true">
       <ReactiveSequence>
         <ReactiveFallback>
@@ -42,8 +43,8 @@
           <Sleep msec="10000"/>
         </ReactiveFallback>
         <Sequence>
-          <moveToPosition Uuid="{ProductID}" TargetPosition="{SelectedAsset}" Asset="{Xbot}"/>
-          <Command_Execution Parameters="'{}'" Uuid="{ProductID}" Operation="Unloading" Asset="{SelectedAsset}"/>
+          <moveToPosition Uuid="{XbotUuid}" TargetPosition="{SelectedAsset}" Asset="{Xbot}"/>
+          <Command_Execution Parameters="'{}'" Uuid="{ProductID}" Operation="Stoppering" Asset="{SelectedAsset}"/>
         </Sequence>
       </ReactiveSequence>
     </Occupy>
@@ -56,8 +57,22 @@
           <Sleep msec="10000"/>
         </ReactiveFallback>
         <Sequence>
-          <moveToPosition Uuid="{ProductID}" TargetPosition="{SelectedAsset}" Asset="{Xbot}"/>
+          <moveToPosition Uuid="{XbotUuid}" TargetPosition="{SelectedAsset}" Asset="{Xbot}"/>
           <Command_Execution Parameters="'{}'" Uuid="{ProductID}" Operation="Unloading" Asset="{SelectedAsset}" _onSuccess="scrap:=false"/>
+        </Sequence>
+      </ReactiveSequence>
+    </Occupy>
+  </BehaviorTree>
+  <BehaviorTree ID="Unloading">
+    <Occupy Uuid="{ProductID}" Assets="{Assets}" _skipIf="scrap == true">
+      <ReactiveSequence>
+        <ReactiveFallback>
+          <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="PackMLState" Asset="{SelectedAsset}"/>
+          <Sleep msec="10000"/>
+        </ReactiveFallback>
+        <Sequence>
+          <moveToPosition Uuid="{XbotUuid}" TargetPosition="{SelectedAsset}" Asset="{Xbot}"/>
+          <Command_Execution Parameters="'{}'" Uuid="{ProductID}" Operation="Unloading" Asset="{SelectedAsset}"/>
         </Sequence>
       </ReactiveSequence>
     </Occupy>
@@ -72,7 +87,7 @@
             <Sleep msec="10000"/>
           </ReactiveFallback>
           <Sequence>
-            <moveToPosition Uuid="{ProductID}" TargetPosition="{SelectedAsset}" Asset="{Xbot}"/>
+            <moveToPosition Uuid="{XbotUuid}" TargetPosition="{SelectedAsset}" Asset="{Xbot}"/>
             <Command_Execution Parameters="'{}'" Uuid="{ProductID}" Operation="Loading" Asset="{SelectedAsset}"/>
           </Sequence>
         </ReactiveSequence>
@@ -87,7 +102,7 @@
           <Sleep msec="10000"/>
         </ReactiveFallback>
         <Sequence>
-          <moveToPosition Uuid="{ProductID}" TargetPosition="{SelectedAsset}" Asset="{Xbot}"/>
+          <moveToPosition Uuid="{XbotUuid}" TargetPosition="{SelectedAsset}" Asset="{Xbot}"/>
           <Command_Execution Parameters="'{}'" Uuid="{ProductID}" Operation="Capture" Asset="{SelectedAsset}"/>
         </Sequence>
       </ReactiveSequence>
@@ -101,22 +116,8 @@
           <Sleep msec="10000"/>
         </ReactiveFallback>
         <Sequence>
-          <moveToPosition Uuid="{ProductID}" TargetPosition="{SelectedAsset}" Asset="{Xbot}"/>
+          <moveToPosition Uuid="{XbotUuid}" TargetPosition="{SelectedAsset}" Asset="{Xbot}"/>
           <Command_Execution Parameters="'{}'" Uuid="{ProductID}" Operation="Dispensing" Asset="{SelectedAsset}"/>
-        </Sequence>
-      </ReactiveSequence>
-    </Occupy>
-  </BehaviorTree>
-  <BehaviorTree ID="Stoppering">
-    <Occupy Uuid="{ProductID}" Assets="{Assets}" _skipIf="scrap == true">
-      <ReactiveSequence>
-        <ReactiveFallback>
-          <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="PackMLState" Asset="{SelectedAsset}"/>
-          <Sleep msec="10000"/>
-        </ReactiveFallback>
-        <Sequence>
-          <moveToPosition Uuid="{ProductID}" TargetPosition="{SelectedAsset}" Asset="{Xbot}"/>
-          <Command_Execution Parameters="'{}'" Uuid="{ProductID}" Operation="Stoppering" Asset="{SelectedAsset}"/>
         </Sequence>
       </ReactiveSequence>
     </Occupy>
@@ -131,6 +132,7 @@
       <input_port name="Asset" type="std::string" default="{Asset}">The asset used for execution</input_port>
     </Action>
     <Action ID="Configure">
+      <input_port name="Product" type="std::string" default="{product}">Product AAS ID to fetch batch information from</input_port>
       <output_port name="ProductIDs" type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;" default="{ProductIDs}">List of product IDs to produce</output_port>
     </Action>
     <Condition ID="Data_Condition">
@@ -170,9 +172,62 @@
       <input_port name="Asset" type="std::string">The asset name to retrieve the property from</input_port>
     </Action>
     <Action ID="moveToPosition">
-      <input_port name="Uuid" type="std::string" default="{ProductID}">UUID for the command to execute</input_port>
+      <input_port name="Uuid" type="std::string" default="{XbotUuid}">UUID for the command to execute (should be the Xbot's reservation UUID)</input_port>
       <input_port name="TargetPosition" type="std::string" default="{Station}">The name of the station to move to</input_port>
       <input_port name="Asset" type="std::string" default="{Xbot}">The Asset to execute the movement</input_port>
     </Action>
+    <!-- SubTree port declarations for Groot visualization -->
+    <SubTree ID="AsepticFilling" editable="true">
+      <inout_port name="Xbot" default="{Xbot1}"/>
+      <output_port name="ProductID"/>
+    </SubTree>
+    <SubTree ID="Loading" editable="true">
+      <input_port name="Assets"/>
+      <inout_port name="Xbot"/>
+      <input_port name="XbotUuid"/>
+      <input_port name="ProductIDs"/>
+      <output_port name="ProductID"/>
+      <inout_port name="scrap"/>
+      <output_port name="Station"/>
+    </SubTree>
+    <SubTree ID="Dispensing" editable="true">
+      <input_port name="Assets"/>
+      <inout_port name="Xbot"/>
+      <input_port name="XbotUuid"/>
+      <input_port name="ProductID"/>
+      <inout_port name="scrap"/>
+      <output_port name="Station"/>
+    </SubTree>
+    <SubTree ID="Stoppering" editable="true">
+      <input_port name="Assets"/>
+      <inout_port name="Xbot"/>
+      <input_port name="XbotUuid"/>
+      <input_port name="ProductID"/>
+      <inout_port name="scrap"/>
+      <output_port name="Station"/>
+    </SubTree>
+    <SubTree ID="QualityControl" editable="true">
+      <input_port name="Assets"/>
+      <inout_port name="Xbot"/>
+      <input_port name="XbotUuid"/>
+      <input_port name="ProductID"/>
+      <inout_port name="scrap"/>
+      <output_port name="Station"/>
+    </SubTree>
+    <SubTree ID="Unloading" editable="true">
+      <input_port name="Assets"/>
+      <inout_port name="Xbot"/>
+      <input_port name="XbotUuid"/>
+      <input_port name="ProductID"/>
+      <inout_port name="scrap"/>
+      <output_port name="Station"/>
+    </SubTree>
+    <SubTree ID="Scraping" editable="true">
+      <input_port name="Assets"/>
+      <inout_port name="Xbot"/>
+      <input_port name="XbotUuid"/>
+      <input_port name="ProductID"/>
+      <output_port name="Station"/>
+    </SubTree>
   </TreeNodesModel>
 </root>
