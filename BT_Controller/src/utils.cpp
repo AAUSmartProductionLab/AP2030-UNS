@@ -447,7 +447,7 @@ namespace mqtt_utils
                     {
                         // Get the full URI as a string for HTTP fetch
                         std::string uri_str = uri.url();
-                        
+
                         // If it's an HTTP(S) URL, fetch it via network
                         if (uri_str.find("http://") == 0 || uri_str.find("https://") == 0)
                         {
@@ -458,7 +458,7 @@ namespace mqtt_utils
                             }
                             return;
                         }
-                        
+
                         // Fallback: try to load as local file (legacy behavior)
                         std::string schema_file = uri.path();
                         if (!schema_file.empty() && schema_file[0] == '/')
