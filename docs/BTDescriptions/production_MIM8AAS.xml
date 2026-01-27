@@ -177,49 +177,49 @@
       <input_port name="Asset" type="std::string" default="{Xbot}">The Asset to execute the movement</input_port>
     </Action>
     <!-- SubTree port declarations for Groot visualization -->
-    <SubTree ID="AsepticFilling">
-      <input_port name="Xbot"/>
+    <SubTree ID="AsepticFilling" editable="true">
+      <inout_port name="Xbot" default="{Xbot1}"/>
       <output_port name="ProductID"/>
     </SubTree>
-    <SubTree ID="Loading">
+    <SubTree ID="Loading" editable="true">
       <input_port name="Assets"/>
-      <input_port name="Xbot"/>
+      <inout_port name="Xbot"/>
       <input_port name="ProductIDs"/>
       <output_port name="ProductID"/>
-      <output_port name="scrap"/>
+      <inout_port name="scrap"/>
       <output_port name="Station"/>
     </SubTree>
-    <SubTree ID="Dispensing">
+    <SubTree ID="Dispensing" editable="true">
       <input_port name="Assets"/>
-      <input_port name="Xbot"/>
+      <inout_port name="Xbot"/>
       <input_port name="ProductID"/>
-      <output_port name="scrap"/>
+      <inout_port name="scrap"/>
       <output_port name="Station"/>
     </SubTree>
-    <SubTree ID="Stoppering">
+    <SubTree ID="Stoppering" editable="true">
       <input_port name="Assets"/>
-      <input_port name="Xbot"/>
+      <inout_port name="Xbot"/>
       <input_port name="ProductID"/>
-      <output_port name="scrap"/>
+      <inout_port name="scrap"/>
       <output_port name="Station"/>
     </SubTree>
-    <SubTree ID="QualityControl">
+    <SubTree ID="QualityControl" editable="true">
       <input_port name="Assets"/>
-      <input_port name="Xbot"/>
+      <inout_port name="Xbot"/>
       <input_port name="ProductID"/>
-      <output_port name="scrap"/>
+      <inout_port name="scrap"/>
       <output_port name="Station"/>
     </SubTree>
-    <SubTree ID="Unloading">
+    <SubTree ID="Unloading" editable="true">
       <input_port name="Assets"/>
-      <input_port name="Xbot"/>
+      <inout_port name="Xbot"/>
       <input_port name="ProductID"/>
-      <output_port name="scrap"/>
+      <inout_port name="scrap"/>
       <output_port name="Station"/>
     </SubTree>
-    <SubTree ID="Scraping">
+    <SubTree ID="Scraping" editable="true">
       <input_port name="Assets"/>
-      <input_port name="Xbot"/>
+      <inout_port name="Xbot"/>
       <input_port name="ProductID"/>
       <output_port name="Station"/>
     </SubTree>
