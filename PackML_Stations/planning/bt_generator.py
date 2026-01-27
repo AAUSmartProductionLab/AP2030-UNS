@@ -23,7 +23,6 @@ class BTGeneratorConfig:
     """Configuration for behavior tree generation"""
     subtrees_dir: str = "../BTDescriptions"
     use_prebuilt_subtrees: bool = True
-    include_error_recovery: bool = True
     tree_nodes_model_file: str = "tree_nodes_model.xml"
     # Map process names to subtree files
     subtree_file_mapping: Dict[str, str] = None
@@ -39,7 +38,6 @@ class BTGeneratorConfig:
                 "QualityControl": "qualityControl.xml",
                 "Inspection": "qualityControl.xml",  # Alias
                 "Unloading": "unloading.xml",
-                "Scraping": "scraping.xml",
                 "Capping": "capping.xml",
                 # Standard subtrees that were previously included via <include>
                 # "LineSOP": "lineSOP.xml",
@@ -61,7 +59,6 @@ class BTGenerator:
     - Using pre-built subtree files for standard operations
     - Generating custom subtrees from capability matches
     - Configuring parallelism based on mover count
-    - Including error recovery subtrees
     """
 
     def __init__(self, config: Optional[BTGeneratorConfig] = None):
@@ -110,8 +107,7 @@ class BTGenerator:
         self._capability_assets["Moving"] = mover_ids
         self._capability_assets["Xbot"] = mover_ids
 
-        # For Scraping/Unloading, use all unloading-capable resources
-        # Check if we have explicit unloading matches, otherwise use all resources
+        # If we don't have explicit unloading matches, use all resources
         if "Unloading" not in self._capability_assets:
             # Use all station resources as potential unloading points
             all_station_ids = []
@@ -119,7 +115,6 @@ class BTGenerator:
                 all_station_ids.extend(
                     [res.aas_id for res in match.matched_resources])
             self._capability_assets["Unloading"] = list(set(all_station_ids))
-            self._capability_assets["Scraping"] = self._capability_assets["Unloading"]
 
         logger.debug(f"Built capability assets map: {self._capability_assets}")
 
@@ -269,12 +264,9 @@ class BTGenerator:
                       Asset="{Xbot}")
         ET.SubElement(reactive_fallback, "Sleep", msec="10000")
 
-        # Main process flow with error recovery
-        process_fallback = ET.SubElement(reactive_seq, "Fallback")
-
-        # Only create SequenceWithMemory if there are process steps to add
+        # Main process flow - create SequenceWithMemory for process steps
         if matching_result.process_matches:
-            seq_mem = ET.SubElement(process_fallback, "SequenceWithMemory")
+            seq_mem = ET.SubElement(reactive_seq, "SequenceWithMemory")
 
             # Add subtree call for each process step
             for match in matching_result.process_matches:
@@ -293,26 +285,15 @@ class BTGenerator:
 
                 # Pass mover reference explicitly (from parent's Xbot, not SelectedAsset)
                 subtree_elem.set("Xbot", "{Xbot}")
+                # Pass the Xbot's reservation UUID for moveToPosition commands
+                subtree_elem.set("XbotUuid", "{Uuid}")
                 # Use _autoremap=false to prevent inner SelectedAsset from overwriting Xbot
                 subtree_elem.set("ProductID", "{ProductID}")
                 subtree_elem.set("ProductIDs", "{ProductIDs}")
-                subtree_elem.set("scrap", "{scrap}")
                 subtree_elem.set("Station", "{Station}")
                 subtree_elem.set("_autoremap", "false")
 
-        # Error recovery: Scraping - use unloading-capable resources
-        if self.config.include_error_recovery:
-            scraping_subtree = ET.SubElement(
-                process_fallback, "SubTree", ID="Scraping")
-            unload_assets = self.get_assets_for_capability("Unloading")
-            if unload_assets:
-                scraping_subtree.set(
-                    "Assets", self._format_assets_array(unload_assets))
-            # Pass mover reference explicitly (from parent's Xbot)
-            scraping_subtree.set("Xbot", "{Xbot}")
-            scraping_subtree.set("ProductID", "{ProductID}")
-            scraping_subtree.set("Station", "{Station}")
-            scraping_subtree.set("_autoremap", "false")
+
 
     def _get_subtree_id(self, process_name: str) -> str:
         """Get the subtree ID for a process name"""
@@ -344,9 +325,7 @@ class BTGenerator:
             subtree_id = self._get_subtree_id(match.process_step.name)
             needed_subtrees.add(subtree_id)
 
-        # Always include Scraping for error recovery
-        if self.config.include_error_recovery:
-            needed_subtrees.add("Scraping")
+
 
         # Always include standard subtrees that were previously referenced via <include>
         # needed_subtrees.add("LineSOP")
@@ -480,8 +459,7 @@ class BTGenerator:
         # Use Assets (array) - will be filled by caller or from blackboard
         occupy = ET.SubElement(bt, "Occupy",
                                Uuid="{ProductID}",
-                               Assets="{Assets}",
-                               _skipIf="scrap == true")
+                               Assets="{Assets}")
 
         reactive_seq = ET.SubElement(occupy, "ReactiveSequence")
 
@@ -498,13 +476,13 @@ class BTGenerator:
         # Execution sequence
         exec_seq = ET.SubElement(reactive_seq, "Sequence")
 
-        # Move to station - get station position from selected asset
+        # Move to station - use XbotUuid (the Xbot's reservation UUID from parent Occupy)
         ET.SubElement(exec_seq, "moveToPosition",
-                      Uuid="{ProductID}",
-                      TargetPosition="{Station}",
+                      Uuid="{XbotUuid}",
+                      TargetPosition="{SelectedAsset}",
                       Asset="{Xbot}")
 
-        # Execute operation on the selected asset
+        # Execute operation on the selected asset - use ProductID for station commands
         operation_name = process_step.name.lower()
         ET.SubElement(exec_seq, "Command_Execution",
                       Parameters="'{}'",
