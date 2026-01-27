@@ -173,16 +173,6 @@ export default function Homepage() {
             <p>Configure application preferences</p>
           </div>
         </Link>
-        {/* Router */}
-        <a href="http://192.168.0.1" target="_blank" rel="noopener noreferrer" className="service-card with-bg-image external">
-            <img src="/router.png" alt="" className="card-image-bg" />
-            <div className="card-content">
-              <div className="card-icon"></div>
-              <h2>Network Router</h2>
-              <p>Configure network settings and device management</p>
-            </div>
-            <div className="external-indicator">External Link</div>
-          </a>
       </div>
 
       {/* EXTERNAL TOOLS SECTION */}
@@ -251,6 +241,17 @@ export default function Homepage() {
           </div>
           <div className="external-indicator">External Link</div>
         </a>
+        
+        {/* Router */}
+        <a href="http://192.168.0.1" target="_blank" rel="noopener noreferrer" className="service-card with-bg-image external">
+            <img src="/router.png" alt="" className="card-image-bg" />
+            <div className="card-content">
+              <div className="card-icon"></div>
+              <h2>Network Router</h2>
+              <p>Configure network settings and device management</p>
+            </div>
+            <div className="external-indicator">External Link</div>
+          </a>
       </div>
       
       <div className="system-status">
