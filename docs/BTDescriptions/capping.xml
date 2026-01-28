@@ -2,8 +2,7 @@
 <root BTCPP_format="4">
   <BehaviorTree ID="Capping">
     <Occupy Uuid="{ProductID}"
-            Assets="{Assets}"
-            _skipIf="scrap == true">
+            Assets="{Assets}">
       <ReactiveSequence>
         <ReactiveFallback>
           <Data_Condition comparison_type="equal"

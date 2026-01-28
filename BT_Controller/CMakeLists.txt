@@ -38,6 +38,8 @@ add_library(bt_controller_common STATIC
     src/bt/decorators/occupy.cpp
     src/bt/decorators/get_product_from_queue.cpp
     src/bt/decorators/keep_running_until_empty.cpp
+    src/bt/decorators/quality_control_gate.cpp
+    src/bt/decorators/sampling_gate.cpp
     src/bt/controls/bc_fallback_node.cpp
 )
 

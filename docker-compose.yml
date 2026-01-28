@@ -422,12 +422,11 @@ services:
       - '8085:8085'
     volumes:
       - ./basyx/aas-dashboard.yml:/application.yml
+      - ./logo:/usr/src/app/dist/Logo
     restart: always
     depends_on:
       mongo:
         condition: service_healthy
-    volumes:
-      - ./logo:/usr/src/app/dist/Logo
     networks:
       - hivemq-network
   databridge:

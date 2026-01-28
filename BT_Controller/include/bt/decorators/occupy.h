@@ -5,6 +5,7 @@
 #include <nlohmann/json.hpp>
 #include <string>
 #include <vector>
+#include <set>
 #include <unordered_map>
 #include <unordered_set>
 #include "mqtt/mqtt_pub_base.h"
@@ -33,9 +34,10 @@ private:
     // Multi-asset tracking
     std::vector<std::string> asset_ids_;                          // All candidate assets from input
     std::string selected_asset_id_;                                // The asset that was successfully occupied
-    std::unordered_map<std::string, std::string> asset_uuids_;     // asset_id -> UUID for each request
+    std::string occupy_uuid_;                                      // Single UUID for this occupy operation (same for all assets)
     std::unordered_set<std::string> pending_assets_;               // Assets waiting for occupy response
     std::unordered_set<std::string> assets_to_release_;            // Assets that need release (occupied but not selected)
+    std::set<std::string> assets_with_pending_requests_;           // All assets we've sent requests to (for proper cleanup)
 
     // Helper to generate topic keys per asset
     std::string getOccupyRequestKey(const std::string& asset_id) const;

@@ -13,7 +13,7 @@
           <Sleep msec="10000"/>
         </ReactiveFallback>
         <Sequence>
-          <moveToPosition Uuid="{ProductID}"
+          <moveToPosition Uuid="{XbotUuid}"
                           TargetPosition="{SelectedAsset}"
                           Asset="{Xbot}"/>
           <Command_Execution Parameters="&apos;{}&apos;"

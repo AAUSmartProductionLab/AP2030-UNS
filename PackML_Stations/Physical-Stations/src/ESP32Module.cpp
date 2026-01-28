@@ -64,6 +64,8 @@ void ESP32Module::initWiFi()
 {
     Serial.print("Connecting to WiFi: ");
     Serial.println(config.ssid);
+    Serial.print("with Password: ");
+    Serial.println(config.password);
     Serial.flush();
 
     WiFi.begin(config.ssid, config.password);
@@ -72,7 +74,8 @@ void ESP32Module::initWiFi()
     while (WiFi.status() != WL_CONNECTED && attempts < 20)
     {
         delay(500);
-        Serial.print(".");
+        //Serial.print(".");
+        Serial.println(WiFi.status());
         attempts++;
         esp_task_wdt_reset();
     }
@@ -154,7 +157,8 @@ void ESP32Module::initializeTime()
     Serial.print("Synchronizing time with NTP");
 
     // Set Danish time with automatic daylight saving
-    configTzTime("CET-1CEST,M3.5.0/02,M10.5.0/03", "pool.ntp.org", "time.nist.gov");
+    configTzTime("CET-1CEST-2,M3.5.0/02,M10.5.0/03", "pool.ntp.org", "time.nist.gov");
+
 
     struct tm timeinfo;
     for (int i = 0; i < 10; i++)
@@ -272,7 +276,29 @@ void ESP32Module::onMqttConnect(bool sessionPresent)
 
 void ESP32Module::onMqttDisconnect(AsyncMqttClientDisconnectReason reason)
 {
-    Serial.println("MQTT Disconnected");
+    Serial.println("MQTT Disconnected: " + String((uint8_t)reason));
+    Serial.println("Attempting to reconnect to MQTT broker...");
+    Serial.flush();
+
+    // Keep trying to reconnect until successful
+    while (WiFi.status() == WL_CONNECTED)
+    {
+        mqttClient.connect();
+        Serial.println("Reconnection attempt sent");
+        Serial.flush();
+        // Wait a bit before next attempt
+        for (int i = 0; i < 10; ++i) {
+            delay(500);
+            esp_task_wdt_reset();
+            if (mqttClient.connected()) {
+                Serial.println("MQTT reconnected!");
+                Serial.flush();
+                return;
+            }
+        }
+    }
+    Serial.println("WiFi disconnected, cannot reconnect to MQTT");
+    Serial.flush();
 }
 
 void ESP32Module::onMqttMessage(char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total)

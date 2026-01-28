@@ -89,17 +89,12 @@ bool NodeMessageDistributor::subscribeForActiveNodes(const BT::Tree &tree,
             if (instances_for_topic.empty())
                 continue;
 
-            auto callback = [instances_copy = instances_for_topic](
-                                const std::string &msg_topic, const json &msg, mqtt::properties props)
-            {
-                for (MqttSubBase *instance : instances_copy)
-                {
-                    instance->processMessage(msg_topic, msg, props);
-                }
-            };
-
-            int qos = topic_to_max_qos[topic_str];
-            topic_handlers_.push_back({topic_str, callback, qos, false});
+            TopicHandler handler;
+            handler.topic = topic_str;
+            handler.instances = instances_for_topic;
+            handler.qos = topic_to_max_qos[topic_str];
+            handler.subscribed = false;
+            topic_handlers_.push_back(handler);
         }
     }
 
@@ -179,6 +174,7 @@ void NodeMessageDistributor::handle_incoming_message(const std::string &msg_topi
 {
     // Route message to registered handlers
     // Note: We rely on MQTT broker retained messages instead of local caching
+    std::lock_guard<std::mutex> lock(handlers_mutex_);
     bool handled = false;
     for (const auto &handler : topic_handlers_)
     {
@@ -186,7 +182,7 @@ void NodeMessageDistributor::handle_incoming_message(const std::string &msg_topi
         // msg_topic is the actual topic the message arrived on
         if (handler.subscribed && mqtt_utils::topicMatches(handler.topic, msg_topic))
         {
-            handler.callback(msg_topic, payload, props);
+            handler.routeMessage(msg_topic, payload, props);
             handled = true;
             // If multiple handlers match (e.g. overlapping wildcards), all will be called.
         }
@@ -233,7 +229,7 @@ bool NodeMessageDistributor::registerLateInitializingNode(MqttSubBase *instance,
         std::string topic_str = topic_obj.getTopic();
         int qos = topic_obj.getQos();
 
-        // Check if handler already exists for this topic
+        // Check if handler already exists for this topic and add instance if so
         bool handler_exists = false;
         {
             std::lock_guard<std::mutex> lock(handlers_mutex_);
@@ -242,6 +238,22 @@ bool NodeMessageDistributor::registerLateInitializingNode(MqttSubBase *instance,
                 if (h.topic == topic_str)
                 {
                     handler_exists = true;
+                    // Check if instance is already in the list
+                    bool instance_already_registered = false;
+                    for (MqttSubBase* existing : h.instances)
+                    {
+                        if (existing == instance)
+                        {
+                            instance_already_registered = true;
+                            break;
+                        }
+                    }
+                    if (!instance_already_registered)
+                    {
+                        // ADD the new instance to the existing handler
+                        h.instances.push_back(instance);
+                        std::cout << "  Added late-init instance to existing handler for: " << topic_str << std::endl;
+                    }
                     break;
                 }
             }
@@ -251,10 +263,7 @@ bool NodeMessageDistributor::registerLateInitializingNode(MqttSubBase *instance,
                 // Add new handler for this late-initializing node
                 TopicHandler handler;
                 handler.topic = topic_str;
-                handler.callback = [instance](const std::string &t, const json &m, mqtt::properties p)
-                {
-                    instance->processMessage(t, m, p);
-                };
+                handler.instances.push_back(instance);
                 handler.qos = qos;
                 handler.subscribed = false;
                 topic_handlers_.push_back(handler);

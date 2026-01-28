@@ -100,31 +100,43 @@ bool MqttSyncConditionNode::ensureInitialized()
     }
 
     // Try lazy initialization
-    std::cout << "Node '" << this->name() << "' attempting lazy initialization..." << std::endl;
+    std::cout << "[MqttSyncConditionNode] Node '" << this->name() << "' attempting lazy initialization..." << std::endl;
     initializeTopicsFromAAS();
 
     if (topics_initialized_ && MqttSubBase::node_message_distributor_)
     {
         // Use registerLateInitializingNode to subscribe to specific topics
         // This triggers the broker to resend retained messages
+        std::cout << "[MqttSyncConditionNode] Node '" << this->name() << "' registering for late subscription..." << std::endl;
+        auto start_time = std::chrono::steady_clock::now();
+        
         bool success = MqttSubBase::node_message_distributor_->registerLateInitializingNode(this);
+        
+        auto sub_time = std::chrono::steady_clock::now();
+        auto sub_ms = std::chrono::duration_cast<std::chrono::milliseconds>(sub_time - start_time).count();
+        
         if (success)
         {
-            std::cout << "Node '" << this->name() << "' lazy initialized and subscribed successfully" << std::endl;
+            std::cout << "[MqttSyncConditionNode] Node '" << this->name() 
+                      << "' lazy initialized and subscribed successfully (took " << sub_ms << "ms)" << std::endl;
 
             // Wait briefly for retained messages to arrive after subscription
             // The MQTT broker sends retained messages asynchronously after subscription completes,
             // so we need a small delay to allow them to be delivered before the first tick
+            std::cout << "[MqttSyncConditionNode] Node '" << this->name() 
+                      << "' waiting 50ms for retained messages..." << std::endl;
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
+            std::cout << "[MqttSyncConditionNode] Node '" << this->name() 
+                      << "' wait complete, returning from ensureInitialized()" << std::endl;
         }
         else
         {
-            std::cerr << "Node '" << this->name() << "' lazy init: subscription failed" << std::endl;
+            std::cerr << "[MqttSyncConditionNode] Node '" << this->name() << "' lazy init: subscription failed" << std::endl;
         }
     }
     else if (!topics_initialized_)
     {
-        std::cerr << "Node '" << this->name() << "' lazy initialization FAILED - topics not configured" << std::endl;
+        std::cerr << "[MqttSyncConditionNode] Node '" << this->name() << "' lazy initialization FAILED - topics not configured" << std::endl;
     }
 
     return topics_initialized_;

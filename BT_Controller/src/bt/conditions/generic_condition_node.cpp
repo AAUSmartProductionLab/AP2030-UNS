@@ -2,6 +2,21 @@
 #include "mqtt/node_message_distributor.h"
 #include "aas/aas_interface_cache.h"
 #include "utils.h"
+#include <chrono>
+#include <iomanip>
+#include <thread>
+
+// Helper to get current timestamp for logging
+static std::string getLogTimestamp()
+{
+    auto now = std::chrono::system_clock::now();
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
+    auto time = std::chrono::system_clock::to_time_t(now);
+    std::tm tm = *std::localtime(&time);
+    std::ostringstream oss;
+    oss << std::put_time(&tm, "%H:%M:%S") << '.' << std::setfill('0') << std::setw(3) << ms.count();
+    return oss.str();
+}
 
 BT::PortsList GenericConditionNode::providedPorts()
 {
@@ -24,7 +39,8 @@ void GenericConditionNode::initializeTopicsFromAAS()
         auto asset_input = getInput<std::string>("Asset");
         if (!asset_input.has_value())
         {
-            std::cerr << "Node '" << this->name() << "' has no Asset input configured" << std::endl;
+            std::cerr << "[" << getLogTimestamp() << "] [DataCondition] Node '" << this->name() 
+                      << "' has no Asset input configured" << std::endl;
             return;
         }
 
@@ -33,7 +49,8 @@ void GenericConditionNode::initializeTopicsFromAAS()
         auto property_name = getInput<std::string>("Property");
         if (!property_name.has_value())
         {
-            std::cerr << "Node '" << this->name() << "' has no Property input configured" << std::endl;
+            std::cerr << "[" << getLogTimestamp() << "] [DataCondition] Node '" << this->name() 
+                      << "' has no Property input configured" << std::endl;
             return;
         }
 
@@ -50,14 +67,21 @@ void GenericConditionNode::initializeTopicsFromAAS()
         if (topics_initialized_ &&
             (asset_id != initialized_asset_id_ || property_name.value() != initialized_property_))
         {
-            std::cout << "Node '" << this->name() << "' reinitializing: asset/property changed from "
+            std::cout << "[" << getLogTimestamp() << "] [DataCondition] Node '" << this->name() 
+                      << "' reinitializing: asset/property changed from "
                       << initialized_asset_id_ << "/" << initialized_property_ << " to "
                       << asset_id << "/" << property_name.value() << std::endl;
             topics_initialized_ = false;
             latest_msg_ = json(); // Clear old message from different asset
+            tick_count_ = 0;
+            first_message_received_time_.reset();
         }
 
-        std::cout << "Node '" << this->name() << "' initializing for Asset: " << asset_id << std::endl;
+        std::cout << "[" << getLogTimestamp() << "] [DataCondition] Node '" << this->name() 
+                  << "' INITIALIZING for Asset: " << asset_id 
+                  << ", Property: " << property_name.value() << std::endl;
+        
+        initialization_time_ = std::chrono::steady_clock::now();
 
         // First, try to use the cached interface (fast path)
         auto cache = MqttSubBase::getAASInterfaceCache();
@@ -66,8 +90,9 @@ void GenericConditionNode::initializeTopicsFromAAS()
             auto cached_interface = cache->getInterface(asset_id, property_name.value(), "output");
             if (cached_interface.has_value())
             {
-                std::cout << "Node '" << this->name() << "' using cached interface for property: "
-                          << property_name.value() << std::endl;
+                std::cout << "[" << getLogTimestamp() << "] [DataCondition] Node '" << this->name() 
+                          << "' using cached interface for property: " << property_name.value() 
+                          << ", topic: " << cached_interface.value().getTopic() << std::endl;
                 MqttSubBase::setTopic("output", cached_interface.value());
                 topics_initialized_ = true;
                 initialized_asset_id_ = asset_id;
@@ -77,15 +102,19 @@ void GenericConditionNode::initializeTopicsFromAAS()
         }
 
         // Fall back to direct AAS query (slow path)
-        std::cout << "Node '" << this->name() << "' falling back to direct AAS query" << std::endl;
+        std::cout << "[" << getLogTimestamp() << "] [DataCondition] Node '" << this->name() 
+                  << "' falling back to direct AAS query" << std::endl;
         auto condition_opt = aas_client_.fetchInterface(asset_id, property_name.value(), "output");
 
         if (!condition_opt.has_value())
         {
-            std::cerr << "Failed to fetch interface from AAS for node: " << this->name() << std::endl;
+            std::cerr << "[" << getLogTimestamp() << "] [DataCondition] FAILED to fetch interface from AAS for node: " 
+                      << this->name() << std::endl;
             return;
         }
 
+        std::cout << "[" << getLogTimestamp() << "] [DataCondition] Node '" << this->name() 
+                  << "' got topic from AAS: " << condition_opt.value().getTopic() << std::endl;
         MqttSubBase::setTopic("output", condition_opt.value());
         topics_initialized_ = true;
         initialized_asset_id_ = asset_id;
@@ -93,31 +122,92 @@ void GenericConditionNode::initializeTopicsFromAAS()
     }
     catch (const std::exception &e)
     {
-        std::cerr << "Exception initializing topics from AAS: " << e.what() << std::endl;
+        std::cerr << "[" << getLogTimestamp() << "] [DataCondition] Exception initializing topics from AAS: " 
+                  << e.what() << std::endl;
     }
 }
 
 BT::NodeStatus GenericConditionNode::tick()
 {
+    tick_count_++;
+    
     // Ensure lazy initialization is done
     if (!ensureInitialized())
     {
         auto asset = getInput<std::string>("Asset");
         auto property = getInput<std::string>("Property");
-        std::cerr << "Node '" << this->name() << "' FAILED - could not initialize. "
+        std::cerr << "[" << getLogTimestamp() << "] [DataCondition] Node '" << this->name() 
+                  << "' tick #" << tick_count_ << " FAILED - could not initialize. "
                   << "Asset=" << (asset.has_value() ? asset.value() : "<not set>") << ", "
                   << "Property=" << (property.has_value() ? property.value() : "<not set>") << std::endl;
         return BT::NodeStatus::FAILURE;
     }
 
-    // Use a unique_lock since we need to wait on a condition variable
+    // Calculate time since initialization for debugging
+    auto now = std::chrono::steady_clock::now();
+    auto ms_since_init = std::chrono::duration_cast<std::chrono::milliseconds>(now - initialization_time_).count();
+
+    // Use a unique_lock since we may need to wait on a condition variable
     std::unique_lock<std::mutex> lock(mutex_);
 
-    // Wait until a message is received
+    // Check if we have received a message yet
     if (latest_msg_.is_null())
     {
-        return BT::NodeStatus::FAILURE;
+        // On early ticks, wait briefly for the first message to arrive
+        // This handles the race condition between subscription and retained message delivery
+        constexpr int MAX_WAIT_TICKS = 5;
+        constexpr auto WAIT_TIMEOUT = std::chrono::milliseconds(200);
+        
+        if (tick_count_ <= MAX_WAIT_TICKS)
+        {
+            std::cout << "[" << getLogTimestamp() << "] [DataCondition] Node '" << this->name() 
+                      << "' tick #" << tick_count_ << " - no message yet, waiting up to " 
+                      << WAIT_TIMEOUT.count() << "ms for first message..." << std::endl;
+            
+            // Release lock and wait for message to arrive
+            lock.unlock();
+            
+            // Wait in small increments, checking for message
+            auto wait_start = std::chrono::steady_clock::now();
+            while (std::chrono::steady_clock::now() - wait_start < WAIT_TIMEOUT)
+            {
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                
+                std::lock_guard<std::mutex> check_lock(mutex_);
+                if (!latest_msg_.is_null())
+                {
+                    auto wait_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                        std::chrono::steady_clock::now() - wait_start).count();
+                    std::cout << "[" << getLogTimestamp() << "] [DataCondition] Node '" << this->name() 
+                              << "' message arrived after " << wait_ms << "ms wait" << std::endl;
+                    break;
+                }
+            }
+            
+            // Re-acquire lock and check again
+            lock.lock();
+        }
+        
+        // If still no message after waiting
+        if (latest_msg_.is_null())
+        {
+            std::cerr << "[" << getLogTimestamp() << "] [DataCondition] Node '" << this->name() 
+                      << "' tick #" << tick_count_ << " FAILURE - no message received!"
+                      << " Time since init: " << ms_since_init << "ms"
+                      << ", Asset: " << initialized_asset_id_
+                      << ", Property: " << initialized_property_ << std::endl;
+            
+            // Log topics we're subscribed to
+            for (const auto& [key, topic] : topics_)
+            {
+                std::cerr << "[" << getLogTimestamp() << "] [DataCondition]   -> Subscribed topic[" << key << "]: " 
+                          << topic.getTopic() << std::endl;
+            }
+            
+            return BT::NodeStatus::FAILURE;
+        }
     }
+    
     BT::Expected<std::string> field_name_res = getInput<std::string>("Field");
     BT::Expected<std::string> expected_value_res = getInput<std::string>("expected_value");
     BT::Expected<std::string> comparison_type_res = getInput<std::string>("comparison_type");
@@ -125,10 +215,33 @@ BT::NodeStatus GenericConditionNode::tick()
     if (field_name_res.has_value() && expected_value_res.has_value() && comparison_type_res.has_value())
     {
         bool result = compare(latest_msg_, field_name_res.value(), comparison_type_res.value(), expected_value_res.value());
+        
+        // Log comparison details on first few ticks or when result changes
+        if (tick_count_ <= 3 || result != last_comparison_result_)
+        {
+            std::cout << "[" << getLogTimestamp() << "] [DataCondition] Node '" << this->name() 
+                      << "' tick #" << tick_count_ << ": comparing " << field_name_res.value()
+                      << " (" << comparison_type_res.value() << ") '" << expected_value_res.value() << "'"
+                      << " -> actual: " << (latest_msg_.contains(field_name_res.value()) ? 
+                                            latest_msg_[field_name_res.value()].dump() : "<missing>")
+                      << " -> result: " << (result ? "SUCCESS" : "FAILURE")
+                      << ", ms_since_init: " << ms_since_init << std::endl;
+            last_comparison_result_ = result;
+        }
+        
         if (result)
         {
             return BT::NodeStatus::SUCCESS;
         }
+    }
+    else
+    {
+        std::cerr << "[" << getLogTimestamp() << "] [DataCondition] Node '" << this->name() 
+                  << "' tick #" << tick_count_ << " FAILURE - missing input ports: "
+                  << "Field=" << (field_name_res.has_value() ? field_name_res.value() : "<not set>")
+                  << ", expected_value=" << (expected_value_res.has_value() ? expected_value_res.value() : "<not set>")
+                  << ", comparison_type=" << (comparison_type_res.has_value() ? comparison_type_res.value() : "<not set>")
+                  << std::endl;
     }
     return BT::NodeStatus::FAILURE;
 }
@@ -139,11 +252,35 @@ void GenericConditionNode::callback(const std::string &topic_key, const json &ms
     if (field_name_res && msg.contains(field_name_res.value()))
     {
         std::lock_guard<std::mutex> lock(mutex_);
+        
+        bool is_first_message = latest_msg_.is_null();
         latest_msg_ = msg;
+        
+        if (is_first_message)
+        {
+            first_message_received_time_ = std::chrono::steady_clock::now();
+            auto ms_since_init = std::chrono::duration_cast<std::chrono::milliseconds>(
+                first_message_received_time_.value() - initialization_time_).count();
+            
+            std::cout << "[" << getLogTimestamp() << "] [DataCondition] Node '" << this->name() 
+                      << "' FIRST MESSAGE RECEIVED on topic_key='" << topic_key << "'"
+                      << ", " << ms_since_init << "ms after init"
+                      << ", tick_count at receipt: " << tick_count_
+                      << ", Field=" << field_name_res.value()
+                      << ", Value=" << msg[field_name_res.value()].dump() << std::endl;
+        }
     }
     else
     {
-        std::cout << "GenericConditionNode: No valid field name or message does not contain the field." << std::endl;
+        std::cout << "[" << getLogTimestamp() << "] [DataCondition] Node '" << this->name() 
+                  << "' received message on topic_key='" << topic_key << "' but field '"
+                  << (field_name_res.has_value() ? field_name_res.value() : "<not set>")
+                  << "' not found in message. Keys: ";
+        for (auto it = msg.begin(); it != msg.end(); ++it)
+        {
+            std::cout << it.key() << " ";
+        }
+        std::cout << std::endl;
     }
 }
 

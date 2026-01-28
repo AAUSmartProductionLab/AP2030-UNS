@@ -4,12 +4,9 @@
     <SequenceWithMemory>
       <PopElement ProductID="{ProductID}"
                   if_empty="SUCCESS"
-                  Queue="{ProductIDs}"
-                  _onSuccess="scrap:= false"
-                  _onFailure="scrap:= true"/>
+                  Queue="{ProductIDs}"/>
       <Occupy Uuid="{ProductID}"
-              Assets="{Assets}"
-              _skipIf="scrap == true">
+              Assets="{Assets}">
         <ReactiveSequence>
           <ReactiveFallback>
             <Data_Condition comparison_type="equal"
@@ -20,7 +17,7 @@
             <Sleep msec="10000"/>
           </ReactiveFallback>
           <Sequence>
-            <moveToPosition Uuid="{ProductID}"
+            <moveToPosition Uuid="{XbotUuid}"
                             TargetPosition="{SelectedAsset}"
                             Asset="{Xbot}"/>
             <Command_Execution Parameters="&apos;{}&apos;"

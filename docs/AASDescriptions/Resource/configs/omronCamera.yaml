@@ -10,7 +10,7 @@ omronCameraSystemAAS:
         InterfaceMQTT:
             Title: 'optima Camera System'
             EndpointMetadata:
-                base: 'mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/Camera'
+                base: 'mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/QualityControl'
                 contentType: 'application/json'
             InteractionMetadata:
                 actions:
@@ -114,6 +114,7 @@ omronCameraSystemAAS:
         Image:
             semanticId: 'https://smartproductionlab.aau.dk/image'
             InterfaceReference: 'Image'
+            Field: 'Image'
     Parameters:
     HierarchicalStructures:
         Name: 'BillOfMaterials'
