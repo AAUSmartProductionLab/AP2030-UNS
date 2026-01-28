@@ -53,7 +53,8 @@ class ProcessAASGenerator:
         product_aas_id: str,
         product_info: Dict[str, Any],
         requirements: Dict[str, Any],
-        bt_filename: str = "production.xml"
+        bt_filename: str = "production.xml",
+        planar_table_id: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Generate a complete Process AAS YAML configuration.
@@ -64,6 +65,7 @@ class ProcessAASGenerator:
             product_info: Product information dictionary
             requirements: Extracted requirements from product
             bt_filename: Name of the behavior tree file
+            planar_table_id: Optional AAS ID of the planar table (motion system)
             
         Returns:
             Complete YAML configuration as dictionary
@@ -93,7 +95,7 @@ class ProcessAASGenerator:
                 
                 # Required capabilities with resource references and embedded requirements
                 'RequiredCapabilities': self._generate_required_capabilities(
-                    matching_result, requirements
+                    matching_result, requirements, planar_table_id
                 ),
                 
                 # Policy reference (behavior tree)
@@ -157,7 +159,8 @@ class ProcessAASGenerator:
     def _generate_required_capabilities(
         self, 
         matching_result: 'MatchingResult',
-        requirements: Dict[str, Any]
+        requirements: Dict[str, Any],
+        planar_table_id: Optional[str] = None
     ) -> Dict[str, Any]:
         """Generate required capabilities grouped by capability type.
         
@@ -173,6 +176,7 @@ class ProcessAASGenerator:
         Args:
             matching_result: Result from capability matching
             requirements: Requirements extracted from product (unused - kept for signature compatibility)
+            planar_table_id: Optional AAS ID of the planar table (motion system)
             
         Returns:
             Dictionary of capability types with their resource references
@@ -218,6 +222,17 @@ class ProcessAASGenerator:
                 resource_name = cap.resource_name
                 # Use AAS ID directly
                 capability_groups[cap_name]['resources'][resource_name] = cap.aas_id
+        
+        # Add planar table (motion system) as a special resource
+        # This is needed for the BT controller to prefetch interfaces for PackMLState checks
+        if planar_table_id:
+            capability_groups['PlanarTable'] = {
+                'semantic_id': 'https://smartproductionlab.aau.dk/Capability/MotionSystem',
+                'description': 'Planar motion system for shuttle coordination',
+                'resources': {
+                    'planarTableAAS': planar_table_id
+                }
+            }
         
         return capability_groups
     
