@@ -83,6 +83,10 @@ class BTGenerator:
             "input": ["Assets", "Xbot", "ProductID"],
             "output": ["scrap", "Station"],
         },
+        "Inspection": {
+            "input": ["Assets", "Xbot", "XbotUuid", "ProductID", "ProductIDs", "Station"],
+            "output": ["scrap"],
+        },
         "Unloading": {
             "input": ["Assets", "Xbot", "ProductID"],
             "output": ["scrap", "Station"],
