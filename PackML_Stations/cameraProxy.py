@@ -28,6 +28,9 @@ def capture_process(duration=0.5):
             print("Failed to capture image from webcam")
             return
 
+        # Rotate image 90 degrees counter-clockwise
+        image = cv2.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE)
+
         # Encode image to compressed format (JPEG)
         _, img_encoded = cv2.imencode(
             '.jpg', image, [cv2.IMWRITE_JPEG_QUALITY, 80])
