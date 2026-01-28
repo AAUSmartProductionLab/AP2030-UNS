@@ -24,6 +24,7 @@ class BTGeneratorConfig:
     subtrees_dir: str = "../BTDescriptions"
     use_prebuilt_subtrees: bool = True
     tree_nodes_model_file: str = "tree_nodes_model.xml"
+    include_error_recovery: bool = False
     # Map process names to subtree files
     subtree_file_mapping: Dict[str, str] = None
     # Map process/capability names to actual subtree IDs
@@ -68,36 +69,36 @@ class BTGenerator:
             "output": ["ProductID"],
         },
         "Loading": {
-            "input": ["Assets", "Xbot", "ProductIDs"],
-            "output": ["ProductID", "scrap", "Station"],
+            "input": ["Assets", "Xbot", "XbotUuid", "ProductID", "ProductIDs", "Station"],
+            "output": [],
         },
         "Dispensing": {
-            "input": ["Assets", "Xbot", "ProductID"],
-            "output": ["scrap", "Station"],
+            "input": ["Assets", "Xbot", "XbotUuid", "ProductID", "ProductIDs", "Station"],
+            "output": [],
         },
         "Stoppering": {
-            "input": ["Assets", "Xbot", "ProductID"],
-            "output": ["scrap", "Station"],
+            "input": ["Assets", "Xbot", "XbotUuid", "ProductID", "ProductIDs", "Station"],
+            "output": [],
         },
         "QualityControl": {
-            "input": ["Assets", "Xbot", "ProductID"],
-            "output": ["scrap", "Station"],
+            "input": ["Assets", "Xbot", "XbotUuid", "ProductID", "ProductIDs", "Station"],
+            "output": [],
         },
         "Inspection": {
-            "input": ["Assets", "Xbot", "XbotUuid", "ProductID", "ProductIDs", "Station"],
-            "output": ["scrap"],
+            "input": ["Assets", "Xbot", "XbotUuid", "ProductID", "ProductIDs", "Station", "IPCInspection", "BatchSize"],
+            "output": [],
         },
         "Unloading": {
-            "input": ["Assets", "Xbot", "ProductID"],
-            "output": ["scrap", "Station"],
+            "input": ["Assets", "Xbot", "XbotUuid", "ProductID", "ProductIDs", "Station"],
+            "output": [],
         },
         "Scraping": {
-            "input": ["Assets", "Xbot", "ProductID"],
-            "output": ["Station"],
+            "input": ["Assets", "Xbot", "XbotUuid", "ProductID", "ProductIDs", "Station"],
+            "output": [],
         },
         "Capping": {
-            "input": ["Assets", "Xbot", "ProductID"],
-            "output": ["scrap", "Station"],
+            "input": ["Assets", "Xbot", "XbotUuid", "ProductID", "ProductIDs", "Station"],
+            "output": [],
         },
     }
 
