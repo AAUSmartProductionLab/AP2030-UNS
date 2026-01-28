@@ -115,8 +115,8 @@ def execute_rotation(xbot_id, target_rad):
         while delta > np.pi: delta -= 2*np.pi
         while delta < -np.pi: delta += 2*np.pi
         
-        # Check if rotation is needed (tolerance: 0.05 rad ≈ 2.9 degrees)
-        if abs(delta) < 0.05:
+        # Check if rotation is needed (tolerance: 0.005 rad ≈ 0.29 degrees)
+        if abs(delta) < 0.005:
             print(f"XBot {xbot_id}: Already at target rotation ({np.degrees(curr_rz):.1f}° vs {np.degrees(target_rad):.1f}°), skipping", flush=True)
             return True
         
@@ -173,8 +173,8 @@ def perform_xbot_task(xbot_id, goal_pos, goal_rot, execute_topic_publisher):
             # Simple check if start/goal are centers
             # (Simplified from original for brevity, but logic holds)
             centers = get_flyway_centers()
-            near_start = any(sqrt((curr_pos[0]-c[0])**2+(curr_pos[1]-c[1])**2)<0.01 for c in centers)
-            near_goal = any(sqrt((goal_pos[0]-c[0])**2+(goal_pos[1]-c[1])**2)<0.01 for c in centers)
+            near_start = any(sqrt((curr_pos[0]-c[0])**2+(curr_pos[1]-c[1])**2)<0.001 for c in centers)
+            near_goal = any(sqrt((goal_pos[0]-c[0])**2+(goal_pos[1]-c[1])**2)<0.001 for c in centers)
             
             if near_start:
                 # Rotate HERE
@@ -482,7 +482,7 @@ def main():
     
     if not detected_ids:
         print("No XBots detected! Defaulting to 1-10 scan...", flush=True)
-        detected_ids = list(range(1, 11))
+        detected_ids = list(range(1, 4))
     else:
         print(f"Detected XBots: {detected_ids}", flush=True)
         
