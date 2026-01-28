@@ -8,7 +8,7 @@ import os
 
 BROKER_ADDRESS = os.getenv("MQTT_BROKER", "hivemq-broker")
 BROKER_PORT = int(os.getenv("MQTT_PORT", "1883"))
-BASE_TOPIC = "NN/Nybrovej/InnoLab/Camera"
+BASE_TOPIC = "NN/Nybrovej/InnoLab/QualityControl"
 uuid = ""
 
 image_publisher = Publisher(

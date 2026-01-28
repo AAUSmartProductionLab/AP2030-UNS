@@ -1,27 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root BTCPP_format="4">
-  <BehaviorTree ID="QualityControl">
-    <Occupy Uuid="{ProductID}"
-            Assets="{Assets}">
-      <ReactiveSequence>
-        <ReactiveFallback>
-          <Data_Condition comparison_type="equal"
-                          Field="State"
-                          expected_value="operational"
-                          Property="PackMLState"
-                          Asset="{SelectedAsset}"/>
-          <Sleep msec="10000"/>
-        </ReactiveFallback>
-        <Sequence>
-          <moveToPosition Uuid="{XbotUuid}"
-                          TargetPosition="{SelectedAsset}"
-                          Asset="{Xbot}"/>
-          <Command_Execution Parameters="&apos;{}&apos;"
-                             Uuid="{ProductID}"
-                             Operation="Capture"
-                             Asset="{SelectedAsset}"/>
-        </Sequence>
-      </ReactiveSequence>
-    </Occupy>
+  <BehaviorTree ID="Inspection">
+    <SamplingGate SamplingRate="{IPCInspection}"
+                  BatchSize="{BatchSize}"
+                  Queue="{ProductIDs}">
+      <Occupy Uuid="{ProductID}"
+              Assets="{Assets}">
+        <ReactiveSequence>
+          <ReactiveFallback>
+            <Data_Condition comparison_type="equal"
+                            Field="State"
+                            expected_value="operational"
+                            Property="PackMLState"
+                            Asset="{SelectedAsset}"/>
+            <Sleep msec="10000"/>
+          </ReactiveFallback>
+          <Sequence>
+            <moveToPosition Uuid="{XbotUuid}"
+                            TargetPosition="{SelectedAsset}"
+                            Asset="{Xbot}"/>
+            <Command_Execution Parameters="&apos;{}&apos;"
+                               Uuid="{ProductID}"
+                               Operation="Capture"
+                               Asset="{SelectedAsset}"/>
+          </Sequence>
+        </ReactiveSequence>
+      </Occupy>
+    </SamplingGate>
   </BehaviorTree>
 </root>

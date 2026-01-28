@@ -35,8 +35,8 @@ class BTGeneratorConfig:
                 "Loading": "loading.xml",
                 "Dispensing": "dispensing.xml",
                 "Stoppering": "stoppering.xml",
-                "QualityControl": "qualityControl.xml",
-                "Inspection": "qualityControl.xml",  # Alias
+                "Inspection": "qualityControl.xml",
+                "QualityControl": "qualityControl.xml",  # Alias for backward compatibility
                 "Unloading": "unloading.xml",
                 "Capping": "capping.xml",
                 # Standard subtrees that were previously included via <include>
@@ -46,8 +46,8 @@ class BTGeneratorConfig:
         if self.subtree_id_mapping is None:
             # Map capability/process names to actual subtree IDs
             self.subtree_id_mapping = {
-                "Inspection": "QualityControl",  # Inspection capability uses QualityControl subtree
-                "inspection": "QualityControl",
+                "QualityControl": "Inspection",  # QualityControl capability uses Inspection subtree
+                "qualityControl": "Inspection",
             }
 
 
@@ -60,6 +60,46 @@ class BTGenerator:
     - Generating custom subtrees from capability matches
     - Configuring parallelism based on mover count
     """
+
+    # Define the ports used by each subtree for Groot visualization
+    SUBTREE_PORTS: Dict[str, Dict[str, List[str]]] = {
+        "AsepticFilling": {
+            "input": ["Xbot"],
+            "output": ["ProductID"],
+        },
+        "Loading": {
+            "input": ["Assets", "Xbot", "ProductIDs"],
+            "output": ["ProductID", "scrap", "Station"],
+        },
+        "Dispensing": {
+            "input": ["Assets", "Xbot", "ProductID"],
+            "output": ["scrap", "Station"],
+        },
+        "Stoppering": {
+            "input": ["Assets", "Xbot", "ProductID"],
+            "output": ["scrap", "Station"],
+        },
+        "QualityControl": {
+            "input": ["Assets", "Xbot", "ProductID"],
+            "output": ["scrap", "Station"],
+        },
+        "Inspection": {
+            "input": ["Assets", "Xbot", "XbotUuid", "ProductID", "ProductIDs", "Station"],
+            "output": ["scrap"],
+        },
+        "Unloading": {
+            "input": ["Assets", "Xbot", "ProductID"],
+            "output": ["scrap", "Station"],
+        },
+        "Scraping": {
+            "input": ["Assets", "Xbot", "ProductID"],
+            "output": ["Station"],
+        },
+        "Capping": {
+            "input": ["Assets", "Xbot", "ProductID"],
+            "output": ["scrap", "Station"],
+        },
+    }
 
     def __init__(self, config: Optional[BTGeneratorConfig] = None):
         """
@@ -166,8 +206,8 @@ class BTGenerator:
         if self.config.use_prebuilt_subtrees:
             self._append_prebuilt_subtrees(root, matching_result)
 
-        # Append TreeNodesModel for node type definitions
-        self._append_tree_nodes_model(root)
+        # Append TreeNodesModel for node type definitions (with SubTree port declarations)
+        self._append_tree_nodes_model(root, matching_result)
 
         # Format and return XML
         return self._format_xml(root)
@@ -185,7 +225,7 @@ class BTGenerator:
 
         # Configure node - initialize product queue with Product AAS ID
         product_aas_id = product_info.get("aas_id", "{product}")
-        ET.SubElement(seq, "Configure", 
+        ET.SubElement(seq, "Configure",
                       Product=product_aas_id,
                       ProductIDs="{ProductIDs}")
 
@@ -291,9 +331,13 @@ class BTGenerator:
                 subtree_elem.set("ProductID", "{ProductID}")
                 subtree_elem.set("ProductIDs", "{ProductIDs}")
                 subtree_elem.set("Station", "{Station}")
+
+                # Pass SamplingGate parameters for Inspection subtree
+                if subtree_id == "Inspection":
+                    subtree_elem.set("IPCInspection", "{IPCInspection}")
+                    subtree_elem.set("BatchSize", "{BatchSize}")
+
                 subtree_elem.set("_autoremap", "false")
-
-
 
     def _get_subtree_id(self, process_name: str) -> str:
         """Get the subtree ID for a process name"""
@@ -324,8 +368,6 @@ class BTGenerator:
         for match in matching_result.process_matches:
             subtree_id = self._get_subtree_id(match.process_step.name)
             needed_subtrees.add(subtree_id)
-
-
 
         # Always include standard subtrees that were previously referenced via <include>
         # needed_subtrees.add("LineSOP")
@@ -387,8 +429,8 @@ class BTGenerator:
             logger.warning(f"Could not load {filename}: {e}")
             return []
 
-    def _append_tree_nodes_model(self, root: ET.Element) -> None:
-        """Load and append the TreeNodesModel from the model file"""
+    def _append_tree_nodes_model(self, root: ET.Element, matching_result: MatchingResult) -> None:
+        """Load and append the TreeNodesModel from the model file, including SubTree port declarations"""
         try:
             filepath = os.path.join(
                 self.config.subtrees_dir,
@@ -397,9 +439,11 @@ class BTGenerator:
             tree = ET.parse(filepath)
             model_root = tree.getroot()
 
-            # Find and append the TreeNodesModel element
+            # Find the TreeNodesModel element
             for child in model_root:
                 if child.tag == "TreeNodesModel":
+                    # Add SubTree port declarations for Groot visualization
+                    self._add_subtree_port_declarations(child, matching_result)
                     root.append(child)
                     logger.debug(f"Loaded TreeNodesModel from {filepath}")
                     return
@@ -407,6 +451,43 @@ class BTGenerator:
             logger.warning(f"No TreeNodesModel found in {filepath}")
         except Exception as e:
             logger.warning(f"Could not load TreeNodesModel: {e}")
+
+    def _add_subtree_port_declarations(
+        self, 
+        tree_nodes_model: ET.Element, 
+        matching_result: MatchingResult
+    ) -> None:
+        """
+        Add SubTree port declarations to TreeNodesModel for Groot visualization.
+        
+        This ensures Groot can properly display the port bindings like {Xbot} 
+        flowing through the subtree hierarchy.
+        """
+        # Collect all subtrees that need port declarations
+        needed_subtrees = {"AsepticFilling"}  # Always include AsepticFilling
+        
+        for match in matching_result.process_matches:
+            subtree_id = self._get_subtree_id(match.process_step.name)
+            needed_subtrees.add(subtree_id)
+        
+        if self.config.include_error_recovery:
+            needed_subtrees.add("Scraping")
+        
+        # Add SubTree elements with port declarations
+        for subtree_id in needed_subtrees:
+            if subtree_id in self.SUBTREE_PORTS:
+                ports = self.SUBTREE_PORTS[subtree_id]
+                subtree_elem = ET.SubElement(tree_nodes_model, "SubTree", ID=subtree_id)
+                
+                # Add input ports
+                for port_name in ports.get("input", []):
+                    ET.SubElement(subtree_elem, "input_port", name=port_name)
+                
+                # Add output ports
+                for port_name in ports.get("output", []):
+                    ET.SubElement(subtree_elem, "output_port", name=port_name)
+                
+                logger.debug(f"Added SubTree port declaration for {subtree_id}")
 
     def _format_xml(self, root: ET.Element) -> str:
         """Format XML with proper indentation"""
