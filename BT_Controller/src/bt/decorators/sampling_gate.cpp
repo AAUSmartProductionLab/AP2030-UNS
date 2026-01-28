@@ -50,14 +50,10 @@ BT::NodeStatus SamplingGate::tick()
     
     if (any_ref)
     {
-        auto queue_expected = any_ref.get()->cast<BT::SharedQueue<std::string>>();
-        if (queue_expected)
+        auto queue_ptr = any_ref.get()->cast<BT::SharedQueue<std::string>>();
+        if (queue_ptr)
         {
-            auto queue_ptr = queue_expected.value();
-            if (queue_ptr)
-            {
-                current_size = static_cast<int>(queue_ptr->size());
-            }
+            current_size = static_cast<int>(queue_ptr->size());
         }
     }
 

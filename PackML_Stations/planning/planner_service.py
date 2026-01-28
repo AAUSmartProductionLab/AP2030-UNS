@@ -240,7 +240,8 @@ class PlannerService:
             product_aas_id,
             product_config,
             requirements,
-            bt_filename
+            bt_filename,
+            planar_table_id
         )
         
         process_aas_id = self.process_generator.get_aas_id(process_config)

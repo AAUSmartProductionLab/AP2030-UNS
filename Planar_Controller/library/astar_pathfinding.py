@@ -23,8 +23,11 @@ def astar_search(grid, start_pos, goal_pos, grid_width, grid_height, turning_cos
         print(f"ERROR: Start position {start_pos} invalid")
         return None
 
-    if not (0 <= goal_pos[0] < grid_width and 0 <= goal_pos[1] < grid_height) or grid[goal_pos[1]][goal_pos[0]] == 1:
-        print(f"ERROR: Goal position {goal_pos} invalid")
+    if not (0 <= goal_pos[0] < grid_width and 0 <= goal_pos[1] < grid_height):
+        print(f"ERROR: Goal position {goal_pos} out of bounds (grid: {grid_width}x{grid_height})")
+        return None
+    if grid[goal_pos[1]][goal_pos[0]] == 1:
+        print(f"ERROR: Goal position {goal_pos} is on obstacle (grid value: {grid[goal_pos[1]][goal_pos[0]]})")
         return None
 
     # Priority queue stores (f_score, g_score, x, y, parent)

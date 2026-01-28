@@ -9,7 +9,7 @@ BROKER_PORT = int(os.getenv("MQTT_PORT", "1883"))
 BASE_TOPIC = "NN/Nybrovej/InnoLab/Loading"
 
 
-def load_process(duration=15.0):
+def load_process(duration=2.0):
     time.sleep(duration)
 
 

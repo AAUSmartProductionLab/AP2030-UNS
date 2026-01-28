@@ -107,12 +107,20 @@ def find_nearest_valid(position, grid, w, h):
     return None
 
 def execute_rotation(xbot_id, target_rad):
+    """Execute rotation, skipping if already at target angle."""
     try:
         status = xbot.get_xbot_status(xbot_id=xbot_id, feedback_type=pm.FEEDBACKOPTION.POSITION)
         curr_rz = float(status.feedback_position_si[5])
         delta = target_rad - curr_rz
         while delta > np.pi: delta -= 2*np.pi
         while delta < -np.pi: delta += 2*np.pi
+        
+        # Check if rotation is needed (tolerance: 0.05 rad ≈ 2.9 degrees)
+        if abs(delta) < 0.05:
+            print(f"XBot {xbot_id}: Already at target rotation ({np.degrees(curr_rz):.1f}° vs {np.degrees(target_rad):.1f}°), skipping", flush=True)
+            return True
+        
+        print(f"XBot {xbot_id}: Rotating from {np.degrees(curr_rz):.1f}° to {np.degrees(target_rad):.1f}° (delta: {np.degrees(delta):.1f}°)", flush=True)
         
         xbot.rotary_motion_p2p(
             cmd_label=9999, xbot_id=xbot_id, mode=pm.ROTATIONMODE.NO_ANGLE_WRAP,
@@ -127,7 +135,14 @@ def execute_rotation(xbot_id, target_rad):
             time.sleep(0.05)
         return False
     except Exception as e:
-        print(f"Rotation Error: {e}")
+        # Get current position for debugging
+        try:
+            status = xbot.get_xbot_status(xbot_id=xbot_id, feedback_type=pm.FEEDBACKOPTION.POSITION)
+            pos = status.feedback_position_si
+            curr_x, curr_y = float(pos[0]), float(pos[1])
+            print(f"Rotation Error at position ({curr_x:.3f}, {curr_y:.3f}): {e}", flush=True)
+        except:
+            print(f"Rotation Error: {e}", flush=True)
         return False
 
 # Function to be called by PackML Execute
@@ -186,12 +201,14 @@ def perform_xbot_task(xbot_id, goal_pos, goal_rot, execute_topic_publisher):
                 if op: others.append(op)
         
         grid, gw, gh = create_occupancy_grid(WORKSPACE, others)
+        print(f"XBot {xbot_id}: Grid dimensions: {gw}x{gh}, Workspace: {WORKSPACE['width']}x{WORKSPACE['height']} flyways, Holes: {WORKSPACE.get('holes', [])}", flush=True)
         
         # Plan to intermediate rotation or goal
         target_stage = rot_point if rot_point else goal_pos
         
         start_grid = meters_to_grid(curr_pos[0], curr_pos[1])
         target_grid = meters_to_grid(target_stage[0], target_stage[1])
+        print(f"XBot {xbot_id}: Current={curr_pos} -> Grid{start_grid}, Target={target_stage} -> Grid{target_grid}", flush=True)
         
         # Validation
         if grid[start_grid[1]][start_grid[0]] == 1:
@@ -204,7 +221,20 @@ def perform_xbot_task(xbot_id, goal_pos, goal_rot, execute_topic_publisher):
                 raise Exception("Stuck in obstacle")
         
         path_grid = astar_search(grid, start_grid, target_grid, gw, gh)
-        if not path_grid: raise Exception("No path found")
+        if not path_grid:
+            # Check if goal is blocked by temporary XBot obstacle or permanent hole
+            grid_no_xbots, _, _ = create_occupancy_grid(WORKSPACE, [])  # Grid with only permanent obstacles
+            
+            # Check if goal is valid in permanent-obstacles-only grid
+            if (0 <= target_grid[0] < gw and 0 <= target_grid[1] < gh and 
+                grid_no_xbots[target_grid[1]][target_grid[0]] == 0):
+                # Goal is valid without XBots, meaning an XBot is temporarily blocking it
+                print(f"XBot {xbot_id}: Goal temporarily blocked by another XBot. Waiting...", flush=True)
+                time.sleep(0.5)  # Wait before retrying
+                continue  # Retry planning
+            else:
+                # Goal is on permanent obstacle (hole)
+                raise Exception("No path found - goal is unreachable")
         
         path_meters = grid_path_to_meters(simplify_path(path_grid))
         

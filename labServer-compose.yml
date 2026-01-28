@@ -1,22 +1,4 @@
 services:
-  
-  # hivemq-broker:
-  #   image: hivemq/hivemq4:latest
-  #   container_name: hivemq-broker
-  #   volumes:
-  #     - ./HiveMQ/conf:/opt/hivemq/conf
-  #     - ./HiveMQ/extensions:/opt/hivemq/extensions
-  #   restart: unless-stopped
-  #   ports:
-  #     - "1883:1883"
-  #     - "8080:8080"
-  #     - "8883:8883"
-  #     - "8884:8884"
-  #     - "8091:8081"
-  #     - "8000:8000"
-  #   networks:
-  #     - hivemq-network
-
   hivemq-broker:
     image: eclipse-mosquitto
     container_name: hivemq-broker
@@ -51,53 +33,6 @@ services:
       - hivemq-network
     depends_on:
       - hivemq-broker
-    restart: unless-stopped
-    
-  timescaledb:
-    image: timescale/timescaledb:latest-pg14
-    container_name: timescaledb
-    volumes:
-      # - ./TimescaleDB/timescaledb-data:/var/lib/postgresql/data
-      - ./TimescaleDB/database/init-scripts:/docker-entrypoint-initdb.d
-    environment:
-      - POSTGRES_PASSWORD=admin
-      - POSTGRES_USER=admin
-      - POSTGRES_DB=uns_data
-    ports:
-      - "5432:5432"
-    networks:
-      - hivemq-network
-    restart: unless-stopped
-  # grafana:
-  #   image: grafana/grafana:latest
-  #   container_name: grafana
-  #   user: "472"
-  #   volumes:
-  #     - ./Grafana/grafana-data:/var/lib/grafana
-  #   environment:
-  #     - GF_SECURITY_ADMIN_PASSWORD=admin
-  #     - GF_USERS_ALLOW_SIGN_UP=false
-  #     - GF_PLUGINS_PREINSTALL=grafana-clock-panel,grafana-simple-json-datasource, volkovlabs-image-panel
-  #   ports:
-  #     - "3000:3000"
-  #   networks:
-  #     - hivemq-network
-  #   depends_on:
-  #     - timescaledb
-  #   restart: unless-stopped
- 
-  groot:
-    build:
-      context: ./Groot2
-      dockerfile: groot2.dockerfile
-    container_name: groot2-web
-    volumes:
-      - ./BT_Controller/config/bt_description:/bt_description
-      - ./offlineResponse_1656FB-A61627-4A4CB2-F0C0CA-8531ED-BD332C.dat:/bt_description/offlineResponse_1656FB-A61627-4A4CB2-F0C0CA-8531ED-BD332C.dat
-    ports:
-      - "6080:6080"
-    networks:
-      - hivemq-network
     restart: unless-stopped
 
   mqtt-explorer:
@@ -195,47 +130,6 @@ services:
       registration-service:
         condition: service_healthy
 
-  filling_station:
-    extends:
-      file: ./PackML_Stations/stations-compose.yml
-      service: filling_station
-    networks:
-      - hivemq-network
-    depends_on:
-      hivemq-broker:
-        condition: service_started
-      aas-env:
-        condition: service_started
-      databridge:
-        condition: service_started
-      registration-service:
-        condition: service_healthy
-
-  # camera_station:
-  #   extends:
-  #     file: ./PackML_Stations/stations-compose.yml
-  #     service: camera_station
-  #   networks:
-  #     - hivemq-network
-  #   depends_on:
-  #     - hivemq-broker
-      
-  stoppering_station:
-    extends:
-      file: ./PackML_Stations/stations-compose.yml
-      service: stoppering_station
-    networks:
-      - hivemq-network
-    depends_on:
-      hivemq-broker:
-        condition: service_started
-      aas-env:
-        condition: service_started
-      databridge:
-        condition: service_started
-      registration-service:
-        condition: service_healthy
-
   load_station:
     extends:
       file: ./PackML_Stations/stations-compose.yml
@@ -278,7 +172,7 @@ services:
     environment:
       - SERVER_PORT=8081
       - EXTERNAL_HOST=${EXTERNAL_HOST:-localhost}
-      - BASYX_BACKEND=MongoDB
+      - BASYX_BACKEND=InMemory
       - BASYX_ENVIRONMENT=file:aas
       - BASYX_CORS_ALLOWED_ORIGINS=*
       - BASYX_CORS_ALLOWED_METHODS=GET,POST,PATCH,DELETE,PUT,OPTIONS,HEAD
@@ -287,16 +181,6 @@ services:
       - BASYX_EXTERNALURL=http://${EXTERNAL_HOST:-localhost}:8081
       - SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE=500MB
       - SPRING_SERVLET_MULTIPART_MAX_REQUEST_SIZE=500MB
-      - SPRING_DATA_MONGODB_HOST=mongo
-      - SPRING_DATA_MONGODB_DATABASE=aas-env
-      - SPRING_DATA_MONGODB_AUTHENTICATION_DATABASE=admin
-      - SPRING_DATA_MONGODB_USERNAME=mongoAdmin
-      - SPRING_DATA_MONGODB_PASSWORD=mongoPassword
-      - MQTT_HOSTNAME=hivemq-broker
-      - MQTT_PORT=1883
-      - MQTT_CLIENTID=aas-env-client
-      - BASYX_AASREPOSITORY_FEATURE_MQTT_ENABLED=false
-      - BASYX_SUBMODELREPOSITORY_FEATURE_MQTT_ENABLED=false
     volumes:
       - ./aas:/application/aas
     ports:
@@ -307,52 +191,32 @@ services:
         condition: service_healthy
       sm-registry:
         condition: service_healthy
-      mongo:
-        condition: service_healthy
       hivemq-broker:
         condition: service_started
     networks:
       - hivemq-network
   aas-registry:
-    image: eclipsebasyx/aas-registry-log-mongodb:2.0.0-SNAPSHOT
+    image: eclipsebasyx/aas-registry-log-mem:2.0.0-SNAPSHOT
     container_name: aas-registry
     ports:
       - '8082:8080'
     environment:
       - SERVER_PORT=8080
-      - SPRING_DATA_MONGODB_HOST=mongo
-      - SPRING_DATA_MONGODB_PORT=27017
-      - SPRING_DATA_MONGODB_DATABASE=aas-registry
-      - SPRING_DATA_MONGODB_AUTHENTICATION_DATABASE=admin
-      - SPRING_DATA_MONGODB_USERNAME=mongoAdmin
-      - SPRING_DATA_MONGODB_PASSWORD=mongoPassword
       - BASYX_CORS_ALLOWED_ORIGINS=*
       - BASYX_CORS_ALLOWED_METHODS=GET,POST,PATCH,DELETE,PUT,OPTIONS,HEAD
     restart: always
-    depends_on:
-      mongo:
-        condition: service_healthy
     networks:
       - hivemq-network
   sm-registry:
-    image: eclipsebasyx/submodel-registry-log-mongodb:2.0.0-SNAPSHOT
+    image: eclipsebasyx/submodel-registry-log-mem:2.0.0-SNAPSHOT
     container_name: sm-registry
     ports:
       - '8083:8080'
     environment:
       - SERVER_PORT=8080
-      - SPRING_DATA_MONGODB_HOST=mongo
-      - SPRING_DATA_MONGODB_PORT=27017
-      - SPRING_DATA_MONGODB_DATABASE=sm-registry
-      - SPRING_DATA_MONGODB_AUTHENTICATION_DATABASE=admin
-      - SPRING_DATA_MONGODB_USERNAME=mongoAdmin
-      - SPRING_DATA_MONGODB_PASSWORD=mongoPassword
       - BASYX_CORS_ALLOWED_ORIGINS=*
       - BASYX_CORS_ALLOWED_METHODS=GET,POST,PATCH,DELETE,PUT,OPTIONS,HEAD
     restart: always
-    depends_on:
-      mongo:
-        condition: service_healthy
     networks:
       - hivemq-network
   aas-discovery:
@@ -362,41 +226,19 @@ services:
       - SERVER_PORT=8081
       - SPRING_APPLICATION_NAME=AAS Discovery Service
       - BASYX_AASDISCOVERYSERVICE_NAME=aas-discovery-service
-      - BASYX_BACKEND=MongoDB
+      - BASYX_BACKEND=InMemory
       - BASYX_CORS_ALLOWED_ORIGINS=*
       - BASYX_CORS_ALLOWED_METHODS=GET,POST,PATCH,DELETE,PUT,OPTIONS,HEAD
-      - SPRING_DATA_MONGODB_HOST=mongo
-      - SPRING_DATA_MONGODB_DATABASE=aas-discovery
-      - SPRING_DATA_MONGODB_AUTHENTICATION_DATABASE=admin
-      - SPRING_DATA_MONGODB_USERNAME=mongoAdmin
-      - SPRING_DATA_MONGODB_PASSWORD=mongoPassword
     ports:
       - '8084:8081'
     restart: always
-    depends_on:
-      mongo:
-        condition: service_healthy
-    networks:
-      - hivemq-network
-  mongo:
-    image: mongo:5.0.10
-    container_name: mongo
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: mongoAdmin
-      MONGO_INITDB_ROOT_PASSWORD: mongoPassword
-    restart: always
-    healthcheck:
-      test: mongo
-      interval: 10s
-      timeout: 5s
-      retries: 5
     networks:
       - hivemq-network
   aas-web-ui:
     image: eclipsebasyx/aas-gui:SNAPSHOT
     container_name: aas-ui
     ports:
-      - '3001:3000'
+      - '3000:3000'
     environment:
       AAS_REGISTRY_PATH: http://${EXTERNAL_HOST:-localhost}:8082/shell-descriptors
       SUBMODEL_REGISTRY_PATH: http://${EXTERNAL_HOST:-localhost}:8083/submodel-descriptors
@@ -410,30 +252,9 @@ services:
     restart: always
     depends_on:
       aas-env:
-        condition: service_started
-    networks:
-      - hivemq-network 
-  dashboard-api:
-    image: aaronzi/basyx-dashboard-api:SNAPSHOT_02
-    container_name: dashboard-api
-    environment:
-      - SERVER_PORT=8085
-      - SPRING_DATA_MONGODB_HOST=mongo
-      - SPRING_DATA_MONGODB_DATABASE=aas-dashboard
-      - SPRING_DATA_MONGODB_AUTHENTICATION_DATABASE=admin
-      - SPRING_DATA_MONGODB_USERNAME=mongoAdmin
-      - SPRING_DATA_MONGODB_PASSWORD=mongoPassword
-      - BASYX_CORS_ALLOWED_ORIGINS=*
-      - BASYX_CORS_ALLOWED_METHODS=GET,POST,PATCH,DELETE,PUT,OPTIONS,HEAD
-      - BASYX_EXTERNALURL=http://${EXTERNAL_HOST:-localhost}:8085
-    ports:
-      - '8085:8085'
+        condition: service_healthy
     volumes:
       - ./logo:/usr/src/app/dist/Logo
-    restart: always
-    depends_on:
-      mongo:
-        condition: service_healthy
     networks:
       - hivemq-network
   databridge:
