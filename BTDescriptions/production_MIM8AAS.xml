@@ -3,11 +3,11 @@
   <BehaviorTree ID="Production">
     <Sequence>
       <Configure Product="{product}" ProductIDs="{ProductIDs}"/>
-<     <Parallel failure_count="-1" success_count="1">
+      <Parallel failure_count="-1" success_count="1">
         <SubTree ID="AsepticFilling" Xbot="{Xbot1}" ProductID="" _autoremap="true"/>
         <SubTree ID="AsepticFilling" Xbot="{Xbot2}" ProductID="" _autoremap="true"/>
         <SubTree ID="AsepticFilling" Xbot="{Xbot3}" ProductID="" _autoremap="true"/>
-      </Parallel>>
+      </Parallel>
     </Sequence>
   </BehaviorTree>
   <BehaviorTree ID="AsepticFilling">
