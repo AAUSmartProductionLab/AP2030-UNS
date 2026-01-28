@@ -166,7 +166,6 @@ The behavior tree XML files define the control logic for the production line con
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/BTDescriptions/production_HgHAAS.xml)
 
 - **[production_MIM8AAS.xml](BTDescriptions/production_MIM8AAS.xml)**
-  - Tree ID: `Production`
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/BTDescriptions/production_MIM8AAS.xml)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/BTDescriptions/production_MIM8AAS.xml)
 
