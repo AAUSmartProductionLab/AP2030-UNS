@@ -6,6 +6,7 @@ class MappingService {
     static moduleOffsets = {
       'DispensingSystem': [-31, 0],
       'StopperingSystem': [-8, 4],
+      'QualityControlSystem': [-60,-5],
       // Add more module types as needed
       'default': [0, 0] // No offset for unknown modules
     };
