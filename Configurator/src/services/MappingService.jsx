@@ -4,8 +4,8 @@ class MappingService {
      * Offsets are [deltaX, deltaY] in millimeters
      */
     static moduleOffsets = {
-      'DispensingSystem': [-5, -34],
-      'StopperingSystem': [3, -12],
+      'DispensingSystem': [-31, 0],
+      'StopperingSystem': [-8, 4],
       // Add more module types as needed
       'default': [0, 0] // No offset for unknown modules
     };
@@ -142,32 +142,32 @@ class MappingService {
       };
       
       // Position map with base positions (centers) - offsets are applied based on module type
-      // Origin at bottom-left corner, Y limit 960mm (long side), X limit 720mm (short side)
+      // Origin at bottom-left corner (Module Area 14), Y limit 960mm (long side), X limit 720mm (short side)
       // Format: [x, y, rotation_degrees]
       static positionMap = {
-        0: [600, 120, 0],    // Top row
-        1: [600, 360, 0],
-        2: [600, 600, 0],
-        3: [600, 840, 0],
+        0: [600, 840, 180],    // Top row - facing south
+        1: [600, 600, 180],
+        2: [600, 360, 180],
+        3: [600, 120, 180],
         
-        // Left edge - orientation 90 (east facing)
-        4: [600, 120, 90],
-        6: [360, 120, 90],
-        9: [120, 120, 90],
+        // Left edge - orientation 270 (west facing)
+        4: [600, 840, 270],
+        6: [360, 840, 270],
+        9: [120, 840, 270],
         
-        // Right edge - orientation 270 (west facing)
-        5: [600, 840, 270],
-        8: [360, 840, 270],
-        10: [120, 840, 270],
+        // Right edge - orientation 90 (east facing)
+        5: [600, 120, 90],
+        8: [360, 120, 90],
+        10: [120, 120, 90],
         
         // Middle EM square
-        7: [360, 360, 270],
+        7: [360, 600, 90],
         
-        // Bottom row - orientation 180 (north facing)
-        11: [120, 120, 180],
-        12: [120, 360, 180],
-        13: [120, 600, 180],
-        14: [120, 840, 180],
+        // Bottom row - orientation 0 (north facing)
+        11: [120, 840, 0],
+        12: [120, 600, 0],
+        13: [120, 360, 0],
+        14: [120, 120, 0],
         };
     }
   

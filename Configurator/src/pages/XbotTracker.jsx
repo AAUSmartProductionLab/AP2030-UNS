@@ -514,7 +514,7 @@ const XbotTracker = () => {
       const xbotMqttId = `Xbot${xbotSubConfig.id}`;
       
       // Pose updates with throttling
-      const poseTopic = `NN/Nybrovej/InnoLab/Planar/${xbotMqttId}/DATA/Pose`;
+      const poseTopic = `NN/Nybrovej/InnoLab/Planar/${xbotMqttId}/DATA/Position`;
       const unsubscribePose = mqttService.onMessage(poseTopic, (message) => {
         try {
           const now = Date.now();
