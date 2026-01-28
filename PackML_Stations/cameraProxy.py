@@ -29,7 +29,7 @@ def capture_process(duration=0.5):
             return
 
         # Rotate image 90 degrees counter-clockwise
-        image = cv2.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE)
+        image = cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
 
         # Encode image to compressed format (JPEG)
         _, img_encoded = cv2.imencode(
