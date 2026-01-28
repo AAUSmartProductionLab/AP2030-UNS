@@ -417,11 +417,18 @@ services:
     image: aaronzi/basyx-dashboard-api:SNAPSHOT_02
     container_name: dashboard-api
     environment:
-      - EXTERNAL_HOST=${EXTERNAL_HOST:-localhost}
+      - SERVER_PORT=8085
+      - SPRING_DATA_MONGODB_HOST=mongo
+      - SPRING_DATA_MONGODB_DATABASE=aas-dashboard
+      - SPRING_DATA_MONGODB_AUTHENTICATION_DATABASE=admin
+      - SPRING_DATA_MONGODB_USERNAME=mongoAdmin
+      - SPRING_DATA_MONGODB_PASSWORD=mongoPassword
+      - BASYX_CORS_ALLOWED_ORIGINS=*
+      - BASYX_CORS_ALLOWED_METHODS=GET,POST,PATCH,DELETE,PUT,OPTIONS,HEAD
+      - BASYX_EXTERNALURL=http://${EXTERNAL_HOST:-localhost}:8085
     ports:
       - '8085:8085'
     volumes:
-      - ./basyx/aas-dashboard.yml:/application.yml
       - ./logo:/usr/src/app/dist/Logo
     restart: always
     depends_on:
