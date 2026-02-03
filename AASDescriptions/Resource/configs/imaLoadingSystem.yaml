@@ -116,10 +116,10 @@ imaLoadingSystemAAS:
             semantic_id: https://smartproductionlab.aau.dk/Capability/Loading
     
     Skills:
-        loading:
+        Loading:
             description: "Loading function for pharmaceutical primary packaging"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/loading"
-            interface: "loading"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/Loading"
+            interface: "Loading"
         Halt:
             description: "Halt the current operation"
             semantic_id: "https://smartproductionlab.aau.dk/skills/Halt"
