@@ -506,6 +506,25 @@ services:
     networks:
       - hivemq-network
 
+  planar-motor-simulator:
+    build:
+      context: ./PlanarMotorSimulator
+      dockerfile: Dockerfile
+    container_name: planar-motor-simulator
+    environment:
+      - DISPLAY=${DISPLAY:-}
+      - RUN_GUI=${RUN_GUI:-false}
+      - AUTO_START=${AUTO_START:-true}
+      - START_BTN_X=400
+      - START_BTN_Y=480
+    ports:
+      - "8888:8888/udp"
+      - "8888:8888/tcp"
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    network_mode: host
+    restart: unless-stopped
+
 
 #################¤ NETWORKS AND VOLUMES ####################
 networks:
