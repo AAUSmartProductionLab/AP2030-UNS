@@ -1,5 +1,6 @@
 services:
-  
+
+######################################### TOOLS AND SERVICES ######################################  
   # hivemq-broker:
   #   image: hivemq/hivemq4:latest
   #   container_name: hivemq-broker
@@ -68,6 +69,7 @@ services:
     networks:
       - hivemq-network
     restart: unless-stopped
+    
   # grafana:
   #   image: grafana/grafana:latest
   #   container_name: grafana
@@ -86,19 +88,19 @@ services:
   #     - timescaledb
   #   restart: unless-stopped
  
-  groot:
-    build:
-      context: ./Groot2
-      dockerfile: groot2.dockerfile
-    container_name: groot2-web
-    volumes:
-      - ./BT_Controller/config/bt_description:/bt_description
-      - ./offlineResponse_1656FB-A61627-4A4CB2-F0C0CA-8531ED-BD332C.dat:/bt_description/offlineResponse_1656FB-A61627-4A4CB2-F0C0CA-8531ED-BD332C.dat
-    ports:
-      - "6080:6080"
-    networks:
-      - hivemq-network
-    restart: unless-stopped
+  # groot:
+  #   build:
+  #     context: ./Groot2
+  #     dockerfile: groot2.dockerfile
+  #   container_name: groot2-web
+  #   volumes:
+  #     - ./BT_Controller/config/bt_description:/bt_description
+  #     - ./offlineResponse_1656FB-A61627-4A4CB2-F0C0CA-8531ED-BD332C.dat:/bt_description/offlineResponse_1656FB-A61627-4A4CB2-F0C0CA-8531ED-BD332C.dat
+  #   ports:
+  #     - "6080:6080"
+  #   networks:
+  #     - hivemq-network
+  #   restart: unless-stopped
 
   mqtt-explorer:
     image: smeagolworms4/mqtt-explorer
@@ -128,40 +130,41 @@ services:
       - hivemq-network
     restart: unless-stopped
 
-  bt_controller:
-    build:
-      context: .
-      dockerfile: BT_Controller/dockerfile
-    container_name: bt_controller
-    environment:
-      - MQTT_BROKER=${MQTT_BROKER:-hivemq-broker}
-      - MQTT_PORT=${MQTT_PORT:-1883}
-      - AAS_SERVER=${AAS_SERVER:-aas-env}
-      - AAS_PORT=${AAS_PORT:-8081}
-      - AAS_REGISTRY=${AAS_REGISTRY:-aas-registry}
-      - AAS_REGISTRY_PORT=${AAS_REGISTRY_PORT:-8080}
-    volumes:
-      - ./BT_Controller/config:/AP2030-UNS/BT_Controller/config
-      - ./BTDescriptions:/AP2030-UNS/MQTTSchemas
-      - ./AASDescriptions:/AP2030-UNS/AASDescriptions
-    ports:
-    - "1667:1667"
-    networks:
-      - hivemq-network
-    depends_on:
-      hivemq-broker:
-        condition: service_started
-      registration-service:
-        condition: service_healthy
+  # bt_controller:
+  #   build:
+  #     context: .
+  #     dockerfile: BT_Controller/dockerfile
+  #   container_name: bt_controller
+  #   environment:
+  #     - MQTT_BROKER=${MQTT_BROKER:-hivemq-broker}
+  #     - MQTT_PORT=${MQTT_PORT:-1883}
+  #     - AAS_SERVER=${AAS_SERVER:-aas-env}
+  #     - AAS_PORT=${AAS_PORT:-8081}
+  #     - AAS_REGISTRY=${AAS_REGISTRY:-aas-registry}
+  #     - AAS_REGISTRY_PORT=${AAS_REGISTRY_PORT:-8080}
+  #   volumes:
+  #     - ./BT_Controller/config:/AP2030-UNS/BT_Controller/config
+  #     - ./BTDescriptions:/AP2030-UNS/MQTTSchemas
+  #     - ./AASDescriptions:/AP2030-UNS/AASDescriptions
+  #   ports:
+  #   - "1667:1667"
+  #   networks:
+  #     - hivemq-network
+  #   depends_on:
+  #     hivemq-broker:
+  #       condition: service_started
+  #     registration-service:
+  #       condition: service_healthy
 
+################################## PACKML STATIONS AND MODULES ###############################
   planar_controller:
     build:
       context: ./Planar_Controller
       dockerfile: Dockerfile
     container_name: planar_controller
     environment:
-      - MQTT_BROKER=${MQTT_BROKER:-hivemq-broker}
-      - MQTT_PORT=${MQTT_PORT:-1883}
+      - MQTT_BROKER=hivemq-broker
+      - MQTT_PORT=1883
       - PMC_IP=${PMC_IP:-192.168.0.199}
     volumes:
       - ./MQTTSchemas:/app/MQTTSchemas
@@ -267,8 +270,6 @@ services:
         condition: service_started
       registration-service:
         condition: service_healthy
-
-
 
 ################################### BASYX CONTAINERS ####################################
 
@@ -458,8 +459,8 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - BASYX_URL=http://${AAS_SERVER:-aas-env}:${AAS_PORT:-8081}
-      - MQTT_BROKER=${MQTT_BROKER:-hivemq-broker}
-      - MQTT_PORT=${MQTT_PORT:-1883}
+      - MQTT_BROKER=hivemq-broker
+      - MQTT_PORT=1883
       # Delegation URL for BaSyx to call - must be reachable from aas-env container
       - DELEGATION_SERVICE_URL=http://registration-service:8087
       - EXTERNAL_HOST=${EXTERNAL_HOST:-localhost}
@@ -481,9 +482,9 @@ services:
       - python
       - unified-registration-service.py
       - --mqtt-broker
-      - ${MQTT_BROKER:-hivemq-broker}
+      - hivemq-broker
       - --mqtt-port
-      - "${MQTT_PORT:-1883}"
+      - "1883"
       - --basyx-url
       - http://${AAS_SERVER:-aas-env}:${AAS_PORT:-8081}
       - --delegation-url

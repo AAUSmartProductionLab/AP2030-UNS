@@ -10,10 +10,10 @@ import os
 
 
 # Default network configuration
-# These defaults assume the service runs within Docker (the primary deployment method)
-# Override via command-line arguments or environment variables when running outside Docker
+# These defaults are for running outside Docker (e.g., register_all_assets.py)
+# Docker containers have MQTT_BROKER hardcoded to hivemq-broker in docker-compose.yml
 DEFAULT_MQTT_BROKER: Final[str] = os.environ.get(
-    "MQTT_BROKER", "hivemq-broker")
+    "MQTT_BROKER", "localhost")
 DEFAULT_MQTT_PORT: Final[int] = int(os.environ.get("MQTT_PORT", "1883"))
 DEFAULT_BASYX_URL: Final[str] = os.environ.get(
     "BASYX_URL", "http://aas-env:8081")
