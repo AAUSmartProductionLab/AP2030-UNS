@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PR2 Policy Graph &ndash; production_1</title>
+    <style>
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        #content {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            padding: 13px;
+            box-sizing: border-box;
+        }
+        #header {
+            margin-bottom: 13px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 { margin: 0 0 8px 0; color: #333; font-size: 1.4em; }
+        .info-bar { font-size: 13px; color: #555; }
+        .stats {
+            display: flex; gap: 18px; margin-top: 10px; flex-wrap: wrap;
+        }
+        .stat {
+            background: #f0f4f8; padding: 8px 14px; border-radius: 4px; text-align: center;
+        }
+        .stat-label { font-size: 11px; color: #666; }
+        .stat-value { font-size: 18px; font-weight: bold; color: #333; }
+        .main {
+            display: flex; flex: 1; gap: 13px; min-height: 0;
+        }
+        #graph-wrap {
+            flex: 1;
+            border: 2px #555 dashed;
+            border-radius: 4px;
+            position: relative;
+            background: white;
+        }
+        #graph { width: 100%; height: 100%; }
+        #sidebar {
+            width: 320px; display: flex; flex-direction: column; gap: 13px;
+        }
+        #state {
+            background: white; border-radius: 8px; padding: 13px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); flex: 1;
+            overflow: auto; font-size: 12px;
+        }
+        #state pre { margin: 0; white-space: pre-wrap; word-break: break-all; }
+        #state h4  { margin: 0 0 8px 0; color: #333; }
+        .legend {
+            background: white; border-radius: 8px; padding: 13px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .legend-item {
+            display: flex; align-items: center; margin-bottom: 5px; font-size: 12px;
+        }
+        .legend-color {
+            display: inline-block; width: 14px; height: 14px;
+            border-radius: 50%; margin-right: 8px; flex-shrink: 0;
+        }
+        .controls {
+            background: white; border-radius: 8px; padding: 10px 13px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .controls label { font-size: 12px; margin-right: 15px; }
+        button {
+            background: #4A90E2; color: white; border: none;
+            padding: 5px 12px; border-radius: 4px; cursor: pointer;
+            font-size: 12px; margin-right: 5px;
+        }
+        button:hover { background: #357ABD; }
+        /* PRP-style graph elements */
+        .psnode { stroke: #000; stroke-width: 1.5px; cursor: pointer; }
+        .pslink {
+            fill: none; stroke: #000; stroke-width: 2.6px;
+            opacity: 0.8; marker-end: url(#end-arrow);
+        }
+        .pslabel { font-size: 10px; fill: #333; pointer-events: none; }
+    </style>
+</head>
+<body>
+    <div id="content">
+        <div id="header">
+            <h1>PR2 Policy Graph</h1>
+            <div class="info-bar">
+                <strong>Domain:</strong> aseptic_production &nbsp;|&nbsp;
+                <strong>Problem:</strong> production_1
+            </div>
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-label">Solved</div>
+                    <div class="stat-value">&#10007;</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Strong Cyclic</div>
+                    <div class="stat-value">&#10007;</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Policy States</div>
+                    <div class="stat-value">27</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Transitions</div>
+                    <div class="stat-value">42</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Mapped Outcomes</div>
+                    <div class="stat-value">38/41</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main">
+            <div id="graph-wrap">
+                <svg id="graph"></svg>
+            </div>
+            <div id="sidebar">
+                <div class="legend">
+                    <div class="legend-item"><span class="legend-color" style="background:#e8c100;"></span>Goal (distance 0)</div>
+                    <div class="legend-item"><span class="legend-color" style="background:#067c00;"></span>Initial state</div>
+                    <div class="legend-item"><span class="legend-color" style="background:#025ef2;"></span>Strong-cyclic</div>
+                    <div class="legend-item"><span class="legend-color" style="background:#930000;"></span>Undefined / unmapped</div>
+                    <div class="legend-item"><span class="legend-color" style="background:#828282;"></span>Default</div>
+                </div>
+                <div class="controls">
+                    <button onclick="resetLayout()">Reset Layout</button>
+                    <button onclick="zoomToFit()">Zoom to Fit</button><br><br>
+                    <label><input type="checkbox" id="show-labels" checked onchange="toggleLabels()"> Labels</label>
+                    <label>Charge: <input type="range" id="charge" min="0" max="400" value="120" oninput="updateCharge()"></label>
+                </div>
+                <div id="state">
+                    <h4>Partial State</h4>
+                    <pre>Hover over a node to inspect its state.</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <script>
+    (function() {
+        const graphData = {"nodes": [{"id": 0, "name": "goal (1)", "type": "state", "distance": 1, "is_sc": false, "num_conditions": 5, "num_positive": 5, "num_negative": 0, "conditions": ["finished(p0)", "free_slot(dispenser1, dispenser1_slot0)", "free_slot(loader1, loader1_slot0)", "free_slot(shuttle0, shuttle0_slot0)", "free_slot(unloader1, unloader1_slot0)"], "actions": ["goal"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 1, "name": "release_unloader unloader1 p0 unloader1_slot0 (2)", "type": "state", "distance": 2, "is_sc": false, "num_conditions": 6, "num_positive": 6, "num_negative": 0, "conditions": ["finished(p0)", "free_slot(dispenser1, dispenser1_slot0)", "free_slot(loader1, loader1_slot0)", "free_slot(shuttle0, shuttle0_slot0)", "occupied(unloader1, p0)", "operational(unloader1)"], "actions": ["release_unloader unloader1 p0 unloader1_slot0"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 2, "name": "release_shuttle shuttle0 p0 shuttle0_slot0 (3)", "type": "state", "distance": 3, "is_sc": false, "num_conditions": 7, "num_positive": 7, "num_negative": 0, "conditions": ["finished(p0)", "free_slot(dispenser1, dispenser1_slot0)", "free_slot(loader1, loader1_slot0)", "occupied(shuttle0, p0)", "occupied(unloader1, p0)", "operational(shuttle0)", "operational(unloader1)"], "actions": ["release_shuttle shuttle0 p0 shuttle0_slot0"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 3, "name": "repair unloader1 (4)", "type": "state", "distance": 4, "is_sc": false, "num_conditions": 7, "num_positive": 6, "num_negative": 1, "conditions": ["finished(p0)", "free_slot(dispenser1, dispenser1_slot0)", "free_slot(loader1, loader1_slot0)", "not(operational(unloader1))", "occupied(shuttle0, p0)", "occupied(unloader1, p0)", "operational(shuttle0)"], "actions": ["repair unloader1"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 4, "name": "unload p0 shuttle0 unloader1 (4)", "type": "state", "distance": 4, "is_sc": true, "num_conditions": 9, "num_positive": 9, "num_negative": 0, "conditions": ["at(shuttle0, unloader1)", "dispensed(p0)", "free_slot(dispenser1, dispenser1_slot0)", "free_slot(loader1, loader1_slot0)", "occupied(shuttle0, p0)", "occupied(unloader1, p0)", "on(shuttle0, p0)", "operational(shuttle0)", "operational(unloader1)"], "actions": ["unload p0 shuttle0 unloader1"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 5, "name": "repair shuttle0 (5)", "type": "state", "distance": 5, "is_sc": false, "num_conditions": 9, "num_positive": 8, "num_negative": 1, "conditions": ["at(shuttle0, unloader1)", "dispensed(p0)", "free_slot(dispenser1, dispenser1_slot0)", "free_slot(loader1, loader1_slot0)", "not(operational(shuttle0))", "occupied(shuttle0, p0)", "occupied(unloader1, p0)", "on(shuttle0, p0)", "operational(unloader1)"], "actions": ["repair shuttle0"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 6, "name": "repair unloader1 (5)", "type": "state", "distance": 5, "is_sc": true, "num_conditions": 9, "num_positive": 8, "num_negative": 1, "conditions": ["at(shuttle0, unloader1)", "dispensed(p0)", "free_slot(dispenser1, dispenser1_slot0)", "free_slot(loader1, loader1_slot0)", "not(operational(unloader1))", "occupied(shuttle0, p0)", "occupied(unloader1, p0)", "on(shuttle0, p0)", "operational(shuttle0)"], "actions": ["repair unloader1"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 7, "name": "move shuttle0 dispenser1 unloader1 p0 (5)", "type": "state", "distance": 5, "is_sc": true, "num_conditions": 9, "num_positive": 9, "num_negative": 0, "conditions": ["at(shuttle0, dispenser1)", "dispensed(p0)", "free_slot(dispenser1, dispenser1_slot0)", "free_slot(loader1, loader1_slot0)", "occupied(shuttle0, p0)", "occupied(unloader1, p0)", "on(shuttle0, p0)", "operational(shuttle0)", "operational(unloader1)"], "actions": ["move shuttle0 dispenser1 unloader1 p0"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 8, "name": "repair shuttle0 (6)", "type": "state", "distance": 6, "is_sc": true, "num_conditions": 9, "num_positive": 8, "num_negative": 1, "conditions": ["at(shuttle0, dispenser1)", "dispensed(p0)", "free_slot(dispenser1, dispenser1_slot0)", "free_slot(loader1, loader1_slot0)", "not(operational(shuttle0))", "occupied(shuttle0, p0)", "occupied(unloader1, p0)", "on(shuttle0, p0)", "operational(unloader1)"], "actions": ["repair shuttle0"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 9, "name": "occupy_unloader unloader1 p0 unloader1_slot0 (6)", "type": "state", "distance": 6, "is_sc": false, "num_conditions": 9, "num_positive": 9, "num_negative": 0, "conditions": ["at(shuttle0, dispenser1)", "dispensed(p0)", "free_slot(dispenser1, dispenser1_slot0)", "free_slot(loader1, loader1_slot0)", "free_slot(unloader1, unloader1_slot0)", "occupied(shuttle0, p0)", "on(shuttle0, p0)", "operational(shuttle0)", "operational(unloader1)"], "actions": ["occupy_unloader unloader1 p0 unloader1_slot0"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 10, "name": "release_dispenser dispenser1 p0 dispenser1_slot0 (7)", "type": "state", "distance": 7, "is_sc": false, "num_conditions": 10, "num_positive": 10, "num_negative": 0, "conditions": ["at(shuttle0, dispenser1)", "dispensed(p0)", "free_slot(loader1, loader1_slot0)", "free_slot(unloader1, unloader1_slot0)", "occupied(dispenser1, p0)", "occupied(shuttle0, p0)", "on(shuttle0, p0)", "operational(dispenser1)", "operational(shuttle0)", "operational(unloader1)"], "actions": ["release_dispenser dispenser1 p0 dispenser1_slot0"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 11, "name": "dispense p0 shuttle0 dispenser1 (8)", "type": "state", "distance": 8, "is_sc": true, "num_conditions": 9, "num_positive": 9, "num_negative": 0, "conditions": ["at(shuttle0, dispenser1)", "free_slot(loader1, loader1_slot0)", "free_slot(unloader1, unloader1_slot0)", "occupied(dispenser1, p0)", "occupied(shuttle0, p0)", "on(shuttle0, p0)", "operational(dispenser1)", "operational(shuttle0)", "operational(unloader1)"], "actions": ["dispense p0 shuttle0 dispenser1"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 12, "name": "repair shuttle0 (9)", "type": "state", "distance": 9, "is_sc": false, "num_conditions": 9, "num_positive": 8, "num_negative": 1, "conditions": ["at(shuttle0, dispenser1)", "free_slot(loader1, loader1_slot0)", "free_slot(unloader1, unloader1_slot0)", "not(operational(shuttle0))", "occupied(dispenser1, p0)", "occupied(shuttle0, p0)", "on(shuttle0, p0)", "operational(dispenser1)", "operational(unloader1)"], "actions": ["repair shuttle0"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 13, "name": "repair dispenser1 (8)", "type": "state", "distance": 8, "is_sc": false, "num_conditions": 10, "num_positive": 9, "num_negative": 1, "conditions": ["at(shuttle0, dispenser1)", "dispensed(p0)", "free_slot(loader1, loader1_slot0)", "free_slot(unloader1, unloader1_slot0)", "not(operational(dispenser1))", "occupied(dispenser1, p0)", "occupied(shuttle0, p0)", "on(shuttle0, p0)", "operational(shuttle0)", "operational(unloader1)"], "actions": ["repair dispenser1"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 14, "name": "repair dispenser1 (9)", "type": "state", "distance": 9, "is_sc": true, "num_conditions": 9, "num_positive": 8, "num_negative": 1, "conditions": ["at(shuttle0, dispenser1)", "free_slot(loader1, loader1_slot0)", "free_slot(unloader1, unloader1_slot0)", "not(operational(dispenser1))", "occupied(dispenser1, p0)", "occupied(shuttle0, p0)", "on(shuttle0, p0)", "operational(shuttle0)", "operational(unloader1)"], "actions": ["repair dispenser1"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 15, "name": "move shuttle0 loader1 dispenser1 p0 (9)", "type": "state", "distance": 9, "is_sc": true, "num_conditions": 9, "num_positive": 9, "num_negative": 0, "conditions": ["at(shuttle0, loader1)", "free_slot(loader1, loader1_slot0)", "free_slot(unloader1, unloader1_slot0)", "occupied(dispenser1, p0)", "occupied(shuttle0, p0)", "on(shuttle0, p0)", "operational(dispenser1)", "operational(shuttle0)", "operational(unloader1)"], "actions": ["move shuttle0 loader1 dispenser1 p0"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 16, "name": "repair shuttle0 (10)", "type": "state", "distance": 10, "is_sc": true, "num_conditions": 9, "num_positive": 8, "num_negative": 1, "conditions": ["at(shuttle0, loader1)", "free_slot(loader1, loader1_slot0)", "free_slot(unloader1, unloader1_slot0)", "not(operational(shuttle0))", "occupied(dispenser1, p0)", "occupied(shuttle0, p0)", "on(shuttle0, p0)", "operational(dispenser1)", "operational(unloader1)"], "actions": ["repair shuttle0"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 17, "name": "occupy_dispenser dispenser1 p0 shuttle0 dispenser1_slot0 (10)", "type": "state", "distance": 10, "is_sc": false, "num_conditions": 9, "num_positive": 9, "num_negative": 0, "conditions": ["at(shuttle0, loader1)", "free_slot(dispenser1, dispenser1_slot0)", "free_slot(loader1, loader1_slot0)", "free_slot(unloader1, unloader1_slot0)", "occupied(shuttle0, p0)", "on(shuttle0, p0)", "operational(dispenser1)", "operational(shuttle0)", "operational(unloader1)"], "actions": ["occupy_dispenser dispenser1 p0 shuttle0 dispenser1_slot0"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 18, "name": "release_loader loader1 p0 shuttle0 loader1_slot0 (11)", "type": "state", "distance": 11, "is_sc": false, "num_conditions": 10, "num_positive": 10, "num_negative": 0, "conditions": ["at(shuttle0, loader1)", "free_slot(dispenser1, dispenser1_slot0)", "free_slot(unloader1, unloader1_slot0)", "occupied(loader1, p0)", "occupied(shuttle0, p0)", "on(shuttle0, p0)", "operational(dispenser1)", "operational(loader1)", "operational(shuttle0)", "operational(unloader1)"], "actions": ["release_loader loader1 p0 shuttle0 loader1_slot0"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 19, "name": "repair loader1 (12)", "type": "state", "distance": 12, "is_sc": false, "num_conditions": 10, "num_positive": 9, "num_negative": 1, "conditions": ["at(shuttle0, loader1)", "free_slot(dispenser1, dispenser1_slot0)", "free_slot(unloader1, unloader1_slot0)", "not(operational(loader1))", "occupied(loader1, p0)", "occupied(shuttle0, p0)", "on(shuttle0, p0)", "operational(dispenser1)", "operational(shuttle0)", "operational(unloader1)"], "actions": ["repair loader1"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 20, "name": "load p0 shuttle0 loader1 (12)", "type": "state", "distance": 12, "is_sc": true, "num_conditions": 10, "num_positive": 9, "num_negative": 1, "conditions": ["at(shuttle0, loader1)", "free_slot(dispenser1, dispenser1_slot0)", "free_slot(unloader1, unloader1_slot0)", "not(on(shuttle0, p0))", "occupied(loader1, p0)", "occupied(shuttle0, p0)", "operational(dispenser1)", "operational(loader1)", "operational(shuttle0)", "operational(unloader1)"], "actions": ["load p0 shuttle0 loader1"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 21, "name": "repair shuttle0 (13)", "type": "state", "distance": 13, "is_sc": false, "num_conditions": 10, "num_positive": 8, "num_negative": 2, "conditions": ["at(shuttle0, loader1)", "free_slot(dispenser1, dispenser1_slot0)", "free_slot(unloader1, unloader1_slot0)", "not(on(shuttle0, p0))", "not(operational(shuttle0))", "occupied(loader1, p0)", "occupied(shuttle0, p0)", "operational(dispenser1)", "operational(loader1)", "operational(unloader1)"], "actions": ["repair shuttle0"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 22, "name": "repair loader1 (13)", "type": "state", "distance": 13, "is_sc": true, "num_conditions": 10, "num_positive": 8, "num_negative": 2, "conditions": ["at(shuttle0, loader1)", "free_slot(dispenser1, dispenser1_slot0)", "free_slot(unloader1, unloader1_slot0)", "not(on(shuttle0, p0))", "not(operational(loader1))", "occupied(loader1, p0)", "occupied(shuttle0, p0)", "operational(dispenser1)", "operational(shuttle0)", "operational(unloader1)"], "actions": ["repair loader1"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 23, "name": "move shuttle0 parking1 loader1 p0 (13)", "type": "state", "distance": 13, "is_sc": true, "num_conditions": 10, "num_positive": 9, "num_negative": 1, "conditions": ["at(shuttle0, parking1)", "free_slot(dispenser1, dispenser1_slot0)", "free_slot(unloader1, unloader1_slot0)", "not(on(shuttle0, p0))", "occupied(loader1, p0)", "occupied(shuttle0, p0)", "operational(dispenser1)", "operational(loader1)", "operational(shuttle0)", "operational(unloader1)"], "actions": ["move shuttle0 parking1 loader1 p0"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 24, "name": "repair shuttle0 (14)", "type": "state", "distance": 14, "is_sc": true, "num_conditions": 10, "num_positive": 8, "num_negative": 2, "conditions": ["at(shuttle0, parking1)", "free_slot(dispenser1, dispenser1_slot0)", "free_slot(unloader1, unloader1_slot0)", "not(on(shuttle0, p0))", "not(operational(shuttle0))", "occupied(loader1, p0)", "occupied(shuttle0, p0)", "operational(dispenser1)", "operational(loader1)", "operational(unloader1)"], "actions": ["repair shuttle0"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 25, "name": "occupy_loader loader1 p0 shuttle0 loader1_slot0 (14)", "type": "state", "distance": 14, "is_sc": false, "num_conditions": 10, "num_positive": 9, "num_negative": 1, "conditions": ["at(shuttle0, parking1)", "free_slot(dispenser1, dispenser1_slot0)", "free_slot(loader1, loader1_slot0)", "free_slot(unloader1, unloader1_slot0)", "not(on(shuttle0, p0))", "occupied(shuttle0, p0)", "operational(dispenser1)", "operational(loader1)", "operational(shuttle0)", "operational(unloader1)"], "actions": ["occupy_loader loader1 p0 shuttle0 loader1_slot0"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 26, "name": "occupy_shuttle shuttle0 p0 shuttle0_slot0 (15)", "type": "state", "distance": 15, "is_sc": false, "num_conditions": 10, "num_positive": 9, "num_negative": 1, "conditions": ["at(shuttle0, parking1)", "free_slot(dispenser1, dispenser1_slot0)", "free_slot(loader1, loader1_slot0)", "free_slot(shuttle0, shuttle0_slot0)", "free_slot(unloader1, unloader1_slot0)", "not(on(shuttle0, p0))", "operational(dispenser1)", "operational(loader1)", "operational(shuttle0)", "operational(unloader1)"], "actions": ["occupy_shuttle shuttle0 p0 shuttle0_slot0"], "num_actions": 1, "is_initial": true, "size": 8}, {"id": 27, "name": "Goal", "type": "goal", "distance": 0, "is_sc": false, "num_conditions": 5, "num_positive": 5, "num_negative": 0, "conditions": [], "actions": [], "num_actions": 0, "is_initial": false, "size": 8}, {"id": 28, "name": "undefined", "type": "unmapped", "distance": -1, "is_sc": false, "num_conditions": 0, "num_positive": 0, "num_negative": 0, "conditions": [], "actions": [], "num_actions": 0, "is_initial": false, "size": 8}], "links": [{"source": 0, "target": 27, "action": "goal", "type": "goal", "outcomes": ["goal"], "value": 2}, {"source": 1, "target": 0, "action": "release_unloader unloader1 p0 unloader1_slot0", "type": "transition", "outcomes": [0], "value": 1}, {"source": 2, "target": 1, "action": "release_shuttle shuttle0 p0 shuttle0_slot0", "type": "transition", "outcomes": [0], "value": 1}, {"source": 3, "target": 2, "action": "repair unloader1", "type": "transition", "outcomes": [0], "value": 1}, {"source": 4, "target": 2, "action": "unload p0 shuttle0 unloader1", "type": "transition", "outcomes": [0], "value": 1}, {"source": 4, "target": 3, "action": "unload p0 shuttle0 unloader1", "type": "transition", "outcomes": [1], "value": 1}, {"source": 4, "target": 6, "action": "unload p0 shuttle0 unloader1", "type": "transition", "outcomes": [2], "value": 1}, {"source": 5, "target": 4, "action": "repair shuttle0", "type": "transition", "outcomes": [0], "value": 1}, {"source": 6, "target": 4, "action": "repair unloader1", "type": "transition", "outcomes": [0], "value": 1}, {"source": 7, "target": 4, "action": "move shuttle0 dispenser1 unloader1 p0", "type": "transition", "outcomes": [0], "value": 1}, {"source": 7, "target": 5, "action": "move shuttle0 dispenser1 unloader1 p0", "type": "transition", "outcomes": [1], "value": 1}, {"source": 7, "target": 28, "action": "move shuttle0 dispenser1 unloader1 p0", "type": "unmapped", "outcomes": [2], "value": 1}, {"source": 7, "target": 8, "action": "move shuttle0 dispenser1 unloader1 p0", "type": "transition", "outcomes": [3], "value": 1}, {"source": 8, "target": 7, "action": "repair shuttle0", "type": "transition", "outcomes": [0], "value": 1}, {"source": 9, "target": 7, "action": "occupy_unloader unloader1 p0 unloader1_slot0", "type": "transition", "outcomes": [0], "value": 1}, {"source": 10, "target": 9, "action": "release_dispenser dispenser1 p0 dispenser1_slot0", "type": "transition", "outcomes": [0], "value": 1}, {"source": 11, "target": 10, "action": "dispense p0 shuttle0 dispenser1", "type": "transition", "outcomes": [0], "value": 1}, {"source": 11, "target": 13, "action": "dispense p0 shuttle0 dispenser1", "type": "transition", "outcomes": [1], "value": 1}, {"source": 11, "target": 14, "action": "dispense p0 shuttle0 dispenser1", "type": "transition", "outcomes": [2], "value": 1}, {"source": 12, "target": 11, "action": "repair shuttle0", "type": "transition", "outcomes": [0], "value": 1}, {"source": 13, "target": 10, "action": "repair dispenser1", "type": "transition", "outcomes": [0], "value": 1}, {"source": 14, "target": 11, "action": "repair dispenser1", "type": "transition", "outcomes": [0], "value": 1}, {"source": 15, "target": 11, "action": "move shuttle0 loader1 dispenser1 p0", "type": "transition", "outcomes": [0], "value": 1}, {"source": 15, "target": 12, "action": "move shuttle0 loader1 dispenser1 p0", "type": "transition", "outcomes": [1], "value": 1}, {"source": 15, "target": 28, "action": "move shuttle0 loader1 dispenser1 p0", "type": "unmapped", "outcomes": [2], "value": 1}, {"source": 15, "target": 16, "action": "move shuttle0 loader1 dispenser1 p0", "type": "transition", "outcomes": [3], "value": 1}, {"source": 16, "target": 15, "action": "repair shuttle0", "type": "transition", "outcomes": [0], "value": 1}, {"source": 17, "target": 15, "action": "occupy_dispenser dispenser1 p0 shuttle0 dispenser1_slot0", "type": "transition", "outcomes": [0], "value": 1}, {"source": 18, "target": 17, "action": "release_loader loader1 p0 shuttle0 loader1_slot0", "type": "transition", "outcomes": [0], "value": 1}, {"source": 19, "target": 18, "action": "repair loader1", "type": "transition", "outcomes": [0], "value": 1}, {"source": 20, "target": 18, "action": "load p0 shuttle0 loader1", "type": "transition", "outcomes": [0], "value": 1}, {"source": 20, "target": 22, "action": "load p0 shuttle0 loader1", "type": "transition", "outcomes": [1], "value": 1}, {"source": 20, "target": 19, "action": "load p0 shuttle0 loader1", "type": "transition", "outcomes": [2], "value": 1}, {"source": 21, "target": 20, "action": "repair shuttle0", "type": "transition", "outcomes": [0], "value": 1}, {"source": 22, "target": 20, "action": "repair loader1", "type": "transition", "outcomes": [0], "value": 1}, {"source": 23, "target": 20, "action": "move shuttle0 parking1 loader1 p0", "type": "transition", "outcomes": [0], "value": 1}, {"source": 23, "target": 21, "action": "move shuttle0 parking1 loader1 p0", "type": "transition", "outcomes": [1], "value": 1}, {"source": 23, "target": 28, "action": "move shuttle0 parking1 loader1 p0", "type": "unmapped", "outcomes": [2], "value": 1}, {"source": 23, "target": 24, "action": "move shuttle0 parking1 loader1 p0", "type": "transition", "outcomes": [3], "value": 1}, {"source": 24, "target": 23, "action": "repair shuttle0", "type": "transition", "outcomes": [0], "value": 1}, {"source": 25, "target": 23, "action": "occupy_loader loader1 p0 shuttle0 loader1_slot0", "type": "transition", "outcomes": [0], "value": 1}, {"source": 26, "target": 25, "action": "occupy_shuttle shuttle0 p0 shuttle0_slot0", "type": "transition", "outcomes": [0], "value": 1}], "stats": {"solved": false, "strong_cyclic": false, "num_rules": 27, "num_fsaps": 147, "num_states": 27, "num_transitions": 42, "grounded_actions_found": 882, "total_outcomes": 41, "mapped_outcomes": 38}};
+        const COLOR_GOAL  = "#e8c100";
+        const COLOR_INIT  = "#067c00";
+        const COLOR_SC    = "#025ef2";
+        const COLOR_UNDEF = "#930000";
+        const COLOR_DEF   = "#828282";
+
+        const svgEl  = document.getElementById("graph");
+        const width  = svgEl.clientWidth  || 900;
+        const height = svgEl.clientHeight || 700;
+        const nodeRadius = 8;
+
+        const svg = d3.select("#graph")
+                      .attr("width", width)
+                      .attr("height", height);
+        const container = svg.append("g");
+
+        /* Zoom / pan */
+        const zoomBehavior = d3.zoom()
+            .scaleExtent([0.1, 6])
+            .on("zoom", function() {
+                container.attr("transform", d3.event.transform);
+            });
+        svg.call(zoomBehavior);
+
+        /* Arrow marker (PRP style) */
+        svg.append("svg:defs").append("svg:marker")
+            .attr("id", "end-arrow")
+            .attr("viewBox", "0 -5 10 10")
+            .attr("refX", 6)
+            .attr("markerWidth", 3)
+            .attr("markerHeight", 3)
+            .attr("orient", "auto")
+          .append("svg:path")
+            .attr("d", "M0,-5L10,0L0,5")
+            .attr("fill", "#000");
+
+        /* Initial positions: top-to-bottom flow (init=top, goal=bottom) */
+        const maxDist = Math.max(1, ...graphData.nodes.map(
+            function(n) { return n.distance >= 0 ? n.distance : 0; }
+        ));
+        const vPad = 60, hPad = 80;
+
+        function jitter(id) {
+            var x = Math.sin((id + 1) * 12.9898) * 43758.5453;
+            return x - Math.floor(x);
+        }
+
+        graphData.nodes.forEach(function(d) {
+            if (d.distance >= 0) {
+                /* Higher distance = closer to init (top). */
+                var ratio = 1.0 - d.distance / (maxDist + 1);
+                d.y = vPad + ratio * (height - 2 * vPad);
+            } else {
+                d.y = height - vPad;
+            }
+            d.x = hPad + jitter(d.id) * (width - 2 * hPad);
+        });
+
+        /* Force simulation (vertical flow akin to PRP's WebCola flowLayout) */
+        const simulation = d3.forceSimulation(graphData.nodes)
+            .force("link", d3.forceLink(graphData.links)
+                .id(function(d) { return d.id; })
+                .distance(84)
+                .strength(0.5))
+            .force("charge", d3.forceManyBody().strength(-120))
+            .force("y", d3.forceY(function(d) {
+                if (d.type === "goal") return height - vPad;
+                if (d.is_initial)     return vPad;
+                if (d.distance >= 0) {
+                    var ratio = 1.0 - d.distance / (maxDist + 1);
+                    return vPad + ratio * (height - 2 * vPad);
+                }
+                return height - vPad;
+            }).strength(0.12))
+            .force("x", d3.forceX(width / 2).strength(0.03))
+            .force("collision", d3.forceCollide(nodeRadius + 4));
+
+        /* Edges (PRP: black, 2.6px, 0.8 opacity, arrow marker) */
+        const path = container.selectAll(".pslink")
+            .data(graphData.links)
+            .enter().append("svg:path")
+            .attr("class", "pslink");
+
+        /* Nodes (PRP colour scheme) */
+        const node = container.selectAll(".psnode")
+            .data(graphData.nodes)
+            .enter().append("circle")
+            .attr("class", "psnode")
+            .attr("id", function(d) { return "psnode" + d.id; })
+            .attr("r", nodeRadius)
+            .style("fill", function(d) {
+                if (d.type === "goal" || d.distance === 0) return COLOR_GOAL;
+                if (d.is_initial) return COLOR_INIT;
+                if (d.is_sc)      return COLOR_SC;
+                if (d.type === "unmapped") return COLOR_UNDEF;
+                return COLOR_DEF;
+            })
+            .call(d3.drag()
+                .on("start", dragstarted)
+                .on("drag", dragged)
+                .on("end", dragended));
+
+        /* Labels ("action (distance)" beside each node) */
+        const label = container.selectAll(".pslabel")
+            .data(graphData.nodes)
+            .enter().append("text")
+            .attr("class", "pslabel")
+            .attr("dx", 12)
+            .attr("dy", ".35em")
+            .text(function(d) { return d.name; });
+
+        /* Hover: show partial state in side panel (PRP style) */
+        node.on("mouseover", function(d) {
+                var html = "<h4>Partial State for Node " + d.id + "</h4>";
+                if (d.type === "goal") {
+                    html += "<pre>Goal node (distance 0)</pre>";
+                } else if (d.type === "unmapped") {
+                    html += "<pre>Undefined / unmapped successor</pre>";
+                } else {
+                    html += "<p><strong>Actions:</strong> " + (d.actions||[]).join(", ") + "</p>";
+                    html += "<p><strong>Distance to goal:</strong> " + (d.distance >= 0 ? d.distance : "unreachable") + "</p>";
+                    if (d.is_sc) html += "<p><strong>Strong-cyclic:</strong> Yes</p>";
+                    if (d.is_initial) html += "<p><em>Initial state</em></p>";
+                    if (d.conditions && d.conditions.length) {
+                        html += "<pre>" + d.conditions.join("\n") + "</pre>";
+                        if (d.num_conditions > d.conditions.length)
+                            html += "<p>... and " + (d.num_conditions - d.conditions.length) + " more</p>";
+                    }
+                }
+                document.getElementById("state").innerHTML = html;
+                d3.select(this).transition().duration(200).attr("r", nodeRadius * 2);
+            })
+            .on("mouseout", function(d) {
+                d3.select(this).transition().duration(200).attr("r", nodeRadius);
+            })
+            .on("dblclick", function(d) {
+                console.log("Node Info:", d);
+            });
+
+        /* Tick (PRP-style edge routing) */
+        simulation.on("tick", function() {
+            path.attr("d", function(d) {
+                var dx = d.target.x - d.source.x,
+                    dy = d.target.y - d.source.y,
+                    dist = Math.sqrt(dx * dx + dy * dy) || 1,
+                    nx = dx / dist, ny = dy / dist,
+                    sx = d.source.x + nodeRadius * nx,
+                    sy = d.source.y + nodeRadius * ny,
+                    tx = d.target.x - (nodeRadius + 2) * nx,
+                    ty = d.target.y - (nodeRadius + 2) * ny;
+                return "M" + sx + "," + sy + "L" + tx + "," + ty;
+            });
+            node.attr("cx", function(d) { return d.x; })
+                .attr("cy", function(d) { return d.y; });
+            label.attr("x", function(d) { return d.x; })
+                 .attr("y", function(d) { return d.y; });
+        });
+
+        /* Drag handlers */
+        function dragstarted(d) {
+            if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x; d.fy = d.y;
+        }
+        function dragged(d) { d.fx = d3.event.x; d.fy = d3.event.y; }
+        function dragended(d) {
+            if (!d3.event.active) simulation.alphaTarget(0);
+            d.fx = null; d.fy = null;
+        }
+
+        /* Controls */
+        window.resetLayout = function() { simulation.alpha(1).restart(); };
+
+        window.zoomToFit = function() {
+            var bounds = container.node().getBBox();
+            if (!bounds.width || !bounds.height) return;
+            var wR = width / bounds.width,
+                hR = height / bounds.height,
+                sc = 0.85 * Math.min(wR, hR),
+                tx = width  / 2 - sc * (bounds.x + bounds.width  / 2),
+                ty = height / 2 - sc * (bounds.y + bounds.height / 2);
+            svg.transition().duration(600)
+               .call(zoomBehavior.transform,
+                     d3.zoomIdentity.translate(tx, ty).scale(sc));
+        };
+
+        window.toggleLabels = function() {
+            var show = document.getElementById("show-labels").checked;
+            label.style("display", show ? "block" : "none");
+        };
+
+        window.updateCharge = function() {
+            simulation.force("charge").strength(
+                -document.getElementById("charge").value);
+            simulation.alpha(0.3).restart();
+        };
+
+        setTimeout(window.zoomToFit, 300);
+    })();
+    </script>
+</body>
+</html>

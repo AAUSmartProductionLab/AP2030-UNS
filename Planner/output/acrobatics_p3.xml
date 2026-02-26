@@ -1,0 +1,206 @@
+<?xml version='1.0' encoding='utf-8'?>
+<root BTCPP_format="4">
+  <BehaviorTree ID="Production">
+    <ReactiveFallback name="PolicyRoot">
+      <ReactiveSequence name="GoalBranch">
+        <ReactiveSequence name="GoalCond">
+          <Condition ID="FluentCheck" name="position(p7)" fluent="position(p7)" />
+          <Condition ID="FluentCheck" name="up()" fluent="up()" />
+        </ReactiveSequence>
+        <Action ID="GoalReached" name="GoalReached" />
+      </ReactiveSequence>
+      <ReactiveSequence name="PolicyRules">
+        <Condition ID="FluentCheck" name="not(broken-leg())" fluent="not(broken-leg())" />
+        <ReactiveFallback name="Progression">
+          <SubTree ID="Walk-on-beam_p6_p7_WithRecovery_common" />
+          <SubTree ID="Walk-on-beam_p5_p6_WithRecovery_common" />
+          <SubTree ID="Walk-on-beam_p4_p5_WithRecovery_common" />
+          <SubTree ID="Walk-on-beam_p3_p4_WithRecovery_common" />
+          <SubTree ID="Walk-on-beam_p2_p3_WithRecovery_common" />
+          <SubTree ID="Walk-on-beam_p1_p2_WithRecovery_common" />
+          <SubTree ID="Walk-on-beam_p0_p1_WithRecovery_common" />
+          <SubTree ID="Walk-left_p7_p6" />
+        </ReactiveFallback>
+      </ReactiveSequence>
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Climb_p0">
+    <ReactiveSequence name="Climb_p0">
+      <Action ID="ExecuteAction" name="climb p0" action_name="climb" action_args="p0" />
+    </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Walk-left_p7_p6">
+    <ReactiveSequence name="Walk-left_p7_p6">
+      <Condition ID="FluentCheck" name="not(up())" fluent="not(up())" />
+      <Condition ID="FluentCheck" name="position(p7)" fluent="position(p7)" />
+      <Action ID="ExecuteAction" name="walk-left p7 p6" action_name="walk-left" action_args="p7 p6" />
+    </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Walk-on-beam_p0_p1">
+    <ReactiveSequence name="Walk-on-beam_p0_p1">
+      <Condition ID="FluentCheck" name="up()" fluent="up()" />
+      <Inverter name="Inverter">
+        <Action ID="ForbiddenAction" name="Forbid:jump-over p0 p1 p2" forbidden_action="jump-over" forbidden_args="p0 p1 p2" />
+      </Inverter>
+      <Action ID="ExecuteAction" name="walk-on-beam p0 p1" action_name="walk-on-beam" action_args="p0 p1" />
+    </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Walk-on-beam_p0_p1_OrFallback">
+    <ReactiveFallback name="Walk-on-beam_p0_p1_OrFallback">
+      <SubTree ID="Walk-on-beam_p0_p1" />
+      <SubTree ID="Climb_p0" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Walk-on-beam_p0_p1_WithRecovery_common">
+    <ReactiveSequence name="Walk-on-beam_p0_p1_WithRecovery_common">
+      <Condition ID="FluentCheck" name="position(p0)" fluent="position(p0)" />
+      <SubTree ID="Walk-on-beam_p0_p1_OrFallback" />
+    </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Walk-on-beam_p1_p2">
+    <ReactiveSequence name="Walk-on-beam_p1_p2">
+      <Condition ID="FluentCheck" name="up()" fluent="up()" />
+      <Inverter name="Inverter">
+        <Action ID="ForbiddenAction" name="Forbid:jump-over p1 p2 p3" forbidden_action="jump-over" forbidden_args="p1 p2 p3" />
+      </Inverter>
+      <Action ID="ExecuteAction" name="walk-on-beam p1 p2" action_name="walk-on-beam" action_args="p1 p2" />
+    </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Walk-on-beam_p1_p2_OrFallback">
+    <ReactiveFallback name="Walk-on-beam_p1_p2_OrFallback">
+      <SubTree ID="Walk-on-beam_p1_p2" />
+      <SubTree ID="Walk-left" arg0="p1" arg1="p0" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Walk-on-beam_p1_p2_WithRecovery_common">
+    <ReactiveSequence name="Walk-on-beam_p1_p2_WithRecovery_common">
+      <Condition ID="FluentCheck" name="position(p1)" fluent="position(p1)" />
+      <SubTree ID="Walk-on-beam_p1_p2_OrFallback" />
+    </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Walk-on-beam_p2_p3">
+    <ReactiveSequence name="Walk-on-beam_p2_p3">
+      <Condition ID="FluentCheck" name="up()" fluent="up()" />
+      <Inverter name="Inverter">
+        <Action ID="ForbiddenAction" name="Forbid:jump-over p2 p3 p4" forbidden_action="jump-over" forbidden_args="p2 p3 p4" />
+      </Inverter>
+      <Action ID="ExecuteAction" name="walk-on-beam p2 p3" action_name="walk-on-beam" action_args="p2 p3" />
+    </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Walk-on-beam_p2_p3_OrFallback">
+    <ReactiveFallback name="Walk-on-beam_p2_p3_OrFallback">
+      <SubTree ID="Walk-on-beam_p2_p3" />
+      <SubTree ID="Walk-left" arg0="p2" arg1="p1" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Walk-on-beam_p2_p3_WithRecovery_common">
+    <ReactiveSequence name="Walk-on-beam_p2_p3_WithRecovery_common">
+      <Condition ID="FluentCheck" name="position(p2)" fluent="position(p2)" />
+      <SubTree ID="Walk-on-beam_p2_p3_OrFallback" />
+    </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Walk-on-beam_p3_p4">
+    <ReactiveSequence name="Walk-on-beam_p3_p4">
+      <Condition ID="FluentCheck" name="up()" fluent="up()" />
+      <Inverter name="Inverter">
+        <Action ID="ForbiddenAction" name="Forbid:jump-over p3 p4 p5" forbidden_action="jump-over" forbidden_args="p3 p4 p5" />
+      </Inverter>
+      <Action ID="ExecuteAction" name="walk-on-beam p3 p4" action_name="walk-on-beam" action_args="p3 p4" />
+    </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Walk-on-beam_p3_p4_OrFallback">
+    <ReactiveFallback name="Walk-on-beam_p3_p4_OrFallback">
+      <SubTree ID="Walk-on-beam_p3_p4" />
+      <SubTree ID="Walk-left" arg0="p3" arg1="p2" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Walk-on-beam_p3_p4_WithRecovery_common">
+    <ReactiveSequence name="Walk-on-beam_p3_p4_WithRecovery_common">
+      <Condition ID="FluentCheck" name="position(p3)" fluent="position(p3)" />
+      <SubTree ID="Walk-on-beam_p3_p4_OrFallback" />
+    </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Walk-on-beam_p4_p5">
+    <ReactiveSequence name="Walk-on-beam_p4_p5">
+      <Condition ID="FluentCheck" name="up()" fluent="up()" />
+      <Inverter name="Inverter">
+        <Action ID="ForbiddenAction" name="Forbid:jump-over p4 p5 p6" forbidden_action="jump-over" forbidden_args="p4 p5 p6" />
+      </Inverter>
+      <Action ID="ExecuteAction" name="walk-on-beam p4 p5" action_name="walk-on-beam" action_args="p4 p5" />
+    </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Walk-on-beam_p4_p5_OrFallback">
+    <ReactiveFallback name="Walk-on-beam_p4_p5_OrFallback">
+      <SubTree ID="Walk-on-beam_p4_p5" />
+      <SubTree ID="Walk-left" arg0="p4" arg1="p3" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Walk-on-beam_p4_p5_WithRecovery_common">
+    <ReactiveSequence name="Walk-on-beam_p4_p5_WithRecovery_common">
+      <Condition ID="FluentCheck" name="position(p4)" fluent="position(p4)" />
+      <SubTree ID="Walk-on-beam_p4_p5_OrFallback" />
+    </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Walk-on-beam_p5_p6">
+    <ReactiveSequence name="Walk-on-beam_p5_p6">
+      <Condition ID="FluentCheck" name="up()" fluent="up()" />
+      <Inverter name="Inverter">
+        <Action ID="ForbiddenAction" name="Forbid:jump-over p5 p6 p7" forbidden_action="jump-over" forbidden_args="p5 p6 p7" />
+      </Inverter>
+      <Action ID="ExecuteAction" name="walk-on-beam p5 p6" action_name="walk-on-beam" action_args="p5 p6" />
+    </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Walk-on-beam_p5_p6_OrFallback">
+    <ReactiveFallback name="Walk-on-beam_p5_p6_OrFallback">
+      <SubTree ID="Walk-on-beam_p5_p6" />
+      <SubTree ID="Walk-left" arg0="p5" arg1="p4" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Walk-on-beam_p5_p6_WithRecovery_common">
+    <ReactiveSequence name="Walk-on-beam_p5_p6_WithRecovery_common">
+      <Condition ID="FluentCheck" name="position(p5)" fluent="position(p5)" />
+      <SubTree ID="Walk-on-beam_p5_p6_OrFallback" />
+    </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Walk-on-beam_p6_p7">
+    <ReactiveSequence name="Walk-on-beam_p6_p7">
+      <Condition ID="FluentCheck" name="up()" fluent="up()" />
+      <Action ID="ExecuteAction" name="walk-on-beam p6 p7" action_name="walk-on-beam" action_args="p6 p7" />
+    </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Walk-on-beam_p6_p7_OrFallback">
+    <ReactiveFallback name="Walk-on-beam_p6_p7_OrFallback">
+      <SubTree ID="Walk-on-beam_p6_p7" />
+      <SubTree ID="Walk-left" arg0="p6" arg1="p5" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Walk-on-beam_p6_p7_WithRecovery_common">
+    <ReactiveSequence name="Walk-on-beam_p6_p7_WithRecovery_common">
+      <Condition ID="FluentCheck" name="position(p6)" fluent="position(p6)" />
+      <SubTree ID="Walk-on-beam_p6_p7_OrFallback" />
+    </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Walk-left">
+    <ReactiveSequence name="Walk-left_{arg0}_{arg1}">
+      <Action ID="ExecuteAction" name="walk-left {arg0} {arg1}" action_name="walk-left" action_args="{arg0} {arg1}" />
+    </ReactiveSequence>
+  </BehaviorTree>
+  <TreeNodesModel>
+    <Condition ID="FluentCheck">
+      <input_port name="fluent" default="" />
+    </Condition>
+    <Action ID="ExecuteAction">
+      <input_port name="action_name" default="" />
+      <input_port name="action_args" default="" />
+    </Action>
+    <Action ID="GoalReached" />
+    <Action ID="ForbiddenAction">
+      <input_port name="forbidden_action" default="" />
+      <input_port name="forbidden_args" default="" />
+    </Action>
+    <SubTree ID="Walk-left" editable="true">
+      <input_port name="arg0" />
+      <input_port name="arg1" />
+    </SubTree>
+  </TreeNodesModel>
+</root>

@@ -1,0 +1,571 @@
+<?xml version='1.0' encoding='utf-8'?>
+<root BTCPP_format="4">
+  <BehaviorTree ID="Production">
+    <ReactiveFallback name="PolicyRoot">
+      <ReactiveSequence name="GoalBranch">
+        <ReactiveSequence name="GoalCond">
+          <Condition ID="FluentCheck" name="finished(p0)" fluent="finished(p0)" />
+          <Condition ID="FluentCheck" name="free_slot(dispenser1, dispenser1_slot0)" fluent="free_slot(dispenser1, dispenser1_slot0)" />
+          <Condition ID="FluentCheck" name="free_slot(loader1, loader1_slot0)" fluent="free_slot(loader1, loader1_slot0)" />
+          <Condition ID="FluentCheck" name="free_slot(shuttle0, shuttle0_slot0)" fluent="free_slot(shuttle0, shuttle0_slot0)" />
+          <Condition ID="FluentCheck" name="free_slot(unloader1, unloader1_slot0)" fluent="free_slot(unloader1, unloader1_slot0)" />
+        </ReactiveSequence>
+        <Action ID="GoalReached" name="GoalReached" />
+      </ReactiveSequence>
+      <ReactiveFallback name="Progression">
+        <SubTree ID="ReleaseUnloader_unloader1_p0_unloader1_slot0" />
+        <SubTree ID="ReleaseShuttle_shuttle0_p0_shuttle0_slot0_WithRecovery_common" />
+        <SubTree ID="Unload_p0_shuttle0_unloader1_WithRecovery_common" />
+        <SubTree ID="Phase_Move_shuttle0_dispenser1_unloader1_p0_common" />
+        <SubTree ID="OccupyUnloader_unloader1_p0_unloader1_slot0" />
+        <SubTree ID="ReleaseDispenser_dispenser1_p0_dispenser1_slot0_WithRecovery_common" />
+        <SubTree ID="Dispense_p0_shuttle0_dispenser1_WithRecovery_common" />
+        <SubTree ID="Phase_Move_shuttle0_loader1_dispenser1_p0_common" />
+        <SubTree ID="OccupyDispenser_dispenser1_p0_shuttle0_dispenser1_slot0" />
+        <SubTree ID="ReleaseLoader_loader1_p0_shuttle0_loader1_slot0_WithRecovery_common" />
+        <SubTree ID="Load_p0_shuttle0_loader1_WithRecovery_common" />
+        <SubTree ID="Phase_Move_shuttle0_parking1_loader1_p0_common" />
+        <SubTree ID="OccupyLoader_loader1_p0_shuttle0_loader1_slot0" />
+        <SubTree ID="OccupyShuttle_shuttle0_p0_shuttle0_slot0" />
+      </ReactiveFallback>
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Dispense_p0_shuttle0_dispenser1">
+    <ReactiveSequence name="Dispense_p0_shuttle0_dispenser1">
+      <Condition ID="FluentCheck" name="operational(shuttle0)" fluent="operational(shuttle0)" />
+      <Action ID="ExecuteAction" name="dispense p0 shuttle0 dispenser1" action_name="dispense" action_args="p0 shuttle0 dispenser1" />
+    </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Dispense_p0_shuttle0_dispenser1_OrFallback">
+    <ReactiveFallback name="Dispense_p0_shuttle0_dispenser1_OrFallback">
+      <SubTree ID="Dispense_p0_shuttle0_dispenser1" />
+      <SubTree ID="Repair" arg0="shuttle0" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Dispense_p0_shuttle0_dispenser1_WithRecovery_common">
+    <ReactiveSequence name="Dispense_p0_shuttle0_dispenser1_WithRecovery_common">
+      <Condition ID="FluentCheck" name="at(shuttle0, dispenser1)" fluent="at(shuttle0, dispenser1)" />
+      <Condition ID="FluentCheck" name="free_slot(loader1, loader1_slot0)" fluent="free_slot(loader1, loader1_slot0)" />
+      <Condition ID="FluentCheck" name="free_slot(unloader1, unloader1_slot0)" fluent="free_slot(unloader1, unloader1_slot0)" />
+      <Condition ID="FluentCheck" name="occupied(dispenser1, p0)" fluent="occupied(dispenser1, p0)" />
+      <Condition ID="FluentCheck" name="occupied(shuttle0, p0)" fluent="occupied(shuttle0, p0)" />
+      <Condition ID="FluentCheck" name="on(shuttle0, p0)" fluent="on(shuttle0, p0)" />
+      <Condition ID="FluentCheck" name="operational(dispenser1)" fluent="operational(dispenser1)" />
+      <Condition ID="FluentCheck" name="operational(unloader1)" fluent="operational(unloader1)" />
+      <SubTree ID="Dispense_p0_shuttle0_dispenser1_OrFallback" />
+    </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Exec_Move_shuttle0_dispenser1_unloader1_p0">
+    <ReactiveSequence name="Exec_Move_shuttle0_dispenser1_unloader1_p0">
+      <Condition ID="FluentCheck" name="at(shuttle0, dispenser1)" fluent="at(shuttle0, dispenser1)" />
+      <Condition ID="FluentCheck" name="operational(unloader1)" fluent="operational(unloader1)" />
+      <ReactiveFallback name="Move_shuttle0_dispenser1_unloader1_p0_OrFallback">
+        <SubTree ID="Move_shuttle0_dispenser1_unloader1_p0" />
+        <SubTree ID="Repair" arg0="shuttle0" />
+      </ReactiveFallback>
+    </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Exec_Move_shuttle0_loader1_dispenser1_p0">
+    <ReactiveSequence name="Exec_Move_shuttle0_loader1_dispenser1_p0">
+      <Condition ID="FluentCheck" name="at(shuttle0, loader1)" fluent="at(shuttle0, loader1)" />
+      <Condition ID="FluentCheck" name="operational(dispenser1)" fluent="operational(dispenser1)" />
+      <ReactiveFallback name="Move_shuttle0_loader1_dispenser1_p0_OrFallback">
+        <SubTree ID="Move_shuttle0_loader1_dispenser1_p0" />
+        <SubTree ID="Repair" arg0="shuttle0" />
+      </ReactiveFallback>
+    </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Exec_Move_shuttle0_parking1_loader1_p0">
+    <ReactiveSequence name="Exec_Move_shuttle0_parking1_loader1_p0">
+      <Condition ID="FluentCheck" name="at(shuttle0, parking1)" fluent="at(shuttle0, parking1)" />
+      <Condition ID="FluentCheck" name="operational(loader1)" fluent="operational(loader1)" />
+      <ReactiveFallback name="Move_shuttle0_parking1_loader1_p0_OrFallback">
+        <SubTree ID="Move_shuttle0_parking1_loader1_p0" />
+        <SubTree ID="Repair" arg0="shuttle0" />
+      </ReactiveFallback>
+    </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Load_p0_shuttle0_loader1">
+    <ReactiveSequence name="Load_p0_shuttle0_loader1">
+      <Condition ID="FluentCheck" name="operational(shuttle0)" fluent="operational(shuttle0)" />
+      <Action ID="ExecuteAction" name="load p0 shuttle0 loader1" action_name="load" action_args="p0 shuttle0 loader1" />
+    </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Load_p0_shuttle0_loader1_OrFallback">
+    <ReactiveFallback name="Load_p0_shuttle0_loader1_OrFallback">
+      <SubTree ID="Load_p0_shuttle0_loader1" />
+      <SubTree ID="Repair" arg0="shuttle0" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Load_p0_shuttle0_loader1_WithRecovery_common">
+    <ReactiveSequence name="Load_p0_shuttle0_loader1_WithRecovery_common">
+      <Condition ID="FluentCheck" name="at(shuttle0, loader1)" fluent="at(shuttle0, loader1)" />
+      <Condition ID="FluentCheck" name="free_slot(dispenser1, dispenser1_slot0)" fluent="free_slot(dispenser1, dispenser1_slot0)" />
+      <Condition ID="FluentCheck" name="free_slot(unloader1, unloader1_slot0)" fluent="free_slot(unloader1, unloader1_slot0)" />
+      <Condition ID="FluentCheck" name="not(on(shuttle0, p0))" fluent="not(on(shuttle0, p0))" />
+      <Condition ID="FluentCheck" name="occupied(loader1, p0)" fluent="occupied(loader1, p0)" />
+      <Condition ID="FluentCheck" name="occupied(shuttle0, p0)" fluent="occupied(shuttle0, p0)" />
+      <Condition ID="FluentCheck" name="operational(dispenser1)" fluent="operational(dispenser1)" />
+      <Condition ID="FluentCheck" name="operational(loader1)" fluent="operational(loader1)" />
+      <Condition ID="FluentCheck" name="operational(unloader1)" fluent="operational(unloader1)" />
+      <SubTree ID="Load_p0_shuttle0_loader1_OrFallback" />
+    </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Move_shuttle0_dispenser1_unloader1_p0">
+    <ReactiveSequence name="Move_shuttle0_dispenser1_unloader1_p0">
+      <Condition ID="FluentCheck" name="operational(shuttle0)" fluent="operational(shuttle0)" />
+      <Inverter name="Inverter">
+        <ReactiveSequence name="FSAP_move_shuttle0_dispenser1_unloader1_p0">
+          <Condition ID="FluentCheck" name="not(at(shuttle0, loader1))" fluent="not(at(shuttle0, loader1))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, parking1))" fluent="not(at(shuttle0, parking1))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, shuttle0))" fluent="not(at(shuttle0, shuttle0))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, unloader1))" fluent="not(at(shuttle0, unloader1))" />
+          <Condition ID="FluentCheck" name="not(finished(p0))" fluent="not(finished(p0))" />
+        </ReactiveSequence>
+      </Inverter>
+      <Action ID="ExecuteAction" name="move shuttle0 dispenser1 unloader1 p0" action_name="move" action_args="shuttle0 dispenser1 unloader1 p0" />
+    </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Move_shuttle0_loader1_dispenser1_p0">
+    <ReactiveSequence name="Move_shuttle0_loader1_dispenser1_p0">
+      <Condition ID="FluentCheck" name="operational(shuttle0)" fluent="operational(shuttle0)" />
+      <Inverter name="Inverter">
+        <ReactiveSequence name="FSAP_move_shuttle0_loader1_dispenser1_p0">
+          <Condition ID="FluentCheck" name="not(at(shuttle0, dispenser1))" fluent="not(at(shuttle0, dispenser1))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, parking1))" fluent="not(at(shuttle0, parking1))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, shuttle0))" fluent="not(at(shuttle0, shuttle0))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, unloader1))" fluent="not(at(shuttle0, unloader1))" />
+          <Condition ID="FluentCheck" name="not(finished(p0))" fluent="not(finished(p0))" />
+        </ReactiveSequence>
+      </Inverter>
+      <Action ID="ExecuteAction" name="move shuttle0 loader1 dispenser1 p0" action_name="move" action_args="shuttle0 loader1 dispenser1 p0" />
+    </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Move_shuttle0_parking1_loader1_p0">
+    <ReactiveSequence name="Move_shuttle0_parking1_loader1_p0">
+      <Condition ID="FluentCheck" name="operational(shuttle0)" fluent="operational(shuttle0)" />
+      <Inverter name="Inverter">
+        <ReactiveSequence name="FSAP_move_shuttle0_parking1_loader1_p0">
+          <Condition ID="FluentCheck" name="not(at(shuttle0, dispenser1))" fluent="not(at(shuttle0, dispenser1))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, loader1))" fluent="not(at(shuttle0, loader1))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, shuttle0))" fluent="not(at(shuttle0, shuttle0))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, unloader1))" fluent="not(at(shuttle0, unloader1))" />
+          <Condition ID="FluentCheck" name="not(finished(p0))" fluent="not(finished(p0))" />
+        </ReactiveSequence>
+      </Inverter>
+      <Action ID="ExecuteAction" name="move shuttle0 parking1 loader1 p0" action_name="move" action_args="shuttle0 parking1 loader1 p0" />
+    </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="OccupyDispenser_dispenser1_p0_shuttle0_dispenser1_slot0">
+    <ReactiveSequence name="OccupyDispenser_dispenser1_p0_shuttle0_dispenser1_slot0">
+      <Condition ID="FluentCheck" name="at(shuttle0, loader1)" fluent="at(shuttle0, loader1)" />
+      <Condition ID="FluentCheck" name="free_slot(dispenser1, dispenser1_slot0)" fluent="free_slot(dispenser1, dispenser1_slot0)" />
+      <Condition ID="FluentCheck" name="free_slot(loader1, loader1_slot0)" fluent="free_slot(loader1, loader1_slot0)" />
+      <Condition ID="FluentCheck" name="free_slot(unloader1, unloader1_slot0)" fluent="free_slot(unloader1, unloader1_slot0)" />
+      <Condition ID="FluentCheck" name="occupied(shuttle0, p0)" fluent="occupied(shuttle0, p0)" />
+      <Condition ID="FluentCheck" name="on(shuttle0, p0)" fluent="on(shuttle0, p0)" />
+      <Condition ID="FluentCheck" name="operational(dispenser1)" fluent="operational(dispenser1)" />
+      <Condition ID="FluentCheck" name="operational(shuttle0)" fluent="operational(shuttle0)" />
+      <Condition ID="FluentCheck" name="operational(unloader1)" fluent="operational(unloader1)" />
+      <Inverter name="Inverter">
+        <ReactiveSequence name="FSAP_repair_unloader1">
+          <Condition ID="FluentCheck" name="not(at(shuttle0, dispenser1))" fluent="not(at(shuttle0, dispenser1))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, loader1))" fluent="not(at(shuttle0, loader1))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, parking1))" fluent="not(at(shuttle0, parking1))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, shuttle0))" fluent="not(at(shuttle0, shuttle0))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, unloader1))" fluent="not(at(shuttle0, unloader1))" />
+          <Condition ID="FluentCheck" name="not(finished(p0))" fluent="not(finished(p0))" />
+        </ReactiveSequence>
+      </Inverter>
+      <Action ID="ExecuteAction" name="occupy_dispenser dispenser1 p0 shuttle0 dispenser1_slot0" action_name="occupy_dispenser" action_args="dispenser1 p0 shuttle0 dispenser1_slot0" />
+    </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="OccupyLoader_loader1_p0_shuttle0_loader1_slot0">
+    <ReactiveSequence name="OccupyLoader_loader1_p0_shuttle0_loader1_slot0">
+      <Condition ID="FluentCheck" name="at(shuttle0, parking1)" fluent="at(shuttle0, parking1)" />
+      <Condition ID="FluentCheck" name="free_slot(dispenser1, dispenser1_slot0)" fluent="free_slot(dispenser1, dispenser1_slot0)" />
+      <Condition ID="FluentCheck" name="free_slot(loader1, loader1_slot0)" fluent="free_slot(loader1, loader1_slot0)" />
+      <Condition ID="FluentCheck" name="free_slot(unloader1, unloader1_slot0)" fluent="free_slot(unloader1, unloader1_slot0)" />
+      <Condition ID="FluentCheck" name="not(on(shuttle0, p0))" fluent="not(on(shuttle0, p0))" />
+      <Condition ID="FluentCheck" name="occupied(shuttle0, p0)" fluent="occupied(shuttle0, p0)" />
+      <Condition ID="FluentCheck" name="operational(dispenser1)" fluent="operational(dispenser1)" />
+      <Condition ID="FluentCheck" name="operational(loader1)" fluent="operational(loader1)" />
+      <Condition ID="FluentCheck" name="operational(shuttle0)" fluent="operational(shuttle0)" />
+      <Condition ID="FluentCheck" name="operational(unloader1)" fluent="operational(unloader1)" />
+      <Inverter name="Inverter">
+        <ReactiveSequence name="FSAP_repair_unloader1">
+          <Condition ID="FluentCheck" name="not(at(shuttle0, dispenser1))" fluent="not(at(shuttle0, dispenser1))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, loader1))" fluent="not(at(shuttle0, loader1))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, parking1))" fluent="not(at(shuttle0, parking1))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, shuttle0))" fluent="not(at(shuttle0, shuttle0))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, unloader1))" fluent="not(at(shuttle0, unloader1))" />
+          <Condition ID="FluentCheck" name="not(finished(p0))" fluent="not(finished(p0))" />
+        </ReactiveSequence>
+      </Inverter>
+      <Action ID="ExecuteAction" name="occupy_loader loader1 p0 shuttle0 loader1_slot0" action_name="occupy_loader" action_args="loader1 p0 shuttle0 loader1_slot0" />
+    </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="OccupyShuttle_shuttle0_p0_shuttle0_slot0">
+    <ReactiveSequence name="OccupyShuttle_shuttle0_p0_shuttle0_slot0">
+      <Condition ID="FluentCheck" name="at(shuttle0, parking1)" fluent="at(shuttle0, parking1)" />
+      <Condition ID="FluentCheck" name="free_slot(dispenser1, dispenser1_slot0)" fluent="free_slot(dispenser1, dispenser1_slot0)" />
+      <Condition ID="FluentCheck" name="free_slot(loader1, loader1_slot0)" fluent="free_slot(loader1, loader1_slot0)" />
+      <Condition ID="FluentCheck" name="free_slot(shuttle0, shuttle0_slot0)" fluent="free_slot(shuttle0, shuttle0_slot0)" />
+      <Condition ID="FluentCheck" name="free_slot(unloader1, unloader1_slot0)" fluent="free_slot(unloader1, unloader1_slot0)" />
+      <Condition ID="FluentCheck" name="not(on(shuttle0, p0))" fluent="not(on(shuttle0, p0))" />
+      <Condition ID="FluentCheck" name="operational(dispenser1)" fluent="operational(dispenser1)" />
+      <Condition ID="FluentCheck" name="operational(loader1)" fluent="operational(loader1)" />
+      <Condition ID="FluentCheck" name="operational(shuttle0)" fluent="operational(shuttle0)" />
+      <Condition ID="FluentCheck" name="operational(unloader1)" fluent="operational(unloader1)" />
+      <Inverter name="Inverter">
+        <ReactiveSequence name="FSAP_repair_unloader1">
+          <Condition ID="FluentCheck" name="not(at(shuttle0, dispenser1))" fluent="not(at(shuttle0, dispenser1))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, loader1))" fluent="not(at(shuttle0, loader1))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, parking1))" fluent="not(at(shuttle0, parking1))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, shuttle0))" fluent="not(at(shuttle0, shuttle0))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, unloader1))" fluent="not(at(shuttle0, unloader1))" />
+          <Condition ID="FluentCheck" name="not(finished(p0))" fluent="not(finished(p0))" />
+        </ReactiveSequence>
+      </Inverter>
+      <Action ID="ExecuteAction" name="occupy_shuttle shuttle0 p0 shuttle0_slot0" action_name="occupy_shuttle" action_args="shuttle0 p0 shuttle0_slot0" />
+    </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="OccupyUnloader_unloader1_p0_unloader1_slot0">
+    <ReactiveSequence name="OccupyUnloader_unloader1_p0_unloader1_slot0">
+      <Condition ID="FluentCheck" name="at(shuttle0, dispenser1)" fluent="at(shuttle0, dispenser1)" />
+      <Condition ID="FluentCheck" name="dispensed(p0)" fluent="dispensed(p0)" />
+      <Condition ID="FluentCheck" name="free_slot(dispenser1, dispenser1_slot0)" fluent="free_slot(dispenser1, dispenser1_slot0)" />
+      <Condition ID="FluentCheck" name="free_slot(loader1, loader1_slot0)" fluent="free_slot(loader1, loader1_slot0)" />
+      <Condition ID="FluentCheck" name="free_slot(unloader1, unloader1_slot0)" fluent="free_slot(unloader1, unloader1_slot0)" />
+      <Condition ID="FluentCheck" name="occupied(shuttle0, p0)" fluent="occupied(shuttle0, p0)" />
+      <Condition ID="FluentCheck" name="on(shuttle0, p0)" fluent="on(shuttle0, p0)" />
+      <Condition ID="FluentCheck" name="operational(shuttle0)" fluent="operational(shuttle0)" />
+      <Condition ID="FluentCheck" name="operational(unloader1)" fluent="operational(unloader1)" />
+      <Inverter name="Inverter">
+        <ReactiveSequence name="FSAP_repair_unloader1">
+          <Condition ID="FluentCheck" name="not(at(shuttle0, dispenser1))" fluent="not(at(shuttle0, dispenser1))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, loader1))" fluent="not(at(shuttle0, loader1))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, parking1))" fluent="not(at(shuttle0, parking1))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, shuttle0))" fluent="not(at(shuttle0, shuttle0))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, unloader1))" fluent="not(at(shuttle0, unloader1))" />
+          <Condition ID="FluentCheck" name="not(finished(p0))" fluent="not(finished(p0))" />
+        </ReactiveSequence>
+      </Inverter>
+      <Action ID="ExecuteAction" name="occupy_unloader unloader1 p0 unloader1_slot0" action_name="occupy_unloader" action_args="unloader1 p0 unloader1_slot0" />
+    </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Phase_Move_shuttle0_dispenser1_unloader1_p0">
+    <ReactiveFallback name="Phase_Move_shuttle0_dispenser1_unloader1_p0">
+      <SubTree ID="Exec_Move_shuttle0_dispenser1_unloader1_p0" />
+      <SubTree ID="Repair_unloader1" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Phase_Move_shuttle0_dispenser1_unloader1_p0_common">
+    <ReactiveSequence name="Phase_Move_shuttle0_dispenser1_unloader1_p0_common">
+      <Condition ID="FluentCheck" name="dispensed(p0)" fluent="dispensed(p0)" />
+      <Condition ID="FluentCheck" name="free_slot(dispenser1, dispenser1_slot0)" fluent="free_slot(dispenser1, dispenser1_slot0)" />
+      <Condition ID="FluentCheck" name="free_slot(loader1, loader1_slot0)" fluent="free_slot(loader1, loader1_slot0)" />
+      <Condition ID="FluentCheck" name="occupied(shuttle0, p0)" fluent="occupied(shuttle0, p0)" />
+      <Condition ID="FluentCheck" name="occupied(unloader1, p0)" fluent="occupied(unloader1, p0)" />
+      <Condition ID="FluentCheck" name="on(shuttle0, p0)" fluent="on(shuttle0, p0)" />
+      <SubTree ID="Phase_Move_shuttle0_dispenser1_unloader1_p0" />
+    </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Phase_Move_shuttle0_loader1_dispenser1_p0">
+    <ReactiveFallback name="Phase_Move_shuttle0_loader1_dispenser1_p0">
+      <SubTree ID="Exec_Move_shuttle0_loader1_dispenser1_p0" />
+      <SubTree ID="Repair_dispenser1" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Phase_Move_shuttle0_loader1_dispenser1_p0_common">
+    <ReactiveSequence name="Phase_Move_shuttle0_loader1_dispenser1_p0_common">
+      <Condition ID="FluentCheck" name="free_slot(loader1, loader1_slot0)" fluent="free_slot(loader1, loader1_slot0)" />
+      <Condition ID="FluentCheck" name="free_slot(unloader1, unloader1_slot0)" fluent="free_slot(unloader1, unloader1_slot0)" />
+      <Condition ID="FluentCheck" name="occupied(dispenser1, p0)" fluent="occupied(dispenser1, p0)" />
+      <Condition ID="FluentCheck" name="occupied(shuttle0, p0)" fluent="occupied(shuttle0, p0)" />
+      <Condition ID="FluentCheck" name="on(shuttle0, p0)" fluent="on(shuttle0, p0)" />
+      <Condition ID="FluentCheck" name="operational(unloader1)" fluent="operational(unloader1)" />
+      <SubTree ID="Phase_Move_shuttle0_loader1_dispenser1_p0" />
+    </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Phase_Move_shuttle0_parking1_loader1_p0">
+    <ReactiveFallback name="Phase_Move_shuttle0_parking1_loader1_p0">
+      <SubTree ID="Exec_Move_shuttle0_parking1_loader1_p0" />
+      <SubTree ID="Repair_loader1" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Phase_Move_shuttle0_parking1_loader1_p0_common">
+    <ReactiveSequence name="Phase_Move_shuttle0_parking1_loader1_p0_common">
+      <Condition ID="FluentCheck" name="free_slot(dispenser1, dispenser1_slot0)" fluent="free_slot(dispenser1, dispenser1_slot0)" />
+      <Condition ID="FluentCheck" name="free_slot(unloader1, unloader1_slot0)" fluent="free_slot(unloader1, unloader1_slot0)" />
+      <Condition ID="FluentCheck" name="not(on(shuttle0, p0))" fluent="not(on(shuttle0, p0))" />
+      <Condition ID="FluentCheck" name="occupied(loader1, p0)" fluent="occupied(loader1, p0)" />
+      <Condition ID="FluentCheck" name="occupied(shuttle0, p0)" fluent="occupied(shuttle0, p0)" />
+      <Condition ID="FluentCheck" name="operational(dispenser1)" fluent="operational(dispenser1)" />
+      <Condition ID="FluentCheck" name="operational(unloader1)" fluent="operational(unloader1)" />
+      <SubTree ID="Phase_Move_shuttle0_parking1_loader1_p0" />
+    </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="ReleaseDispenser_dispenser1_p0_dispenser1_slot0">
+    <ReactiveSequence name="ReleaseDispenser_dispenser1_p0_dispenser1_slot0">
+      <Condition ID="FluentCheck" name="operational(dispenser1)" fluent="operational(dispenser1)" />
+      <Inverter name="Inverter">
+        <ReactiveSequence name="FSAP_repair_unloader1">
+          <Condition ID="FluentCheck" name="not(at(shuttle0, dispenser1))" fluent="not(at(shuttle0, dispenser1))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, loader1))" fluent="not(at(shuttle0, loader1))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, parking1))" fluent="not(at(shuttle0, parking1))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, shuttle0))" fluent="not(at(shuttle0, shuttle0))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, unloader1))" fluent="not(at(shuttle0, unloader1))" />
+          <Condition ID="FluentCheck" name="not(finished(p0))" fluent="not(finished(p0))" />
+        </ReactiveSequence>
+      </Inverter>
+      <Action ID="ExecuteAction" name="release_dispenser dispenser1 p0 dispenser1_slot0" action_name="release_dispenser" action_args="dispenser1 p0 dispenser1_slot0" />
+    </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="ReleaseDispenser_dispenser1_p0_dispenser1_slot0_OrFallback">
+    <ReactiveFallback name="ReleaseDispenser_dispenser1_p0_dispenser1_slot0_OrFallback">
+      <SubTree ID="ReleaseDispenser_dispenser1_p0_dispenser1_slot0" />
+      <SubTree ID="Repair_dispenser1_2" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="ReleaseDispenser_dispenser1_p0_dispenser1_slot0_WithRecovery_common">
+    <ReactiveSequence name="ReleaseDispenser_dispenser1_p0_dispenser1_slot0_WithRecovery_common">
+      <Condition ID="FluentCheck" name="at(shuttle0, dispenser1)" fluent="at(shuttle0, dispenser1)" />
+      <Condition ID="FluentCheck" name="dispensed(p0)" fluent="dispensed(p0)" />
+      <Condition ID="FluentCheck" name="free_slot(loader1, loader1_slot0)" fluent="free_slot(loader1, loader1_slot0)" />
+      <Condition ID="FluentCheck" name="free_slot(unloader1, unloader1_slot0)" fluent="free_slot(unloader1, unloader1_slot0)" />
+      <Condition ID="FluentCheck" name="occupied(dispenser1, p0)" fluent="occupied(dispenser1, p0)" />
+      <Condition ID="FluentCheck" name="occupied(shuttle0, p0)" fluent="occupied(shuttle0, p0)" />
+      <Condition ID="FluentCheck" name="on(shuttle0, p0)" fluent="on(shuttle0, p0)" />
+      <Condition ID="FluentCheck" name="operational(shuttle0)" fluent="operational(shuttle0)" />
+      <Condition ID="FluentCheck" name="operational(unloader1)" fluent="operational(unloader1)" />
+      <SubTree ID="ReleaseDispenser_dispenser1_p0_dispenser1_slot0_OrFallback" />
+    </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="ReleaseLoader_loader1_p0_shuttle0_loader1_slot0">
+    <ReactiveSequence name="ReleaseLoader_loader1_p0_shuttle0_loader1_slot0">
+      <Condition ID="FluentCheck" name="operational(loader1)" fluent="operational(loader1)" />
+      <Inverter name="Inverter">
+        <ReactiveSequence name="FSAP_repair_unloader1">
+          <Condition ID="FluentCheck" name="not(at(shuttle0, dispenser1))" fluent="not(at(shuttle0, dispenser1))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, loader1))" fluent="not(at(shuttle0, loader1))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, parking1))" fluent="not(at(shuttle0, parking1))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, shuttle0))" fluent="not(at(shuttle0, shuttle0))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, unloader1))" fluent="not(at(shuttle0, unloader1))" />
+          <Condition ID="FluentCheck" name="not(finished(p0))" fluent="not(finished(p0))" />
+        </ReactiveSequence>
+      </Inverter>
+      <Action ID="ExecuteAction" name="release_loader loader1 p0 shuttle0 loader1_slot0" action_name="release_loader" action_args="loader1 p0 shuttle0 loader1_slot0" />
+    </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="ReleaseLoader_loader1_p0_shuttle0_loader1_slot0_OrFallback">
+    <ReactiveFallback name="ReleaseLoader_loader1_p0_shuttle0_loader1_slot0_OrFallback">
+      <SubTree ID="ReleaseLoader_loader1_p0_shuttle0_loader1_slot0" />
+      <SubTree ID="Repair_loader1_2" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="ReleaseLoader_loader1_p0_shuttle0_loader1_slot0_WithRecovery_common">
+    <ReactiveSequence name="ReleaseLoader_loader1_p0_shuttle0_loader1_slot0_WithRecovery_common">
+      <Condition ID="FluentCheck" name="at(shuttle0, loader1)" fluent="at(shuttle0, loader1)" />
+      <Condition ID="FluentCheck" name="free_slot(dispenser1, dispenser1_slot0)" fluent="free_slot(dispenser1, dispenser1_slot0)" />
+      <Condition ID="FluentCheck" name="free_slot(unloader1, unloader1_slot0)" fluent="free_slot(unloader1, unloader1_slot0)" />
+      <Condition ID="FluentCheck" name="occupied(loader1, p0)" fluent="occupied(loader1, p0)" />
+      <Condition ID="FluentCheck" name="occupied(shuttle0, p0)" fluent="occupied(shuttle0, p0)" />
+      <Condition ID="FluentCheck" name="on(shuttle0, p0)" fluent="on(shuttle0, p0)" />
+      <Condition ID="FluentCheck" name="operational(dispenser1)" fluent="operational(dispenser1)" />
+      <Condition ID="FluentCheck" name="operational(shuttle0)" fluent="operational(shuttle0)" />
+      <Condition ID="FluentCheck" name="operational(unloader1)" fluent="operational(unloader1)" />
+      <SubTree ID="ReleaseLoader_loader1_p0_shuttle0_loader1_slot0_OrFallback" />
+    </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="ReleaseShuttle_shuttle0_p0_shuttle0_slot0">
+    <ReactiveSequence name="ReleaseShuttle_shuttle0_p0_shuttle0_slot0">
+      <Condition ID="FluentCheck" name="operational(unloader1)" fluent="operational(unloader1)" />
+      <Action ID="ExecuteAction" name="release_shuttle shuttle0 p0 shuttle0_slot0" action_name="release_shuttle" action_args="shuttle0 p0 shuttle0_slot0" />
+    </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="ReleaseShuttle_shuttle0_p0_shuttle0_slot0_OrFallback">
+    <ReactiveFallback name="ReleaseShuttle_shuttle0_p0_shuttle0_slot0_OrFallback">
+      <SubTree ID="ReleaseShuttle_shuttle0_p0_shuttle0_slot0" />
+      <SubTree ID="Repair_unloader1_2" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="ReleaseShuttle_shuttle0_p0_shuttle0_slot0_WithRecovery_common">
+    <ReactiveSequence name="ReleaseShuttle_shuttle0_p0_shuttle0_slot0_WithRecovery_common">
+      <Condition ID="FluentCheck" name="finished(p0)" fluent="finished(p0)" />
+      <Condition ID="FluentCheck" name="free_slot(dispenser1, dispenser1_slot0)" fluent="free_slot(dispenser1, dispenser1_slot0)" />
+      <Condition ID="FluentCheck" name="free_slot(loader1, loader1_slot0)" fluent="free_slot(loader1, loader1_slot0)" />
+      <Condition ID="FluentCheck" name="occupied(shuttle0, p0)" fluent="occupied(shuttle0, p0)" />
+      <Condition ID="FluentCheck" name="occupied(unloader1, p0)" fluent="occupied(unloader1, p0)" />
+      <Condition ID="FluentCheck" name="operational(shuttle0)" fluent="operational(shuttle0)" />
+      <SubTree ID="ReleaseShuttle_shuttle0_p0_shuttle0_slot0_OrFallback" />
+    </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="ReleaseUnloader_unloader1_p0_unloader1_slot0">
+    <ReactiveSequence name="ReleaseUnloader_unloader1_p0_unloader1_slot0">
+      <Condition ID="FluentCheck" name="finished(p0)" fluent="finished(p0)" />
+      <Condition ID="FluentCheck" name="free_slot(dispenser1, dispenser1_slot0)" fluent="free_slot(dispenser1, dispenser1_slot0)" />
+      <Condition ID="FluentCheck" name="free_slot(loader1, loader1_slot0)" fluent="free_slot(loader1, loader1_slot0)" />
+      <Condition ID="FluentCheck" name="free_slot(shuttle0, shuttle0_slot0)" fluent="free_slot(shuttle0, shuttle0_slot0)" />
+      <Condition ID="FluentCheck" name="occupied(unloader1, p0)" fluent="occupied(unloader1, p0)" />
+      <Condition ID="FluentCheck" name="operational(unloader1)" fluent="operational(unloader1)" />
+      <Action ID="ExecuteAction" name="release_unloader unloader1 p0 unloader1_slot0" action_name="release_unloader" action_args="unloader1 p0 unloader1_slot0" />
+    </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Repair_dispenser1">
+    <ReactiveSequence name="Repair_dispenser1">
+      <Condition ID="FluentCheck" name="at(shuttle0, dispenser1)" fluent="at(shuttle0, dispenser1)" />
+      <Condition ID="FluentCheck" name="not(operational(dispenser1))" fluent="not(operational(dispenser1))" />
+      <Condition ID="FluentCheck" name="operational(shuttle0)" fluent="operational(shuttle0)" />
+      <Inverter name="Inverter">
+        <ReactiveSequence name="FSAP_repair_unloader1">
+          <Condition ID="FluentCheck" name="not(at(shuttle0, dispenser1))" fluent="not(at(shuttle0, dispenser1))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, loader1))" fluent="not(at(shuttle0, loader1))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, parking1))" fluent="not(at(shuttle0, parking1))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, shuttle0))" fluent="not(at(shuttle0, shuttle0))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, unloader1))" fluent="not(at(shuttle0, unloader1))" />
+          <Condition ID="FluentCheck" name="not(finished(p0))" fluent="not(finished(p0))" />
+        </ReactiveSequence>
+      </Inverter>
+      <Action ID="ExecuteAction" name="repair dispenser1" action_name="repair" action_args="dispenser1" />
+    </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Repair_dispenser1_2">
+    <ReactiveSequence name="Repair_dispenser1">
+      <Inverter name="Inverter">
+        <ReactiveSequence name="FSAP_repair_unloader1">
+          <Condition ID="FluentCheck" name="not(at(shuttle0, dispenser1))" fluent="not(at(shuttle0, dispenser1))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, loader1))" fluent="not(at(shuttle0, loader1))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, parking1))" fluent="not(at(shuttle0, parking1))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, shuttle0))" fluent="not(at(shuttle0, shuttle0))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, unloader1))" fluent="not(at(shuttle0, unloader1))" />
+          <Condition ID="FluentCheck" name="not(finished(p0))" fluent="not(finished(p0))" />
+        </ReactiveSequence>
+      </Inverter>
+      <Action ID="ExecuteAction" name="repair dispenser1" action_name="repair" action_args="dispenser1" />
+    </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Repair_loader1">
+    <ReactiveSequence name="Repair_loader1">
+      <Condition ID="FluentCheck" name="at(shuttle0, loader1)" fluent="at(shuttle0, loader1)" />
+      <Condition ID="FluentCheck" name="not(operational(loader1))" fluent="not(operational(loader1))" />
+      <Condition ID="FluentCheck" name="operational(shuttle0)" fluent="operational(shuttle0)" />
+      <Inverter name="Inverter">
+        <ReactiveSequence name="FSAP_repair_unloader1">
+          <Condition ID="FluentCheck" name="not(at(shuttle0, dispenser1))" fluent="not(at(shuttle0, dispenser1))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, loader1))" fluent="not(at(shuttle0, loader1))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, parking1))" fluent="not(at(shuttle0, parking1))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, shuttle0))" fluent="not(at(shuttle0, shuttle0))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, unloader1))" fluent="not(at(shuttle0, unloader1))" />
+          <Condition ID="FluentCheck" name="not(finished(p0))" fluent="not(finished(p0))" />
+        </ReactiveSequence>
+      </Inverter>
+      <Action ID="ExecuteAction" name="repair loader1" action_name="repair" action_args="loader1" />
+    </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Repair_loader1_2">
+    <ReactiveSequence name="Repair_loader1">
+      <Inverter name="Inverter">
+        <ReactiveSequence name="FSAP_repair_unloader1">
+          <Condition ID="FluentCheck" name="not(at(shuttle0, dispenser1))" fluent="not(at(shuttle0, dispenser1))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, loader1))" fluent="not(at(shuttle0, loader1))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, parking1))" fluent="not(at(shuttle0, parking1))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, shuttle0))" fluent="not(at(shuttle0, shuttle0))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, unloader1))" fluent="not(at(shuttle0, unloader1))" />
+          <Condition ID="FluentCheck" name="not(finished(p0))" fluent="not(finished(p0))" />
+        </ReactiveSequence>
+      </Inverter>
+      <Action ID="ExecuteAction" name="repair loader1" action_name="repair" action_args="loader1" />
+    </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Repair_unloader1">
+    <ReactiveSequence name="Repair_unloader1">
+      <Condition ID="FluentCheck" name="at(shuttle0, unloader1)" fluent="at(shuttle0, unloader1)" />
+      <Condition ID="FluentCheck" name="not(operational(unloader1))" fluent="not(operational(unloader1))" />
+      <Condition ID="FluentCheck" name="operational(shuttle0)" fluent="operational(shuttle0)" />
+      <Inverter name="Inverter">
+        <ReactiveSequence name="FSAP_repair_unloader1">
+          <Condition ID="FluentCheck" name="not(at(shuttle0, dispenser1))" fluent="not(at(shuttle0, dispenser1))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, loader1))" fluent="not(at(shuttle0, loader1))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, parking1))" fluent="not(at(shuttle0, parking1))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, shuttle0))" fluent="not(at(shuttle0, shuttle0))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, unloader1))" fluent="not(at(shuttle0, unloader1))" />
+          <Condition ID="FluentCheck" name="not(finished(p0))" fluent="not(finished(p0))" />
+        </ReactiveSequence>
+      </Inverter>
+      <Action ID="ExecuteAction" name="repair unloader1" action_name="repair" action_args="unloader1" />
+    </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Repair_unloader1_2">
+    <ReactiveSequence name="Repair_unloader1">
+      <Inverter name="Inverter">
+        <ReactiveSequence name="FSAP_repair_unloader1">
+          <Condition ID="FluentCheck" name="not(at(shuttle0, dispenser1))" fluent="not(at(shuttle0, dispenser1))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, loader1))" fluent="not(at(shuttle0, loader1))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, parking1))" fluent="not(at(shuttle0, parking1))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, shuttle0))" fluent="not(at(shuttle0, shuttle0))" />
+          <Condition ID="FluentCheck" name="not(at(shuttle0, unloader1))" fluent="not(at(shuttle0, unloader1))" />
+          <Condition ID="FluentCheck" name="not(finished(p0))" fluent="not(finished(p0))" />
+        </ReactiveSequence>
+      </Inverter>
+      <Action ID="ExecuteAction" name="repair unloader1" action_name="repair" action_args="unloader1" />
+    </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Unload_p0_shuttle0_unloader1">
+    <ReactiveSequence name="Unload_p0_shuttle0_unloader1">
+      <Condition ID="FluentCheck" name="operational(shuttle0)" fluent="operational(shuttle0)" />
+      <Action ID="ExecuteAction" name="unload p0 shuttle0 unloader1" action_name="unload" action_args="p0 shuttle0 unloader1" />
+    </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Unload_p0_shuttle0_unloader1_OrFallback">
+    <ReactiveFallback name="Unload_p0_shuttle0_unloader1_OrFallback">
+      <SubTree ID="Unload_p0_shuttle0_unloader1" />
+      <SubTree ID="Repair" arg0="shuttle0" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Unload_p0_shuttle0_unloader1_WithRecovery_common">
+    <ReactiveSequence name="Unload_p0_shuttle0_unloader1_WithRecovery_common">
+      <Condition ID="FluentCheck" name="at(shuttle0, unloader1)" fluent="at(shuttle0, unloader1)" />
+      <Condition ID="FluentCheck" name="dispensed(p0)" fluent="dispensed(p0)" />
+      <Condition ID="FluentCheck" name="free_slot(dispenser1, dispenser1_slot0)" fluent="free_slot(dispenser1, dispenser1_slot0)" />
+      <Condition ID="FluentCheck" name="free_slot(loader1, loader1_slot0)" fluent="free_slot(loader1, loader1_slot0)" />
+      <Condition ID="FluentCheck" name="occupied(shuttle0, p0)" fluent="occupied(shuttle0, p0)" />
+      <Condition ID="FluentCheck" name="occupied(unloader1, p0)" fluent="occupied(unloader1, p0)" />
+      <Condition ID="FluentCheck" name="on(shuttle0, p0)" fluent="on(shuttle0, p0)" />
+      <Condition ID="FluentCheck" name="operational(unloader1)" fluent="operational(unloader1)" />
+      <SubTree ID="Unload_p0_shuttle0_unloader1_OrFallback" />
+    </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Repair">
+    <ReactiveSequence name="Repair_{arg0}">
+      <Inverter name="Inverter">
+        <ReactiveSequence name="FSAP_repair_{arg0}">
+          <Condition ID="FluentCheck" name="not(at({arg0}, dispenser1))" fluent="not(at({arg0}, dispenser1))" />
+          <Condition ID="FluentCheck" name="not(at({arg0}, loader1))" fluent="not(at({arg0}, loader1))" />
+          <Condition ID="FluentCheck" name="not(at({arg0}, parking1))" fluent="not(at({arg0}, parking1))" />
+          <Condition ID="FluentCheck" name="not(at({arg0}, {arg0}))" fluent="not(at({arg0}, {arg0}))" />
+          <Condition ID="FluentCheck" name="not(at({arg0}, unloader1))" fluent="not(at({arg0}, unloader1))" />
+          <Condition ID="FluentCheck" name="not(finished(p0))" fluent="not(finished(p0))" />
+        </ReactiveSequence>
+      </Inverter>
+      <Action ID="ExecuteAction" name="repair {arg0}" action_name="repair" action_args="{arg0}" />
+    </ReactiveSequence>
+  </BehaviorTree>
+  <TreeNodesModel>
+    <Condition ID="FluentCheck">
+      <input_port name="fluent" default="" />
+    </Condition>
+    <Action ID="ExecuteAction">
+      <input_port name="action_name" default="" />
+      <input_port name="action_args" default="" />
+    </Action>
+    <Action ID="GoalReached" />
+    <Action ID="ForbiddenAction">
+      <input_port name="forbidden_action" default="" />
+      <input_port name="forbidden_args" default="" />
+    </Action>
+    <SubTree ID="Repair" editable="true">
+      <input_port name="arg0" />
+    </SubTree>
+  </TreeNodesModel>
+</root>

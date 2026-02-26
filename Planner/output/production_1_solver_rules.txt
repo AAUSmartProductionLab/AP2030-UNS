@@ -1,0 +1,358 @@
+Domain: aseptic_production
+Problem: production_1
+Solved: False
+Strong Cyclic: False
+Policy rules: 27
+FSAPs: 147
+
+=== POLICY RULES ===
+[1] IF {'free_slot(unloader1, unloader1_slot0)', 'finished(p0)', 'free_slot(dispenser1, dispenser1_slot0)', 'free_slot(loader1, loader1_slot0)', 'free_slot(shuttle0, shuttle0_slot0)'}
+    THEN goal
+[2] IF {'finished(p0)', 'free_slot(dispenser1, dispenser1_slot0)', 'operational(unloader1)', 'occupied(unloader1, p0)', 'free_slot(loader1, loader1_slot0)', 'free_slot(shuttle0, shuttle0_slot0)'}
+    THEN release_unloader unloader1 p0 unloader1_slot0
+[3] IF {'finished(p0)', 'occupied(shuttle0, p0)', 'free_slot(dispenser1, dispenser1_slot0)', 'operational(unloader1)', 'operational(shuttle0)', 'occupied(unloader1, p0)', 'free_slot(loader1, loader1_slot0)'}
+    THEN release_shuttle shuttle0 p0 shuttle0_slot0
+[4] IF {'finished(p0)', 'occupied(shuttle0, p0)', 'free_slot(dispenser1, dispenser1_slot0)', 'operational(shuttle0)', 'occupied(unloader1, p0)', 'not(operational(unloader1))', 'free_slot(loader1, loader1_slot0)'}
+    THEN repair unloader1
+[5] IF {'dispensed(p0)', 'on(shuttle0, p0)', 'operational(unloader1)', 'at(shuttle0, unloader1)', 'occupied(shuttle0, p0)', 'free_slot(dispenser1, dispenser1_slot0)', 'operational(shuttle0)', 'occupied(unloader1, p0)', 'free_slot(loader1, loader1_slot0)'}
+    THEN unload p0 shuttle0 unloader1
+[6] IF {'dispensed(p0)', 'on(shuttle0, p0)', 'operational(unloader1)', 'not(operational(shuttle0))', 'at(shuttle0, unloader1)', 'occupied(shuttle0, p0)', 'free_slot(dispenser1, dispenser1_slot0)', 'occupied(unloader1, p0)', 'free_slot(loader1, loader1_slot0)'}
+    THEN repair shuttle0
+[7] IF {'dispensed(p0)', 'on(shuttle0, p0)', 'at(shuttle0, unloader1)', 'occupied(shuttle0, p0)', 'free_slot(dispenser1, dispenser1_slot0)', 'operational(shuttle0)', 'occupied(unloader1, p0)', 'not(operational(unloader1))', 'free_slot(loader1, loader1_slot0)'}
+    THEN repair unloader1
+[8] IF {'dispensed(p0)', 'at(shuttle0, dispenser1)', 'on(shuttle0, p0)', 'operational(unloader1)', 'occupied(shuttle0, p0)', 'free_slot(dispenser1, dispenser1_slot0)', 'operational(shuttle0)', 'occupied(unloader1, p0)', 'free_slot(loader1, loader1_slot0)'}
+    THEN move shuttle0 dispenser1 unloader1 p0
+[9] IF {'dispensed(p0)', 'at(shuttle0, dispenser1)', 'on(shuttle0, p0)', 'operational(unloader1)', 'not(operational(shuttle0))', 'occupied(shuttle0, p0)', 'free_slot(dispenser1, dispenser1_slot0)', 'occupied(unloader1, p0)', 'free_slot(loader1, loader1_slot0)'}
+    THEN repair shuttle0
+[10] IF {'free_slot(unloader1, unloader1_slot0)', 'dispensed(p0)', 'at(shuttle0, dispenser1)', 'on(shuttle0, p0)', 'operational(unloader1)', 'occupied(shuttle0, p0)', 'free_slot(dispenser1, dispenser1_slot0)', 'operational(shuttle0)', 'free_slot(loader1, loader1_slot0)'}
+    THEN occupy_unloader unloader1 p0 unloader1_slot0
+[11] IF {'free_slot(unloader1, unloader1_slot0)', 'dispensed(p0)', 'at(shuttle0, dispenser1)', 'on(shuttle0, p0)', 'operational(unloader1)', 'operational(dispenser1)', 'occupied(shuttle0, p0)', 'operational(shuttle0)', 'occupied(dispenser1, p0)', 'free_slot(loader1, loader1_slot0)'}
+    THEN release_dispenser dispenser1 p0 dispenser1_slot0
+[12] IF {'free_slot(unloader1, unloader1_slot0)', 'at(shuttle0, dispenser1)', 'on(shuttle0, p0)', 'operational(unloader1)', 'operational(dispenser1)', 'occupied(shuttle0, p0)', 'operational(shuttle0)', 'occupied(dispenser1, p0)', 'free_slot(loader1, loader1_slot0)'}
+    THEN dispense p0 shuttle0 dispenser1
+[13] IF {'free_slot(unloader1, unloader1_slot0)', 'at(shuttle0, dispenser1)', 'on(shuttle0, p0)', 'operational(unloader1)', 'operational(dispenser1)', 'not(operational(shuttle0))', 'occupied(shuttle0, p0)', 'occupied(dispenser1, p0)', 'free_slot(loader1, loader1_slot0)'}
+    THEN repair shuttle0
+[14] IF {'free_slot(unloader1, unloader1_slot0)', 'dispensed(p0)', 'at(shuttle0, dispenser1)', 'on(shuttle0, p0)', 'operational(unloader1)', 'occupied(shuttle0, p0)', 'not(operational(dispenser1))', 'operational(shuttle0)', 'occupied(dispenser1, p0)', 'free_slot(loader1, loader1_slot0)'}
+    THEN repair dispenser1
+[15] IF {'free_slot(unloader1, unloader1_slot0)', 'at(shuttle0, dispenser1)', 'on(shuttle0, p0)', 'operational(unloader1)', 'occupied(shuttle0, p0)', 'not(operational(dispenser1))', 'operational(shuttle0)', 'occupied(dispenser1, p0)', 'free_slot(loader1, loader1_slot0)'}
+    THEN repair dispenser1
+[16] IF {'at(shuttle0, loader1)', 'free_slot(unloader1, unloader1_slot0)', 'on(shuttle0, p0)', 'operational(unloader1)', 'operational(dispenser1)', 'occupied(shuttle0, p0)', 'operational(shuttle0)', 'occupied(dispenser1, p0)', 'free_slot(loader1, loader1_slot0)'}
+    THEN move shuttle0 loader1 dispenser1 p0
+[17] IF {'at(shuttle0, loader1)', 'free_slot(unloader1, unloader1_slot0)', 'on(shuttle0, p0)', 'operational(unloader1)', 'operational(dispenser1)', 'not(operational(shuttle0))', 'occupied(shuttle0, p0)', 'occupied(dispenser1, p0)', 'free_slot(loader1, loader1_slot0)'}
+    THEN repair shuttle0
+[18] IF {'at(shuttle0, loader1)', 'free_slot(unloader1, unloader1_slot0)', 'on(shuttle0, p0)', 'operational(unloader1)', 'operational(dispenser1)', 'occupied(shuttle0, p0)', 'free_slot(dispenser1, dispenser1_slot0)', 'operational(shuttle0)', 'free_slot(loader1, loader1_slot0)'}
+    THEN occupy_dispenser dispenser1 p0 shuttle0 dispenser1_slot0
+[19] IF {'at(shuttle0, loader1)', 'free_slot(unloader1, unloader1_slot0)', 'on(shuttle0, p0)', 'operational(unloader1)', 'operational(dispenser1)', 'occupied(shuttle0, p0)', 'free_slot(dispenser1, dispenser1_slot0)', 'operational(loader1)', 'operational(shuttle0)', 'occupied(loader1, p0)'}
+    THEN release_loader loader1 p0 shuttle0 loader1_slot0
+[20] IF {'at(shuttle0, loader1)', 'free_slot(unloader1, unloader1_slot0)', 'on(shuttle0, p0)', 'operational(unloader1)', 'operational(dispenser1)', 'occupied(shuttle0, p0)', 'free_slot(dispenser1, dispenser1_slot0)', 'not(operational(loader1))', 'operational(shuttle0)', 'occupied(loader1, p0)'}
+    THEN repair loader1
+[21] IF {'at(shuttle0, loader1)', 'free_slot(unloader1, unloader1_slot0)', 'operational(unloader1)', 'operational(dispenser1)', 'occupied(shuttle0, p0)', 'free_slot(dispenser1, dispenser1_slot0)', 'operational(loader1)', 'operational(shuttle0)', 'not(on(shuttle0, p0))', 'occupied(loader1, p0)'}
+    THEN load p0 shuttle0 loader1
+[22] IF {'at(shuttle0, loader1)', 'free_slot(unloader1, unloader1_slot0)', 'operational(unloader1)', 'operational(dispenser1)', 'not(operational(shuttle0))', 'occupied(shuttle0, p0)', 'free_slot(dispenser1, dispenser1_slot0)', 'operational(loader1)', 'occupied(loader1, p0)', 'not(on(shuttle0, p0))'}
+    THEN repair shuttle0
+[23] IF {'at(shuttle0, loader1)', 'free_slot(unloader1, unloader1_slot0)', 'operational(unloader1)', 'operational(dispenser1)', 'occupied(shuttle0, p0)', 'free_slot(dispenser1, dispenser1_slot0)', 'not(operational(loader1))', 'operational(shuttle0)', 'not(on(shuttle0, p0))', 'occupied(loader1, p0)'}
+    THEN repair loader1
+[24] IF {'free_slot(unloader1, unloader1_slot0)', 'operational(unloader1)', 'operational(dispenser1)', 'at(shuttle0, parking1)', 'occupied(shuttle0, p0)', 'free_slot(dispenser1, dispenser1_slot0)', 'operational(loader1)', 'operational(shuttle0)', 'not(on(shuttle0, p0))', 'occupied(loader1, p0)'}
+    THEN move shuttle0 parking1 loader1 p0
+[25] IF {'free_slot(unloader1, unloader1_slot0)', 'operational(unloader1)', 'operational(dispenser1)', 'at(shuttle0, parking1)', 'not(operational(shuttle0))', 'occupied(shuttle0, p0)', 'free_slot(dispenser1, dispenser1_slot0)', 'operational(loader1)', 'occupied(loader1, p0)', 'not(on(shuttle0, p0))'}
+    THEN repair shuttle0
+[26] IF {'free_slot(unloader1, unloader1_slot0)', 'operational(unloader1)', 'operational(dispenser1)', 'at(shuttle0, parking1)', 'occupied(shuttle0, p0)', 'free_slot(dispenser1, dispenser1_slot0)', 'operational(loader1)', 'operational(shuttle0)', 'not(on(shuttle0, p0))', 'free_slot(loader1, loader1_slot0)'}
+    THEN occupy_loader loader1 p0 shuttle0 loader1_slot0
+[27] IF {'free_slot(unloader1, unloader1_slot0)', 'operational(unloader1)', 'operational(dispenser1)', 'at(shuttle0, parking1)', 'free_slot(loader1, loader1_slot0)', 'free_slot(dispenser1, dispenser1_slot0)', 'operational(loader1)', 'operational(shuttle0)', 'not(on(shuttle0, p0))', 'free_slot(shuttle0, shuttle0_slot0)'}
+    THEN occupy_shuttle shuttle0 p0 shuttle0_slot0
+
+=== FSAPS ===
+[1] IF {'not(finished(p0))', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'not(at(shuttle0, unloader1))', 'not(operational(shuttle0))', 'not(at(shuttle0, loader1))'}
+    FORBID repair shuttle0
+[2] IF {'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'free_slot(shuttle0, dispenser1_slot0)', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'operational(shuttle0)'}
+    FORBID occupy_shuttle shuttle0 p0 dispenser1_slot0
+[3] IF {'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'operational(shuttle0)', 'free_slot(shuttle0, loader1_slot0)'}
+    FORBID occupy_shuttle shuttle0 p0 loader1_slot0
+[4] IF {'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'operational(shuttle0)', 'free_slot(shuttle0, shuttle0_slot0)'}
+    FORBID occupy_shuttle shuttle0 p0 shuttle0_slot0
+[5] IF {'free_slot(shuttle0, unloader1_slot0)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'operational(shuttle0)'}
+    FORBID occupy_shuttle shuttle0 p0 unloader1_slot0
+[6] IF {'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'at(shuttle0, unloader1)', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, loader1))', 'operational(shuttle0)'}
+    FORBID move shuttle0 unloader1 shuttle0 p0
+[7] IF {'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'at(shuttle0, unloader1)', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, loader1))', 'operational(shuttle0)', 'occupied(loader1, p0)'}
+    FORBID move shuttle0 unloader1 loader1 p0
+[8] IF {'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'at(shuttle0, unloader1)', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, loader1))', 'operational(shuttle0)', 'occupied(dispenser1, p0)'}
+    FORBID move shuttle0 unloader1 dispenser1 p0
+[9] IF {'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'at(shuttle0, unloader1)', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, loader1))', 'operational(shuttle0)', 'occupied(unloader1, p0)'}
+    FORBID move shuttle0 unloader1 unloader1 p0
+[10] IF {'at(shuttle0, loader1)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'operational(shuttle0)'}
+    FORBID move shuttle0 loader1 shuttle0 p0
+[11] IF {'at(shuttle0, loader1)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'operational(shuttle0)', 'occupied(dispenser1, p0)'}
+    FORBID move shuttle0 loader1 dispenser1 p0
+[12] IF {'at(shuttle0, loader1)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'operational(shuttle0)', 'occupied(unloader1, p0)'}
+    FORBID move shuttle0 loader1 unloader1 p0
+[13] IF {'at(shuttle0, loader1)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'operational(shuttle0)', 'occupied(loader1, p0)'}
+    FORBID move shuttle0 loader1 loader1 p0
+[14] IF {'at(shuttle0, dispenser1)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'operational(shuttle0)'}
+    FORBID move shuttle0 dispenser1 shuttle0 p0
+[15] IF {'at(shuttle0, dispenser1)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'operational(shuttle0)', 'occupied(unloader1, p0)'}
+    FORBID move shuttle0 dispenser1 unloader1 p0
+[16] IF {'at(shuttle0, dispenser1)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'operational(shuttle0)', 'occupied(loader1, p0)'}
+    FORBID move shuttle0 dispenser1 loader1 p0
+[17] IF {'at(shuttle0, dispenser1)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'operational(shuttle0)', 'occupied(dispenser1, p0)'}
+    FORBID move shuttle0 dispenser1 dispenser1 p0
+[18] IF {'not(at(shuttle0, parking1))', 'not(at(shuttle0, dispenser1))', 'not(finished(p0))', 'at(shuttle0, shuttle0)', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'operational(shuttle0)'}
+    FORBID move shuttle0 shuttle0 shuttle0 p0
+[19] IF {'not(at(shuttle0, parking1))', 'not(at(shuttle0, dispenser1))', 'not(finished(p0))', 'at(shuttle0, shuttle0)', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'operational(shuttle0)', 'occupied(unloader1, p0)'}
+    FORBID move shuttle0 shuttle0 unloader1 p0
+[20] IF {'not(at(shuttle0, parking1))', 'not(at(shuttle0, dispenser1))', 'not(finished(p0))', 'at(shuttle0, shuttle0)', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'operational(shuttle0)', 'occupied(loader1, p0)'}
+    FORBID move shuttle0 shuttle0 loader1 p0
+[21] IF {'not(at(shuttle0, parking1))', 'not(at(shuttle0, dispenser1))', 'not(finished(p0))', 'at(shuttle0, shuttle0)', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'operational(shuttle0)', 'occupied(dispenser1, p0)'}
+    FORBID move shuttle0 shuttle0 dispenser1 p0
+[22] IF {'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'at(shuttle0, parking1)', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'operational(shuttle0)'}
+    FORBID move shuttle0 parking1 shuttle0 p0
+[23] IF {'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'at(shuttle0, parking1)', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'operational(shuttle0)', 'occupied(unloader1, p0)'}
+    FORBID move shuttle0 parking1 unloader1 p0
+[24] IF {'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'at(shuttle0, parking1)', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'operational(shuttle0)', 'occupied(loader1, p0)'}
+    FORBID move shuttle0 parking1 loader1 p0
+[25] IF {'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'at(shuttle0, parking1)', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'operational(shuttle0)', 'occupied(dispenser1, p0)'}
+    FORBID move shuttle0 parking1 dispenser1 p0
+[26] IF {'not(finished(p0))', 'not(at(shuttle0, dispenser1))', 'not(at(shuttle0, shuttle0))', 'not(operational(loader1))', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))'}
+    FORBID repair loader1
+[27] IF {'on(shuttle0, p0)', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, dispenser1))', 'not(at(shuttle0, loader1))', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'operational(loader1)', 'occupied(loader1, p0)'}
+    FORBID release_loader loader1 p0 shuttle0 dispenser1_slot0
+[28] IF {'on(shuttle0, p0)', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, dispenser1))', 'not(at(shuttle0, loader1))', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'operational(loader1)', 'occupied(loader1, p0)'}
+    FORBID release_loader loader1 p0 shuttle0 loader1_slot0
+[29] IF {'on(shuttle0, p0)', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, dispenser1))', 'not(at(shuttle0, loader1))', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'operational(loader1)', 'occupied(loader1, p0)'}
+    FORBID release_loader loader1 p0 shuttle0 shuttle0_slot0
+[30] IF {'on(shuttle0, p0)', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, dispenser1))', 'not(at(shuttle0, loader1))', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'operational(loader1)', 'occupied(loader1, p0)'}
+    FORBID release_loader loader1 p0 shuttle0 unloader1_slot0
+[31] IF {'free_slot(loader1, dispenser1_slot0)', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, dispenser1))', 'operational(loader1)', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))'}
+    FORBID occupy_loader loader1 p0 shuttle0 dispenser1_slot0
+[32] IF {'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, dispenser1))', 'operational(loader1)', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'free_slot(loader1, loader1_slot0)'}
+    FORBID occupy_loader loader1 p0 shuttle0 loader1_slot0
+[33] IF {'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, dispenser1))', 'free_slot(loader1, shuttle0_slot0)', 'operational(loader1)', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))'}
+    FORBID occupy_loader loader1 p0 shuttle0 shuttle0_slot0
+[34] IF {'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, dispenser1))', 'operational(loader1)', 'free_slot(loader1, unloader1_slot0)', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))'}
+    FORBID occupy_loader loader1 p0 shuttle0 unloader1_slot0
+[35] IF {'not(finished(p0))', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'not(operational(unloader1))'}
+    FORBID repair unloader1
+[36] IF {'dispensed(p0)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'operational(unloader1)', 'not(at(shuttle0, dispenser1))', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'free_slot(unloader1, dispenser1_slot0)'}
+    FORBID occupy_unloader unloader1 p0 dispenser1_slot0
+[37] IF {'dispensed(p0)', 'free_slot(unloader1, loader1_slot0)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'operational(unloader1)', 'not(at(shuttle0, dispenser1))', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))'}
+    FORBID occupy_unloader unloader1 p0 loader1_slot0
+[38] IF {'dispensed(p0)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'operational(unloader1)', 'not(at(shuttle0, dispenser1))', 'free_slot(unloader1, shuttle0_slot0)', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))'}
+    FORBID occupy_unloader unloader1 p0 shuttle0_slot0
+[39] IF {'free_slot(unloader1, unloader1_slot0)', 'dispensed(p0)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'operational(unloader1)', 'not(at(shuttle0, dispenser1))', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))'}
+    FORBID occupy_unloader unloader1 p0 unloader1_slot0
+[40] IF {'not(finished(p0))', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'not(operational(dispenser1))', 'not(at(shuttle0, loader1))', 'not(at(shuttle0, unloader1))'}
+    FORBID repair dispenser1
+[41] IF {'dispensed(p0)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'operational(dispenser1)', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'occupied(dispenser1, p0)'}
+    FORBID release_dispenser dispenser1 p0 dispenser1_slot0
+[42] IF {'dispensed(p0)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'operational(dispenser1)', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'occupied(dispenser1, p0)'}
+    FORBID release_dispenser dispenser1 p0 loader1_slot0
+[43] IF {'dispensed(p0)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'operational(dispenser1)', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'occupied(dispenser1, p0)'}
+    FORBID release_dispenser dispenser1 p0 shuttle0_slot0
+[44] IF {'dispensed(p0)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'operational(dispenser1)', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'occupied(dispenser1, p0)'}
+    FORBID release_dispenser dispenser1 p0 unloader1_slot0
+[45] IF {'on(shuttle0, p0)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'operational(dispenser1)', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'free_slot(dispenser1, dispenser1_slot0)'}
+    FORBID occupy_dispenser dispenser1 p0 shuttle0 dispenser1_slot0
+[46] IF {'on(shuttle0, p0)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'operational(dispenser1)', 'not(finished(p0))', 'free_slot(dispenser1, loader1_slot0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))'}
+    FORBID occupy_dispenser dispenser1 p0 shuttle0 loader1_slot0
+[47] IF {'on(shuttle0, p0)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'operational(dispenser1)', 'not(finished(p0))', 'free_slot(dispenser1, shuttle0_slot0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))'}
+    FORBID occupy_dispenser dispenser1 p0 shuttle0 shuttle0_slot0
+[48] IF {'on(shuttle0, p0)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'operational(dispenser1)', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'free_slot(dispenser1, unloader1_slot0)'}
+    FORBID occupy_dispenser dispenser1 p0 shuttle0 unloader1_slot0
+[49] IF {'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'at(shuttle0, parking1)', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'operational(shuttle0)', 'occupied(loader1, p0)'}
+    FORBID move shuttle0 parking1 loader1 p0
+[50] IF {'not(finished(p0))', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'not(at(shuttle0, unloader1))', 'not(operational(shuttle0))', 'not(at(shuttle0, loader1))'}
+    FORBID repair shuttle0
+[51] IF {'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'free_slot(shuttle0, dispenser1_slot0)', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'operational(shuttle0)'}
+    FORBID occupy_shuttle shuttle0 p0 dispenser1_slot0
+[52] IF {'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'operational(shuttle0)', 'free_slot(shuttle0, loader1_slot0)'}
+    FORBID occupy_shuttle shuttle0 p0 loader1_slot0
+[53] IF {'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'operational(shuttle0)', 'free_slot(shuttle0, shuttle0_slot0)'}
+    FORBID occupy_shuttle shuttle0 p0 shuttle0_slot0
+[54] IF {'free_slot(shuttle0, unloader1_slot0)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'operational(shuttle0)'}
+    FORBID occupy_shuttle shuttle0 p0 unloader1_slot0
+[55] IF {'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'at(shuttle0, unloader1)', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, loader1))', 'operational(shuttle0)'}
+    FORBID move shuttle0 unloader1 shuttle0 p0
+[56] IF {'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'at(shuttle0, unloader1)', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, loader1))', 'operational(shuttle0)', 'occupied(loader1, p0)'}
+    FORBID move shuttle0 unloader1 loader1 p0
+[57] IF {'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'at(shuttle0, unloader1)', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, loader1))', 'operational(shuttle0)', 'occupied(dispenser1, p0)'}
+    FORBID move shuttle0 unloader1 dispenser1 p0
+[58] IF {'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'at(shuttle0, unloader1)', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, loader1))', 'operational(shuttle0)', 'occupied(unloader1, p0)'}
+    FORBID move shuttle0 unloader1 unloader1 p0
+[59] IF {'at(shuttle0, loader1)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'operational(shuttle0)'}
+    FORBID move shuttle0 loader1 shuttle0 p0
+[60] IF {'at(shuttle0, loader1)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'operational(shuttle0)', 'occupied(dispenser1, p0)'}
+    FORBID move shuttle0 loader1 dispenser1 p0
+[61] IF {'at(shuttle0, loader1)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'operational(shuttle0)', 'occupied(unloader1, p0)'}
+    FORBID move shuttle0 loader1 unloader1 p0
+[62] IF {'at(shuttle0, loader1)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'operational(shuttle0)', 'occupied(loader1, p0)'}
+    FORBID move shuttle0 loader1 loader1 p0
+[63] IF {'at(shuttle0, dispenser1)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'operational(shuttle0)'}
+    FORBID move shuttle0 dispenser1 shuttle0 p0
+[64] IF {'at(shuttle0, dispenser1)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'operational(shuttle0)', 'occupied(unloader1, p0)'}
+    FORBID move shuttle0 dispenser1 unloader1 p0
+[65] IF {'at(shuttle0, dispenser1)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'operational(shuttle0)', 'occupied(loader1, p0)'}
+    FORBID move shuttle0 dispenser1 loader1 p0
+[66] IF {'at(shuttle0, dispenser1)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'operational(shuttle0)', 'occupied(dispenser1, p0)'}
+    FORBID move shuttle0 dispenser1 dispenser1 p0
+[67] IF {'not(at(shuttle0, parking1))', 'not(at(shuttle0, dispenser1))', 'not(finished(p0))', 'at(shuttle0, shuttle0)', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'operational(shuttle0)'}
+    FORBID move shuttle0 shuttle0 shuttle0 p0
+[68] IF {'not(at(shuttle0, parking1))', 'not(at(shuttle0, dispenser1))', 'not(finished(p0))', 'at(shuttle0, shuttle0)', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'operational(shuttle0)', 'occupied(unloader1, p0)'}
+    FORBID move shuttle0 shuttle0 unloader1 p0
+[69] IF {'not(at(shuttle0, parking1))', 'not(at(shuttle0, dispenser1))', 'not(finished(p0))', 'at(shuttle0, shuttle0)', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'operational(shuttle0)', 'occupied(loader1, p0)'}
+    FORBID move shuttle0 shuttle0 loader1 p0
+[70] IF {'not(at(shuttle0, parking1))', 'not(at(shuttle0, dispenser1))', 'not(finished(p0))', 'at(shuttle0, shuttle0)', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'operational(shuttle0)', 'occupied(dispenser1, p0)'}
+    FORBID move shuttle0 shuttle0 dispenser1 p0
+[71] IF {'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'at(shuttle0, parking1)', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'operational(shuttle0)'}
+    FORBID move shuttle0 parking1 shuttle0 p0
+[72] IF {'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'at(shuttle0, parking1)', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'operational(shuttle0)', 'occupied(unloader1, p0)'}
+    FORBID move shuttle0 parking1 unloader1 p0
+[73] IF {'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'at(shuttle0, parking1)', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'operational(shuttle0)', 'occupied(loader1, p0)'}
+    FORBID move shuttle0 parking1 loader1 p0
+[74] IF {'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'at(shuttle0, parking1)', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'operational(shuttle0)', 'occupied(dispenser1, p0)'}
+    FORBID move shuttle0 parking1 dispenser1 p0
+[75] IF {'not(finished(p0))', 'not(at(shuttle0, dispenser1))', 'not(at(shuttle0, shuttle0))', 'not(operational(loader1))', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))'}
+    FORBID repair loader1
+[76] IF {'on(shuttle0, p0)', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, dispenser1))', 'not(at(shuttle0, loader1))', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'operational(loader1)', 'occupied(loader1, p0)'}
+    FORBID release_loader loader1 p0 shuttle0 dispenser1_slot0
+[77] IF {'on(shuttle0, p0)', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, dispenser1))', 'not(at(shuttle0, loader1))', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'operational(loader1)', 'occupied(loader1, p0)'}
+    FORBID release_loader loader1 p0 shuttle0 loader1_slot0
+[78] IF {'on(shuttle0, p0)', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, dispenser1))', 'not(at(shuttle0, loader1))', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'operational(loader1)', 'occupied(loader1, p0)'}
+    FORBID release_loader loader1 p0 shuttle0 shuttle0_slot0
+[79] IF {'on(shuttle0, p0)', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, dispenser1))', 'not(at(shuttle0, loader1))', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'operational(loader1)', 'occupied(loader1, p0)'}
+    FORBID release_loader loader1 p0 shuttle0 unloader1_slot0
+[80] IF {'free_slot(loader1, dispenser1_slot0)', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, dispenser1))', 'operational(loader1)', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))'}
+    FORBID occupy_loader loader1 p0 shuttle0 dispenser1_slot0
+[81] IF {'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, dispenser1))', 'operational(loader1)', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'free_slot(loader1, loader1_slot0)'}
+    FORBID occupy_loader loader1 p0 shuttle0 loader1_slot0
+[82] IF {'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, dispenser1))', 'free_slot(loader1, shuttle0_slot0)', 'operational(loader1)', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))'}
+    FORBID occupy_loader loader1 p0 shuttle0 shuttle0_slot0
+[83] IF {'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, dispenser1))', 'operational(loader1)', 'free_slot(loader1, unloader1_slot0)', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))'}
+    FORBID occupy_loader loader1 p0 shuttle0 unloader1_slot0
+[84] IF {'not(finished(p0))', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'not(operational(unloader1))'}
+    FORBID repair unloader1
+[85] IF {'dispensed(p0)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'operational(unloader1)', 'not(at(shuttle0, dispenser1))', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'free_slot(unloader1, dispenser1_slot0)'}
+    FORBID occupy_unloader unloader1 p0 dispenser1_slot0
+[86] IF {'dispensed(p0)', 'free_slot(unloader1, loader1_slot0)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'operational(unloader1)', 'not(at(shuttle0, dispenser1))', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))'}
+    FORBID occupy_unloader unloader1 p0 loader1_slot0
+[87] IF {'dispensed(p0)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'operational(unloader1)', 'not(at(shuttle0, dispenser1))', 'free_slot(unloader1, shuttle0_slot0)', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))'}
+    FORBID occupy_unloader unloader1 p0 shuttle0_slot0
+[88] IF {'free_slot(unloader1, unloader1_slot0)', 'dispensed(p0)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'operational(unloader1)', 'not(at(shuttle0, dispenser1))', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))'}
+    FORBID occupy_unloader unloader1 p0 unloader1_slot0
+[89] IF {'not(finished(p0))', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'not(operational(dispenser1))', 'not(at(shuttle0, loader1))', 'not(at(shuttle0, unloader1))'}
+    FORBID repair dispenser1
+[90] IF {'dispensed(p0)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'operational(dispenser1)', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'occupied(dispenser1, p0)'}
+    FORBID release_dispenser dispenser1 p0 dispenser1_slot0
+[91] IF {'dispensed(p0)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'operational(dispenser1)', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'occupied(dispenser1, p0)'}
+    FORBID release_dispenser dispenser1 p0 loader1_slot0
+[92] IF {'dispensed(p0)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'operational(dispenser1)', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'occupied(dispenser1, p0)'}
+    FORBID release_dispenser dispenser1 p0 shuttle0_slot0
+[93] IF {'dispensed(p0)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'operational(dispenser1)', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'occupied(dispenser1, p0)'}
+    FORBID release_dispenser dispenser1 p0 unloader1_slot0
+[94] IF {'on(shuttle0, p0)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'operational(dispenser1)', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'free_slot(dispenser1, dispenser1_slot0)'}
+    FORBID occupy_dispenser dispenser1 p0 shuttle0 dispenser1_slot0
+[95] IF {'on(shuttle0, p0)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'operational(dispenser1)', 'not(finished(p0))', 'free_slot(dispenser1, loader1_slot0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))'}
+    FORBID occupy_dispenser dispenser1 p0 shuttle0 loader1_slot0
+[96] IF {'on(shuttle0, p0)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'operational(dispenser1)', 'not(finished(p0))', 'free_slot(dispenser1, shuttle0_slot0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))'}
+    FORBID occupy_dispenser dispenser1 p0 shuttle0 shuttle0_slot0
+[97] IF {'on(shuttle0, p0)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'operational(dispenser1)', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'free_slot(dispenser1, unloader1_slot0)'}
+    FORBID occupy_dispenser dispenser1 p0 shuttle0 unloader1_slot0
+[98] IF {'at(shuttle0, loader1)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'operational(shuttle0)', 'occupied(dispenser1, p0)'}
+    FORBID move shuttle0 loader1 dispenser1 p0
+[99] IF {'not(finished(p0))', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'not(at(shuttle0, unloader1))', 'not(operational(shuttle0))', 'not(at(shuttle0, loader1))'}
+    FORBID repair shuttle0
+[100] IF {'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'free_slot(shuttle0, dispenser1_slot0)', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'operational(shuttle0)'}
+    FORBID occupy_shuttle shuttle0 p0 dispenser1_slot0
+[101] IF {'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'operational(shuttle0)', 'free_slot(shuttle0, loader1_slot0)'}
+    FORBID occupy_shuttle shuttle0 p0 loader1_slot0
+[102] IF {'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'operational(shuttle0)', 'free_slot(shuttle0, shuttle0_slot0)'}
+    FORBID occupy_shuttle shuttle0 p0 shuttle0_slot0
+[103] IF {'free_slot(shuttle0, unloader1_slot0)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'operational(shuttle0)'}
+    FORBID occupy_shuttle shuttle0 p0 unloader1_slot0
+[104] IF {'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'at(shuttle0, unloader1)', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, loader1))', 'operational(shuttle0)'}
+    FORBID move shuttle0 unloader1 shuttle0 p0
+[105] IF {'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'at(shuttle0, unloader1)', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, loader1))', 'operational(shuttle0)', 'occupied(loader1, p0)'}
+    FORBID move shuttle0 unloader1 loader1 p0
+[106] IF {'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'at(shuttle0, unloader1)', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, loader1))', 'operational(shuttle0)', 'occupied(dispenser1, p0)'}
+    FORBID move shuttle0 unloader1 dispenser1 p0
+[107] IF {'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'at(shuttle0, unloader1)', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, loader1))', 'operational(shuttle0)', 'occupied(unloader1, p0)'}
+    FORBID move shuttle0 unloader1 unloader1 p0
+[108] IF {'at(shuttle0, loader1)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'operational(shuttle0)'}
+    FORBID move shuttle0 loader1 shuttle0 p0
+[109] IF {'at(shuttle0, loader1)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'operational(shuttle0)', 'occupied(dispenser1, p0)'}
+    FORBID move shuttle0 loader1 dispenser1 p0
+[110] IF {'at(shuttle0, loader1)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'operational(shuttle0)', 'occupied(unloader1, p0)'}
+    FORBID move shuttle0 loader1 unloader1 p0
+[111] IF {'at(shuttle0, loader1)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'operational(shuttle0)', 'occupied(loader1, p0)'}
+    FORBID move shuttle0 loader1 loader1 p0
+[112] IF {'at(shuttle0, dispenser1)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'operational(shuttle0)'}
+    FORBID move shuttle0 dispenser1 shuttle0 p0
+[113] IF {'at(shuttle0, dispenser1)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'operational(shuttle0)', 'occupied(unloader1, p0)'}
+    FORBID move shuttle0 dispenser1 unloader1 p0
+[114] IF {'at(shuttle0, dispenser1)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'operational(shuttle0)', 'occupied(loader1, p0)'}
+    FORBID move shuttle0 dispenser1 loader1 p0
+[115] IF {'at(shuttle0, dispenser1)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'operational(shuttle0)', 'occupied(dispenser1, p0)'}
+    FORBID move shuttle0 dispenser1 dispenser1 p0
+[116] IF {'not(at(shuttle0, parking1))', 'not(at(shuttle0, dispenser1))', 'not(finished(p0))', 'at(shuttle0, shuttle0)', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'operational(shuttle0)'}
+    FORBID move shuttle0 shuttle0 shuttle0 p0
+[117] IF {'not(at(shuttle0, parking1))', 'not(at(shuttle0, dispenser1))', 'not(finished(p0))', 'at(shuttle0, shuttle0)', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'operational(shuttle0)', 'occupied(unloader1, p0)'}
+    FORBID move shuttle0 shuttle0 unloader1 p0
+[118] IF {'not(at(shuttle0, parking1))', 'not(at(shuttle0, dispenser1))', 'not(finished(p0))', 'at(shuttle0, shuttle0)', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'operational(shuttle0)', 'occupied(loader1, p0)'}
+    FORBID move shuttle0 shuttle0 loader1 p0
+[119] IF {'not(at(shuttle0, parking1))', 'not(at(shuttle0, dispenser1))', 'not(finished(p0))', 'at(shuttle0, shuttle0)', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'operational(shuttle0)', 'occupied(dispenser1, p0)'}
+    FORBID move shuttle0 shuttle0 dispenser1 p0
+[120] IF {'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'at(shuttle0, parking1)', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'operational(shuttle0)'}
+    FORBID move shuttle0 parking1 shuttle0 p0
+[121] IF {'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'at(shuttle0, parking1)', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'operational(shuttle0)', 'occupied(unloader1, p0)'}
+    FORBID move shuttle0 parking1 unloader1 p0
+[122] IF {'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'at(shuttle0, parking1)', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'operational(shuttle0)', 'occupied(loader1, p0)'}
+    FORBID move shuttle0 parking1 loader1 p0
+[123] IF {'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'at(shuttle0, parking1)', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'operational(shuttle0)', 'occupied(dispenser1, p0)'}
+    FORBID move shuttle0 parking1 dispenser1 p0
+[124] IF {'not(finished(p0))', 'not(at(shuttle0, dispenser1))', 'not(at(shuttle0, shuttle0))', 'not(operational(loader1))', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))'}
+    FORBID repair loader1
+[125] IF {'on(shuttle0, p0)', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, dispenser1))', 'not(at(shuttle0, loader1))', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'operational(loader1)', 'occupied(loader1, p0)'}
+    FORBID release_loader loader1 p0 shuttle0 dispenser1_slot0
+[126] IF {'on(shuttle0, p0)', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, dispenser1))', 'not(at(shuttle0, loader1))', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'operational(loader1)', 'occupied(loader1, p0)'}
+    FORBID release_loader loader1 p0 shuttle0 loader1_slot0
+[127] IF {'on(shuttle0, p0)', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, dispenser1))', 'not(at(shuttle0, loader1))', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'operational(loader1)', 'occupied(loader1, p0)'}
+    FORBID release_loader loader1 p0 shuttle0 shuttle0_slot0
+[128] IF {'on(shuttle0, p0)', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, dispenser1))', 'not(at(shuttle0, loader1))', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'operational(loader1)', 'occupied(loader1, p0)'}
+    FORBID release_loader loader1 p0 shuttle0 unloader1_slot0
+[129] IF {'free_slot(loader1, dispenser1_slot0)', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, dispenser1))', 'operational(loader1)', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))'}
+    FORBID occupy_loader loader1 p0 shuttle0 dispenser1_slot0
+[130] IF {'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, dispenser1))', 'operational(loader1)', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'free_slot(loader1, loader1_slot0)'}
+    FORBID occupy_loader loader1 p0 shuttle0 loader1_slot0
+[131] IF {'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, dispenser1))', 'free_slot(loader1, shuttle0_slot0)', 'operational(loader1)', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))'}
+    FORBID occupy_loader loader1 p0 shuttle0 shuttle0_slot0
+[132] IF {'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, dispenser1))', 'operational(loader1)', 'free_slot(loader1, unloader1_slot0)', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))'}
+    FORBID occupy_loader loader1 p0 shuttle0 unloader1_slot0
+[133] IF {'not(finished(p0))', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'not(operational(unloader1))'}
+    FORBID repair unloader1
+[134] IF {'dispensed(p0)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'operational(unloader1)', 'not(at(shuttle0, dispenser1))', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'free_slot(unloader1, dispenser1_slot0)'}
+    FORBID occupy_unloader unloader1 p0 dispenser1_slot0
+[135] IF {'dispensed(p0)', 'free_slot(unloader1, loader1_slot0)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'operational(unloader1)', 'not(at(shuttle0, dispenser1))', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))'}
+    FORBID occupy_unloader unloader1 p0 loader1_slot0
+[136] IF {'dispensed(p0)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'operational(unloader1)', 'not(at(shuttle0, dispenser1))', 'free_slot(unloader1, shuttle0_slot0)', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))'}
+    FORBID occupy_unloader unloader1 p0 shuttle0_slot0
+[137] IF {'free_slot(unloader1, unloader1_slot0)', 'dispensed(p0)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'operational(unloader1)', 'not(at(shuttle0, dispenser1))', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))'}
+    FORBID occupy_unloader unloader1 p0 unloader1_slot0
+[138] IF {'not(finished(p0))', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'not(operational(dispenser1))', 'not(at(shuttle0, loader1))', 'not(at(shuttle0, unloader1))'}
+    FORBID repair dispenser1
+[139] IF {'dispensed(p0)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'operational(dispenser1)', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'occupied(dispenser1, p0)'}
+    FORBID release_dispenser dispenser1 p0 dispenser1_slot0
+[140] IF {'dispensed(p0)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'operational(dispenser1)', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'occupied(dispenser1, p0)'}
+    FORBID release_dispenser dispenser1 p0 loader1_slot0
+[141] IF {'dispensed(p0)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'operational(dispenser1)', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'occupied(dispenser1, p0)'}
+    FORBID release_dispenser dispenser1 p0 shuttle0_slot0
+[142] IF {'dispensed(p0)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'operational(dispenser1)', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'occupied(dispenser1, p0)'}
+    FORBID release_dispenser dispenser1 p0 unloader1_slot0
+[143] IF {'on(shuttle0, p0)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'operational(dispenser1)', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'free_slot(dispenser1, dispenser1_slot0)'}
+    FORBID occupy_dispenser dispenser1 p0 shuttle0 dispenser1_slot0
+[144] IF {'on(shuttle0, p0)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'operational(dispenser1)', 'not(finished(p0))', 'free_slot(dispenser1, loader1_slot0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))'}
+    FORBID occupy_dispenser dispenser1 p0 shuttle0 loader1_slot0
+[145] IF {'on(shuttle0, p0)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'operational(dispenser1)', 'not(finished(p0))', 'free_slot(dispenser1, shuttle0_slot0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))'}
+    FORBID occupy_dispenser dispenser1 p0 shuttle0 shuttle0_slot0
+[146] IF {'on(shuttle0, p0)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(at(shuttle0, dispenser1))', 'operational(dispenser1)', 'not(finished(p0))', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'free_slot(dispenser1, unloader1_slot0)'}
+    FORBID occupy_dispenser dispenser1 p0 shuttle0 unloader1_slot0
+[147] IF {'at(shuttle0, dispenser1)', 'not(at(shuttle0, parking1))', 'not(at(shuttle0, shuttle0))', 'not(finished(p0))', 'occupied(shuttle0, p0)', 'not(at(shuttle0, unloader1))', 'not(at(shuttle0, loader1))', 'operational(shuttle0)', 'occupied(unloader1, p0)'}
+    FORBID move shuttle0 dispenser1 unloader1 p0
