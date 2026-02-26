@@ -10,6 +10,7 @@ Requirements:
 """
 
 import sys
+import os
 from pathlib import Path
 
 # Ensure pr2 root is on sys.path
@@ -64,7 +65,7 @@ def build_domain():
     # ── State predicates ──────────────────────────────────────────────
     occupied    = Predicate("occupied", r, p)     # resource reserved for product
     operational = Predicate("operational", r)     # resources can only execute when operational
-    free_slot   = Predicate("free_slot", r, t)   # capacity token t available on resource r
+    free_slot   = Predicate("free_slot", r, t)    # capacity token t available on resource r
     on          = Predicate("on", c, p)           # product physically on shuttle
     at          = Predicate("at", c, s)           # shuttle docked at station
     dispensed   = Predicate("dispensed", p)

@@ -205,7 +205,7 @@ def bt_to_xml(bt: BehaviorTree, tree_id: str = "MainTree") -> str:
     """Serialize a ``BehaviorTree`` to BehaviorTree.CPP v4 XML."""
     root_el = ET.Element("root", attrib={"BTCPP_format": "4"})
     extracted_ids = _collect_factorable_subtrees(bt.root)
-
+    root_el.set("main_tree_to_execute", tree_id)
     # Main tree.
     bt_el = ET.SubElement(root_el, "BehaviorTree", attrib={"ID": tree_id})
     _bt_node_to_xml(bt.root, bt_el, extracted_ids)
