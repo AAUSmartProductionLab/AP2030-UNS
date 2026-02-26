@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PR2 Policy Graph &ndash; $problem_name</title>
+    <style>
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        #content {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            padding: 13px;
+            box-sizing: border-box;
+        }
+        #header {
+            margin-bottom: 13px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 { margin: 0 0 8px 0; color: #333; font-size: 1.4em; }
+        .info-bar { font-size: 13px; color: #555; }
+        .stats {
+            display: flex; gap: 18px; margin-top: 10px; flex-wrap: wrap;
+        }
+        .stat {
+            background: #f0f4f8; padding: 8px 14px; border-radius: 4px; text-align: center;
+        }
+        .stat-label { font-size: 11px; color: #666; }
+        .stat-value { font-size: 18px; font-weight: bold; color: #333; }
+        .main {
+            display: flex; flex: 1; gap: 13px; min-height: 0;
+        }
+        #graph-wrap {
+            flex: 1;
+            border: 2px #555 dashed;
+            border-radius: 4px;
+            position: relative;
+            background: white;
+        }
+        #graph { width: 100%; height: 100%; }
+        #sidebar {
+            width: 320px; display: flex; flex-direction: column; gap: 13px;
+        }
+        #state {
+            background: white; border-radius: 8px; padding: 13px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); flex: 1;
+            overflow: auto; font-size: 12px;
+        }
+        #state pre { margin: 0; white-space: pre-wrap; word-break: break-all; }
+        #state h4  { margin: 0 0 8px 0; color: #333; }
+        .legend {
+            background: white; border-radius: 8px; padding: 13px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .legend-item {
+            display: flex; align-items: center; margin-bottom: 5px; font-size: 12px;
+        }
+        .legend-color {
+            display: inline-block; width: 14px; height: 14px;
+            border-radius: 50%; margin-right: 8px; flex-shrink: 0;
+        }
+        .controls {
+            background: white; border-radius: 8px; padding: 10px 13px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .controls label { font-size: 12px; margin-right: 15px; }
+        button {
+            background: #4A90E2; color: white; border: none;
+            padding: 5px 12px; border-radius: 4px; cursor: pointer;
+            font-size: 12px; margin-right: 5px;
+        }
+        button:hover { background: #357ABD; }
+        /* PRP-style graph elements */
+        .psnode { stroke: #000; stroke-width: 1.5px; cursor: pointer; }
+        .pslink {
+            fill: none; stroke: #000; stroke-width: 2.6px;
+            opacity: 0.8; marker-end: url(#end-arrow);
+        }
+        .pslabel { font-size: 10px; fill: #333; pointer-events: none; }
+    </style>
+</head>
+<body>
+    <div id="content">
+        <div id="header">
+            <h1>PR2 Policy Graph</h1>
+            <div class="info-bar">
+                <strong>Domain:</strong> $domain_name &nbsp;|&nbsp;
+                <strong>Problem:</strong> $problem_name
+            </div>
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-label">Solved</div>
+                    <div class="stat-value">$solved_mark</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Strong Cyclic</div>
+                    <div class="stat-value">$sc_mark</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Policy States</div>
+                    <div class="stat-value">$num_states</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Transitions</div>
+                    <div class="stat-value">$num_transitions</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Mapped Outcomes</div>
+                    <div class="stat-value">$mapped_outcomes/$total_outcomes</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main">
+            <div id="graph-wrap">
+                <svg id="graph"></svg>
+            </div>
+            <div id="sidebar">
+                <div class="legend">
+                    <div class="legend-item"><span class="legend-color" style="background:$color_goal;"></span>Goal (distance 0)</div>
+                    <div class="legend-item"><span class="legend-color" style="background:$color_init;"></span>Initial state</div>
+                    <div class="legend-item"><span class="legend-color" style="background:$color_sc;"></span>Strong-cyclic</div>
+                    <div class="legend-item"><span class="legend-color" style="background:$color_undefined;"></span>Undefined / unmapped</div>
+                    <div class="legend-item"><span class="legend-color" style="background:$color_default;"></span>Default</div>
+                </div>
+                <div class="controls">
+                    <button onclick="resetLayout()">Reset Layout</button>
+                    <button onclick="zoomToFit()">Zoom to Fit</button><br><br>
+                    <label><input type="checkbox" id="show-labels" checked onchange="toggleLabels()"> Labels</label>
+                    <label>Charge: <input type="range" id="charge" min="0" max="400" value="120" oninput="updateCharge()"></label>
+                </div>
+                <div id="state">
+                    <h4>Partial State</h4>
+                    <pre>Hover over a node to inspect its state.</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <script>
+    (function() {
+        const graphData = $graph_data_json;
+        const COLOR_GOAL  = "$color_goal";
+        const COLOR_INIT  = "$color_init";
+        const COLOR_SC    = "$color_sc";
+        const COLOR_UNDEF = "$color_undefined";
+        const COLOR_DEF   = "$color_default";
+
+        const svgEl  = document.getElementById("graph");
+        const width  = svgEl.clientWidth  || 900;
+        const height = svgEl.clientHeight || 700;
+        const nodeRadius = 8;
+
+        const svg = d3.select("#graph")
+                      .attr("width", width)
+                      .attr("height", height);
+        const container = svg.append("g");
+
+        /* Zoom / pan */
+        const zoomBehavior = d3.zoom()
+            .scaleExtent([0.1, 6])
+            .on("zoom", function() {
+                container.attr("transform", d3.event.transform);
+            });
+        svg.call(zoomBehavior);
+
+        /* Arrow marker (PRP style) */
+        svg.append("svg:defs").append("svg:marker")
+            .attr("id", "end-arrow")
+            .attr("viewBox", "0 -5 10 10")
+            .attr("refX", 6)
+            .attr("markerWidth", 3)
+            .attr("markerHeight", 3)
+            .attr("orient", "auto")
+          .append("svg:path")
+            .attr("d", "M0,-5L10,0L0,5")
+            .attr("fill", "#000");
+
+        /* Initial positions: top-to-bottom flow (init=top, goal=bottom) */
+        const maxDist = Math.max(1, ...graphData.nodes.map(
+            function(n) { return n.distance >= 0 ? n.distance : 0; }
+        ));
+        const vPad = 60, hPad = 80;
+
+        function jitter(id) {
+            var x = Math.sin((id + 1) * 12.9898) * 43758.5453;
+            return x - Math.floor(x);
+        }
+
+        graphData.nodes.forEach(function(d) {
+            if (d.distance >= 0) {
+                /* Higher distance = closer to init (top). */
+                var ratio = 1.0 - d.distance / (maxDist + 1);
+                d.y = vPad + ratio * (height - 2 * vPad);
+            } else {
+                d.y = height - vPad;
+            }
+            d.x = hPad + jitter(d.id) * (width - 2 * hPad);
+        });
+
+        /* Force simulation (vertical flow akin to PRP's WebCola flowLayout) */
+        const simulation = d3.forceSimulation(graphData.nodes)
+            .force("link", d3.forceLink(graphData.links)
+                .id(function(d) { return d.id; })
+                .distance(84)
+                .strength(0.5))
+            .force("charge", d3.forceManyBody().strength(-120))
+            .force("y", d3.forceY(function(d) {
+                if (d.type === "goal") return height - vPad;
+                if (d.is_initial)     return vPad;
+                if (d.distance >= 0) {
+                    var ratio = 1.0 - d.distance / (maxDist + 1);
+                    return vPad + ratio * (height - 2 * vPad);
+                }
+                return height - vPad;
+            }).strength(0.12))
+            .force("x", d3.forceX(width / 2).strength(0.03))
+            .force("collision", d3.forceCollide(nodeRadius + 4));
+
+        /* Edges (PRP: black, 2.6px, 0.8 opacity, arrow marker) */
+        const path = container.selectAll(".pslink")
+            .data(graphData.links)
+            .enter().append("svg:path")
+            .attr("class", "pslink");
+
+        /* Nodes (PRP colour scheme) */
+        const node = container.selectAll(".psnode")
+            .data(graphData.nodes)
+            .enter().append("circle")
+            .attr("class", "psnode")
+            .attr("id", function(d) { return "psnode" + d.id; })
+            .attr("r", nodeRadius)
+            .style("fill", function(d) {
+                if (d.type === "goal" || d.distance === 0) return COLOR_GOAL;
+                if (d.is_initial) return COLOR_INIT;
+                if (d.is_sc)      return COLOR_SC;
+                if (d.type === "unmapped") return COLOR_UNDEF;
+                return COLOR_DEF;
+            })
+            .call(d3.drag()
+                .on("start", dragstarted)
+                .on("drag", dragged)
+                .on("end", dragended));
+
+        /* Labels ("action (distance)" beside each node) */
+        const label = container.selectAll(".pslabel")
+            .data(graphData.nodes)
+            .enter().append("text")
+            .attr("class", "pslabel")
+            .attr("dx", 12)
+            .attr("dy", ".35em")
+            .text(function(d) { return d.name; });
+
+        /* Hover: show partial state in side panel (PRP style) */
+        node.on("mouseover", function(d) {
+                var html = "<h4>Partial State for Node " + d.id + "</h4>";
+                if (d.type === "goal") {
+                    html += "<pre>Goal node (distance 0)</pre>";
+                } else if (d.type === "unmapped") {
+                    html += "<pre>Undefined / unmapped successor</pre>";
+                } else {
+                    html += "<p><strong>Actions:</strong> " + (d.actions||[]).join(", ") + "</p>";
+                    html += "<p><strong>Distance to goal:</strong> " + (d.distance >= 0 ? d.distance : "unreachable") + "</p>";
+                    if (d.is_sc) html += "<p><strong>Strong-cyclic:</strong> Yes</p>";
+                    if (d.is_initial) html += "<p><em>Initial state</em></p>";
+                    if (d.conditions && d.conditions.length) {
+                        html += "<pre>" + d.conditions.join("\n") + "</pre>";
+                        if (d.num_conditions > d.conditions.length)
+                            html += "<p>... and " + (d.num_conditions - d.conditions.length) + " more</p>";
+                    }
+                }
+                document.getElementById("state").innerHTML = html;
+                d3.select(this).transition().duration(200).attr("r", nodeRadius * 2);
+            })
+            .on("mouseout", function(d) {
+                d3.select(this).transition().duration(200).attr("r", nodeRadius);
+            })
+            .on("dblclick", function(d) {
+                console.log("Node Info:", d);
+            });
+
+        /* Tick (PRP-style edge routing) */
+        simulation.on("tick", function() {
+            path.attr("d", function(d) {
+                var dx = d.target.x - d.source.x,
+                    dy = d.target.y - d.source.y,
+                    dist = Math.sqrt(dx * dx + dy * dy) || 1,
+                    nx = dx / dist, ny = dy / dist,
+                    sx = d.source.x + nodeRadius * nx,
+                    sy = d.source.y + nodeRadius * ny,
+                    tx = d.target.x - (nodeRadius + 2) * nx,
+                    ty = d.target.y - (nodeRadius + 2) * ny;
+                return "M" + sx + "," + sy + "L" + tx + "," + ty;
+            });
+            node.attr("cx", function(d) { return d.x; })
+                .attr("cy", function(d) { return d.y; });
+            label.attr("x", function(d) { return d.x; })
+                 .attr("y", function(d) { return d.y; });
+        });
+
+        /* Drag handlers */
+        function dragstarted(d) {
+            if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x; d.fy = d.y;
+        }
+        function dragged(d) { d.fx = d3.event.x; d.fy = d3.event.y; }
+        function dragended(d) {
+            if (!d3.event.active) simulation.alphaTarget(0);
+            d.fx = null; d.fy = null;
+        }
+
+        /* Controls */
+        window.resetLayout = function() { simulation.alpha(1).restart(); };
+
+        window.zoomToFit = function() {
+            var bounds = container.node().getBBox();
+            if (!bounds.width || !bounds.height) return;
+            var wR = width / bounds.width,
+                hR = height / bounds.height,
+                sc = 0.85 * Math.min(wR, hR),
+                tx = width  / 2 - sc * (bounds.x + bounds.width  / 2),
+                ty = height / 2 - sc * (bounds.y + bounds.height / 2);
+            svg.transition().duration(600)
+               .call(zoomBehavior.transform,
+                     d3.zoomIdentity.translate(tx, ty).scale(sc));
+        };
+
+        window.toggleLabels = function() {
+            var show = document.getElementById("show-labels").checked;
+            label.style("display", show ? "block" : "none");
+        };
+
+        window.updateCharge = function() {
+            simulation.force("charge").strength(
+                -document.getElementById("charge").value);
+            simulation.alpha(0.3).restart();
+        };
+
+        setTimeout(window.zoomToFit, 300);
+    })();
+    </script>
+</body>
+</html>
