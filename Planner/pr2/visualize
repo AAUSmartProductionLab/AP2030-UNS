@@ -1,0 +1,8 @@
+#! /bin/bash
+
+set -e
+
+SOURCE="$(cd "$(dirname "${BASH_SOURCE[0]}")"; pwd)"
+$SOURCE/prp --disable-object-sampling $1 $2 --logging-dump-snapshots 1
+python $SOURCE/prp-scripts/snapshot-viz/combine.py
+open $SOURCE/prp-scripts/snapshot-viz/index.html
