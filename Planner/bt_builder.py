@@ -61,6 +61,49 @@ from literals import parse_predicate, strip_negation
 _FACTOR_MAX_DEPTH = 20  # Safety limit for recursive factoring.
 
 
+def _build_postcond_check(
+    fluents: FrozenSet[str],
+    name: str = "PostCond",
+) -> Optional[BTNode]:
+    """Build a condition check from a set of fluents.
+
+    Returns ``None`` when *fluents* is empty, a single ``ConditionNode``
+    for one fluent, or a ``ReactiveSequence`` of conditions for several.
+
+    This is the shared helper used by both the goal-branch and
+    phase post-condition gates.
+    """
+    if not fluents:
+        return None
+    ordered = sorted(fluents)
+    if len(ordered) == 1:
+        return ConditionNode(ordered[0])
+    return ReactiveSequence(name, [ConditionNode(f) for f in ordered])
+
+
+def _wrap_with_postcond_gate(
+    subtree: BTNode,
+    postcond_fluents: FrozenSet[str],
+    gate_name: str,
+) -> BTNode:
+    """Wrap *subtree* in a fallback that short-circuits when *postcond_fluents* hold.
+
+    Structure::
+
+        ReactiveFallback(gate_name)
+        ├── <postcond check>   ← SUCCESS → phase done, skip subtree
+        └── subtree            ← postcond FAILURE → execute as before
+
+    Returns *subtree* unchanged when no post-conditions are available.
+    """
+    postcond = _build_postcond_check(postcond_fluents, f"{gate_name}_PostCond")
+    if postcond is None:
+        return subtree
+    gated = ReactiveSelector(gate_name, [postcond, subtree])
+    gated.is_rule_leaf = True
+    return gated
+
+
 def _condition_and(name: str, fluents: Set[str]) -> BTNode:
     """Build a reactive AND-check (sequence of conditions) for *fluents*."""
     ordered = sorted(fluents)
@@ -284,10 +327,11 @@ def _strip_conditions(
 def _compute_rule_distances(
     rules: List["PolicyRule"],
     causal: CausalInfo,
-) -> Dict[int, int]:
+) -> _DistanceResult:
     """Compute goal-distance for each policy rule via reverse BFS.
 
-    Returns dict mapping rule index to distance-to-goal.
+    Returns a ``_DistanceResult`` containing rule distances **and** the
+    policy graph structure needed for post-condition derivation.
     """
     state_index: Dict[FrozenSet[str], int] = {}
     state_list: List[FrozenSet[str]] = []
@@ -410,7 +454,160 @@ def _compute_rule_distances(
         else:
             rule_dist[ridx] = max_dist + 1
 
-    return rule_dist
+    return _DistanceResult(
+        rule_dist=rule_dist,
+        forward=dict(forward),
+        state_index=dict(state_index),
+        state_list=state_list,
+        state_rules=dict(state_rules),
+        goal_node=goal_node,
+    )
+
+
+# ===================================================================
+#  Post-condition derivation from the policy graph
+# ===================================================================
+
+
+def _compute_phase_postconditions(
+    dist_result: _DistanceResult,
+    rules: List["PolicyRule"],
+    causal: CausalInfo,
+) -> Dict[int, FrozenSet[str]]:
+    """Derive per-phase post-conditions from the policy graph.
+
+    For each distance group D the post-condition is the set of fluents
+    that:
+
+    1. are **shared** preconditions across *all* rules at distance
+       D - 1 (the next-closer phase), or are **goal fluents** when
+       D = 1, **and**
+    2. are **add-effects** of at least one action in the current phase.
+
+    Using the *intersection* of successor-rule preconditions (rather
+    than the union) ensures that only universally-required fluents
+    are checked.  Complementary pairs like ``closed(d)``/``open(d)``
+    representing alternative scenarios are naturally excluded.
+    """
+    rd = dist_result.rule_dist
+
+    # Build distance -> set of rule indices.
+    dist_to_rules: Dict[int, List[int]] = defaultdict(list)
+    for ridx, d in rd.items():
+        dist_to_rules[d].append(ridx)
+
+    # Collect the *common* (intersection) preconditions of rules at
+    # each distance -- what ANY successor path requires.
+    dist_common_preconds: Dict[int, FrozenSet[str]] = {}
+    for d, ridxs in dist_to_rules.items():
+        cond_sets = [
+            frozenset(str(lit).strip().lower() for lit in rules[ridx].condition)
+            for ridx in ridxs
+        ]
+        common = cond_sets[0]
+        for cs in cond_sets[1:]:
+            common = common & cs
+        dist_common_preconds[d] = common
+
+    # Goal fluents serve as the target for the closest-to-goal phase.
+    goal_target: FrozenSet[str] = frozenset()
+    goal_pos = frozenset(f.lower() for f in causal.goal_fluents)
+    goal_neg = frozenset(f"not({f.lower()})" for f in causal.goal_neg_fluents)
+    goal_target = goal_pos | goal_neg
+
+    phase_postconds: Dict[int, FrozenSet[str]] = {}
+    for d, ridxs in dist_to_rules.items():
+        # What the successor phase(s) need.
+        if d <= 1:
+            # Closest to goal -- successor is the goal itself.
+            target_fluents = goal_target
+        else:
+            # Common preconditions of rules at distance d-1.
+            target_fluents = dist_common_preconds.get(d - 1, frozenset())
+
+        if not target_fluents:
+            continue
+
+        # What does this phase produce?
+        phase_adds: Set[str] = set()
+        for ridx in ridxs:
+            action = rules[ridx].action
+            ga = _lookup_action(action, causal)
+            if ga is not None:
+                for a in ga.all_adds:
+                    phase_adds.add(a.lower())
+
+        # Post-condition = intersection of target and production.
+        postcond = frozenset(
+            f for f in target_fluents if f in phase_adds
+        )
+        if postcond:
+            phase_postconds[d] = postcond
+
+    return phase_postconds
+
+
+def _compute_action_postconditions(
+    action: str,
+    causal: Optional[CausalInfo],
+    phase_postcond: FrozenSet[str],
+) -> FrozenSet[str]:
+    """Derive action-level post-conditions filtered to phase-relevant effects.
+
+    Returns the subset of *phase_postcond* fluents that are add-effects
+    of *action*.  Returns an empty frozenset when causal info is
+    unavailable or no relevant effects exist.
+    """
+    if not causal or not phase_postcond:
+        return frozenset()
+    ga = _lookup_action(action, causal)
+    if ga is None:
+        return frozenset()
+    action_adds = {a.lower() for a in ga.all_adds}
+    return frozenset(f for f in phase_postcond if f in action_adds)
+
+
+def _compute_recovery_postconditions(
+    recovery_action: str,
+    primary_action: str,
+    causal: Optional[CausalInfo],
+) -> FrozenSet[str]:
+    """Derive post-conditions for a recovery action in a fallback pair.
+
+    The recovery action's purpose is to re-establish a precondition of
+    the primary action (e.g. ``climb`` achieves ``up()`` which is a
+    precondition of ``walk-on-beam``).  The post-condition is the
+    intersection of the recovery's add-effects and the primary's
+    preconditions.
+    """
+    if not causal:
+        return frozenset()
+    ga_recovery = _lookup_action(recovery_action, causal)
+    ga_primary = _lookup_action(primary_action, causal)
+    if ga_recovery is None or ga_primary is None:
+        return frozenset()
+    recovery_adds = {a.lower() for a in ga_recovery.all_adds}
+    primary_preconds = {p.lower() for p in ga_primary.preconditions}
+    return frozenset(f for f in primary_preconds if f in recovery_adds)
+
+
+def _lookup_action(
+    action: str,
+    causal: CausalInfo,
+) -> Optional["GroundedAction"]:
+    """Case-insensitive lookup of a grounded action in causal info."""
+    from bt_causal import GroundedAction
+    ga = causal.actions.get(action)
+    if ga is not None:
+        return ga
+    action_lower = action.lower()
+    ga = causal.actions.get(action_lower)
+    if ga is not None:
+        return ga
+    for k, v in causal.actions.items():
+        if k.lower() == action_lower:
+            return v
+    return None
 
 
 # ===================================================================
@@ -432,6 +629,23 @@ class _DistanceGroupItems:
     """Items in a distance group: pre-identified pairs + remaining singles."""
     pairs: List[_FallbackGroup] = field(default_factory=list)
     singles: List["PolicyRule"] = field(default_factory=list)
+
+
+@dataclass
+class _DistanceResult:
+    """Full result of distance computation, including the policy graph."""
+    rule_dist: Dict[int, int]
+    """Rule index → distance-to-goal."""
+    forward: Dict[int, List[int]]
+    """State-id → list of successor state-ids (closer to goal)."""
+    state_index: Dict[FrozenSet[str], int]
+    """Literal signature → state-id."""
+    state_list: List[FrozenSet[str]]
+    """State-id → literal signature."""
+    state_rules: Dict[int, List[int]]
+    """State-id → list of rule indices active in that state."""
+    goal_node: int
+    """Virtual goal node id."""
 
 
 def _find_complementary_pairs(
@@ -598,19 +812,23 @@ def _hoist_common(
 
 
 def _build_goal_branch(goal_rules: List["PolicyRule"]) -> Optional[BTNode]:
-    """Build the goal-check branch from all ``goal`` policy rules."""
+    """Build the goal-check branch from all ``goal`` policy rules.
+
+    Uses the shared ``_build_postcond_check`` helper -- the goal branch
+    is semantically the post-condition gate for the entire plan
+    (distance-0 check).
+    """
     if not goal_rules:
         return None
 
     all_conds: List[BTNode] = []
     for rule in goal_rules:
-        ordered = sorted(rule.condition)
-        if len(ordered) == 1:
-            all_conds.append(ConditionNode(ordered[0]))
-        else:
-            all_conds.append(
-                ReactiveSequence("GoalCond", [ConditionNode(f) for f in ordered])
-            )
+        cond = _build_postcond_check(frozenset(rule.condition), "GoalCond")
+        if cond is not None:
+            all_conds.append(cond)
+
+    if not all_conds:
+        return None
 
     goal_ok = all_conds[0] if len(all_conds) == 1 else ReactiveSelector("GoalCheck", all_conds)
     return ReactiveSequence("GoalBranch", [goal_ok, SuccessLeaf()])
@@ -620,6 +838,8 @@ def _build_action_leaf(
     rule: "PolicyRule",
     fsaps: List["FSAP"],
     context: FrozenSet[str],
+    causal: Optional[CausalInfo] = None,
+    phase_postcond: FrozenSet[str] = frozenset(),
 ) -> BTNode:
     """Build a leaf node for a single action rule."""
     children: List[BTNode] = _condition_nodes(rule.condition)
@@ -631,9 +851,17 @@ def _build_action_leaf(
 
     children.append(ActionNode(rule.action))
 
-    node = ReactiveSequence(
-        readable_action_id(rule.action), children, is_rule_leaf=True,
+    action_id = readable_action_id(rule.action)
+    node = ReactiveSequence(action_id, children, is_rule_leaf=True)
+
+    # Wrap with action-level post-condition gate.
+    # Skip when the action postcond is identical to the phase postcond —
+    # the group-level gate already covers it and avoids double-wrapping.
+    action_postcond = _compute_action_postconditions(
+        rule.action, causal, phase_postcond,
     )
+    if action_postcond and action_postcond != phase_postcond:
+        node = _wrap_with_postcond_gate(node, action_postcond, f"{action_id}_Done")
     return node
 
 
@@ -641,6 +869,8 @@ def _build_fallback_branch(
     group: _FallbackGroup,
     fsaps: List["FSAP"],
     context: FrozenSet[str],
+    causal: Optional[CausalInfo] = None,
+    phase_postcond: FrozenSet[str] = frozenset(),
 ) -> BTNode:
     """Build a try/recover fallback from a complementary-pair group."""
     shared_ctx = context | group.shared
@@ -669,6 +899,18 @@ def _build_fallback_branch(
     neg_id = readable_action_id(group.neg_rule.action)
     neg_branch = ReactiveSequence(neg_id, neg_children, is_rule_leaf=True)
 
+    # Recovery-branch post-condition: the recovery action's add-effects that
+    # satisfy the primary action's preconditions (e.g. climb→up() enables
+    # walk-on-beam).  This lets the fallback skip recovery when its purpose
+    # is already fulfilled.
+    neg_postcond = _compute_recovery_postconditions(
+        group.neg_rule.action, group.pos_rule.action, causal,
+    )
+    if neg_postcond:
+        neg_branch = _wrap_with_postcond_gate(
+            neg_branch, neg_postcond, f"{neg_id}_Done",
+        )
+
     fallback = ReactiveSelector(
         f"{pos_id}_OrFallback", [pos_branch, neg_branch],
     )
@@ -687,6 +929,8 @@ def _build_merged_action_branch(
     rules: List["PolicyRule"],
     fsaps: List["FSAP"],
     context: FrozenSet[str],
+    causal: Optional[CausalInfo] = None,
+    phase_postcond: FrozenSet[str] = frozenset(),
 ) -> BTNode:
     """Build a branch for multiple rules sharing the same action."""
     assert len(rules) >= 2
@@ -726,7 +970,16 @@ def _build_merged_action_branch(
 
     children.append(ActionNode(action))
 
-    return ReactiveSequence(action_id, children, is_rule_leaf=True)
+    node = ReactiveSequence(action_id, children, is_rule_leaf=True)
+
+    # Wrap with action-level post-condition gate.
+    # Skip when identical to phase postcond to avoid double-wrapping.
+    action_postcond = _compute_action_postconditions(
+        action, causal, phase_postcond,
+    )
+    if action_postcond and action_postcond != phase_postcond:
+        node = _wrap_with_postcond_gate(node, action_postcond, f"{action_id}_Done")
+    return node
 
 
 # ===================================================================
@@ -739,11 +992,15 @@ def _build_group_subtree(
     fsaps: List["FSAP"],
     context: FrozenSet[str],
     group_name: str,
+    causal: Optional[CausalInfo] = None,
+    phase_postcond: FrozenSet[str] = frozenset(),
 ) -> BTNode:
     """Build the subtree for a single distance group."""
     # Fast paths.
     if not items.pairs and len(items.singles) == 1:
-        return _build_action_leaf(items.singles[0], fsaps, context)
+        return _build_action_leaf(
+            items.singles[0], fsaps, context, causal, phase_postcond,
+        )
     if not items.pairs and not items.singles:
         return FailureLeaf("EmptyGroup")
 
@@ -802,7 +1059,9 @@ def _build_group_subtree(
 
     # Fallback branches from pre-identified pairs.
     for pair in items.pairs:
-        branches.append(_build_fallback_branch(pair, fsaps, context))
+        branches.append(_build_fallback_branch(
+            pair, fsaps, context, causal, phase_postcond,
+        ))
 
     # Handle singles.
     if items.singles:
@@ -852,6 +1111,7 @@ def _build_group_subtree(
                     inner = _build_group_subtree(
                         sub_items, fsaps, lit_ctx,
                         f"{group_name}_{readable_action_id(lit)}",
+                        causal, phase_postcond,
                     )
                     branch = ReactiveSequence(
                         f"At_{readable_action_id(lit)}",
@@ -878,12 +1138,16 @@ def _build_group_subtree(
         singles_branches: List[BTNode] = []
         for mg in merged_groups:
             singles_branches.append(
-                _build_merged_action_branch(mg, fsaps, singles_ctx)
+                _build_merged_action_branch(
+                    mg, fsaps, singles_ctx, causal, phase_postcond,
+                )
             )
         if mutex_branch is not None:
             singles_branches.append(mutex_branch)
         for s in plain_singles:
-            singles_branches.append(_build_action_leaf(s, fsaps, singles_ctx))
+            singles_branches.append(
+                _build_action_leaf(s, fsaps, singles_ctx, causal, phase_postcond)
+            )
 
         if singles_branches:
             if common_singles:
@@ -960,8 +1224,10 @@ def policy_to_bt(result: "PR2Result") -> BehaviorTree:
         return BehaviorTree(root)
 
     # Compute distances on ORIGINAL rules (before stripping).
+    dist_result: Optional[_DistanceResult] = None
     if causal is not None:
-        rule_dist = _compute_rule_distances(action_rules, causal)
+        dist_result = _compute_rule_distances(action_rules, causal)
+        rule_dist = dist_result.rule_dist
     else:
         rule_dist = {i: 0 for i in range(len(action_rules))}
 
@@ -995,6 +1261,13 @@ def policy_to_bt(result: "PR2Result") -> BehaviorTree:
 
     sorted_distances = sorted(dist_items.keys())
 
+    # Compute per-phase post-conditions from the policy graph.
+    phase_postconds: Dict[int, FrozenSet[str]] = {}
+    if dist_result is not None and causal is not None:
+        phase_postconds = _compute_phase_postconditions(
+            dist_result, action_rules, causal,
+        )
+
     # Build per-distance subtrees.
     group_branches: List[BTNode] = []
     for dist in sorted_distances:
@@ -1016,7 +1289,16 @@ def policy_to_bt(result: "PR2Result") -> BehaviorTree:
         else:
             first = items.pairs[0].pos_rule.action if items.pairs else items.singles[0].action
             group_name = "Phase_" + readable_action_id(first)
-        subtree = _build_group_subtree(items, result.fsaps, outer_ctx, group_name)
+
+        postcond = phase_postconds.get(dist, frozenset())
+        subtree = _build_group_subtree(
+            items, result.fsaps, outer_ctx, group_name, causal, postcond,
+        )
+        # Wrap with group-level post-condition gate.
+        if postcond:
+            subtree = _wrap_with_postcond_gate(
+                subtree, postcond, f"{group_name}_Done",
+            )
         group_branches.append(subtree)
 
     # Mark ALL Progression children for extraction as subtree definitions.
