@@ -353,16 +353,19 @@ class AasService {
    */
   async getAllShells() {
     try {
-      const result = await this.registryClient.getAllAssetAdministrationShellDescriptors({
-        configuration: this.registryConfig
-      });
+      console.log('AasService: Fetching shells from registry:', this.shellRegistryUrl);
       
-      if (result.success && result.data?.result) {
-        return result.data.result;
+      // Use direct fetch instead of SDK - BaSyx registry doesn't use /api/v3.0 prefix
+      const response = await fetch(`${this.shellRegistryUrl}/shell-descriptors`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       
-      console.error('Failed to get shell descriptors:', result.error);
-      return [];
+      const data = await response.json();
+      console.log('AasService: Found', data.result?.length || 0, 'shells');
+      
+      return data.result || [];
     } catch (error) {
       console.error('Failed to fetch shell descriptors:', error);
       toast.error(`Failed to fetch AAS modules: ${error.message}`);

@@ -228,12 +228,21 @@ class ConfigParser:
         variables = []
         # Handle dict format: Variables: { VarName: {...}, ... }
         for var_name, var_config in variables_dict.items():
+            interface_ref_raw = var_config.get('InterfaceReference')
+            # Handle InterfaceReference as either a string or a dict with Name/Field
+            if isinstance(interface_ref_raw, dict):
+                interface_ref = interface_ref_raw.get('Name')
+                field = interface_ref_raw.get('Field') or var_config.get('Field')
+            else:
+                interface_ref = interface_ref_raw
+                field = var_config.get('Field')
+
             variables.append({
                 'name': var_name,
                 'semantic_id': var_config.get('semanticId', ''),
-                'interface_reference': var_config.get('InterfaceReference'),
+                'interface_reference': interface_ref,
                 # Optional: specific field from the MQTT message
-                'field': var_config.get('Field'),
+                'field': field,
                 'values': {k: v for k, v in var_config.items()
                            if k not in ['semanticId', 'InterfaceReference', 'Field']}
             })

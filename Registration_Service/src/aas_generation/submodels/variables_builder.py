@@ -57,9 +57,9 @@ class VariablesSubmodelBuilder:
             self._properties_cache = {p['name']: p for p in properties}
 
         # Handle dict format (no dashes): Variables: { VarName: {...}, ... }
-        for var_name, var_config in variables_config.items():
+        for var_name, var_data in variables_config.items():
             var_collection = self._create_variable_collection(
-                var_name, var_config or {})
+                var_name, var_data or {})
             if var_collection:
                 variable_elements.append(var_collection)
 
@@ -75,8 +75,7 @@ class VariablesSubmodelBuilder:
 
         return submodel
 
-    def _create_variable_collection(self, var_name: str,
-                                    var_config: Dict) -> Optional[model.SubmodelElementCollection]:
+    def _create_variable_collection(self, var_name: str, var_config: Dict) -> Optional[model.SubmodelElementCollection]:
         """
         Create a variable collection from config format.
 
@@ -99,9 +98,15 @@ class VariablesSubmodelBuilder:
 
         # Add semantic ID if present
         semantic_id = var_config.get('semanticId')
-        interface_ref = var_config.get('InterfaceReference')
-        # Optional: extract only this field
-        specific_field = var_config.get('Field')
+        interface_ref_raw = var_config.get('InterfaceReference')
+
+        # Handle InterfaceReference as either a string or a dict with Name/Field
+        if isinstance(interface_ref_raw, dict):
+            interface_ref = interface_ref_raw.get('Name')
+            specific_field = interface_ref_raw.get('Field') or var_config.get('Field')
+        else:
+            interface_ref = interface_ref_raw
+            specific_field = var_config.get('Field')
 
         # Try to get fields from schema if interface reference exists
         schema_fields = {}

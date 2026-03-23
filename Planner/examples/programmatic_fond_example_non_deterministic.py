@@ -65,7 +65,7 @@ def build_domain():
     # ── State predicates ──────────────────────────────────────────────
     occupied    = Predicate("occupied", r, p)     # resource reserved for product
     operational = Predicate("operational", r)     # resources can only execute when operational
-    free_slot   = Predicate("free_slot", r, t)   # capacity token t available on resource r
+    free_slot   = Predicate("free_slot", r, t)    # capacity token t available on resource r
     on          = Predicate("on", c, p)           # product physically on shuttle
     at          = Predicate("at", c, s)           # shuttle docked at station
     dispensed   = Predicate("dispensed", p)
@@ -84,6 +84,8 @@ def build_domain():
         precondition= operational(c) & is_shuttle(c) & free_slot(c, t),
         effect= occupied(c, p) & ~free_slot(c, t),
     )
+
+    Durati
 
     # Reserve loader — shuttle must already be reserved for this product
     occupy_loader = Action(

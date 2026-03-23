@@ -339,13 +339,16 @@ class Problem(object):
         for obj, t in object_list:
             self.objects.add(obj)
 
-            if t not in self.type_to_obj:
-                self.type_to_obj[t] = set([])
-            self.type_to_obj[t].add(obj)
-
+            # Populate type_to_obj for the direct type AND all ancestor
+            # types so that parameters typed with a parent (e.g. ?r -
+            # resource) correctly resolve to objects of subtypes (e.g.
+            # shuttle0, loader1, ...).
             self.obj_to_type[obj] = set([])
             k = t
             while k in self.parent_types:
+                if k not in self.type_to_obj:
+                    self.type_to_obj[k] = set([])
+                self.type_to_obj[k].add(obj)
                 self.obj_to_type[obj].add(k)
                 k = self.parent_types[k]
 

@@ -1,7 +1,7 @@
-imaLoadingSystemAAS:
-    idShort: imaLoadingSystemAAS
-    id: 'https://smartproductionlab.aau.dk/aas/imaLoadingSystemAAS'
-    globalAssetId: 'https://smartproductionlab.aau.dk/assets/ZDNlYmVhZjItZTAyMC00NWMwLTg5NjEtODRiNTFkOWE0NzVl'
+imaLoadingSystem2AAS:
+    idShort: imaLoadingSystem2AAS
+    id: 'https://smartproductionlab.aau.dk/aas/imaLoadingSystem2AAS'
+    globalAssetId: 'https://smartproductionlab.aau.dk/assets/ZDNlYmVhZjItZTAyMC00NWMwLTg5NjEtODRiNTFkOWE0NzVl2'
     derivedFrom: 'https://smartproductionlab.aau.dk/aas/templates/resource'
     assetType: 'https://smartproductionlab.aau.dk/Resource/CPPM/LoadingSystem/imaLoadingSystem'
     serialNumber: 'IMA-LS-2024-001'
@@ -95,12 +95,14 @@ imaLoadingSystemAAS:
     Variables:
         PackMLState:
             semanticId: 'https://www.omac.org/packml/state'
-            InterfaceReference: 'StationState'
-            Field: 'State'
+            InterfaceReference:
+                Name: 'StationState'
+                Field: 'State'
         OccupationState:
             semanticId: 'https://smartproductionlab.aau.dk/stationOccupation'
-            InterfaceReference: 'StationState'
-            Field: 'ProcessQueue'
+            InterfaceReference: 
+                Name: 'StationState'
+                Field: 'ProcessQueue'
 
     Parameters:
     HierarchicalStructures:
@@ -119,16 +121,165 @@ imaLoadingSystemAAS:
         Loading:
             description: "Loading function for pharmaceutical primary packaging"
             semantic_id: "https://smartproductionlab.aau.dk/skills/Loading"
-            interface: "Loading"
+            InterfaceReference: "Loading"
+            skill_desription:
+                conditions:
+                    semantic_id: "https://smartproductionlab.aau.dk/PDDL/Conditions"
+                    PreConditions:
+                        - term:
+                            semantic_id: "https://smartproductionlab.aau.dk/PDDL/Term/Logic/And"
+                            terms:
+                                - predicate:
+                                    semantic_id: "https://smartproductionlab.aau.dk/PDDL/Term/Predicates/Operational"
+                                    parameters:
+                                      - name: "PackMLState"
+                                        reference:
+                                          model:
+                                            - SM: Variables
+                                            - SMC: "PackMLState"
+                                            - Property: "State"
+                                        comparison:
+                                          operator: "https://smartproductionlab.aau.dk/PDDL/Grounding/Comparison/Equal"
+                                          value: "Execute"
+                                - predicate:
+                                    semantic_id: "https://smartproductionlab.aau.dk/PDDL/Term/Predicates/Occupied"
+                                    operator: "https://smartproductionlab.aau.dk/PDDL/Grounding/Comparison/FirstIn"
+                                    parameters:
+                                      - name: "OccupationState"
+                                        reference:
+                                          model:
+                                            - SM: Variables
+                                            - SMC: "OccupationState"
+                                            - Property: "ProcessQueue"
+                                      - name: "ProductUuid"
+                                        reference:
+                                          external: "https://smartproductionlab.aau.dk/Uuid"
+                effects:
+                    semantic_id: "https://smartproductionlab.aau.dk/PDDL/Effects"
+                    terms:
+                        - predicate:
+                            semantic_id: "https://smartproductionlab.aau.dk/PDDL/Term/Predicates/On"
+                            description: "Product is placed on the shuttle"
+                            parameters:
+                              - name: "ProductUuid"
+                                reference:
+                                  external: "https://smartproductionlab.aau.dk/Uuid"
+                              - name: "Transport"
+                                reference:
+                                  external: "https://smartproductionlab.aau.dk/Resource/Transport"
+
         Halt:
             description: "Halt the current operation"
             semantic_id: "https://smartproductionlab.aau.dk/skills/Halt"
-            interface: "Halt"
+            InterfaceReference: "Halt"
+
         Occupy:
             description: "Occupy the system for exclusive use"
             semantic_id: "https://smartproductionlab.aau.dk/skills/Occupy"
-            interface: "Occupy"
+            InterfaceReference: "Occupy"
+            skill_desription:
+                conditions:
+                    semantic_id: "https://smartproductionlab.aau.dk/PDDL/Conditions"
+                    PreConditions:
+                        - term:
+                            semantic_id: "https://smartproductionlab.aau.dk/PDDL/Term/Logic/And"
+                            terms:
+                                - predicate:
+                                    semantic_id: "https://smartproductionlab.aau.dk/PDDL/Term/Predicates/Operational"
+                                    parameters:
+                                      - name: "PackMLState"
+                                        reference:
+                                          model:
+                                            - SM: Variables
+                                            - SMC: "PackMLState"
+                                            - Property: "State"
+                                        comparison:
+                                          operator: "https://smartproductionlab.aau.dk/PDDL/Grounding/Comparison/Equal"
+                                          value: "Execute"
+                                - term:
+                                    semantic_id: "https://smartproductionlab.aau.dk/PDDL/Term/Logic/Not"
+                                    terms:
+                                        - predicate:
+                                            semantic_id: "https://smartproductionlab.aau.dk/PDDL/Term/Predicates/Occupied"
+                                            parameters:
+                                              - name: "OccupationState"
+                                                reference:
+                                                  model:
+                                                    - SM: "Variables"
+                                                    - SMC: "OccupationState"
+                                                    - Property: "ProcessQueue"
+                                                comparison:
+                                                  operator: "https://smartproductionlab.aau.dk/PDDL/Grounding/Comparison/Equal"
+                                                  value: "[]"
+                effects:
+                    semantic_id: "https://smartproductionlab.aau.dk/PDDL/Effects"
+                    terms:
+                        - predicate:
+                            semantic_id: "https://smartproductionlab.aau.dk/PDDL/Term/Predicates/Occupied"
+                            operator: "https://smartproductionlab.aau.dk/PDDL/Grounding/Comparison/FirstIn"
+                            parameters:
+                              - name: "OccupationState"
+                                reference:
+                                  model:
+                                    - SM: "Variables"
+                                    - SMC: "OccupationState"
+                                    - Property: "ProcessQueue"
+                              - name: "ProductUuid"
+                                reference:
+                                  external: "https://smartproductionlab.aau.dk/Uuid"
+
         Release:
             description: "Release the system from exclusive use"
             semantic_id: "https://smartproductionlab.aau.dk/skills/Release"
-            interface: "Release"
+            InterfaceReference: "Release"
+            skill_desription:
+                conditions:
+                    semantic_id: "https://smartproductionlab.aau.dk/PDDL/Conditions"
+                    PreConditions:
+                        - term:
+                            semantic_id: "https://smartproductionlab.aau.dk/PDDL/Term/Logic/And"
+                            terms:
+                                - predicate:
+                                    semantic_id: "https://smartproductionlab.aau.dk/PDDL/Term/Predicates/Operational"
+                                    parameters:
+                                      - name: "PackMLState"
+                                        reference:
+                                          model:
+                                            - SM: "Variables"
+                                            - SMC: "PackMLState"
+                                            - Property: "State"
+                                        comparison:
+                                          operator: "https://smartproductionlab.aau.dk/PDDL/Grounding/Comparison/Equal"
+                                          value: "Execute"
+                                - predicate:
+                                    semantic_id: "https://smartproductionlab.aau.dk/PDDL/Term/Predicates/Occupied"
+                                    operator: "https://smartproductionlab.aau.dk/PDDL/Grounding/Comparison/FirstIn"
+                                    parameters:
+                                      - name: "OccupationState"
+                                        reference:
+                                          model:
+                                            - SM: "Variables"
+                                            - SMC: "OccupationState"
+                                            - Property: "ProcessQueue"
+                                      - name: "ProductUuid"
+                                        reference:
+                                          external: "https://smartproductionlab.aau.dk/Uuid"
+                effects:
+                    semantic_id: "https://smartproductionlab.aau.dk/PDDL/Effects"
+                    terms:
+                        - term:
+                            semantic_id: "https://smartproductionlab.aau.dk/PDDL/Term/Logic/Not"
+                            terms:
+                                - predicate:
+                                    semantic_id: "https://smartproductionlab.aau.dk/PDDL/Term/Predicates/Occupied"
+                                    operator: "https://smartproductionlab.aau.dk/PDDL/Grounding/Comparison/NotIn"
+                                    parameters:
+                                      - name: "OccupationState"
+                                        reference:
+                                          model:
+                                            - SM: "Variables"
+                                            - SMC: "OccupationState"
+                                            - Property: "ProcessQueue"
+                                      - name: "ProductUuid"
+                                        reference:
+                                          external: "https://smartproductionlab.aau.dk/Uuid"

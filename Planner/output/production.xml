@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<root BTCPP_format="4">
+<root BTCPP_format="4" main_tree_to_execute="Production">
   <BehaviorTree ID="Production">
     <ReactiveFallback name="PolicyRoot">
       <ReactiveSequence name="GoalBranch">
@@ -13,20 +13,20 @@
         <Action ID="GoalReached" name="GoalReached" />
       </ReactiveSequence>
       <ReactiveFallback name="Progression">
-        <SubTree ID="ReleaseUnloader_unloader1_p0_unloader1_slot0" />
-        <SubTree ID="ReleaseShuttle_shuttle0_p0_shuttle0_slot0_WithRecovery_common" />
-        <SubTree ID="Unload_p0_shuttle0_unloader1_WithRecovery_common" />
-        <SubTree ID="Phase_Move_shuttle0_dispenser1_unloader1_p0_common" />
-        <SubTree ID="OccupyUnloader_unloader1_p0_unloader1_slot0" />
-        <SubTree ID="ReleaseDispenser_dispenser1_p0_dispenser1_slot0_WithRecovery_common" />
-        <SubTree ID="Dispense_p0_shuttle0_dispenser1_WithRecovery_common" />
-        <SubTree ID="Phase_Move_shuttle0_loader1_dispenser1_p0_common" />
-        <SubTree ID="OccupyDispenser_dispenser1_p0_shuttle0_dispenser1_slot0" />
-        <SubTree ID="ReleaseLoader_loader1_p0_shuttle0_loader1_slot0_WithRecovery_common" />
-        <SubTree ID="Load_p0_shuttle0_loader1_WithRecovery_common" />
-        <SubTree ID="Phase_Move_shuttle0_parking1_loader1_p0_common" />
-        <SubTree ID="OccupyLoader_loader1_p0_shuttle0_loader1_slot0" />
-        <SubTree ID="OccupyShuttle_shuttle0_p0_shuttle0_slot0" />
+        <SubTree ID="ReleaseUnloader_unloader1_p0_unloader1_slot0_Done" />
+        <SubTree ID="ReleaseShuttle_shuttle0_p0_shuttle0_slot0_WithRecovery_Done" />
+        <SubTree ID="Unload_p0_shuttle0_unloader1_WithRecovery_Done" />
+        <SubTree ID="Phase_Move_shuttle0_dispenser1_unloader1_p0_Done" />
+        <SubTree ID="OccupyUnloader_unloader1_p0_unloader1_slot0_Done" />
+        <SubTree ID="ReleaseDispenser_dispenser1_p0_dispenser1_slot0_WithRecovery_Done" />
+        <SubTree ID="Dispense_p0_shuttle0_dispenser1_WithRecovery_Done" />
+        <SubTree ID="Phase_Move_shuttle0_loader1_dispenser1_p0_Done" />
+        <SubTree ID="OccupyDispenser_dispenser1_p0_shuttle0_dispenser1_slot0_Done" />
+        <SubTree ID="ReleaseLoader_loader1_p0_shuttle0_loader1_slot0_WithRecovery_Done" />
+        <SubTree ID="Load_p0_shuttle0_loader1_WithRecovery_Done" />
+        <SubTree ID="Phase_Move_shuttle0_parking1_loader1_p0_Done" />
+        <SubTree ID="OccupyLoader_loader1_p0_shuttle0_loader1_slot0_Done" />
+        <SubTree ID="OccupyShuttle_shuttle0_p0_shuttle0_slot0_Done" />
       </ReactiveFallback>
     </ReactiveFallback>
   </BehaviorTree>
@@ -40,6 +40,15 @@
     <ReactiveFallback name="Dispense_p0_shuttle0_dispenser1_OrFallback">
       <SubTree ID="Dispense_p0_shuttle0_dispenser1" />
       <SubTree ID="Repair" arg0="shuttle0" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Dispense_p0_shuttle0_dispenser1_WithRecovery_Done">
+    <ReactiveFallback name="Dispense_p0_shuttle0_dispenser1_WithRecovery_Done">
+      <ReactiveSequence name="Dispense_p0_shuttle0_dispenser1_WithRecovery_Done_PostCond">
+        <Condition ID="FluentCheck" name="dispensed(p0)" fluent="dispensed(p0)" />
+        <Condition ID="FluentCheck" name="operational(dispenser1)" fluent="operational(dispenser1)" />
+      </ReactiveSequence>
+      <SubTree ID="Dispense_p0_shuttle0_dispenser1_WithRecovery_common" />
     </ReactiveFallback>
   </BehaviorTree>
   <BehaviorTree ID="Dispense_p0_shuttle0_dispenser1_WithRecovery_common">
@@ -95,6 +104,15 @@
     <ReactiveFallback name="Load_p0_shuttle0_loader1_OrFallback">
       <SubTree ID="Load_p0_shuttle0_loader1" />
       <SubTree ID="Repair" arg0="shuttle0" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Load_p0_shuttle0_loader1_WithRecovery_Done">
+    <ReactiveFallback name="Load_p0_shuttle0_loader1_WithRecovery_Done">
+      <ReactiveSequence name="Load_p0_shuttle0_loader1_WithRecovery_Done_PostCond">
+        <Condition ID="FluentCheck" name="on(shuttle0, p0)" fluent="on(shuttle0, p0)" />
+        <Condition ID="FluentCheck" name="operational(loader1)" fluent="operational(loader1)" />
+      </ReactiveSequence>
+      <SubTree ID="Load_p0_shuttle0_loader1_WithRecovery_common" />
     </ReactiveFallback>
   </BehaviorTree>
   <BehaviorTree ID="Load_p0_shuttle0_loader1_WithRecovery_common">
@@ -180,6 +198,12 @@
       <Action ID="ExecuteAction" name="occupy_dispenser dispenser1 p0 shuttle0 dispenser1_slot0" action_name="occupy_dispenser" action_args="dispenser1 p0 shuttle0 dispenser1_slot0" />
     </ReactiveSequence>
   </BehaviorTree>
+  <BehaviorTree ID="OccupyDispenser_dispenser1_p0_shuttle0_dispenser1_slot0_Done">
+    <ReactiveFallback name="OccupyDispenser_dispenser1_p0_shuttle0_dispenser1_slot0_Done">
+      <Condition ID="FluentCheck" name="occupied(dispenser1, p0)" fluent="occupied(dispenser1, p0)" />
+      <SubTree ID="OccupyDispenser_dispenser1_p0_shuttle0_dispenser1_slot0" />
+    </ReactiveFallback>
+  </BehaviorTree>
   <BehaviorTree ID="OccupyLoader_loader1_p0_shuttle0_loader1_slot0">
     <ReactiveSequence name="OccupyLoader_loader1_p0_shuttle0_loader1_slot0">
       <Condition ID="FluentCheck" name="at(shuttle0, parking1)" fluent="at(shuttle0, parking1)" />
@@ -204,6 +228,12 @@
       </Inverter>
       <Action ID="ExecuteAction" name="occupy_loader loader1 p0 shuttle0 loader1_slot0" action_name="occupy_loader" action_args="loader1 p0 shuttle0 loader1_slot0" />
     </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="OccupyLoader_loader1_p0_shuttle0_loader1_slot0_Done">
+    <ReactiveFallback name="OccupyLoader_loader1_p0_shuttle0_loader1_slot0_Done">
+      <Condition ID="FluentCheck" name="occupied(loader1, p0)" fluent="occupied(loader1, p0)" />
+      <SubTree ID="OccupyLoader_loader1_p0_shuttle0_loader1_slot0" />
+    </ReactiveFallback>
   </BehaviorTree>
   <BehaviorTree ID="OccupyShuttle_shuttle0_p0_shuttle0_slot0">
     <ReactiveSequence name="OccupyShuttle_shuttle0_p0_shuttle0_slot0">
@@ -230,6 +260,12 @@
       <Action ID="ExecuteAction" name="occupy_shuttle shuttle0 p0 shuttle0_slot0" action_name="occupy_shuttle" action_args="shuttle0 p0 shuttle0_slot0" />
     </ReactiveSequence>
   </BehaviorTree>
+  <BehaviorTree ID="OccupyShuttle_shuttle0_p0_shuttle0_slot0_Done">
+    <ReactiveFallback name="OccupyShuttle_shuttle0_p0_shuttle0_slot0_Done">
+      <Condition ID="FluentCheck" name="occupied(shuttle0, p0)" fluent="occupied(shuttle0, p0)" />
+      <SubTree ID="OccupyShuttle_shuttle0_p0_shuttle0_slot0" />
+    </ReactiveFallback>
+  </BehaviorTree>
   <BehaviorTree ID="OccupyUnloader_unloader1_p0_unloader1_slot0">
     <ReactiveSequence name="OccupyUnloader_unloader1_p0_unloader1_slot0">
       <Condition ID="FluentCheck" name="at(shuttle0, dispenser1)" fluent="at(shuttle0, dispenser1)" />
@@ -254,10 +290,22 @@
       <Action ID="ExecuteAction" name="occupy_unloader unloader1 p0 unloader1_slot0" action_name="occupy_unloader" action_args="unloader1 p0 unloader1_slot0" />
     </ReactiveSequence>
   </BehaviorTree>
+  <BehaviorTree ID="OccupyUnloader_unloader1_p0_unloader1_slot0_Done">
+    <ReactiveFallback name="OccupyUnloader_unloader1_p0_unloader1_slot0_Done">
+      <Condition ID="FluentCheck" name="occupied(unloader1, p0)" fluent="occupied(unloader1, p0)" />
+      <SubTree ID="OccupyUnloader_unloader1_p0_unloader1_slot0" />
+    </ReactiveFallback>
+  </BehaviorTree>
   <BehaviorTree ID="Phase_Move_shuttle0_dispenser1_unloader1_p0">
     <ReactiveFallback name="Phase_Move_shuttle0_dispenser1_unloader1_p0">
       <SubTree ID="Exec_Move_shuttle0_dispenser1_unloader1_p0" />
       <SubTree ID="Repair_unloader1" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Phase_Move_shuttle0_dispenser1_unloader1_p0_Done">
+    <ReactiveFallback name="Phase_Move_shuttle0_dispenser1_unloader1_p0_Done">
+      <Condition ID="FluentCheck" name="operational(shuttle0)" fluent="operational(shuttle0)" />
+      <SubTree ID="Phase_Move_shuttle0_dispenser1_unloader1_p0_common" />
     </ReactiveFallback>
   </BehaviorTree>
   <BehaviorTree ID="Phase_Move_shuttle0_dispenser1_unloader1_p0_common">
@@ -277,6 +325,15 @@
       <SubTree ID="Repair_dispenser1" />
     </ReactiveFallback>
   </BehaviorTree>
+  <BehaviorTree ID="Phase_Move_shuttle0_loader1_dispenser1_p0_Done">
+    <ReactiveFallback name="Phase_Move_shuttle0_loader1_dispenser1_p0_Done">
+      <ReactiveSequence name="Phase_Move_shuttle0_loader1_dispenser1_p0_Done_PostCond">
+        <Condition ID="FluentCheck" name="at(shuttle0, dispenser1)" fluent="at(shuttle0, dispenser1)" />
+        <Condition ID="FluentCheck" name="operational(shuttle0)" fluent="operational(shuttle0)" />
+      </ReactiveSequence>
+      <SubTree ID="Phase_Move_shuttle0_loader1_dispenser1_p0_common" />
+    </ReactiveFallback>
+  </BehaviorTree>
   <BehaviorTree ID="Phase_Move_shuttle0_loader1_dispenser1_p0_common">
     <ReactiveSequence name="Phase_Move_shuttle0_loader1_dispenser1_p0_common">
       <Condition ID="FluentCheck" name="free_slot(loader1, loader1_slot0)" fluent="free_slot(loader1, loader1_slot0)" />
@@ -292,6 +349,15 @@
     <ReactiveFallback name="Phase_Move_shuttle0_parking1_loader1_p0">
       <SubTree ID="Exec_Move_shuttle0_parking1_loader1_p0" />
       <SubTree ID="Repair_loader1" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Phase_Move_shuttle0_parking1_loader1_p0_Done">
+    <ReactiveFallback name="Phase_Move_shuttle0_parking1_loader1_p0_Done">
+      <ReactiveSequence name="Phase_Move_shuttle0_parking1_loader1_p0_Done_PostCond">
+        <Condition ID="FluentCheck" name="at(shuttle0, loader1)" fluent="at(shuttle0, loader1)" />
+        <Condition ID="FluentCheck" name="operational(shuttle0)" fluent="operational(shuttle0)" />
+      </ReactiveSequence>
+      <SubTree ID="Phase_Move_shuttle0_parking1_loader1_p0_common" />
     </ReactiveFallback>
   </BehaviorTree>
   <BehaviorTree ID="Phase_Move_shuttle0_parking1_loader1_p0_common">
@@ -325,7 +391,13 @@
   <BehaviorTree ID="ReleaseDispenser_dispenser1_p0_dispenser1_slot0_OrFallback">
     <ReactiveFallback name="ReleaseDispenser_dispenser1_p0_dispenser1_slot0_OrFallback">
       <SubTree ID="ReleaseDispenser_dispenser1_p0_dispenser1_slot0" />
-      <SubTree ID="Repair_dispenser1_2" />
+      <SubTree ID="Repair_dispenser1_Done" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="ReleaseDispenser_dispenser1_p0_dispenser1_slot0_WithRecovery_Done">
+    <ReactiveFallback name="ReleaseDispenser_dispenser1_p0_dispenser1_slot0_WithRecovery_Done">
+      <Condition ID="FluentCheck" name="free_slot(dispenser1, dispenser1_slot0)" fluent="free_slot(dispenser1, dispenser1_slot0)" />
+      <SubTree ID="ReleaseDispenser_dispenser1_p0_dispenser1_slot0_WithRecovery_common" />
     </ReactiveFallback>
   </BehaviorTree>
   <BehaviorTree ID="ReleaseDispenser_dispenser1_p0_dispenser1_slot0_WithRecovery_common">
@@ -361,7 +433,13 @@
   <BehaviorTree ID="ReleaseLoader_loader1_p0_shuttle0_loader1_slot0_OrFallback">
     <ReactiveFallback name="ReleaseLoader_loader1_p0_shuttle0_loader1_slot0_OrFallback">
       <SubTree ID="ReleaseLoader_loader1_p0_shuttle0_loader1_slot0" />
-      <SubTree ID="Repair_loader1_2" />
+      <SubTree ID="Repair_loader1_Done" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="ReleaseLoader_loader1_p0_shuttle0_loader1_slot0_WithRecovery_Done">
+    <ReactiveFallback name="ReleaseLoader_loader1_p0_shuttle0_loader1_slot0_WithRecovery_Done">
+      <Condition ID="FluentCheck" name="free_slot(loader1, loader1_slot0)" fluent="free_slot(loader1, loader1_slot0)" />
+      <SubTree ID="ReleaseLoader_loader1_p0_shuttle0_loader1_slot0_WithRecovery_common" />
     </ReactiveFallback>
   </BehaviorTree>
   <BehaviorTree ID="ReleaseLoader_loader1_p0_shuttle0_loader1_slot0_WithRecovery_common">
@@ -390,6 +468,12 @@
       <SubTree ID="Repair_unloader1_2" />
     </ReactiveFallback>
   </BehaviorTree>
+  <BehaviorTree ID="ReleaseShuttle_shuttle0_p0_shuttle0_slot0_WithRecovery_Done">
+    <ReactiveFallback name="ReleaseShuttle_shuttle0_p0_shuttle0_slot0_WithRecovery_Done">
+      <Condition ID="FluentCheck" name="free_slot(shuttle0, shuttle0_slot0)" fluent="free_slot(shuttle0, shuttle0_slot0)" />
+      <SubTree ID="ReleaseShuttle_shuttle0_p0_shuttle0_slot0_WithRecovery_common" />
+    </ReactiveFallback>
+  </BehaviorTree>
   <BehaviorTree ID="ReleaseShuttle_shuttle0_p0_shuttle0_slot0_WithRecovery_common">
     <ReactiveSequence name="ReleaseShuttle_shuttle0_p0_shuttle0_slot0_WithRecovery_common">
       <Condition ID="FluentCheck" name="finished(p0)" fluent="finished(p0)" />
@@ -411,6 +495,12 @@
       <Condition ID="FluentCheck" name="operational(unloader1)" fluent="operational(unloader1)" />
       <Action ID="ExecuteAction" name="release_unloader unloader1 p0 unloader1_slot0" action_name="release_unloader" action_args="unloader1 p0 unloader1_slot0" />
     </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="ReleaseUnloader_unloader1_p0_unloader1_slot0_Done">
+    <ReactiveFallback name="ReleaseUnloader_unloader1_p0_unloader1_slot0_Done">
+      <Condition ID="FluentCheck" name="free_slot(unloader1, unloader1_slot0)" fluent="free_slot(unloader1, unloader1_slot0)" />
+      <SubTree ID="ReleaseUnloader_unloader1_p0_unloader1_slot0" />
+    </ReactiveFallback>
   </BehaviorTree>
   <BehaviorTree ID="Repair_dispenser1">
     <ReactiveSequence name="Repair_dispenser1">
@@ -445,6 +535,12 @@
       <Action ID="ExecuteAction" name="repair dispenser1" action_name="repair" action_args="dispenser1" />
     </ReactiveSequence>
   </BehaviorTree>
+  <BehaviorTree ID="Repair_dispenser1_Done">
+    <ReactiveFallback name="Repair_dispenser1_Done">
+      <Condition ID="FluentCheck" name="operational(dispenser1)" fluent="operational(dispenser1)" />
+      <SubTree ID="Repair_dispenser1_2" />
+    </ReactiveFallback>
+  </BehaviorTree>
   <BehaviorTree ID="Repair_loader1">
     <ReactiveSequence name="Repair_loader1">
       <Condition ID="FluentCheck" name="at(shuttle0, loader1)" fluent="at(shuttle0, loader1)" />
@@ -477,6 +573,12 @@
       </Inverter>
       <Action ID="ExecuteAction" name="repair loader1" action_name="repair" action_args="loader1" />
     </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Repair_loader1_Done">
+    <ReactiveFallback name="Repair_loader1_Done">
+      <Condition ID="FluentCheck" name="operational(loader1)" fluent="operational(loader1)" />
+      <SubTree ID="Repair_loader1_2" />
+    </ReactiveFallback>
   </BehaviorTree>
   <BehaviorTree ID="Repair_unloader1">
     <ReactiveSequence name="Repair_unloader1">
@@ -523,6 +625,15 @@
       <SubTree ID="Repair" arg0="shuttle0" />
     </ReactiveFallback>
   </BehaviorTree>
+  <BehaviorTree ID="Unload_p0_shuttle0_unloader1_WithRecovery_Done">
+    <ReactiveFallback name="Unload_p0_shuttle0_unloader1_WithRecovery_Done">
+      <ReactiveSequence name="Unload_p0_shuttle0_unloader1_WithRecovery_Done_PostCond">
+        <Condition ID="FluentCheck" name="finished(p0)" fluent="finished(p0)" />
+        <Condition ID="FluentCheck" name="operational(unloader1)" fluent="operational(unloader1)" />
+      </ReactiveSequence>
+      <SubTree ID="Unload_p0_shuttle0_unloader1_WithRecovery_common" />
+    </ReactiveFallback>
+  </BehaviorTree>
   <BehaviorTree ID="Unload_p0_shuttle0_unloader1_WithRecovery_common">
     <ReactiveSequence name="Unload_p0_shuttle0_unloader1_WithRecovery_common">
       <Condition ID="FluentCheck" name="at(shuttle0, unloader1)" fluent="at(shuttle0, unloader1)" />
@@ -537,6 +648,24 @@
     </ReactiveSequence>
   </BehaviorTree>
   <BehaviorTree ID="Repair">
+    <ReactiveFallback name="Repair_{arg0}_Done">
+      <Condition ID="FluentCheck" name="operational({arg0})" fluent="operational({arg0})" />
+      <ReactiveSequence name="Repair_{arg0}">
+        <Inverter name="Inverter">
+          <ReactiveSequence name="FSAP_repair_{arg0}">
+            <Condition ID="FluentCheck" name="not(at({arg0}, dispenser1))" fluent="not(at({arg0}, dispenser1))" />
+            <Condition ID="FluentCheck" name="not(at({arg0}, loader1))" fluent="not(at({arg0}, loader1))" />
+            <Condition ID="FluentCheck" name="not(at({arg0}, parking1))" fluent="not(at({arg0}, parking1))" />
+            <Condition ID="FluentCheck" name="not(at({arg0}, {arg0}))" fluent="not(at({arg0}, {arg0}))" />
+            <Condition ID="FluentCheck" name="not(at({arg0}, unloader1))" fluent="not(at({arg0}, unloader1))" />
+            <Condition ID="FluentCheck" name="not(finished(p0))" fluent="not(finished(p0))" />
+          </ReactiveSequence>
+        </Inverter>
+        <Action ID="ExecuteAction" name="repair {arg0}" action_name="repair" action_args="{arg0}" />
+      </ReactiveSequence>
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Repair_v2">
     <ReactiveSequence name="Repair_{arg0}">
       <Inverter name="Inverter">
         <ReactiveSequence name="FSAP_repair_{arg0}">
@@ -565,6 +694,9 @@
       <input_port name="forbidden_args" default="" />
     </Action>
     <SubTree ID="Repair" editable="true">
+      <input_port name="arg0" />
+    </SubTree>
+    <SubTree ID="Repair_v2" editable="true">
       <input_port name="arg0" />
     </SubTree>
   </TreeNodesModel>
