@@ -57,9 +57,8 @@ class VariablesSubmodelBuilder:
             self._properties_cache = {p['name']: p for p in properties}
 
         # Handle dict format (no dashes): Variables: { VarName: {...}, ... }
-        for var_name, var_data in variables_config.items():
-            var_collection = self._create_variable_collection(
-                var_name, var_data or {})
+        for var_data in variables_config:
+            var_collection = self._create_variable_collection(var_data or {})
             if var_collection:
                 variable_elements.append(var_collection)
 
@@ -75,7 +74,7 @@ class VariablesSubmodelBuilder:
 
         return submodel
 
-    def _create_variable_collection(self, var_name: str, var_config: Dict) -> Optional[model.SubmodelElementCollection]:
+    def _create_variable_collection(self, var_config: Dict) -> Optional[model.SubmodelElementCollection]:
         """
         Create a variable collection from config format.
 
@@ -182,9 +181,8 @@ class VariablesSubmodelBuilder:
         if semantic_id:
             collection_semantic_id = self.semantic_factory.create_external_reference(
                 semantic_id)
-
         return self.element_factory.create_collection(
-            id_short=var_name,
+            id_short=var_config.get('key'),
             elements=elements,
             semantic_id=collection_semantic_id
         )

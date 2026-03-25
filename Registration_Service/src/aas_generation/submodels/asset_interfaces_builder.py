@@ -153,7 +153,7 @@ class AssetInterfacesBuilder:
             elements=endpoint_elements
         )
 
-    def _create_actions_from_interaction_metadata(self, actions: Dict) -> Optional[model.SubmodelElementCollection]:
+    def _create_actions_from_interaction_metadata(self, actions: List) -> Optional[model.SubmodelElementCollection]:
         """
         Create Actions collection from interaction metadata.
 
@@ -168,8 +168,9 @@ class AssetInterfacesBuilder:
 
         action_elements = []
 
+
         # Actions is a dict with action names as keys
-        for action_name, action_config in actions.items():
+        for action_config in actions:
 
             action_props = []
 
@@ -264,7 +265,7 @@ class AssetInterfacesBuilder:
                     )
 
             action_element = self.element_factory.create_collection(
-                id_short=action_name,
+                id_short=action_config.get('key'),
                 elements=action_props
             )
             action_elements.append(action_element)
@@ -294,7 +295,7 @@ class AssetInterfacesBuilder:
         property_elements = []
 
         # Properties is a dict with property names as keys
-        for prop_name, prop_config in properties.items():
+        for prop_config in properties:
 
             prop_elements = []
 
@@ -350,7 +351,7 @@ class AssetInterfacesBuilder:
                     )
 
             property_element = self.element_factory.create_collection(
-                id_short=prop_name,
+                id_short=prop_config.get('key'),
                 elements=prop_elements
             )
             property_elements.append(property_element)

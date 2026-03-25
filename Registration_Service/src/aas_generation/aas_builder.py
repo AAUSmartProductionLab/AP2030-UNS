@@ -145,17 +145,10 @@ class AASBuilder:
             submodel_names.append('HierarchicalStructures')
         if 'Capabilities' in config and config.get('Capabilities'):
             submodel_names.append('OfferedCapabilityDescription')
-        
-        # Add Skills submodel reference if:
-        # 1. Skills are explicitly defined in config, OR
-        # 2. There are actions in AssetInterfacesDescription (auto-generation)
-        has_explicit_skills = 'Skills' in config and config.get('Skills')
-        has_actions = self._has_interface_actions(config)
-        
-        if has_explicit_skills or has_actions:
+        if 'Skills' in config and config.get('Skills'):
             submodel_names.append('Skills')
-        
-        # Add Process AAS specific submodels if they exist in config
+        if 'AI-Planning' in config and config.get('AI-Planning'):
+            submodel_names.append('AIPlanning')
         if 'ProcessInformation' in config:
             submodel_names.append('ProcessInformation')
         if 'RequiredCapabilities' in config:
@@ -164,22 +157,7 @@ class AASBuilder:
             submodel_names.append('Policy')
         
         return submodel_names
-    
-    def _has_interface_actions(self, config: Dict) -> bool:
-        """
-        Check if the configuration has interface actions defined.
-        
-        Args:
-            config: Configuration dictionary
-            
-        Returns:
-            True if actions are defined, False otherwise
-        """
-        interface_config = config.get('AssetInterfacesDescription', {}) or {}
-        mqtt_config = interface_config.get('InterfaceMQTT', {}) or {}
-        interaction_metadata = mqtt_config.get('InteractionMetadata', {}) or {}
-        actions = interaction_metadata.get('actions', [])
-        return bool(actions)
+
     
     def _create_submodel_references(
         self, 

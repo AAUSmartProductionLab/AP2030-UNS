@@ -36,14 +36,13 @@ class CapabilitiesSubmodelBuilder:
         Returns:
             Capabilities submodel instance
         """
-        capabilities = config.get('Capabilities', {}) or {}
+        capabilities = config.get('Capabilities', []) or []
         capability_containers = []
 
         # Handle dict format: Capabilities: { CapName: {...}, ... }
-        for cap_name, cap_config in capabilities.items():
-            cap_config = cap_config or {}
+        for cap_config in capabilities:
             container = self._create_capability_container(
-                system_id, cap_name, cap_config
+                system_id, cap_config
             )
             if container:
                 capability_containers.append(container)
@@ -68,8 +67,7 @@ class CapabilitiesSubmodelBuilder:
 
         return submodel
 
-    def _create_capability_container(self, system_id: str, cap_name: str,
-                                     cap_config: Dict) -> model.SubmodelElementCollection:
+    def _create_capability_container(self, system_id: str, cap_config: Dict) -> model.SubmodelElementCollection:
         """
         Create a capability container with all its elements.
 
@@ -86,6 +84,7 @@ class CapabilitiesSubmodelBuilder:
         # Add Capability element with semantic_id from config if specified
         # This enables capability matching based on semantic identifiers
         capability_semantic_id = cap_config.get('semantic_id')
+        cap_name = cap_config.get('key')
         if capability_semantic_id:
             # Convert string semantic_id from config to proper ExternalReference
             from ..semantic_ids import SemanticIdFactory

@@ -123,3 +123,70 @@ The service interacts with the following components (defaults):
 - `MQTT_PORT`: MQTT broker port
 - `DELEGATION_SERVICE_URL`: Operation Delegation Service URL
 
+## Skills YAML Simplification
+
+The Skills parser supports simplified action semantics in `pddl`.
+
+### Recommended simplified syntax
+
+```yaml
+Skills:
+  - key: Loading
+    InterfaceReference: Loading
+    pddl:
+      parameters:
+        - name: LoadingSystem
+          modelRef:
+            - AAS: self
+        - name: Product
+          externalRef: https://smartproductionlab.aau.dk/Product
+        - name: TransportSystem
+          externalRef: https://smartproductionlab.aau.dk/CPS/Transport
+
+      duration:
+        =:
+          left:
+            func:
+              external: https://smartproductionlab.aau.dk/PDDL/Functions/Duration
+              args: [0]
+          right:
+            const: 5.0
+
+      conditions:
+        at_start:
+          and:
+            - pred:
+                ref: Operational
+                args: [0]
+            - pred:
+                ref: Occupied
+                args: [0, 1]
+
+      effects:
+        at_end:
+          and:
+            - set:
+                pred:
+                  external: https://smartproductionlab.aau.dk/PDDL/Term/Predicates/On
+                  args: [1, 2]
+                value: true
+            - set:
+                pred:
+                  external: https://smartproductionlab.aau.dk/PDDL/Term/Predicates/At
+                  args: [1, 0]
+                value: true
+
+```
+
+Use this structure for new and existing Skills configs. Legacy `skill_description`
+syntax is no longer supported.
+
+Only action semantics are emitted in Skills:
+- `parameters`
+- `duration`
+- `conditions`
+- `effects`
+
+For compatibility, unsupported extended fields such as `processes`, `events`,
+`constraints`, and `preferences` are ignored when present in Skills config.
+

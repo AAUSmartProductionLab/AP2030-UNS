@@ -22,6 +22,7 @@ from .aas_generation.submodels import (
     AssetInterfacesBuilder,
     VariablesSubmodelBuilder,
     SkillsSubmodelBuilder,
+    AIPlanningSubmodelBuilder,
     ParametersSubmodelBuilder,
     HierarchicalStructuresSubmodelBuilder,
     CapabilitiesSubmodelBuilder,
@@ -104,9 +105,9 @@ class AASGenerator:
             self.schema_handler
         )
         self.skills_builder = SkillsSubmodelBuilder(
-            self.base_url, self.delegation_base_url,
-            self.semantic_factory, self.element_factory, self.schema_handler
+            self.base_url, self.delegation_base_url, self.schema_handler
         )
+        self.ai_planning_builder = AIPlanningSubmodelBuilder(self.base_url)
         self.parameters_builder = ParametersSubmodelBuilder(
             self.base_url, self.semantic_factory, self.element_factory,
             self.schema_handler
@@ -218,14 +219,14 @@ class AASGenerator:
             'AssetInterfacesDescription', {}) or {}
         mqtt_config = interface_config.get('InterfaceMQTT', {}) or {}
         interaction_config = mqtt_config.get('InteractionMetadata', {}) or {}
-        properties_dict = interaction_config.get('properties', {}) or {}
+        properties_dict = interaction_config.get('properties', []) or []
 
         properties = []
         # Handle dict format: { PropName: {...}, ... }
-        for prop_name, prop_config in properties_dict.items():
+        for prop_config in properties_dict:
             if isinstance(prop_config, dict):
                 properties.append({
-                    'name': prop_name,
+                    'name': prop_config.get('key'),
                     'schema': prop_config.get('output')
                 })
 
@@ -245,14 +246,14 @@ class AASGenerator:
             'AssetInterfacesDescription', {}) or {}
         mqtt_config = interface_config.get('InterfaceMQTT', {}) or {}
         interaction_config = mqtt_config.get('InteractionMetadata', {}) or {}
-        properties_dict = interaction_config.get('properties', {}) or {}
+        properties_dict = interaction_config.get('properties', []) or []
 
         properties = []
         # Handle dict format: { PropName: {...}, ... }
-        for prop_name, prop_config in properties_dict.items():
+        for  prop_config in properties_dict:
             if isinstance(prop_config, dict):
                 properties.append({
-                    'name': prop_name,
+                    'name': prop_config.get('key'),
                     'schema': prop_config.get('input')
                 })
 
@@ -291,6 +292,9 @@ class AASGenerator:
                 self.system_id, self.system_config),
             self.skills_builder.build(self.system_id, self.system_config)
         ]
+        ai_planning_submodel = self.ai_planning_builder.build(self.system_id, self.system_config)
+        if ai_planning_submodel is not None:
+            submodels.append(ai_planning_submodel)
 
         for submodel in submodels:
             obj_store.add(submodel)
@@ -389,7 +393,7 @@ def main():
     parser.add_argument(
         '--config',
         type=str,
-        default='output_test/resource_config.yaml',
+        default='tests/test_config.yaml',
         help='Path to the YAML configuration file (default: output_test/resource_config.yaml)'
     )
     parser.add_argument(

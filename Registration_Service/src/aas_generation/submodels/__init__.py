@@ -7,6 +7,8 @@ from .parameters_builder import ParametersSubmodelBuilder
 from .hierarchical_structures_builder import HierarchicalStructuresSubmodelBuilder
 from .capabilities_builder import CapabilitiesSubmodelBuilder
 from .bill_of_processes_builder import BillOfProcessesSubmodelBuilder
+from .ai_planning_builder import AIPlanningSubmodelBuilder
+from ..semantic_ids import SemanticIdFactory
 from .process_submodels_builder import (
     ProcessInformationSubmodelBuilder,
     RequiredCapabilitiesSubmodelBuilder,
@@ -21,6 +23,8 @@ __all__ = [
     'HierarchicalStructuresSubmodelBuilder',
     'CapabilitiesSubmodelBuilder',
     'BillOfProcessesSubmodelBuilder',
+    'AIPlanningSubmodelBuilder',
+    'SemanticIdFactory',
     # Process AAS specific builders
     'ProcessInformationSubmodelBuilder',
     'RequiredCapabilitiesSubmodelBuilder',
