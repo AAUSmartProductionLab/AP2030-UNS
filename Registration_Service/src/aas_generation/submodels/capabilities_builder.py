@@ -83,8 +83,8 @@ class CapabilitiesSubmodelBuilder:
 
         # Add Capability element with semantic_id from config if specified
         # This enables capability matching based on semantic identifiers
-        capability_semantic_id = cap_config.get('semantic_id')
-        cap_name = cap_config.get('key')
+        capability_semantic_id = cap_config.get('semantic_id') or cap_config.get('semanticId')
+        cap_name = cap_config.get('key') or cap_config.get('name')
         if capability_semantic_id:
             # Convert string semantic_id from config to proper ExternalReference
             from ..semantic_ids import SemanticIdFactory
@@ -157,7 +157,7 @@ class CapabilitiesSubmodelBuilder:
         Returns:
             SubmodelElementList of relationships to skills, or None if no realizedBy
         """
-        realized_by = cap_config.get('realizedBy')
+        realized_by = cap_config.get('realizedBy') or cap_config.get('realized_by')
         if not realized_by:
             return None
 

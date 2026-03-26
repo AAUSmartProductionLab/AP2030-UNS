@@ -65,6 +65,26 @@ class ConfigParser:
         """Get the global asset ID"""
         return self.config.get('globalAssetId', '')
 
+    @staticmethod
+    def _iter_named_entries(section: Any, fallback_prefix: str) -> List[Tuple[str, Dict[str, Any]]]:
+        """Return normalized (name, config) pairs from dict or list declarations."""
+        entries: List[Tuple[str, Dict[str, Any]]] = []
+
+        if isinstance(section, dict):
+            for name, cfg in section.items():
+                if isinstance(cfg, dict):
+                    entries.append((str(name), cfg))
+            return entries
+
+        if isinstance(section, list):
+            for idx, item in enumerate(section):
+                if not isinstance(item, dict):
+                    continue
+                name = item.get('key') or item.get('name') or f"{fallback_prefix}_{idx + 1}"
+                entries.append((str(name), item))
+
+        return entries
+
     def get_mqtt_endpoint(self) -> Dict[str, Any]:
         """
         Extract MQTT endpoint information from config.
@@ -124,14 +144,13 @@ class ConfigParser:
             'AssetInterfacesDescription', {}) or {}
         mqtt_config = interface_config.get('InterfaceMQTT', {}) or {}
         interaction_metadata = mqtt_config.get('InteractionMetadata', {}) or {}
-        actions_dict = interaction_metadata.get('actions', {}) or {}
+        actions_cfg = interaction_metadata.get('actions', {}) or {}
 
         endpoint = self.get_mqtt_endpoint()
         base_topic = endpoint.get('base_topic', '')
 
         actions = []
-        # Actions is a dict with action names as keys
-        for action_name, action_config in actions_dict.items():
+        for action_name, action_config in self._iter_named_entries(actions_cfg, fallback_prefix='Action'):
             forms = action_config.get('forms', {}) or {}
             response_forms = forms.get('response', {}) or {}
 
@@ -189,14 +208,13 @@ class ConfigParser:
             'AssetInterfacesDescription', {}) or {}
         mqtt_config = interface_config.get('InterfaceMQTT', {}) or {}
         interaction_metadata = mqtt_config.get('InteractionMetadata', {}) or {}
-        properties_dict = interaction_metadata.get('properties', {}) or {}
+        properties_cfg = interaction_metadata.get('properties', {}) or {}
 
         endpoint = self.get_mqtt_endpoint()
         base_topic = endpoint.get('base_topic', '')
 
         properties = []
-        # Properties is a dict with property names as keys
-        for prop_name, prop_config in properties_dict.items():
+        for prop_name, prop_config in self._iter_named_entries(properties_cfg, fallback_prefix='Property'):
             forms = prop_config.get('forms', {}) or {}
 
             # Build full topic
@@ -223,28 +241,27 @@ class ConfigParser:
         Returns:
             List of variable dictionaries with interface references
         """
-        variables_dict = self.config.get('Variables', {}) or {}
+        variables_cfg = self.config.get('Variables', {}) or {}
 
         variables = []
-        # Handle dict format: Variables: { VarName: {...}, ... }
-        for var_name, var_config in variables_dict.items():
-            interface_ref_raw = var_config.get('InterfaceReference')
+        for var_name, var_config in self._iter_named_entries(variables_cfg, fallback_prefix='Variable'):
+            interface_ref_raw = var_config.get('InterfaceReference') or var_config.get('interface_reference')
             # Handle InterfaceReference as either a string or a dict with Name/Field
             if isinstance(interface_ref_raw, dict):
-                interface_ref = interface_ref_raw.get('Name')
-                field = interface_ref_raw.get('Field') or var_config.get('Field')
+                interface_ref = interface_ref_raw.get('Name') or interface_ref_raw.get('name')
+                field = interface_ref_raw.get('Field') or interface_ref_raw.get('field') or var_config.get('Field') or var_config.get('field')
             else:
                 interface_ref = interface_ref_raw
-                field = var_config.get('Field')
+                field = var_config.get('Field') or var_config.get('field')
 
             variables.append({
                 'name': var_name,
-                'semantic_id': var_config.get('semanticId', ''),
+                'semantic_id': var_config.get('semantic_id') or var_config.get('semanticId', ''),
                 'interface_reference': interface_ref,
                 # Optional: specific field from the MQTT message
                 'field': field,
                 'values': {k: v for k, v in var_config.items()
-                           if k not in ['semanticId', 'InterfaceReference', 'Field']}
+                           if k not in ['semanticId', 'semantic_id', 'InterfaceReference', 'interface_reference', 'Field', 'field', 'key', 'name']}
             })
 
         return variables
@@ -341,14 +358,13 @@ class ConfigParser:
         Returns:
             List of capability dictionaries
         """
-        capabilities_dict = self.config.get('Capabilities', {}) or {}
+        capabilities_cfg = self.config.get('Capabilities', {}) or {}
 
         capabilities = []
-        # Handle dict format: Capabilities: { CapName: {...}, ... }
-        for cap_name, cap_config in capabilities_dict.items():
+        for cap_name, cap_config in self._iter_named_entries(capabilities_cfg, fallback_prefix='Capability'):
             capabilities.append({
                 'name': cap_name,
-                'realized_by': cap_config.get('realizedBy')
+                'realized_by': cap_config.get('realizedBy') or cap_config.get('realized_by')
             })
 
         return capabilities

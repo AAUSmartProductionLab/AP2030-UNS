@@ -252,6 +252,177 @@ def test_aas_generation(config_path: str, output_dir: str) -> dict:
             print_info(
                 f"Submodel: {sm.get('idShort')} - {len(sm_elements)} elements")
 
+        # AI-Planning Problem structure checks
+        ai_planning_sm = next(
+            (sm for sm in submodels if sm.get('idShort') == 'AIPlanning'),
+            None,
+        )
+
+        ai_planning_issues = []
+        if ai_planning_sm:
+            ai_elements = ai_planning_sm.get('submodelElements', [])
+            problem_section = next(
+                (el for el in ai_elements if el.get('idShort') == 'Problem'),
+                None,
+            )
+
+            if not problem_section:
+                ai_planning_issues.append("AIPlanning is missing Problem section")
+            else:
+                problem_values = problem_section.get('value', [])
+                objects_section = next(
+                    (el for el in problem_values if el.get('idShort') == 'Objects'),
+                    None,
+                )
+                if not objects_section:
+                    ai_planning_issues.append("Problem is missing Objects section")
+                else:
+                    if objects_section.get('modelType') != 'SubmodelElementList':
+                        ai_planning_issues.append("Problem.Objects must be a SubmodelElementList")
+
+                    if any(item.get('idShort') == 'Payload' for item in objects_section.get('value', []) if isinstance(item, dict)):
+                        ai_planning_issues.append("Problem.Objects must not contain freeform Payload")
+
+                    object_entries = objects_section.get('value', [])
+                    if not object_entries:
+                        ai_planning_issues.append("Problem.Objects must contain at least one object reference")
+                    else:
+                        for i, entry in enumerate(object_entries):
+                            if entry.get('modelType') != 'ReferenceElement':
+                                ai_planning_issues.append(
+                                    f"Problem.Objects[{i}] must be a ReferenceElement"
+                                )
+                                continue
+                            if entry.get('value', {}).get('type') != 'ModelReference':
+                                ai_planning_issues.append(
+                                    f"Problem.Objects[{i}] must use ModelReference"
+                                )
+
+                def _collect_problem_object_parameter_refs(element):
+                    refs = []
+                    if not isinstance(element, dict):
+                        return refs
+
+                    if element.get('idShort') == 'Parameters' and element.get('modelType') == 'SubmodelElementList':
+                        for ref_entry in element.get('value', []):
+                            keys = ref_entry.get('value', {}).get('keys', [])
+                            if keys:
+                                refs.append(keys)
+
+                    for child in element.get('value', []):
+                        refs.extend(_collect_problem_object_parameter_refs(child))
+                    return refs
+
+                def _collect_empty_parameter_structures(element, path='AIPlanning'):
+                    issues = []
+                    if not isinstance(element, dict):
+                        return issues
+
+                    element_id = element.get('idShort') or '<unnamed>'
+                    current_path = f"{path}/{element_id}"
+                    model_type = element.get('modelType')
+                    value = element.get('value')
+
+                    if element.get('idShort') == 'Parameters' and model_type in ('SubmodelElementList', 'SubmodelElementCollection'):
+                        if not isinstance(value, list) or not value:
+                            issues.append(f"Empty Parameters structure at {current_path} ({model_type})")
+
+                    if isinstance(value, list):
+                        for child in value:
+                            issues.extend(_collect_empty_parameter_structures(child, current_path))
+
+                    return issues
+
+                def _is_non_empty_display_name(display_name):
+                    if isinstance(display_name, str):
+                        return bool(display_name.strip())
+                    if isinstance(display_name, dict):
+                        return any(isinstance(v, str) and v.strip() for v in display_name.values())
+                    if isinstance(display_name, list):
+                        for item in display_name:
+                            if isinstance(item, dict):
+                                text = item.get('text') or item.get('value')
+                                if isinstance(text, str) and text.strip():
+                                    return True
+                    return False
+
+                def _collect_metric_weight_constant_issues(problem_values):
+                    issues = []
+                    metric_section = next(
+                        (el for el in problem_values if el.get('idShort') == 'Metric'),
+                        None,
+                    )
+                    if not isinstance(metric_section, dict):
+                        return issues
+
+                    qualifiers = metric_section.get('qualifiers', []) or []
+                    opt_qualifier = next(
+                        (q for q in qualifiers if str(q.get('type', '')).lower() == 'optimization'),
+                        None,
+                    )
+                    if not isinstance(opt_qualifier, dict):
+                        issues.append("Metric must declare Optimization qualifier")
+                    else:
+                        opt_value = str(opt_qualifier.get('value') or '').lower()
+                        if opt_value not in ('minimize', 'maximize'):
+                            issues.append(
+                                f"Metric Optimization qualifier must be 'minimize' or 'maximize', got '{opt_qualifier.get('value')}'"
+                            )
+
+                    def _walk(node):
+                        if not isinstance(node, dict):
+                            return
+
+                        if node.get('modelType') == 'Property' and node.get('value') in (5, 10):
+                            id_short = str(node.get('idShort') or '')
+                            if not id_short.startswith('term_'):
+                                issues.append(
+                                    f"Metric constant value {node.get('value')} must use term_* idShort, got '{id_short or '<missing>'}'"
+                                )
+                            if not _is_non_empty_display_name(node.get('displayName')):
+                                issues.append(
+                                    f"Metric constant '{id_short or '<missing>'}' is missing displayName"
+                                )
+
+                        value = node.get('value')
+                        if isinstance(value, list):
+                            for child in value:
+                                _walk(child)
+
+                    _walk(metric_section)
+                    return issues
+
+                for state_name in ('Init', 'Goal'):
+                    state_section = next(
+                        (el for el in problem_values if el.get('idShort') == state_name),
+                        None,
+                    )
+                    if not state_section:
+                        continue
+
+                    refs = _collect_problem_object_parameter_refs(state_section)
+                    if not refs:
+                        ai_planning_issues.append(f"Problem.{state_name} must include parameter references")
+                        continue
+
+                    for key_path in refs:
+                        path_values = [k.get('value') for k in key_path]
+                        if 'Problem' not in path_values or 'Objects' not in path_values:
+                            ai_planning_issues.append(
+                                f"Problem.{state_name} contains parameters not referencing Problem.Objects"
+                            )
+                            break
+
+                ai_planning_issues.extend(_collect_empty_parameter_structures(ai_planning_sm))
+                ai_planning_issues.extend(_collect_metric_weight_constant_issues(problem_values))
+
+            if ai_planning_issues:
+                print_failure("AI-Planning Problem structure validation failed")
+                for issue in ai_planning_issues:
+                    print_info(f"  - {issue}")
+            else:
+                print_success("AI-Planning Problem uses structured Objects and object-based Init/Goal references")
+
         output_path = os.path.join(output_dir, 'aas_output.json')
         with open(output_path, 'w') as f:
             json.dump(aas_data, f, indent=2)
@@ -277,6 +448,10 @@ def test_aas_generation(config_path: str, output_dir: str) -> dict:
             if not shell.get('idShort'):
                 errors.append("Shell missing 'idShort'")
                 is_valid = False
+
+        if ai_planning_issues:
+            errors.extend(ai_planning_issues)
+            is_valid = False
 
         if is_valid:
             print_success("Basic validation passed")

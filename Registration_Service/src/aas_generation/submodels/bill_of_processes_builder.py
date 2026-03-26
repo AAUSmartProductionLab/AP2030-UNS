@@ -8,6 +8,8 @@ semantic IDs for capability matching.
 from typing import Dict, List, Any, Optional
 from basyx.aas import model
 
+from ..semantic_ids import SemanticIdCatalog
+
 
 class BillOfProcessesSubmodelBuilder:
     """
@@ -19,8 +21,8 @@ class BillOfProcessesSubmodelBuilder:
     """
     
     # Semantic IDs
-    BILL_OF_PROCESSES_SEMANTIC_ID = "https://smartproductionlab.aau.dk/submodels/BillOfProcesses/1/0"
-    PROCESS_STEP_SEMANTIC_ID = "https://smartproductionlab.aau.dk/submodels/ProcessStep/1/0"
+    BILL_OF_PROCESSES_SEMANTIC_ID = SemanticIdCatalog.BILL_OF_PROCESSES_SUBMODEL
+    PROCESS_STEP_SEMANTIC_ID = SemanticIdCatalog.PROCESS_STEP_SUBMODEL
     
     def __init__(self, base_url: str, semantic_factory, element_factory):
         """
@@ -79,7 +81,7 @@ class BillOfProcessesSubmodelBuilder:
             type_value_list_element=model.SubmodelElementCollection,
             value=process_elements,
             semantic_id=self._create_semantic_reference(
-                "https://smartproductionlab.aau.dk/submodels/ProcessList/1/0"
+                SemanticIdCatalog.PROCESS_LIST_SUBMODEL
             )
         )
         
@@ -227,7 +229,7 @@ class RequirementsSubmodelBuilder:
     - Quality control specifications
     """
     
-    REQUIREMENTS_SEMANTIC_ID = "https://smartproductionlab.aau.dk/submodels/Requirements/1/0"
+    REQUIREMENTS_SEMANTIC_ID = SemanticIdCatalog.REQUIREMENTS_SUBMODEL
     
     def __init__(self, base_url: str, semantic_factory, element_factory):
         """

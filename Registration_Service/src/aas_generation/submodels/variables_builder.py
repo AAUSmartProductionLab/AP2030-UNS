@@ -56,8 +56,18 @@ class VariablesSubmodelBuilder:
         if properties:
             self._properties_cache = {p['name']: p for p in properties}
 
-        # Handle dict format (no dashes): Variables: { VarName: {...}, ... }
-        for var_data in variables_config:
+        # Support list format and dict format with implicit key names.
+        variable_entries: List[Dict] = []
+        if isinstance(variables_config, list):
+            variable_entries = [item for item in variables_config if isinstance(item, dict)]
+        elif isinstance(variables_config, dict):
+            for var_name, var_cfg in variables_config.items():
+                if isinstance(var_cfg, dict):
+                    item = dict(var_cfg)
+                    item.setdefault('key', var_name)
+                    variable_entries.append(item)
+
+        for var_data in variable_entries:
             var_collection = self._create_variable_collection(var_data or {})
             if var_collection:
                 variable_elements.append(var_collection)
@@ -96,16 +106,21 @@ class VariablesSubmodelBuilder:
         elements = []
 
         # Add semantic ID if present
-        semantic_id = var_config.get('semanticId')
-        interface_ref_raw = var_config.get('InterfaceReference')
+        semantic_id = var_config.get('semantic_id') or var_config.get('semanticId')
+        interface_ref_raw = var_config.get('interface_reference') or var_config.get('InterfaceReference')
 
         # Handle InterfaceReference as either a string or a dict with Name/Field
         if isinstance(interface_ref_raw, dict):
-            interface_ref = interface_ref_raw.get('Name')
-            specific_field = interface_ref_raw.get('Field') or var_config.get('Field')
+            interface_ref = interface_ref_raw.get('Name') or interface_ref_raw.get('name')
+            specific_field = (
+                interface_ref_raw.get('Field')
+                or interface_ref_raw.get('field')
+                or var_config.get('Field')
+                or var_config.get('field')
+            )
         else:
             interface_ref = interface_ref_raw
-            specific_field = var_config.get('Field')
+            specific_field = var_config.get('Field') or var_config.get('field')
 
         # Try to get fields from schema if interface reference exists
         schema_fields = {}
@@ -128,7 +143,15 @@ class VariablesSubmodelBuilder:
                 # Get default value from config if provided, otherwise use schema default
                 config_value = None
                 for key, value in var_config.items():
-                    if key not in ['semanticId', 'InterfaceReference', 'Field'] and key == field_name:
+                    if key not in [
+                        'semanticId',
+                        'semantic_id',
+                        'InterfaceReference',
+                        'interface_reference',
+                        'Field',
+                        'field',
+                        'key',
+                    ] and key == field_name:
                         config_value = value
                         break
 
@@ -145,7 +168,14 @@ class VariablesSubmodelBuilder:
         else:
             # Fallback: use fields defined directly in config
             for key, value in var_config.items():
-                if key in ['semanticId', 'InterfaceReference', 'Field']:
+                if key in [
+                    'semanticId',
+                    'semantic_id',
+                    'InterfaceReference',
+                    'interface_reference',
+                    'Field',
+                    'field',
+                ]:
                     continue
 
                 # Determine value type

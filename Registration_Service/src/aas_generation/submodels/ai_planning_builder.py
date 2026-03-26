@@ -1,59 +1,75 @@
-"""AI Planning Submodel builder.
+"""AI Planning Submodel builder facade.
 
-This submodel stores planning-relevant information separate from Skills.
-Both Domain and Problem sections are optional and can coexist in the same
-submodel instance.
+Facade/orchestration class for AI planning submodel construction.
+Collaborator implementations live in ai_planning_components.py.
 """
 
 from typing import Any, Dict, List, Optional, Tuple
 
 from basyx.aas import model
 
-from .skills_spec_parser import normalize_description_from_pddl
-
-
-def _make_semantic_id(semantic_id_str: Optional[str]) -> Optional[model.ExternalReference]:
-    if not semantic_id_str:
-        return None
-    return model.ExternalReference(
-        (model.Key(type_=model.KeyTypes.GLOBAL_REFERENCE, value=semantic_id_str),)
-    )
-
-
-def _semantic_id_tail(semantic_id_str: Optional[str]) -> Optional[str]:
-    if not isinstance(semantic_id_str, str) or not semantic_id_str:
-        return None
-    fragment_tail = semantic_id_str.rsplit("#", 1)[-1]
-    return fragment_tail.rsplit("/", 1)[-1]
-
-
-def _semantic_id_display_name(semantic_id_str: Optional[str]) -> Optional[str]:
-    tail = _semantic_id_tail(semantic_id_str)
-    if not tail:
-        return None
-    normalized = tail.replace("-", " ").replace("_", " ").strip()
-    if not normalized:
-        return None
-    return " ".join(part.capitalize() for part in normalized.split())
+from ..semantic_ids import SemanticIdCatalog
+from .ai_planning_components import (
+    _DomainSectionBuilder,
+    _PlanningBuildContext,
+    _PlanningReferenceBuilder,
+    _PlanningTermBuilder,
+    _PlanningTransitionBuilder,
+    _ProblemSectionBuilder,
+    _TermOwner,
+    _make_semantic_id,
+)
+from .skills_spec_parser import (
+    CONDITION_GROUP_ALIASES,
+    EFFECT_GROUP_ALIASES,
+    normalize_description_from_pddl,
+    normalize_section_groups,
+    normalize_terms_payload,
+)
 
 
 class AIPlanningSubmodelBuilder:
     """Build AIPlanning submodel from `AI-Planning` config section."""
 
-    SUBMODEL_SEMANTIC_ID = "https://smartproductionlab.aau.dk/submodels/AIPlanning/1/0"
+    SUBMODEL_SEMANTIC_ID = SemanticIdCatalog.AI_PLANNING_SUBMODEL
 
     def __init__(self, base_url: str):
         self.base_url = base_url
-        self._domain_fluents: Dict[str, Dict[str, Any]] = {}
-        self._action_parameter_names: Dict[str, List[str]] = {}
+        self._context = _PlanningBuildContext()
+        self._references = _PlanningReferenceBuilder(base_url=base_url, context=self._context)
+        self._terms = _PlanningTermBuilder(
+            references=self._references,
+            typed_property_factory=self._typed_property,
+        )
+        self._transitions = _PlanningTransitionBuilder(
+            base_url=base_url,
+            context=self._context,
+            terms=self._terms,
+            build_action_parameters=self._build_action_parameters,
+            normalize_named_transition_items=self._normalize_named_transition_items,
+            normalize_transition_conditions=self._normalize_transition_conditions,
+            normalize_transition_effects=self._normalize_transition_effects,
+        )
+        self._domain_builder = _DomainSectionBuilder(
+            build_fluents_section=self._build_fluents_section,
+            build_actions_section=self._build_actions_section,
+            build_processes_section=self._build_processes_section,
+            build_events_section=self._build_events_section,
+            build_constraints_section=self._build_constraints_section,
+        )
+        self._problem_builder = _ProblemSectionBuilder(
+            build_problem_objects_section=self._build_problem_objects_section,
+            build_problem_state_section=self._build_problem_state_section,
+            build_constraints_section=self._build_constraints_section,
+            build_metric_section=self._build_metric_section,
+        )
 
     def build(self, system_id: str, config: Dict[str, Any]) -> Optional[model.Submodel]:
         planning_cfg = config.get("AI-Planning") or {}
         if not isinstance(planning_cfg, dict) or not planning_cfg:
             return None
 
-        self._domain_fluents = {}
-        self._action_parameter_names = {}
+        self._context.reset()
         elements: List[model.SubmodelElement] = []
 
         domain_cfg = planning_cfg.get("Domain")
@@ -77,55 +93,278 @@ class AIPlanningSubmodelBuilder:
         )
 
     def _build_domain(self, system_id: str, domain_cfg: Dict[str, Any]) -> model.SubmodelElementCollection:
-        elements: List[model.SubmodelElement] = []
-
-        fluents_cfg = domain_cfg.get("Fluents", []) or []
-        if isinstance(fluents_cfg, list) and fluents_cfg:
-            elements.append(self._build_fluents_section(fluents_cfg))
-
-        actions_cfg = domain_cfg.get("Actions", []) or []
-        if isinstance(actions_cfg, list) and actions_cfg:
-            elements.append(self._build_actions_section(system_id, actions_cfg))
-
-        for section_name in ("Processes", "Events", "Constraints"):
-            section_cfg = domain_cfg.get(section_name)
-            if section_cfg:
-                elements.append(self._build_freeform_section(section_name, section_cfg))
-
-        return model.SubmodelElementCollection(
-            id_short="Domain",
-            value=elements,
-            semantic_id=_make_semantic_id("https://smartproductionlab.aau.dk/AIPlanning/Domain"),
-        )
+        return self._domain_builder.build(system_id=system_id, domain_cfg=domain_cfg)
 
     def _build_problem(self, system_id: str, problem_cfg: Dict[str, Any]) -> model.SubmodelElementCollection:
+        return self._problem_builder.build(system_id=system_id, problem_cfg=problem_cfg)
+
+    def _build_processes_section(
+        self,
+        system_id: str,
+        processes_cfg: Any,
+    ) -> model.SubmodelElementCollection:
+        return self._transitions.build_processes_section(
+            system_id=system_id,
+            processes_cfg=processes_cfg,
+        )
+
+    def _build_events_section(
+        self,
+        system_id: str,
+        events_cfg: Any,
+    ) -> model.SubmodelElementCollection:
+        return self._transitions.build_events_section(
+            system_id=system_id,
+            events_cfg=events_cfg,
+        )
+
+    def _build_transition_item(
+        self,
+        system_id: str,
+        section_name: str,
+        key: str,
+        parameters: List[Dict[str, Any]],
+        conditions: Dict[str, Any],
+        effects: Dict[str, Any],
+        item_semantic_id: str,
+        duration: Optional[Dict[str, Any]] = None,
+        skill_reference: Optional[str] = None,
+    ) -> model.SubmodelElementCollection:
+        return self._transitions.build_transition_item(
+            system_id=system_id,
+            section_name=section_name,
+            key=key,
+            parameters=parameters,
+            conditions=conditions,
+            effects=effects,
+            item_semantic_id=item_semantic_id,
+            duration=duration,
+            skill_reference=skill_reference,
+        )
+
+    def _normalize_named_transition_items(self, items_cfg: Any) -> List[Dict[str, Any]]:
+        if isinstance(items_cfg, list):
+            return [item for item in items_cfg if isinstance(item, dict)]
+
+        if isinstance(items_cfg, dict):
+            if any(k in items_cfg for k in ("key", "parameters", "conditions", "effects", "precondition", "effect")):
+                return [items_cfg]
+            items: List[Dict[str, Any]] = []
+            for key, value in items_cfg.items():
+                if isinstance(value, dict):
+                    item = dict(value)
+                    item.setdefault("key", str(key))
+                    items.append(item)
+            return items
+
+        return []
+
+    def _normalize_transition_conditions(self, raw_conditions: Any) -> Dict[str, Dict[str, List[Dict[str, Any]]]]:
+        return self._normalize_transition_groups(
+            groups_cfg=raw_conditions,
+            aliases=CONDITION_GROUP_ALIASES,
+            default_group="PreConditions",
+        )
+
+    def _normalize_transition_effects(
+        self,
+        raw_effects: Any,
+        default_group: str,
+    ) -> Dict[str, Dict[str, List[Dict[str, Any]]]]:
+        aliases = dict(EFFECT_GROUP_ALIASES)
+        aliases["effect"] = default_group
+        return self._normalize_transition_groups(
+            groups_cfg=raw_effects,
+            aliases=aliases,
+            default_group=default_group,
+        )
+
+    def _normalize_transition_groups(
+        self,
+        groups_cfg: Any,
+        aliases: Dict[str, str],
+        default_group: str,
+    ) -> Dict[str, Dict[str, List[Dict[str, Any]]]]:
+        """Normalize flexible section-group input into canonical grouped terms."""
+        return normalize_section_groups(
+            groups_cfg=groups_cfg,
+            aliases=aliases,
+            default_group=default_group,
+        )
+
+    def _build_constraints_section(
+        self,
+        system_id: str,
+        section_name: str,
+        constraints_cfg: Any,
+        is_problem_section: bool,
+    ) -> model.SubmodelElementCollection:
+        terms = normalize_terms_payload(constraints_cfg)
         elements: List[model.SubmodelElement] = []
-
-        objects_cfg = problem_cfg.get("Objects")
-        if objects_cfg:
-            elements.append(self._build_freeform_section("Objects", objects_cfg))
-
-        initial_state = problem_cfg.get("Init")
-        if initial_state:
-            elements.append(self._build_problem_state_section(system_id, "Init", initial_state))
-
-        goal_state = problem_cfg.get("Goal")
-        if goal_state:
-            elements.append(self._build_problem_state_section(system_id, "Goal", goal_state))
-
-        metric_cfg = problem_cfg.get("Metric")
-        if metric_cfg:
-            elements.append(self._build_freeform_section("Metric", metric_cfg))
-
-        preferences_cfg = problem_cfg.get("Preferences")
-        if preferences_cfg:
-            elements.append(self._build_freeform_section("Preferences", preferences_cfg))
+        for i, term in enumerate(terms):
+            term_id_short = self._preferred_term_id_short(term, i + 1)
+            elements.append(
+                self._build_term(
+                    system_id,
+                    section_name,
+                    term,
+                    i + 1,
+                    is_effect=False,
+                    problem_section_name=section_name if is_problem_section else None,
+                    id_short_override=term_id_short,
+                )
+            )
+            if is_problem_section:
+                self._register_preference_location(term, section_name, term_id_short)
 
         return model.SubmodelElementCollection(
-            id_short="Problem",
+            id_short=section_name,
             value=elements,
-            semantic_id=_make_semantic_id("https://smartproductionlab.aau.dk/AIPlanning/Problem"),
+            semantic_id=_make_semantic_id(SemanticIdCatalog.ai_planning_section(section_name)),
         )
+
+    def _build_metric_section(
+        self,
+        system_id: str,
+        metric_cfg: Any,
+    ) -> model.SubmodelElementCollection:
+        optimization, expression = self._normalize_metric(metric_cfg)
+        metric_elements: List[model.SubmodelElement] = [
+            self._build_term(
+                system_id,
+                "Metric",
+                term,
+                i + 1,
+                is_effect=False,
+                problem_section_name="Metric",
+            )
+            for i, term in enumerate(expression)
+        ]
+
+        return model.SubmodelElementCollection(
+            id_short="Metric",
+            value=metric_elements,
+            semantic_id=_make_semantic_id(SemanticIdCatalog.AI_PLANNING_PROBLEM_METRIC),
+            qualifier=(
+                model.Qualifier(
+                    type_="Optimization",
+                    value_type=model.datatypes.String,
+                    value=optimization,
+                ),
+            ),
+        )
+
+    def _normalize_metric(self, metric_cfg: Any) -> Tuple[str, List[Dict[str, Any]]]:
+        optimization = "minimize"
+        payload = metric_cfg
+        preference_weight_terms: List[Dict[str, Any]] = []
+
+        if isinstance(metric_cfg, dict):
+            if "minimize" in metric_cfg:
+                optimization = "minimize"
+                payload = metric_cfg.get("minimize")
+            elif "maximize" in metric_cfg:
+                optimization = "maximize"
+                payload = metric_cfg.get("maximize")
+            elif "optimize" in metric_cfg:
+                opt_val = str(metric_cfg.get("optimize") or "").lower()
+                optimization = "maximize" if opt_val == "maximize" else "minimize"
+                payload = metric_cfg.get("expression") or metric_cfg.get("terms") or metric_cfg
+
+            raw_weights = metric_cfg.get("preference_weights") or metric_cfg.get("preferences") or []
+            if isinstance(raw_weights, list):
+                preference_weight_terms = self._normalize_preference_weight_terms(raw_weights)
+
+        expression_terms = normalize_terms_payload(payload)
+        if preference_weight_terms:
+            expression_terms.extend(preference_weight_terms)
+
+        return optimization, expression_terms
+
+    def _normalize_preference_weight_terms(self, raw_weights: List[Any]) -> List[Dict[str, Any]]:
+        terms: List[Dict[str, Any]] = []
+        for idx, item in enumerate(raw_weights):
+            if not isinstance(item, dict):
+                continue
+
+            name = item.get("name") or item.get("preference") or item.get("id")
+            if not name:
+                continue
+
+            weight_value = item.get("weight", 1)
+            terms.append(
+                {
+                    "type": "arithmeticterm",
+                    "semantic_id": SemanticIdCatalog.ARITHMETIC_SEMANTIC_IDS["*"],
+                    "terms": [
+                        {
+                            "type": "function",
+                            "PreferenceReference": str(name),
+                            "parameters": [],
+                        },
+                        {
+                            "type": "constant",
+                            "name": f"PreferenceWeight_{idx + 1}",
+                            "value": weight_value,
+                        },
+                    ],
+                }
+            )
+
+        return terms
+
+    def _build_problem_objects_section(
+        self,
+        system_id: str,
+        objects_cfg: Any,
+    ) -> model.SubmodelElementList:
+        if not isinstance(objects_cfg, list):
+            raise ValueError("Invalid AI-Planning Problem.Objects: expected a list")
+
+        entries: List[model.ReferenceElement] = []
+        names: List[str] = []
+
+        for idx, obj in enumerate(objects_cfg):
+            if not isinstance(obj, dict):
+                raise ValueError(
+                    f"Invalid AI-Planning Problem.Objects entry at index {idx}: expected object"
+                )
+
+            obj_name = str(obj.get("name") or f"Object_{idx}")
+            model_ref = obj.get("ModelReference") or obj.get("modelRef")
+            external_ref = obj.get("ExternalReference") or obj.get("externalRef")
+
+            if external_ref and not model_ref:
+                raise ValueError(
+                    f"Invalid AI-Planning Problem.Objects entry '{obj_name}': external references are not allowed; use modelRef"
+                )
+
+            if not model_ref:
+                raise ValueError(
+                    f"Invalid AI-Planning Problem.Objects entry '{obj_name}': missing modelRef"
+                )
+
+            ref = self._build_model_reference_from_dsl(system_id, model_ref)
+            entries.append(
+                model.ReferenceElement(
+                    id_short=None,
+                    display_name=model.MultiLanguageNameType({"en": obj_name}),
+                    value=ref,
+                )
+            )
+            names.append(obj_name)
+
+        self._context.problem_object_names = names
+        return model.SubmodelElementList(
+            id_short="Objects",
+            value=entries,
+            type_value_list_element=model.ReferenceElement,
+            semantic_id=_make_semantic_id(SemanticIdCatalog.PDDL_OBJECTS),
+            semantic_id_list_element=_make_semantic_id(SemanticIdCatalog.PDDL_OBJECT),
+        )
+
+    def _build_model_reference_from_dsl(self, system_id: str, model_ref: Any) -> model.ModelReference:
+        return self._references.build_model_reference_from_dsl(system_id=system_id, model_ref=model_ref)
 
     def _build_fluents_section(self, fluents_cfg: List[Dict[str, Any]]) -> model.SubmodelElementCollection:
         fluent_elements: List[model.SubmodelElementCollection] = []
@@ -135,26 +374,28 @@ class AIPlanningSubmodelBuilder:
                 continue
 
             fluent_key = fluent_cfg.get("key") or f"Fluent_{idx + 1}"
-            self._domain_fluents[fluent_key] = fluent_cfg
+            self._context.domain_fluents[fluent_key] = fluent_cfg
             elements: List[model.SubmodelElement] = []
 
             parameters = fluent_cfg.get("parameters", []) or []
             if isinstance(parameters, list) and parameters:
-                elements.append(self._build_domain_fluent_parameters(parameters))
+                parameter_element = self._build_domain_fluent_parameters(parameters)
+                if parameter_element is not None:
+                    elements.append(parameter_element)
 
             transformation = fluent_cfg.get("transformation")
             if transformation:
                 elements.append(self._string_property("Transformation", transformation))
 
-            semantic_id = fluent_cfg.get("semantic_id") or "https://smartproductionlab.aau.dk/PDDL/Term"
+            semantic_id = fluent_cfg.get("semantic_id") or SemanticIdCatalog.PDDL_TERM
             fluent_elements.append(
                 model.SubmodelElementCollection(
                     id_short=str(fluent_key),
                     display_name=model.MultiLanguageNameType({"en": str(fluent_key)}),
                     value=elements,
                     semantic_id=_make_semantic_id(semantic_id),
-                    supplemental_semantic_id=[_make_semantic_id("https://smartproductionlab.aau.dk/PDDL/Term")]
-                    if semantic_id != "https://smartproductionlab.aau.dk/PDDL/Term"
+                    supplemental_semantic_id=[_make_semantic_id(SemanticIdCatalog.PDDL_TERM)]
+                    if semantic_id != SemanticIdCatalog.PDDL_TERM
                     else [],
                 )
             )
@@ -162,7 +403,7 @@ class AIPlanningSubmodelBuilder:
         return model.SubmodelElementCollection(
             id_short="Fluents",
             value=fluent_elements,
-            semantic_id=_make_semantic_id("https://smartproductionlab.aau.dk/AIPlanning/Domain/Fluents"),
+            semantic_id=_make_semantic_id(SemanticIdCatalog.AI_PLANNING_DOMAIN_FLUENTS),
         )
 
     def _build_actions_section(self, system_id: str, actions_cfg: List[Dict[str, Any]]) -> model.SubmodelElementCollection:
@@ -174,66 +415,31 @@ class AIPlanningSubmodelBuilder:
 
             action_key = action_cfg.get("key") or f"Action_{idx + 1}"
             normalized = normalize_description_from_pddl(action_cfg, skill_name=action_key)
-            elements: List[model.SubmodelElement] = []
-
-            skill_ref = action_cfg.get("SkillReference")
-            if skill_ref:
-                elements.append(
-                    model.ReferenceElement(
-                        id_short="SkillReference",
-                        value=model.ModelReference(
-                            key=(
-                                model.Key(
-                                    type_=model.KeyTypes.SUBMODEL,
-                                    value=f"{self.base_url}/submodels/instances/{system_id}/Skills",
-                                ),
-                                model.Key(
-                                    type_=model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION,
-                                    value=str(skill_ref),
-                                ),
-                            ),
-                            type_=model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION,
-                        ),
-                    )
-                )
-
             parameters = normalized.get("parameters", [])
-            self._action_parameter_names[str(action_key)] = [
-                str(param.get("name") or f"Parameter_{i}")
-                for i, param in enumerate(parameters)
-                if isinstance(param, dict)
-            ]
-            if parameters:
-                elements.append(self._build_action_parameters(system_id, action_key, parameters))
-
             duration = normalized.get("duration", {})
-            if duration:
-                elements.append(self._build_duration_section(system_id, action_key, duration))
-
             conditions = normalized.get("conditions", {})
-            if conditions:
-                elements.append(self._build_conditions_section(system_id, action_key, conditions))
-
             effects = normalized.get("effects", {})
-            if effects:
-                elements.append(self._build_effects_section(system_id, action_key, effects))
-
             action_elements.append(
-                model.SubmodelElementCollection(
-                    id_short=str(action_key),
-                    display_name=model.MultiLanguageNameType({"en": str(action_key)}),
-                    value=elements,
-                    semantic_id=_make_semantic_id("https://smartproductionlab.aau.dk/AIPlanning/Domain/Action"),
+                self._build_transition_item(
+                    system_id=system_id,
+                    section_name="Actions",
+                    key=str(action_key),
+                    parameters=parameters,
+                    conditions=conditions,
+                    effects=effects,
+                    duration=duration,
+                    skill_reference=action_cfg.get("SkillReference"),
+                    item_semantic_id=SemanticIdCatalog.AI_PLANNING_DOMAIN_ACTION,
                 )
             )
 
         return model.SubmodelElementCollection(
             id_short="Actions",
             value=action_elements,
-            semantic_id=_make_semantic_id("https://smartproductionlab.aau.dk/AIPlanning/Domain/Actions"),
+            semantic_id=_make_semantic_id(SemanticIdCatalog.AI_PLANNING_DOMAIN_ACTIONS),
         )
 
-    def _build_domain_fluent_parameters(self, parameters: List[Dict[str, Any]]) -> model.SubmodelElementList:
+    def _build_domain_fluent_parameters(self, parameters: List[Dict[str, Any]]) -> Optional[model.SubmodelElementList]:
         entries: List[model.ReferenceElement] = []
         for idx, parameter in enumerate(parameters):
             if not isinstance(parameter, dict):
@@ -254,12 +460,15 @@ class AIPlanningSubmodelBuilder:
                 )
             )
 
+        if not entries:
+            return None
+
         return model.SubmodelElementList(
             id_short="Parameters",
             value=entries,
             type_value_list_element=model.ReferenceElement,
-            semantic_id=_make_semantic_id("https://smartproductionlab.aau.dk/PDDL/Parameters"),
-            semantic_id_list_element=_make_semantic_id("https://smartproductionlab.aau.dk/PDDL/Parameter"),
+            semantic_id=_make_semantic_id(SemanticIdCatalog.PDDL_PARAMETERS),
+            semantic_id_list_element=_make_semantic_id(SemanticIdCatalog.PDDL_PARAMETER),
         )
 
     def _build_action_parameters(
@@ -267,7 +476,7 @@ class AIPlanningSubmodelBuilder:
         system_id: str,
         action_key: str,
         parameters: List[Dict[str, Any]],
-    ) -> model.SubmodelElementList:
+    ) -> Optional[model.SubmodelElementList]:
         entries: List[model.ReferenceElement] = []
 
         for idx, parameter in enumerate(parameters):
@@ -280,31 +489,7 @@ class AIPlanningSubmodelBuilder:
             external_ref = parameter.get("ExternalReference") or parameter.get("externalRef")
 
             if model_ref:
-                keys: List[model.Key] = []
-                last_type = model.KeyTypes.REFERENCE_ELEMENT
-                for part in model_ref:
-                    if not isinstance(part, dict):
-                        continue
-                    k, v = next(iter(part.items()))
-                    if k == "AAS":
-                        last_type = model.KeyTypes.ASSET_ADMINISTRATION_SHELL
-                        if v == "self":
-                            v = f"{self.base_url}/aas/{system_id}"
-                    elif k == "SM":
-                        last_type = model.KeyTypes.SUBMODEL
-                        v = f"{self.base_url}/submodels/instances/{system_id}/{v}"
-                    elif k == "SMC":
-                        last_type = model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION
-                    elif k == "SML":
-                        last_type = model.KeyTypes.SUBMODEL_ELEMENT_LIST
-                    elif k == "ReferenceElement":
-                        last_type = model.KeyTypes.REFERENCE_ELEMENT
-                    elif k == "Property":
-                        last_type = model.KeyTypes.PROPERTY
-                    keys.append(model.Key(last_type, str(v)))
-
-                if keys:
-                    ref = model.ModelReference(key=tuple(keys), type_=last_type)
+                ref = self._build_model_reference_from_dsl(system_id, model_ref)
 
             elif external_ref:
                 ref = model.ExternalReference(
@@ -320,87 +505,15 @@ class AIPlanningSubmodelBuilder:
                     )
                 )
 
+        if not entries:
+            return None
+
         return model.SubmodelElementList(
             id_short="Parameters",
             value=entries,
             type_value_list_element=model.ReferenceElement,
-            semantic_id=_make_semantic_id("https://smartproductionlab.aau.dk/PDDL/Parameters"),
-            semantic_id_list_element=_make_semantic_id("https://smartproductionlab.aau.dk/PDDL/Parameter"),
-        )
-
-    def _build_duration_section(
-        self,
-        system_id: str,
-        action_key: str,
-        duration_cfg: Dict[str, Any],
-    ) -> model.SubmodelElementCollection:
-        terms = duration_cfg.get("terms", []) or []
-        elements = [self._build_term(system_id, action_key, term, i + 1, is_effect=False) for i, term in enumerate(terms)]
-        return model.SubmodelElementCollection(
-            id_short="Duration",
-            value=elements,
-            semantic_id=_make_semantic_id("https://smartproductionlab.aau.dk/PDDL/Duration"),
-        )
-
-    def _build_conditions_section(
-        self,
-        system_id: str,
-        action_key: str,
-        conditions_cfg: Dict[str, Any],
-    ) -> model.SubmodelElementCollection:
-        elements: List[model.SubmodelElementCollection] = []
-        for group_name in ("PreConditions", "InvariantConditions", "PostConditions"):
-            group = conditions_cfg.get(group_name)
-            if not isinstance(group, dict):
-                continue
-            terms = group.get("terms", []) or []
-            if not terms:
-                continue
-            elements.append(
-                model.SubmodelElementCollection(
-                    id_short=group_name,
-                    value=[
-                        self._build_term(system_id, action_key, term, i + 1, is_effect=False)
-                        for i, term in enumerate(terms)
-                    ],
-                )
-            )
-
-        return model.SubmodelElementCollection(
-            id_short="Conditions",
-            value=elements,
-            semantic_id=_make_semantic_id("https://smartproductionlab.aau.dk/PDDL/Conditions"),
-        )
-
-    def _build_effects_section(
-        self,
-        system_id: str,
-        action_key: str,
-        effects_cfg: Dict[str, Any],
-    ) -> model.SubmodelElementCollection:
-        elements: List[model.SubmodelElementCollection] = []
-        for group_name in ("StartEffects", "ContinuousEffects", "EndEffects"):
-            group = effects_cfg.get(group_name)
-            if not isinstance(group, dict):
-                continue
-            raw_terms = group.get("terms", []) or []
-            terms = [self._flatten_effect_set(term) for term in raw_terms]
-            if not terms:
-                continue
-            elements.append(
-                model.SubmodelElementCollection(
-                    id_short=group_name,
-                    value=[
-                        self._build_term(system_id, action_key, term, i + 1, is_effect=True)
-                        for i, term in enumerate(terms)
-                    ],
-                )
-            )
-
-        return model.SubmodelElementCollection(
-            id_short="Effects",
-            value=elements,
-            semantic_id=_make_semantic_id("https://smartproductionlab.aau.dk/PDDL/Effects"),
+            semantic_id=_make_semantic_id(SemanticIdCatalog.PDDL_PARAMETERS),
+            semantic_id_list_element=_make_semantic_id(SemanticIdCatalog.PDDL_PARAMETER),
         )
 
     def _build_term(
@@ -410,197 +523,19 @@ class AIPlanningSubmodelBuilder:
         term_cfg: Dict[str, Any],
         index: int,
         is_effect: bool,
+        problem_section_name: Optional[str] = None,
+        id_short_override: Optional[str] = None,
+        term_owner: Optional[_TermOwner] = None,
     ) -> model.SubmodelElementCollection:
-        term_type = term_cfg.get("type")
-        if term_type in {"predicate", "function", "fluent"}:
-            return self._build_action_fluent(system_id, action_key, term_cfg)
-
-        if term_type == "constant":
-            literal = self._build_constant_property(term_cfg, index)
-            return model.SubmodelElementCollection(
-                id_short=f"Constant_{index}",
-                value=[literal],
-                semantic_id=_make_semantic_id("https://smartproductionlab.aau.dk/PDDL/Term"),
-            )
-
-        semantic_id_str = term_cfg.get("semantic_id")
-        display_name = _semantic_id_display_name(semantic_id_str) or (term_type or f"Term_{index}")
-
-        child_terms = term_cfg.get("terms", []) or []
-        term_elements: List[model.SubmodelElement] = []
-        constant_properties: List[model.Property] = []
-
-        for i, child in enumerate(child_terms):
-            child_type = child.get("type") or child.get("key")
-            if child_type == "constant":
-                constant_properties.append(self._build_constant_property(child, len(constant_properties) + 1))
-            else:
-                term_elements.append(self._build_term(system_id, action_key, child, i + 1, is_effect=is_effect))
-
-        if constant_properties:
-            term_elements.append(
-                model.SubmodelElementCollection(
-                    id_short="Constants",
-                    value=constant_properties,
-                    semantic_id=_make_semantic_id("https://smartproductionlab.aau.dk/PDDL/Term/Constants"),
-                )
-            )
-
-        return model.SubmodelElementCollection(
-            id_short=f"Term_{index}",
-            value=term_elements,
-            semantic_id=_make_semantic_id("https://smartproductionlab.aau.dk/PDDL/Term"),
-            supplemental_semantic_id=[_make_semantic_id(semantic_id_str)] if semantic_id_str else [],
-            display_name=model.MultiLanguageNameType({"en": display_name}),
-        )
-
-    def _build_action_fluent(
-        self,
-        system_id: str,
-        action_key: str,
-        fluent_cfg: Dict[str, Any],
-        resolve_parameter_refs: bool = True,
-    ) -> model.SubmodelElementCollection:
-        elements: List[model.SubmodelElement] = []
-
-        ref_name = fluent_cfg.get("TransformationReference")
-        external_ref = fluent_cfg.get("ExternalReference")
-        inferred_semantic_id = fluent_cfg.get("semantic_id")
-
-        if ref_name:
-            domain_fluent = self._domain_fluents.get(str(ref_name), {})
-            inferred_semantic_id = inferred_semantic_id or domain_fluent.get("semantic_id")
-            elements.append(
-                model.ReferenceElement(
-                    id_short="FluentReference",
-                    value=model.ModelReference(
-                        key=(
-                            model.Key(
-                                type_=model.KeyTypes.SUBMODEL,
-                                value=f"{self.base_url}/submodels/instances/{system_id}/AIPlanning",
-                            ),
-                            model.Key(
-                                type_=model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION,
-                                value="Domain",
-                            ),
-                            model.Key(
-                                type_=model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION,
-                                value="Fluents",
-                            ),
-                            model.Key(
-                                type_=model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION,
-                                value=str(ref_name),
-                            ),
-                        ),
-                        type_=model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION,
-                    ),
-                )
-            )
-        elif external_ref:
-            inferred_semantic_id = inferred_semantic_id or external_ref
-            elements.append(
-                model.ReferenceElement(
-                    id_short="FluentReference",
-                    value=model.ExternalReference(
-                        key=(model.Key(model.KeyTypes.GLOBAL_REFERENCE, str(external_ref)),)
-                    ),
-                )
-            )
-
-        args = fluent_cfg.get("parameters", []) or []
-        if resolve_parameter_refs:
-            parameter_refs = [
-                self._build_action_parameter_reference(system_id, action_key, int(arg))
-                for arg in args
-                if isinstance(arg, int)
-            ]
-            elements.append(
-                model.SubmodelElementList(
-                    id_short="Parameters",
-                    type_value_list_element=model.ReferenceElement,
-                    value=parameter_refs,
-                    semantic_id_list_element=_make_semantic_id("https://smartproductionlab.aau.dk/PDDL/Parameter"),
-                )
-            )
-        else:
-            literal_args = [
-                self._typed_property(f"Argument_{idx + 1:02d}", arg)
-                for idx, arg in enumerate(args)
-            ]
-            elements.append(
-                model.SubmodelElementCollection(
-                    id_short="Parameters",
-                    value=literal_args,
-                    semantic_id=_make_semantic_id("https://smartproductionlab.aau.dk/PDDL/Parameters"),
-                )
-            )
-
-        if "value" in fluent_cfg and self._should_emit_numeric_value(fluent_cfg):
-            elements.append(self._typed_property("Value", fluent_cfg.get("value")))
-
-        semantic_name = _semantic_id_tail(inferred_semantic_id)
-        id_short = str(ref_name or semantic_name or "Fluent")
-
-        supp_ids = []
-        pred_sid = _make_semantic_id(inferred_semantic_id)
-        if pred_sid:
-            supp_ids.append(pred_sid)
-
-        return model.SubmodelElementCollection(
-            id_short=id_short,
-            value=elements,
-            display_name=model.MultiLanguageNameType({"en": id_short}),
-            semantic_id=pred_sid or _make_semantic_id("https://smartproductionlab.aau.dk/PDDL/Term"),
-            supplemental_semantic_id=[_make_semantic_id("https://smartproductionlab.aau.dk/PDDL/Term")] + supp_ids
-            if pred_sid
-            else [],
-        )
-
-    def _build_action_parameter_reference(
-        self,
-        system_id: str,
-        action_key: str,
-        param_idx: int,
-    ) -> model.ReferenceElement:
-        parameter_names = self._action_parameter_names.get(str(action_key), [])
-        display_name = (
-            parameter_names[param_idx]
-            if 0 <= param_idx < len(parameter_names)
-            else f"Parameter_{param_idx}"
-        )
-
-        return model.ReferenceElement(
-            id_short=None,
-            display_name=model.MultiLanguageNameType({"en": display_name}),
-            value=model.ModelReference(
-                key=(
-                    model.Key(
-                        type_=model.KeyTypes.SUBMODEL,
-                        value=f"{self.base_url}/submodels/instances/{system_id}/AIPlanning",
-                    ),
-                    model.Key(
-                        type_=model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION,
-                        value="Domain",
-                    ),
-                    model.Key(
-                        type_=model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION,
-                        value="Actions",
-                    ),
-                    model.Key(
-                        type_=model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION,
-                        value=str(action_key),
-                    ),
-                    model.Key(
-                        type_=model.KeyTypes.SUBMODEL_ELEMENT_LIST,
-                        value="Parameters",
-                    ),
-                    model.Key(
-                        type_=model.KeyTypes.REFERENCE_ELEMENT,
-                        value=str(param_idx),
-                    ),
-                ),
-                type_=model.KeyTypes.REFERENCE_ELEMENT,
-            ),
+        return self._terms.build_term(
+            system_id=system_id,
+            action_key=action_key,
+            term_cfg=term_cfg,
+            index=index,
+            is_effect=is_effect,
+            problem_section_name=problem_section_name,
+            id_short_override=id_short_override,
+            term_owner=term_owner,
         )
 
     def _build_problem_state_section(
@@ -609,136 +544,57 @@ class AIPlanningSubmodelBuilder:
         section_name: str,
         section_cfg: Any,
     ) -> model.SubmodelElementCollection:
-        state_terms = self._normalize_problem_state_terms(section_cfg)
-        elements = [
-            self._build_action_fluent(system_id, f"{section_name}_state", term, resolve_parameter_refs=False)
-            if (term.get("type") in {"predicate", "function", "fluent"})
-            else self._build_term(system_id, f"{section_name}_state", term, i + 1, is_effect=False)
-            for i, term in enumerate(state_terms)
-        ]
+        state_terms = normalize_terms_payload(section_cfg)
+        elements: List[model.SubmodelElement] = []
+        for i, term in enumerate(state_terms):
+            term_id_short = self._preferred_term_id_short(term, i + 1)
+            elements.append(
+                self._build_term(
+                    system_id,
+                    f"{section_name}_state",
+                    term,
+                    i + 1,
+                    is_effect=False,
+                    problem_section_name=section_name,
+                    id_short_override=term_id_short,
+                )
+            )
+            if section_name == "Goal":
+                self._register_preference_location(term, section_name, term_id_short)
 
         return model.SubmodelElementCollection(
             id_short=section_name,
             value=elements,
-            semantic_id=_make_semantic_id(f"https://smartproductionlab.aau.dk/AIPlanning/Problem/{section_name}"),
+            semantic_id=_make_semantic_id(SemanticIdCatalog.ai_planning_problem_section(section_name)),
         )
 
-    def _normalize_problem_state_terms(self, section_cfg: Any) -> List[Dict[str, Any]]:
-        if not isinstance(section_cfg, list):
-            return []
+    def _preferred_term_id_short(self, term_cfg: Dict[str, Any], index: int) -> str:
+        return f"term_{index}"
 
-        terms: List[Dict[str, Any]] = []
-        for entry in section_cfg:
-            if not isinstance(entry, dict):
-                continue
-
-            if "pred" in entry:
-                term = self._normalize_problem_predicate(entry["pred"])
-                if term:
-                    terms.append(term)
-                continue
-
-            if "not" in entry:
-                neg_payload = entry["not"]
-                if isinstance(neg_payload, list) and neg_payload and isinstance(neg_payload[0], dict) and "pred" in neg_payload[0]:
-                    term = self._normalize_problem_predicate(neg_payload[0]["pred"])
-                    if term:
-                        terms.append(
-                            {
-                                "type": "logicalterm",
-                                "semantic_id": "https://smartproductionlab.aau.dk/PDDL/Term/Logic/Not",
-                                "terms": [term],
-                            }
-                        )
-                    continue
-                if isinstance(neg_payload, dict) and "pred" in neg_payload:
-                    term = self._normalize_problem_predicate(neg_payload["pred"])
-                    if term:
-                        terms.append(
-                            {
-                                "type": "logicalterm",
-                                "semantic_id": self.SUBMODEL_SEMANTIC_ID.LOGIC_SEMANTIC_IDS,
-                                "terms": [term],
-                            }
-                        )
-                    continue
-
-        return terms
-
-    def _normalize_problem_predicate(self, payload: Any) -> Optional[Dict[str, Any]]:
-        if isinstance(payload, str):
-            return {
-                "type": "predicate",
-                "TransformationReference": payload,
-                "parameters": [],
-            }
-
-        if not isinstance(payload, dict):
-            return None
-
-        return {
-            "type": "predicate",
-            "TransformationReference": payload.get("ref"),
-            "ExternalReference": payload.get("external") or payload.get("externalRef"),
-            "parameters": payload.get("args") or payload.get("parameters") or [],
-            "semantic_id": payload.get("semantic_id") or payload.get("semanticId"),
-        }
-
-    def _flatten_effect_set(self, term_cfg: Dict[str, Any]) -> Dict[str, Any]:
+    def _extract_preference_name(self, term_cfg: Any) -> Optional[str]:
         if not isinstance(term_cfg, dict):
-            return term_cfg
-
+            return None
+        term_type = str(term_cfg.get("type", "")).lower()
         semantic_id = str(term_cfg.get("semantic_id", "")).lower()
-        if term_cfg.get("type") == "arithmeticterm" and semantic_id.endswith("/set"):
-            fluent_term, value_term = self._extract_set_parts(term_cfg.get("terms", []) or [])
-            if fluent_term is not None:
-                if value_term is not None:
-                    fluent_term = dict(fluent_term)
-                    fluent_term["value"] = value_term
-                return fluent_term
+        if term_type == "temporalterm" and "preference" in semantic_id and term_cfg.get("name"):
+            return str(term_cfg.get("name"))
+        return None
 
-        children = term_cfg.get("terms")
-        if isinstance(children, list):
-            updated = [self._flatten_effect_set(child) if isinstance(child, dict) else child for child in children]
-            flattened = dict(term_cfg)
-            flattened["terms"] = updated
-            return flattened
-
-        return term_cfg
-
-    def _should_emit_numeric_value(self, fluent_cfg: Dict[str, Any]) -> bool:
-        value = fluent_cfg.get("value")
-        if isinstance(value, bool):
-            return False
-
-        term_type = str(fluent_cfg.get("type", "")).lower()
-        if term_type == "function":
-            return True
-
-        return isinstance(value, (int, float))
-
-    def _extract_set_parts(self, terms: List[Dict[str, Any]]) -> Tuple[Optional[Dict[str, Any]], Optional[Any]]:
-        fluent_term: Optional[Dict[str, Any]] = None
-        value_term: Optional[Any] = None
-        for term in terms:
-            if not isinstance(term, dict):
-                continue
-            if term.get("type") in {"predicate", "function", "fluent"} and fluent_term is None:
-                fluent_term = term
-            elif term.get("type") == "constant" and value_term is None:
-                value_term = term.get("value")
-        return fluent_term, value_term
-
-    def _build_constant_property(self, term_cfg: Dict[str, Any], index: int) -> model.Property:
-        const_name = term_cfg.get("name") or f"Constant_{index}"
-        return self._typed_property(const_name, term_cfg.get("value"))
-
-    def _build_freeform_section(self, section_name: str, section_cfg: Any) -> model.SubmodelElementCollection:
-        return model.SubmodelElementCollection(
-            id_short=section_name,
-            value=[self._string_property("Payload", str(section_cfg))],
-            semantic_id=_make_semantic_id(f"https://smartproductionlab.aau.dk/AIPlanning/{section_name}"),
-        )
+    def _register_preference_location(
+        self,
+        term_cfg: Dict[str, Any],
+        section_name: str,
+        term_id_short: str,
+    ) -> None:
+        pref_name = self._extract_preference_name(term_cfg)
+        if not pref_name:
+            return
+        existing = self._context.problem_preference_locations.get(pref_name)
+        if existing and existing != (section_name, term_id_short):
+            raise ValueError(
+                f"Duplicate preference name '{pref_name}' in Problem section. Preference names must be unique."
+            )
+        self._context.problem_preference_locations[pref_name] = (section_name, term_id_short)
 
     def _string_property(self, id_short: str, value: str) -> model.Property:
         return model.Property(
@@ -747,7 +603,7 @@ class AIPlanningSubmodelBuilder:
             value=str(value),
         )
 
-    def _typed_property(self, id_short: str, value: Any) -> model.Property:
+    def _typed_property(self, id_short: str, value: Any, display_name: Optional[str] = None) -> model.Property:
         if isinstance(value, bool):
             value_type = model.datatypes.Boolean
             val = value
@@ -761,4 +617,13 @@ class AIPlanningSubmodelBuilder:
             value_type = model.datatypes.String
             val = str(value)
 
+        if display_name:
+            return model.Property(
+                id_short=id_short,
+                value_type=value_type,
+                value=val,
+                display_name=model.MultiLanguageNameType({"en": display_name}),
+            )
+
         return model.Property(id_short=id_short, value_type=value_type, value=val)
+

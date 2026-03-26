@@ -9,6 +9,8 @@ This module provides builders for Process AAS specific submodels:
 from typing import Dict, List, Any, Optional
 from basyx.aas import model
 
+from ..semantic_ids import SemanticIdCatalog
+
 
 class ProcessInformationSubmodelBuilder:
     """Builder for ProcessInformation submodel.
@@ -16,7 +18,7 @@ class ProcessInformationSubmodelBuilder:
     Contains basic process metadata and a ReferenceElement to the product AAS.
     """
     
-    SEMANTIC_ID = "https://smartproductionlab.aau.dk/submodels/ProcessInformation/1/0"
+    SEMANTIC_ID = SemanticIdCatalog.PROCESS_INFORMATION_SUBMODEL
     
     def __init__(self, base_url: str, semantic_factory, element_factory):
         self.base_url = base_url
@@ -101,7 +103,7 @@ class RequiredCapabilitiesSubmodelBuilder:
                 capability_path: ["CapabilitySet", "Container", "Capability"]
     """
     
-    SEMANTIC_ID = "https://smartproductionlab.aau.dk/submodels/RequiredCapabilities/1/0"
+    SEMANTIC_ID = SemanticIdCatalog.REQUIRED_CAPABILITIES_SUBMODEL
     
     def __init__(self, base_url: str, semantic_factory, element_factory):
         """
@@ -344,7 +346,7 @@ class RequiredCapabilitiesSubmodelBuilder:
 class PolicySubmodelBuilder:
     """Builder for Policy submodel (Behavior Tree reference)."""
     
-    SEMANTIC_ID = "https://smartproductionlab.aau.dk/submodels/Policy/1/0"
+    SEMANTIC_ID = SemanticIdCatalog.POLICY_SUBMODEL
     
     def __init__(self, base_url: str, semantic_factory, element_factory):
         self.base_url = base_url
@@ -356,7 +358,7 @@ class PolicySubmodelBuilder:
         
         Expected config format:
             Policy:
-                semantic_id: "https://smartproductionlab.aau.dk/submodels/Policy/1/0"
+                semantic_id: "<policy-semantic-id>"
                 BehaviorTree:
                     File: "https://example.com/policy/production.xml"
                     contentType: "application/xml"

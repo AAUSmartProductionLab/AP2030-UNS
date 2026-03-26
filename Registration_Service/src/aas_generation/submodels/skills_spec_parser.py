@@ -6,76 +6,53 @@ It supports only the simplified ``pddl`` syntax used in current configs.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Set
+from typing import Any, Dict, List, Optional, Set
 
-PDDL_LOGIC_BASE = "https://smartproductionlab.aau.dk/PDDL/Term/Logic"
-PDDL_ARITH_BASE = "https://smartproductionlab.aau.dk/PDDL/Term/Arithmetic"
-PDDL_NONDET_BASE = "https://smartproductionlab.aau.dk/PDDL/Term/Nondeterministic"
-PDDL_TEMPORAL_BASE = "https://smartproductionlab.aau.dk/PDDL/Term/Temporal"
+from ..semantic_ids import SemanticIdCatalog
 
-LOGIC_SEMANTIC_IDS = {
-    "and": "https://planning.wiki/ref/pddl/domain#and",
-    "or": "https://planning.wiki/ref/pddl/domain#or",
-    "not": f"https://planning.wiki/ref/pddl/domain#not",
-    "imply": "https://planning.wiki/ref/pddl/domain#imply",
-    "forall": "https://planning.wiki/ref/pddl/domain#forall",
-    "exists": "https://planning.wiki/ref/pddl/domain#exists",
-    "when": "https://planning.wiki/ref/pddl/domain#when",
-}
+PDDL_LOGIC_BASE = SemanticIdCatalog.PDDL_LOGIC_BASE
+PDDL_ARITH_BASE = SemanticIdCatalog.PDDL_ARITH_BASE
+PDDL_NONDET_BASE = SemanticIdCatalog.PDDL_NONDET_BASE
+PDDL_TEMPORAL_BASE = SemanticIdCatalog.PDDL_TEMPORAL_BASE
 
-ARITHMETIC_SEMANTIC_IDS = {
-    "=": f"{PDDL_ARITH_BASE}/Equal",
-    "eq": f"{PDDL_ARITH_BASE}/Equal",
-    "<": f"{PDDL_ARITH_BASE}/LessThan",
-    "<=": f"{PDDL_ARITH_BASE}/LessOrEqual",
-    ">": f"{PDDL_ARITH_BASE}/GreaterThan",
-    ">=": f"{PDDL_ARITH_BASE}/GreaterOrEqual",
-    "+": "https://planning.wiki/ref/pddl21/domain#add",
-    "-": "https://planning.wiki/ref/pddl21/domain#subtract",
-    "*": "https://planning.wiki/ref/pddl21/domain#multiply",
-    "/": "https://planning.wiki/ref/pddl21/domain#divide",
-    "assign": f"https://planning.wiki/ref/pddl21/domain#assign",
-    "increase": f"https://planning.wiki/ref/pddl21/domain#increase",
-    "decrease": f"https://planning.wiki/ref/pddl21/domain#decrease",
-    "scale-up": f"https://planning.wiki/ref/pddl21/domain#scale-up",
-    "scale-down": f"https://planning.wiki/ref/pddl21/domain#scale-down"
-}
-
-NONDET_SEMANTIC_IDS = {
-    "oneof": f"{PDDL_NONDET_BASE}/OneOf",
-}
-
-TEMPORAL_SEMANTIC_IDS = {
-    "always": f"https://planning.wiki/ref/pddl3/domain#always",
-    "sometime": f"https://planning.wiki/ref/pddl3/domain#sometime",
-    "within": f"https://planning.wiki/ref/pddl3/domain#within",
-    "at-most-once": f"https://planning.wiki/ref/pddl3/domain#at-most-once",
-    "sometime-after": f"https://planning.wiki/ref/pddl3/domain#sometime-after",
-    "sometime-before": f"https://planning.wiki/ref/pddl3/domain#sometime-before",
-    "always-within": "https://planning.wiki/ref/pddl3/domain#always-within",
-    "hold-during": f"https://planning.wiki/ref/pddl3/domain#hold-during",
-    "hold-after": f"https://planning.wiki/ref/pddl3/domain#hold-after",
-    "preference": f"https://planning.wiki/ref/pddl3/problem#preferences",
-}
+LOGIC_SEMANTIC_IDS = SemanticIdCatalog.LOGIC_SEMANTIC_IDS
+ARITHMETIC_SEMANTIC_IDS = SemanticIdCatalog.ARITHMETIC_SEMANTIC_IDS
+NONDET_SEMANTIC_IDS = SemanticIdCatalog.NONDET_SEMANTIC_IDS
+TEMPORAL_SEMANTIC_IDS = SemanticIdCatalog.TEMPORAL_SEMANTIC_IDS
 
 CONDITION_GROUP_ALIASES = {
+    "preconditions": "PreConditions",
+    "precondition": "PreConditions",
+    "PreConditions": "PreConditions",
     "at_start": "PreConditions",
     "start": "PreConditions",
     "pre": "PreConditions",
+    "invariantconditions": "InvariantConditions",
+    "InvariantConditions": "InvariantConditions",
     "over_all": "InvariantConditions",
     "invariant": "InvariantConditions",
+    "postconditions": "PostConditions",
+    "postcondition": "PostConditions",
+    "PostConditions": "PostConditions",
     "at_end": "PostConditions",
     "end": "PostConditions",
     "post": "PostConditions",
 }
 
 EFFECT_GROUP_ALIASES = {
+    "starteffects": "StartEffects",
+    "StartEffects": "StartEffects",
     "at_start": "StartEffects",
     "start": "StartEffects",
+    "continuouseffects": "ContinuousEffects",
+    "ContinuousEffects": "ContinuousEffects",
     "continuous": "ContinuousEffects",
     "over_all": "ContinuousEffects",
+    "endeffects": "EndEffects",
+    "EndEffects": "EndEffects",
     "at_end": "EndEffects",
     "end": "EndEffects",
+    "effect": "EndEffects",
 }
 
 
@@ -90,23 +67,17 @@ def normalize_description_from_pddl(
     conditions_cfg = pddl_cfg.get("conditions", {})
     effects_cfg = pddl_cfg.get("effects", {})
 
-    conditions: Dict[str, Dict[str, List[Dict[str, Any]]]] = {}
-    for key, value in (conditions_cfg or {}).items():
-        canonical = CONDITION_GROUP_ALIASES.get(str(key).lower())
-        if canonical is None:
-            continue
-        terms = _normalize_group_terms(value)
-        if terms:
-            conditions[canonical] = {"terms": terms}
+    conditions = normalize_section_groups(
+        groups_cfg=conditions_cfg,
+        aliases=CONDITION_GROUP_ALIASES,
+        default_group="PreConditions",
+    )
 
-    effects: Dict[str, Dict[str, List[Dict[str, Any]]]] = {}
-    for key, value in (effects_cfg or {}).items():
-        canonical = EFFECT_GROUP_ALIASES.get(str(key).lower())
-        if canonical is None:
-            continue
-        terms = _normalize_group_terms(value)
-        if terms:
-            effects[canonical] = {"terms": terms}
+    effects = normalize_section_groups(
+        groups_cfg=effects_cfg,
+        aliases=EFFECT_GROUP_ALIASES,
+        default_group="EndEffects",
+    )
 
     duration = _normalize_duration(pddl_cfg.get("duration"))
 
@@ -138,8 +109,8 @@ def normalize_parameters(parameters: List[Dict[str, Any]]) -> List[Dict[str, Any
         name = item.get("name") or f"Parameter_{idx}"
         param: Dict[str, Any] = {"name": name}
 
-        model_ref = item.get("ModelReference") or item.get("modelRef")
-        external_ref = item.get("ExternalReference") or item.get("externalRef")
+        model_ref = _first_present(item, "ModelReference", "modelRef", "model_reference")
+        external_ref = _first_present(item, "ExternalReference", "externalRef", "external_reference")
 
         if model_ref:
             param["ModelReference"] = model_ref
@@ -149,6 +120,39 @@ def normalize_parameters(parameters: List[Dict[str, Any]]) -> List[Dict[str, Any
         normalized.append(param)
 
     return normalized
+
+
+def normalize_terms_payload(raw_terms: Any) -> List[Dict[str, Any]]:
+    """Normalize any term payload into canonical term dictionaries."""
+    return _ensure_term_list(raw_terms)
+
+
+def normalize_section_groups(
+    groups_cfg: Any,
+    aliases: Dict[str, str],
+    default_group: Optional[str] = None,
+) -> Dict[str, Dict[str, List[Dict[str, Any]]]]:
+    """Normalize section groups (conditions/effects) with aliases and fallback group."""
+    if groups_cfg is None:
+        return {}
+
+    if isinstance(groups_cfg, dict):
+        normalized: Dict[str, Dict[str, List[Dict[str, Any]]]] = {}
+        for key, value in groups_cfg.items():
+            canonical = aliases.get(str(key).lower())
+            if canonical is None:
+                continue
+            terms = _normalize_group_terms(value)
+            if terms:
+                normalized[canonical] = {"terms": terms}
+        return normalized
+
+    if default_group:
+        terms = _normalize_group_terms(groups_cfg)
+        if terms:
+            return {default_group: {"terms": terms}}
+
+    return {}
 
 
 def _ensure_term_list(raw_terms: Any) -> List[Dict[str, Any]]:
@@ -173,6 +177,9 @@ def _normalize_term(node: Any) -> Dict[str, Any]:
 
     if not isinstance(node, dict):
         return {}
+
+    if _is_fluent_like_payload(node):
+        return _normalize_fluent_payload(node)
 
     # Compact DSL: {and: [...]}, {not: {...}}, {pred: {...}}
     if len(node) == 1:
@@ -238,7 +245,7 @@ def _normalize_term(node: Any) -> Dict[str, Any]:
 
     if term_type in {"logicalterm", "logicterm"}:
         terms = _ensure_term_list(node.get("terms", []))
-        semantic_id = node.get("semantic_id")
+        semantic_id = _extract_semantic_id(node)
         return {
             "type": "logicalterm",
             "terms": terms,
@@ -247,7 +254,7 @@ def _normalize_term(node: Any) -> Dict[str, Any]:
 
     if term_type in {"arithmeticterm", "arithmeticalterm"}:
         terms = _ensure_term_list(node.get("terms", []))
-        semantic_id = node.get("semantic_id")
+        semantic_id = _extract_semantic_id(node)
         if not semantic_id and node.get("operator"):
             semantic_id = ARITHMETIC_SEMANTIC_IDS.get(str(node.get("operator")).lower())
         return {
@@ -258,7 +265,7 @@ def _normalize_term(node: Any) -> Dict[str, Any]:
 
     if term_type in {"nondeterministicterm", "nondetterm"}:
         terms = _ensure_term_list(node.get("terms", []))
-        semantic_id = node.get("semantic_id")
+        semantic_id = _extract_semantic_id(node)
         if not semantic_id and node.get("operator"):
             semantic_id = NONDET_SEMANTIC_IDS.get(str(node.get("operator")).lower())
         return {
@@ -269,7 +276,7 @@ def _normalize_term(node: Any) -> Dict[str, Any]:
 
     if term_type in {"temporalterm", "constraintterm", "preferenceterm"}:
         terms = _ensure_term_list(node.get("terms", []))
-        semantic_id = node.get("semantic_id")
+        semantic_id = _extract_semantic_id(node)
         if not semantic_id and node.get("operator"):
             semantic_id = TEMPORAL_SEMANTIC_IDS.get(str(node.get("operator")).lower())
         return {
@@ -280,7 +287,7 @@ def _normalize_term(node: Any) -> Dict[str, Any]:
         }
 
     terms = _ensure_term_list(node.get("terms", []))
-    semantic_id = node.get("semantic_id")
+    semantic_id = _extract_semantic_id(node)
     if not semantic_id and term_type in LOGIC_SEMANTIC_IDS:
         semantic_id = LOGIC_SEMANTIC_IDS[term_type]
 
@@ -314,12 +321,23 @@ def _normalize_fluent_payload(payload: Any) -> Dict[str, Any]:
     if not isinstance(payload, dict):
         return {"type": "predicate", "parameters": []}
 
+    inferred_type = str(payload.get("type") or "predicate").lower()
+    if inferred_type in {"func", "function"}:
+        inferred_type = "function"
+
     normalized = {
-        "type": payload.get("type") or "predicate",
-        "TransformationReference": payload.get("ref") or payload.get("transformation"),
-        "ExternalReference": payload.get("external") or payload.get("externalRef"),
-        "semantic_id": payload.get("semantic_id") or payload.get("semanticId"),
-        "parameters": payload.get("args") or payload.get("parameters") or [],
+        "type": inferred_type,
+        "TransformationReference": _first_present(
+            payload,
+            "TransformationReference",
+            "transformationReference",
+            "ref",
+            "transformation",
+        ),
+        "ExternalReference": _first_present(payload, "ExternalReference", "externalRef", "external"),
+        "semantic_id": _extract_semantic_id(payload),
+        "parameters": _first_present(payload, "parameters", "args") or [],
+        "PreferenceReference": _first_present(payload, "PreferenceReference", "preferenceReference", "preference"),
         "description": payload.get("description"),
         "value": payload.get("value"),
     }
@@ -453,6 +471,32 @@ def _normalize_preference(payload: Any) -> Dict[str, Any]:
         "terms": _ensure_term_list(inner),
         **({"name": payload.get("name")} if payload.get("name") else {}),
     }
+
+
+def _first_present(payload: Dict[str, Any], *keys: str) -> Any:
+    for key in keys:
+        if key in payload and payload.get(key) is not None:
+            return payload.get(key)
+    return None
+
+
+def _extract_semantic_id(payload: Dict[str, Any]) -> Any:
+    return _first_present(payload, "semantic_id", "semanticId", "semantic")
+
+
+def _is_fluent_like_payload(payload: Dict[str, Any]) -> bool:
+    return any(
+        key in payload
+        for key in (
+            "TransformationReference",
+            "transformationReference",
+            "ref",
+            "transformation",
+            "ExternalReference",
+            "externalRef",
+            "external",
+        )
+    )
 
 
 def _merge_requirements(explicit_requirements: List[Any], inferred: List[str]) -> List[str]:

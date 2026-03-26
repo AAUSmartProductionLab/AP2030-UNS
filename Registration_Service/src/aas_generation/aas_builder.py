@@ -3,6 +3,8 @@
 from typing import Dict, List
 from basyx.aas import model
 
+from .semantic_ids import SemanticIdFactory
+
 
 class AASBuilder:
     """
@@ -20,6 +22,7 @@ class AASBuilder:
             base_url: Base URL for AAS identifiers
         """
         self.base_url = base_url
+        self.semantic_factory = SemanticIdFactory()
     
     def build(self, system_id: str, config: Dict) -> model.AssetAdministrationShell:
         """
@@ -101,22 +104,12 @@ class AASBuilder:
             model.SpecificAssetId(
                 name="serialNumber",
                 value=serial_number,
-                external_subject_id=model.ExternalReference(
-                    (model.Key(
-                        type_=model.KeyTypes.GLOBAL_REFERENCE,
-                        value="https://admin-shell.io/aas/3/0/SpecificAssetId/SerialNumber"
-                    ),)
-                )
+                external_subject_id=self.semantic_factory.SERIAL_NUMBER
             ),
             model.SpecificAssetId(
                 name="location",
                 value=location,
-                external_subject_id=model.ExternalReference(
-                    (model.Key(
-                        type_=model.KeyTypes.GLOBAL_REFERENCE,
-                        value="https://admin-shell.io/aas/3/0/SpecificAssetId/Location"
-                    ),)
-                )
+                external_subject_id=self.semantic_factory.LOCATION
             )
         }
         

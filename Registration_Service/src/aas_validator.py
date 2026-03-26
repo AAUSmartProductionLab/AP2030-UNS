@@ -8,6 +8,8 @@ from typing import Dict, List, Tuple, Set
 from basyx.aas import model
 import re
 
+from .aas_generation.semantic_ids import SemanticIdCatalog
+
 
 class ValidationResult:
     """Stores validation results with severity levels."""
@@ -78,25 +80,10 @@ class AASValidator:
     """Validates AAS structures for correctness and compliance."""
     
     # Known IDTA semantic IDs for validation
-    IDTA_SUBMODELS = {
-        "https://admin-shell.io/idta/AssetInterfacesDescription/1/0",
-        "https://admin-shell.io/zvei/nameplate/1/0/Nameplate",
-        "https://admin-shell.io/ZVEI/TechnicalData/Submodel/1/2",
-        "https://admin-shell.io/idta/HierarchicalStructures/1/0/Submodel",
-        "https://admin-shell.io/idta/HierarchicalStructures/1/1/Submodel",
-        "https://admin-shell.io/idta/CarbonFootprint/0/9/ProductCarbonFootprint",
-        "http://smartproductionlab.aau.dk/submodels/Variables/1/0",
-        "http://smartproductionlab.aau.dk/submodels/Parameters/1/0",
-        "http://smartproductionlab.aau.dk/submodels/Skills/1/0",
-        "http://smartproductionlab.aau.dk/submodels/OfferedCapabilityDescription/1/0",
-    }
+    IDTA_SUBMODELS = SemanticIdCatalog.recognized_submodel_templates()
     
     # W3C Thing Description semantic IDs
-    WOT_SEMANTIC_IDS = {
-        "https://www.w3.org/2019/wot/td#ActionAffordance",
-        "https://www.w3.org/2019/wot/td#PropertyAffordance",
-        "https://www.w3.org/2019/wot/td#InteractionAffordance",
-    }
+    WOT_SEMANTIC_IDS = SemanticIdCatalog.wot_semantic_ids()
     
     def __init__(self):
         self.result = ValidationResult()

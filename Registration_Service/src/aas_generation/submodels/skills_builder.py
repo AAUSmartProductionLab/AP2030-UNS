@@ -113,7 +113,7 @@ class SkillBuilder:
         """
         # Get the interface name for this skill
         skill_name = self.config.get('key')
-        interface_name = self.config.get('InterfaceReference', skill_name)
+        interface_name = self.config.get('InterfaceReference') or self.config.get('interface_reference') or skill_name
 
         elements = []
         is_async = False

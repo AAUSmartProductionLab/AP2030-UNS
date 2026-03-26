@@ -8,6 +8,8 @@ from enum import Enum
 from typing import Final
 import os
 
+from ..aas_generation.semantic_ids import SemanticIdCatalog
+
 
 # Default network configuration
 # These defaults assume the service runs within Docker (the primary deployment method)
@@ -90,23 +92,23 @@ class BaSyxPorts:
 class SemanticIds:
     """Common semantic IDs."""
     # IDTA submodels
-    ASSET_INTERFACES: Final[str] = "https://admin-shell.io/idta/AssetInterfacesDescription/1/0"
-    NAMEPLATE: Final[str] = "https://admin-shell.io/zvei/nameplate/1/0/Nameplate"
-    TECHNICAL_DATA: Final[str] = "https://admin-shell.io/ZVEI/TechnicalData/Submodel/1/2"
-    HIERARCHICAL_STRUCTURES_1_0: Final[str] = "https://admin-shell.io/idta/HierarchicalStructures/1/0/Submodel"
-    HIERARCHICAL_STRUCTURES_1_1: Final[str] = "https://admin-shell.io/idta/HierarchicalStructures/1/1/Submodel"
-    CARBON_FOOTPRINT: Final[str] = "https://admin-shell.io/idta/CarbonFootprint/0/9/ProductCarbonFootprint"
+    ASSET_INTERFACES: Final[str] = SemanticIdCatalog.IDTA_ASSET_INTERFACES
+    NAMEPLATE: Final[str] = SemanticIdCatalog.IDTA_NAMEPLATE
+    TECHNICAL_DATA: Final[str] = SemanticIdCatalog.IDTA_TECHNICAL_DATA
+    HIERARCHICAL_STRUCTURES_1_0: Final[str] = SemanticIdCatalog.IDTA_HIERARCHICAL_STRUCTURES_1_0
+    HIERARCHICAL_STRUCTURES_1_1: Final[str] = SemanticIdCatalog.IDTA_HIERARCHICAL_STRUCTURES_1_1
+    CARBON_FOOTPRINT: Final[str] = SemanticIdCatalog.IDTA_CARBON_FOOTPRINT
 
     # Custom submodels
-    VARIABLES: Final[str] = "http://smartproductionlab.aau.dk/submodels/Variables/1/0"
-    PARAMETERS: Final[str] = "http://smartproductionlab.aau.dk/submodels/Parameters/1/0"
-    SKILLS: Final[str] = "http://smartproductionlab.aau.dk/submodels/Skills/1/0"
-    CAPABILITIES: Final[str] = "http://smartproductionlab.aau.dk/submodels/OfferedCapabilityDescription/1/0"
+    VARIABLES: Final[str] = SemanticIdCatalog.LEGACY_VARIABLES_SUBMODEL
+    PARAMETERS: Final[str] = SemanticIdCatalog.LEGACY_PARAMETERS_SUBMODEL
+    SKILLS: Final[str] = SemanticIdCatalog.LEGACY_SKILLS_SUBMODEL
+    CAPABILITIES: Final[str] = SemanticIdCatalog.LEGACY_CAPABILITIES_SUBMODEL
 
     # W3C Thing Description
-    WOT_ACTION: Final[str] = "https://www.w3.org/2019/wot/td#ActionAffordance"
-    WOT_PROPERTY: Final[str] = "https://www.w3.org/2019/wot/td#PropertyAffordance"
-    WOT_INTERACTION: Final[str] = "https://www.w3.org/2019/wot/td#InteractionAffordance"
+    WOT_ACTION: Final[str] = SemanticIdCatalog.WOT_ACTION
+    WOT_PROPERTY: Final[str] = SemanticIdCatalog.WOT_PROPERTY
+    WOT_INTERACTION: Final[str] = SemanticIdCatalog.WOT_INTERACTION
 
 
 class DataTypes:
