@@ -683,6 +683,18 @@ class _PlanningTermBuilder:
             if isinstance(value, str) and value.strip():
                 return value.strip()
 
+        # External/global predicate references should use the semantic tail
+        # (e.g. .../Predicates/On -> On) rather than a generic fallback like
+        # "predicate".
+        external_reference = term_cfg.get("ExternalReference") or term_cfg.get("externalRef")
+        external_tail = _semantic_id_tail(str(external_reference)) if external_reference else None
+        if external_tail:
+            return external_tail
+
+        semantic_tail = _semantic_id_tail(term_cfg.get("semantic_id"))
+        if semantic_tail:
+            return semantic_tail
+
         return fallback
 
 
