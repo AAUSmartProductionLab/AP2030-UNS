@@ -13,3 +13,6 @@
 [submodule "BT_Controller/third_party/BehaviorTree.CPP"]
 	path = BT_Controller/third_party/BehaviorTree.CPP
 	url = https://github.com/BehaviorTree/BehaviorTree.CPP.git
+[submodule "unified-planning"]
+	path = unified-planning
+	url = git@github.com:tristan-schwoerer/unified-planning.git
