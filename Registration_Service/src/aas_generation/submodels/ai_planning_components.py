@@ -12,8 +12,9 @@ from basyx.aas import model
 
 from ..semantic_ids import SemanticIdCatalog
 from .skills_spec_parser import (
+    EFFECT_GROUP_ALIASES,
     normalize_description_from_pddl,
-    normalize_parameters,
+    normalize_section_groups,
 )
 
 
@@ -158,20 +159,16 @@ class _PlanningReferenceBuilder:
             else f"Parameter_{param_idx}"
         )
 
-        return model.ReferenceElement(
-            id_short=None,
-            display_name=model.MultiLanguageNameType({"en": display_name}),
-            value=self.build_ai_planning_model_reference(
-                system_id=system_id,
-                path_segments=[
-                    (model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION, "Domain"),
-                    (model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION, str(owner_section)),
-                    (model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION, str(owner_key)),
-                    (model.KeyTypes.SUBMODEL_ELEMENT_LIST, "Parameters"),
-                    (model.KeyTypes.REFERENCE_ELEMENT, str(param_idx)),
-                ],
-                reference_type=model.KeyTypes.REFERENCE_ELEMENT,
-            ),
+        return self._build_internal_reference_element(
+            system_id=system_id,
+            display_name=display_name,
+            path_segments=[
+                (model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION, "Domain"),
+                (model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION, str(owner_section)),
+                (model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION, str(owner_key)),
+                (model.KeyTypes.SUBMODEL_ELEMENT_LIST, "Parameters"),
+                (model.KeyTypes.REFERENCE_ELEMENT, str(param_idx)),
+            ],
         )
 
     def build_problem_object_reference(
@@ -186,16 +183,28 @@ class _PlanningReferenceBuilder:
             )
 
         display_name = self._context.problem_object_names[object_idx]
+        return self._build_internal_reference_element(
+            system_id=system_id,
+            display_name=display_name,
+            path_segments=[
+                (model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION, "Problem"),
+                (model.KeyTypes.SUBMODEL_ELEMENT_LIST, "Objects"),
+                (model.KeyTypes.REFERENCE_ELEMENT, str(object_idx)),
+            ],
+        )
+
+    def _build_internal_reference_element(
+        self,
+        system_id: str,
+        display_name: str,
+        path_segments: List[Tuple[model.KeyTypes, str]],
+    ) -> model.ReferenceElement:
         return model.ReferenceElement(
             id_short=None,
             display_name=model.MultiLanguageNameType({"en": display_name}),
             value=self.build_ai_planning_model_reference(
                 system_id=system_id,
-                path_segments=[
-                    (model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION, "Problem"),
-                    (model.KeyTypes.SUBMODEL_ELEMENT_LIST, "Objects"),
-                    (model.KeyTypes.REFERENCE_ELEMENT, str(object_idx)),
-                ],
+                path_segments=path_segments,
                 reference_type=model.KeyTypes.REFERENCE_ELEMENT,
             ),
         )
@@ -448,60 +457,49 @@ class _PlanningTermBuilder:
         display_name_override: Optional[str] = None,
         term_owner: Optional[_TermOwner] = None,
     ) -> model.SubmodelElementCollection:
-        elements: List[model.SubmodelElement] = []
         owner = self.resolve_term_owner(term_owner, fallback_key=action_key)
-
         ref_name = fluent_cfg.get("TransformationReference")
         external_ref = fluent_cfg.get("ExternalReference")
-        inferred_semantic_id = fluent_cfg.get("semantic_id")
 
-        inferred_semantic_id = self._references.append_fluent_reference_element(
-            elements=elements,
-            system_id=system_id,
-            ref_name=ref_name,
-            external_ref=external_ref,
-            inferred_semantic_id=inferred_semantic_id,
-        )
+        def append_reference(
+            elements: List[model.SubmodelElement],
+            inferred_semantic_id: Optional[str],
+        ) -> Tuple[Optional[str], Optional[Any]]:
+            resolved_semantic_id = self._references.append_fluent_reference_element(
+                elements=elements,
+                system_id=system_id,
+                ref_name=ref_name,
+                external_ref=external_ref,
+                inferred_semantic_id=inferred_semantic_id,
+            )
+            return resolved_semantic_id, ref_name
 
-        args = fluent_cfg.get("parameters", []) or []
-        if resolve_parameter_refs:
-            if any(not isinstance(arg, int) for arg in args):
-                raise ValueError(
-                    f"Invalid AI-Planning Domain.{owner.section}.{owner.key} term arguments: only integer parameter indexes are supported"
+        def append_parameters(elements: List[model.SubmodelElement], args: List[Any]) -> None:
+            if resolve_parameter_refs:
+                self._validate_integer_indexes(
+                    args,
+                    f"Domain.{owner.section}.{owner.key}",
+                    "parameter indexes",
                 )
-            parameter_refs = [
-                self._references.build_action_parameter_reference(
-                    system_id,
-                    owner.section,
-                    owner.key,
-                    int(arg),
-                )
-                for arg in args
-                if isinstance(arg, int)
-            ]
-            self.append_parameter_reference_list(elements, parameter_refs)
-        else:
-            literal_args = [
-                self._typed_property_factory(f"Argument_{idx + 1:02d}", arg, None)
-                for idx, arg in enumerate(args)
-            ]
-            if literal_args:
-                elements.append(
-                    model.SubmodelElementCollection(
-                        id_short="Parameters",
-                        value=literal_args,
-                        semantic_id=_make_semantic_id(SemanticIdCatalog.PDDL_PARAMETERS),
+                parameter_refs = [
+                    self._references.build_action_parameter_reference(
+                        system_id,
+                        owner.section,
+                        owner.key,
+                        int(arg),
                     )
-                )
+                    for arg in args
+                    if isinstance(arg, int)
+                ]
+                self.append_parameter_reference_list(elements, parameter_refs)
+                return
 
-        if "value" in fluent_cfg and self.should_emit_numeric_value(fluent_cfg):
-            elements.append(self._typed_property_factory("Value", fluent_cfg.get("value"), None))
+            self.append_literal_parameter_values(elements, args)
 
-        return self.build_fluent_collection(
-            elements=elements,
+        return self._build_fluent(
             fluent_cfg=fluent_cfg,
-            inferred_semantic_id=inferred_semantic_id,
-            fallback_name=ref_name,
+            append_reference=append_reference,
+            append_parameters=append_parameters,
             id_short_override=id_short_override,
             display_name_override=display_name_override,
         )
@@ -514,43 +512,70 @@ class _PlanningTermBuilder:
         id_short_override: Optional[str] = None,
         display_name_override: Optional[str] = None,
     ) -> model.SubmodelElementCollection:
-        elements: List[model.SubmodelElement] = []
-
         ref_name = fluent_cfg.get("TransformationReference")
         external_ref = fluent_cfg.get("ExternalReference")
         preference_ref = fluent_cfg.get("PreferenceReference") or fluent_cfg.get("preference")
-        inferred_semantic_id = fluent_cfg.get("semantic_id")
 
-        if section_name == "Metric" and preference_ref:
-            pref_name = str(preference_ref)
-            inferred_semantic_id = inferred_semantic_id or SemanticIdCatalog.PDDL_METRIC_IS_VIOLATED
-            elements.append(
-                model.ReferenceElement(
-                    id_short="PreferenceReference",
-                    value=self._references.build_preference_declaration_reference(system_id, pref_name),
+        def append_reference(
+            elements: List[model.SubmodelElement],
+            inferred_semantic_id: Optional[str],
+        ) -> Tuple[Optional[str], Optional[Any]]:
+            if section_name == "Metric" and preference_ref:
+                pref_name = str(preference_ref)
+                resolved_semantic_id = inferred_semantic_id or SemanticIdCatalog.PDDL_METRIC_IS_VIOLATED
+                elements.append(
+                    model.ReferenceElement(
+                        id_short="PreferenceReference",
+                        value=self._references.build_preference_declaration_reference(system_id, pref_name),
+                    )
                 )
-            )
-        else:
-            inferred_semantic_id = self._references.append_fluent_reference_element(
+                return resolved_semantic_id, preference_ref
+
+            resolved_semantic_id = self._references.append_fluent_reference_element(
                 elements=elements,
                 system_id=system_id,
                 ref_name=ref_name,
                 external_ref=external_ref,
                 inferred_semantic_id=inferred_semantic_id,
             )
+            return resolved_semantic_id, (ref_name or preference_ref)
+
+        def append_parameters(elements: List[model.SubmodelElement], args: List[Any]) -> None:
+            self._validate_integer_indexes(
+                args,
+                f"Problem.{section_name}",
+                "object indexes",
+            )
+            parameter_refs = [
+                self._references.build_problem_object_reference(system_id, section_name, int(arg))
+                for arg in args
+                if isinstance(arg, int)
+            ]
+            self.append_parameter_reference_list(elements, parameter_refs)
+
+        return self._build_fluent(
+            fluent_cfg=fluent_cfg,
+            append_reference=append_reference,
+            append_parameters=append_parameters,
+            id_short_override=id_short_override,
+            display_name_override=display_name_override,
+        )
+
+    def _build_fluent(
+        self,
+        fluent_cfg: Dict[str, Any],
+        append_reference: Callable[[List[model.SubmodelElement], Optional[str]], Tuple[Optional[str], Optional[Any]]],
+        append_parameters: Callable[[List[model.SubmodelElement], List[Any]], None],
+        id_short_override: Optional[str],
+        display_name_override: Optional[str],
+    ) -> model.SubmodelElementCollection:
+        elements: List[model.SubmodelElement] = []
+        inferred_semantic_id = fluent_cfg.get("semantic_id")
+
+        inferred_semantic_id, fallback_name = append_reference(elements, inferred_semantic_id)
 
         args = fluent_cfg.get("parameters", []) or []
-        parameter_refs = [
-            self._references.build_problem_object_reference(system_id, section_name, int(arg))
-            for arg in args
-            if isinstance(arg, int)
-        ]
-        if len(parameter_refs) != len(args):
-            raise ValueError(
-                f"Invalid AI-Planning Problem.{section_name} term arguments: only integer object indexes are supported"
-            )
-
-        self.append_parameter_reference_list(elements, parameter_refs)
+        append_parameters(elements, args)
 
         if "value" in fluent_cfg and self.should_emit_numeric_value(fluent_cfg):
             elements.append(self._typed_property_factory("Value", fluent_cfg.get("value"), None))
@@ -559,10 +584,41 @@ class _PlanningTermBuilder:
             elements=elements,
             fluent_cfg=fluent_cfg,
             inferred_semantic_id=inferred_semantic_id,
-            fallback_name=ref_name or preference_ref,
+            fallback_name=fallback_name,
             id_short_override=id_short_override,
             display_name_override=display_name_override,
         )
+
+    def append_literal_parameter_values(
+        self,
+        elements: List[model.SubmodelElement],
+        args: List[Any],
+    ) -> None:
+        literal_args = [
+            self._typed_property_factory(f"Argument_{idx + 1:02d}", arg, None)
+            for idx, arg in enumerate(args)
+        ]
+        if not literal_args:
+            return
+
+        elements.append(
+            model.SubmodelElementCollection(
+                id_short="Parameters",
+                value=literal_args,
+                semantic_id=_make_semantic_id(SemanticIdCatalog.PDDL_PARAMETERS),
+            )
+        )
+
+    def _validate_integer_indexes(
+        self,
+        args: List[Any],
+        context_path: str,
+        index_label: str,
+    ) -> None:
+        if any(not isinstance(arg, int) for arg in args):
+            raise ValueError(
+                f"Invalid AI-Planning {context_path} term arguments: only integer {index_label} are supported"
+            )
 
     def resolve_term_owner(self, owner: Optional[_TermOwner], fallback_key: str) -> _TermOwner:
         if owner is not None:
@@ -703,17 +759,11 @@ class _PlanningTransitionBuilder:
         context: _PlanningBuildContext,
         terms: _PlanningTermBuilder,
         build_action_parameters: Callable[[str, str, List[Dict[str, Any]]], Optional[model.SubmodelElementList]],
-        normalize_named_transition_items: Callable[[Any], List[Dict[str, Any]]],
-        normalize_transition_conditions: Callable[[Any], Dict[str, Dict[str, List[Dict[str, Any]]]]],
-        normalize_transition_effects: Callable[[Any, str], Dict[str, Dict[str, List[Dict[str, Any]]]]],
     ):
         self._base_url = base_url
         self._context = context
         self._terms = terms
         self._build_action_parameters = build_action_parameters
-        self._normalize_named_transition_items = normalize_named_transition_items
-        self._normalize_transition_conditions = normalize_transition_conditions
-        self._normalize_transition_effects = normalize_transition_effects
 
     def build_processes_section(self, system_id: str, processes_cfg: Any) -> model.SubmodelElementCollection:
         return self.build_transition_section(
@@ -815,9 +865,55 @@ class _PlanningTransitionBuilder:
         )
 
         # Uncontrolled transitions may use section-specific default effect groups.
-        normalized["effects"] = self._normalize_transition_effects(effects_input, default_group=default_group)
-        normalized["parameters"] = normalize_parameters(item.get("parameters", []))
+        if default_group != "EndEffects":
+            normalized["effects"] = self._normalize_transition_effects(
+                effects_input,
+                default_group=default_group,
+            )
         return normalized
+
+    def _normalize_named_transition_items(self, items_cfg: Any) -> List[Dict[str, Any]]:
+        if isinstance(items_cfg, list):
+            return [item for item in items_cfg if isinstance(item, dict)]
+
+        if isinstance(items_cfg, dict):
+            if any(k in items_cfg for k in ("key", "parameters", "conditions", "effects", "precondition", "effect")):
+                return [items_cfg]
+
+            items: List[Dict[str, Any]] = []
+            for key, value in items_cfg.items():
+                if isinstance(value, dict):
+                    item = dict(value)
+                    item.setdefault("key", str(key))
+                    items.append(item)
+            return items
+
+        return []
+
+    def _normalize_transition_effects(
+        self,
+        raw_effects: Any,
+        default_group: str,
+    ) -> Dict[str, Dict[str, List[Dict[str, Any]]]]:
+        aliases = dict(EFFECT_GROUP_ALIASES)
+        aliases["effect"] = default_group
+        return self._normalize_transition_groups(
+            groups_cfg=raw_effects,
+            aliases=aliases,
+            default_group=default_group,
+        )
+
+    def _normalize_transition_groups(
+        self,
+        groups_cfg: Any,
+        aliases: Dict[str, str],
+        default_group: str,
+    ) -> Dict[str, Dict[str, List[Dict[str, Any]]]]:
+        return normalize_section_groups(
+            groups_cfg=groups_cfg,
+            aliases=aliases,
+            default_group=default_group,
+        )
 
     def build_transition_item(
         self,
@@ -936,21 +1032,16 @@ class _PlanningTransitionBuilder:
         conditions_cfg: Dict[str, Any],
         term_owner: Optional[_TermOwner] = None,
     ) -> model.SubmodelElementCollection:
-        owner = self._terms.resolve_term_owner(term_owner, fallback_key=action_key)
-        elements = self.build_grouped_terms(
+        return self._build_grouped_terms_section(
+            section_id_short="Conditions",
+            section_semantic_id=SemanticIdCatalog.PDDL_CONDITIONS,
             system_id=system_id,
             action_key=action_key,
             groups_cfg=conditions_cfg,
             group_names=("PreConditions", "InvariantConditions", "PostConditions"),
-            term_owner=owner,
+            term_owner=term_owner,
             is_effect=False,
             flatten_effect_terms=False,
-        )
-
-        return model.SubmodelElementCollection(
-            id_short="Conditions",
-            value=elements,
-            semantic_id=_make_semantic_id(SemanticIdCatalog.PDDL_CONDITIONS),
         )
 
     def build_effects_section(
@@ -960,21 +1051,45 @@ class _PlanningTransitionBuilder:
         effects_cfg: Dict[str, Any],
         term_owner: Optional[_TermOwner] = None,
     ) -> model.SubmodelElementCollection:
-        owner = self._terms.resolve_term_owner(term_owner, fallback_key=action_key)
-        elements = self.build_grouped_terms(
+        return self._build_grouped_terms_section(
+            section_id_short="Effects",
+            section_semantic_id=SemanticIdCatalog.PDDL_EFFECTS,
             system_id=system_id,
             action_key=action_key,
             groups_cfg=effects_cfg,
             group_names=("StartEffects", "ContinuousEffects", "EndEffects"),
-            term_owner=owner,
+            term_owner=term_owner,
             is_effect=True,
             flatten_effect_terms=True,
         )
 
+    def _build_grouped_terms_section(
+        self,
+        section_id_short: str,
+        section_semantic_id: str,
+        system_id: str,
+        action_key: str,
+        groups_cfg: Dict[str, Any],
+        group_names: Tuple[str, ...],
+        term_owner: Optional[_TermOwner],
+        is_effect: bool,
+        flatten_effect_terms: bool,
+    ) -> model.SubmodelElementCollection:
+        owner = self._terms.resolve_term_owner(term_owner, fallback_key=action_key)
+        elements = self.build_grouped_terms(
+            system_id=system_id,
+            action_key=action_key,
+            groups_cfg=groups_cfg,
+            group_names=group_names,
+            term_owner=owner,
+            is_effect=is_effect,
+            flatten_effect_terms=flatten_effect_terms,
+        )
+
         return model.SubmodelElementCollection(
-            id_short="Effects",
+            id_short=section_id_short,
             value=elements,
-            semantic_id=_make_semantic_id(SemanticIdCatalog.PDDL_EFFECTS),
+            semantic_id=_make_semantic_id(section_semantic_id),
         )
 
     def build_grouped_terms(

@@ -4,7 +4,7 @@ Facade/orchestration class for AI planning submodel construction.
 Collaborator implementations live in ai_planning_components.py.
 """
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from basyx.aas import model
 
@@ -20,9 +20,6 @@ from .ai_planning_components import (
     _make_semantic_id,
 )
 from .skills_spec_parser import (
-    CONDITION_GROUP_ALIASES,
-    EFFECT_GROUP_ALIASES,
-    normalize_section_groups,
     normalize_terms_payload,
 )
 
@@ -45,9 +42,6 @@ class AIPlanningSubmodelBuilder:
             context=self._context,
             terms=self._terms,
             build_action_parameters=self._build_action_parameters,
-            normalize_named_transition_items=self._normalize_named_transition_items,
-            normalize_transition_conditions=self._normalize_transition_conditions,
-            normalize_transition_effects=self._normalize_transition_effects,
         )
         self._domain_builder = _DomainSectionBuilder(
             build_fluents_section=self._build_fluents_section,
@@ -115,56 +109,6 @@ class AIPlanningSubmodelBuilder:
         return self._transitions.build_events_section(
             system_id=system_id,
             events_cfg=events_cfg,
-        )
-
-    def _normalize_named_transition_items(self, items_cfg: Any) -> List[Dict[str, Any]]:
-        if isinstance(items_cfg, list):
-            return [item for item in items_cfg if isinstance(item, dict)]
-
-        if isinstance(items_cfg, dict):
-            if any(k in items_cfg for k in ("key", "parameters", "conditions", "effects", "precondition", "effect")):
-                return [items_cfg]
-            items: List[Dict[str, Any]] = []
-            for key, value in items_cfg.items():
-                if isinstance(value, dict):
-                    item = dict(value)
-                    item.setdefault("key", str(key))
-                    items.append(item)
-            return items
-
-        return []
-
-    def _normalize_transition_conditions(self, raw_conditions: Any) -> Dict[str, Dict[str, List[Dict[str, Any]]]]:
-        return self._normalize_transition_groups(
-            groups_cfg=raw_conditions,
-            aliases=CONDITION_GROUP_ALIASES,
-            default_group="PreConditions",
-        )
-
-    def _normalize_transition_effects(
-        self,
-        raw_effects: Any,
-        default_group: str,
-    ) -> Dict[str, Dict[str, List[Dict[str, Any]]]]:
-        aliases = dict(EFFECT_GROUP_ALIASES)
-        aliases["effect"] = default_group
-        return self._normalize_transition_groups(
-            groups_cfg=raw_effects,
-            aliases=aliases,
-            default_group=default_group,
-        )
-
-    def _normalize_transition_groups(
-        self,
-        groups_cfg: Any,
-        aliases: Dict[str, str],
-        default_group: str,
-    ) -> Dict[str, Dict[str, List[Dict[str, Any]]]]:
-        """Normalize flexible section-group input into canonical grouped terms."""
-        return normalize_section_groups(
-            groups_cfg=groups_cfg,
-            aliases=aliases,
-            default_group=default_group,
         )
 
     def _build_constraints_section(
@@ -388,35 +332,17 @@ class AIPlanningSubmodelBuilder:
         )
 
     def _build_domain_fluent_parameters(self, parameters: List[Dict[str, Any]]) -> Optional[model.SubmodelElementList]:
-        entries: List[model.ReferenceElement] = []
-        for idx, parameter in enumerate(parameters):
-            if not isinstance(parameter, dict):
-                continue
-
-            name = parameter.get("name") or f"Parameter_{idx}"
+        def resolve_reference(parameter: Dict[str, Any]) -> Optional[model.Reference]:
             external = parameter.get("externalRef") or parameter.get("ExternalReference")
             if not external:
-                continue
-
-            entries.append(
-                model.ReferenceElement(
-                    id_short=None,
-                    display_name=model.MultiLanguageNameType({"en": str(name)}),
-                    value=model.ExternalReference(
-                        key=(model.Key(model.KeyTypes.GLOBAL_REFERENCE, str(external)),)
-                    ),
-                )
+                return None
+            return model.ExternalReference(
+                key=(model.Key(model.KeyTypes.GLOBAL_REFERENCE, str(external)),)
             )
 
-        if not entries:
-            return None
-
-        return model.SubmodelElementList(
-            id_short="Parameters",
-            value=entries,
-            type_value_list_element=model.ReferenceElement,
-            semantic_id=_make_semantic_id(SemanticIdCatalog.PDDL_PARAMETERS),
-            semantic_id_list_element=_make_semantic_id(SemanticIdCatalog.PDDL_PARAMETER),
+        return self._build_parameter_reference_list(
+            parameters=parameters,
+            resolve_reference=resolve_reference,
         )
 
     def _build_action_parameters(
@@ -425,33 +351,47 @@ class AIPlanningSubmodelBuilder:
         action_key: str,
         parameters: List[Dict[str, Any]],
     ) -> Optional[model.SubmodelElementList]:
-        entries: List[model.ReferenceElement] = []
+        def resolve_reference(parameter: Dict[str, Any]) -> Optional[model.Reference]:
+            model_ref = parameter.get("ModelReference") or parameter.get("modelRef")
+            external_ref = parameter.get("ExternalReference") or parameter.get("externalRef")
 
+            if model_ref:
+                return self._build_model_reference_from_dsl(system_id, model_ref)
+
+            if external_ref:
+                return model.ExternalReference(
+                    key=(model.Key(model.KeyTypes.GLOBAL_REFERENCE, str(external_ref)),)
+                )
+
+            return None
+
+        return self._build_parameter_reference_list(
+            parameters=parameters,
+            resolve_reference=resolve_reference,
+        )
+
+    def _build_parameter_reference_list(
+        self,
+        parameters: List[Dict[str, Any]],
+        resolve_reference: Callable[[Dict[str, Any]], Optional[model.Reference]],
+    ) -> Optional[model.SubmodelElementList]:
+        entries: List[model.ReferenceElement] = []
         for idx, parameter in enumerate(parameters):
             if not isinstance(parameter, dict):
                 continue
 
             param_name = parameter.get("name") or f"Parameter_{idx}"
-            ref: Optional[model.Reference] = None
-            model_ref = parameter.get("ModelReference") or parameter.get("modelRef")
-            external_ref = parameter.get("ExternalReference") or parameter.get("externalRef")
+            ref = resolve_reference(parameter)
+            if ref is None:
+                continue
 
-            if model_ref:
-                ref = self._build_model_reference_from_dsl(system_id, model_ref)
-
-            elif external_ref:
-                ref = model.ExternalReference(
-                    key=(model.Key(model.KeyTypes.GLOBAL_REFERENCE, str(external_ref)),)
+            entries.append(
+                model.ReferenceElement(
+                    id_short=None,
+                    display_name=model.MultiLanguageNameType({"en": str(param_name)}),
+                    value=ref,
                 )
-
-            if ref is not None:
-                entries.append(
-                    model.ReferenceElement(
-                        id_short=None,
-                        display_name=model.MultiLanguageNameType({"en": str(param_name)}),
-                        value=ref,
-                    )
-                )
+            )
 
         if not entries:
             return None
