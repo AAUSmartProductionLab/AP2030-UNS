@@ -22,7 +22,6 @@ from .ai_planning_components import (
 from .skills_spec_parser import (
     CONDITION_GROUP_ALIASES,
     EFFECT_GROUP_ALIASES,
-    normalize_description_from_pddl,
     normalize_section_groups,
     normalize_terms_payload,
 )
@@ -116,30 +115,6 @@ class AIPlanningSubmodelBuilder:
         return self._transitions.build_events_section(
             system_id=system_id,
             events_cfg=events_cfg,
-        )
-
-    def _build_transition_item(
-        self,
-        system_id: str,
-        section_name: str,
-        key: str,
-        parameters: List[Dict[str, Any]],
-        conditions: Dict[str, Any],
-        effects: Dict[str, Any],
-        item_semantic_id: str,
-        duration: Optional[Dict[str, Any]] = None,
-        skill_reference: Optional[str] = None,
-    ) -> model.SubmodelElementCollection:
-        return self._transitions.build_transition_item(
-            system_id=system_id,
-            section_name=section_name,
-            key=key,
-            parameters=parameters,
-            conditions=conditions,
-            effects=effects,
-            item_semantic_id=item_semantic_id,
-            duration=duration,
-            skill_reference=skill_reference,
         )
 
     def _normalize_named_transition_items(self, items_cfg: Any) -> List[Dict[str, Any]]:
@@ -407,36 +382,9 @@ class AIPlanningSubmodelBuilder:
         )
 
     def _build_actions_section(self, system_id: str, actions_cfg: List[Dict[str, Any]]) -> model.SubmodelElementCollection:
-        action_elements: List[model.SubmodelElementCollection] = []
-
-        for idx, action_cfg in enumerate(actions_cfg):
-            if not isinstance(action_cfg, dict):
-                continue
-
-            action_key = action_cfg.get("key") or f"Action_{idx + 1}"
-            normalized = normalize_description_from_pddl(action_cfg, skill_name=action_key)
-            parameters = normalized.get("parameters", [])
-            duration = normalized.get("duration", {})
-            conditions = normalized.get("conditions", {})
-            effects = normalized.get("effects", {})
-            action_elements.append(
-                self._build_transition_item(
-                    system_id=system_id,
-                    section_name="Actions",
-                    key=str(action_key),
-                    parameters=parameters,
-                    conditions=conditions,
-                    effects=effects,
-                    duration=duration,
-                    skill_reference=action_cfg.get("SkillReference"),
-                    item_semantic_id=SemanticIdCatalog.AI_PLANNING_DOMAIN_ACTION,
-                )
-            )
-
-        return model.SubmodelElementCollection(
-            id_short="Actions",
-            value=action_elements,
-            semantic_id=_make_semantic_id(SemanticIdCatalog.AI_PLANNING_DOMAIN_ACTIONS),
+        return self._transitions.build_actions_section(
+            system_id=system_id,
+            actions_cfg=actions_cfg,
         )
 
     def _build_domain_fluent_parameters(self, parameters: List[Dict[str, Any]]) -> Optional[model.SubmodelElementList]:

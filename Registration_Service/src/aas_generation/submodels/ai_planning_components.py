@@ -12,12 +12,8 @@ from basyx.aas import model
 
 from ..semantic_ids import SemanticIdCatalog
 from .skills_spec_parser import (
-    EFFECT_GROUP_ALIASES,
-    CONDITION_GROUP_ALIASES,
     normalize_description_from_pddl,
     normalize_parameters,
-    normalize_section_groups,
-    normalize_terms_payload,
 )
 
 
@@ -395,7 +391,7 @@ class _PlanningTermBuilder:
                     id_short_override=current_term_id_short,
                     display_name_override=term_display_name,
                 )
-            return self.build_action_fluent(
+            return self.build_domain_fluent(
                 system_id,
                 action_key,
                 term_cfg,
@@ -442,7 +438,7 @@ class _PlanningTermBuilder:
             display_name=model.MultiLanguageNameType({"en": term_display_name}),
         )
 
-    def build_action_fluent(
+    def build_domain_fluent(
         self,
         system_id: str,
         action_key: str,
@@ -720,42 +716,61 @@ class _PlanningTransitionBuilder:
         self._normalize_transition_effects = normalize_transition_effects
 
     def build_processes_section(self, system_id: str, processes_cfg: Any) -> model.SubmodelElementCollection:
-        return self.build_uncontrolled_transitions_section(
+        return self.build_transition_section(
             system_id=system_id,
             section_name="Processes",
             semantic_element="Process",
             items_cfg=processes_cfg,
             default_effect_group="ContinuousEffects",
+            include_skill_reference=False,
+            allow_duration=False,
         )
 
     def build_events_section(self, system_id: str, events_cfg: Any) -> model.SubmodelElementCollection:
-        return self.build_uncontrolled_transitions_section(
+        return self.build_transition_section(
             system_id=system_id,
             section_name="Events",
             semantic_element="Event",
             items_cfg=events_cfg,
             default_effect_group="EndEffects",
+            include_skill_reference=False,
+            allow_duration=False,
         )
 
-    def build_uncontrolled_transitions_section(
+    def build_actions_section(self, system_id: str, actions_cfg: Any) -> model.SubmodelElementCollection:
+        return self.build_transition_section(
+            system_id=system_id,
+            section_name="Actions",
+            semantic_element="Action",
+            items_cfg=actions_cfg,
+            default_effect_group="EndEffects",
+            include_skill_reference=True,
+            allow_duration=True,
+        )
+
+    def build_transition_section(
         self,
         system_id: str,
         section_name: str,
         semantic_element: str,
         items_cfg: Any,
         default_effect_group: str,
+        include_skill_reference: bool,
+        allow_duration: bool,
     ) -> model.SubmodelElementCollection:
         items = self._normalize_named_transition_items(items_cfg)
         elements: List[model.SubmodelElementCollection] = []
 
         for idx, item in enumerate(items):
             key = str(item.get("key") or f"{semantic_element}_{idx + 1}")
-            parameters = normalize_parameters(item.get("parameters", []))
-            conditions = self._normalize_transition_conditions(item.get("conditions") or item.get("precondition"))
-            effects = self._normalize_transition_effects(
-                item.get("effects") or item.get("effect"),
+            normalized = self._normalize_transition_description(
+                item=item,
                 default_group=default_effect_group,
             )
+            parameters = normalized.get("parameters", [])
+            duration = normalized.get("duration", {}) if allow_duration else {}
+            conditions = normalized.get("conditions", {})
+            effects = normalized.get("effects", {})
             elements.append(
                 self.build_transition_item(
                     system_id=system_id,
@@ -765,6 +780,8 @@ class _PlanningTransitionBuilder:
                     conditions=conditions,
                     effects=effects,
                     item_semantic_id=SemanticIdCatalog.ai_planning_domain_section(semantic_element),
+                    duration=duration,
+                    skill_reference=item.get("SkillReference") if include_skill_reference else None,
                 )
             )
 
@@ -773,6 +790,34 @@ class _PlanningTransitionBuilder:
             value=elements,
             semantic_id=_make_semantic_id(SemanticIdCatalog.ai_planning_domain_section(section_name)),
         )
+
+    def _normalize_transition_description(
+        self,
+        item: Dict[str, Any],
+        default_group: str,
+    ) -> Dict[str, Any]:
+        conditions_input = item.get("conditions")
+        if conditions_input is None:
+            conditions_input = item.get("precondition")
+
+        effects_input = item.get("effects")
+        if effects_input is None:
+            effects_input = item.get("effect")
+
+        normalized = normalize_description_from_pddl(
+            {
+                "parameters": item.get("parameters", []),
+                "duration": item.get("duration"),
+                "conditions": conditions_input,
+                "effects": effects_input,
+            },
+            skill_name=str(item.get("key") or "transition"),
+        )
+
+        # Uncontrolled transitions may use section-specific default effect groups.
+        normalized["effects"] = self._normalize_transition_effects(effects_input, default_group=default_group)
+        normalized["parameters"] = normalize_parameters(item.get("parameters", []))
+        return normalized
 
     def build_transition_item(
         self,
