@@ -110,7 +110,7 @@ imaLoadingSystem2AAS:
 
     Capabilities:
         -   key: "Loading"
-            realizedBy: "Load"
+            realizedBy: "Loading"
             semantic_id: https://smartproductionlab.aau.dk/Capability/Loading
 
     AI-Planning:
@@ -131,6 +131,17 @@ imaLoadingSystem2AAS:
                         -   name: "Product"
                             externalRef: "https://smartproductionlab.aau.dk/Product"
                     transformation: 'parameter1.Variables.OccupationState.ProcessQueue[0] == parameter2.Parameters.Uuid'
+
+                -   key: "OccupationLoad"
+                    type: "function"
+                    semantic_id: "https://smartproductionlab.aau.dk/PDDL/Term/Functions/OccupationLoad"
+                    parameters:
+                        -   name: "Resource"
+                            externalRef: "https://smartproductionlab.aau.dk/Resource"
+                        -   name: "Product"
+                            externalRef: "https://smartproductionlab.aau.dk/Product"
+                    value: 0.0
+                    transformation: 'size(parameter1.Variables.OccupationState.ProcessQueue)'
 
             Actions:
                 -   key: "Loading"
@@ -226,9 +237,12 @@ imaLoadingSystem2AAS:
                             ref: "Occupied"
                             parameters: [0, 1]
                     effect:
-                        - predicate:
-                            ref: "Occupied"
-                            parameters: [0, 1]
+                        continuous:
+                            - increase:
+                                function:
+                                    ref: "OccupationLoad"
+                                    parameters: [0, 1]
+                                value: 1.0
 
             Events:
                 -   key: "AutoReleaseOnStop"

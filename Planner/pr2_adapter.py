@@ -1,59 +1,4 @@
-"""
-PR2 Adapter for the `pddl` library (https://github.com/AI-Planning/pddl).
-
-Allows programmatic definition of FOND planning problems using the `pddl`
-library and solving them with PR2.
-
-Example usage:
-
-    from pddl.logic import Predicate, constants, variables
-    from pddl.core import Domain, Problem
-    from pddl.action import Action
-    from pddl.logic.base import OneOf
-    from pddl.requirements import Requirements
-
-    from pr2_adapter import PR2Solver, PR2Result
-
-    # Define types, variables, predicates
-    x, y = variables("x y", types=["location"])
-    pos = Predicate("position", x)
-    next_fwd = Predicate("next-fwd", x, y)
-    up = Predicate("up")
-    broken = Predicate("broken-leg")
-
-    # Non-deterministic action with oneof
-    walk = Action(
-        "walk-on-beam",
-        parameters=[x, y],
-        precondition=~broken & up & pos(x) & next_fwd(x, y),
-        effect=OneOf(
-            pos(y) & ~pos(x),
-            ~up & pos(y) & ~pos(x),
-        ),
-    )
-
-    domain = Domain(
-        "acrobatics",
-        requirements=[Requirements.STRIPS, Requirements.TYPING, Requirements.NON_DETERMINISTIC],
-        types={"location": None},
-        predicates=[pos, next_fwd, up, broken],
-        actions=[walk],
-    )
-
-    p0, p1 = constants("p0 p1", type_="location")
-    problem = Problem(
-        "beam-walk-2",
-        domain=domain,
-        objects=[p0, p1],
-        init=[next_fwd(p0, p1), pos(p0), up],
-        goal=up & pos(p1),
-    )
-
-    solver = PR2Solver()
-    result = solver.solve(domain, problem)
-    print(result.is_solved)
-    print(result.policy)
-"""
+"""PR2 adapter for file-based and Unified Planning-based solving."""
 
 from __future__ import annotations
 
@@ -61,10 +6,14 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+
+from up_to_pr2 import lower_problem as lower_up_problem
+from up_to_pr2 import task_to_sas as up_task_to_sas
 
 
 # ---------------------------------------------------------------------------
@@ -283,7 +232,7 @@ def _parse_policy_file(
 
 class PR2Solver:
     """
-    Solve FOND planning problems defined with the ``pddl`` library using PR2.
+    Solve FOND planning problems with PR2.
 
     Parameters
     ----------
@@ -323,45 +272,6 @@ class PR2Solver:
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
-
-    def solve(
-        self,
-        domain,        # pddl.core.Domain
-        problem,       # pddl.core.Problem
-        *,
-        timeout: Optional[int] = None,
-        extra_args: Optional[List[str]] = None,
-    ) -> PR2Result:
-        """
-        Solve a FOND problem.
-
-        Parameters
-        ----------
-        domain : pddl.core.Domain
-            A domain object from the ``pddl`` library.
-        problem : pddl.core.Problem
-            A problem object from the ``pddl`` library.
-        timeout : int, optional
-            Override the solver-level timeout for this call.
-        extra_args : list[str], optional
-            Additional arguments appended after the default extra_args.
-
-        Returns
-        -------
-        PR2Result
-            A dataclass with the solution policy, strong-cyclicity flag,
-            raw output, etc.
-        """
-        timeout = timeout if timeout is not None else self.timeout
-        merged_extra = self.extra_args + (extra_args or [])
-
-        # Serialize to PDDL strings
-        domain_str = str(domain)
-        problem_str = str(problem)
-
-        return self.solve_from_pddl_strings(
-            domain_str, problem_str, timeout=timeout, extra_args=merged_extra
-        )
 
     def solve_from_pddl_strings(
         self,
@@ -420,6 +330,35 @@ class PR2Solver:
 
         try:
             return self._run_pr2(dom_copy, prob_copy, tmpdir, timeout, merged_extra)
+        finally:
+            if not self.keep_files:
+                shutil.rmtree(tmpdir, ignore_errors=True)
+
+    def solve_unified_planning_problem(
+        self,
+        problem,
+        *,
+        timeout: Optional[int] = None,
+        extra_args: Optional[List[str]] = None,
+    ) -> PR2Result:
+        """Solve a supported unified-planning Problem through PR2 directly."""
+        timeout = timeout if timeout is not None else self.timeout
+        merged_extra = extra_args or []
+        lowered = lower_up_problem(problem)
+
+        tmpdir = tempfile.mkdtemp(prefix="pr2_up_")
+        sas_file = os.path.join(tmpdir, "output.sas")
+
+        try:
+            up_task_to_sas(lowered, sas_file)
+            return self._run_pr2_from_sas(
+                sas_file,
+                tmpdir,
+                timeout,
+                merged_extra,
+                domain_pddl=lowered.domain_pddl,
+                problem_pddl=lowered.problem_pddl,
+            )
         finally:
             if not self.keep_files:
                 shutil.rmtree(tmpdir, ignore_errors=True)
@@ -522,3 +461,76 @@ class PR2Solver:
             result.problem_file = os.path.join(workdir, "problem.pddl")
 
         return result
+
+    def _run_pr2_from_sas(
+        self,
+        sas_file: str,
+        workdir: str,
+        timeout: Optional[int],
+        extra_args: List[str],
+        *,
+        domain_pddl: str = "",
+        problem_pddl: str = "",
+    ) -> PR2Result:
+        """Execute only the PR2 search stage from an already translated SAS task."""
+        cmd = [
+            sys.executable,
+            str(_FD_SCRIPT),
+            "--build=release64",
+            sas_file,
+            "--search",
+            "prpsearch()",
+        ]
+        cmd.extend(extra_args)
+
+        env = os.environ.copy()
+        env["PYTHONPATH"] = str(self.pr2_root / "prp-scripts") + ":" + env.get("PYTHONPATH", "")
+
+        try:
+            proc = subprocess.run(
+                cmd,
+                cwd=workdir,
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+                env=env,
+            )
+        except subprocess.TimeoutExpired as e:
+            return PR2Result(
+                is_solved=False,
+                is_strong_cyclic=False,
+                policy=[],
+                fsaps=[],
+                raw_policy="",
+                raw_fsap="",
+                stdout=e.stdout or "",
+                stderr=e.stderr or "",
+                returncode=-1,
+                domain_pddl=domain_pddl,
+                problem_pddl=problem_pddl,
+            )
+
+        combined = proc.stdout + proc.stderr
+        is_strong_cyclic = "Strong cyclic solution found." in combined
+        is_solved = is_strong_cyclic
+
+        mapping = _parse_sas_mapping(sas_file)
+        policy_path = os.path.join(workdir, "policy.out")
+        fsap_path = os.path.join(workdir, "policy.fsap")
+        rules, _, raw_policy = _parse_policy_file(policy_path, mapping, is_fsap=False)
+        _, fsaps, raw_fsap = _parse_policy_file(fsap_path, mapping, is_fsap=True)
+
+        return PR2Result(
+            is_solved=is_solved,
+            is_strong_cyclic=is_strong_cyclic,
+            policy=rules,
+            fsaps=fsaps,
+            raw_policy=raw_policy,
+            raw_fsap=raw_fsap,
+            stdout=proc.stdout,
+            stderr=proc.stderr,
+            returncode=proc.returncode,
+            sas_variables=mapping,
+            domain_pddl=domain_pddl,
+            problem_pddl=problem_pddl,
+        )

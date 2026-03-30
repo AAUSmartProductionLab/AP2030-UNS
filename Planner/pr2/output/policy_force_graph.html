@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PR2 Policy Graph &ndash; p6</title>
+    <style>
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        #content {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            padding: 13px;
+            box-sizing: border-box;
+        }
+        #header {
+            margin-bottom: 13px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 { margin: 0 0 8px 0; color: #333; font-size: 1.4em; }
+        .info-bar { font-size: 13px; color: #555; }
+        .stats {
+            display: flex; gap: 18px; margin-top: 10px; flex-wrap: wrap;
+        }
+        .stat {
+            background: #f0f4f8; padding: 8px 14px; border-radius: 4px; text-align: center;
+        }
+        .stat-label { font-size: 11px; color: #666; }
+        .stat-value { font-size: 18px; font-weight: bold; color: #333; }
+        .main {
+            display: flex; flex: 1; gap: 13px; min-height: 0;
+        }
+        #graph-wrap {
+            flex: 1;
+            border: 2px #555 dashed;
+            border-radius: 4px;
+            position: relative;
+            background: white;
+        }
+        #graph { width: 100%; height: 100%; }
+        #sidebar {
+            width: 320px; display: flex; flex-direction: column; gap: 13px;
+        }
+        #state {
+            background: white; border-radius: 8px; padding: 13px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); flex: 1;
+            overflow: auto; font-size: 12px;
+        }
+        #state pre { margin: 0; white-space: pre-wrap; word-break: break-all; }
+        #state h4  { margin: 0 0 8px 0; color: #333; }
+        .legend {
+            background: white; border-radius: 8px; padding: 13px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .legend-item {
+            display: flex; align-items: center; margin-bottom: 5px; font-size: 12px;
+        }
+        .legend-color {
+            display: inline-block; width: 14px; height: 14px;
+            border-radius: 50%; margin-right: 8px; flex-shrink: 0;
+        }
+        .controls {
+            background: white; border-radius: 8px; padding: 10px 13px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .controls label { font-size: 12px; margin-right: 15px; }
+        button {
+            background: #4A90E2; color: white; border: none;
+            padding: 5px 12px; border-radius: 4px; cursor: pointer;
+            font-size: 12px; margin-right: 5px;
+        }
+        button:hover { background: #357ABD; }
+        /* PRP-style graph elements */
+        .psnode { stroke: #000; stroke-width: 1.5px; cursor: pointer; }
+        .pslink {
+            fill: none; stroke: #000; stroke-width: 2.6px;
+            opacity: 0.8; marker-end: url(#end-arrow);
+        }
+        .pslabel { font-size: 10px; fill: #333; pointer-events: none; }
+    </style>
+</head>
+<body>
+    <div id="content">
+        <div id="header">
+            <h1>PR2 Policy Graph</h1>
+            <div class="info-bar">
+                <strong>Domain:</strong> domain &nbsp;|&nbsp;
+                <strong>Problem:</strong> p6
+            </div>
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-label">Solved</div>
+                    <div class="stat-value">&#10003;</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Strong Cyclic</div>
+                    <div class="stat-value">&#10003;</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Policy States</div>
+                    <div class="stat-value">48</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Transitions</div>
+                    <div class="stat-value">71</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Mapped Outcomes</div>
+                    <div class="stat-value">71/71</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main">
+            <div id="graph-wrap">
+                <svg id="graph"></svg>
+            </div>
+            <div id="sidebar">
+                <div class="legend">
+                    <div class="legend-item"><span class="legend-color" style="background:#e8c100;"></span>Goal (distance 0)</div>
+                    <div class="legend-item"><span class="legend-color" style="background:#067c00;"></span>Initial state</div>
+                    <div class="legend-item"><span class="legend-color" style="background:#025ef2;"></span>Strong-cyclic</div>
+                    <div class="legend-item"><span class="legend-color" style="background:#930000;"></span>Undefined / unmapped</div>
+                    <div class="legend-item"><span class="legend-color" style="background:#828282;"></span>Default</div>
+                </div>
+                <div class="controls">
+                    <button onclick="resetLayout()">Reset Layout</button>
+                    <button onclick="zoomToFit()">Zoom to Fit</button><br><br>
+                    <label><input type="checkbox" id="show-labels" checked onchange="toggleLabels()"> Labels</label>
+                    <label>Charge: <input type="range" id="charge" min="0" max="400" value="120" oninput="updateCharge()"></label>
+                </div>
+                <div id="state">
+                    <h4>Partial State</h4>
+                    <pre>Hover over a node to inspect its state.</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <script>
+    (function() {
+        const graphData = {"nodes": [{"id": 0, "name": "goal (1)", "type": "state", "distance": 1, "is_sc": false, "num_conditions": 1, "num_positive": 1, "num_negative": 0, "conditions": ["vehicle-at(l-1-13)"], "actions": ["goal"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 1, "name": "move-car l-2-12 l-1-13 (2)", "type": "state", "distance": 2, "is_sc": false, "num_conditions": 2, "num_positive": 2, "num_negative": 0, "conditions": ["not-flattire()", "vehicle-at(l-2-12)"], "actions": ["move-car l-2-12 l-1-13"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 2, "name": "move-car l-3-11 l-2-12 (3)", "type": "state", "distance": 3, "is_sc": false, "num_conditions": 3, "num_positive": 3, "num_negative": 0, "conditions": ["not-flattire()", "spare-in(l-2-12)", "vehicle-at(l-3-11)"], "actions": ["move-car l-3-11 l-2-12"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 3, "name": "changetire l-2-12 (3)", "type": "state", "distance": 3, "is_sc": false, "num_conditions": 2, "num_positive": 2, "num_negative": 0, "conditions": ["spare-in(l-2-12)", "vehicle-at(l-2-12)"], "actions": ["changetire l-2-12"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 4, "name": "move-car l-4-10 l-3-11 (4)", "type": "state", "distance": 4, "is_sc": false, "num_conditions": 4, "num_positive": 4, "num_negative": 0, "conditions": ["not-flattire()", "spare-in(l-2-12)", "spare-in(l-3-11)", "vehicle-at(l-4-10)"], "actions": ["move-car l-4-10 l-3-11"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 5, "name": "changetire l-3-11 (4)", "type": "state", "distance": 4, "is_sc": false, "num_conditions": 3, "num_positive": 3, "num_negative": 0, "conditions": ["spare-in(l-2-12)", "spare-in(l-3-11)", "vehicle-at(l-3-11)"], "actions": ["changetire l-3-11"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 6, "name": "move-car l-5-9 l-4-10 (5)", "type": "state", "distance": 5, "is_sc": false, "num_conditions": 5, "num_positive": 5, "num_negative": 0, "conditions": ["not-flattire()", "spare-in(l-2-12)", "spare-in(l-3-11)", "spare-in(l-4-10)", "vehicle-at(l-5-9)"], "actions": ["move-car l-5-9 l-4-10"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 7, "name": "changetire l-4-10 (5)", "type": "state", "distance": 5, "is_sc": false, "num_conditions": 4, "num_positive": 4, "num_negative": 0, "conditions": ["spare-in(l-2-12)", "spare-in(l-3-11)", "spare-in(l-4-10)", "vehicle-at(l-4-10)"], "actions": ["changetire l-4-10"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 8, "name": "move-car l-6-8 l-5-9 (6)", "type": "state", "distance": 6, "is_sc": false, "num_conditions": 6, "num_positive": 6, "num_negative": 0, "conditions": ["not-flattire()", "spare-in(l-2-12)", "spare-in(l-3-11)", "spare-in(l-4-10)", "spare-in(l-5-9)", "vehicle-at(l-6-8)"], "actions": ["move-car l-6-8 l-5-9"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 9, "name": "changetire l-5-9 (6)", "type": "state", "distance": 6, "is_sc": false, "num_conditions": 5, "num_positive": 5, "num_negative": 0, "conditions": ["spare-in(l-2-12)", "spare-in(l-3-11)", "spare-in(l-4-10)", "spare-in(l-5-9)", "vehicle-at(l-5-9)"], "actions": ["changetire l-5-9"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 10, "name": "move-car l-7-7 l-6-8 (7)", "type": "state", "distance": 7, "is_sc": false, "num_conditions": 7, "num_positive": 7, "num_negative": 0, "conditions": ["not-flattire()", "spare-in(l-2-12)", "spare-in(l-3-11)", "spare-in(l-4-10)", "spare-in(l-5-9)", "spare-in(l-6-8)", "vehicle-at(l-7-7)"], "actions": ["move-car l-7-7 l-6-8"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 11, "name": "changetire l-6-8 (7)", "type": "state", "distance": 7, "is_sc": false, "num_conditions": 6, "num_positive": 6, "num_negative": 0, "conditions": ["spare-in(l-2-12)", "spare-in(l-3-11)", "spare-in(l-4-10)", "spare-in(l-5-9)", "spare-in(l-6-8)", "vehicle-at(l-6-8)"], "actions": ["changetire l-6-8"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 12, "name": "move-car l-8-6 l-7-7 (8)", "type": "state", "distance": 8, "is_sc": false, "num_conditions": 8, "num_positive": 8, "num_negative": 0, "conditions": ["not-flattire()", "spare-in(l-2-12)", "spare-in(l-3-11)", "spare-in(l-4-10)", "spare-in(l-5-9)", "spare-in(l-6-8)", "spare-in(l-7-7)", "vehicle-at(l-8-6)"], "actions": ["move-car l-8-6 l-7-7"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 13, "name": "changetire l-7-7 (8)", "type": "state", "distance": 8, "is_sc": false, "num_conditions": 7, "num_positive": 7, "num_negative": 0, "conditions": ["spare-in(l-2-12)", "spare-in(l-3-11)", "spare-in(l-4-10)", "spare-in(l-5-9)", "spare-in(l-6-8)", "spare-in(l-7-7)", "vehicle-at(l-7-7)"], "actions": ["changetire l-7-7"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 14, "name": "move-car l-9-5 l-8-6 (9)", "type": "state", "distance": 9, "is_sc": false, "num_conditions": 9, "num_positive": 9, "num_negative": 0, "conditions": ["not-flattire()", "spare-in(l-2-12)", "spare-in(l-3-11)", "spare-in(l-4-10)", "spare-in(l-5-9)", "spare-in(l-6-8)", "spare-in(l-7-7)", "spare-in(l-8-6)", "vehicle-at(l-9-5)"], "actions": ["move-car l-9-5 l-8-6"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 15, "name": "changetire l-8-6 (9)", "type": "state", "distance": 9, "is_sc": false, "num_conditions": 8, "num_positive": 8, "num_negative": 0, "conditions": ["spare-in(l-2-12)", "spare-in(l-3-11)", "spare-in(l-4-10)", "spare-in(l-5-9)", "spare-in(l-6-8)", "spare-in(l-7-7)", "spare-in(l-8-6)", "vehicle-at(l-8-6)"], "actions": ["changetire l-8-6"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 16, "name": "move-car l-10-4 l-9-5 (10)", "type": "state", "distance": 10, "is_sc": false, "num_conditions": 10, "num_positive": 10, "num_negative": 0, "conditions": ["not-flattire()", "spare-in(l-2-12)", "spare-in(l-3-11)", "spare-in(l-4-10)", "spare-in(l-5-9)", "spare-in(l-6-8)", "spare-in(l-7-7)", "spare-in(l-8-6)", "spare-in(l-9-5)", "vehicle-at(l-10-4)"], "actions": ["move-car l-10-4 l-9-5"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 17, "name": "changetire l-9-5 (10)", "type": "state", "distance": 10, "is_sc": false, "num_conditions": 9, "num_positive": 9, "num_negative": 0, "conditions": ["spare-in(l-2-12)", "spare-in(l-3-11)", "spare-in(l-4-10)", "spare-in(l-5-9)", "spare-in(l-6-8)", "spare-in(l-7-7)", "spare-in(l-8-6)", "spare-in(l-9-5)", "vehicle-at(l-9-5)"], "actions": ["changetire l-9-5"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 18, "name": "move-car l-11-3 l-10-4 (11)", "type": "state", "distance": 11, "is_sc": false, "num_conditions": 11, "num_positive": 11, "num_negative": 0, "conditions": ["not-flattire()", "spare-in(l-10-4)", "spare-in(l-2-12)", "spare-in(l-3-11)", "spare-in(l-4-10)", "spare-in(l-5-9)", "spare-in(l-6-8)", "spare-in(l-7-7)", "spare-in(l-8-6)", "spare-in(l-9-5)", "vehicle-at(l-11-3)"], "actions": ["move-car l-11-3 l-10-4"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 19, "name": "changetire l-10-4 (11)", "type": "state", "distance": 11, "is_sc": false, "num_conditions": 10, "num_positive": 10, "num_negative": 0, "conditions": ["spare-in(l-10-4)", "spare-in(l-2-12)", "spare-in(l-3-11)", "spare-in(l-4-10)", "spare-in(l-5-9)", "spare-in(l-6-8)", "spare-in(l-7-7)", "spare-in(l-8-6)", "spare-in(l-9-5)", "vehicle-at(l-10-4)"], "actions": ["changetire l-10-4"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 20, "name": "move-car l-12-2 l-11-3 (12)", "type": "state", "distance": 12, "is_sc": false, "num_conditions": 12, "num_positive": 12, "num_negative": 0, "conditions": ["not-flattire()", "spare-in(l-10-4)", "spare-in(l-11-3)", "spare-in(l-2-12)", "spare-in(l-3-11)", "spare-in(l-4-10)", "spare-in(l-5-9)", "spare-in(l-6-8)", "spare-in(l-7-7)", "spare-in(l-8-6)", "spare-in(l-9-5)", "vehicle-at(l-12-2)"], "actions": ["move-car l-12-2 l-11-3"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 21, "name": "changetire l-11-3 (12)", "type": "state", "distance": 12, "is_sc": false, "num_conditions": 11, "num_positive": 11, "num_negative": 0, "conditions": ["spare-in(l-10-4)", "spare-in(l-11-3)", "spare-in(l-2-12)", "spare-in(l-3-11)", "spare-in(l-4-10)", "spare-in(l-5-9)", "spare-in(l-6-8)", "spare-in(l-7-7)", "spare-in(l-8-6)", "spare-in(l-9-5)", "vehicle-at(l-11-3)"], "actions": ["changetire l-11-3"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 22, "name": "move-car l-13-1 l-12-2 (13)", "type": "state", "distance": 13, "is_sc": false, "num_conditions": 13, "num_positive": 13, "num_negative": 0, "conditions": ["not-flattire()", "spare-in(l-10-4)", "spare-in(l-11-3)", "spare-in(l-12-2)", "spare-in(l-2-12)", "spare-in(l-3-11)", "spare-in(l-4-10)", "spare-in(l-5-9)", "spare-in(l-6-8)", "spare-in(l-7-7)", "spare-in(l-8-6)", "spare-in(l-9-5)", "vehicle-at(l-13-1)"], "actions": ["move-car l-13-1 l-12-2"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 23, "name": "changetire l-12-2 (13)", "type": "state", "distance": 13, "is_sc": false, "num_conditions": 12, "num_positive": 12, "num_negative": 0, "conditions": ["spare-in(l-10-4)", "spare-in(l-11-3)", "spare-in(l-12-2)", "spare-in(l-2-12)", "spare-in(l-3-11)", "spare-in(l-4-10)", "spare-in(l-5-9)", "spare-in(l-6-8)", "spare-in(l-7-7)", "spare-in(l-8-6)", "spare-in(l-9-5)", "vehicle-at(l-12-2)"], "actions": ["changetire l-12-2"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 24, "name": "move-car l-12-1 l-13-1 (14)", "type": "state", "distance": 14, "is_sc": false, "num_conditions": 14, "num_positive": 14, "num_negative": 0, "conditions": ["not-flattire()", "spare-in(l-10-4)", "spare-in(l-11-3)", "spare-in(l-12-2)", "spare-in(l-13-1)", "spare-in(l-2-12)", "spare-in(l-3-11)", "spare-in(l-4-10)", "spare-in(l-5-9)", "spare-in(l-6-8)", "spare-in(l-7-7)", "spare-in(l-8-6)", "spare-in(l-9-5)", "vehicle-at(l-12-1)"], "actions": ["move-car l-12-1 l-13-1"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 25, "name": "changetire l-13-1 (14)", "type": "state", "distance": 14, "is_sc": false, "num_conditions": 13, "num_positive": 13, "num_negative": 0, "conditions": ["spare-in(l-10-4)", "spare-in(l-11-3)", "spare-in(l-12-2)", "spare-in(l-13-1)", "spare-in(l-2-12)", "spare-in(l-3-11)", "spare-in(l-4-10)", "spare-in(l-5-9)", "spare-in(l-6-8)", "spare-in(l-7-7)", "spare-in(l-8-6)", "spare-in(l-9-5)", "vehicle-at(l-13-1)"], "actions": ["changetire l-13-1"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 26, "name": "move-car l-11-1 l-12-1 (15)", "type": "state", "distance": 15, "is_sc": false, "num_conditions": 15, "num_positive": 15, "num_negative": 0, "conditions": ["not-flattire()", "spare-in(l-10-4)", "spare-in(l-11-3)", "spare-in(l-12-1)", "spare-in(l-12-2)", "spare-in(l-13-1)", "spare-in(l-2-12)", "spare-in(l-3-11)", "spare-in(l-4-10)", "spare-in(l-5-9)", "spare-in(l-6-8)", "spare-in(l-7-7)", "spare-in(l-8-6)", "spare-in(l-9-5)", "vehicle-at(l-11-1)"], "actions": ["move-car l-11-1 l-12-1"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 27, "name": "changetire l-12-1 (15)", "type": "state", "distance": 15, "is_sc": false, "num_conditions": 14, "num_positive": 14, "num_negative": 0, "conditions": ["spare-in(l-10-4)", "spare-in(l-11-3)", "spare-in(l-12-1)", "spare-in(l-12-2)", "spare-in(l-13-1)", "spare-in(l-2-12)", "spare-in(l-3-11)", "spare-in(l-4-10)", "spare-in(l-5-9)", "spare-in(l-6-8)", "spare-in(l-7-7)", "spare-in(l-8-6)", "spare-in(l-9-5)", "vehicle-at(l-12-1)"], "actions": ["changetire l-12-1"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 28, "name": "move-car l-10-1 l-11-1 (16)", "type": "state", "distance": 16, "is_sc": false, "num_conditions": 16, "num_positive": 16, "num_negative": 0, "conditions": ["not-flattire()", "spare-in(l-10-4)", "spare-in(l-11-1)", "spare-in(l-11-3)", "spare-in(l-12-1)", "spare-in(l-12-2)", "spare-in(l-13-1)", "spare-in(l-2-12)", "spare-in(l-3-11)", "spare-in(l-4-10)", "spare-in(l-5-9)", "spare-in(l-6-8)", "spare-in(l-7-7)", "spare-in(l-8-6)", "spare-in(l-9-5)", "vehicle-at(l-10-1)"], "actions": ["move-car l-10-1 l-11-1"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 29, "name": "changetire l-11-1 (16)", "type": "state", "distance": 16, "is_sc": false, "num_conditions": 15, "num_positive": 15, "num_negative": 0, "conditions": ["spare-in(l-10-4)", "spare-in(l-11-1)", "spare-in(l-11-3)", "spare-in(l-12-1)", "spare-in(l-12-2)", "spare-in(l-13-1)", "spare-in(l-2-12)", "spare-in(l-3-11)", "spare-in(l-4-10)", "spare-in(l-5-9)", "spare-in(l-6-8)", "spare-in(l-7-7)", "spare-in(l-8-6)", "spare-in(l-9-5)", "vehicle-at(l-11-1)"], "actions": ["changetire l-11-1"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 30, "name": "move-car l-9-1 l-10-1 (17)", "type": "state", "distance": 17, "is_sc": false, "num_conditions": 17, "num_positive": 17, "num_negative": 0, "conditions": ["not-flattire()", "spare-in(l-10-1)", "spare-in(l-10-4)", "spare-in(l-11-1)", "spare-in(l-11-3)", "spare-in(l-12-1)", "spare-in(l-12-2)", "spare-in(l-13-1)", "spare-in(l-2-12)", "spare-in(l-3-11)", "spare-in(l-4-10)", "spare-in(l-5-9)", "spare-in(l-6-8)", "spare-in(l-7-7)", "spare-in(l-8-6)", "spare-in(l-9-5)", "vehicle-at(l-9-1)"], "actions": ["move-car l-9-1 l-10-1"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 31, "name": "changetire l-10-1 (17)", "type": "state", "distance": 17, "is_sc": false, "num_conditions": 16, "num_positive": 16, "num_negative": 0, "conditions": ["spare-in(l-10-1)", "spare-in(l-10-4)", "spare-in(l-11-1)", "spare-in(l-11-3)", "spare-in(l-12-1)", "spare-in(l-12-2)", "spare-in(l-13-1)", "spare-in(l-2-12)", "spare-in(l-3-11)", "spare-in(l-4-10)", "spare-in(l-5-9)", "spare-in(l-6-8)", "spare-in(l-7-7)", "spare-in(l-8-6)", "spare-in(l-9-5)", "vehicle-at(l-10-1)"], "actions": ["changetire l-10-1"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 32, "name": "move-car l-8-1 l-9-1 (18)", "type": "state", "distance": 18, "is_sc": false, "num_conditions": 18, "num_positive": 18, "num_negative": 0, "conditions": ["not-flattire()", "spare-in(l-10-1)", "spare-in(l-10-4)", "spare-in(l-11-1)", "spare-in(l-11-3)", "spare-in(l-12-1)", "spare-in(l-12-2)", "spare-in(l-13-1)", "spare-in(l-2-12)", "spare-in(l-3-11)", "spare-in(l-4-10)", "spare-in(l-5-9)", "spare-in(l-6-8)", "spare-in(l-7-7)", "spare-in(l-8-6)", "spare-in(l-9-1)", "spare-in(l-9-5)", "vehicle-at(l-8-1)"], "actions": ["move-car l-8-1 l-9-1"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 33, "name": "changetire l-9-1 (18)", "type": "state", "distance": 18, "is_sc": false, "num_conditions": 17, "num_positive": 17, "num_negative": 0, "conditions": ["spare-in(l-10-1)", "spare-in(l-10-4)", "spare-in(l-11-1)", "spare-in(l-11-3)", "spare-in(l-12-1)", "spare-in(l-12-2)", "spare-in(l-13-1)", "spare-in(l-2-12)", "spare-in(l-3-11)", "spare-in(l-4-10)", "spare-in(l-5-9)", "spare-in(l-6-8)", "spare-in(l-7-7)", "spare-in(l-8-6)", "spare-in(l-9-1)", "spare-in(l-9-5)", "vehicle-at(l-9-1)"], "actions": ["changetire l-9-1"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 34, "name": "move-car l-7-1 l-8-1 (19)", "type": "state", "distance": 19, "is_sc": false, "num_conditions": 19, "num_positive": 19, "num_negative": 0, "conditions": ["not-flattire()", "spare-in(l-10-1)", "spare-in(l-10-4)", "spare-in(l-11-1)", "spare-in(l-11-3)", "spare-in(l-12-1)", "spare-in(l-12-2)", "spare-in(l-13-1)", "spare-in(l-2-12)", "spare-in(l-3-11)", "spare-in(l-4-10)", "spare-in(l-5-9)", "spare-in(l-6-8)", "spare-in(l-7-7)", "spare-in(l-8-1)", "spare-in(l-8-6)", "spare-in(l-9-1)", "spare-in(l-9-5)", "vehicle-at(l-7-1)"], "actions": ["move-car l-7-1 l-8-1"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 35, "name": "changetire l-8-1 (19)", "type": "state", "distance": 19, "is_sc": false, "num_conditions": 18, "num_positive": 18, "num_negative": 0, "conditions": ["spare-in(l-10-1)", "spare-in(l-10-4)", "spare-in(l-11-1)", "spare-in(l-11-3)", "spare-in(l-12-1)", "spare-in(l-12-2)", "spare-in(l-13-1)", "spare-in(l-2-12)", "spare-in(l-3-11)", "spare-in(l-4-10)", "spare-in(l-5-9)", "spare-in(l-6-8)", "spare-in(l-7-7)", "spare-in(l-8-1)", "spare-in(l-8-6)", "spare-in(l-9-1)", "spare-in(l-9-5)", "vehicle-at(l-8-1)"], "actions": ["changetire l-8-1"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 36, "name": "move-car l-6-1 l-7-1 (20)", "type": "state", "distance": 20, "is_sc": false, "num_conditions": 20, "num_positive": 20, "num_negative": 0, "conditions": ["not-flattire()", "spare-in(l-10-1)", "spare-in(l-10-4)", "spare-in(l-11-1)", "spare-in(l-11-3)", "spare-in(l-12-1)", "spare-in(l-12-2)", "spare-in(l-13-1)", "spare-in(l-2-12)", "spare-in(l-3-11)", "spare-in(l-4-10)", "spare-in(l-5-9)", "spare-in(l-6-8)", "spare-in(l-7-1)", "spare-in(l-7-7)", "spare-in(l-8-1)", "spare-in(l-8-6)", "spare-in(l-9-1)", "spare-in(l-9-5)", "vehicle-at(l-6-1)"], "actions": ["move-car l-6-1 l-7-1"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 37, "name": "changetire l-7-1 (20)", "type": "state", "distance": 20, "is_sc": false, "num_conditions": 19, "num_positive": 19, "num_negative": 0, "conditions": ["spare-in(l-10-1)", "spare-in(l-10-4)", "spare-in(l-11-1)", "spare-in(l-11-3)", "spare-in(l-12-1)", "spare-in(l-12-2)", "spare-in(l-13-1)", "spare-in(l-2-12)", "spare-in(l-3-11)", "spare-in(l-4-10)", "spare-in(l-5-9)", "spare-in(l-6-8)", "spare-in(l-7-1)", "spare-in(l-7-7)", "spare-in(l-8-1)", "spare-in(l-8-6)", "spare-in(l-9-1)", "spare-in(l-9-5)", "vehicle-at(l-7-1)"], "actions": ["changetire l-7-1"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 38, "name": "move-car l-5-1 l-6-1 (21)", "type": "state", "distance": 21, "is_sc": false, "num_conditions": 21, "num_positive": 21, "num_negative": 0, "conditions": ["not-flattire()", "spare-in(l-10-1)", "spare-in(l-10-4)", "spare-in(l-11-1)", "spare-in(l-11-3)", "spare-in(l-12-1)", "spare-in(l-12-2)", "spare-in(l-13-1)", "spare-in(l-2-12)", "spare-in(l-3-11)", "spare-in(l-4-10)", "spare-in(l-5-9)", "spare-in(l-6-1)", "spare-in(l-6-8)", "spare-in(l-7-1)", "spare-in(l-7-7)", "spare-in(l-8-1)", "spare-in(l-8-6)", "spare-in(l-9-1)", "spare-in(l-9-5)", "vehicle-at(l-5-1)"], "actions": ["move-car l-5-1 l-6-1"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 39, "name": "changetire l-6-1 (21)", "type": "state", "distance": 21, "is_sc": false, "num_conditions": 20, "num_positive": 20, "num_negative": 0, "conditions": ["spare-in(l-10-1)", "spare-in(l-10-4)", "spare-in(l-11-1)", "spare-in(l-11-3)", "spare-in(l-12-1)", "spare-in(l-12-2)", "spare-in(l-13-1)", "spare-in(l-2-12)", "spare-in(l-3-11)", "spare-in(l-4-10)", "spare-in(l-5-9)", "spare-in(l-6-1)", "spare-in(l-6-8)", "spare-in(l-7-1)", "spare-in(l-7-7)", "spare-in(l-8-1)", "spare-in(l-8-6)", "spare-in(l-9-1)", "spare-in(l-9-5)", "vehicle-at(l-6-1)"], "actions": ["changetire l-6-1"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 40, "name": "move-car l-4-1 l-5-1 (22)", "type": "state", "distance": 22, "is_sc": false, "num_conditions": 22, "num_positive": 22, "num_negative": 0, "conditions": ["not-flattire()", "spare-in(l-10-1)", "spare-in(l-10-4)", "spare-in(l-11-1)", "spare-in(l-11-3)", "spare-in(l-12-1)", "spare-in(l-12-2)", "spare-in(l-13-1)", "spare-in(l-2-12)", "spare-in(l-3-11)", "spare-in(l-4-10)", "spare-in(l-5-1)", "spare-in(l-5-9)", "spare-in(l-6-1)", "spare-in(l-6-8)", "spare-in(l-7-1)", "spare-in(l-7-7)", "spare-in(l-8-1)", "spare-in(l-8-6)", "spare-in(l-9-1)", "spare-in(l-9-5)", "vehicle-at(l-4-1)"], "actions": ["move-car l-4-1 l-5-1"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 41, "name": "changetire l-5-1 (22)", "type": "state", "distance": 22, "is_sc": false, "num_conditions": 21, "num_positive": 21, "num_negative": 0, "conditions": ["spare-in(l-10-1)", "spare-in(l-10-4)", "spare-in(l-11-1)", "spare-in(l-11-3)", "spare-in(l-12-1)", "spare-in(l-12-2)", "spare-in(l-13-1)", "spare-in(l-2-12)", "spare-in(l-3-11)", "spare-in(l-4-10)", "spare-in(l-5-1)", "spare-in(l-5-9)", "spare-in(l-6-1)", "spare-in(l-6-8)", "spare-in(l-7-1)", "spare-in(l-7-7)", "spare-in(l-8-1)", "spare-in(l-8-6)", "spare-in(l-9-1)", "spare-in(l-9-5)", "vehicle-at(l-5-1)"], "actions": ["changetire l-5-1"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 42, "name": "move-car l-3-1 l-4-1 (23)", "type": "state", "distance": 23, "is_sc": false, "num_conditions": 23, "num_positive": 23, "num_negative": 0, "conditions": ["not-flattire()", "spare-in(l-10-1)", "spare-in(l-10-4)", "spare-in(l-11-1)", "spare-in(l-11-3)", "spare-in(l-12-1)", "spare-in(l-12-2)", "spare-in(l-13-1)", "spare-in(l-2-12)", "spare-in(l-3-11)", "spare-in(l-4-1)", "spare-in(l-4-10)", "spare-in(l-5-1)", "spare-in(l-5-9)", "spare-in(l-6-1)", "spare-in(l-6-8)", "spare-in(l-7-1)", "spare-in(l-7-7)", "spare-in(l-8-1)", "spare-in(l-8-6)", "spare-in(l-9-1)", "spare-in(l-9-5)", "vehicle-at(l-3-1)"], "actions": ["move-car l-3-1 l-4-1"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 43, "name": "changetire l-4-1 (23)", "type": "state", "distance": 23, "is_sc": false, "num_conditions": 22, "num_positive": 22, "num_negative": 0, "conditions": ["spare-in(l-10-1)", "spare-in(l-10-4)", "spare-in(l-11-1)", "spare-in(l-11-3)", "spare-in(l-12-1)", "spare-in(l-12-2)", "spare-in(l-13-1)", "spare-in(l-2-12)", "spare-in(l-3-11)", "spare-in(l-4-1)", "spare-in(l-4-10)", "spare-in(l-5-1)", "spare-in(l-5-9)", "spare-in(l-6-1)", "spare-in(l-6-8)", "spare-in(l-7-1)", "spare-in(l-7-7)", "spare-in(l-8-1)", "spare-in(l-8-6)", "spare-in(l-9-1)", "spare-in(l-9-5)", "vehicle-at(l-4-1)"], "actions": ["changetire l-4-1"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 44, "name": "move-car l-2-1 l-3-1 (24)", "type": "state", "distance": 24, "is_sc": false, "num_conditions": 24, "num_positive": 24, "num_negative": 0, "conditions": ["not-flattire()", "spare-in(l-10-1)", "spare-in(l-10-4)", "spare-in(l-11-1)", "spare-in(l-11-3)", "spare-in(l-12-1)", "spare-in(l-12-2)", "spare-in(l-13-1)", "spare-in(l-2-12)", "spare-in(l-3-1)", "spare-in(l-3-11)", "spare-in(l-4-1)", "spare-in(l-4-10)", "spare-in(l-5-1)", "spare-in(l-5-9)", "spare-in(l-6-1)", "spare-in(l-6-8)", "spare-in(l-7-1)", "spare-in(l-7-7)", "spare-in(l-8-1)", "spare-in(l-8-6)", "spare-in(l-9-1)", "spare-in(l-9-5)", "vehicle-at(l-2-1)"], "actions": ["move-car l-2-1 l-3-1"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 45, "name": "changetire l-3-1 (24)", "type": "state", "distance": 24, "is_sc": false, "num_conditions": 23, "num_positive": 23, "num_negative": 0, "conditions": ["spare-in(l-10-1)", "spare-in(l-10-4)", "spare-in(l-11-1)", "spare-in(l-11-3)", "spare-in(l-12-1)", "spare-in(l-12-2)", "spare-in(l-13-1)", "spare-in(l-2-12)", "spare-in(l-3-1)", "spare-in(l-3-11)", "spare-in(l-4-1)", "spare-in(l-4-10)", "spare-in(l-5-1)", "spare-in(l-5-9)", "spare-in(l-6-1)", "spare-in(l-6-8)", "spare-in(l-7-1)", "spare-in(l-7-7)", "spare-in(l-8-1)", "spare-in(l-8-6)", "spare-in(l-9-1)", "spare-in(l-9-5)", "vehicle-at(l-3-1)"], "actions": ["changetire l-3-1"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 46, "name": "move-car l-1-1 l-2-1 (25)", "type": "state", "distance": 25, "is_sc": false, "num_conditions": 25, "num_positive": 25, "num_negative": 0, "conditions": ["not-flattire()", "spare-in(l-10-1)", "spare-in(l-10-4)", "spare-in(l-11-1)", "spare-in(l-11-3)", "spare-in(l-12-1)", "spare-in(l-12-2)", "spare-in(l-13-1)", "spare-in(l-2-1)", "spare-in(l-2-12)", "spare-in(l-3-1)", "spare-in(l-3-11)", "spare-in(l-4-1)", "spare-in(l-4-10)", "spare-in(l-5-1)", "spare-in(l-5-9)", "spare-in(l-6-1)", "spare-in(l-6-8)", "spare-in(l-7-1)", "spare-in(l-7-7)", "spare-in(l-8-1)", "spare-in(l-8-6)", "spare-in(l-9-1)", "spare-in(l-9-5)", "vehicle-at(l-1-1)"], "actions": ["move-car l-1-1 l-2-1"], "num_actions": 1, "is_initial": true, "size": 8}, {"id": 47, "name": "changetire l-2-1 (25)", "type": "state", "distance": 25, "is_sc": false, "num_conditions": 24, "num_positive": 24, "num_negative": 0, "conditions": ["spare-in(l-10-1)", "spare-in(l-10-4)", "spare-in(l-11-1)", "spare-in(l-11-3)", "spare-in(l-12-1)", "spare-in(l-12-2)", "spare-in(l-13-1)", "spare-in(l-2-1)", "spare-in(l-2-12)", "spare-in(l-3-1)", "spare-in(l-3-11)", "spare-in(l-4-1)", "spare-in(l-4-10)", "spare-in(l-5-1)", "spare-in(l-5-9)", "spare-in(l-6-1)", "spare-in(l-6-8)", "spare-in(l-7-1)", "spare-in(l-7-7)", "spare-in(l-8-1)", "spare-in(l-8-6)", "spare-in(l-9-1)", "spare-in(l-9-5)", "vehicle-at(l-2-1)"], "actions": ["changetire l-2-1"], "num_actions": 1, "is_initial": false, "size": 8}, {"id": 48, "name": "Goal", "type": "goal", "distance": 0, "is_sc": false, "num_conditions": 1, "num_positive": 1, "num_negative": 0, "conditions": [], "actions": [], "num_actions": 0, "is_initial": false, "size": 8}], "links": [{"source": 0, "target": 48, "action": "goal", "type": "goal", "outcomes": ["goal"], "value": 2}, {"source": 1, "target": 0, "action": "move-car l-2-12 l-1-13", "type": "transition", "outcomes": [0, 1], "value": 1.5}, {"source": 2, "target": 1, "action": "move-car l-3-11 l-2-12", "type": "transition", "outcomes": [0], "value": 1}, {"source": 2, "target": 3, "action": "move-car l-3-11 l-2-12", "type": "transition", "outcomes": [1], "value": 1}, {"source": 3, "target": 1, "action": "changetire l-2-12", "type": "transition", "outcomes": [0], "value": 1}, {"source": 4, "target": 2, "action": "move-car l-4-10 l-3-11", "type": "transition", "outcomes": [0], "value": 1}, {"source": 4, "target": 5, "action": "move-car l-4-10 l-3-11", "type": "transition", "outcomes": [1], "value": 1}, {"source": 5, "target": 2, "action": "changetire l-3-11", "type": "transition", "outcomes": [0], "value": 1}, {"source": 6, "target": 4, "action": "move-car l-5-9 l-4-10", "type": "transition", "outcomes": [0], "value": 1}, {"source": 6, "target": 7, "action": "move-car l-5-9 l-4-10", "type": "transition", "outcomes": [1], "value": 1}, {"source": 7, "target": 4, "action": "changetire l-4-10", "type": "transition", "outcomes": [0], "value": 1}, {"source": 8, "target": 6, "action": "move-car l-6-8 l-5-9", "type": "transition", "outcomes": [0], "value": 1}, {"source": 8, "target": 9, "action": "move-car l-6-8 l-5-9", "type": "transition", "outcomes": [1], "value": 1}, {"source": 9, "target": 6, "action": "changetire l-5-9", "type": "transition", "outcomes": [0], "value": 1}, {"source": 10, "target": 8, "action": "move-car l-7-7 l-6-8", "type": "transition", "outcomes": [0], "value": 1}, {"source": 10, "target": 11, "action": "move-car l-7-7 l-6-8", "type": "transition", "outcomes": [1], "value": 1}, {"source": 11, "target": 8, "action": "changetire l-6-8", "type": "transition", "outcomes": [0], "value": 1}, {"source": 12, "target": 10, "action": "move-car l-8-6 l-7-7", "type": "transition", "outcomes": [0], "value": 1}, {"source": 12, "target": 13, "action": "move-car l-8-6 l-7-7", "type": "transition", "outcomes": [1], "value": 1}, {"source": 13, "target": 10, "action": "changetire l-7-7", "type": "transition", "outcomes": [0], "value": 1}, {"source": 14, "target": 12, "action": "move-car l-9-5 l-8-6", "type": "transition", "outcomes": [0], "value": 1}, {"source": 14, "target": 15, "action": "move-car l-9-5 l-8-6", "type": "transition", "outcomes": [1], "value": 1}, {"source": 15, "target": 12, "action": "changetire l-8-6", "type": "transition", "outcomes": [0], "value": 1}, {"source": 16, "target": 14, "action": "move-car l-10-4 l-9-5", "type": "transition", "outcomes": [0], "value": 1}, {"source": 16, "target": 17, "action": "move-car l-10-4 l-9-5", "type": "transition", "outcomes": [1], "value": 1}, {"source": 17, "target": 14, "action": "changetire l-9-5", "type": "transition", "outcomes": [0], "value": 1}, {"source": 18, "target": 16, "action": "move-car l-11-3 l-10-4", "type": "transition", "outcomes": [0], "value": 1}, {"source": 18, "target": 19, "action": "move-car l-11-3 l-10-4", "type": "transition", "outcomes": [1], "value": 1}, {"source": 19, "target": 16, "action": "changetire l-10-4", "type": "transition", "outcomes": [0], "value": 1}, {"source": 20, "target": 18, "action": "move-car l-12-2 l-11-3", "type": "transition", "outcomes": [0], "value": 1}, {"source": 20, "target": 21, "action": "move-car l-12-2 l-11-3", "type": "transition", "outcomes": [1], "value": 1}, {"source": 21, "target": 18, "action": "changetire l-11-3", "type": "transition", "outcomes": [0], "value": 1}, {"source": 22, "target": 20, "action": "move-car l-13-1 l-12-2", "type": "transition", "outcomes": [0], "value": 1}, {"source": 22, "target": 23, "action": "move-car l-13-1 l-12-2", "type": "transition", "outcomes": [1], "value": 1}, {"source": 23, "target": 20, "action": "changetire l-12-2", "type": "transition", "outcomes": [0], "value": 1}, {"source": 24, "target": 22, "action": "move-car l-12-1 l-13-1", "type": "transition", "outcomes": [0], "value": 1}, {"source": 24, "target": 25, "action": "move-car l-12-1 l-13-1", "type": "transition", "outcomes": [1], "value": 1}, {"source": 25, "target": 22, "action": "changetire l-13-1", "type": "transition", "outcomes": [0], "value": 1}, {"source": 26, "target": 24, "action": "move-car l-11-1 l-12-1", "type": "transition", "outcomes": [0], "value": 1}, {"source": 26, "target": 27, "action": "move-car l-11-1 l-12-1", "type": "transition", "outcomes": [1], "value": 1}, {"source": 27, "target": 24, "action": "changetire l-12-1", "type": "transition", "outcomes": [0], "value": 1}, {"source": 28, "target": 26, "action": "move-car l-10-1 l-11-1", "type": "transition", "outcomes": [0], "value": 1}, {"source": 28, "target": 29, "action": "move-car l-10-1 l-11-1", "type": "transition", "outcomes": [1], "value": 1}, {"source": 29, "target": 26, "action": "changetire l-11-1", "type": "transition", "outcomes": [0], "value": 1}, {"source": 30, "target": 28, "action": "move-car l-9-1 l-10-1", "type": "transition", "outcomes": [0], "value": 1}, {"source": 30, "target": 31, "action": "move-car l-9-1 l-10-1", "type": "transition", "outcomes": [1], "value": 1}, {"source": 31, "target": 28, "action": "changetire l-10-1", "type": "transition", "outcomes": [0], "value": 1}, {"source": 32, "target": 30, "action": "move-car l-8-1 l-9-1", "type": "transition", "outcomes": [0], "value": 1}, {"source": 32, "target": 33, "action": "move-car l-8-1 l-9-1", "type": "transition", "outcomes": [1], "value": 1}, {"source": 33, "target": 30, "action": "changetire l-9-1", "type": "transition", "outcomes": [0], "value": 1}, {"source": 34, "target": 32, "action": "move-car l-7-1 l-8-1", "type": "transition", "outcomes": [0], "value": 1}, {"source": 34, "target": 35, "action": "move-car l-7-1 l-8-1", "type": "transition", "outcomes": [1], "value": 1}, {"source": 35, "target": 32, "action": "changetire l-8-1", "type": "transition", "outcomes": [0], "value": 1}, {"source": 36, "target": 34, "action": "move-car l-6-1 l-7-1", "type": "transition", "outcomes": [0], "value": 1}, {"source": 36, "target": 37, "action": "move-car l-6-1 l-7-1", "type": "transition", "outcomes": [1], "value": 1}, {"source": 37, "target": 34, "action": "changetire l-7-1", "type": "transition", "outcomes": [0], "value": 1}, {"source": 38, "target": 36, "action": "move-car l-5-1 l-6-1", "type": "transition", "outcomes": [0], "value": 1}, {"source": 38, "target": 39, "action": "move-car l-5-1 l-6-1", "type": "transition", "outcomes": [1], "value": 1}, {"source": 39, "target": 36, "action": "changetire l-6-1", "type": "transition", "outcomes": [0], "value": 1}, {"source": 40, "target": 38, "action": "move-car l-4-1 l-5-1", "type": "transition", "outcomes": [0], "value": 1}, {"source": 40, "target": 41, "action": "move-car l-4-1 l-5-1", "type": "transition", "outcomes": [1], "value": 1}, {"source": 41, "target": 38, "action": "changetire l-5-1", "type": "transition", "outcomes": [0], "value": 1}, {"source": 42, "target": 40, "action": "move-car l-3-1 l-4-1", "type": "transition", "outcomes": [0], "value": 1}, {"source": 42, "target": 43, "action": "move-car l-3-1 l-4-1", "type": "transition", "outcomes": [1], "value": 1}, {"source": 43, "target": 40, "action": "changetire l-4-1", "type": "transition", "outcomes": [0], "value": 1}, {"source": 44, "target": 42, "action": "move-car l-2-1 l-3-1", "type": "transition", "outcomes": [0], "value": 1}, {"source": 44, "target": 45, "action": "move-car l-2-1 l-3-1", "type": "transition", "outcomes": [1], "value": 1}, {"source": 45, "target": 42, "action": "changetire l-3-1", "type": "transition", "outcomes": [0], "value": 1}, {"source": 46, "target": 44, "action": "move-car l-1-1 l-2-1", "type": "transition", "outcomes": [0], "value": 1}, {"source": 46, "target": 47, "action": "move-car l-1-1 l-2-1", "type": "transition", "outcomes": [1], "value": 1}, {"source": 47, "target": 44, "action": "changetire l-2-1", "type": "transition", "outcomes": [0], "value": 1}], "stats": {"solved": true, "strong_cyclic": true, "num_rules": 48, "num_fsaps": 118, "num_states": 48, "num_transitions": 71, "grounded_actions_found": 28730, "total_outcomes": 71, "mapped_outcomes": 71}};
+        const COLOR_GOAL  = "#e8c100";
+        const COLOR_INIT  = "#067c00";
+        const COLOR_SC    = "#025ef2";
+        const COLOR_UNDEF = "#930000";
+        const COLOR_DEF   = "#828282";
+
+        const svgEl  = document.getElementById("graph");
+        const width  = svgEl.clientWidth  || 900;
+        const height = svgEl.clientHeight || 700;
+        const nodeRadius = 8;
+
+        const svg = d3.select("#graph")
+                      .attr("width", width)
+                      .attr("height", height);
+        const container = svg.append("g");
+
+        /* Zoom / pan */
+        const zoomBehavior = d3.zoom()
+            .scaleExtent([0.1, 6])
+            .on("zoom", function() {
+                container.attr("transform", d3.event.transform);
+            });
+        svg.call(zoomBehavior);
+
+        /* Arrow marker (PRP style) */
+        svg.append("svg:defs").append("svg:marker")
+            .attr("id", "end-arrow")
+            .attr("viewBox", "0 -5 10 10")
+            .attr("refX", 6)
+            .attr("markerWidth", 3)
+            .attr("markerHeight", 3)
+            .attr("orient", "auto")
+          .append("svg:path")
+            .attr("d", "M0,-5L10,0L0,5")
+            .attr("fill", "#000");
+
+        /* Initial positions: top-to-bottom flow (init=top, goal=bottom) */
+        const maxDist = Math.max(1, ...graphData.nodes.map(
+            function(n) { return n.distance >= 0 ? n.distance : 0; }
+        ));
+        const vPad = 60, hPad = 80;
+
+        function jitter(id) {
+            var x = Math.sin((id + 1) * 12.9898) * 43758.5453;
+            return x - Math.floor(x);
+        }
+
+        graphData.nodes.forEach(function(d) {
+            if (d.distance >= 0) {
+                /* Higher distance = closer to init (top). */
+                var ratio = 1.0 - d.distance / (maxDist + 1);
+                d.y = vPad + ratio * (height - 2 * vPad);
+            } else {
+                d.y = height - vPad;
+            }
+            d.x = hPad + jitter(d.id) * (width - 2 * hPad);
+        });
+
+        /* Force simulation (vertical flow akin to PRP's WebCola flowLayout) */
+        const simulation = d3.forceSimulation(graphData.nodes)
+            .force("link", d3.forceLink(graphData.links)
+                .id(function(d) { return d.id; })
+                .distance(84)
+                .strength(0.5))
+            .force("charge", d3.forceManyBody().strength(-120))
+            .force("y", d3.forceY(function(d) {
+                if (d.type === "goal") return height - vPad;
+                if (d.is_initial)     return vPad;
+                if (d.distance >= 0) {
+                    var ratio = 1.0 - d.distance / (maxDist + 1);
+                    return vPad + ratio * (height - 2 * vPad);
+                }
+                return height - vPad;
+            }).strength(0.12))
+            .force("x", d3.forceX(width / 2).strength(0.03))
+            .force("collision", d3.forceCollide(nodeRadius + 4));
+
+        /* Edges (PRP: black, 2.6px, 0.8 opacity, arrow marker) */
+        const path = container.selectAll(".pslink")
+            .data(graphData.links)
+            .enter().append("svg:path")
+            .attr("class", "pslink");
+
+        /* Nodes (PRP colour scheme) */
+        const node = container.selectAll(".psnode")
+            .data(graphData.nodes)
+            .enter().append("circle")
+            .attr("class", "psnode")
+            .attr("id", function(d) { return "psnode" + d.id; })
+            .attr("r", nodeRadius)
+            .style("fill", function(d) {
+                if (d.type === "goal" || d.distance === 0) return COLOR_GOAL;
+                if (d.is_initial) return COLOR_INIT;
+                if (d.is_sc)      return COLOR_SC;
+                if (d.type === "unmapped") return COLOR_UNDEF;
+                return COLOR_DEF;
+            })
+            .call(d3.drag()
+                .on("start", dragstarted)
+                .on("drag", dragged)
+                .on("end", dragended));
+
+        /* Labels ("action (distance)" beside each node) */
+        const label = container.selectAll(".pslabel")
+            .data(graphData.nodes)
+            .enter().append("text")
+            .attr("class", "pslabel")
+            .attr("dx", 12)
+            .attr("dy", ".35em")
+            .text(function(d) { return d.name; });
+
+        /* Hover: show partial state in side panel (PRP style) */
+        node.on("mouseover", function(d) {
+                var html = "<h4>Partial State for Node " + d.id + "</h4>";
+                if (d.type === "goal") {
+                    html += "<pre>Goal node (distance 0)</pre>";
+                } else if (d.type === "unmapped") {
+                    html += "<pre>Undefined / unmapped successor</pre>";
+                } else {
+                    html += "<p><strong>Actions:</strong> " + (d.actions||[]).join(", ") + "</p>";
+                    html += "<p><strong>Distance to goal:</strong> " + (d.distance >= 0 ? d.distance : "unreachable") + "</p>";
+                    if (d.is_sc) html += "<p><strong>Strong-cyclic:</strong> Yes</p>";
+                    if (d.is_initial) html += "<p><em>Initial state</em></p>";
+                    if (d.conditions && d.conditions.length) {
+                        html += "<pre>" + d.conditions.join("\n") + "</pre>";
+                        if (d.num_conditions > d.conditions.length)
+                            html += "<p>... and " + (d.num_conditions - d.conditions.length) + " more</p>";
+                    }
+                }
+                document.getElementById("state").innerHTML = html;
+                d3.select(this).transition().duration(200).attr("r", nodeRadius * 2);
+            })
+            .on("mouseout", function(d) {
+                d3.select(this).transition().duration(200).attr("r", nodeRadius);
+            })
+            .on("dblclick", function(d) {
+                console.log("Node Info:", d);
+            });
+
+        /* Tick (PRP-style edge routing) */
+        simulation.on("tick", function() {
+            path.attr("d", function(d) {
+                var dx = d.target.x - d.source.x,
+                    dy = d.target.y - d.source.y,
+                    dist = Math.sqrt(dx * dx + dy * dy) || 1,
+                    nx = dx / dist, ny = dy / dist,
+                    sx = d.source.x + nodeRadius * nx,
+                    sy = d.source.y + nodeRadius * ny,
+                    tx = d.target.x - (nodeRadius + 2) * nx,
+                    ty = d.target.y - (nodeRadius + 2) * ny;
+                return "M" + sx + "," + sy + "L" + tx + "," + ty;
+            });
+            node.attr("cx", function(d) { return d.x; })
+                .attr("cy", function(d) { return d.y; });
+            label.attr("x", function(d) { return d.x; })
+                 .attr("y", function(d) { return d.y; });
+        });
+
+        /* Drag handlers */
+        function dragstarted(d) {
+            if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x; d.fy = d.y;
+        }
+        function dragged(d) { d.fx = d3.event.x; d.fy = d3.event.y; }
+        function dragended(d) {
+            if (!d3.event.active) simulation.alphaTarget(0);
+            d.fx = null; d.fy = null;
+        }
+
+        /* Controls */
+        window.resetLayout = function() { simulation.alpha(1).restart(); };
+
+        window.zoomToFit = function() {
+            var bounds = container.node().getBBox();
+            if (!bounds.width || !bounds.height) return;
+            var wR = width / bounds.width,
+                hR = height / bounds.height,
+                sc = 0.85 * Math.min(wR, hR),
+                tx = width  / 2 - sc * (bounds.x + bounds.width  / 2),
+                ty = height / 2 - sc * (bounds.y + bounds.height / 2);
+            svg.transition().duration(600)
+               .call(zoomBehavior.transform,
+                     d3.zoomIdentity.translate(tx, ty).scale(sc));
+        };
+
+        window.toggleLabels = function() {
+            var show = document.getElementById("show-labels").checked;
+            label.style("display", show ? "block" : "none");
+        };
+
+        window.updateCharge = function() {
+            simulation.force("charge").strength(
+                -document.getElementById("charge").value);
+            simulation.alpha(0.3).restart();
+        };
+
+        setTimeout(window.zoomToFit, 300);
+    })();
+    </script>
+</body>
+</html>

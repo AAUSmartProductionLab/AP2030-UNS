@@ -306,6 +306,10 @@ class AIPlanningSubmodelBuilder:
             if transformation:
                 elements.append(self._string_property("Transformation", transformation))
 
+            fluent_value = fluent_cfg.get("value")
+            if fluent_value is not None and not isinstance(fluent_value, bool):
+                elements.append(self._typed_property("Value", fluent_value))
+
             semantic_id = fluent_cfg.get("semantic_id") or SemanticIdCatalog.PDDL_TERM
             fluent_elements.append(
                 model.SubmodelElementCollection(

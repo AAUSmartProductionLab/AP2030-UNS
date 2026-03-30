@@ -14,10 +14,11 @@ committing to a specific BT architecture.
 import sys
 from pathlib import Path
 
-_PR2_ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(_PR2_ROOT))
+_Planner_ROOT = Path(__file__).resolve().parent.parent
+_PR2_ROOT = _Planner_ROOT / "pr2"
+sys.path.insert(0, str(_Planner_ROOT))
 
-from pr2_adapter import PR2Solver
+from solve import solve_from_files
 from visualize_policy_graph import create_force_graph_html
 
 
@@ -37,8 +38,7 @@ def main():
     print()
     
     # Solve with PR2
-    solver = PR2Solver()
-    result = solver.solve_from_files(str(domain_path), str(problem_path), timeout=30)
+    result = solve_from_files(str(domain_path), str(problem_path), timeout=30)
     
     print(f"✓ Solved:        {result.is_solved}")
     print(f"🔄 Strong Cyclic: {result.is_strong_cyclic}")

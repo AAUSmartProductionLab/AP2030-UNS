@@ -21,8 +21,8 @@ sys.path.insert(0, str(_PR2_ROOT))
 sys.path.insert(0, str(_Planner_ROOT))
 
 
-from pr2_adapter import PR2Solver
 from pr2_to_bt import policy_to_bt, bt_to_xml
+from solve import solve_from_files
 from visualize_policy_graph import create_force_graph_html
 
 
@@ -45,8 +45,7 @@ def main():
     print()
 
     # ── Solve ────────────────────────────────────────────────────────
-    solver = PR2Solver()
-    result = solver.solve_from_files(domain_path, problem_path, timeout=120)
+    result = solve_from_files(domain_path, problem_path, timeout=120)
 
     print(f"Solved:        {result.is_solved}")
     print(f"Strong Cyclic: {result.is_strong_cyclic}")
