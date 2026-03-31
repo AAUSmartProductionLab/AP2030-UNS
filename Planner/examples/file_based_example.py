@@ -21,9 +21,9 @@ sys.path.insert(0, str(_PR2_ROOT))
 sys.path.insert(0, str(_Planner_ROOT))
 
 
-from pr2_to_bt import policy_to_bt, bt_to_xml
-from solve import solve_from_files
-from visualize_policy_graph import create_force_graph_html
+from bt_policy.api import policy_to_bt, bt_to_xml
+from planner_core.solver import solve_from_files
+from bt_policy.visualization import create_force_graph_html
 
 
 def main():

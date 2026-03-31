@@ -1,0 +1,20 @@
+services:
+  camera_station:
+    build:
+      context: ../..
+      dockerfile: deployment/docker/stations.dockerfile
+    container_name: camera_station
+    restart: always
+    network_mode: host
+    environment:
+      - MQTT_BROKER=192.168.100.123
+      - MQTT_PORT=1883
+      - PYTHONPATH=/app
+    volumes:
+      - ../../:/app
+      - ../../../packml_runtime:/app/packml_runtime
+      - ../../../MQTTSchemas:/app/MQTTSchemas
+      - ../../../AASDescriptions:/app/AASDescriptions
+    devices:
+      - /dev/video0:/dev/video0
+    command: ["-m", "services.stations.camera.service"]

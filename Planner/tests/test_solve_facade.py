@@ -9,7 +9,7 @@ Planner_ROOT = Path(__file__).resolve().parent.parent
 if str(Planner_ROOT) not in sys.path:
     sys.path.insert(0, str(Planner_ROOT))
 
-from solve import solve
+from planner_core.solver import solve
 
 
 def build_problem():

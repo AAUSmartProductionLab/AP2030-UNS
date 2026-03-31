@@ -53,21 +53,21 @@ services:
       - hivemq-broker
     restart: unless-stopped
     
-  timescaledb:
-    image: timescale/timescaledb:latest-pg14
-    container_name: timescaledb
-    volumes:
-      # - ./TimescaleDB/timescaledb-data:/var/lib/postgresql/data
-      - ./TimescaleDB/database/init-scripts:/docker-entrypoint-initdb.d
-    environment:
-      - POSTGRES_PASSWORD=admin
-      - POSTGRES_USER=admin
-      - POSTGRES_DB=uns_data
-    ports:
-      - "5432:5432"
-    networks:
-      - hivemq-network
-    restart: unless-stopped
+  # timescaledb:
+  #   image: timescale/timescaledb:latest-pg14
+  #   container_name: timescaledb
+  #   volumes:
+  #     # - ./TimescaleDB/timescaledb-data:/var/lib/postgresql/data
+  #     - ./TimescaleDB/database/init-scripts:/docker-entrypoint-initdb.d
+  #   environment:
+  #     - POSTGRES_PASSWORD=admin
+  #     - POSTGRES_USER=admin
+  #     - POSTGRES_DB=uns_data
+  #   ports:
+  #     - "5432:5432"
+  #   networks:
+  #     - hivemq-network
+  #   restart: unless-stopped
   # grafana:
   #   image: grafana/grafana:latest
   #   container_name: grafana
@@ -86,19 +86,19 @@ services:
   #     - timescaledb
   #   restart: unless-stopped
  
-  groot:
-    build:
-      context: ./Groot2
-      dockerfile: groot2.dockerfile
-    container_name: groot2-web
-    volumes:
-      - ./BT_Controller/config/bt_description:/bt_description
-      - ./offlineResponse_1656FB-A61627-4A4CB2-F0C0CA-8531ED-BD332C.dat:/bt_description/offlineResponse_1656FB-A61627-4A4CB2-F0C0CA-8531ED-BD332C.dat
-    ports:
-      - "6080:6080"
-    networks:
-      - hivemq-network
-    restart: unless-stopped
+  # groot:
+  #   build:
+  #     context: ./Groot2
+  #     dockerfile: groot2.dockerfile
+  #   container_name: groot2-web
+  #   volumes:
+  #     - ./BT_Controller/config/bt_description:/bt_description
+  #     - ./offlineResponse_1656FB-A61627-4A4CB2-F0C0CA-8531ED-BD332C.dat:/bt_description/offlineResponse_1656FB-A61627-4A4CB2-F0C0CA-8531ED-BD332C.dat
+  #   ports:
+  #     - "6080:6080"
+  #   networks:
+  #     - hivemq-network
+  #   restart: unless-stopped
 
   mqtt-explorer:
     image: smeagolworms4/mqtt-explorer
@@ -116,17 +116,17 @@ services:
       - hivemq-broker
     restart: unless-stopped
     
-  portainer:
-    image: portainer/portainer-ce:latest
-    container_name: portainer
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./Portainer/data:/data
-    ports:
-      - "9000:9000"
-    networks:
-      - hivemq-network
-    restart: unless-stopped
+  # portainer:
+  #   image: portainer/portainer-ce:latest
+  #   container_name: portainer
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #     - ./Portainer/data:/data
+  #   ports:
+  #     - "9000:9000"
+  #   networks:
+  #     - hivemq-network
+  #   restart: unless-stopped
 
   bt_controller:
     build:
@@ -154,34 +154,34 @@ services:
       registration-service:
         condition: service_healthy
 
-  planar_controller:
-    build:
-      context: ./Planar_Controller
-      dockerfile: Dockerfile
-    container_name: planar_controller
-    environment:
-      - MQTT_BROKER=${MQTT_BROKER:-hivemq-broker}
-      - MQTT_PORT=${MQTT_PORT:-1883}
-      - PMC_IP=${PMC_IP:-192.168.0.199}
-    volumes:
-      - ./MQTTSchemas:/app/MQTTSchemas
-      - ./AASDescriptions:/app/AASDescriptions
-    networks:
-      - hivemq-network
-    depends_on:
-      hivemq-broker:
-        condition: service_started
-      aas-env:
-        condition: service_started
-      databridge:
-        condition: service_started
-      registration-service:
-        condition: service_healthy
-    restart: unless-stopped
+  # planar_controller:
+  #   build:
+  #     context: ./Planar_Controller
+  #     dockerfile: Dockerfile
+  #   container_name: planar_controller
+  #   environment:
+  #     - MQTT_BROKER=${MQTT_BROKER:-hivemq-broker}
+  #     - MQTT_PORT=${MQTT_PORT:-1883}
+  #     - PMC_IP=${PMC_IP:-192.168.0.199}
+  #   volumes:
+  #     - ./MQTTSchemas:/app/MQTTSchemas
+  #     - ./AASDescriptions:/app/AASDescriptions
+  #   networks:
+  #     - hivemq-network
+  #   depends_on:
+  #     hivemq-broker:
+  #       condition: service_started
+  #     aas-env:
+  #       condition: service_started
+  #     databridge:
+  #       condition: service_started
+  #     registration-service:
+  #       condition: service_healthy
+  #   restart: unless-stopped
 
   production_planner:
     extends:
-      file: ./PackML_Stations/stations-compose.yml
+      file: ./simulated_stations/deployment/compose/stations-compose.yml
       service: production_planner
     networks:
       - hivemq-network
@@ -197,7 +197,7 @@ services:
 
   filling_station:
     extends:
-      file: ./PackML_Stations/stations-compose.yml
+      file: ./simulated_stations/deployment/compose/stations-compose.yml
       service: filling_station
     networks:
       - hivemq-network
@@ -213,7 +213,7 @@ services:
 
   # camera_station:
   #   extends:
-  #     file: ./PackML_Stations/stations-compose.yml
+  #     file: ./simulated_stations/deployment/compose/stations-compose.yml
   #     service: camera_station
   #   networks:
   #     - hivemq-network
@@ -222,7 +222,7 @@ services:
       
   stoppering_station:
     extends:
-      file: ./PackML_Stations/stations-compose.yml
+      file: ./simulated_stations/deployment/compose/stations-compose.yml
       service: stoppering_station
     networks:
       - hivemq-network
@@ -238,7 +238,7 @@ services:
 
   load_station:
     extends:
-      file: ./PackML_Stations/stations-compose.yml
+      file: ./simulated_stations/deployment/compose/stations-compose.yml
       service: load_station
     networks:
       - hivemq-network
@@ -254,7 +254,7 @@ services:
 
   unload_station:
     extends:
-      file: ./PackML_Stations/stations-compose.yml
+      file: ./simulated_stations/deployment/compose/stations-compose.yml
       service: unload_station
     networks:
       - hivemq-network
@@ -506,24 +506,24 @@ services:
     networks:
       - hivemq-network
 
-  planar-motor-simulator:
-    build:
-      context: ./PlanarMotorSimulator
-      dockerfile: Dockerfile
-    container_name: planar-motor-simulator
-    environment:
-      - DISPLAY=${DISPLAY:-}
-      - RUN_GUI=${RUN_GUI:-false}
-      - AUTO_START=${AUTO_START:-true}
-      - START_BTN_X=400
-      - START_BTN_Y=480
-    ports:
-      - "8888:8888/udp"
-      - "8888:8888/tcp"
-    volumes:
-      - /tmp/.X11-unix:/tmp/.X11-unix:rw
-    network_mode: host
-    restart: unless-stopped
+  # planar-motor-simulator:
+  #   build:
+  #     context: ./PlanarMotorSimulator
+  #     dockerfile: Dockerfile
+  #   container_name: planar-motor-simulator
+  #   environment:
+  #     - DISPLAY=${DISPLAY:-}
+  #     - RUN_GUI=${RUN_GUI:-false}
+  #     - AUTO_START=${AUTO_START:-true}
+  #     - START_BTN_X=400
+  #     - START_BTN_Y=480
+  #   ports:
+  #     - "8888:8888/udp"
+  #     - "8888:8888/tcp"
+  #   volumes:
+  #     - /tmp/.X11-unix:/tmp/.X11-unix:rw
+  #   network_mode: host
+  #   restart: unless-stopped
 
 
 #################¤ NETWORKS AND VOLUMES ####################

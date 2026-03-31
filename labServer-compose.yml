@@ -116,7 +116,7 @@ services:
 
   production_planner:
     extends:
-      file: ./PackML_Stations/stations-compose.yml
+      file: ./simulated_stations/deployment/compose/stations-compose.yml
       service: production_planner
     networks:
       - hivemq-network
@@ -132,7 +132,7 @@ services:
 
   load_station:
     extends:
-      file: ./PackML_Stations/stations-compose.yml
+      file: ./simulated_stations/deployment/compose/stations-compose.yml
       service: load_station
     networks:
       - hivemq-network
@@ -148,7 +148,7 @@ services:
 
   unload_station:
     extends:
-      file: ./PackML_Stations/stations-compose.yml
+      file: ./simulated_stations/deployment/compose/stations-compose.yml
       service: unload_station
     networks:
       - hivemq-network

@@ -15,7 +15,7 @@ _Planner_ROOT = Path(__file__).resolve().parent.parent
 if str(_Planner_ROOT) not in sys.path:
     sys.path.insert(0, str(_Planner_ROOT))
 
-from aas_ai_planning_pipeline import AIPlanningSource, run_ai_planning_pipeline
+from ai_pipeline import AIPlanningSource, run_ai_planning_pipeline
 
 
 def main() -> int:

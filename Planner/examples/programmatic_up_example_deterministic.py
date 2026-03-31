@@ -12,7 +12,7 @@ from pathlib import Path
 _Planner_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_Planner_ROOT))
 
-from solve import solve
+from planner_core.solver import solve
 from unified_planning.shortcuts import (
     BoolType, InstantaneousAction, Not, Problem, UserType)
 

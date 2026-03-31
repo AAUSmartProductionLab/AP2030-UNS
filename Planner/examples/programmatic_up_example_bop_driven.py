@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Unified-planning BOP-driven FOND example with PR2 policy visualization.
 
-This is the UP-based counterpart to the legacy ``programmatic_fond_example_bop_driven``
+This is the UP-based counterpart to ``programmatic_fond_example_bop_driven``
 example. Because the current direct UP->PR2 bridge does not lower axioms or existential
 predecessor checks yet, the BOP ordering is compiled explicitly into step-specific actions
 and ``step_ready`` fluents.
@@ -16,8 +16,8 @@ from pathlib import Path
 _Planner_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_Planner_ROOT))
 
-from solve import solve
-from visualize_policy_graph import create_force_graph_html
+from planner_core.solver import solve
+from bt_policy.visualization import create_force_graph_html
 
 
 HGH_BOP = [

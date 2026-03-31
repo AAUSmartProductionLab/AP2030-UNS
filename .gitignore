@@ -199,4 +199,4 @@ Grafana/grafana-data/grafana.db
 PlanarMotorSimulator/setup.exe
 PlanarMotorSimulator/Simulation Installer.msi
 Planner/output/*
-PackML_Stations/UR5/*
+simulated_stations/robotics/ur5/*
