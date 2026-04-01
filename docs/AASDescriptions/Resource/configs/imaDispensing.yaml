@@ -1,148 +1,144 @@
 imaDispensingSystemAAS:
-    idShort: imaDispensingSystemAAS
-    id: 'https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS'
-    globalAssetId: 'https://smartproductionlab.aau.dk/assets/MzFiZTU1YzAtODc0ZC00YTRmLTkzYzItMDQ5ZDZjZDdhZTYw'
-    derivedFrom: 'https://smartproductionlab.aau.dk/aas/templates/resource'
-    assetType: 'https://smartproductionlab.aau.dk/Resource/CPPM/DispensingSystem/imaDispensingSystem'
-    serialNumber: 'IMA-DS-2024-001'
-    location: 'InnoLab, Nybrovej, AAU'
-    AssetInterfacesDescription:
-        InterfaceMQTT:
-            Title: 'IMA Dispensing System'
-            EndpointMetadata:
-                base: 'mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/Dispensing'
-                contentType: 'application/json'
-            InteractionMetadata:
-                actions:
-                    Dispensing:
-                        key: 'Dispensing'
-                        title: 'Dispensing'
-                        synchronous: 'true'
-                        input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
-                        output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
-                        forms:
-                            contentType: 'application/json'
-                            href: '/CMD/Dispensing'
-                            op: 'invokeAction'
-                            mqv_retain: 'false'
-                            mqv_controlPacket: subscribe
-                            mqv_qos: '2'
-                            response:
-                                contentType: 'application/json'
-                                href: '/DATA/Dispensing'
-                                mqv_controlPacket: 'publish'
-                                mqv_retain: 'false'
-                    Halt:
-                        key: 'Halt'
-                        title: 'Halt'
-                        synchronous: 'true'
-                        input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
-                        forms:
-                            contentType: 'application/json'
-                            href: '/CMD/Halt'
-                            op: 'invokeAction'
-                            mqv_retain: 'false'
-                            mqv_controlPacket: subscribe
-                            mqv_qos: '2'                                   
-                    Occupy:
-                        key: 'Occupy'
-                        title: 'Occupy'
-                        synchronous: 'true'
-                        input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
-                        output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
-                        forms:
-                            contentType: 'application/json'
-                            href: '/CMD/Occupy'
-                            op: 'invokeAction'
-                            mqv_retain: 'false'
-                            mqv_controlPacket: subscribe
-                            mqv_qos: '2'
-                            response:
-                                contentType: 'application/json'
-                                href: '/DATA/Occupy'
-                                mqv_controlPacket: 'publish'
-                                mqv_retain: 'false'
-                    Release:
-                        key: 'Release'
-                        title: 'Release'
-                        synchronous: 'true'
-                        input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
-                        output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
-                        forms:
-                            contentType: 'application/json'
-                            href: '/CMD/Release'
-                            op: 'invokeAction'
-                            mqv_retain: 'false'
-                            mqv_controlPacket: subscribe
-                            mqv_qos: '2'
-                            response:
-                                contentType: 'application/json'
-                                href: '/DATA/Release'
-                                mqv_controlPacket: 'publish'
-                                mqv_retain: 'false'
-                properties:
-                    StationState:
-                        key: 'StationState'
-                        title: 'StationState'
-                        output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/stationState.schema.json'
-                        forms:
-                            contentType: 'application/json'
-                            href: '/DATA/State'
-                            mqv_retain: 'true'
-                            mqv_controlPacket: publish
-                            mqv_qos: '0'
-                    Weight:
-                        key: 'Weight'
-                        title: 'Weight'
-                        output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/weight.schema.json'
-                        forms:
-                            contentType: 'application/json'
-                            href: '/DATA/Weight'
-                            mqv_retain: 'true'
-                            mqv_controlPacket: publish
-                            mqv_qos: '0'
+  idShort: imaDispensingSystemAAS
+  id: 'https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS'
+  globalAssetId: 'https://smartproductionlab.aau.dk/assets/MzFiZTU1YzAtODc0ZC00YTRmLTkzYzItMDQ5ZDZjZDdhZTYw'
+  derivedFrom: 'https://smartproductionlab.aau.dk/aas/templates/resource'
+  assetType: 'https://smartproductionlab.aau.dk/Resource/CPPM/DispensingSystem/imaDispensingSystem'
+  serialNumber: 'IMA-DS-2024-001'
+  location: 'InnoLab, Nybrovej, AAU'
+  AssetInterfacesDescription:
+    InterfaceMQTT:
+      Title: 'IMA Dispensing System'
+      EndpointMetadata:
+        base: 'mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/Dispensing'
+        contentType: 'application/json'
+      InteractionMetadata:
+        actions:
+        - key: 'Dispensing'
+          title: 'Dispensing'
+          synchronous: 'true'
+          input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
+          output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
+          forms:
+            contentType: 'application/json'
+            href: '/CMD/Dispensing'
+            op: 'invokeAction'
+            mqv_retain: 'false'
+            mqv_controlPacket: subscribe
+            mqv_qos: '2'
+            response:
+              contentType: 'application/json'
+              href: '/DATA/Dispensing'
+              mqv_controlPacket: 'publish'
+              mqv_retain: 'false'
+        - key: 'Halt'
+          title: 'Halt'
+          synchronous: 'true'
+          input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
+          forms:
+            contentType: 'application/json'
+            href: '/CMD/Halt'
+            op: 'invokeAction'
+            mqv_retain: 'false'
+            mqv_controlPacket: subscribe
+            mqv_qos: '2'
+        - key: 'Occupy'
+          title: 'Occupy'
+          synchronous: 'true'
+          input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
+          output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
+          forms:
+            contentType: 'application/json'
+            href: '/CMD/Occupy'
+            op: 'invokeAction'
+            mqv_retain: 'false'
+            mqv_controlPacket: subscribe
+            mqv_qos: '2'
+            response:
+              contentType: 'application/json'
+              href: '/DATA/Occupy'
+              mqv_controlPacket: 'publish'
+              mqv_retain: 'false'
+        - key: 'Release'
+          title: 'Release'
+          synchronous: 'true'
+          input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
+          output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
+          forms:
+            contentType: 'application/json'
+            href: '/CMD/Release'
+            op: 'invokeAction'
+            mqv_retain: 'false'
+            mqv_controlPacket: subscribe
+            mqv_qos: '2'
+            response:
+              contentType: 'application/json'
+              href: '/DATA/Release'
+              mqv_controlPacket: 'publish'
+              mqv_retain: 'false'
+        properties:
+        - key: 'StationState'
+          title: 'StationState'
+          output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/stationState.schema.json'
+          forms:
+            contentType: 'application/json'
+            href: '/DATA/State'
+            mqv_retain: 'true'
+            mqv_controlPacket: publish
+            mqv_qos: '0'
+        - key: 'Weight'
+          title: 'Weight'
+          output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/weight.schema.json'
+          forms:
+            contentType: 'application/json'
+            href: '/DATA/Weight'
+            mqv_retain: 'true'
+            mqv_controlPacket: publish
+            mqv_qos: '0'
 
-    Variables:
-        PackMLState:
-            semanticId: 'https://www.omac.org/packml/state'
-            InterfaceReference: 'StationState'
-            Field: 'State'
-        OccupationState:
-            semanticId: 'https://smartproductionlab.aau.dk/stationOccupation'
-            InterfaceReference: 'StationState'
-            Field: 'ProcessQueue'
-        Weight:
-            semanticId: 'https://smartproductionlab.aau.dk/weight'
-            InterfaceReference: 'Weight'
+  Variables:
+  - key: PackMLState
+    semanticId: 'https://www.omac.org/packml/state'
+    InterfaceReference:
+      Name: 'StationState'
+      Field: 'State'
+  - key: OccupationState
+    semanticId: 'https://smartproductionlab.aau.dk/stationOccupation'
+    InterfaceReference:
+      Name: 'StationState'
+      Field: 'ProcessQueue'
+  - key: Weight
+    semanticId: 'https://smartproductionlab.aau.dk/weight'
+    InterfaceReference:
 
-    Parameters:
-    HierarchicalStructures:
-        Name: 'BillOfMaterials'
-        Archetype: 'OneUp'
-        IsPartOf:
-            aauFillingLineAAS:
-                globalAssetId: 'https://smartproductionlab.aau.dk/assets/MWQ2ODY5ZDEtZTQ3Yy00NWU4LTlmYTAtNTI3YjVlMDk4MWFi'
-    
-    Capabilities:
-        Dispensing:
-            realizedBy: "Dispensing"
-            semantic_id: https://smartproductionlab.aau.dk/Capability/Dispensing
+      Name: 'Weight'
+  Parameters:
+  HierarchicalStructures:
+    Name: 'BillOfMaterials'
+    Archetype: 'OneUp'
+    IsPartOf:
+      aauFillingLineAAS:
+        globalAssetId: 'https://smartproductionlab.aau.dk/assets/MWQ2ODY5ZDEtZTQ3Yy00NWU4LTlmYTAtNTI3YjVlMDk4MWFi'
+  Capabilities:
+  - key: Dispensing
+    realizedBy: "Dispensing"
+    semantic_id: https://smartproductionlab.aau.dk/Capability/Dispensing
 
-    
-    Skills:
-        Dispensing:
-            description: "Dispensing function for pharmaceutical primary packaging"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/Dispensing"
-            interface: "Dispensing"
-        Halt:
-            description: "Halt the current operation"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/Halt"
-            interface: "Halt"
-        Occupy:
-            description: "Occupy the system for exclusive use"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/Occupy"
-            interface: "Occupy"
-        Release:
-            description: "Release the system from exclusive use"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/Release"
-            interface: "Release"
+
+  Skills:
+  - key: Dispensing
+    description: "Dispensing function for pharmaceutical primary packaging"
+    semantic_id: "https://smartproductionlab.aau.dk/skills/Dispensing"
+    InterfaceReference: Dispensing
+  - key: Halt
+    description: "Halt the current operation"
+    semantic_id: "https://smartproductionlab.aau.dk/skills/Halt"
+    InterfaceReference: Halt
+  - key: Occupy
+    description: "Occupy the system for exclusive use"
+    semantic_id: "https://smartproductionlab.aau.dk/skills/Occupy"
+    InterfaceReference: Occupy
+  - key: Release
+    description: "Release the system from exclusive use"
+    semantic_id: "https://smartproductionlab.aau.dk/skills/Release"
+    InterfaceReference: Release

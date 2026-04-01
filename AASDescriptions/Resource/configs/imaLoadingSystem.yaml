@@ -14,8 +14,7 @@ imaLoadingSystem2AAS:
                 contentType: 'application/json'
             InteractionMetadata:
                 actions:
-                    -   Loading:
-                        key: 'Loading'
+                    -   key: 'Loading'
                         title: 'Loading'
                         synchronous: 'false'
                         input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
@@ -32,8 +31,7 @@ imaLoadingSystem2AAS:
                                 href: '/DATA/Loading'
                                 mqv_controlPacket: 'publish'
                                 mqv_retain: 'false'
-                    -   Halt:
-                        key: 'Halt'
+                    -   key: 'Halt'
                         title: 'Halt'
                         synchronous: 'true'
                         input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
@@ -43,9 +41,8 @@ imaLoadingSystem2AAS:
                             op: 'invokeAction'
                             mqv_retain: 'false'
                             mqv_controlPacket: subscribe
-                            mqv_qos: '2'                                   
-                    -   Occupy:
-                        key: 'Occupy'
+                            mqv_qos: '2'
+                    -   key: 'Occupy'
                         title: 'Occupy'
                         synchronous: 'true'
                         input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
@@ -62,8 +59,7 @@ imaLoadingSystem2AAS:
                                 href: '/DATA/Occupy'
                                 mqv_controlPacket: 'publish'
                                 mqv_retain: 'false'
-                    -   Release:
-                        key: 'Release'
+                    -   key: 'Release'
                         title: 'Release'
                         synchronous: 'true'
                         input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
@@ -81,8 +77,7 @@ imaLoadingSystem2AAS:
                                 mqv_controlPacket: 'publish'
                                 mqv_retain: 'false'
                 properties:
-                    -   StationState:
-                        key: 'StationState'
+                    -   key: 'StationState'
                         title: 'StationState'
                         output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/stationState.schema.json'
                         forms:
@@ -93,14 +88,14 @@ imaLoadingSystem2AAS:
                             mqv_qos: '0'
 
     Variables:
-        - PackMLState:
+        -   key: "PackMLState"
             semanticId: 'https://www.omac.org/packml/state'
             InterfaceReference:
                 Name: 'StationState'
                 Field: 'State'
-        - OccupationState:
+        -   key: "OccupationState"
             semanticId: 'https://smartproductionlab.aau.dk/stationOccupation'
-            InterfaceReference: 
+            InterfaceReference:
                 Name: 'StationState'
                 Field: 'ProcessQueue'
 
@@ -112,214 +107,263 @@ imaLoadingSystem2AAS:
         IsPartOf:
             aauFillingLineAAS:
                 globalAssetId: 'https://smartproductionlab.aau.dk/assets/MWQ2ODY5ZDEtZTQ3Yy00NWU4LTlmYTAtNTI3YjVlMDk4MWFi'
-    
+
     Capabilities:
-        Loading:
-            realizedBy: "Load"
+        -   key: "Loading"
+            realizedBy: "Loading"
             semantic_id: https://smartproductionlab.aau.dk/Capability/Loading
 
-    TransformationData:
-        -   Operational:
-            semantic_id: "https://smartproductionlab.aau.dk/PDDL/Term/Predicates/Operational"
-            parameters:
-                -   name: "Resource"
-                    reference:
-                        external: "https://smartproductionlab.aau.dk/Resource"  
-            transformation: 'parameter1.Variables.PackMLState.State == "Execute"'
-        -   Occupied:
-            semantic_id: "https://smartproductionlab.aau.dk/PDDL/Term/Predicates/Occupied"
-            parameters:
-                -   name: "Resource"
-                    reference:
-                        external: "https://smartproductionlab.aau.dk/Resource"  
-                -   name: "Product"
-                    reference:
-                        external: "https://smartproductionlab.aau.dk/Product"  
-            transformation: 'parameter1.Variables.OccupationState.ProcessQueue[0] == parameter2.Parameters.Uuid'
-    
+    AI-Planning:
+        Domain:
+            Fluents:
+                -   key: "Operational"
+                    semantic_id: "https://smartproductionlab.aau.dk/PDDL/Term/Predicates/Operational"
+                    parameters:
+                        -   name: "Resource"
+                            externalRef: "https://smartproductionlab.aau.dk/Resource"
+                    transformation: 'parameter1.Variables.PackMLState.State == "Execute"'
+
+                -   key: "Occupied"
+                    semantic_id: "https://smartproductionlab.aau.dk/PDDL/Term/Predicates/Occupied"
+                    parameters:
+                        -   name: "Resource"
+                            externalRef: "https://smartproductionlab.aau.dk/Resource"
+                        -   name: "Product"
+                            externalRef: "https://smartproductionlab.aau.dk/Product"
+                    transformation: 'parameter1.Variables.OccupationState.ProcessQueue[0] == parameter2.Parameters.Uuid'
+
+                -   key: "OccupationLoad"
+                    type: "function"
+                    semantic_id: "https://smartproductionlab.aau.dk/PDDL/Term/Functions/OccupationLoad"
+                    parameters:
+                        -   name: "Resource"
+                            externalRef: "https://smartproductionlab.aau.dk/Resource"
+                        -   name: "Product"
+                            externalRef: "https://smartproductionlab.aau.dk/Product"
+                    value: 0.0
+                    transformation: 'size(parameter1.Variables.OccupationState.ProcessQueue)'
+
+            Actions:
+                -   key: "Loading"
+                    SkillReference: "Loading"
+                    parameters:
+                        -   name: "LoadingSystem"
+                            modelRef:
+                                - AAS: "self"
+                        -   name: "Product"
+                            externalRef: "https://smartproductionlab.aau.dk/Product"
+                        -   name: "TransportSystem"
+                            externalRef: "https://smartproductionlab.aau.dk/CPS/Transport"
+                    duration:
+                        =:
+                            right:
+                                const: 5.0
+                    conditions:
+                        at_start:
+                            - predicate:
+                                ref: "Operational"
+                                parameters: [0]
+                            - predicate:
+                                ref: "Occupied"
+                                parameters: [0, 1]
+                    effects:
+                        at_end:
+                            - predicate:
+                                external: "https://smartproductionlab.aau.dk/PDDL/Term/Predicates/On"
+                                parameters: [1, 2]
+                            - predicate:
+                                external: "https://smartproductionlab.aau.dk/PDDL/Term/Predicates/At"
+                                parameters: [1, 0]
+
+                -   key: "Occupy"
+                    SkillReference: "Occupy"
+                    parameters:
+                        -   name: "LoadingSystem"
+                            modelRef:
+                                - AAS: "self"
+                        -   name: "Product"
+                            externalRef: "https://smartproductionlab.aau.dk/Product"
+                    conditions:
+                        at_start:
+                            - predicate:
+                                ref: "Operational"
+                                parameters: [0]
+                            - not:
+                                predicate:
+                                    ref: "Occupied"
+                                    parameters: [0, 1]
+                    effects:
+                        at_end:
+                            - predicate:
+                                ref: "Occupied"
+                                parameters: [0, 1]
+
+                -   key: "Release"
+                    SkillReference: "Release"
+                    parameters:
+                        -   name: "LoadingSystem"
+                            modelRef:
+                                - AAS: "self"
+                        -   name: "Product"
+                            externalRef: "https://smartproductionlab.aau.dk/Product"
+                    conditions:
+                        at_start:
+                            - predicate:
+                                ref: "Operational"
+                                parameters: [0]
+                            - predicate:
+                                ref: "Occupied"
+                                parameters: [0, 1]
+                    effects:
+                        at_end:
+                            - predicate:
+                                ref: "Occupied"
+                                parameters: [0, 1]
+
+            Processes:
+                -   key: "MaintainOccupation"
+                    parameters:
+                        -   name: "LoadingSystem"
+                            modelRef:
+                                - AAS: "self"
+                        -   name: "Product"
+                            modelRef:
+                                - AAS: "https://smartproductionlab.aau.dk/aas/MIM8AAS"
+                    precondition:
+                        - predicate:
+                            ref: "Operational"
+                            parameters: [0]
+                        - predicate:
+                            ref: "Occupied"
+                            parameters: [0, 1]
+                    effect:
+                        continuous:
+                            - increase:
+                                function:
+                                    ref: "OccupationLoad"
+                                    parameters: [0, 1]
+                                value: 1.0
+
+            Events:
+                -   key: "AutoReleaseOnStop"
+                    parameters:
+                        -   name: "LoadingSystem"
+                            modelRef:
+                                - AAS: "self"
+                        -   name: "Product"
+                            modelRef:
+                                - AAS: "https://smartproductionlab.aau.dk/aas/MIM8AAS"
+                    precondition:
+                        - not:
+                            predicate:
+                                ref: "Operational"
+                                parameters: [0]
+                        - predicate:
+                            ref: "Occupied"
+                            parameters: [0, 1]
+                    effect:
+                        - not:
+                            predicate:
+                                ref: "Occupied"
+                                parameters: [0, 1]
+
+            Constraints:
+                -   always:
+                        - predicate:
+                            ref: "Operational"
+                            parameters: [0]
+
+                -   at-most-once:
+                        - predicate:
+                            ref: "Occupied"
+                            parameters: [0, 1]
+
+        Problem:
+            Objects:
+                -   name: "imaLoadingSystem2"
+                    modelRef:
+                        - AAS: "self"
+                -   name: "MIM8"
+                    modelRef:
+                        - AAS: "https://smartproductionlab.aau.dk/aas/MIM8AAS"
+
+            Init:
+                -   predicate:
+                    ref: "Operational"
+                    parameters: [0]
+                - not:
+                    -   predicate:
+                        ref: "Occupied"
+                        parameters: [0, 1]
+
+            Goal:
+                - predicate:
+                    ref: "Operational"
+                    parameters: [0]
+                - not:
+                    - predicate:
+                        ref: "Occupied"
+                        parameters: [0, 1]
+                - preference:
+                    name: "goal_operational"
+                    term:
+                        predicate:
+                            ref: "Operational"
+                            parameters: [0]
+
+            Constraints:
+                -   always:
+                        - predicate:
+                            ref: "Operational"
+                            parameters: [0]
+
+                -   sometime:
+                        - predicate:
+                            ref: "Occupied"
+                            parameters: [0, 1]
+
+                - preference:
+                    name: "avoid_multiple_occupation"
+                    term:
+                        at-most-once:
+                            - predicate:
+                                ref: "Occupied"
+                                parameters: [0, 1]
+
+            Metric:
+                optimize: "minimize"
+                expression:
+                    - "+":
+                        - "*":
+                            - function:
+                                preference: "goal_operational"
+                            - const:
+                                name: "Weight"
+                                value: 10
+                        - "*":
+                            - function:
+                                preference: "avoid_multiple_occupation"
+                            - const:
+                                name: "Weight"
+                                value: 5
+
     Skills:
-        Loading:
+        -   key: "Loading"
             description: "Loading function for pharmaceutical primary packaging"
             semantic_id: "https://smartproductionlab.aau.dk/skills/Loading"
             InterfaceReference: "Loading"
-            skill_desription:
-                parameters:
-                    semantic_id: "https://smartproductionlab.aau.dk/PDDL/Parameters"
-                    parameters:
-                        -   name: "LoadingSystem"
-                            reference:
-                                model:
-                                - AAS: "https://smartproductionlab.aau.dk/assets/ZDNlYmVhZjItZTAyMC00NWMwLTg5NjEtODRiNTFkOWE0NzVl2"
-                        -   name: "Product"
-                            reference:
-                                external: "https://smartproductionlab.aau.dk/Product"                        
-                        -   name: "TransportSystem"
-                            reference:
-                                external: "https://smartproductionlab.aau.dk/CPS/Transport"
 
-                conditions:
-                    semantic_id: "https://smartproductionlab.aau.dk/PDDL/Conditions"
-                    PreConditions:
-                        terms:
-                            - logicterm:
-                                semantic_id: "https://smartproductionlab.aau.dk/PDDL/Term/Logic/And"
-                                terms:
-                                    -   fluent:
-                                        reference:
-                                            model:
-                                                -   SM: "OperationalData"
-                                                -   SMC: "TransformationData"
-                                                -   SMC: "Operational"
-                                        parameters:
-                                            -   0
-                                    -   fluent:
-                                        reference:
-                                            model:
-                                                -   SM: "OperationalData"
-                                                -   SMC: "TransformationData"
-                                                -   SMC: "Occupied"
-                                        parameters:
-                                            -   0
-                                            -   1
-                                        
-                effects:
-                    semantic_id: "https://smartproductionlab.aau.dk/PDDL/Effects"
-                    EndEffects:
-                        terms:
-                            - logicterm:
-                                semantic_id: "https://smartproductionlab.aau.dk/PDDL/Term/Logic/And"
-                                terms:
-                                    -   fluent:
-                                        reference:
-                                            external: "https://smartproductionlab.aau.dk/PDDL/Term/Predicates/On"
-                                        parameters:
-                                            -   1
-                                            -   2
-                                    -   fluent:
-                                        reference:
-                                            external: "https://smartproductionlab.aau.dk/PDDL/Term/Predicates/At"
-                                        parameters:
-                                            -   1
-                                            -   0
-
-        Halt:
+        -   key: "Halt"
             description: "Halt the current operation"
             semantic_id: "https://smartproductionlab.aau.dk/skills/Halt"
             InterfaceReference: "Halt"
 
-        Occupy:
+        -   key: "Occupy"
             description: "Occupy the system for exclusive use"
             semantic_id: "https://smartproductionlab.aau.dk/skills/Occupy"
             InterfaceReference: "Occupy"
-            skill_desription:
-                parameters:
-                    semantic_id: "https://smartproductionlab.aau.dk/PDDL/Parameters"
-                    parameters:
-                        -   name: "LoadingSystem"
-                            reference:
-                                model:
-                                - AAS: "https://smartproductionlab.aau.dk/assets/ZDNlYmVhZjItZTAyMC00NWMwLTg5NjEtODRiNTFkOWE0NzVl2"
-                        -   name: "Product"
-                            reference:
-                                external: "https://smartproductionlab.aau.dk/Product"                        
-                        -   name: "TransportSystem"
-                            reference:
-                                external: "https://smartproductionlab.aau.dk/CPS/Transport"
-                conditions:
-                    semantic_id: "https://smartproductionlab.aau.dk/PDDL/Conditions"
-                    PreConditions:
-                        terms:
-                            -   logicterm:
-                                semantic_id: "https://smartproductionlab.aau.dk/PDDL/Term/Logic/And"
-                                terms:
-                                    -   fluent:
-                                        reference:
-                                            model:
-                                                -   SM: "OperationalData"
-                                                -   SMC: "TransformationData"
-                                                -   SMC: "Operational"
-                                        parameters:
-                                            -   0
-                                    -   logicterm:
-                                        semantic_id: "https://smartproductionlab.aau.dk/PDDL/Term/Logic/Not"
-                                        terms:
-                                        -   fluent:
-                                            reference:
-                                                model:
-                                                    -   SM: "OperationalData"
-                                                    -   SMC: "TransformationData"
-                                                    -   SMC: "Occupied"
-                                            parameters:
-                                                -   0
-                                                -   1
-                effects:
-                    semantic_id: "https://smartproductionlab.aau.dk/PDDL/Effects"
-                    EndEffects:
-                        terms:
-                            - logicterm:
-                                semantic_id: "https://smartproductionlab.aau.dk/PDDL/Term/Logic/And"
-                                terms:
-                                    -   fluent:
-                                        reference:
-                                            external: "https://smartproductionlab.aau.dk/PDDL/Term/Predicates/Occupied"
-                                        parameters:
-                                            -   0
-                                            -   1
-                                        value: true
 
-        Release:
+        -   key: "Release"
             description: "Release the system from exclusive use"
             semantic_id: "https://smartproductionlab.aau.dk/skills/Release"
             InterfaceReference: "Release"
-            skill_desription:
-                parameters:
-                    semantic_id: "https://smartproductionlab.aau.dk/PDDL/Parameters"
-                    parameters:
-                        -   name: "LoadingSystem"
-                            reference:
-                                model:
-                                - AAS: "https://smartproductionlab.aau.dk/assets/ZDNlYmVhZjItZTAyMC00NWMwLTg5NjEtODRiNTFkOWE0NzVl2"
-                        -   name: "Product"
-                            reference:
-                                external: "https://smartproductionlab.aau.dk/Product"                        
-                        -   name: "TransportSystem"
-                            reference:
-                                external: "https://smartproductionlab.aau.dk/CPS/Transport"
-                conditions:
-                    semantic_id: "https://smartproductionlab.aau.dk/PDDL/Conditions"
-                    PreConditions:
-                        terms:
-                            -   logicterm:
-                                semantic_id: "https://smartproductionlab.aau.dk/PDDL/Term/Logic/And"
-                                terms:
-                                    -   fluent:
-                                        reference:
-                                            model:
-                                                -   SM: "OperationalData"
-                                                -   SMC: "TransformationData"
-                                                -   SMC: "Operational"
-                                        parameters:
-                                            -   0
-                                    -   fluent:
-                                        reference:
-                                            model:
-                                                -   SM: "OperationalData"
-                                                -   SMC: "TransformationData"
-                                                -   SMC: "Occupied"
-                                        parameters:
-                                            -   0
-                                            -   1
-                effects:
-                    semantic_id: "https://smartproductionlab.aau.dk/PDDL/Effects"
-                    EndEffects:
-                        terms:
-                            - logicterm:
-                                semantic_id: "https://smartproductionlab.aau.dk/PDDL/Term/Logic/And"
-                                terms:
-                                    -   fluent:
-                                        reference:
-                                            external: "https://smartproductionlab.aau.dk/PDDL/Term/Predicates/Occupied"
-                                        parameters:
-                                            -   0
-                                            -   1
-                                        value: false

@@ -1,150 +1,146 @@
 omronCameraSystemAAS:
-    idShort: omronCameraSystemAAS
-    id: 'https://smartproductionlab.aau.dk/aas/omronCameraSystemAAS'
-    globalAssetId: 'https://smartproductionlab.aau.dk/assets/M2VmNjk0OTgtNmE0YS00MzA4LWE4NjMtM2JjZDZjZDhkMTBl'
-    derivedFrom: 'https://smartproductionlab.aau.dk/aas/templates/resource'
-    assetType: 'https://smartproductionlab.aau.dk/Resource/CPPM/QualityControlSystem/omronCameraSystem'
-    serialNumber: 'OMRON-CAM-2024-001'
-    location: 'InnoLab, Nybrovej, AAU'
-    AssetInterfacesDescription:
-        InterfaceMQTT:
-            Title: 'optima Camera System'
-            EndpointMetadata:
-                base: 'mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/QualityControl'
-                contentType: 'application/json'
-            InteractionMetadata:
-                actions:
-                    Capture:
-                        key: 'Capture'
-                        title: 'Capture'
-                        synchronous: 'true'
-                        input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
-                        output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
-                        forms:
-                            contentType: 'application/json'
-                            href: '/CMD/Capture'
-                            op: 'invokeAction'
-                            mqv_retain: 'false'
-                            mqv_controlPacket: subscribe
-                            mqv_qos: '2'
-                            response:
-                                contentType: 'application/json'
-                                href: '/DATA/Capture'
-                                mqv_controlPacket: 'publish'
-                                mqv_retain: 'false'
-                    Halt:
-                        key: 'Halt'
-                        title: 'Halt'
-                        synchronous: 'true'
-                        input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
-                        forms:
-                            contentType: 'application/json'
-                            href: '/CMD/Halt'
-                            op: 'invokeAction'
-                            mqv_retain: 'false'
-                            mqv_controlPacket: subscribe
-                            mqv_qos: '2'                                   
-                    Occupy:
-                        key: 'Occupy'
-                        title: 'Occupy'
-                        synchronous: 'true'
-                        input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
-                        output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
-                        forms:
-                            contentType: 'application/json'
-                            href: '/CMD/Occupy'
-                            op: 'invokeAction'
-                            mqv_retain: 'false'
-                            mqv_controlPacket: subscribe
-                            mqv_qos: '2'
-                            response:
-                                contentType: 'application/json'
-                                href: '/DATA/Occupy'
-                                mqv_controlPacket: 'publish'
-                                mqv_retain: 'false'
-                    Release:
-                        key: 'Release'
-                        title: 'Release'
-                        synchronous: 'true'
-                        input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
-                        output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
-                        forms:
-                            contentType: 'application/json'
-                            href: '/CMD/Release'
-                            op: 'invokeAction'
-                            mqv_retain: 'false'
-                            mqv_controlPacket: subscribe
-                            mqv_qos: '2'
-                            response:
-                                contentType: 'application/json'
-                                href: '/DATA/Release'
-                                mqv_controlPacket: 'publish'
-                                mqv_retain: 'false'
-                properties:
-                    StationState:
-                        key: 'StationState'
-                        title: 'StationState'
-                        output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/stationState.schema.json'
-                        forms:
-                            contentType: 'application/json'
-                            href: '/DATA/State'
-                            mqv_retain: 'true'
-                            mqv_controlPacket: publish
-                            mqv_qos: '0'
-                    Image:
-                        key: 'Image'
-                        title: 'Image'
-                        output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/image.schema.json'
-                        forms:
-                            contentType: 'application/json'
-                            href: '/DATA/Image'
-                            mqv_retain: 'false'
-                            mqv_controlPacket: publish
-                            mqv_qos: '0'
+  idShort: omronCameraSystemAAS
+  id: 'https://smartproductionlab.aau.dk/aas/omronCameraSystemAAS'
+  globalAssetId: 'https://smartproductionlab.aau.dk/assets/M2VmNjk0OTgtNmE0YS00MzA4LWE4NjMtM2JjZDZjZDhkMTBl'
+  derivedFrom: 'https://smartproductionlab.aau.dk/aas/templates/resource'
+  assetType: 'https://smartproductionlab.aau.dk/Resource/CPPM/QualityControlSystem/omronCameraSystem'
+  serialNumber: 'OMRON-CAM-2024-001'
+  location: 'InnoLab, Nybrovej, AAU'
+  AssetInterfacesDescription:
+    InterfaceMQTT:
+      Title: 'optima Camera System'
+      EndpointMetadata:
+        base: 'mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/QualityControl'
+        contentType: 'application/json'
+      InteractionMetadata:
+        actions:
+        - key: 'Capture'
+          title: 'Capture'
+          synchronous: 'true'
+          input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
+          output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
+          forms:
+            contentType: 'application/json'
+            href: '/CMD/Capture'
+            op: 'invokeAction'
+            mqv_retain: 'false'
+            mqv_controlPacket: subscribe
+            mqv_qos: '2'
+            response:
+              contentType: 'application/json'
+              href: '/DATA/Capture'
+              mqv_controlPacket: 'publish'
+              mqv_retain: 'false'
+        - key: 'Halt'
+          title: 'Halt'
+          synchronous: 'true'
+          input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
+          forms:
+            contentType: 'application/json'
+            href: '/CMD/Halt'
+            op: 'invokeAction'
+            mqv_retain: 'false'
+            mqv_controlPacket: subscribe
+            mqv_qos: '2'
+        - key: 'Occupy'
+          title: 'Occupy'
+          synchronous: 'true'
+          input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
+          output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
+          forms:
+            contentType: 'application/json'
+            href: '/CMD/Occupy'
+            op: 'invokeAction'
+            mqv_retain: 'false'
+            mqv_controlPacket: subscribe
+            mqv_qos: '2'
+            response:
+              contentType: 'application/json'
+              href: '/DATA/Occupy'
+              mqv_controlPacket: 'publish'
+              mqv_retain: 'false'
+        - key: 'Release'
+          title: 'Release'
+          synchronous: 'true'
+          input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
+          output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
+          forms:
+            contentType: 'application/json'
+            href: '/CMD/Release'
+            op: 'invokeAction'
+            mqv_retain: 'false'
+            mqv_controlPacket: subscribe
+            mqv_qos: '2'
+            response:
+              contentType: 'application/json'
+              href: '/DATA/Release'
+              mqv_controlPacket: 'publish'
+              mqv_retain: 'false'
+        properties:
+        - key: 'StationState'
+          title: 'StationState'
+          output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/stationState.schema.json'
+          forms:
+            contentType: 'application/json'
+            href: '/DATA/State'
+            mqv_retain: 'true'
+            mqv_controlPacket: publish
+            mqv_qos: '0'
+        - key: 'Image'
+          title: 'Image'
+          output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/image.schema.json'
+          forms:
+            contentType: 'application/json'
+            href: '/DATA/Image'
+            mqv_retain: 'false'
+            mqv_controlPacket: publish
+            mqv_qos: '0'
 
-    Variables:
-        PackMLState:
-            semanticId: 'https://www.omac.org/packml/state'
-            InterfaceReference: 'StationState'
-            Field: 'State'
-        OccupationState:
-            semanticId: 'https://smartproductionlab.aau.dk/stationOccupation'
-            InterfaceReference: 'StationState'
-            Field: 'ProcessQueue'
-        Image:
-            semanticId: 'https://smartproductionlab.aau.dk/image'
-            InterfaceReference: 'Image'
-            Field: 'Image'
-    Parameters:
-    HierarchicalStructures:
-        Name: 'BillOfMaterials'
-        Archetype: 'OneUp'
-        IsPartOf:
-            aauFillingLineAAS:
-                globalAssetId: 'https://smartproductionlab.aau.dk/assets/MWQ2ODY5ZDEtZTQ3Yy00NWU4LTlmYTAtNTI3YjVlMDk4MWFi'
-    
-    Capabilities:
-        QualityControl:
-            realizedBy: "Capture"
-            semantic_id: https://smartproductionlab.aau.dk/Capability/QualityControl
-        Capture:
-            realizedBy: "Capture"
-            semantic_id: https://smartproductionlab.aau.dk/Capability/Capture
-    
-    Skills:
-        Capture:
-            description: "Capture image for quality control"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/Capture"
-            interface: "Capture"
-        Halt:
-            description: "Halt the current operation"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/Halt"
-            interface: "Halt"
-        Occupy:
-            description: "Occupy the system for exclusive use"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/Occupy"
-            interface: "Occupy"
-        Release:
-            description: "Release the system from exclusive use"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/Release"
-            interface: "Release"
+  Variables:
+  - key: PackMLState
+    semanticId: 'https://www.omac.org/packml/state'
+    InterfaceReference:
+      Name: 'StationState'
+      Field: 'State'
+  - key: OccupationState
+    semanticId: 'https://smartproductionlab.aau.dk/stationOccupation'
+    InterfaceReference:
+      Name: 'StationState'
+      Field: 'ProcessQueue'
+  - key: Image
+    semanticId: 'https://smartproductionlab.aau.dk/image'
+    InterfaceReference:
+      Name: 'Image'
+      Field: 'Image'
+  Parameters:
+  HierarchicalStructures:
+    Name: 'BillOfMaterials'
+    Archetype: 'OneUp'
+    IsPartOf:
+      aauFillingLineAAS:
+        globalAssetId: 'https://smartproductionlab.aau.dk/assets/MWQ2ODY5ZDEtZTQ3Yy00NWU4LTlmYTAtNTI3YjVlMDk4MWFi'
+  Capabilities:
+  - key: QualityControl
+    realizedBy: "Capture"
+    semantic_id: https://smartproductionlab.aau.dk/Capability/QualityControl
+  - key: Capture
+    realizedBy: "Capture"
+    semantic_id: https://smartproductionlab.aau.dk/Capability/Capture
+
+  Skills:
+  - key: Capture
+    description: "Capture image for quality control"
+    semantic_id: "https://smartproductionlab.aau.dk/skills/Capture"
+    InterfaceReference: Capture
+  - key: Halt
+    description: "Halt the current operation"
+    semantic_id: "https://smartproductionlab.aau.dk/skills/Halt"
+    InterfaceReference: Halt
+  - key: Occupy
+    description: "Occupy the system for exclusive use"
+    semantic_id: "https://smartproductionlab.aau.dk/skills/Occupy"
+    InterfaceReference: Occupy
+  - key: Release
+    description: "Release the system from exclusive use"
+    semantic_id: "https://smartproductionlab.aau.dk/skills/Release"
+    InterfaceReference: Release
