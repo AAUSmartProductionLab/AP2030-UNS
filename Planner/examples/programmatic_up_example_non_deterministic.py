@@ -10,7 +10,7 @@ from pathlib import Path
 _Planner_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_Planner_ROOT))
 
-from planner_core.solver import solve
+from pddl_planning.planner_core.solver import solve
 
 
 def build_problem():

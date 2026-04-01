@@ -18,8 +18,8 @@ _Planner_ROOT = Path(__file__).resolve().parent.parent
 _PR2_ROOT = _Planner_ROOT / "pr2"
 sys.path.insert(0, str(_Planner_ROOT))
 
-from planner_core.solver import solve_from_files
-from bt_policy.visualization import create_force_graph_html
+from pddl_planning.planner_core.solver import solve_from_files
+from pddl_planning.pr2_bridge.visualization import create_force_graph_html
 
 
 def main():

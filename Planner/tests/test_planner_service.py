@@ -8,10 +8,15 @@ from unittest.mock import Mock, patch
 
 
 Planner_ROOT = Path(__file__).resolve().parent.parent
-if str(Planner_ROOT) not in sys.path:
-    sys.path.insert(0, str(Planner_ROOT))
+REPO_ROOT = Planner_ROOT.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
-from aas_to_pddl.core.planner_service import PlanningResult, PlannerConfig, PlannerService
+from Planner.production_planner_service import (
+    PlanningResult,
+    PlannerConfig,
+    PlannerService,
+)
 
 
 class _PipelineResult:
@@ -58,14 +63,19 @@ class PlannerServiceTests(unittest.TestCase):
         config = PlannerConfig(save_intermediate_files=False, strict_semantic_solve=True)
         service = PlannerService(aas_client=object(), mqtt_client=object(), config=config)
 
-        service._fetch_product_config = Mock(return_value={
-            "id": "https://example/aas/productA",
-            "idShort": "productA",
-            "BatchInformation": {},
-            "Requirements": {},
-        })
-        service._resolve_asset_hierarchies = Mock(return_value=["https://example/aas/dispensing"])
-        service._collect_ai_planning_sources = Mock(return_value=[object()])
+        planning_sources = [object()]
+        service.context_collector = Mock(return_value=SimpleNamespace(
+            product_config={
+                "id": "https://example/aas/productA",
+                "idShort": "productA",
+                "BatchInformation": {},
+                "Requirements": {},
+            },
+            requirements={},
+            resolved_asset_ids=["https://example/aas/dispensing"],
+            planning_sources=planning_sources,
+            planar_table_id=None,
+        ))
 
         unsolved = SimpleNamespace(
             is_solved=False,
@@ -79,7 +89,7 @@ class PlannerServiceTests(unittest.TestCase):
             artifacts={"domain_pddl": "/tmp/domain.pddl"},
         )
 
-        with patch("ai_pipeline.run_ai_planning_pipeline", return_value=pipeline_result) as run_pipeline:
+        with patch.object(service, "_run_planning_pipeline", return_value=pipeline_result) as run_pipeline:
             result = service.plan_and_register(
                 asset_ids=["https://example/aas/dispensing"],
                 product_aas_id="https://example/aas/productA",
@@ -91,8 +101,7 @@ class PlannerServiceTests(unittest.TestCase):
         self.assertEqual(result.planner_backend, "up")
         self.assertEqual(result.planner_mode, "plan")
 
-        kwargs = run_pipeline.call_args.kwargs
-        self.assertFalse(kwargs["allow_reduced_fallback"])
+        run_pipeline.assert_called_once_with(planning_sources)
 
     def test_plan_and_register_success_uses_pipeline_capabilities_for_process_config(self):
         config = PlannerConfig(
@@ -109,16 +118,24 @@ class PlannerServiceTests(unittest.TestCase):
             "BatchInformation": {},
             "Requirements": {"x": 1},
         }
-        service._fetch_product_config = Mock(return_value=product_config)
-        service._resolve_asset_hierarchies = Mock(return_value=["https://example/aas/dispensing"])
-        service._collect_ai_planning_sources = Mock(return_value=[object()])
-        service._find_planar_table_from_assets = Mock(return_value="https://example/aas/planartable")
-        service._register_via_mqtt = Mock()
+        planning_sources = [object()]
+        service.context_collector = Mock(return_value=SimpleNamespace(
+            product_config=product_config,
+            requirements={"x": 1},
+            resolved_asset_ids=["https://example/aas/dispensing"],
+            planning_sources=planning_sources,
+            planar_table_id="https://example/aas/planartable",
+        ))
 
         service.process_generator = Mock()
-        service.process_generator.generate_config.return_value = {"proc": {"id": "https://example/aas/processA"}}
-        service.process_generator.get_aas_id.return_value = "https://example/aas/processA"
-        service.process_generator.get_system_id.return_value = "ProcessAAS"
+        process_bundle = SimpleNamespace(
+            process_aas_id="https://example/aas/processA",
+            system_id="ProcessAAS",
+            config={"proc": {"id": "https://example/aas/processA"}},
+            yaml_content="proc:\n  id: https://example/aas/processA\n",
+            output_path=None,
+        )
+        service.process_generator.generate_process_aas_bundle.return_value = process_bundle
 
         capabilities = [
             SimpleNamespace(
@@ -141,7 +158,7 @@ class PlannerServiceTests(unittest.TestCase):
             artifacts={"behavior_tree_xml": "/tmp/behavior_tree.xml"},
         )
 
-        with patch("ai_pipeline.run_ai_planning_pipeline", return_value=pipeline_result) as run_pipeline:
+        with patch.object(service, "_run_planning_pipeline", return_value=pipeline_result) as run_pipeline:
             result = service.plan_and_register(
                 asset_ids=["https://example/aas/dispensing"],
                 product_aas_id="https://example/aas/productA",
@@ -154,17 +171,21 @@ class PlannerServiceTests(unittest.TestCase):
         self.assertEqual(result.solver_status, "SOLVED_POLICY")
         self.assertEqual(result.capabilities[0]["Name"], "Dispensing")
 
-        generate_args = service.process_generator.generate_config.call_args.args
+        generate_args = service.process_generator.generate_process_aas_bundle.call_args.args
         self.assertEqual(generate_args[0], capabilities)
         self.assertEqual(generate_args[1], "https://example/aas/productA")
         self.assertEqual(generate_args[2], product_config)
         self.assertEqual(generate_args[3], {"x": 1})
         self.assertEqual(generate_args[5], "https://example/aas/planartable")
+        self.assertIsNone(service.process_generator.generate_process_aas_bundle.call_args.kwargs["output_dir"])
 
-        kwargs = run_pipeline.call_args.kwargs
-        self.assertTrue(kwargs["allow_reduced_fallback"])
-        self.assertEqual(kwargs["timeout"], 12.5)
-        self.assertEqual(kwargs["artifacts_dir"], "/tmp/planner-artifacts")
+        service.process_generator.publish_bundle_registration.assert_called_once_with(
+            service.mqtt_client,
+            service.config.registration_topic,
+            process_bundle,
+        )
+
+        run_pipeline.assert_called_once_with(planning_sources)
 
 
 if __name__ == "__main__":

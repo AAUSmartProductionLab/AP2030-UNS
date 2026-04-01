@@ -1,9 +1,0 @@
-paho-mqtt
-jsonschema
-basyx-python-sdk
-requests
-pyyaml
-pddl
-pyparsing
-networkx
-ConfigSpace

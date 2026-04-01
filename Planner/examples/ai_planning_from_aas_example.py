@@ -12,10 +12,12 @@ import sys
 from pathlib import Path
 
 _Planner_ROOT = Path(__file__).resolve().parent.parent
-if str(_Planner_ROOT) not in sys.path:
-    sys.path.insert(0, str(_Planner_ROOT))
+_REPO_ROOT = _Planner_ROOT.parent
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
 
-from ai_pipeline import AIPlanningSource, run_ai_planning_pipeline
+from Planner.aas_to_pddl_conversion.models import AIPlanningSource
+from Planner.production_planner_service import PlannerService
 
 
 def main() -> int:
@@ -46,7 +48,9 @@ def main() -> int:
         ai_planning_submodel=ai_planning_submodel,
     )
 
-    result = run_ai_planning_pipeline([source], timeout=20)
+    service = PlannerService(aas_client=None)
+    service.config.planning_timeout_seconds = 20
+    result = service._run_planning_pipeline([source])
 
     print(f"Solve mode:  {result.solve_result.mode}")
     print(f"Backend:     {result.solve_result.backend_name}")
