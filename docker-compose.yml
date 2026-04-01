@@ -181,7 +181,7 @@ services:
 
   production_planner:
     extends:
-      file: ./simulated_stations/deployment/compose/stations-compose.yml
+      file: ./Planner/deployment/compose/docker-compose.yaml
       service: production_planner
     networks:
       - hivemq-network
