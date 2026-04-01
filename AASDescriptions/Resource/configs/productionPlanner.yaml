@@ -47,12 +47,7 @@ productionPlannerAAS:
     InterfaceReference:
       Name: 'StationState'
       Field: 'State'
-  - key: OccupationState
-    semanticId: 'https://smartproductionlab.aau.dk/stationOccupation'
-    InterfaceReference:
-      Name: 'StationState'
-      Field: 'ProcessQueue'
-      
+
   Parameters:
 
   HierarchicalStructures:
