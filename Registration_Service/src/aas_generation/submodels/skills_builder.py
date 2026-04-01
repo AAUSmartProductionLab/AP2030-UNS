@@ -48,6 +48,8 @@ class SkillsSubmodelBuilder:
             Skills submodel with Operations wrapped in SubmodelElementCollections
         """
         skills_config = config.get('Skills', []) or []
+        if not isinstance(skills_config, list):
+            raise ValueError("Invalid Skills config: expected a list")
         skill_elements = []
 
         # Get action interfaces from AssetInterfacesDescription
@@ -65,6 +67,8 @@ class SkillsSubmodelBuilder:
         # If explicit Skills are configured, use them
         if skills_config:
             for skill_config in skills_config:
+                if not isinstance(skill_config, dict):
+                    raise ValueError("Invalid Skills entry: expected object")
 
                 skill = SkillBuilder(skill_config, action_map, system_id, self.base_url, self.delegation_base_url, self.schema_handler)
                 if skill.SMC:
@@ -113,7 +117,16 @@ class SkillBuilder:
         """
         # Get the interface name for this skill
         skill_name = self.config.get('key')
-        interface_name = self.config.get('InterfaceReference') or self.config.get('interface_reference') or skill_name
+        if not isinstance(skill_name, str) or not skill_name:
+            raise ValueError("Invalid Skills entry: missing or invalid 'key'")
+
+        interface_name = self.config.get('InterfaceReference')
+        if interface_name is None:
+            interface_name = skill_name
+        if not isinstance(interface_name, str) or not interface_name:
+            raise ValueError(
+                f"Invalid Skills entry '{skill_name}': InterfaceReference must be a string"
+            )
 
         elements = []
         is_async = False
