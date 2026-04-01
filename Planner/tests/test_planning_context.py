@@ -20,7 +20,7 @@ class _FakeAASClient:
             "https://example/aas/productA": SimpleNamespace(
                 id="https://example/aas/productA",
                 id_short="productA",
-                asset_information=SimpleNamespace(global_asset_id="asset-product", asset_type="Product"),
+                asset_information=SimpleNamespace(global_asset_id="asset-product", asset_type="Order"),
             ),
             "https://example/aas/resourceA": SimpleNamespace(
                 id="https://example/aas/resourceA",
@@ -63,12 +63,12 @@ class PlanningContextTests(unittest.TestCase):
 
         ctx = collect_planning_context(
             client,
-            product_aas_id="https://example/aas/productA",
+            order_aas_id="https://example/aas/productA",
             asset_ids=["https://example/aas/resourceA"],
         )
 
         self.assertIsNotNone(ctx)
-        self.assertEqual(ctx.product_config["id"], "https://example/aas/productA")
+        self.assertEqual(ctx.order_config["id"], "https://example/aas/productA")
         self.assertEqual(ctx.resolved_asset_ids, ["https://example/aas/resourceA"])
         self.assertEqual(len(ctx.planning_sources), 2)
         self.assertEqual(ctx.planar_table_id, "https://example/aas/resourceA")

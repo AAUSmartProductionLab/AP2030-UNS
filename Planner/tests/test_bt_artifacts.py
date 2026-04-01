@@ -18,11 +18,11 @@ class BTArtifactsTests(unittest.TestCase):
     def test_generate_bt_filename_prefers_aas_id_tail(self):
         filename = generate_bt_filename(
             {
-                "id": "https://example/aas/Product_A-1/",
+                "id": "https://example/aas/Order_A-1/",
                 "idShort": "ignored",
             }
         )
-        self.assertEqual(filename, "production_Product_A-1.xml")
+        self.assertEqual(filename, "production_Order_A-1.xml")
 
     def test_generate_bt_filename_falls_back_to_id_short(self):
         filename = generate_bt_filename({"idShort": "My Product@42"})

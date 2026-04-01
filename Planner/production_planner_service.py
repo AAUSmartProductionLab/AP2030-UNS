@@ -42,7 +42,7 @@ class PlanningResult:
 
     success: bool
     process_aas_id: Optional[str] = None
-    product_aas_id: Optional[str] = None
+    order_aas_id: Optional[str] = None
     error_message: Optional[str] = None
     process_config: Optional[Dict[str, Any]] = None
     planner_mode: Optional[str] = None
@@ -56,7 +56,7 @@ class PlanningResult:
         """Convert to MQTT response format."""
         response = {
             "State": "SUCCESS" if self.success else "FAILURE",
-            "ProductAasId": self.product_aas_id,
+            "OrderAASId": self.order_aas_id,
         }
 
         if self.success and self.process_aas_id:
@@ -132,17 +132,17 @@ class PlannerService:
             ProcessAASConfig(bt_base_url=self.config.bt_base_url)
         )
 
-    def plan_and_register(self, asset_ids: List[str], product_aas_id: str) -> PlanningResult:
-        logger.info("Starting planning for product: %s", product_aas_id)
+    def plan_and_register(self, asset_ids: List[str], order_aas_id: str) -> PlanningResult:
+        logger.info("Starting planning for order: %s", order_aas_id)
         logger.info("Initial asset IDs: %s", asset_ids)
 
         logger.info("Step 1-4: Collecting planning context from AAS models...")
-        planning_context = self.context_collector(self.aas_client, product_aas_id, asset_ids)
+        planning_context = self.context_collector(self.aas_client, order_aas_id, asset_ids)
         if not planning_context:
             return PlanningResult(
                 success=False,
-                product_aas_id=product_aas_id,
-                error_message=f"Could not fetch product AAS: {product_aas_id}",
+                order_aas_id=order_aas_id,
+                error_message=f"Could not fetch order AAS: {order_aas_id}",
             )
 
         logger.info("Resolved to %d assets", len(planning_context.resolved_asset_ids))
@@ -150,7 +150,7 @@ class PlannerService:
         if not planning_sources:
             return PlanningResult(
                 success=False,
-                product_aas_id=product_aas_id,
+                order_aas_id=order_aas_id,
                 error_message="No AIPlanning submodels found across product/assets",
             )
 
@@ -161,7 +161,7 @@ class PlannerService:
             logger.error("Planning sequence failed: %s", exc)
             return PlanningResult(
                 success=False,
-                product_aas_id=product_aas_id,
+                order_aas_id=order_aas_id,
                 error_message=f"AI planning failed: {exc}",
             )
 
@@ -169,7 +169,7 @@ class PlannerService:
         if not getattr(solve_result, "is_solved", False):
             return PlanningResult(
                 success=False,
-                product_aas_id=product_aas_id,
+                order_aas_id=order_aas_id,
                 planner_mode=getattr(solve_result, "mode", None),
                 planner_backend=getattr(solve_result, "backend_name", None),
                 solver_status=getattr(solve_result, "status", None),
@@ -182,7 +182,7 @@ class PlannerService:
         if not bt_xml:
             return PlanningResult(
                 success=False,
-                product_aas_id=product_aas_id,
+                order_aas_id=order_aas_id,
                 planner_mode=getattr(solve_result, "mode", None),
                 planner_backend=getattr(solve_result, "backend_name", None),
                 solver_status=getattr(solve_result, "status", None),
@@ -192,7 +192,7 @@ class PlannerService:
             )
 
         planar_table_id = planning_context.planar_table_id
-        bt_filename = generate_bt_filename(planning_context.product_config)
+        bt_filename = generate_bt_filename(planning_context.order_config)
         bt_path = os.path.join(self.config.bt_output_dir, bt_filename)
 
         if self.config.save_intermediate_files:
@@ -202,8 +202,8 @@ class PlannerService:
         logger.info("Step 7: Generating Process AAS configuration...")
         process_bundle = self.process_generator.generate_process_aas_bundle(
             pipeline_result.capabilities,
-            product_aas_id,
-            planning_context.product_config,
+            order_aas_id,
+            planning_context.order_config,
             planning_context.requirements,
             bt_filename,
             planar_table_id,
@@ -224,7 +224,7 @@ class PlannerService:
         return PlanningResult(
             success=True,
             process_aas_id=process_bundle.process_aas_id,
-            product_aas_id=product_aas_id,
+            order_aas_id=order_aas_id,
             process_config=process_bundle.config,
             planner_mode=getattr(solve_result, "mode", None),
             planner_backend=getattr(solve_result, "backend_name", None),
@@ -307,7 +307,7 @@ class ProductionPlannerRuntime:
         self,
         duration: float = 0.0,
         asset_ids: Optional[List[str]] = None,
-        product_aas_id: Optional[str] = None,
+        order_aas_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         del duration
 
@@ -318,21 +318,21 @@ class ProductionPlannerRuntime:
                 "ErrorMessage": "Planner service not initialized",
             }
 
-        if not asset_ids or not product_aas_id:
-            logger.error("Missing required parameters: asset_ids and product_aas_id")
+        if not asset_ids or not order_aas_id:
+            logger.error("Missing required parameters: asset_ids and order_aas_id")
             return {
                 "State": "FAILURE",
-                "ProductAasId": product_aas_id,
-                "ErrorMessage": "Missing required parameters: Assets and Product",
+                "OrderAASId": order_aas_id,
+                "ErrorMessage": "Missing required parameters: Assets and Order",
             }
 
         try:
-            logger.info("Starting planning process for product: %s", product_aas_id)
+            logger.info("Starting planning process for product: %s", order_aas_id)
             logger.info("Available assets: %s", asset_ids)
 
             result = self.planner_service.plan_and_register(
                 asset_ids=asset_ids,
-                product_aas_id=product_aas_id,
+                order_aas_id=order_aas_id,
             )
 
             if result.success:
@@ -347,7 +347,7 @@ class ProductionPlannerRuntime:
             traceback.print_exc()
             return {
                 "State": "FAILURE",
-                "ProductAasId": product_aas_id,
+                "OrderAASId": order_aas_id,
                 "ErrorMessage": f"Unexpected error during planning: {exc}",
             }
 
@@ -359,13 +359,13 @@ class ProductionPlannerRuntime:
             logger.info("[%s] Received planning command: %s", request_uuid, json.dumps(message, indent=2))
 
             asset_ids = None
-            product_aas_id = None
+            order_aas_id = None
             if isinstance(message, dict):
                 asset_ids = message.get("Assets") or message.get("assetIds")
-                product_aas_id = message.get("Product") or message.get("productAasId")
+                order_aas_id = message.get("Order") or message.get("OrderAASId")
 
-            if not asset_ids or not product_aas_id:
-                logger.error("Invalid planning command: missing Assets or Product")
+            if not asset_ids or not order_aas_id:
+                logger.error("Invalid planning command: missing Assets or Order")
                 return
 
             self.state_machine.execute_command(
@@ -374,7 +374,7 @@ class ProductionPlannerRuntime:
                 self._planning_process,
                 0.0,
                 asset_ids,
-                product_aas_id,
+                order_aas_id,
             )
 
         except Exception as exc:

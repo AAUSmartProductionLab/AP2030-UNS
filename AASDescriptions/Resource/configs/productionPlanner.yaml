@@ -52,23 +52,15 @@ productionPlannerAAS:
     InterfaceReference:
       Name: 'StationState'
       Field: 'ProcessQueue'
+      
   Parameters:
-  HierarchicalStructures:
-  Capabilities:
-  - key: ProductionPlanning
-    realizedBy: "Plan"
 
+  HierarchicalStructures:
+
+  Capabilities:
     
   Skills:
   - key: Plan
     description: "Generate a production plan for the provided product using the available assets"
     semantic_id: "https://smartproductionlab.aau.dk/skills/productionPlanning"
     InterfaceReference: Plan
-  - key: Occupy
-    description: "Occupy the system for exclusive use"
-    semantic_id: "https://smartproductionlab.aau.dk/skills/Occupy"
-    InterfaceReference: Occupy
-  - key: Release
-    description: "Release the system from exclusive use"
-    semantic_id: "https://smartproductionlab.aau.dk/skills/Release"
-    InterfaceReference: Release

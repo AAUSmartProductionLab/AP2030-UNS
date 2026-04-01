@@ -33,7 +33,7 @@ class PlannerServiceTests(unittest.TestCase):
         result = PlanningResult(
             success=True,
             process_aas_id="https://example/aas/process1",
-            product_aas_id="https://example/aas/product1",
+            order_aas_id="https://example/aas/product1",
             planner_mode="plan",
             planner_backend="up",
             solver_status="SOLVED_SATISFICING",
@@ -65,7 +65,7 @@ class PlannerServiceTests(unittest.TestCase):
 
         planning_sources = [object()]
         service.context_collector = Mock(return_value=SimpleNamespace(
-            product_config={
+            order_config={
                 "id": "https://example/aas/productA",
                 "idShort": "productA",
                 "BatchInformation": {},
@@ -92,7 +92,7 @@ class PlannerServiceTests(unittest.TestCase):
         with patch.object(service, "_run_planning_pipeline", return_value=pipeline_result) as run_pipeline:
             result = service.plan_and_register(
                 asset_ids=["https://example/aas/dispensing"],
-                product_aas_id="https://example/aas/productA",
+                order_aas_id="https://example/aas/productA",
             )
 
         self.assertFalse(result.success)
@@ -112,7 +112,7 @@ class PlannerServiceTests(unittest.TestCase):
         )
         service = PlannerService(aas_client=object(), mqtt_client=object(), config=config)
 
-        product_config = {
+        order_config = {
             "id": "https://example/aas/productA",
             "idShort": "productA",
             "BatchInformation": {},
@@ -120,7 +120,7 @@ class PlannerServiceTests(unittest.TestCase):
         }
         planning_sources = [object()]
         service.context_collector = Mock(return_value=SimpleNamespace(
-            product_config=product_config,
+            order_config=order_config,
             requirements={"x": 1},
             resolved_asset_ids=["https://example/aas/dispensing"],
             planning_sources=planning_sources,
@@ -161,7 +161,7 @@ class PlannerServiceTests(unittest.TestCase):
         with patch.object(service, "_run_planning_pipeline", return_value=pipeline_result) as run_pipeline:
             result = service.plan_and_register(
                 asset_ids=["https://example/aas/dispensing"],
-                product_aas_id="https://example/aas/productA",
+                order_aas_id="https://example/aas/productA",
             )
 
         self.assertTrue(result.success)
@@ -174,7 +174,7 @@ class PlannerServiceTests(unittest.TestCase):
         generate_args = service.process_generator.generate_process_aas_bundle.call_args.args
         self.assertEqual(generate_args[0], capabilities)
         self.assertEqual(generate_args[1], "https://example/aas/productA")
-        self.assertEqual(generate_args[2], product_config)
+        self.assertEqual(generate_args[2], order_config)
         self.assertEqual(generate_args[3], {"x": 1})
         self.assertEqual(generate_args[5], "https://example/aas/planartable")
         self.assertIsNone(service.process_generator.generate_process_aas_bundle.call_args.kwargs["output_dir"])

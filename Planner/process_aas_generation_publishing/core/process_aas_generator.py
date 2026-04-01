@@ -61,8 +61,8 @@ class ProcessAASGenerator:
     def generate_config(
         self,
         planning_capabilities: List[Any],
-        product_aas_id: str,
-        product_info: Dict[str, Any],
+        order_aas_id: str,
+        order_info: Dict[str, Any],
         requirements: Dict[str, Any],
         bt_filename: str = "production.xml",
         planar_table_id: Optional[str] = None
@@ -72,8 +72,8 @@ class ProcessAASGenerator:
         
         Args:
             planning_capabilities: List of planner capabilities
-            product_aas_id: AAS ID of the product
-            product_info: Product information dictionary
+            order_aas_id: AAS ID of the product
+            order_info: Product information dictionary
             requirements: Extracted requirements from product
             bt_filename: Name of the behavior tree file
             planar_table_id: Optional AAS ID of the planar table (motion system)
@@ -82,7 +82,7 @@ class ProcessAASGenerator:
             Complete YAML configuration as dictionary
         """
         # Generate unique identifiers
-        process_id = self._generate_process_id(product_info)
+        process_id = self._generate_process_id(order_info)
         global_asset_id = self._generate_global_asset_id()
         timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
         
@@ -101,7 +101,7 @@ class ProcessAASGenerator:
                 
                 # Process metadata with product reference
                 'ProcessInformation': self._generate_process_info(
-                    process_id, product_info, product_aas_id, timestamp
+                    process_id, order_info, order_aas_id, timestamp
                 ),
                 
                 # Required capabilities with resource references and embedded requirements
@@ -127,8 +127,8 @@ class ProcessAASGenerator:
     def generate_process_aas_bundle(
         self,
         planning_capabilities: List[Any],
-        product_aas_id: str,
-        product_info: Dict[str, Any],
+        order_aas_id: str,
+        order_info: Dict[str, Any],
         requirements: Dict[str, Any],
         bt_filename: str = "production.xml",
         planar_table_id: Optional[str] = None,
@@ -137,8 +137,8 @@ class ProcessAASGenerator:
         """Generate Process AAS config, IDs, YAML and optional persisted file path."""
         config = self.generate_config(
             planning_capabilities,
-            product_aas_id,
-            product_info,
+            order_aas_id,
+            order_info,
             requirements,
             bt_filename,
             planar_table_id,
@@ -213,11 +213,11 @@ class ProcessAASGenerator:
             qos=qos,
         )
     
-    def _generate_process_id(self, product_info: Dict[str, Any]) -> str:
+    def _generate_process_id(self, order_info: Dict[str, Any]) -> str:
         """Generate a unique process ID based on product info"""
-        product_name = product_info.get('BatchInformation', {}).get('ProductName', 'Unknown')
+        order_name = order_info.get('BatchInformation', {}).get('ProductName', 'Unknown')
         # Clean up product name for ID
-        clean_name = ''.join(c for c in product_name if c.isalnum())[:20]
+        clean_name = ''.join(c for c in order_name if c.isalnum())[:20]
         timestamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
         return f"Process_{clean_name}_{timestamp}"
     
@@ -231,29 +231,29 @@ class ProcessAASGenerator:
     def _generate_process_info(
         self,
         process_id: str,
-        product_info: Dict[str, Any],
-        product_aas_id: str,
+        order_info: Dict[str, Any],
+        order_aas_id: str,
         timestamp: str
     ) -> Dict[str, Any]:
         """Generate process information section with product reference.
         
         Args:
             process_id: Unique process identifier
-            product_info: Product information from AAS
-            product_aas_id: AAS ID of the product (for ReferenceElement)
+            order_info: Product information from AAS
+            order_aas_id: AAS ID of the product (for ReferenceElement)
             timestamp: Creation timestamp
             
         Returns:
             ProcessInformation config dictionary
         """
-        product_name = product_info.get('BatchInformation', {}).get('ProductName', 'Unknown')
+        order_name = order_info.get('BatchInformation', {}).get('ProductName', 'Unknown')
         
         return {
-            'ProcessName': f"Production of {product_name}",
+            'ProcessName': f"Production of {order_name}",
             'ProcessType': 'AsepticFilling',
             'CreatedAt': timestamp,
             'Status': 'planned',
-            'ProductReference': product_aas_id  # Will be converted to ReferenceElement
+            'ProductReference': order_aas_id  # Will be converted to ReferenceElement
         }
     
     def _generate_required_capabilities(

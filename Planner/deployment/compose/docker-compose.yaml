@@ -1,5 +1,3 @@
-name: PlanarMotorsExperiment
-
 services:
   production_planner:
     build:
@@ -11,9 +9,8 @@ services:
       - MQTT_PORT=${MQTT_PORT:-1883}
       - PYTHONPATH=/app
     volumes:
-      - ../../:/app  # Mount simulated_stations root
+      - ../../../:/app  # Mount AP2030-UNS repo root
       - ../../../packml_runtime:/app/packml_runtime  # Mount shared PackML runtime
-      - ../../../Planner:/app/Planner  # Mount planner core + PR2 bridge
       - ../../../unified-planning:/app/unified-planning  # Mount vendored UP fork
       - ../../../MQTTSchemas:/app/MQTTSchemas  # Overlay schemas
       - ../../../AASDescriptions:/app/AASDescriptions  # Mount AAS configs for registration

@@ -27,13 +27,13 @@ class ProcessAASBundleTests(unittest.TestCase):
                 resources={"imaDispensing": "https://example/aas/dispensing"},
             )
         ]
-        product_info = {"BatchInformation": {"ProductName": "TestProduct"}}
+        order_info = {"BatchInformation": {"ProductName": "TestOrder"}}
 
         with tempfile.TemporaryDirectory() as tmp_dir:
             bundle = generator.generate_process_aas_bundle(
                 planning_capabilities=capabilities,
-                product_aas_id="https://example/aas/productA",
-                product_info=product_info,
+                order_aas_id="https://example/aas/productA",
+                order_info=order_info,
                 requirements={},
                 bt_filename="production_test.xml",
                 planar_table_id="https://example/aas/planar",
@@ -60,14 +60,14 @@ class ProcessAASBundleTests(unittest.TestCase):
 
         bundle = generator.generate_process_aas_bundle(
             planning_capabilities=capabilities,
-            product_aas_id="https://example/aas/productB",
-            product_info={"BatchInformation": {"ProductName": "NoFileProduct"}},
+            order_aas_id="https://example/aas/productB",
+            order_info={"BatchInformation": {"ProductName": "NoFileOrder"}},
             requirements={},
             output_dir=None,
         )
 
         self.assertIsNone(bundle.output_path)
-        self.assertIn("NoFileProduct", bundle.yaml_content)
+        self.assertIn("NoFileOrder", bundle.yaml_content)
 
     def test_build_registration_message_contains_expected_fields(self):
         generator = ProcessAASGenerator()

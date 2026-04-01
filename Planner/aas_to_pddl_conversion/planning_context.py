@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class PlanningContext:
-    product_config: Dict[str, Any]
+    order_config: Dict[str, Any]
     requirements: Dict[str, Any]
     resolved_asset_ids: List[str]
     planning_sources: List[AIPlanningSource]
@@ -21,20 +21,20 @@ class PlanningContext:
 
 def collect_planning_context(
     aas_client: Any,
-    product_aas_id: str,
+    order_aas_id: str,
     asset_ids: List[str],
 ) -> Optional[PlanningContext]:
-    product_config = fetch_product_config(aas_client, product_aas_id)
-    if not product_config:
+    order_config = fetch_order_config(aas_client, order_aas_id)
+    if not order_config:
         return None
 
-    requirements = product_config.get("Requirements", {})
+    requirements = order_config.get("Requirements", {})
     resolved_asset_ids = resolve_asset_hierarchies(aas_client, asset_ids)
-    planning_sources = collect_ai_planning_sources(aas_client, product_aas_id, resolved_asset_ids)
+    planning_sources = collect_ai_planning_sources(aas_client, order_aas_id, resolved_asset_ids)
     planar_table_id = find_planar_table_from_assets(aas_client, resolved_asset_ids)
 
     return PlanningContext(
-        product_config=product_config,
+        order_config=order_config,
         requirements=requirements,
         resolved_asset_ids=resolved_asset_ids,
         planning_sources=planning_sources,
@@ -42,12 +42,12 @@ def collect_planning_context(
     )
 
 
-def fetch_product_config(aas_client: Any, product_aas_id: str) -> Optional[Dict[str, Any]]:
-    """Fetch product AAS and convert to config format using BaSyx SDK."""
+def fetch_order_config(aas_client: Any, order_aas_id: str) -> Optional[Dict[str, Any]]:
+    """Fetch order AAS and convert to config format using BaSyx SDK."""
     from basyx.aas import model
 
     try:
-        shell = aas_client.get_aas_by_id(product_aas_id)
+        shell = aas_client.get_aas_by_id(order_aas_id)
         if not shell:
             return None
 
@@ -60,8 +60,8 @@ def fetch_product_config(aas_client: Any, product_aas_id: str) -> Optional[Dict[
             "Requirements": {},
         }
 
-        submodels = aas_client.get_submodels_from_aas(product_aas_id)
-        logger.info("Found %d submodels for product AAS", len(submodels))
+        submodels = aas_client.get_submodels_from_aas(order_aas_id)
+        logger.info("Found %d submodels for order AAS", len(submodels))
         for sm in submodels:
             logger.info("  Submodel: %s", sm.id_short)
 
@@ -98,18 +98,18 @@ def fetch_product_config(aas_client: Any, product_aas_id: str) -> Optional[Dict[
         return config
 
     except Exception as exc:
-        logger.error("Error fetching product config: %s", exc)
+        logger.error("Error fetching order config: %s", exc)
         traceback.print_exc()
         return None
 
 
 def collect_ai_planning_sources(
     aas_client: Any,
-    product_aas_id: str,
+    order_aas_id: str,
     asset_ids: List[str],
 ) -> List[AIPlanningSource]:
-    """Collect AIPlanning sources from product and resolved assets."""
-    source_ids: List[str] = [product_aas_id] + [asset_id for asset_id in asset_ids if asset_id != product_aas_id]
+    """Collect AIPlanning sources from order and resolved assets."""
+    source_ids: List[str] = [order_aas_id] + [asset_id for asset_id in asset_ids if asset_id != order_aas_id]
     sources: List[AIPlanningSource] = []
 
     for aas_id in source_ids:
