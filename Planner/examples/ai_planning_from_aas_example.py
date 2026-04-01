@@ -3,10 +3,13 @@
 
 Usage:
     python ai_planning_from_aas_example.py [aas_json_path] [output_xml]
+    python ai_planning_from_aas_example.py --strict [aas_json_path] [output_xml]
+    python ai_planning_from_aas_example.py --non-strict [aas_json_path] [output_xml]
 """
 
 from __future__ import annotations
 
+import argparse
 import json
 import sys
 from pathlib import Path
@@ -20,10 +23,36 @@ from Planner.aas_to_pddl_conversion.models import AIPlanningSource
 from Planner.production_planner_service import PlannerService
 
 
-def main() -> int:
+def parse_args() -> argparse.Namespace:
     default_input = _Planner_ROOT.parent / "Registration_Service" / "Resource" / "imaLoadingSystem2AAS.json"
-    input_path = Path(sys.argv[1]) if len(sys.argv) > 1 else default_input
-    output_path = Path(sys.argv[2]) if len(sys.argv) > 2 else _Planner_ROOT / "output" / "ai_planning_pipeline_bt.xml"
+    default_output = _Planner_ROOT / "output" / "ai_planning_pipeline_bt.xml"
+
+    parser = argparse.ArgumentParser(description="Run AIPlanning pipeline from an exported AAS JSON fixture.")
+    parser.add_argument("aas_json_path", nargs="?", default=default_input, help="Path to exported AAS JSON input.")
+    parser.add_argument("output_xml", nargs="?", default=default_output, help="Path to write output BT XML.")
+
+    mode_group = parser.add_mutually_exclusive_group()
+    mode_group.add_argument(
+        "--strict",
+        dest="strict_semantic_solve",
+        action="store_true",
+        help="Require full semantic solve support; disable reduced-model fallback.",
+    )
+    mode_group.add_argument(
+        "--non-strict",
+        dest="strict_semantic_solve",
+        action="store_false",
+        help="Allow reduced-model fallback when full semantic solve is unsupported.",
+    )
+    parser.set_defaults(strict_semantic_solve=False)
+
+    return parser.parse_args()
+
+
+def main() -> int:
+    args = parse_args()
+    input_path = Path(args.aas_json_path)
+    output_path = Path(args.output_xml)
 
     if not input_path.exists():
         print(f"Input file not found: {input_path}")
@@ -50,8 +79,10 @@ def main() -> int:
 
     service = PlannerService(aas_client=None)
     service.config.planning_timeout_seconds = 20
+    service.config.strict_semantic_solve = bool(args.strict_semantic_solve)
     result = service._run_planning_pipeline([source])
 
+    print(f"Strict mode: {service.config.strict_semantic_solve}")
     print(f"Solve mode:  {result.solve_result.mode}")
     print(f"Backend:     {result.solve_result.backend_name}")
     print(f"Solved:      {result.solve_result.is_solved}")
