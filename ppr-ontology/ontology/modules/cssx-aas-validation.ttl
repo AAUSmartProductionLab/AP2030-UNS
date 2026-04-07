@@ -1,0 +1,284 @@
+@prefix : <http://www.w3id.org/aau-ra/resourceaas-validation#> .
+@prefix css: <http://www.w3id.org/hsu-aut/css#> .
+@prefix cssx: <http://www.w3id.org/aau-ra/cssx#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+#################################################################
+#    External CSS declarations for VOWL visualization in protege
+#################################################################
+
+css:Resource rdf:type owl:Class .
+css:Capability rdf:type owl:Class .
+css:Skill rdf:type owl:Class .
+
+css:providesCapability rdf:type owl:ObjectProperty .
+css:providesSkill rdf:type owl:ObjectProperty .
+css:isRealizedBySkill rdf:type owl:ObjectProperty .
+
+#################################################################
+# AAS validation projection vocabulary
+#
+# This ontology captures the expected RDF projection terms for validating
+# ResourceAAS instances. It does not replace SHACL rules, but centralizes
+# mapping semantics that should not remain implicit in conversion code.
+#################################################################
+
+#################################################################
+#    Classes
+#################################################################
+
+:ResourceAASProjection rdf:type owl:Class ;
+  rdfs:comment "Marker class for projected ResourceAAS validation nodes." .
+
+:DigitalNameplateSubmodel rdf:type owl:Class ;
+  rdfs:subClassOf :ResourceAASProjection .
+
+:HierarchicalStructuresSubmodel rdf:type owl:Class ;
+  rdfs:subClassOf :ResourceAASProjection .
+
+:CapabilitiesSubmodel rdf:type owl:Class ;
+  rdfs:subClassOf :ResourceAASProjection .
+
+:SkillsSubmodel rdf:type owl:Class ;
+  rdfs:subClassOf :ResourceAASProjection .
+
+:OperationalDataSubmodel rdf:type owl:Class ;
+  rdfs:subClassOf :ResourceAASProjection .
+
+:AIDSubmodel rdf:type owl:Class ;
+  rdfs:subClassOf :ResourceAASProjection .
+
+:ParametersSubmodel rdf:type owl:Class ;
+  rdfs:subClassOf :ResourceAASProjection .
+
+:BomEntry rdf:type owl:Class ;
+  rdfs:subClassOf :ResourceAASProjection .
+
+:MappedElement rdf:type owl:Class ;
+  rdfs:subClassOf :ResourceAASProjection .
+
+#################################################################
+#    Object Properties
+#################################################################
+
+:hasSubmodel rdf:type owl:ObjectProperty ;
+  rdfs:domain css:Resource ;
+  rdfs:range :ResourceAASProjection .
+
+:hasDigitalNameplateSubmodel rdf:type owl:ObjectProperty , owl:FunctionalProperty ;
+  rdfs:subPropertyOf :hasSubmodel ;
+  rdfs:domain css:Resource ;
+  rdfs:range :DigitalNameplateSubmodel .
+
+:hasHierarchicalStructuresSubmodel rdf:type owl:ObjectProperty , owl:FunctionalProperty ;
+  rdfs:subPropertyOf :hasSubmodel ;
+  rdfs:domain css:Resource ;
+  rdfs:range :HierarchicalStructuresSubmodel .
+
+:hasCapabilitiesSubmodel rdf:type owl:ObjectProperty ;
+  rdfs:subPropertyOf :hasSubmodel ;
+  rdfs:domain css:Resource ;
+  rdfs:range :CapabilitiesSubmodel .
+
+:hasSkillsSubmodel rdf:type owl:ObjectProperty ;
+  rdfs:subPropertyOf :hasSubmodel ;
+  rdfs:domain css:Resource ;
+  rdfs:range :SkillsSubmodel .
+
+:hasOperationalDataSubmodel rdf:type owl:ObjectProperty ;
+  rdfs:subPropertyOf :hasSubmodel ;
+  rdfs:domain css:Resource ;
+  rdfs:range :OperationalDataSubmodel .
+
+:hasAIDSubmodel rdf:type owl:ObjectProperty ;
+  rdfs:subPropertyOf :hasSubmodel ;
+  rdfs:domain css:Resource ;
+  rdfs:range :AIDSubmodel .
+
+:hasParametersSubmodel rdf:type owl:ObjectProperty ;
+  rdfs:subPropertyOf :hasSubmodel ;
+  rdfs:domain css:Resource ;
+  rdfs:range :ParametersSubmodel .
+
+:hasMappedElement rdf:type owl:ObjectProperty ;
+  rdfs:domain :ResourceAASProjection ;
+  rdfs:range :MappedElement .
+
+:hasBomEntry rdf:type owl:ObjectProperty ;
+  rdfs:domain :HierarchicalStructuresSubmodel ;
+  rdfs:range :BomEntry .
+
+#################################################################
+#    Datatype Properties
+#################################################################
+
+:hasIdShort rdf:type owl:DatatypeProperty ;
+  rdfs:domain :ResourceAASProjection ;
+  rdfs:range xsd:string .
+
+:sourceIdShort rdf:type owl:DatatypeProperty ;
+  rdfs:domain :ResourceAASProjection ;
+  rdfs:range xsd:string .
+
+:sourceSemanticId rdf:type owl:DatatypeProperty ;
+  rdfs:domain [ rdf:type owl:Class ;
+    owl:unionOf ( :ResourceAASProjection css:Capability css:Skill )
+  ] ;
+  rdfs:range xsd:string .
+
+:sourceSubmodelSemanticId rdf:type owl:DatatypeProperty ;
+  rdfs:domain :ResourceAASProjection ;
+  rdfs:range xsd:string .
+
+:sourceElementPath rdf:type owl:DatatypeProperty ;
+  rdfs:domain :MappedElement ;
+  rdfs:range xsd:string .
+
+:bomName rdf:type owl:DatatypeProperty ;
+  rdfs:domain :HierarchicalStructuresSubmodel ;
+  rdfs:range xsd:string .
+
+:bomArchetype rdf:type owl:DatatypeProperty ;
+  rdfs:domain :HierarchicalStructuresSubmodel ;
+  rdfs:range xsd:string .
+
+:bomEntryName rdf:type owl:DatatypeProperty ;
+  rdfs:domain :BomEntry ;
+  rdfs:range xsd:string .
+
+:bomEntryGlobalAssetId rdf:type owl:DatatypeProperty ;
+  rdfs:domain :BomEntry ;
+  rdfs:range xsd:string .
+
+### OWL alignment constraints (projection-level)
+[ rdf:type owl:Class ;
+  owl:intersectionOf (
+    css:Resource
+    [ rdf:type owl:Restriction ;
+      owl:onProperty :hasSubmodel ;
+      owl:someValuesFrom :SkillsSubmodel
+    ]
+  )
+] rdfs:subClassOf [
+  rdf:type owl:Restriction ;
+  owl:onProperty :hasSubmodel ;
+  owl:someValuesFrom :AIDSubmodel
+] .
+
+[ rdf:type owl:Class ;
+  owl:intersectionOf (
+    css:Resource
+    [ rdf:type owl:Restriction ;
+      owl:onProperty :hasSubmodel ;
+      owl:someValuesFrom :OperationalDataSubmodel
+    ]
+  )
+] rdfs:subClassOf [
+  rdf:type owl:Restriction ;
+  owl:onProperty :hasSubmodel ;
+  owl:someValuesFrom :AIDSubmodel
+] .
+
+[ rdf:type owl:Class ;
+  owl:intersectionOf (
+    css:Resource
+    [ rdf:type owl:Restriction ;
+      owl:onProperty :hasSubmodel ;
+      owl:someValuesFrom :ParametersSubmodel
+    ]
+  )
+] rdfs:subClassOf [
+  rdf:type owl:Restriction ;
+  owl:onProperty :hasSubmodel ;
+  owl:someValuesFrom :AIDSubmodel
+] .
+
+[ rdf:type owl:Class ;
+  owl:intersectionOf (
+    css:Resource
+    [ rdf:type owl:Restriction ;
+      owl:onProperty :hasSubmodel ;
+      owl:someValuesFrom :CapabilitiesSubmodel
+    ]
+  )
+] rdfs:subClassOf [
+  rdf:type owl:Restriction ;
+  owl:onProperty :hasSubmodel ;
+  owl:someValuesFrom :SkillsSubmodel
+] .
+
+[ rdf:type owl:Class ;
+  owl:intersectionOf (
+    css:Resource
+    [ rdf:type owl:Restriction ;
+      owl:onProperty :hasSubmodel ;
+      owl:someValuesFrom :SkillsSubmodel
+    ]
+  )
+] rdfs:subClassOf [
+  rdf:type owl:Restriction ;
+  owl:onProperty :hasSubmodel ;
+  owl:someValuesFrom :CapabilitiesSubmodel
+] .
+
+:HierarchicalStructuresSubmodel rdfs:subClassOf [ rdf:type owl:Restriction ;
+  owl:onProperty :hasBomEntry ;
+  owl:minCardinality "1"^^xsd:nonNegativeInteger
+] .
+
+css:Resource rdfs:subClassOf [ rdf:type owl:Restriction ;
+  owl:onProperty :hasDigitalNameplateSubmodel ;
+  owl:minCardinality "1"^^xsd:nonNegativeInteger
+] .
+
+css:Resource rdfs:subClassOf [ rdf:type owl:Restriction ;
+  owl:onProperty :hasDigitalNameplateSubmodel ;
+  owl:maxCardinality "1"^^xsd:nonNegativeInteger
+] .
+
+css:Resource rdfs:subClassOf [ rdf:type owl:Restriction ;
+  owl:onProperty :hasHierarchicalStructuresSubmodel ;
+  owl:minCardinality "1"^^xsd:nonNegativeInteger
+] .
+
+css:Resource rdfs:subClassOf [ rdf:type owl:Restriction ;
+  owl:onProperty :hasHierarchicalStructuresSubmodel ;
+  owl:maxCardinality "1"^^xsd:nonNegativeInteger
+] .
+
+css:Resource rdfs:subClassOf [ rdf:type owl:Restriction ;
+  owl:onProperty :hasAIDSubmodel ;
+  owl:maxCardinality "1"^^xsd:nonNegativeInteger
+] .
+
+css:Resource rdfs:subClassOf [ rdf:type owl:Restriction ;
+  owl:onProperty css:providesCapability ;
+  owl:minCardinality "1"^^xsd:nonNegativeInteger
+] .
+
+css:Resource rdfs:subClassOf [ rdf:type owl:Restriction ;
+  owl:onProperty css:providesSkill ;
+  owl:minCardinality "1"^^xsd:nonNegativeInteger
+] .
+
+css:Capability rdfs:subClassOf [ rdf:type owl:Restriction ;
+  owl:onProperty :sourceSemanticId ;
+  owl:minCardinality "1"^^xsd:nonNegativeInteger
+] .
+
+css:Skill rdfs:subClassOf [ rdf:type owl:Restriction ;
+  owl:onProperty :sourceSemanticId ;
+  owl:minCardinality "1"^^xsd:nonNegativeInteger
+] .
+
+css:Capability rdfs:subClassOf [ rdf:type owl:Restriction ;
+  owl:onProperty css:isRealizedBySkill ;
+  owl:minCardinality "1"^^xsd:nonNegativeInteger
+] .
+
+#################################################################
+#    Individuals
+#################################################################
