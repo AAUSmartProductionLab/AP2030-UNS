@@ -1,0 +1,7 @@
+"""Module entrypoint for `python -m generation`."""
+
+from .run import main
+
+
+if __name__ == "__main__":
+    main()

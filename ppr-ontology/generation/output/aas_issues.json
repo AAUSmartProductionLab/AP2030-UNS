@@ -1,0 +1,6 @@
+[
+  {
+    "severity": "Violation",
+    "message": "DigitalNameplate.DateOfManufacture contains a [VERIFY: ...] marker"
+  }
+]

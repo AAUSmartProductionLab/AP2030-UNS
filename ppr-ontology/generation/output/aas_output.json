@@ -1,0 +1,273 @@
+{
+  "assetAdministrationShells": [
+    {
+      "idShort": "CA18CLC12BPM1AAS",
+      "modelType": "AssetAdministrationShell",
+      "id": "https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1",
+      "assetInformation": {
+        "assetKind": "Instance",
+        "globalAssetId": "https://smartproductionlab.aau.dk/assets/CA18CLC12BPM1",
+        "specificAssetIds": [
+          {
+            "name": "serialNumber",
+            "value": "CA18CLC12BPM1",
+            "externalSubjectId": {
+              "type": "ExternalReference",
+              "keys": [
+                {
+                  "type": "GlobalReference",
+                  "value": "https://admin-shell.io/aas/3/0/SpecificAssetId/SerialNumber"
+                }
+              ]
+            }
+          },
+          {
+            "name": "location",
+            "value": "[VERIFY: physical/logical installation location]",
+            "externalSubjectId": {
+              "type": "ExternalReference",
+              "keys": [
+                {
+                  "type": "GlobalReference",
+                  "value": "https://admin-shell.io/aas/3/0/SpecificAssetId/Location"
+                }
+              ]
+            }
+          }
+        ],
+        "assetType": "https://smartproductionlab.aau.dk/[VERIFY: asset type/classification URI for the resource]"
+      },
+      "submodels": [
+        {
+          "type": "ModelReference",
+          "keys": [
+            {
+              "type": "Submodel",
+              "value": "https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/Nameplate"
+            }
+          ]
+        },
+        {
+          "type": "ModelReference",
+          "keys": [
+            {
+              "type": "Submodel",
+              "value": "https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/HierarchicalStructures"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "submodels": [
+    {
+      "idShort": "DigitalNameplate",
+      "modelType": "Submodel",
+      "id": "https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/Nameplate",
+      "administration": {
+        "version": "1",
+        "revision": "0"
+      },
+      "semanticId": {
+        "type": "ExternalReference",
+        "keys": [
+          {
+            "type": "GlobalReference",
+            "value": "https://admin-shell.io/IDTA 02006-3-0"
+          }
+        ]
+      },
+      "submodelElements": [
+        {
+          "idShort": "URIOfTheProduct",
+          "modelType": "Property",
+          "value": "https://smartproductionlab.aau.dk/assets/CA18CLC12BPM1AAS",
+          "valueType": "xs:string"
+        },
+        {
+          "idShort": "ManufacturerName",
+          "modelType": "MultiLanguageProperty",
+          "value": [
+            {
+              "language": "en",
+              "text": "Carlo Gavazzi"
+            }
+          ]
+        },
+        {
+          "idShort": "ManufacturerProductDesignation",
+          "modelType": "Property",
+          "value": "CA18CLC12BPM1",
+          "valueType": "xs:string"
+        },
+        {
+          "idShort": "SerialNumber",
+          "modelType": "Property",
+          "value": "CA18CLC12BPM1",
+          "valueType": "xs:string"
+        },
+        {
+          "idShort": "DateOfManufacture",
+          "modelType": "Property",
+          "value": "[VERIFY: manufacture date YYYY-MM-DD, e.g. 2022-07-05]",
+          "valueType": "xs:string"
+        }
+      ]
+    },
+    {
+      "idShort": "HierarchicalStructures",
+      "displayName": [
+        {
+          "language": "en",
+          "text": "BillOfMaterials"
+        }
+      ],
+      "modelType": "Submodel",
+      "id": "https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/HierarchicalStructures",
+      "administration": {
+        "version": "1",
+        "revision": "1"
+      },
+      "semanticId": {
+        "type": "ExternalReference",
+        "keys": [
+          {
+            "type": "GlobalReference",
+            "value": "https://admin-shell.io/idta/HierarchicalStructures/1/1/Submodel"
+          }
+        ]
+      },
+      "submodelElements": [
+        {
+          "idShort": "ArcheType",
+          "modelType": "Property",
+          "semanticId": {
+            "type": "ExternalReference",
+            "keys": [
+              {
+                "type": "GlobalReference",
+                "value": "https://admin-shell.io/idta/HierarchicalStructures/ArcheType/1/0"
+              }
+            ]
+          },
+          "value": "OneUp",
+          "valueType": "xs:string"
+        },
+        {
+          "idShort": "EntryNode",
+          "modelType": "Entity",
+          "semanticId": {
+            "type": "ExternalReference",
+            "keys": [
+              {
+                "type": "GlobalReference",
+                "value": "https://admin-shell.io/idta/HierarchicalStructures/EntryNode/1/0"
+              }
+            ]
+          },
+          "statements": [
+            {
+              "idShort": "IsPartOf_parentSystemAAS",
+              "modelType": "RelationshipElement",
+              "semanticId": {
+                "type": "ExternalReference",
+                "keys": [
+                  {
+                    "type": "GlobalReference",
+                    "value": "https://admin-shell.io/idta/HierarchicalStructures/Relationship/1/0"
+                  }
+                ]
+              },
+              "first": {
+                "type": "ModelReference",
+                "keys": [
+                  {
+                    "type": "Submodel",
+                    "value": "https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/HierarchicalStructures"
+                  },
+                  {
+                    "type": "Entity",
+                    "value": "EntryNode"
+                  }
+                ]
+              },
+              "second": {
+                "type": "ModelReference",
+                "keys": [
+                  {
+                    "type": "Submodel",
+                    "value": "https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/HierarchicalStructures"
+                  },
+                  {
+                    "type": "Entity",
+                    "value": "EntryNode"
+                  },
+                  {
+                    "type": "Entity",
+                    "value": "parentSystemAAS"
+                  }
+                ]
+              }
+            },
+            {
+              "idShort": "parentSystemAAS",
+              "modelType": "Entity",
+              "semanticId": {
+                "type": "ExternalReference",
+                "keys": [
+                  {
+                    "type": "GlobalReference",
+                    "value": "https://admin-shell.io/idta/HierarchicalStructures/Node/1/0"
+                  }
+                ]
+              },
+              "statements": [
+                {
+                  "idShort": "SameAs",
+                  "modelType": "ReferenceElement",
+                  "semanticId": {
+                    "type": "ExternalReference",
+                    "keys": [
+                      {
+                        "type": "GlobalReference",
+                        "value": "https://admin-shell.io/idta/HierarchicalStructures/SameAs/1/0"
+                      }
+                    ]
+                  },
+                  "supplementalSemanticIds": [
+                    {
+                      "type": "ExternalReference",
+                      "keys": [
+                        {
+                          "type": "GlobalReference",
+                          "value": "https://admin-shell.io/idta/HierarchicalStructures/EntryNode/1/0"
+                        }
+                      ]
+                    }
+                  ],
+                  "value": {
+                    "type": "ModelReference",
+                    "keys": [
+                      {
+                        "type": "Submodel",
+                        "value": "https://smartproductionlab.aau.dk/submodels/instances/parentSystemAAS/HierarchicalStructures"
+                      },
+                      {
+                        "type": "Entity",
+                        "value": "EntryNode"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "entityType": "SelfManagedEntity",
+              "globalAssetId": "https://smartproductionlab.aau.dk/[VERIFY: parent system globalAssetId, e.g. https://smartproductionlab.aau.dk/assets/ParentSystem]"
+            }
+          ],
+          "entityType": "SelfManagedEntity",
+          "globalAssetId": "https://smartproductionlab.aau.dk/assets/CA18CLC12BPM1"
+        }
+      ]
+    }
+  ]
+}
