@@ -1,0 +1,123 @@
+@prefix : <http://www.w3id.org/aau-ra/cssx#> .
+@prefix css: <http://www.w3id.org/hsu-aut/css#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+#################################################################
+#    External CSS declarations for VOWL visualization in protege
+#################################################################
+
+css:Skill rdf:type owl:Class .
+css:SkillInterface rdf:type owl:Class .
+css:SkillParameter rdf:type owl:Class .
+css:accessibleThrough rdf:type owl:ObjectProperty .
+
+#################################################################
+#    Classes
+#################################################################
+
+###  http://www.w3id.org/aau-ra/cssx#SkillMode
+:SkillMode rdf:type owl:Class ;
+  rdfs:comment "Allowed execution mode for a skill (e.g., AUTO, MANUAL)." .
+
+###  http://www.w3id.org/aau-ra/cssx#SkillOperation
+:SkillOperation rdf:type owl:Class ;
+  rdfs:comment "Abstract operation exposed by a skill." .
+
+###  http://www.w3id.org/aau-ra/cssx#SkillCondition
+:SkillCondition rdf:type owl:Class ;
+  rdfs:comment "Condition that constrains when a skill operation can be executed." .
+
+###  http://www.w3id.org/aau-ra/cssx#SkillEffect
+:SkillEffect rdf:type owl:Class ;
+  rdfs:comment "Effect asserted after skill execution." .
+
+###  http://www.w3id.org/aau-ra/cssx#SkillPredicate
+:SkillPredicate rdf:type owl:Class ;
+  rdfs:comment "Predicate used to express skill executability or logical guards." .
+
+css:Skill rdfs:subClassOf [ rdf:type owl:Restriction ;
+  owl:onProperty css:accessibleThrough ;
+  owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+  owl:onClass css:SkillInterface
+] .
+
+#################################################################
+#    Object Properties
+#################################################################
+
+###  http://www.w3id.org/aau-ra/cssx#skillInterfaceUsesSoftwareInterface
+:skillInterfaceUsesSoftwareInterface rdf:type owl:ObjectProperty ;
+  rdfs:domain css:SkillInterface ;
+  rdfs:range :SoftwareInterface ;
+  rdfs:comment "Skills are invoked through software interfaces." .
+
+###  http://www.w3id.org/aau-ra/cssx#hasSkillMode
+:hasSkillMode rdf:type owl:ObjectProperty ;
+  rdfs:domain css:Skill ;
+  rdfs:range :SkillMode .
+
+###  http://www.w3id.org/aau-ra/cssx#usesSkill
+:usesSkill rdf:type owl:ObjectProperty ;
+  rdfs:domain css:Skill ;
+  rdfs:range css:Skill .
+
+###  http://www.w3id.org/aau-ra/cssx#hasSkillOperation
+:hasSkillOperation rdf:type owl:ObjectProperty ;
+  rdfs:domain css:Skill ;
+  rdfs:range :SkillOperation .
+
+###  http://www.w3id.org/aau-ra/cssx#hasSkillCondition
+:hasSkillCondition rdf:type owl:ObjectProperty ;
+  rdfs:domain css:Skill ;
+  rdfs:range :SkillCondition .
+
+###  http://www.w3id.org/aau-ra/cssx#hasSkillEffect
+:hasSkillEffect rdf:type owl:ObjectProperty ;
+  rdfs:domain css:Skill ;
+  rdfs:range :SkillEffect .
+
+###  http://www.w3id.org/aau-ra/cssx#hasSkillPredicate
+:hasSkillPredicate rdf:type owl:ObjectProperty ;
+  rdfs:domain css:Skill ;
+  rdfs:range :SkillPredicate .
+
+###  http://www.w3id.org/aau-ra/cssx#operationUsesInterface
+:operationUsesInterface rdf:type owl:ObjectProperty ;
+  rdfs:domain :SkillOperation ;
+  rdfs:range :SoftwareInterface .
+
+###  http://www.w3id.org/aau-ra/cssx#operationHasInput
+:operationHasInput rdf:type owl:ObjectProperty ;
+  rdfs:domain :SkillOperation ;
+  rdfs:range css:SkillParameter .
+
+###  http://www.w3id.org/aau-ra/cssx#operationHasOutput
+:operationHasOutput rdf:type owl:ObjectProperty ;
+  rdfs:domain :SkillOperation ;
+  rdfs:range css:SkillParameter .
+
+#################################################################
+#    Datatype Properties
+#################################################################
+
+###  http://www.w3id.org/aau-ra/cssx#skillModeValue
+:skillModeValue rdf:type owl:DatatypeProperty ;
+  rdfs:domain :SkillMode ;
+  rdfs:range xsd:string .
+
+###  http://www.w3id.org/aau-ra/cssx#operationName
+:operationName rdf:type owl:DatatypeProperty ;
+  rdfs:domain :SkillOperation ;
+  rdfs:range xsd:string .
+
+###  http://www.w3id.org/aau-ra/cssx#operationDescription
+:operationDescription rdf:type owl:DatatypeProperty ;
+  rdfs:domain :SkillOperation ;
+  rdfs:range rdf:langString .
+
+#################################################################
+#    Individuals
+#################################################################
