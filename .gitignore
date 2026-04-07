@@ -199,3 +199,4 @@ Grafana/grafana-data/grafana.db
 PlanarMotorSimulator/setup.exe
 PlanarMotorSimulator/Simulation Installer.msi
 config.yaml
+deprecated/
