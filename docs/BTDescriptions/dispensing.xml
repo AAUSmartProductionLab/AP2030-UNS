@@ -2,25 +2,24 @@
 <root BTCPP_format="4">
   <BehaviorTree ID="Dispensing">
     <Occupy Uuid="{ProductID}"
-            Asset="{DispensingSystem}"
-            _skipIf="scrap == true">
+            Assets="{Assets}">
       <ReactiveSequence>
         <ReactiveFallback>
           <Data_Condition comparison_type="equal"
                           Field="State"
                           expected_value="operational"
                           Property="PackMLState"
-                          Asset="{DispensingSystem}"/>
+                          Asset="{SelectedAsset}"/>
           <Sleep msec="10000"/>
         </ReactiveFallback>
         <Sequence>
-          <moveToPosition Uuid="{ProductID}"
-                          TargetPosition="{Station}"
+          <moveToPosition Uuid="{XbotUuid}"
+                          TargetPosition="{SelectedAsset}"
                           Asset="{Xbot}"/>
           <Command_Execution Parameters="&apos;{}&apos;"
                               Uuid="{ProductID}"
-                              Operation="dispense"
-                              Asset="{DispensingSystem}"/>
+                              Operation="Dispensing"
+                              Asset="{SelectedAsset}"/>
         </Sequence>
       </ReactiveSequence>
     </Occupy>

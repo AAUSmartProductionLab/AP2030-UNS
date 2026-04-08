@@ -20,26 +20,53 @@ void ESP32Module::setup(const String &topic, const String &name, unsigned long b
     if (initialized)
     {
         Serial.println("ESP32Module already initialized");
+        Serial.flush();
         return;
     }
 
-    Serial.begin(baudRate);
+    // Serial is already initialized in main.cpp, just update baud rate if different
+    if (baudRate != 115200)
+    {
+        Serial.end();
+        Serial.begin(baudRate);
+        delay(100);
+    }
+    
+    Serial.println("=== Initializing ESP32 Module ===");
+    Serial.flush();
+    delay(100);
+    
     baseTopic = topic;
     moduleName = name;
-
+    
+    Serial.println("Step 1: Initializing WiFi...");
+    Serial.flush();
     initWiFi();
+    
+    Serial.println("Step 2: Initializing MQTT...");
+    Serial.flush();
     initMQTT();
+    
+    Serial.println("Step 3: Initializing Time...");
+    Serial.flush();
     initializeTime();
+    
+    Serial.println("Step 4: Publishing Description...");
+    Serial.flush();
     publishDescriptionFromFile();
 
     initialized = true;
     Serial.println("=== ESP32 Module Initialized ===\n");
+    Serial.flush();
 }
 
 void ESP32Module::initWiFi()
 {
     Serial.print("Connecting to WiFi: ");
     Serial.println(config.ssid);
+    Serial.print("with Password: ");
+    Serial.println(config.password);
+    Serial.flush();
 
     WiFi.begin(config.ssid, config.password);
 
@@ -47,7 +74,8 @@ void ESP32Module::initWiFi()
     while (WiFi.status() != WL_CONNECTED && attempts < 20)
     {
         delay(500);
-        Serial.print(".");
+        //Serial.print(".");
+        Serial.println(WiFi.status());
         attempts++;
         esp_task_wdt_reset();
     }
@@ -57,10 +85,12 @@ void ESP32Module::initWiFi()
         Serial.println("\nWiFi Connected!");
         Serial.print("IP Address: ");
         Serial.println(WiFi.localIP());
+        Serial.flush();
     }
     else
     {
         Serial.println("\nWiFi Connection Failed!");
+        Serial.flush();
     }
 }
 
@@ -70,20 +100,39 @@ void ESP32Module::initMQTT()
     Serial.print(config.mqttServer);
     Serial.print(":");
     Serial.println(config.mqttPort);
+    Serial.flush();
 
     // Configure AsyncMqttClient callbacks using lambda to capture 'this'
     mqttClient.onConnect([this](bool sessionPresent)
-                         { this->onMqttConnect(sessionPresent); });
+                         { 
+                             Serial.println("[CALLBACK] onConnect triggered!");
+                             Serial.flush();
+                             this->onMqttConnect(sessionPresent); 
+                         });
     mqttClient.onDisconnect([this](AsyncMqttClientDisconnectReason reason)
-                            { this->onMqttDisconnect(reason); });
+                            { 
+                                Serial.println("[CALLBACK] onDisconnect triggered!");
+                                Serial.flush();
+                                this->onMqttDisconnect(reason); 
+                            });
     mqttClient.onMessage([this](char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total)
-                         { this->onMqttMessage(topic, payload, properties, len, index, total); });
+                         { 
+                             Serial.println("[CALLBACK] onMessage triggered!");
+                             Serial.flush();
+                             this->onMqttMessage(topic, payload, properties, len, index, total); 
+                         });
 
     // Set server and credentials
+    Serial.println("Setting MQTT server...");
+    Serial.flush();
     mqttClient.setServer(config.mqttServer, config.mqttPort);
 
     // Connect to MQTT broker
+    Serial.println("Calling mqttClient.connect()...");
+    Serial.flush();
     mqttClient.connect();
+    Serial.println("mqttClient.connect() called");
+    Serial.flush();
 
 // For ESP32-S3: Wait for async_tcp task to be created, then add it to watchdog
 #if CONFIG_IDF_TARGET_ESP32S3
@@ -108,7 +157,8 @@ void ESP32Module::initializeTime()
     Serial.print("Synchronizing time with NTP");
 
     // Set Danish time with automatic daylight saving
-    configTzTime("CET-1CEST,M3.5.0/02,M10.5.0/03", "pool.ntp.org", "time.nist.gov");
+    configTzTime("CET-1CEST-2,M3.5.0/02,M10.5.0/03", "pool.ntp.org", "time.nist.gov");
+
 
     struct tm timeinfo;
     for (int i = 0; i < 10; i++)
@@ -226,7 +276,29 @@ void ESP32Module::onMqttConnect(bool sessionPresent)
 
 void ESP32Module::onMqttDisconnect(AsyncMqttClientDisconnectReason reason)
 {
-    Serial.println("MQTT Disconnected");
+    Serial.println("MQTT Disconnected: " + String((uint8_t)reason));
+    Serial.println("Attempting to reconnect to MQTT broker...");
+    Serial.flush();
+
+    // Keep trying to reconnect until successful
+    while (WiFi.status() == WL_CONNECTED)
+    {
+        mqttClient.connect();
+        Serial.println("Reconnection attempt sent");
+        Serial.flush();
+        // Wait a bit before next attempt
+        for (int i = 0; i < 10; ++i) {
+            delay(500);
+            esp_task_wdt_reset();
+            if (mqttClient.connected()) {
+                Serial.println("MQTT reconnected!");
+                Serial.flush();
+                return;
+            }
+        }
+    }
+    Serial.println("WiFi disconnected, cannot reconnect to MQTT");
+    Serial.flush();
 }
 
 void ESP32Module::onMqttMessage(char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total)

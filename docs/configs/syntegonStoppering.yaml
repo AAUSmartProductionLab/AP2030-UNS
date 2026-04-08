@@ -1,6 +1,6 @@
 syntegonStopperingSystemAAS:
     idShort: syntegonStopperingSystemAAS
-    id: 'https://smartproductionlab.aau.dk/aas/syntegonStopperingSystem'
+    id: 'https://smartproductionlab.aau.dk/aas/syntegonStopperingSystemAAS'
     globalAssetId: 'https://smartproductionlab.aau.dk/assets/NGQ5ZWE4ZmUtY2Q3OS00Nzc5LWE5YjEtNGEzZGRkODRhNzQ2'
     derivedFrom: 'https://smartproductionlab.aau.dk/aas/templates/resource'
     assetType: 'https://smartproductionlab.aau.dk/Resource/CPPM/StopperingSystem/syntegonStopperingSystem'
@@ -31,9 +31,11 @@ syntegonStopperingSystemAAS:
                                 contentType: 'application/json'
                                 href: '/DATA/Stoppering'
                                 mqv_controlPacket: 'publish'
-                    halt:
-                        key: 'halt'
-                        title: 'halt'
+                                mqv_retain: 'false'
+                    Halt:
+                        key: 'Halt'
+                        title: 'Halt'
+                        synchronous: 'true'
                         input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
                         forms:
                             contentType: 'application/json'
@@ -41,10 +43,10 @@ syntegonStopperingSystemAAS:
                             op: 'invokeAction'
                             mqv_retain: 'false'
                             mqv_controlPacket: subscribe
-                            mqv_qos: '2'                                              
-                    occupy:
-                        key: 'occupy'
-                        title: 'occupy'
+                            mqv_qos: '2'                                   
+                    Occupy:
+                        key: 'Occupy'
+                        title: 'Occupy'
                         synchronous: 'true'
                         input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
                         output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
@@ -59,9 +61,10 @@ syntegonStopperingSystemAAS:
                                 contentType: 'application/json'
                                 href: '/DATA/Occupy'
                                 mqv_controlPacket: 'publish'
-                    release:
-                        key: 'release'
-                        title: 'release'
+                                mqv_retain: 'false'
+                    Release:
+                        key: 'Release'
+                        title: 'Release'
                         synchronous: 'true'
                         input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
                         output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
@@ -76,6 +79,7 @@ syntegonStopperingSystemAAS:
                                 contentType: 'application/json'
                                 href: '/DATA/Release'
                                 mqv_controlPacket: 'publish'
+                                mqv_retain: 'false'
                 properties:
                     StationState:
                         key: 'StationState'
@@ -84,7 +88,7 @@ syntegonStopperingSystemAAS:
                         forms:
                             contentType: 'application/json'
                             href: '/DATA/State'
-                            mqv_retain: 'false'
+                            mqv_retain: 'true'
                             mqv_controlPacket: publish
                             mqv_qos: '0'
     Variables:
@@ -98,29 +102,31 @@ syntegonStopperingSystemAAS:
             Field: 'ProcessQueue'
     Parameters:
     HierarchicalStructures:
+        Name: 'BillOfMaterials'
         Archetype: 'OneUp'
         IsPartOf:
-            - aauFillingLine:
+            aauFillingLineAAS:
                 globalAssetId: 'https://smartproductionlab.aau.dk/assets/MWQ2ODY5ZDEtZTQ3Yy00NWU4LTlmYTAtNTI3YjVlMDk4MWFi'
     
     Capabilities:
         Stoppering:
             realizedBy: "Stopper"
+            semantic_id: https://smartproductionlab.aau.dk/Capability/Stoppering
     
     Skills:
         Stoppering:
             description: "Stoppering function for pharmaceutical primary packaging"
             semantic_id: "https://smartproductionlab.aau.dk/skills/Stoppering"
             interface: "Stoppering"
-        halt:
-            description: "Halt the current stoppering operation"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/halt"
-            interface: "halt"
-        occupy:
-            description: "Occupy the stoppering system for exclusive use"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/occupy"
-            interface: "occupy"
-        release:
-            description: "Release the stoppering system from exclusive use"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/release"
-            interface: "release"
+        Halt:
+            description: "Halt the current stoppeng operation"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/Halt"
+            interface: "Halt"
+        Occupy:
+            description: "Occupy the system for exclusive use"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/Occupy"
+            interface: "Occupy"
+        Release:
+            description: "Release the system from exclusive use"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/Release"
+            interface: "Release"

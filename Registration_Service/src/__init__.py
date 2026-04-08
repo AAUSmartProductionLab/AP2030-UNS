@@ -54,6 +54,20 @@ from .mqtt_config_registration import MQTTConfigRegistrationService
 from .generate_aas import AASGenerator
 from .aas_validator import AASValidator
 
+# Operation Delegation (MQTT bridge)
+from .schema_parser import SchemaParser, determine_field_mappings
+from .mqtt_operation_bridge import MQTTOperationBridge
+from .operation_delegation_api import (
+    app as delegation_app,
+    get_topic_config,
+    update_topic_config,
+    set_full_topic_config,
+    get_mqtt_bridge,
+    init_mqtt_bridge,
+    start_delegation_api,
+    start_delegation_api_background,
+)
+
 __all__ = [
     # Core
     'BaSyxConfig',
@@ -96,4 +110,15 @@ __all__ = [
     # AAS Generation
     'AASGenerator',
     'AASValidator',
+    # Operation Delegation
+    'SchemaParser',
+    'determine_field_mappings',
+    'MQTTOperationBridge',
+    'delegation_app',
+    'get_topic_config',
+    'update_topic_config',
+    'set_full_topic_config',
+    'get_mqtt_bridge',
+    'start_delegation_api',
+    'start_delegation_api_background',
 ]

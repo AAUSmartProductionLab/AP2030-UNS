@@ -7,6 +7,12 @@
 
 void GetProductFromQueue::initializeTopicsFromAAS()
 {
+    // Already initialized, skip
+    if (topics_initialized_)
+    {
+        return;
+    }
+
     try
     {
         auto xbot_topic_opt = this->config().blackboard->getAnyLocked("XbotTopic");
@@ -22,8 +28,8 @@ void GetProductFromQueue::initializeTopicsFromAAS()
         // Use xbot_topic directly (should be resolved from blackboard)
         std::string asset_id = xbot_topic;
 
-        // Create Topic objects
-        auto request_opt = aas_client_.fetchInterface(asset_id, this->name(), "ProductID");
+        // Create Topic objects - ProductID property with output endpoint (data being published)
+        auto request_opt = aas_client_.fetchInterface(asset_id, "ProductID", "input");
 
         if (!request_opt.has_value())
         {
@@ -32,6 +38,7 @@ void GetProductFromQueue::initializeTopicsFromAAS()
         }
 
         MqttPubBase::setTopic("ProductID", request_opt.value());
+        topics_initialized_ = true;
     }
     catch (const std::exception &e)
     {
@@ -41,6 +48,16 @@ void GetProductFromQueue::initializeTopicsFromAAS()
 
 BT::NodeStatus GetProductFromQueue::tick()
 {
+    // Ensure lazy initialization is done
+    if (!ensureInitialized())
+    {
+        auto xbot_topic_opt = this->config().blackboard->getAnyLocked("XbotTopic");
+        std::string xbot_val = xbot_topic_opt ? xbot_topic_opt->cast<std::string>() : "<not set>";
+        std::cerr << "Node '" << this->name() << "' FAILED - could not initialize. "
+                  << "XbotTopic=" << xbot_val << std::endl;
+        return BT::NodeStatus::FAILURE;
+    }
+
     bool popped = false;
     if (status() == BT::NodeStatus::IDLE)
     {

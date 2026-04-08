@@ -1,0 +1,16 @@
+@prefix css: <http://www.w3id.org/hsu-aut/css#> .
+@prefix cssx: <http://www.w3id.org/aau-ra/cssx#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+[] a sh:ValidationReport ;
+    sh:conforms false ;
+    sh:result [ a sh:ValidationResult ;
+            sh:focusNode <https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1> ;
+            sh:resultMessage "Value is not Literal with datatype rdf:langString" ;
+            sh:resultPath cssx:manufacturerProductDesignation ;
+            sh:resultSeverity sh:Violation ;
+            sh:sourceConstraintComponent sh:DatatypeConstraintComponent ;
+            sh:sourceShape css:Resource-manufacturerProductDesignation ;
+            sh:value "CA18CLC12BPM1" ] .
+

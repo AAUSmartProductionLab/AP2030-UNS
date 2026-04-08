@@ -144,7 +144,7 @@ class AASBuilder:
         if 'HierarchicalStructures' in config:
             submodel_names.append('HierarchicalStructures')
         if 'Capabilities' in config and config.get('Capabilities'):
-            submodel_names.append('OfferedCapabilitiyDescription')
+            submodel_names.append('OfferedCapabilityDescription')
         
         # Add Skills submodel reference if:
         # 1. Skills are explicitly defined in config, OR
@@ -154,6 +154,14 @@ class AASBuilder:
         
         if has_explicit_skills or has_actions:
             submodel_names.append('Skills')
+        
+        # Add Process AAS specific submodels if they exist in config
+        if 'ProcessInformation' in config:
+            submodel_names.append('ProcessInformation')
+        if 'RequiredCapabilities' in config:
+            submodel_names.append('RequiredCapabilities')
+        if 'Policy' in config:
+            submodel_names.append('Policy')
         
         return submodel_names
     

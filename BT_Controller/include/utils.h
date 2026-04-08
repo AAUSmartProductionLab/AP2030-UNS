@@ -64,7 +64,6 @@ namespace bt_utils
                             int &groot2_port,
                             std::string &bt_description_path,
                             std::string &bt_nodes_path,
-                            std::vector<std::string> &asset_ids_to_resolve,
                             std::string &registration_config_path,
                             std::string &registration_topic_pattern);
 
@@ -84,6 +83,13 @@ namespace schema_utils
      * @param schema The schema to resolve (modified in place)
      */
     void resolveSchemaReferences(nlohmann::json &schema);
+
+    /**
+     * Fetch raw text content from a URL using CURL
+     * @param url The full URL to fetch content from
+     * @return The raw content as string, or empty string on failure
+     */
+    std::string fetchContentFromUrl(const std::string &url);
 }
 
 namespace BT

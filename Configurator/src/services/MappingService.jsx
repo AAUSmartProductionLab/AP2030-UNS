@@ -1,5 +1,17 @@
 class MappingService {
     /**
+     * Module-specific position offsets from the base (center) position
+     * Offsets are [deltaX, deltaY] in millimeters
+     */
+    static moduleOffsets = {
+      'DispensingSystem': [-31, 0],
+      'StopperingSystem': [-8, 4],
+      'QualityControlSystem': [-60,-5],
+      // Add more module types as needed
+      'default': [0, 0] // No offset for unknown modules
+    };
+    
+    /**
      * Convert a container name to an integer ID
      * @param {string} containerName - e.g. "Module Area 5" or "Flyway 2"
      * @returns {number} integer ID
@@ -35,64 +47,58 @@ class MappingService {
     }
     
     /**
-     * Get the approach position for a container
-     * @param {number|string} containerIdOrName - Container ID or name
-     * @returns {Array} [x, y, Rz] position array for approach
+     * Get the position offset for a specific module type
+     * @param {string} moduleType - The module type (e.g., 'DispensingSystem')
+     * @returns {Array} [deltaX, deltaY] offset in millimeters
      */
-    static getApproachPosition(containerIdOrName) {
-      const id = typeof containerIdOrName === 'string' 
-        ? this.nameToId(containerIdOrName) 
-        : containerIdOrName;
-      
-      if (this.positionMap[id]?.approach) {
-        return this.positionMap[id].approach;
-      }
-      
-      console.warn(`No approach position found for container ${containerIdOrName}`);
-      return [0, 0, 0]; // Default position
+    static getModuleOffset(moduleType) {
+      return this.moduleOffsets[moduleType] || this.moduleOffsets['default'];
     }
     
     /**
-     * Get the process position for a container
+     * Get the process position for a container with module-specific offset
      * @param {number|string} containerIdOrName - Container ID or name
+     * @param {string} moduleType - The module type (e.g., 'DispensingSystem')
      * @returns {Array} [x, y, Rz] position array for process
      */
-    static getProcessPosition(containerIdOrName) {
+    static getProcessPosition(containerIdOrName, moduleType = null) {
       const id = typeof containerIdOrName === 'string' 
         ? this.nameToId(containerIdOrName) 
         : containerIdOrName;
       
-      if (this.positionMap[id]?.process) {
-        return this.positionMap[id].process;
+      if (this.positionMap[id]) {
+        const basePos = this.positionMap[id];
+        const offset = moduleType ? this.getModuleOffset(moduleType) : [0, 0];
+        
+        return [
+          basePos[0] + offset[0],
+          basePos[1] + offset[1],
+          basePos[2]
+        ];
       }
       
-      console.warn(`No process position found for container ${containerIdOrName}`);
+      console.warn(`No position found for container ${containerIdOrName}`);
       return [0, 0, 0]; // Default position
     }
     
     /**
-     * Get both approach and process positions
+     * Get the process position with optional module-specific offset
      * @param {number|string} containerIdOrName - Container ID or name
-     * @returns {Object} Object with approach and process positions
+     * @param {string} moduleType - The module type for offset calculation (e.g., 'DispensingSystem')
+     * @returns {Array} [x, y, Rz] position array
      */
-    static getPositions(containerIdOrName) {
-      const id = typeof containerIdOrName === 'string' 
-        ? this.nameToId(containerIdOrName) 
-        : containerIdOrName;
-      
-      return {
-        approach: this.getApproachPosition(id),
-        process: this.getProcessPosition(id)
-      };
+    static getPositions(containerIdOrName, moduleType = null) {
+      return this.getProcessPosition(containerIdOrName, moduleType);
     }
     
     /**
      * Get the primary position (backwards compatibility)
      * @param {number|string} containerIdOrName - Container ID or name
-     * @returns {Array} [x, y, Rz] position array (approach position)
+     * @param {string} moduleType - The module type for offset calculation
+     * @returns {Array} [x, y, Rz] position array
      */
-    static getPosition(containerIdOrName) {
-      return this.getApproachPosition(containerIdOrName);
+    static getPosition(containerIdOrName, moduleType = null) {
+      return this.getProcessPosition(containerIdOrName, moduleType);
     }
     
     /**
@@ -100,16 +106,16 @@ class MappingService {
      * This mapping is used by the behavior tree controller to find assets in the AAS registry
      */
     static assetNameToInstanceMap = {
-      'PlanarSystem': 'planarTable',
-      'Xbot1': 'planarTableShuttle1',
-      'Xbot2': 'planarTableShuttle2',
-      'Xbot3': 'planarTableShuttle3'
+      'PlanarSystem': 'planarTableAAS',
+      'Xbot1': 'planarTableShuttle1AAS',
+      'Xbot2': 'planarTableShuttle2AAS',
+      'Xbot3': 'planarTableShuttle3AAS'
     };
     
     /**
      * Get the AAS instance name for an asset name
      * @param {string} assetName - The asset name used in the behavior tree
-     * @returns {string} The AAS instance name (idShort without "AAS" suffix)
+     * @returns {string} The AAS idShort (includes "AAS" suffix, e.g., "planarTableAAS")
      */
     static getInstanceName(assetName) {
       return this.assetNameToInstanceMap[assetName] || assetName;
@@ -136,74 +142,33 @@ class MappingService {
         33: 14
       };
       
-      // Updated positionMap with approach and process positions
-      // Origin at bottom-left corner, X limit 960mm, Y limit 720mm
+      // Position map with base positions (centers) - offsets are applied based on module type
+      // Origin at bottom-left corner (Module Area 14), Y limit 960mm (long side), X limit 720mm (short side)
+      // Format: [x, y, rotation_degrees]
       static positionMap = {
-        0: {
-          approach: [120, 600, 0],    // Approach from flyway 0 (center)
-          process: [120, 660, 0]      // Process is 60mm towards the module area
-        },
-        1: {
-          approach: [360, 600, 0],    // Approach from flyway 1
-          process: [360, 660, 0]
-        },
-        2: {
-          approach: [600, 600, 0],    // Approach from flyway 2
-          process: [600, 660, 0]
-        },
-        3: {
-          approach: [840, 600, 0],    // Approach from new flyway column
-          process: [840, 660, 0]
-        },
+        0: [600, 840, 180],    // Top row - facing south
+        1: [600, 600, 180],
+        2: [600, 360, 180],
+        3: [600, 120, 180],
         
-        // Left edge - orientation 90 (east facing)
-        4: {
-          approach: [120, 600, 90],   // Approach from flyway 3
-          process: [60, 600, 90]      // Process is 60mm to the left
-        },
-        6: {
-          approach: [120, 360, 90],   // Approach from flyway 6
-          process: [60, 360, 90]
-        },
-        9: {
-            approach: [120, 120, 90],
-            process: [60, 120, 90]
-        },
-        // Right edge - orientation 270 (west facing)
-        5: {
-          approach: [840, 600, 270],  // Approach from right flyway
-          process: [900, 600, 270]    // Process is 60mm to the right
-        },
-        8: {
-          approach: [840, 360, 270],  // Approach from right flyway
-          process: [900, 360, 270]    // Process is 60mm to the right
-        },
-        10: {
-          approach: [840, 120, 270],  // Approach from right flyway
-          process: [900, 120, 270]    // Process is 60mm to the right
-        },
+        // Left edge - orientation 270 (west facing)
+        4: [600, 840, 270],
+        6: [360, 840, 270],
+        9: [120, 840, 270],
+        
+        // Right edge - orientation 90 (east facing)
+        5: [600, 120, 90],
+        8: [360, 120, 90],
+        10: [120, 120, 90],
+        
         // Middle EM square
-        7: {
-          approach: [360, 360, 270],
-          process: [420, 360, 270]    // Matches example data
-        },
-        // Bottom row - orientation 180 (north facing)
-        11: {
-          approach: [120, 120, 270],
-          process: [120, 60, 270]
-        },
-        12: {
-            approach: [360, 120, 270],
-            process: [360, 60, 270]
-        },
-        13: {
-            approach: [600, 120, 270],
-            process: [600, 60, 270]
-        },
-        14: {
-            approach: [840, 120, 270],
-            process: [840, 60, 270]
-        },
+        7: [360, 600, 90],
+        
+        // Bottom row - orientation 0 (north facing)
+        11: [120, 840, 0],
+        12: [120, 600, 0],
+        13: [120, 360, 0],
+        14: [120, 120, 0],
         };
     }
   

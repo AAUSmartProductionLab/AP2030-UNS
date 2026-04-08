@@ -8,7 +8,7 @@ import os
 
 BROKER_ADDRESS = os.getenv("MQTT_BROKER", "hivemq-broker")
 BROKER_PORT = int(os.getenv("MQTT_PORT", "1883"))
-BASE_TOPIC = "NN/Nybrovej/InnoLab/Camera"
+BASE_TOPIC = "NN/Nybrovej/InnoLab/QualityControl"
 uuid = ""
 
 image_publisher = Publisher(
@@ -27,6 +27,9 @@ def capture_process(duration=0.5):
         if not ret:
             print("Failed to capture image from webcam")
             return
+
+        # Rotate image 90 degrees counter-clockwise
+        image = cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
 
         # Encode image to compressed format (JPEG)
         _, img_encoded = cv2.imencode(

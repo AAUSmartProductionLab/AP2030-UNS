@@ -1,0 +1,190 @@
+@prefix aasv: <http://www.w3id.org/aau-ra/resourceaas-validation#> .
+@prefix css: <http://www.w3id.org/hsu-aut/css#> .
+@prefix cssx: <http://www.w3id.org/aau-ra/cssx#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1> a css:Resource ;
+    cssx:hasManufacturer <https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1#manufacturer> ;
+    cssx:hasOperationalData <https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1#operational-data-1> ;
+    cssx:hasResourceBoM <https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1#resource-bom-1> ;
+    cssx:hasResourceInterface <https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1#resource-software-interface-1> ;
+    cssx:manufacturerProductDesignation "CA18CLC12BPM1" ;
+    cssx:serialNumber "CA18CLC12BPM1" ;
+    cssx:uriOfTheProduct "https://smartproductionlab.aau.dk/assets/CA18CLC12BPM1AAS"^^xsd:anyURI ;
+    cssx:yearOfConstruction "2024" ;
+    aasv:hasAIDSubmodel <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/AID> ;
+    aasv:hasCapabilitiesSubmodel <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/Capabilities> ;
+    aasv:hasDigitalNameplateSubmodel <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/Nameplate> ;
+    aasv:hasHierarchicalStructuresSubmodel <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/HierarchicalStructures> ;
+    aasv:hasMappedElement <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/AID#trace-interfacemqtt-0-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/AID#trace-interfacemqtt-0-1>,
+        <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/AID#trace-interfacemqtt-0-2>,
+        <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/AID#trace-interfacemqtt-0-interactionmetadata-2-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/AID#trace-interfacemqtt-0-interactionmetadata-2-1>,
+        <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/AID#trace-interfacemqtt-0-interactionmetadata-2-properties-0-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/Capabilities#trace-capabilityset-0-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/Capabilities#trace-capabilityset-0-proximitydetectioncontainer-0-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/Capabilities#trace-capabilityset-0-proximitydetectioncontainer-0-proximitydetection-1-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/Capabilities#trace-capabilityset-0-proximitydetectioncontainer-0-realizedby-2-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/HierarchicalStructures#trace-archetype-0-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/HierarchicalStructures#trace-entrynode-1-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/OperationalData#trace-proximitystate-0-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/OperationalData#trace-proximitystate-0-interfacereference-0-0> ;
+    aasv:hasOperationalDataSubmodel <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/OperationalData> ;
+    aasv:hasSkillsSubmodel <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/Skills> ;
+    aasv:hasSubmodel <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/AID>,
+        <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/Capabilities>,
+        <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/HierarchicalStructures>,
+        <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/Nameplate>,
+        <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/OperationalData>,
+        <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/Skills> ;
+    aasv:sourceIdShort "CA18CLC12BPM1_AAS" ;
+    css:providesCapability <https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1#capability-proximitydetectioncontainer> ;
+    css:providesSkill <https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1#skill-no-nc-configuration>,
+        <https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1#skill-proximitydetection>,
+        <https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1#skill-teachin> .
+
+<https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1#capability-proximitydetectioncontainer> a css:Capability ;
+    aasv:sourceIdShort "ProximityDetectionContainer" ;
+    aasv:sourceSemanticId "https://smartproductionlab.aau.dk/Capability/ProximityDetection" ;
+    aasv:sourceSubmodelSemanticId "https://smartfactory.de/aas/submodel/OfferedCapabilityDescription/CapabilitySet/CapabilityContainer#1/0" ;
+    css:isRealizedBySkill <https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1#skill-proximitydetection> .
+
+<https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1#manufacturer> a cssx:Manufacturer ;
+    cssx:manufacturerName "Carlo Gavazzi"@en .
+
+<https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1#operational-data-1> a cssx:OperationalData ;
+    cssx:dataReferencesInterface <https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1#resource-software-interface-1> .
+
+<https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1#resource-bom-1> a cssx:ResourceBoM ;
+    cssx:hasBoMItem <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/HierarchicalStructures#bom-entry-aaufillinglineaas> .
+
+<https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1#skill-interface-no-nc-configuration> a css:SkillInterface ;
+    cssx:skillInterfaceUsesSoftwareInterface <https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1#resource-software-interface-1> .
+
+<https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1#skill-interface-proximitydetection> a css:SkillInterface ;
+    cssx:skillInterfaceUsesSoftwareInterface <https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1#resource-software-interface-1> .
+
+<https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1#skill-interface-teachin> a css:SkillInterface ;
+    cssx:skillInterfaceUsesSoftwareInterface <https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1#resource-software-interface-1> .
+
+<https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1#skill-no-nc-configuration> a css:Skill ;
+    aasv:sourceIdShort "NO_NC_Configuration" ;
+    aasv:sourceSemanticId "https://smartproductionlab.aau.dk/skills/NO_NC_Configuration" ;
+    css:accessibleThrough <https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1#skill-interface-no-nc-configuration> .
+
+<https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1#skill-teachin> a css:Skill ;
+    aasv:sourceIdShort "TeachIn" ;
+    aasv:sourceSemanticId "https://smartproductionlab.aau.dk/skills/TeachIn" ;
+    css:accessibleThrough <https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1#skill-interface-teachin> .
+
+<https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1#skill-proximitydetection> a css:Skill ;
+    aasv:sourceIdShort "ProximityDetection" ;
+    aasv:sourceSemanticId "https://smartproductionlab.aau.dk/skills/ProximityDetection" ;
+    css:accessibleThrough <https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1#skill-interface-proximitydetection> .
+
+<https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/AID> a aasv:AIDSubmodel ;
+    aasv:hasIdShort "AID" ;
+    aasv:hasMappedElement <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/AID#trace-interfacemqtt-0-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/AID#trace-interfacemqtt-0-1>,
+        <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/AID#trace-interfacemqtt-0-2>,
+        <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/AID#trace-interfacemqtt-0-interactionmetadata-2-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/AID#trace-interfacemqtt-0-interactionmetadata-2-1>,
+        <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/AID#trace-interfacemqtt-0-interactionmetadata-2-properties-0-0> ;
+    aasv:sourceSemanticId "https://admin-shell.io/idta/AssetInterfacesDescription/1/0/Submodel" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/AID#trace-interfacemqtt-0-0> aasv:sourceElementPath "InterfaceMQTT[0]" ;
+    aasv:sourceIdShort "InterfaceMQTT" ;
+    aasv:sourceSemanticId "https://admin-shell.io/idta/AssetInterfacesDescription/1/0/Interface" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/AID#trace-interfacemqtt-0-1> aasv:sourceElementPath "InterfaceMQTT[0]" ;
+    aasv:sourceIdShort "InterfaceMQTT" ;
+    aasv:sourceSemanticId "http://www.w3.org/2011/mqtt" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/AID#trace-interfacemqtt-0-2> aasv:sourceElementPath "InterfaceMQTT[0]" ;
+    aasv:sourceIdShort "InterfaceMQTT" ;
+    aasv:sourceSemanticId "https://www.w3.org/2019/wot/td" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/AID#trace-interfacemqtt-0-interactionmetadata-2-0> aasv:sourceElementPath "InterfaceMQTT[0]/InteractionMetadata[2]" ;
+    aasv:sourceIdShort "InteractionMetadata" ;
+    aasv:sourceSemanticId "https://admin-shell.io/idta/AssetInterfacesDescription/1/0/InteractionMetadata" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/AID#trace-interfacemqtt-0-interactionmetadata-2-1> aasv:sourceElementPath "InterfaceMQTT[0]/InteractionMetadata[2]" ;
+    aasv:sourceIdShort "InteractionMetadata" ;
+    aasv:sourceSemanticId "https://www.w3.org/2019/wot/td#InteractionAffordance" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/AID#trace-interfacemqtt-0-interactionmetadata-2-properties-0-0> aasv:sourceElementPath "InterfaceMQTT[0]/InteractionMetadata[2]/properties[0]" ;
+    aasv:sourceIdShort "properties" ;
+    aasv:sourceSemanticId "https://www.w3.org/2019/wot/td#PropertyAffordance" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/Capabilities> a aasv:CapabilitiesSubmodel ;
+    aasv:hasIdShort "Capabilities" ;
+    aasv:hasMappedElement <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/Capabilities#trace-capabilityset-0-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/Capabilities#trace-capabilityset-0-proximitydetectioncontainer-0-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/Capabilities#trace-capabilityset-0-proximitydetectioncontainer-0-proximitydetection-1-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/Capabilities#trace-capabilityset-0-proximitydetectioncontainer-0-realizedby-2-0> ;
+    aasv:sourceSemanticId "https://smartfactory.de/aas/submodel/Capabilities#1/0" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/Capabilities#trace-capabilityset-0-0> aasv:sourceElementPath "CapabilitySet[0]" ;
+    aasv:sourceIdShort "CapabilitySet" ;
+    aasv:sourceSemanticId "https://smartfactory.de/aas/submodel/OfferedCapabilityDescription/CapabilitySet#1/0" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/Capabilities#trace-capabilityset-0-proximitydetectioncontainer-0-0> aasv:sourceElementPath "CapabilitySet[0]/ProximityDetectionContainer[0]" ;
+    aasv:sourceIdShort "ProximityDetectionContainer" ;
+    aasv:sourceSemanticId "https://smartfactory.de/aas/submodel/OfferedCapabilityDescription/CapabilitySet/CapabilityContainer#1/0" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/Capabilities#trace-capabilityset-0-proximitydetectioncontainer-0-proximitydetection-1-0> aasv:sourceElementPath "CapabilitySet[0]/ProximityDetectionContainer[0]/ProximityDetection[1]" ;
+    aasv:sourceIdShort "ProximityDetection" ;
+    aasv:sourceSemanticId "https://smartproductionlab.aau.dk/Capability/ProximityDetection" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/Capabilities#trace-capabilityset-0-proximitydetectioncontainer-0-realizedby-2-0> aasv:sourceElementPath "CapabilitySet[0]/ProximityDetectionContainer[0]/realizedBy[2]" ;
+    aasv:sourceIdShort "realizedBy" ;
+    aasv:sourceSemanticId "https://wiki.eclipse.org/BaSyx_/_Documentation_/_Submodels_/_Capability#CapabilityRealizedBy" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/HierarchicalStructures> a aasv:HierarchicalStructuresSubmodel ;
+    aasv:bomArchetype "OneUp" ;
+    aasv:bomName "BillOfMaterials" ;
+    aasv:hasBomEntry <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/HierarchicalStructures#bom-entry-aaufillinglineaas> ;
+    aasv:hasIdShort "HierarchicalStructures" ;
+    aasv:hasMappedElement <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/HierarchicalStructures#trace-archetype-0-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/HierarchicalStructures#trace-entrynode-1-0> ;
+    aasv:sourceSemanticId "https://admin-shell.io/idta/HierarchicalStructures/1/1/Submodel" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/HierarchicalStructures#bom-entry-aaufillinglineaas> a cssx:ResourceBoMItem,
+        aasv:BomEntry ;
+    cssx:itemNumber "aauFillingLineAAS" ;
+    aasv:bomEntryGlobalAssetId "https://smartproductionlab.aau.dk/assets/MWQ2ODY5ZDEtZTQ3Yy00NWU4LTlmYTAtNTI3YjVlMDk4MWFi" ;
+    aasv:bomEntryName "aauFillingLineAAS" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/HierarchicalStructures#trace-archetype-0-0> aasv:sourceElementPath "ArcheType[0]" ;
+    aasv:sourceIdShort "ArcheType" ;
+    aasv:sourceSemanticId "https://admin-shell.io/idta/HierarchicalStructures/ArcheType/1/0" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/HierarchicalStructures#trace-entrynode-1-0> aasv:sourceElementPath "EntryNode[1]" ;
+    aasv:sourceIdShort "EntryNode" ;
+    aasv:sourceSemanticId "https://admin-shell.io/idta/HierarchicalStructures/EntryNode/1/0" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/Nameplate> a aasv:DigitalNameplateSubmodel ;
+    aasv:hasIdShort "DigitalNameplate" ;
+    aasv:sourceSemanticId "https://admin-shell.io/IDTA 02006-3-0" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/OperationalData> a aasv:OperationalDataSubmodel ;
+    aasv:hasIdShort "OperationalData" ;
+    aasv:hasMappedElement <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/OperationalData#trace-proximitystate-0-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/OperationalData#trace-proximitystate-0-interfacereference-0-0> ;
+    aasv:sourceSemanticId "https://admin-shell.io/idta/Variables/1/0/Submodel" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/OperationalData#trace-proximitystate-0-0> aasv:sourceElementPath "ProximityState[0]" ;
+    aasv:sourceIdShort "ProximityState" ;
+    aasv:sourceSemanticId "https://smartproductionlab.aau.dk/proximityState" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/OperationalData#trace-proximitystate-0-interfacereference-0-0> aasv:sourceElementPath "ProximityState[0]/InterfaceReference[0]" ;
+    aasv:sourceIdShort "InterfaceReference" ;
+    aasv:sourceSemanticId "https://admin-shell.io/idta/AssetInterfacesDescription/1/0/InterfaceReference" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/Skills> a aasv:SkillsSubmodel ;
+    aasv:hasIdShort "Skills" ;
+    aasv:sourceSemanticId "https://smartfactory.de/aas/submodel/Skills#1/0" .
+
+<https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1#resource-software-interface-1> a cssx:SoftwareInterface .
+

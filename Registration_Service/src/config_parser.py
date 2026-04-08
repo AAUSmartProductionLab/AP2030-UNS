@@ -365,9 +365,17 @@ class ConfigParser:
                 'command_topic': action['command_topic']
             }
 
+            # Add input schema for automatic field mapping detection
+            if action.get('input_schema'):
+                skill_entry['input_schema'] = action['input_schema']
+
             # Only include response_topic if action expects a response
             if action.get('has_response') and action.get('response_topic'):
                 skill_entry['response_topic'] = action['response_topic']
+                
+                # Add output schema for automatic field mapping detection
+                if action.get('output_schema'):
+                    skill_entry['output_schema'] = action['output_schema']
 
                 # Include synchronous flag for async operations (synchronous=false)
                 # The operation delegation service uses this to update StateMachine
@@ -387,7 +395,7 @@ class ConfigParser:
             'submodel_id': submodel_id,
             'skills': skills
         }
-
+    
     def get_databridge_property_mappings(self) -> List[Dict[str, Any]]:
         """
         Generate property mappings for DataBridge configuration.

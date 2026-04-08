@@ -1,19 +1,17 @@
 mqtt:
-  broker_uri: "tcp://${MQTT_BROKER:-hivemq-broker}:${MQTT_PORT:-1883}"
+  broker_uri: "tcp://${MQTT_BROKER:-192.168.0.104}:${MQTT_PORT:-1883}"
   client_id: "Orchestrator"
   uns_topic: "NN/Nybrovej/InnoLab"
 
 aas:
   server_url: "http://${AAS_SERVER:-aas-env}:${AAS_PORT:-8081}"
   registry_url: "http://${AAS_REGISTRY:-aas-registry}:${AAS_REGISTRY_PORT:-8080}"
-  asset_ids:
-    - "https://smartproductionlab.aau.dk/assets/aauFillingLine"
 
 registration:
   # Path to the orchestrator's AAS description config file
   config_path: "../../AASDescriptions/Resource/configs/orchestrator.yaml"
   # MQTT topic to publish config for registration (uses client_id from mqtt section)
-  topic_pattern: "NN/Nybrovej/InnoLab/{client_id}/Registration/Config"
+  topic_pattern: "NN/Nybrovej/InnoLab/Registration/Config"
 
 groot2:
   port: 1667

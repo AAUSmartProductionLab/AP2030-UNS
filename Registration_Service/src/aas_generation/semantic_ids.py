@@ -40,8 +40,8 @@ class SemanticIdFactory:
     # Custom Submodels
     _SKILLS_SUBMODEL = "https://smartfactory.de/aas/submodel/Skills#1/0"
     _CAPABILITIES_SUBMODEL = "https://smartfactory.de/aas/submodel/Capabilities#1/0"
-    _CAPABILITY_SET = "https://smartfactory.de/aas/submodel/OfferedCapabilitiyDescription/CapabilitySet#1/0"
-    _CAPABILITY_CONTAINER = "https://smartfactory.de/aas/submodel/OfferedCapabilitiyDescription/CapabilitySet/CapabilityContainer#1/0"
+    _CAPABILITY_SET = "https://smartfactory.de/aas/submodel/OfferedCapabilityDescription/CapabilitySet#1/0"
+    _CAPABILITY_CONTAINER = "https://smartfactory.de/aas/submodel/OfferedCapabilityDescription/CapabilitySet/CapabilityContainer#1/0"
     _CAPABILITY = "https://wiki.eclipse.org/BaSyx_/_Documentation_/_Submodels_/_Capability#Capability"
     _CAPABILITY_RELATIONS = "https://wiki.eclipse.org/BaSyx_/_Documentation_/_Submodels_/_Capability#CapabilityRelationships"
     _CAPABILITY_REALIZED_BY = "https://wiki.eclipse.org/BaSyx_/_Documentation_/_Submodels_/_Capability#CapabilityRealizedBy"

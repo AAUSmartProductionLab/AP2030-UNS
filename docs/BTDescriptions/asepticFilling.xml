@@ -28,7 +28,7 @@
                        _autoremap="true"/>
               <SubTree ID="Stoppering"
                        _autoremap="true"/>
-              <SubTree ID="QualityControl"
+              <SubTree ID="Inspection"
                        _autoremap="true"/>
               <SubTree ID="Unloading"
                        _autoremap="true"/>

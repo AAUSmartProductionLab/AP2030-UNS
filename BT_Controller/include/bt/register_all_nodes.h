@@ -7,6 +7,7 @@
 #include "mqtt/node_message_distributor.h"
 #include "bt/mqtt_action_node.h"
 #include "bt/mqtt_sync_action_node.h"
+#include "bt/mqtt_sync_condition_node.h"
 #include "bt/mqtt_decorator.h"
 #include "bt/actions/move_to_position.h"
 #include "bt/actions/generic_action_node.h"
@@ -19,6 +20,7 @@
 #include "bt/decorators/get_product_from_queue_node.h"
 #include "bt/decorators/keep_running_until_empty.h"
 #include "bt/decorators/occupy.h"
+#include "bt/decorators/sampling_gate.h"
 #include "bt/controls/bc_fallback_node.h"
 void registerAllNodes(
     BT::BehaviorTreeFactory &factory,
@@ -53,17 +55,15 @@ void registerAllNodes(
         aas_client,
         "Refill_Node");
 
-    MqttActionNode::registerNodeType<GenericConditionNode>(
+    MqttSyncConditionNode::registerNodeType<GenericConditionNode>(
         factory,
         node_message_distributor,
         mqtt_client,
         aas_client,
         "Data_Condition");
 
-    MqttActionNode::registerNodeType<ConfigurationNode>(
+    ConfigurationNode::registerNodeType<ConfigurationNode>(
         factory,
-        node_message_distributor,
-        mqtt_client,
         aas_client,
         "Configure");
 
@@ -94,6 +94,8 @@ void registerAllNodes(
         mqtt_client,
         aas_client,
         "PopElement");
+
+    factory.registerNodeType<SamplingGate>("SamplingGate");
 
     factory.registerNodeType<BT::BC_FallbackNode>("BC_Fallback");
     factory.registerNodeType<BT::BC_FallbackNode>("BC_Fallback_Async", true);

@@ -88,7 +88,7 @@ class AASValidator:
         "http://smartproductionlab.aau.dk/submodels/Variables/1/0",
         "http://smartproductionlab.aau.dk/submodels/Parameters/1/0",
         "http://smartproductionlab.aau.dk/submodels/Skills/1/0",
-        "http://smartproductionlab.aau.dk/submodels/OfferedCapabilitiyDescription/1/0",
+        "http://smartproductionlab.aau.dk/submodels/OfferedCapabilityDescription/1/0",
     }
     
     # W3C Thing Description semantic IDs

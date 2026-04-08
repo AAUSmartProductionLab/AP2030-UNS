@@ -1,6 +1,6 @@
-productionPlanner:
-    idShort: productionPlanner
-    id: 'https://smartproductionlab.aau.dk/aas/productionPlanner'
+productionPlannerAAS:
+    idShort: productionPlannerAAS
+    id: 'https://smartproductionlab.aau.dk/aas/productionPlannerAAS'
     globalAssetId: 'https://smartproductionlab.aau.dk/assets/YWY0MjA2MjYtMzg2Ni00M2NjLTkyN2ItM2VjNDg4MzNlMTJm'
     derivedFrom: 'https://smartproductionlab.aau.dk/aas/templates/resource'
     assetType: 'https://smartproductionlab.aau.dk/Resource/ProductionPlanner'
@@ -19,7 +19,7 @@ productionPlanner:
                         title: 'Plan'
                         synchronous: 'true'
                         input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/planningCommand.schema.json'
-                        output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
+                        output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/planningResponse.schema.json'
                         forms:
                             contentType: 'application/json'
                             href: '/CMD/Plan'
@@ -31,40 +31,7 @@ productionPlanner:
                                 contentType: 'application/json'
                                 href: '/DATA/Plan'
                                 mqv_controlPacket: 'publish'
-                    occupy:
-                        key: 'occupy'
-                        title: 'occupy'
-                        synchronous: 'true'
-                        input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
-                        output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
-                        forms:
-                            contentType: 'application/json'
-                            href: '/CMD/Occupy'
-                            op: 'invokeAction'
-                            mqv_retain: 'false'
-                            mqv_controlPacket: subscribe
-                            mqv_qos: '2'
-                            response:
-                                contentType: 'application/json'
-                                href: '/DATA/Occupy'
-                                mqv_controlPacket: 'publish'
-                    release:
-                        key: 'release'
-                        title: 'release'
-                        synchronous: 'true'
-                        input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
-                        output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
-                        forms:
-                            contentType: 'application/json'
-                            href: '/CMD/Release'
-                            op: 'invokeAction'
-                            mqv_retain: 'false'
-                            mqv_controlPacket: subscribe
-                            mqv_qos: '2'
-                            response:
-                                contentType: 'application/json'
-                                href: '/DATA/Release'
-                                mqv_controlPacket: 'publish'
+                                mqv_retain: 'false'
                 properties:
                     StationState:
                         key: 'StationState'
@@ -73,7 +40,7 @@ productionPlanner:
                         forms:
                             contentType: 'application/json'
                             href: '/DATA/State'
-                            mqv_retain: 'false'
+                            mqv_retain: 'true'
                             mqv_controlPacket: publish
                             mqv_qos: '0'
     Variables:
@@ -99,11 +66,11 @@ productionPlanner:
             description: "Generate a production plan for the provided product using the available assets"
             semantic_id: "https://smartproductionlab.aau.dk/skills/productionPlanning"
             interface: "Plan"
-        occupy:
-            description: "Occupy the planner for exclusive use"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/occupy"
-            interface: "occupy"
-        release:
-            description: "Release the planner from exclusive use"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/release"
-            interface: "release"
+        Occupy:
+            description: "Occupy the system for exclusive use"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/Occupy"
+            interface: "Occupy"
+        Release:
+            description: "Release the system from exclusive use"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/Release"
+            interface: "Release"

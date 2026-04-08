@@ -16,4 +16,4 @@ fi
 # 2. Run Main Planner
 echo "[Entrypoint] Starting XBot Planner..."
 # Pass all arguments to xbot_planner.py
-exec python xbot_planner.py "$@"
+exec python xbot_planner_packml.py "$@"

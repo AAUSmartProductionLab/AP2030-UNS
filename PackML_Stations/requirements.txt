@@ -1,0 +1,5 @@
+paho-mqtt
+jsonschema
+basyx-python-sdk
+requests
+pyyaml

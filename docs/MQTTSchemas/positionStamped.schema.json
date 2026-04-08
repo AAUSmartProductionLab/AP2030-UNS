@@ -1,0 +1,13 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Position Data",
+    "type": "object",
+    "allOf": [
+        {
+            "$ref": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/data.schema.json"
+        },
+        {
+            "$ref": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/position.schema.json"
+        }
+    ]
+}

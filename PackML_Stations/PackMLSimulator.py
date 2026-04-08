@@ -35,7 +35,7 @@ class PackMLState(enum.Enum):
 
 
 class PackMLStateMachine:
-    def __init__(self,  base_topic, client: Proxy, properties, config_path: Optional[str] = None):
+    def __init__(self,  base_topic, client: Proxy, properties, config_path: Optional[str] = None, custom_handlers=None, enable_occupation: bool = True, auto_execute: bool = False):
         self.state = PackMLState.IDLE
         self.base_topic = base_topic
         # Keep if used elsewhere, otherwise consider removing
@@ -44,6 +44,10 @@ class PackMLStateMachine:
         self.client = client
         self.properties = properties
         self.Uuid = None
+        
+        self.custom_handlers = custom_handlers or {}
+        self.enable_occupation = enable_occupation
+        self.auto_execute = auto_execute
 
         # YAML config path for registration
         self.config_path = config_path
@@ -62,21 +66,35 @@ class PackMLStateMachine:
         # Key: UUID of the item in queue, Value: UUID of the original registration command
         self.pending_registrations = {}
 
-        self.register_topic = ResponseAsync(
-            self.base_topic+"/DATA/Occupy",
-            self.base_topic+"/CMD/Occupy",
-            "./MQTTSchemas/commandResponse.schema.json",
-            "./MQTTSchemas/command.schema.json",
+        # Occupation topics (optional - can be disabled for services like planners)
+        self.register_topic = None
+        self.unregister_topic = None
+        
+        if self.enable_occupation:
+            self.register_topic = ResponseAsync(
+                self.base_topic+"/DATA/Occupy",
+                self.base_topic+"/CMD/Occupy",
+                "./MQTTSchemas/commandResponse.schema.json",
+                "./MQTTSchemas/command.schema.json",
+                2,
+                self.register_callback
+            )
+            self.unregister_topic = ResponseAsync(
+                self.base_topic+"/DATA/Release",
+                self.base_topic+"/CMD/Release",
+                "./MQTTSchemas/commandResponse.schema.json",
+                "./MQTTSchemas/command.schema.json",
+                2,
+                self.unregister_callback
+            )
+        
+        # Command topic for manual state control (Start, Stop, Reset, etc.)
+        from MQTT_classes import Subscriber
+        self.command_topic = Subscriber(
+            self.base_topic + "/CMD/State",
+            "./MQTTSchemas/stateCommand.schema.json",
             2,
-            self.register_callback
-        )
-        self.unregister_topic = ResponseAsync(
-            self.base_topic+"/DATA/Release",
-            self.base_topic+"/CMD/Release",
-            "./MQTTSchemas/commandResponse.schema.json",
-            "./MQTTSchemas/command.schema.json",
-            2,
-            self.unregister_callback
+            self.state_command_callback
         )
 
         self.state_topic = Publisher(
@@ -84,11 +102,70 @@ class PackMLStateMachine:
             "./MQTTSchemas/stationState.schema.json",
             2
         )
-        topics = [self.register_topic, self.unregister_topic, self.state_topic]
+        
+        # Build list of topics to register
+        topics = [self.command_topic, self.state_topic]
+        if self.enable_occupation:
+            topics.extend([self.register_topic, self.unregister_topic])
         for topic in topics:
             client.register_topic(topic)
 
         self.publish_state()
+        
+        # Auto-transition to EXECUTE for service-type stations (no occupation needed)
+        if self.auto_execute:
+            self.state = PackMLState.EXECUTE
+            self.publish_state()
+            print(f"PackML: Auto-started in EXECUTE state (service mode)")
+
+    def state_command_callback(self, topic, client, message, properties):
+        """Callback for external state commands like Start, Stop, Reset."""
+        state_id = message.get("StateId")
+        if not state_id:
+            # Fallback to ButtonId for backward compatibility
+            state_id = message.get("ButtonId")
+        if not state_id:
+            print(f"PackML: Received state command without StateId or ButtonId: {message}")
+            return
+            
+        cmd = str(state_id).lower()
+        print(f"PackML State Command received: {state_id} (Current State: {self.state.value})")
+
+        if cmd == "start":
+            if self.state == PackMLState.IDLE:
+                self.transition_to(PackMLState.STARTING)
+        
+        elif cmd == "stop":
+            if self.state not in [PackMLState.STOPPED, PackMLState.STOPPING, PackMLState.ABORTED, PackMLState.ABORTING]:
+                self.transition_to(PackMLState.STOPPING)
+                
+        elif cmd == "hold":
+            if self.state == PackMLState.EXECUTE:
+                self.transition_to(PackMLState.HOLDING)
+                
+        elif cmd == "unhold":
+            if self.state in [PackMLState.HELD, PackMLState.HOLDING]:
+                self.transition_to(PackMLState.UNHOLDING)
+        
+        elif cmd == "clear":
+            if self.state == PackMLState.ABORTED:
+                self.transition_to(PackMLState.CLEARING)
+
+        elif cmd == "reset":
+            if self.state in [PackMLState.STOPPED, PackMLState.ABORTED, PackMLState.COMPLETE]:
+                self.transition_to(PackMLState.RESETTING)
+        
+        elif cmd == "suspend":
+            if self.state == PackMLState.EXECUTE:
+                self.transition_to(PackMLState.SUSPENDING)
+                
+        elif cmd == "unsuspend":
+            if self.state in [PackMLState.SUSPENDED, PackMLState.SUSPENDING]:
+                self.transition_to(PackMLState.UNSUSPENDING)
+        
+        elif cmd == "abort":
+            if self.state not in [PackMLState.ABORTED, PackMLState.ABORTING]:
+                self.abort_command()
 
     def _publish_command_status(self, status_topic_publisher, command_uuid, state_value):
         timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat(
@@ -253,8 +330,15 @@ class PackMLStateMachine:
             # Use "#" to signify a general clear down
             self.transition_to(PackMLState.COMPLETING, "#")
 
-    def _handle_process_completion(self, completed_uuid, final_command_state, execute_topic: Topic):
-        """Handles post-processing after a command's process_function finishes or fails."""
+    def _handle_process_completion(self, completed_uuid, final_command_state, execute_topic: Topic, additional_response_data=None):
+        """Handles post-processing after a command's process_function finishes or fails.
+        
+        Args:
+            completed_uuid: UUID of the completed command
+            final_command_state: "SUCCESS" or "FAILURE"
+            execute_topic: Topic to publish response to
+            additional_response_data: Optional dict with additional fields to include in response
+        """
         # Publish final command status
         timestamp_final = datetime.datetime.now(datetime.timezone.utc).isoformat(
             timespec='milliseconds').replace('+00:00', 'Z')
@@ -263,6 +347,18 @@ class PackMLStateMachine:
             "TimeStamp": timestamp_final,
             "Uuid": completed_uuid
         }
+        
+        # Merge additional response data if provided (e.g., planning results)
+        if additional_response_data and isinstance(additional_response_data, dict):
+            # Override State from additional_response_data if present
+            if 'State' in additional_response_data:
+                response_final['State'] = additional_response_data['State']
+                final_command_state = additional_response_data['State']
+            # Merge other fields
+            for key, value in additional_response_data.items():
+                if key not in ['Uuid', 'TimeStamp']:  # Don't override these
+                    response_final[key] = value
+        
         execute_topic.publish(response_final, self.client, False)
 
         # Cleanup processing-specific attributes
@@ -294,7 +390,14 @@ class PackMLStateMachine:
 
     def execute_command(self, message, execute_topic: Topic, process_function, *args):
         if self.state == PackMLState.EXECUTE:
-            if self.uuids and message.get("Uuid") == self.uuids[0] and not self.is_processing:
+            command_uuid = message.get("Uuid")
+            
+            # Auto-queue for service mode (no occupation) - process commands immediately
+            if self.auto_execute and not self.enable_occupation:
+                if command_uuid and command_uuid not in self.uuids:
+                    self.uuids.append(command_uuid)
+            
+            if self.uuids and command_uuid == self.uuids[0] and not self.is_processing:
                 # Do not pop from self.uuids here; completing_state will.
                 active_uuid = self.uuids[0]
 
@@ -335,12 +438,22 @@ class PackMLStateMachine:
                         *process_func_args):
                     """Target function for the processing thread."""
                     final_state_thread = "SUCCESS"
+                    response_data = None  # Additional response data from process function
                     try:
                         if can_interrupt:
-                            func_for_thread(event_for_thread,
+                            result = func_for_thread(event_for_thread,
                                             *process_func_args)
                         else:
-                            func_for_thread(*process_func_args)
+                            result = func_for_thread(*process_func_args)
+                        
+                        # If the process function returns a dict, use it as additional response data
+                        if isinstance(result, dict):
+                            response_data = result
+                            # Check if the result indicates failure
+                            if result.get('State') == 'FAILURE':
+                                final_state_thread = "FAILURE"
+                            elif result.get('State') == 'SUCCESS':
+                                final_state_thread = "SUCCESS"
 
                         # Check if interruption was requested externally during non-interruptible execution
                         # or if an interruptible function completed but was still marked for interruption.
@@ -353,10 +466,11 @@ class PackMLStateMachine:
                         print(
                             f"Exception in process_function thread for {uuid_for_thread}: {e}")
                         final_state_thread = "FAILURE"
+                        response_data = {"ErrorMessage": str(e)}
                     finally:
                         # This ensures completion handling occurs even if process_function errors out.
                         current_self._handle_process_completion(
-                            uuid_for_thread, final_state_thread, topic_for_thread)
+                            uuid_for_thread, final_state_thread, topic_for_thread, response_data)
 
                 processing_thread = threading.Thread(
                     target=process_wrapper_thread_target,
@@ -407,6 +521,10 @@ class PackMLStateMachine:
             self.transition_to(PackMLState.STARTING)
 
     def starting_state(self):
+        # Call custom handler
+        if 'on_starting' in self.custom_handlers:
+            self.custom_handlers['on_starting']()
+            
         if not self.uuids:
             self.transition_to(PackMLState.IDLE)
             return
@@ -417,6 +535,31 @@ class PackMLStateMachine:
             self._publish_command_status(
                 self.register_topic, original_reg_cmd_uuid, "SUCCESS")
 
+        self.transition_to(PackMLState.EXECUTE)
+
+    def stopping_state(self):
+        if 'on_stopping' in self.custom_handlers:
+            self.custom_handlers['on_stopping']()
+        self.transition_to(PackMLState.STOPPED)
+
+    def holding_state(self):
+        if 'on_holding' in self.custom_handlers:
+            self.custom_handlers['on_holding']()
+        self.transition_to(PackMLState.HELD)
+
+    def unholding_state(self):
+        if 'on_unholding' in self.custom_handlers:
+            self.custom_handlers['on_unholding']()
+        self.transition_to(PackMLState.EXECUTE)
+
+    def suspending_state(self):
+        if 'on_suspending' in self.custom_handlers:
+            self.custom_handlers['on_suspending']()
+        self.transition_to(PackMLState.SUSPENDED)
+
+    def unsuspending_state(self):
+        if 'on_unsuspending' in self.custom_handlers:
+            self.custom_handlers['on_unsuspending']()
         self.transition_to(PackMLState.EXECUTE)
 
     def completing_state(self, uuid_completed):
@@ -476,6 +619,16 @@ class PackMLStateMachine:
         elif new_state == PackMLState.STARTING:
             if self.uuids:
                 self.starting_state()
+        elif new_state == PackMLState.STOPPING:
+            self.stopping_state()
+        elif new_state == PackMLState.HOLDING:
+            self.holding_state()
+        elif new_state == PackMLState.UNHOLDING:
+            self.unholding_state()
+        elif new_state == PackMLState.SUSPENDING:
+            self.suspending_state()
+        elif new_state == PackMLState.UNSUSPENDING:
+            self.unsuspending_state()
         elif new_state == PackMLState.COMPLETING:
             self.completing_state(uuid_param)
         elif new_state == PackMLState.COMPLETE:
@@ -485,7 +638,7 @@ class PackMLStateMachine:
         elif new_state == PackMLState.ABORTING:
             self.aborting_state(uuid_param)
         elif new_state == PackMLState.CLEARING:
-            self.clearing_state()  # Renamed from self.clearing() for consistency
+            self.clearing_state()
 
     def publish_state(self):
         """Publish the current state"""
@@ -537,7 +690,7 @@ class PackMLStateMachine:
             with open(config_file, 'r', encoding='utf-8') as f:
                 yaml_content = f.read()
 
-            registration_topic = self.base_topic + "/Registration/Config"
+            registration_topic = "NN/Nybrovej/InnoLab/Registration/Config" #self.base_topic + "/Registration/Config"
             self.client.publish(registration_topic,
                                 yaml_content, qos=2, retain=False)
 

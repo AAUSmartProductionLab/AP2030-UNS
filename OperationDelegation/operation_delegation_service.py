@@ -22,6 +22,7 @@ from datetime import datetime, timedelta
 import requests
 from flask import Flask, request, jsonify
 import paho.mqtt.client as mqtt
+from schema_parser import SchemaParser, determine_field_mappings
 
 # Configure logging
 logging.basicConfig(
@@ -163,6 +164,12 @@ class MQTTOperationBridge:
         self.client.on_disconnect = self._on_disconnect
 
         self._connected = threading.Event()
+        
+        # Schema parser for automatic structure determination
+        self.schema_parser = SchemaParser()
+        
+        # Schema parser for automatic structure determination
+        self.schema_parser = SchemaParser()
 
     def connect(self):
         """Connect to MQTT broker"""
@@ -284,7 +291,10 @@ class MQTTOperationBridge:
         response_topic: str,
         input_variables: List[Dict[str, Any]],
         is_async: bool = False,
-        state_property_path: Optional[str] = None
+        state_property_path: Optional[str] = None,
+        array_mappings: Dict[str, List[Dict[str, str]]] = None,
+        schema_url: Optional[str] = None,
+        output_schema_url: Optional[str] = None
     ) -> List[Dict[str, Any]]:
         """
         Invoke an operation by publishing an MQTT command and waiting for response.
@@ -295,6 +305,9 @@ class MQTTOperationBridge:
             input_variables: List of AAS OperationVariable objects
             is_async: Whether this is an asynchronous operation (updates AAS state property)
             state_property_path: For async ops, the path to update state: "submodel_id|skill_name"
+            array_mappings: Optional dict for packing/unpacking arrays
+            schema_url: Optional URL to MQTT input schema for auto-determining structure
+            output_schema_url: Optional URL to MQTT output schema for response type conversion
 
         Returns:
             List of AAS OperationVariable objects as response
@@ -327,7 +340,23 @@ class MQTTOperationBridge:
         try:
             # Build MQTT command message from input variables
             command_message = self._build_command_message(
-                correlation_id, input_variables)
+                correlation_id, input_variables, array_mappings, schema_url)
+
+            # Log the generated message for schema compliance verification
+            logger.info(f"Generated MQTT message for topic {command_topic}:")
+            logger.info(f"  Schema-compliant message: {json.dumps(command_message, indent=2)}")
+
+            # Compute simple_mappings from output schema for response type conversion
+            output_simple_mappings = {}
+            if output_schema_url:
+                try:
+                    output_parser = SchemaParser(output_schema_url)
+                    output_structure = output_parser.extract_message_structure()
+                    _, output_simple_mappings, _ = determine_field_mappings(
+                        output_structure, input_variables)
+                    logger.info(f"Output schema simple mappings: {output_simple_mappings}")
+                except Exception as e:
+                    logger.warning(f"Failed to parse output schema {output_schema_url}: {e}")
 
             # Publish command
             logger.info(
@@ -344,7 +373,7 @@ class MQTTOperationBridge:
                 if is_async and state_property_path:
                     # State was already updated by _on_message, now set to IDLE
                     self._update_aas_state_async(state_property_path, "IDLE")
-                return self._build_response_variables(pending_op.response_data)
+                return self._build_response_variables(pending_op.response_data, array_mappings, output_simple_mappings)
             else:
                 logger.warning(f"Operation {correlation_id} timed out")
                 # Update state to indicate timeout/failure
@@ -364,7 +393,9 @@ class MQTTOperationBridge:
     def invoke_one_way(
         self,
         command_topic: str,
-        input_variables: List[Dict[str, Any]]
+        input_variables: List[Dict[str, Any]],
+        array_mappings: Dict[str, List[Dict[str, str]]] = None,
+        schema_url: Optional[str] = None
     ) -> None:
         """
         Invoke a one-way (fire-and-forget) operation.
@@ -375,13 +406,15 @@ class MQTTOperationBridge:
         Args:
             command_topic: The MQTT topic to publish the command to
             input_variables: List of AAS OperationVariable objects
+            array_mappings: Optional dict for packing arrays
+            schema_url: Optional URL to MQTT schema for auto-determining structure
         """
         # Generate correlation ID (still useful for logging/tracking)
         correlation_id = str(uuid.uuid4())
 
         # Build MQTT command message from input variables
         command_message = self._build_command_message(
-            correlation_id, input_variables)
+            correlation_id, input_variables, array_mappings, schema_url)
 
         # Publish command (fire-and-forget)
         logger.info(
@@ -395,7 +428,9 @@ class MQTTOperationBridge:
     def _build_command_message(
         self,
         correlation_id: str,
-        input_variables: List[Dict[str, Any]]
+        input_variables: List[Dict[str, Any]],
+        array_mappings: Dict[str, List[Dict[str, str]]] = None,
+        schema_url: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Build an MQTT command message from AAS OperationVariables.
@@ -412,12 +447,27 @@ class MQTTOperationBridge:
             },
             ...
         ]
+        
+        If schema_url is provided and array_mappings is not, the schema will be parsed
+        to automatically determine the message structure. Only fields defined in the
+        schema will be included in the MQTT message - AAS fields not in the schema
+        will be dropped with a warning to ensure strict schema compliance.
+        
+        If array_mappings is provided, it will pack flattened fields back into arrays.
+        For example: X, Y, Theta -> Position: [X, Y, Theta]
+        
+        Args:
+            correlation_id: Unique ID for the command
+            input_variables: AAS operation input variables
+            array_mappings: Optional dict of parent_field -> [{aas_field, json_field, index, optional, default}]
+            schema_url: Optional URL to MQTT schema for auto-determining structure
         """
         command = {
             "Uuid": correlation_id
         }
 
         # Extract values from OperationVariables
+        field_values = {}
         for var in input_variables:
             if "value" in var:
                 value_obj = var["value"]
@@ -433,13 +483,94 @@ class MQTTOperationBridge:
                 elif value_type == "xs:boolean":
                     value = str(value).lower() == "true"
 
-                command[id_short] = value
+                field_values[id_short] = value
+        
+        # Auto-determine array mappings from schema if not provided
+        simple_mappings = {}
+        if schema_url and not array_mappings:
+            try:
+                logger.info(f"Parsing schema to determine message structure: {schema_url}")
+                schema_structure = self.schema_parser.extract_message_structure(schema_url)
+                
+                # Determine mappings based on available AAS fields
+                aas_fields = list(field_values.keys())
+                array_mappings, simple_mappings, unmapped = determine_field_mappings(aas_fields, schema_structure)
+                
+                if array_mappings:
+                    logger.info(f"Auto-determined array mappings: {array_mappings}")
+                if simple_mappings:
+                    logger.info(f"Auto-determined simple mappings: {simple_mappings}")
+                if unmapped:
+                    logger.warning(
+                        f"AAS fields not in MQTT schema (will be dropped): {unmapped}. "
+                        f"Schema: {schema_url}"
+                    )
+                    
+            except Exception as e:
+                logger.warning(f"Failed to parse schema {schema_url}: {e}. Continuing without schema-based mappings.")
+                array_mappings = None
+                simple_mappings = {}
+
+        # Add simple mapped fields to command
+        for schema_field, mapping_info in simple_mappings.items():
+            aas_field = mapping_info["aas_field"]
+            if aas_field in field_values:
+                command[schema_field] = field_values[aas_field]
+
+        # Pack arrays if array_mappings is provided
+        packed_fields = set(m["aas_field"] for m in simple_mappings.values())  # Track fields already used
+        if array_mappings:
+            
+            for parent_field, mappings in array_mappings.items():
+                # Sort by index to ensure correct order
+                sorted_mappings = sorted(mappings, key=lambda m: m.get('index', 0))
+                array_values = []
+                all_required_present = True
+                
+                for mapping in sorted_mappings:
+                    aas_field = mapping['aas_field']
+                    is_optional = mapping.get('optional', False)
+                    default_value = mapping.get('default')
+                    
+                    if aas_field in field_values:
+                        array_values.append(field_values[aas_field])
+                        packed_fields.add(aas_field)
+                    elif is_optional:
+                        # Use default for optional fields
+                        if default_value is not None:
+                            array_values.append(default_value)
+                        # If no default and optional, stop here (truncate array)
+                        else:
+                            break
+                    else:
+                        # Required field missing
+                        all_required_present = False
+                        logger.warning(f"Required field '{aas_field}' missing for array '{parent_field}'")
+                        break
+                
+                # Pack array if all required fields present
+                if all_required_present and array_values:
+                    command[parent_field] = array_values
+            
+            # Check for unmapped fields (not in schema) - log warning but DON'T include
+            unmapped = set(field_values.keys()) - packed_fields
+            if unmapped:
+                logger.warning(
+                    f"AAS fields not in MQTT schema (will be dropped): {sorted(unmapped)}. "
+                    f"These fields are defined in the AAS but not in the MQTT schema '{schema_url}'."
+                )
+        else:
+            # No array packing - when no schema is parsed, pass through all fields
+            # This maintains backward compatibility for operations without schemas
+            command.update(field_values)
 
         return command
 
     def _build_response_variables(
         self,
-        response_data: Dict[str, Any]
+        response_data: Dict[str, Any],
+        array_mappings: Dict[str, List[Dict[str, str]]] = None,
+        simple_mappings: Dict[str, Dict[str, Any]] = None
     ) -> List[Dict[str, Any]]:
         """
         Build AAS OperationVariable response from MQTT response data.
@@ -456,12 +587,86 @@ class MQTTOperationBridge:
             },
             ...
         ]
+        
+        If array_mappings is provided, it will unpack arrays into flattened fields.
+        For example: Position: [{X, Y, Theta}] -> Position_X, Position_Y, Position_Theta
+        
+        Args:
+            response_data: MQTT response data
+            array_mappings: Optional dict of parent_field -> [{aas_field, json_field}]
+            simple_mappings: Optional dict with format info for type conversion
         """
+        # Unpack arrays if array_mappings is provided
+        flattened_data = {}
+        
+        if array_mappings:
+            unpacked_fields = set()  # Track which fields have been unpacked
+            
+            for parent_field, mappings in array_mappings.items():
+                if parent_field in response_data:
+                    value = response_data[parent_field]
+                    
+                    # Unpack positional array [x, y, theta] -> X, Y, Theta
+                    if isinstance(value, list) and len(value) > 0:
+                        for mapping in mappings:
+                            aas_field = mapping['aas_field']
+                            index = mapping['index']
+                            
+                            if index < len(value):
+                                flattened_data[aas_field] = value[index]
+                        
+                        unpacked_fields.add(parent_field)
+            
+            # Add remaining fields that weren't unpacked
+            for field_name, field_value in response_data.items():
+                if field_name not in unpacked_fields:
+                    flattened_data[field_name] = field_value
+        else:
+            # No array unpacking, just pass through
+            flattened_data = response_data
+        
+        # Build output variables from flattened data
         output_variables = []
-
-        for key, value in response_data.items():
-            # Determine value type
-            if isinstance(value, bool):
+        
+        # Build reverse lookup: aas_field -> format info
+        format_lookup = {}
+        if simple_mappings:
+            for schema_field, mapping_info in simple_mappings.items():
+                aas_field = mapping_info["aas_field"]
+                format_lookup[aas_field] = {
+                    "type": mapping_info.get("type"),
+                    "format": mapping_info.get("format")
+                }
+        
+        for key, value in flattened_data.items():
+            # Determine value type from schema format or infer from Python type
+            format_info = format_lookup.get(key, {})
+            json_format = format_info.get("format")
+            json_type = format_info.get("type")
+            
+            # Map JSON Schema format to AAS valueType
+            if json_format == "date-time":
+                value_type = "xs:dateTime"
+                str_value = str(value)
+            elif json_format == "date":
+                value_type = "xs:date"
+                str_value = str(value)
+            elif json_format == "time":
+                value_type = "xs:time"
+                str_value = str(value)
+            elif json_format == "uri":
+                value_type = "xs:anyURI"
+                str_value = str(value)
+            elif json_type == "integer":
+                value_type = "xs:int"
+                str_value = str(value)
+            elif json_type == "number":
+                value_type = "xs:double"
+                str_value = str(value)
+            elif json_type == "boolean":
+                value_type = "xs:boolean"
+                str_value = str(value).lower()
+            elif isinstance(value, bool):
                 value_type = "xs:boolean"
                 str_value = str(value).lower()
             elif isinstance(value, int):
@@ -657,17 +862,20 @@ def invoke_asset_skill(asset_id: str, skill_name: str):
 
         # Parse input variables
         input_variables = request.get_json() or []
+        
+        # Extract configuration from skill config
+        array_mappings = skill_config.get('array_mappings')  # Will be None if not specified
+        schema_url = skill_config.get('input_schema')  # The MQTT input schema URL
+        output_schema_url = skill_config.get('output_schema')  # The MQTT output schema URL
 
         # Check if this is a one-way (fire-and-forget) operation
         # One-way operations have no response_topic in the config
         is_one_way = 'response_topic' not in skill_config
-        logger.info(f"Operation mode - oneWay: {is_one_way}")
-        logger.info(f"Skill config for {skill_name}: {skill_config}")
-
+        
         if is_one_way:
             # Fire-and-forget: publish and return immediately
             bridge = get_mqtt_bridge()
-            bridge.invoke_one_way(command_topic, input_variables)
+            bridge.invoke_one_way(command_topic, input_variables, array_mappings, schema_url)
             logger.info(f"One-way operation sent to {command_topic}")
             return jsonify([]), 200
 
@@ -697,7 +905,10 @@ def invoke_asset_skill(asset_id: str, skill_name: str):
             response_topic,
             input_variables,
             is_async=is_async,
-            state_property_path=state_property_path
+            state_property_path=state_property_path,
+            array_mappings=array_mappings,
+            schema_url=schema_url,
+            output_schema_url=output_schema_url
         )
 
         return jsonify(result), 200

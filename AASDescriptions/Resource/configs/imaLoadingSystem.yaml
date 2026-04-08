@@ -1,7 +1,7 @@
 imaLoadingSystemAAS:
     idShort: imaLoadingSystemAAS
-    id: 'https://smartproductionlab.aau.dk/aas/imaLoadingSystem'
-    globalAssetId: 'https://smartproductionlab.aau.dk/assets/MzFiZTU1YzAtODc0ZC00YTRmLTkzYzItMDQ5ZDZjZDdhZTYw'
+    id: 'https://smartproductionlab.aau.dk/aas/imaLoadingSystemAAS'
+    globalAssetId: 'https://smartproductionlab.aau.dk/assets/ZDNlYmVhZjItZTAyMC00NWMwLTg5NjEtODRiNTFkOWE0NzVl'
     derivedFrom: 'https://smartproductionlab.aau.dk/aas/templates/resource'
     assetType: 'https://smartproductionlab.aau.dk/Resource/CPPM/LoadingSystem/imaLoadingSystem'
     serialNumber: 'IMA-LS-2024-001'
@@ -14,8 +14,8 @@ imaLoadingSystemAAS:
                 contentType: 'application/json'
             InteractionMetadata:
                 actions:
-                    loading:
-                        key: 'loading'
+                    Loading:
+                        key: 'Loading'
                         title: 'Loading'
                         synchronous: 'false'
                         input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
@@ -31,9 +31,11 @@ imaLoadingSystemAAS:
                                 contentType: 'application/json'
                                 href: '/DATA/Loading'
                                 mqv_controlPacket: 'publish'
-                    halt:
-                        key: 'halt'
-                        title: 'halt'
+                                mqv_retain: 'false'
+                    Halt:
+                        key: 'Halt'
+                        title: 'Halt'
+                        synchronous: 'true'
                         input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
                         forms:
                             contentType: 'application/json'
@@ -41,10 +43,10 @@ imaLoadingSystemAAS:
                             op: 'invokeAction'
                             mqv_retain: 'false'
                             mqv_controlPacket: subscribe
-                            mqv_qos: '2'                                              
-                    occupy:
-                        key: 'occupy'
-                        title: 'occupy'
+                            mqv_qos: '2'                                   
+                    Occupy:
+                        key: 'Occupy'
+                        title: 'Occupy'
                         synchronous: 'true'
                         input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
                         output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
@@ -59,9 +61,10 @@ imaLoadingSystemAAS:
                                 contentType: 'application/json'
                                 href: '/DATA/Occupy'
                                 mqv_controlPacket: 'publish'
-                    release:
-                        key: 'release'
-                        title: 'release'
+                                mqv_retain: 'false'
+                    Release:
+                        key: 'Release'
+                        title: 'Release'
                         synchronous: 'true'
                         input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
                         output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
@@ -76,6 +79,7 @@ imaLoadingSystemAAS:
                                 contentType: 'application/json'
                                 href: '/DATA/Release'
                                 mqv_controlPacket: 'publish'
+                                mqv_retain: 'false'
                 properties:
                     StationState:
                         key: 'StationState'
@@ -84,7 +88,7 @@ imaLoadingSystemAAS:
                         forms:
                             contentType: 'application/json'
                             href: '/DATA/State'
-                            mqv_retain: 'false'
+                            mqv_retain: 'true'
                             mqv_controlPacket: publish
                             mqv_qos: '0'
 
@@ -100,29 +104,31 @@ imaLoadingSystemAAS:
 
     Parameters:
     HierarchicalStructures:
+        Name: 'BillOfMaterials'
         Archetype: 'OneUp'
         IsPartOf:
-            - aauFillingLine:
+            aauFillingLineAAS:
                 globalAssetId: 'https://smartproductionlab.aau.dk/assets/MWQ2ODY5ZDEtZTQ3Yy00NWU4LTlmYTAtNTI3YjVlMDk4MWFi'
     
     Capabilities:
         Loading:
             realizedBy: "Load"
+            semantic_id: https://smartproductionlab.aau.dk/Capability/Loading
     
     Skills:
-        loading:
+        Loading:
             description: "Loading function for pharmaceutical primary packaging"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/loading"
-            interface: "loading"
-        halt:
-            description: "Halt the current loading operation"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/halt"
-            interface: "halt"
-        occupy:
-            description: "Occupy the loading system for exclusive use"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/occupy"
-            interface: "occupy"
-        release:
-            description: "Release the loading system from exclusive use"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/release"
-            interface: "release"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/Loading"
+            interface: "Loading"
+        Halt:
+            description: "Halt the current operation"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/Halt"
+            interface: "Halt"
+        Occupy:
+            description: "Occupy the system for exclusive use"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/Occupy"
+            interface: "Occupy"
+        Release:
+            description: "Release the system from exclusive use"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/Release"
+            interface: "Release"

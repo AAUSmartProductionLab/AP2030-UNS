@@ -42,7 +42,9 @@ from src import (
     TopicsGenerator,
     DataBridgeFromConfig,
     generate_topics_from_directory,
-    generate_databridge_from_directory
+    generate_databridge_from_directory,
+    start_delegation_api_background,
+    set_full_topic_config
 )
 from src.core.constants import (
     DEFAULT_MQTT_BROKER,
@@ -147,12 +149,14 @@ Examples:
                                           help='Start MQTT listener for registration')
     listen_parser.add_argument('--config-topic', default=MQTTTopics.REGISTRATION_CONFIG,
                                help='MQTT topic for config registration')
-    listen_parser.add_argument('--legacy-topic', default=MQTTTopics.REGISTRATION_LEGACY,
-                               help='MQTT topic for legacy registration')
     listen_parser.add_argument('--response-topic', default=MQTTTopics.REGISTRATION_RESPONSE,
                                help='MQTT topic for responses')
     listen_parser.add_argument('--databridge-name', default=ContainerNames.DATABRIDGE,
                                help='DataBridge container name')
+    listen_parser.add_argument('--delegation-port', type=int, default=8087,
+                               help='Port for Operation Delegation HTTP API (default: 8087)')
+    listen_parser.add_argument('--topics-json', type=str,
+                               help='Path to existing topics.json to load at startup')
 
     # List registered AAS
     list_parser = subparsers.add_parser('list', help='List all registered AAS')
@@ -293,6 +297,33 @@ Examples:
                 sys.exit(1)
 
         elif args.command == 'listen':
+            # Always load existing topics.json for persistence across restarts
+            # Default path is /app/config/topics.json in container
+            default_topics_path = Path('/app/config/topics.json')
+            topics_path = Path(args.topics_json) if args.topics_json else default_topics_path
+            
+            if topics_path.exists():
+                import json
+                try:
+                    with open(topics_path, 'r') as f:
+                        existing_config = json.load(f)
+                    set_full_topic_config(existing_config)
+                    logger.info(f"Loaded {len(existing_config)} topic configs from {topics_path}")
+                except Exception as e:
+                    logger.warning(f"Failed to load topics.json: {e}")
+            else:
+                logger.info(f"No existing topics.json found at {topics_path} - starting with empty config")
+            
+            # Start Operation Delegation Flask API in background thread
+            logger.info(f"Starting Operation Delegation API on port {args.delegation_port}...")
+            start_delegation_api_background(
+                host='0.0.0.0',
+                port=args.delegation_port,
+                mqtt_broker=args.mqtt_broker,
+                mqtt_port=args.mqtt_port
+            )
+            logger.info(f"✓ Operation Delegation API running on http://0.0.0.0:{args.delegation_port}")
+            
             # Start MQTT listener
             service = UnifiedRegistrationService(
                 config=basyx_config,
@@ -307,18 +338,20 @@ Examples:
                 mqtt_broker=args.mqtt_broker,
                 mqtt_port=args.mqtt_port,
                 config_topic=args.config_topic,
-                legacy_topic=args.legacy_topic,
                 response_topic=args.response_topic
             )
 
             logger.info("Starting MQTT registration listener...")
             logger.info(f"MQTT Broker: {args.mqtt_broker}:{args.mqtt_port}")
             logger.info(f"Config Topic: {args.config_topic}")
-            logger.info(f"Legacy Topic: {args.legacy_topic}")
+            logger.info(f"Delegation API: http://0.0.0.0:{args.delegation_port}")
 
             try:
                 mqtt_service.start()
                 logger.info("✓ MQTT listener started. Press Ctrl+C to stop.")
+                logger.info("\nUnified Service running with:")
+                logger.info("  - MQTT registration listener")
+                logger.info(f"  - Operation Delegation API on port {args.delegation_port}")
                 logger.info("\nSupported config message formats:")
                 logger.info("1. Raw YAML (from ESP32 devices):")
                 logger.info("   syntegonStopperingSystemAAS:")
@@ -343,7 +376,6 @@ Examples:
                 stats = mqtt_service.get_stats()
                 logger.info(f"\nStatistics:")
                 logger.info(f"  Config received: {stats['config_received']}")
-                logger.info(f"  Legacy received: {stats['legacy_received']}")
                 logger.info(f"  Processed: {stats['processed']}")
                 logger.info(f"  Failed: {stats['failed']}")
 

@@ -14,6 +14,7 @@ This consolidates OperationDelegation config and RegistrationService functionali
 import copy
 import json
 import logging
+import os
 import sys
 import tempfile
 from pathlib import Path
@@ -25,6 +26,7 @@ from .config_parser import ConfigParser, parse_config_file
 from .topics_generator import TopicsGenerator
 from .databridge_from_config import DataBridgeFromConfig
 from .generate_aas import AASGenerator
+from .operation_delegation_api import update_topic_config
 from .core import (
     HTTPClient,
     DockerService,
@@ -93,7 +95,12 @@ class UnifiedRegistrationService:
         # In container, OperationDelegation is mounted at /app/OperationDelegation
         # so project_root should be the same as script_dir
         self.project_root = self.script_dir
-        self.databridge_dir = self.project_root / 'databridge'
+        # Use mounted databridge directory (/databridge) when in container,
+        # otherwise use local databridge directory
+        if Path('/databridge').exists() and os.access('/databridge', os.W_OK):
+            self.databridge_dir = Path('/databridge')
+        else:
+            self.databridge_dir = self.project_root.parent / 'databridge'
         self.topics_json_path = self.project_root / \
             'OperationDelegation' / 'config' / 'topics.json'
 
@@ -149,8 +156,12 @@ class UnifiedRegistrationService:
             system_id = config.system_id
             logger.info(f"Registering asset: {system_id}")
 
-            # Step 2: Update Operation Delegation topics.json
+            # Step 2: Update Operation Delegation config (in-memory + file)
             logger.info("Updating Operation Delegation topics...")
+            topics_entry = config.get_operation_delegation_entry()
+            # Update in-memory config (no restart needed!)
+            update_topic_config(system_id, topics_entry)
+            # Also write to file for persistence across restarts
             self.topics_generator.add_from_config(config)
             self.topics_generator.save()
 
@@ -175,11 +186,11 @@ class UnifiedRegistrationService:
                 logger.error("Failed to register with BaSyx")
                 return False
 
-            # Step 6: Restart services (if requested)
+            # Step 6: Restart DataBridge (if requested)
+            # Note: Operation Delegation no longer needs restart - config is updated in-memory
             if restart_services:
-                logger.info("Restarting services...")
+                logger.info("Restarting DataBridge...")
                 self._restart_databridge()
-                self._restart_operation_delegation()
             else:
                 logger.info("Skipping service restarts")
 
@@ -360,7 +371,7 @@ class UnifiedRegistrationService:
             submodel_data = self._preprocess_submodel(submodel_data)
 
             # Debug logging for capabilities submodel
-            if submodel_data.get('idShort') == 'OfferedCapabilitiyDescription':
+            if submodel_data.get('idShort') == 'OfferedCapabilityDescription':
                 logger.info(
                     f"Debug: CapabilitySet has {len(submodel_data.get('submodelElements', [])[0].get('value', []))} capability containers")
 
@@ -456,6 +467,8 @@ class UnifiedRegistrationService:
         """Register shell descriptor in AAS registry"""
         try:
             external_url = self.basyx_config.get_external_url()
+            
+            logger.info(f"Registering shell descriptor with {len(submodels)} submodels")
 
             shell_descriptor = {
                 "id": shell_data['id'],
@@ -494,13 +507,30 @@ class UnifiedRegistrationService:
                         if 'semanticId' in sm:
                             sm_descriptor['semanticId'] = sm['semanticId']
                         submodel_descriptors.append(sm_descriptor)
+                        logger.debug(f"Added submodel descriptor: {sm['idShort']}")
+                    else:
+                        logger.warning(f"Skipping invalid submodel: {sm}")
 
+                logger.info(f"Built {len(submodel_descriptors)} submodel descriptors")
                 if submodel_descriptors:
                     shell_descriptor['submodelDescriptors'] = submodel_descriptors
 
             response = self.http_client.post(
                 self.basyx_config.aas_registry_url, shell_descriptor)
-            return response.status_code in [HTTPStatus.OK, HTTPStatus.CREATED, HTTPStatus.CONFLICT]
+            logger.info(f"Shell descriptor registration response: {response.status_code}")
+            
+            if self.http_client.is_conflict(response):
+                # Already exists - delete and re-register
+                logger.info(f"Shell descriptor exists, updating...")
+                delete_url = f"{self.basyx_config.aas_registry_url}/{encoded_id}"
+                self.http_client.delete(delete_url)
+                
+                # Re-register
+                response = self.http_client.post(
+                    self.basyx_config.aas_registry_url, shell_descriptor)
+                logger.info(f"Shell descriptor re-registration response: {response.status_code}")
+            
+            return response.status_code in [HTTPStatus.OK, HTTPStatus.CREATED]
 
         except Exception as e:
             logger.error(f"Failed to register shell descriptor: {e}")

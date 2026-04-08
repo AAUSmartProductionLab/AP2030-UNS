@@ -1,6 +1,6 @@
 planarTableAAS:
     idShort: planarTableAAS
-    id: 'https://smartproductionlab.aau.dk/aas/planarTable'
+    id: 'https://smartproductionlab.aau.dk/aas/planarTableAAS'
     globalAssetId: 'https://smartproductionlab.aau.dk/assets/ZTM1NTAzNzQtMDZkNi00N2Q4LWI1YTktMGNhMmY0MDEyNTk4'
     derivedFrom: 'https://smartproductionlab.aau.dk/aas/templates/resource'
     assetType: 'https://smartproductionlab.aau.dk/Resource/CPS/MotionSystem/planarTable'
@@ -26,40 +26,6 @@ planarTableAAS:
                             mqv_retain: 'false'
                             mqv_controlPacket: subscribe
                             mqv_qos: '2'                                              
-                    occupy:
-                        key: 'occupy'
-                        title: 'occupy'
-                        synchronous: 'true'
-                        input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
-                        output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
-                        forms:
-                            contentType: 'application/json'
-                            href: '/CMD/Occupy'
-                            op: 'invokeAction'
-                            mqv_retain: 'false'
-                            mqv_controlPacket: subscribe
-                            mqv_qos: '2'
-                            response:
-                                contentType: 'application/json'
-                                href: '/DATA/Occupy'
-                                mqv_controlPacket: 'publish'
-                    release:
-                        key: 'release'
-                        title: 'release'
-                        synchronous: 'true'
-                        input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
-                        output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
-                        forms:
-                            contentType: 'application/json'
-                            href: '/CMD/Release'
-                            op: 'invokeAction'
-                            mqv_retain: 'false'
-                            mqv_controlPacket: subscribe
-                            mqv_qos: '2'
-                            response:
-                                contentType: 'application/json'
-                                href: '/DATA/Release'
-                                mqv_controlPacket: 'publish'
                 properties:
                     StationState:
                         key: 'StationState'
@@ -68,7 +34,7 @@ planarTableAAS:
                         forms:
                             contentType: 'application/json'
                             href: '/DATA/State'
-                            mqv_retain: 'false'
+                            mqv_retain: 'true'
                             mqv_controlPacket: publish
                             mqv_qos: '0'
 
@@ -77,20 +43,17 @@ planarTableAAS:
             semanticId: 'https://www.omac.org/packml/state'
             InterfaceReference: 'StationState'
             Field: 'State'
-        OccupationState:
-            semanticId: 'https://smartproductionlab.aau.dk/stationOccupation'
-            InterfaceReference: 'StationState'
-            Field: 'ProcessQueue'
 
     Parameters:
     HierarchicalStructures:
+        Name: 'BillOfMaterials'
         Archetype: 'OneDown'
         HasPart:
-            - planarTableShuttle1:
+            planarTableShuttle1AAS:
                 globalAssetId: 'https://smartproductionlab.aau.dk/assets/ODYwM2Q2YjYtYmUzOS00NTAxLWFhZDktYjc1MjhhMzUzOGNm'
-            - planarTableShuttle2:
+            planarTableShuttle2AAS:
                 globalAssetId: 'https://smartproductionlab.aau.dk/assets/OTZhZGNiZDAtNTNhNS00YmJhLThiNDctMzFjYzM3OGNiNTMw'
-            - planarTableShuttle3:
+            planarTableShuttle3AAS:
                 globalAssetId: 'https://smartproductionlab.aau.dk/assets/YjY3ZTJjZGEtZDYxMC00ZDJjLTlkYjYtOGUyNGE4NWVlNTBi'
     
     Capabilities:
@@ -100,11 +63,3 @@ planarTableAAS:
             description: "Halt all planar table operations"
             semantic_id: "https://smartproductionlab.aau.dk/skills/halt"
             interface: "halt"
-        occupy:
-            description: "Occupy the planar table for exclusive use"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/occupy"
-            interface: "occupy"
-        release:
-            description: "Release the planar table from exclusive use"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/release"
-            interface: "release"

@@ -1,12 +1,14 @@
 #include "mqtt/mqtt_sub_base.h"
 #include "mqtt/node_message_distributor.h"
+#include "aas/aas_interface_cache.h"
 #include "utils.h"
 #include <iostream>
 #include "behaviortree_cpp/blackboard.h"
 
 namespace fs = std::filesystem;
-// Initialize the static member
+// Initialize the static members
 NodeMessageDistributor *MqttSubBase::node_message_distributor_ = nullptr;
+AASInterfaceCache *MqttSubBase::aas_interface_cache_ = nullptr;
 
 MqttSubBase::MqttSubBase(MqttClient &mqtt_client)
     : mqtt_client_(mqtt_client)
@@ -42,7 +44,18 @@ void MqttSubBase::setNodeMessageDistributor(NodeMessageDistributor *manager)
     node_message_distributor_ = manager;
 }
 
+void MqttSubBase::setAASInterfaceCache(AASInterfaceCache *cache)
+{
+    aas_interface_cache_ = cache;
+}
+
+AASInterfaceCache* MqttSubBase::getAASInterfaceCache()
+{
+    return aas_interface_cache_;
+}
+
 void MqttSubBase::setTopic(const std::string &topic_key, const mqtt_utils::Topic &topic_object)
 {
     topics_[topic_key] = topic_object;
 }
+

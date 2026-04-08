@@ -1,0 +1,116 @@
+@prefix : <http://www.w3id.org/aau-ra/cssx#> .
+@prefix css: <http://www.w3id.org/hsu-aut/css#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix td: <https://www.w3.org/2019/wot/td#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+#################################################################
+#    Classes
+#################################################################
+
+###  http://www.w3id.org/aau-ra/cssx#ResourceInterface
+:ResourceInterface rdf:type owl:Class ;
+  rdfs:comment "Interface of a resource used to access or control its functions." .
+
+###  http://www.w3id.org/aau-ra/cssx#PhysicalInterface
+:PhysicalInterface rdf:type owl:Class ;
+  rdfs:subClassOf :ResourceInterface ;
+  rdfs:comment "Physical interface for mechanical or material connections." .
+
+###  http://www.w3id.org/aau-ra/cssx#ElectricalInterface
+:ElectricalInterface rdf:type owl:Class ;
+  rdfs:subClassOf :ResourceInterface ;
+  rdfs:comment "Electrical interface for power or signal connections." .
+
+###  http://www.w3id.org/aau-ra/cssx#SoftwareInterface
+:SoftwareInterface rdf:type owl:Class ;
+  rdfs:subClassOf :ResourceInterface , td:Thing ;
+  rdfs:comment "Software interface for digital communication or control." .
+
+###  http://www.w3id.org/aau-ra/cssx#EndpointMetadata
+:EndpointMetadata rdf:type owl:Class ;
+  rdfs:subClassOf td:Form ;
+  rdfs:comment "AID endpoint metadata container aligned with WoT Form semantics." .
+
+###  http://www.w3id.org/aau-ra/cssx#InteractionMetadata
+:InteractionMetadata rdf:type owl:Class ;
+  rdfs:comment "Metadata describing interaction affordances of an interface." .
+
+###  http://www.w3id.org/aau-ra/cssx#SecurityDefinition
+:SecurityDefinition rdf:type owl:Class ;
+  rdfs:comment "Container for interface security definitions." .
+
+#################################################################
+#    Object Properties
+#################################################################
+
+###  http://www.w3id.org/aau-ra/cssx#hasResourceInterface
+:hasResourceInterface rdf:type owl:ObjectProperty ;
+  rdfs:domain css:Resource ;
+  rdfs:range :ResourceInterface .
+
+###  http://www.w3id.org/aau-ra/cssx#hasEndpointMetadata
+:hasEndpointMetadata rdf:type owl:ObjectProperty ;
+  rdfs:domain :ResourceInterface ;
+  rdfs:range :EndpointMetadata .
+
+###  http://www.w3id.org/aau-ra/cssx#hasInteractionMetadata
+:hasInteractionMetadata rdf:type owl:ObjectProperty ;
+  rdfs:domain :ResourceInterface ;
+  rdfs:range :InteractionMetadata .
+
+###  http://www.w3id.org/aau-ra/cssx#hasSecurityDefinition
+:hasSecurityDefinition rdf:type owl:ObjectProperty ;
+  rdfs:domain :EndpointMetadata ;
+  rdfs:range :SecurityDefinition .
+
+###  http://www.w3id.org/aau-ra/cssx#hasSecurityScheme
+:hasSecurityScheme rdf:type owl:ObjectProperty ;
+  rdfs:domain :SecurityDefinition ;
+  rdfs:range td:SecurityScheme .
+
+###  http://www.w3id.org/aau-ra/cssx#hasInteractionPoint
+:hasInteractionPoint rdf:type owl:ObjectProperty ;
+  rdfs:domain :InteractionMetadata ;
+  rdfs:range td:InteractionAffordance ;
+  rdfs:comment "Bridges AID InteractionMetadata to WoT TD interaction affordances." .
+
+#################################################################
+#    Datatype Properties
+#################################################################
+
+###  http://www.w3id.org/aau-ra/cssx#interfaceTitle
+:interfaceTitle rdf:type owl:DatatypeProperty ;
+  rdfs:domain :ResourceInterface ;
+  rdfs:range xsd:string .
+
+###  http://www.w3id.org/aau-ra/cssx#endpointBaseUri
+:endpointBaseUri rdf:type owl:DatatypeProperty ;
+  rdfs:domain :EndpointMetadata ;
+  rdfs:range xsd:anyURI .
+
+###  http://www.w3id.org/aau-ra/cssx#interfaceContentType
+:interfaceContentType rdf:type owl:DatatypeProperty ;
+  rdfs:domain :EndpointMetadata ;
+  rdfs:range xsd:string .
+
+###  http://www.w3id.org/aau-ra/cssx#interactionName
+:interactionName rdf:type owl:DatatypeProperty ;
+  rdfs:domain td:InteractionAffordance ;
+  rdfs:range xsd:string .
+
+###  http://www.w3id.org/aau-ra/cssx#interactionCategory
+:interactionCategory rdf:type owl:DatatypeProperty ;
+  rdfs:domain td:InteractionAffordance ;
+  rdfs:range xsd:string .
+
+###  http://www.w3id.org/aau-ra/cssx#securitySchemeName
+:securitySchemeName rdf:type owl:DatatypeProperty ;
+  rdfs:domain td:SecurityScheme ;
+  rdfs:range xsd:string .
+
+#################################################################
+#    Individuals
+#################################################################

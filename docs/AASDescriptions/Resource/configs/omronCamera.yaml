@@ -1,7 +1,7 @@
 omronCameraSystemAAS:
     idShort: omronCameraSystemAAS
-    id: 'https://smartproductionlab.aau.dk/aas/omronCameraSystem'
-    globalAssetId: 'https://smartproductionlab.aau.dk/assets/MzFiZTU1YzAtODc0ZC00YTRmLTkzYzItMDQ5ZDZjZDdhZTYw'
+    id: 'https://smartproductionlab.aau.dk/aas/omronCameraSystemAAS'
+    globalAssetId: 'https://smartproductionlab.aau.dk/assets/M2VmNjk0OTgtNmE0YS00MzA4LWE4NjMtM2JjZDZjZDhkMTBl'
     derivedFrom: 'https://smartproductionlab.aau.dk/aas/templates/resource'
     assetType: 'https://smartproductionlab.aau.dk/Resource/CPPM/QualityControlSystem/omronCameraSystem'
     serialNumber: 'OMRON-CAM-2024-001'
@@ -10,7 +10,7 @@ omronCameraSystemAAS:
         InterfaceMQTT:
             Title: 'optima Camera System'
             EndpointMetadata:
-                base: 'mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/Camera'
+                base: 'mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/QualityControl'
                 contentType: 'application/json'
             InteractionMetadata:
                 actions:
@@ -31,9 +31,10 @@ omronCameraSystemAAS:
                                 contentType: 'application/json'
                                 href: '/DATA/Capture'
                                 mqv_controlPacket: 'publish'
-                    halt:
-                        key: 'halt'
-                        title: 'halt'
+                                mqv_retain: 'false'
+                    Halt:
+                        key: 'Halt'
+                        title: 'Halt'
                         synchronous: 'true'
                         input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
                         forms:
@@ -42,10 +43,10 @@ omronCameraSystemAAS:
                             op: 'invokeAction'
                             mqv_retain: 'false'
                             mqv_controlPacket: subscribe
-                            mqv_qos: '2'                                              
-                    occupy:
-                        key: 'occupy'
-                        title: 'occupy'
+                            mqv_qos: '2'                                   
+                    Occupy:
+                        key: 'Occupy'
+                        title: 'Occupy'
                         synchronous: 'true'
                         input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
                         output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
@@ -60,9 +61,10 @@ omronCameraSystemAAS:
                                 contentType: 'application/json'
                                 href: '/DATA/Occupy'
                                 mqv_controlPacket: 'publish'
-                    release:
-                        key: 'release'
-                        title: 'release'
+                                mqv_retain: 'false'
+                    Release:
+                        key: 'Release'
+                        title: 'Release'
                         synchronous: 'true'
                         input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
                         output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
@@ -77,6 +79,7 @@ omronCameraSystemAAS:
                                 contentType: 'application/json'
                                 href: '/DATA/Release'
                                 mqv_controlPacket: 'publish'
+                                mqv_retain: 'false'
                 properties:
                     StationState:
                         key: 'StationState'
@@ -85,7 +88,7 @@ omronCameraSystemAAS:
                         forms:
                             contentType: 'application/json'
                             href: '/DATA/State'
-                            mqv_retain: 'false'
+                            mqv_retain: 'true'
                             mqv_controlPacket: publish
                             mqv_qos: '0'
                     Image:
@@ -111,31 +114,37 @@ omronCameraSystemAAS:
         Image:
             semanticId: 'https://smartproductionlab.aau.dk/image'
             InterfaceReference: 'Image'
+            Field: 'Image'
     Parameters:
     HierarchicalStructures:
+        Name: 'BillOfMaterials'
         Archetype: 'OneUp'
         IsPartOf:
-            - aauFillingLine:
+            aauFillingLineAAS:
                 globalAssetId: 'https://smartproductionlab.aau.dk/assets/MWQ2ODY5ZDEtZTQ3Yy00NWU4LTlmYTAtNTI3YjVlMDk4MWFi'
     
     Capabilities:
+        QualityControl:
+            realizedBy: "Capture"
+            semantic_id: https://smartproductionlab.aau.dk/Capability/QualityControl
         Capture:
             realizedBy: "Capture"
+            semantic_id: https://smartproductionlab.aau.dk/Capability/Capture
     
     Skills:
         Capture:
             description: "Capture image for quality control"
             semantic_id: "https://smartproductionlab.aau.dk/skills/Capture"
             interface: "Capture"
-        halt:
-            description: "Halt the current capture operation"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/halt"
-            interface: "halt"
-        occupy:
-            description: "Occupy the camera system for exclusive use"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/occupy"
-            interface: "occupy"
-        release:
-            description: "Release the camera system from exclusive use"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/release"
-            interface: "release"
+        Halt:
+            description: "Halt the current operation"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/Halt"
+            interface: "Halt"
+        Occupy:
+            description: "Occupy the system for exclusive use"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/Occupy"
+            interface: "Occupy"
+        Release:
+            description: "Release the system from exclusive use"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/Release"
+            interface: "Release"

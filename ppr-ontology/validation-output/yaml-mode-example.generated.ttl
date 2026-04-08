@@ -1,0 +1,253 @@
+@prefix aasv: <http://www.w3id.org/aau-ra/resourceaas-validation#> .
+@prefix css: <http://www.w3id.org/hsu-aut/css#> .
+@prefix cssx: <http://www.w3id.org/aau-ra/cssx#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS> a css:Resource ;
+    cssx:dateOfManufacture "[VERIFY: manufacture date YYYY-MM-DD]"^^xsd:date ;
+    cssx:hasManufacturer <https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS#manufacturer> ;
+    cssx:hasOperationalData <https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS#operational-data-1> ;
+    cssx:hasResourceBoM <https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS#resource-bom-1> ;
+    cssx:hasResourceInterface <https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS#resource-software-interface-1> ;
+    cssx:manufacturerProductDesignation "CA18CLC12BPM1" ;
+    cssx:serialNumber "IMA-DS-2024-001" ;
+    cssx:uriOfTheProduct "https://smartproductionlab.aau.dk/assets/imaDispensingSystemAAS"^^xsd:anyURI ;
+    aasv:hasAIDSubmodel <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/AID> ;
+    aasv:hasCapabilitiesSubmodel <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/Capabilities> ;
+    aasv:hasDigitalNameplateSubmodel <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/Nameplate> ;
+    aasv:hasHierarchicalStructuresSubmodel <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/HierarchicalStructures> ;
+    aasv:hasMappedElement <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/AID#trace-interfacemqtt-0-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/AID#trace-interfacemqtt-0-1>,
+        <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/AID#trace-interfacemqtt-0-2>,
+        <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/AID#trace-interfacemqtt-0-interactionmetadata-2-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/AID#trace-interfacemqtt-0-interactionmetadata-2-1>,
+        <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/AID#trace-interfacemqtt-0-interactionmetadata-2-actions-0-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/AID#trace-interfacemqtt-0-interactionmetadata-2-properties-1-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/Capabilities#trace-capabilityset-0-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/Capabilities#trace-capabilityset-0-dispensingcontainer-0-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/Capabilities#trace-capabilityset-0-dispensingcontainer-0-dispensing-1-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/Capabilities#trace-capabilityset-0-dispensingcontainer-0-realizedby-2-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/HierarchicalStructures#trace-archetype-0-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/HierarchicalStructures#trace-entrynode-1-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/OperationalData#trace-occupationstate-1-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/OperationalData#trace-occupationstate-1-interfacereference-1-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/OperationalData#trace-packmlstate-0-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/OperationalData#trace-packmlstate-0-interfacereference-1-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/OperationalData#trace-weight-2-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/OperationalData#trace-weight-2-interfacereference-1-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/Skills#trace-dispensing-0-dispensing-1-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/Skills#trace-halt-1-halt-1-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/Skills#trace-occupy-2-occupy-1-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/Skills#trace-release-3-release-1-0> ;
+    aasv:hasOperationalDataSubmodel <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/OperationalData> ;
+    aasv:hasSkillsSubmodel <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/Skills> ;
+    aasv:hasSubmodel <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/AID>,
+        <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/Capabilities>,
+        <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/HierarchicalStructures>,
+        <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/Nameplate>,
+        <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/OperationalData>,
+        <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/Skills> ;
+    aasv:sourceIdShort "imaDispensingSystemAAS" ;
+    css:providesCapability <https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS#capability-dispensingcontainer> ;
+    css:providesSkill <https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS#skill-dispensing>,
+        <https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS#skill-halt>,
+        <https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS#skill-occupy>,
+        <https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS#skill-release> .
+
+<https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS#capability-dispensingcontainer> a css:Capability ;
+    aasv:sourceIdShort "DispensingContainer" ;
+    aasv:sourceSemanticId "https://smartproductionlab.aau.dk/Capability/Dispensing" ;
+    aasv:sourceSubmodelSemanticId "https://smartfactory.de/aas/submodel/OfferedCapabilityDescription/CapabilitySet/CapabilityContainer#1/0" ;
+    css:isRealizedBySkill <https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS#skill-dispensing> .
+
+<https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS#manufacturer> a cssx:Manufacturer ;
+    cssx:manufacturerName "[VERIFY: manufacturer name]"@en .
+
+<https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS#operational-data-1> a cssx:OperationalData ;
+    cssx:dataReferencesInterface <https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS#resource-software-interface-1> .
+
+<https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS#resource-bom-1> a cssx:ResourceBoM ;
+    cssx:hasBoMItem <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/HierarchicalStructures#bom-entry-aaufillinglineaas> .
+
+<https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS#skill-halt> a css:Skill ;
+    aasv:sourceIdShort "Halt" ;
+    aasv:sourceSemanticId "https://smartproductionlab.aau.dk/skills/Halt" ;
+    css:accessibleThrough <https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS#skill-interface-halt> .
+
+<https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS#skill-interface-dispensing> a css:SkillInterface ;
+    cssx:skillInterfaceUsesSoftwareInterface <https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS#resource-software-interface-1> .
+
+<https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS#skill-interface-halt> a css:SkillInterface ;
+    cssx:skillInterfaceUsesSoftwareInterface <https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS#resource-software-interface-1> .
+
+<https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS#skill-interface-occupy> a css:SkillInterface ;
+    cssx:skillInterfaceUsesSoftwareInterface <https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS#resource-software-interface-1> .
+
+<https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS#skill-interface-release> a css:SkillInterface ;
+    cssx:skillInterfaceUsesSoftwareInterface <https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS#resource-software-interface-1> .
+
+<https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS#skill-occupy> a css:Skill ;
+    aasv:sourceIdShort "Occupy" ;
+    aasv:sourceSemanticId "https://smartproductionlab.aau.dk/skills/Occupy" ;
+    css:accessibleThrough <https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS#skill-interface-occupy> .
+
+<https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS#skill-release> a css:Skill ;
+    aasv:sourceIdShort "Release" ;
+    aasv:sourceSemanticId "https://smartproductionlab.aau.dk/skills/Release" ;
+    css:accessibleThrough <https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS#skill-interface-release> .
+
+<https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS#skill-dispensing> a css:Skill ;
+    aasv:sourceIdShort "Dispensing" ;
+    aasv:sourceSemanticId "https://smartproductionlab.aau.dk/skills/Dispensing" ;
+    css:accessibleThrough <https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS#skill-interface-dispensing> .
+
+<https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/AID> a aasv:AIDSubmodel ;
+    aasv:hasIdShort "AID" ;
+    aasv:hasMappedElement <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/AID#trace-interfacemqtt-0-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/AID#trace-interfacemqtt-0-1>,
+        <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/AID#trace-interfacemqtt-0-2>,
+        <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/AID#trace-interfacemqtt-0-interactionmetadata-2-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/AID#trace-interfacemqtt-0-interactionmetadata-2-1>,
+        <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/AID#trace-interfacemqtt-0-interactionmetadata-2-actions-0-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/AID#trace-interfacemqtt-0-interactionmetadata-2-properties-1-0> ;
+    aasv:sourceSemanticId "https://admin-shell.io/idta/AssetInterfacesDescription/1/0/Submodel" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/AID#trace-interfacemqtt-0-0> aasv:sourceElementPath "InterfaceMQTT[0]" ;
+    aasv:sourceIdShort "InterfaceMQTT" ;
+    aasv:sourceSemanticId "https://admin-shell.io/idta/AssetInterfacesDescription/1/0/Interface" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/AID#trace-interfacemqtt-0-1> aasv:sourceElementPath "InterfaceMQTT[0]" ;
+    aasv:sourceIdShort "InterfaceMQTT" ;
+    aasv:sourceSemanticId "http://www.w3.org/2011/mqtt" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/AID#trace-interfacemqtt-0-2> aasv:sourceElementPath "InterfaceMQTT[0]" ;
+    aasv:sourceIdShort "InterfaceMQTT" ;
+    aasv:sourceSemanticId "https://www.w3.org/2019/wot/td" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/AID#trace-interfacemqtt-0-interactionmetadata-2-0> aasv:sourceElementPath "InterfaceMQTT[0]/InteractionMetadata[2]" ;
+    aasv:sourceIdShort "InteractionMetadata" ;
+    aasv:sourceSemanticId "https://admin-shell.io/idta/AssetInterfacesDescription/1/0/InteractionMetadata" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/AID#trace-interfacemqtt-0-interactionmetadata-2-1> aasv:sourceElementPath "InterfaceMQTT[0]/InteractionMetadata[2]" ;
+    aasv:sourceIdShort "InteractionMetadata" ;
+    aasv:sourceSemanticId "https://www.w3.org/2019/wot/td#InteractionAffordance" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/AID#trace-interfacemqtt-0-interactionmetadata-2-actions-0-0> aasv:sourceElementPath "InterfaceMQTT[0]/InteractionMetadata[2]/actions[0]" ;
+    aasv:sourceIdShort "actions" ;
+    aasv:sourceSemanticId "https://www.w3.org/2019/wot/td#ActionAffordance" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/AID#trace-interfacemqtt-0-interactionmetadata-2-properties-1-0> aasv:sourceElementPath "InterfaceMQTT[0]/InteractionMetadata[2]/properties[1]" ;
+    aasv:sourceIdShort "properties" ;
+    aasv:sourceSemanticId "https://www.w3.org/2019/wot/td#PropertyAffordance" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/Capabilities> a aasv:CapabilitiesSubmodel ;
+    aasv:hasIdShort "Capabilities" ;
+    aasv:hasMappedElement <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/Capabilities#trace-capabilityset-0-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/Capabilities#trace-capabilityset-0-dispensingcontainer-0-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/Capabilities#trace-capabilityset-0-dispensingcontainer-0-dispensing-1-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/Capabilities#trace-capabilityset-0-dispensingcontainer-0-realizedby-2-0> ;
+    aasv:sourceSemanticId "https://smartfactory.de/aas/submodel/Capabilities#1/0" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/Capabilities#trace-capabilityset-0-0> aasv:sourceElementPath "CapabilitySet[0]" ;
+    aasv:sourceIdShort "CapabilitySet" ;
+    aasv:sourceSemanticId "https://smartfactory.de/aas/submodel/OfferedCapabilityDescription/CapabilitySet#1/0" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/Capabilities#trace-capabilityset-0-dispensingcontainer-0-0> aasv:sourceElementPath "CapabilitySet[0]/DispensingContainer[0]" ;
+    aasv:sourceIdShort "DispensingContainer" ;
+    aasv:sourceSemanticId "https://smartfactory.de/aas/submodel/OfferedCapabilityDescription/CapabilitySet/CapabilityContainer#1/0" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/Capabilities#trace-capabilityset-0-dispensingcontainer-0-dispensing-1-0> aasv:sourceElementPath "CapabilitySet[0]/DispensingContainer[0]/Dispensing[1]" ;
+    aasv:sourceIdShort "Dispensing" ;
+    aasv:sourceSemanticId "https://smartproductionlab.aau.dk/Capability/Dispensing" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/Capabilities#trace-capabilityset-0-dispensingcontainer-0-realizedby-2-0> aasv:sourceElementPath "CapabilitySet[0]/DispensingContainer[0]/realizedBy[2]" ;
+    aasv:sourceIdShort "realizedBy" ;
+    aasv:sourceSemanticId "https://wiki.eclipse.org/BaSyx_/_Documentation_/_Submodels_/_Capability#CapabilityRealizedBy" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/HierarchicalStructures> a aasv:HierarchicalStructuresSubmodel ;
+    aasv:bomArchetype "OneUp" ;
+    aasv:bomName "BillOfMaterials" ;
+    aasv:hasBomEntry <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/HierarchicalStructures#bom-entry-aaufillinglineaas> ;
+    aasv:hasIdShort "HierarchicalStructures" ;
+    aasv:hasMappedElement <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/HierarchicalStructures#trace-archetype-0-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/HierarchicalStructures#trace-entrynode-1-0> ;
+    aasv:sourceSemanticId "https://admin-shell.io/idta/HierarchicalStructures/1/1/Submodel" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/HierarchicalStructures#bom-entry-aaufillinglineaas> a cssx:ResourceBoMItem,
+        aasv:BomEntry ;
+    cssx:itemNumber "aauFillingLineAAS" ;
+    aasv:bomEntryGlobalAssetId "https://smartproductionlab.aau.dk/assets/MWQ2ODY5ZDEtZTQ3Yy00NWU4LTlmYTAtNTI3YjVlMDk4MWFi" ;
+    aasv:bomEntryName "aauFillingLineAAS" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/HierarchicalStructures#trace-archetype-0-0> aasv:sourceElementPath "ArcheType[0]" ;
+    aasv:sourceIdShort "ArcheType" ;
+    aasv:sourceSemanticId "https://admin-shell.io/idta/HierarchicalStructures/ArcheType/1/0" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/HierarchicalStructures#trace-entrynode-1-0> aasv:sourceElementPath "EntryNode[1]" ;
+    aasv:sourceIdShort "EntryNode" ;
+    aasv:sourceSemanticId "https://admin-shell.io/idta/HierarchicalStructures/EntryNode/1/0" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/Nameplate> a aasv:DigitalNameplateSubmodel ;
+    aasv:hasIdShort "DigitalNameplate" ;
+    aasv:sourceSemanticId "https://admin-shell.io/IDTA 02006-3-0" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/OperationalData> a aasv:OperationalDataSubmodel ;
+    aasv:hasIdShort "OperationalData" ;
+    aasv:hasMappedElement <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/OperationalData#trace-occupationstate-1-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/OperationalData#trace-occupationstate-1-interfacereference-1-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/OperationalData#trace-packmlstate-0-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/OperationalData#trace-packmlstate-0-interfacereference-1-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/OperationalData#trace-weight-2-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/OperationalData#trace-weight-2-interfacereference-1-0> ;
+    aasv:sourceSemanticId "https://admin-shell.io/idta/Variables/1/0/Submodel" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/OperationalData#trace-occupationstate-1-0> aasv:sourceElementPath "OccupationState[1]" ;
+    aasv:sourceIdShort "OccupationState" ;
+    aasv:sourceSemanticId "https://smartproductionlab.aau.dk/stationOccupation" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/OperationalData#trace-occupationstate-1-interfacereference-1-0> aasv:sourceElementPath "OccupationState[1]/InterfaceReference[1]" ;
+    aasv:sourceIdShort "InterfaceReference" ;
+    aasv:sourceSemanticId "https://admin-shell.io/idta/AssetInterfacesDescription/1/0/InterfaceReference" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/OperationalData#trace-packmlstate-0-0> aasv:sourceElementPath "PackMLState[0]" ;
+    aasv:sourceIdShort "PackMLState" ;
+    aasv:sourceSemanticId "https://www.omac.org/packml/state" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/OperationalData#trace-packmlstate-0-interfacereference-1-0> aasv:sourceElementPath "PackMLState[0]/InterfaceReference[1]" ;
+    aasv:sourceIdShort "InterfaceReference" ;
+    aasv:sourceSemanticId "https://admin-shell.io/idta/AssetInterfacesDescription/1/0/InterfaceReference" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/OperationalData#trace-weight-2-0> aasv:sourceElementPath "Weight[2]" ;
+    aasv:sourceIdShort "Weight" ;
+    aasv:sourceSemanticId "https://smartproductionlab.aau.dk/weight" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/OperationalData#trace-weight-2-interfacereference-1-0> aasv:sourceElementPath "Weight[2]/InterfaceReference[1]" ;
+    aasv:sourceIdShort "InterfaceReference" ;
+    aasv:sourceSemanticId "https://admin-shell.io/idta/AssetInterfacesDescription/1/0/InterfaceReference" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/Skills> a aasv:SkillsSubmodel ;
+    aasv:hasIdShort "Skills" ;
+    aasv:hasMappedElement <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/Skills#trace-dispensing-0-dispensing-1-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/Skills#trace-halt-1-halt-1-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/Skills#trace-occupy-2-occupy-1-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/Skills#trace-release-3-release-1-0> ;
+    aasv:sourceSemanticId "https://smartfactory.de/aas/submodel/Skills#1/0" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/Skills#trace-dispensing-0-dispensing-1-0> aasv:sourceElementPath "Dispensing[0]/Dispensing[1]" ;
+    aasv:sourceIdShort "Dispensing" ;
+    aasv:sourceSemanticId "https://smartproductionlab.aau.dk/skills/Dispensing" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/Skills#trace-halt-1-halt-1-0> aasv:sourceElementPath "Halt[1]/Halt[1]" ;
+    aasv:sourceIdShort "Halt" ;
+    aasv:sourceSemanticId "https://smartproductionlab.aau.dk/skills/Halt" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/Skills#trace-occupy-2-occupy-1-0> aasv:sourceElementPath "Occupy[2]/Occupy[1]" ;
+    aasv:sourceIdShort "Occupy" ;
+    aasv:sourceSemanticId "https://smartproductionlab.aau.dk/skills/Occupy" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/imaDispensingSystemAAS/Skills#trace-release-3-release-1-0> aasv:sourceElementPath "Release[3]/Release[1]" ;
+    aasv:sourceIdShort "Release" ;
+    aasv:sourceSemanticId "https://smartproductionlab.aau.dk/skills/Release" .
+
+<https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS#resource-software-interface-1> a cssx:SoftwareInterface .
+

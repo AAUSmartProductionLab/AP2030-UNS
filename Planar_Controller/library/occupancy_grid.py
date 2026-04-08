@@ -88,10 +88,15 @@ def create_occupancy_grid(workspace, xbot_obstacles=None):
     # Add layout holes (shrunk by boundary tolerance)
     holes = workspace.get('holes', [])
     cells_per_flyway = int(FLYWAY_SIZE_M / GRID_CELL_SIZE_M)  # 48 cells
+    
+    print(f"Creating occupancy grid: {grid_width}x{grid_height} cells, Holes: {holes}", flush=True)
 
     for hole_col, hole_row in holes:
         start_x = hole_col * cells_per_flyway
         start_y = hole_row * cells_per_flyway
+        end_x = start_x + cells_per_flyway
+        end_y = start_y + cells_per_flyway
+        print(f"  Hole at flyway ({hole_col},{hole_row}) -> grid cells x:[{start_x},{end_x}), y:[{start_y},{end_y})", flush=True)
 
         # Shrink by 2 cells (10mm) on each side - robot can extend over edge
         for dx in range(BOUNDARY_TOLERANCE_CELLS, cells_per_flyway - BOUNDARY_TOLERANCE_CELLS):

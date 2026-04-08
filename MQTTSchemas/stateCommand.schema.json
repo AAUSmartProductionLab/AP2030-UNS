@@ -1,0 +1,27 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "State Command Schema",
+    "description": "A command to transition a system or subsystem to a specific state",
+    "type": "object",
+    "allOf": [
+        { "$ref": "command.schema.json" },
+        { "$ref": "data.schema.json" }
+    ],
+    "properties": {
+        "Uuid": {
+            "type": "string",
+            "description": "Unique identifier for this command"
+        },
+        "TimeStamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The time stamp of the command in ISO 8601 format"
+        },
+        "StateId": {
+            "type": "string",
+            "enum": ["Start", "Stop", "Reset", "Hold", "Unhold", "Suspend", "Unsuspend", "Abort", "Clear"],
+            "description": "The target state for the system to transition to"
+        }
+    },
+    "required": ["Uuid", "TimeStamp", "StateId"]
+}

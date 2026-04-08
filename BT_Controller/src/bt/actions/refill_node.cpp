@@ -7,6 +7,12 @@
 
 void RefillNode::initializeTopicsFromAAS()
 {
+    // Already initialized, skip
+    if (topics_initialized_)
+    {
+        return;
+    }
+
     try
     {
         auto asset_input = getInput<std::string>("Asset");
@@ -33,6 +39,7 @@ void RefillNode::initializeTopicsFromAAS()
         MqttPubBase::setTopic("input", request_opt.value());
         MqttSubBase::setTopic("output", response_opt.value());
         MqttSubBase::setTopic("weight", weight_opt.value());
+        topics_initialized_ = true;
     }
     catch (const std::exception &e)
     {

@@ -1,6 +1,6 @@
-orchestrator:
-    idShort: orchestrator
-    id: 'https://smartproductionlab.aau.dk/aas/orchestrator'
+orchestratorAAS:
+    idShort: orchestratorAAS
+    id: 'https://smartproductionlab.aau.dk/aas/orchestratorAAS'
     globalAssetId: 'https://smartproductionlab.aau.dk/assets/YTZiYjcwOWMtZTI3YS00YmU0LWJkMzEtYjVmYzFlZDQ3NWQ1'
     derivedFrom: 'https://smartproductionlab.aau.dk/aas/templates/resource'
     assetType: 'https://smartproductionlab.aau.dk/Resource/Orchestrator'
@@ -16,9 +16,9 @@ orchestrator:
                 actions:
                     Start:
                         key: 'Start'
-                        title: 'Plan'
+                        title: 'Start'
                         synchronous: 'true'
-                        input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
+                        input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/orchestrationCommand.schema.json'
                         output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
                         forms:
                             contentType: 'application/json'
@@ -31,6 +31,7 @@ orchestrator:
                                 contentType: 'application/json'
                                 href: '/DATA/Start'
                                 mqv_controlPacket: 'publish'
+                                mqv_retain: 'false'
                     Stop:
                         key: 'Stop'
                         title: 'Stop'
@@ -48,6 +49,7 @@ orchestrator:
                                 contentType: 'application/json'
                                 href: '/DATA/Stop'
                                 mqv_controlPacket: 'publish'
+                                mqv_retain: 'false'
                     Suspend:
                         key: 'Suspend'
                         title: 'Suspend'
@@ -65,11 +67,12 @@ orchestrator:
                                 contentType: 'application/json'
                                 href: '/DATA/Suspend'
                                 mqv_controlPacket: 'publish'
+                                mqv_retain: 'false'
                     Unsuspend:
                         key: 'Unsuspend'
                         title: 'Unsuspend'
                         synchronous: 'true'
-                        input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
+                        input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/orchestrationCommand.schema.json'
                         output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
                         forms:
                             contentType: 'application/json'
@@ -82,6 +85,7 @@ orchestrator:
                                 contentType: 'application/json'
                                 href: '/DATA/Unsuspend'
                                 mqv_controlPacket: 'publish'
+                                mqv_retain: 'false'
                     Reset:
                         key: 'Reset'
                         title: 'Reset'
@@ -99,6 +103,7 @@ orchestrator:
                                 contentType: 'application/json'
                                 href: '/DATA/Reset'
                                 mqv_controlPacket: 'publish'
+                                mqv_retain: 'false'
                 properties:
                     State:
                         key: 'State'
@@ -107,7 +112,7 @@ orchestrator:
                         forms:
                             contentType: 'application/json'
                             href: '/DATA/State'
-                            mqv_retain: 'false'
+                            mqv_retain: 'true'
                             mqv_controlPacket: publish
                             mqv_qos: '0'
 

@@ -13,6 +13,11 @@ class MqttDecorator : public BT::DecoratorNode, public MqttPubBase, public MqttS
 {
 protected:
     AASClient &aas_client_;
+    bool topics_initialized_ = false;
+
+    /// @brief Called from tick() to perform lazy initialization if needed
+    /// @return true if initialization is complete, false if still pending
+    bool ensureInitialized();
 
 public:
     MqttDecorator(

@@ -1,0 +1,25 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Planning Command",
+    "description": "Command to trigger production orchestration for a pre planned process using specified assets",
+    "type": "object",
+    "allOf": [
+        {
+            "$ref": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json"
+        },
+        {
+            "type": "object",
+            "properties": {
+                "Process": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "AAS ID of the process to orchestrate.",
+                    "examples": [
+                        "https://smartproductionlab.aau.dk/aas/HgHAAS"
+                    ]
+                }
+            },
+            "required": ["Process"]
+        }
+    ]
+}

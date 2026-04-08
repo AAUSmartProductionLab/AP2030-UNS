@@ -381,51 +381,31 @@ class MqttService {
       'Failed to publish limits'
     );
   }
-  //TODO these should be alligned to our json schemas for commands.
-  // System control methods
-  startSystem() {
-    const topic = "NN/Nybrovej/InnoLab/bt_controller/CMD/Start";
-    const message = JSON.stringify({ Command: "Start", Timestamp: new Date().toISOString() });
-    this.publish(topic, message, { qos: 1, retain: false });
-  }
 
-  stopSystem() {
-    const topic = "NN/Nybrovej/InnoLab/bt_controller/CMD/Stop";
-    const message = JSON.stringify({ Command: "Stop", Timestamp: new Date().toISOString() });
-    this.publish(topic, message, { qos: 1, retain: false });
-  }
-
-  resetSystem() {
-    const topic = "NN/Nybrovej/InnoLab/bt_controller/CMD/Reset";
-    const message = JSON.stringify({ Command: "Reset", Timestamp: new Date().toISOString() });
-    this.publish(topic, message, { qos: 1, retain: false });
-  }
-
-  suspendSystem() {
-    const topic = "NN/Nybrovej/InnoLab/bt_controller/CMD/Suspend";
-    const message = JSON.stringify({ Command: "Suspend", Timestamp: new Date().toISOString() });
-    this.publish(topic, message, { qos: 1, retain: false });
-  }
-
-  unsuspendSystem() {
-    const topic = "NN/Nybrovej/InnoLab/bt_controller/CMD/Unsuspend";
-    const message = JSON.stringify({ Command: "Unsuspend", Timestamp: new Date().toISOString() });
-    this.publish(topic, message, { qos: 1, retain: false });
-  }
-
-  publishPlanarCommand(buttonId) {
-    const topic = "NN/Nybrovej/InnoLab/Planar/CMD/Command";
-    const message = JSON.stringify({
-      ButtonId: buttonId,
-      TimeStamp: new Date().toISOString()
-    });
+  /**
+   * Generic state command publisher - sends a state transition command to any subsystem.
+   * Conforms to stateCommand.schema.json
+   * @param {string} topic The CMD/State topic for the target system
+   * @param {string} stateId The target state (Start, Stop, Reset, Hold, Unhold, Suspend, Unsuspend, Abort, Clear)
+   * @returns {Promise<boolean>} Whether the publish was successful
+   */
+  publishStateCommand(topic, stateId) {
+    const payload = {
+      Uuid: uuidv4(),
+      TimeStamp: new Date().toISOString(),
+      StateId: stateId
+    };
     
-    this.publish(topic, message, { qos: 2, retain: false }, (error) => {
-      if (error) {
-        console.error(`MqttService: Failed to publish Planar command ${buttonId}:`, error);
-      } else {
-        console.log(`MqttService: Successfully published Planar command: ${buttonId}`);
-      }
+    return new Promise((resolve) => {
+      this.publish(topic, JSON.stringify(payload), { qos: 2, retain: false }, (error) => {
+        if (error) {
+          console.error(`MqttService: Failed to publish state command ${stateId} to ${topic}:`, error);
+          resolve(false);
+        } else {
+          console.log(`MqttService: Published state command ${stateId} to ${topic}`);
+          resolve(true);
+        }
+      });
     });
   }
 }

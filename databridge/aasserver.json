@@ -1,8 +1,0 @@
-[
-  {
-    "uniqueId": "orchestrator_PackMLState_sink_State",
-    "submodelEndpoint": "http://aas-env:8081/submodels/aHR0cHM6Ly9zbWFydHByb2R1Y3Rpb25sYWIuYWF1LmRrL3N1Ym1vZGVscy9pbnN0YW5jZXMvb3JjaGVzdHJhdG9yL1ZhcmlhYmxlcw==",
-    "idShortPath": "PackMLState.State",
-    "api": "DotAasV3"
-  }
-]

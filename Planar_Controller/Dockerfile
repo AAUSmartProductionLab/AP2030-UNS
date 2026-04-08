@@ -42,4 +42,8 @@ RUN chmod +x entrypoint.sh
 # Default command runs the entrypoint script
 # Use "--no-viz" by default to avoid display errors in headless environments
 ENTRYPOINT ["./entrypoint.sh"]
-CMD ["--no-viz"]
+
+# Run the planner script
+CMD ["python", "xbot_planner_packml.py"] 
+
+# CMD ["--no-viz"]

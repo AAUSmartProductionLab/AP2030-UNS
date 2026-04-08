@@ -18,12 +18,13 @@ services:
       dockerfile: ./planner.dockerfile
     container_name: production_planner
     environment:
-      - MQTT_BROKER=${MQTT_BROKER:-hivemq-broker}
-      - MQTT_PORT=${MQTT_PORT:-1883}
+      - MQTT_BROKER=hivemq-broker
+      - MQTT_PORT=1883
     volumes:
       - .:/app  # Mount entire directory first
       - ../MQTTSchemas:/app/MQTTSchemas  # Then overlay schemas
       - ../AASDescriptions:/app/AASDescriptions  # Mount AAS configs for registration
+      - ../BTDescriptions:/app/BTDescriptions  # Mount BT descriptions for subtree loading
     command: productionPlanner.py
 
   filling_station:
@@ -32,8 +33,8 @@ services:
       dockerfile: ./dockerfile
     container_name: filling_station
     environment:
-      - MQTT_BROKER=${MQTT_BROKER:-hivemq-broker}
-      - MQTT_PORT=${MQTT_PORT:-1883}
+      - MQTT_BROKER=hivemq-broker
+      - MQTT_PORT=1883
     volumes:
       - .:/app  # Mount entire directory first
       - ../MQTTSchemas:/app/MQTTSchemas  # Then overlay schemas
@@ -46,8 +47,8 @@ services:
       dockerfile: ./dockerfile
     container_name: stoppering_station
     environment:
-      - MQTT_BROKER=${MQTT_BROKER:-hivemq-broker}
-      - MQTT_PORT=${MQTT_PORT:-1883}
+      - MQTT_BROKER=hivemq-broker
+      - MQTT_PORT=1883
     volumes:
       - .:/app  # Mount entire directory first
       - ../MQTTSchemas:/app/MQTTSchemas  # Then overlay schemas
@@ -60,8 +61,8 @@ services:
       dockerfile: ./dockerfile
     container_name: load_station
     environment:
-      - MQTT_BROKER=${MQTT_BROKER:-hivemq-broker}
-      - MQTT_PORT=${MQTT_PORT:-1883}
+      - MQTT_BROKER=hivemq-broker
+      - MQTT_PORT=1883
     volumes:
       - .:/app  # Mount entire directory first
       - ../MQTTSchemas:/app/MQTTSchemas  # Then overlay schemas
@@ -74,8 +75,8 @@ services:
       dockerfile: ./dockerfile
     container_name: unload_station
     environment:
-      - MQTT_BROKER=${MQTT_BROKER:-hivemq-broker}
-      - MQTT_PORT=${MQTT_PORT:-1883}
+      - MQTT_BROKER=hivemq-broker
+      - MQTT_PORT=1883
     volumes:
       - .:/app  # Mount entire directory first
       - ../MQTTSchemas:/app/MQTTSchemas  # Then overlay schemas
@@ -89,8 +90,8 @@ services:
     container_name: camera_station
     restart: always
     environment:
-      - MQTT_BROKER=${MQTT_BROKER:-hivemq-broker}
-      - MQTT_PORT=${MQTT_PORT:-1883}
+      - MQTT_BROKER=hivemq-broker
+      - MQTT_PORT=1883
     volumes:
       - .:/app  # Mount entire directory first
       - ../MQTTSchemas:/app/MQTTSchemas  # Then overlay schemas

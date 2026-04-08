@@ -14,7 +14,7 @@ MqttPubBase::~MqttPubBase()
   // Destructor logic if any
 }
 
-void MqttPubBase::publish(const std::string &topic_key, const json &message)
+void MqttPubBase::publish(const std::string &topic_key, const nlohmann::json &message)
 {
   if (!mqtt_client_)
   {

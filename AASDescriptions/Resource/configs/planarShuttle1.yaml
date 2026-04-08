@@ -1,9 +1,9 @@
 planarTableShuttle1AAS:
     idShort: planarTableShuttle1AAS
-    id: 'https://smartproductionlab.aau.dk/aas/planarTableShuttle1'
+    id: 'https://smartproductionlab.aau.dk/aas/planarTableShuttle1AAS'
     globalAssetId: 'https://smartproductionlab.aau.dk/assets/ODYwM2Q2YjYtYmUzOS00NTAxLWFhZDktYjc1MjhhMzUzOGNm'
     derivedFrom: 'https://smartproductionlab.aau.dk/aas/templates/resource'
-    assetType: 'https://smartproductionlab.aau.dk/Resource/CPS/MotionSystem/planarTableShuttle1'
+    assetType: 'https://smartproductionlab.aau.dk/Resource/CPS/MotionSystem/planarTableShuttle'
     serialNumber: 'PM-S1-2024-001'
     location: 'InnoLab, Nybrovej, AAU'
     AssetInterfacesDescription:
@@ -31,9 +31,11 @@ planarTableShuttle1AAS:
                                 contentType: 'application/json'
                                 href: '/DATA/XYMotion'
                                 mqv_controlPacket: 'publish'
-                    halt:
-                        key: 'halt'
-                        title: 'halt'
+                                mqv_retain: 'false'
+                    Halt:
+                        key: 'Halt'
+                        title: 'Halt'
+                        synchronous: 'true'
                         input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
                         forms:
                             contentType: 'application/json'
@@ -41,10 +43,10 @@ planarTableShuttle1AAS:
                             op: 'invokeAction'
                             mqv_retain: 'false'
                             mqv_controlPacket: subscribe
-                            mqv_qos: '2'                                              
-                    occupy:
-                        key: 'occupy'
-                        title: 'occupy'
+                            mqv_qos: '2'                                   
+                    Occupy:
+                        key: 'Occupy'
+                        title: 'Occupy'
                         synchronous: 'true'
                         input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
                         output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
@@ -59,9 +61,10 @@ planarTableShuttle1AAS:
                                 contentType: 'application/json'
                                 href: '/DATA/Occupy'
                                 mqv_controlPacket: 'publish'
-                    release:
-                        key: 'release'
-                        title: 'release'
+                                mqv_retain: 'false'
+                    Release:
+                        key: 'Release'
+                        title: 'Release'
                         synchronous: 'true'
                         input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
                         output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
@@ -76,6 +79,7 @@ planarTableShuttle1AAS:
                                 contentType: 'application/json'
                                 href: '/DATA/Release'
                                 mqv_controlPacket: 'publish'
+                                mqv_retain: 'false'
                 properties:
                     StationState:
                         key: 'StationState'
@@ -84,6 +88,16 @@ planarTableShuttle1AAS:
                         forms:
                             contentType: 'application/json'
                             href: '/DATA/State'
+                            mqv_retain: 'true'
+                            mqv_controlPacket: publish
+                            mqv_qos: '0'
+                    ProductID:
+                        key: 'ProductID'
+                        title: 'ProductID'
+                        input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/productId.schema.json'
+                        forms:
+                            contentType: 'application/json'
+                            href: '/DATA/ProductId'
                             mqv_retain: 'false'
                             mqv_controlPacket: publish
                             mqv_qos: '0'
@@ -99,36 +113,36 @@ planarTableShuttle1AAS:
             Field: 'ProcessQueue'
 
     Parameters:
+        ProductID:
+            semanticId: 'https://smartproductionlab.aau.dk/productID'
+            InterfaceReference: 'ProductID'
+
     HierarchicalStructures:
+        Name: 'BillOfMaterials'
         Archetype: 'OneUp'
         IsPartOf:
-            - planarTable:
+            planarTableAAS:
                 globalAssetId: 'https://smartproductionlab.aau.dk/assets/ZTM1NTAzNzQtMDZkNi00N2Q4LWI1YTktMGNhMmY0MDEyNTk4'
     
     Capabilities:
-        Transport:
+        MoveToPosition:
             realizedBy: "MoveToPosition"
-        halt:
-            realizedBy: "halt"
-        occupy:
-            realizedBy: "occupy"
-        release:
-            realizedBy: "release"
+            semantic_id: https://smartproductionlab.aau.dk/Capability/MoveToPosition
     
     Skills:
         MoveToPosition:
             description: "Move the planar shuttle to a target position"
             semantic_id: "https://smartproductionlab.aau.dk/skills/MoveToPosition"
             interface: "MoveToPosition"
-        halt:
-            description: "Halt the current movement operation"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/halt"
-            interface: "halt"
-        occupy:
-            description: "Occupy the shuttle for exclusive use"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/occupy"
-            interface: "occupy"
-        release:
-            description: "Release the shuttle from exclusive use"
-            semantic_id: "https://smartproductionlab.aau.dk/skills/release"
-            interface: "release"
+        Halt:
+            description: "Halt the current operation"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/Halt"
+            interface: "Halt"
+        Occupy:
+            description: "Occupy the system for exclusive use"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/Occupy"
+            interface: "Occupy"
+        Release:
+            description: "Release the dispensing system from exclusive use"
+            semantic_id: "https://smartproductionlab.aau.dk/skills/Release"
+            interface: "Release"

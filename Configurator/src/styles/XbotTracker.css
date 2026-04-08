@@ -463,6 +463,26 @@
   background-color: #fd7e14; /* Orange */
 }
 
+.abort-button:hover {
+  background-color: #c0392b; /* Dark Red for emergency abort */
+}
+
+/* System Controls Section - highlighted styling */
+.system-controls-section {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border: 2px solid #0f3460;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+.system-controls-section h3 {
+  color: #e94560;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 0.95rem;
+}
+
 .tracker-main-area {
   flex: 1;
   display: flex;

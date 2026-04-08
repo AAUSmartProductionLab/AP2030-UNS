@@ -57,8 +57,8 @@ class CapabilitiesSubmodelBuilder:
 
         # Create submodel
         submodel = model.Submodel(
-            id_=f"{self.base_url}/submodels/instances/{system_id}/OfferedCapabilitiyDescription",
-            id_short="OfferedCapabilitiyDescription",
+            id_=f"{self.base_url}/submodels/instances/{system_id}/OfferedCapabilityDescription",
+            id_short="OfferedCapabilityDescription",
             kind=model.ModellingKind.INSTANCE,
             semantic_id=self.semantic_factory.CAPABILITIES_SUBMODEL,
             administration=model.AdministrativeInformation(
@@ -83,11 +83,20 @@ class CapabilitiesSubmodelBuilder:
         """
         container_elements = []
 
-        # Add Capability element
+        # Add Capability element with semantic_id from config if specified
+        # This enables capability matching based on semantic identifiers
+        capability_semantic_id = cap_config.get('semantic_id')
+        if capability_semantic_id:
+            # Convert string semantic_id from config to proper ExternalReference
+            from ..semantic_ids import SemanticIdFactory
+            capability_semantic_id = SemanticIdFactory.create_external_reference(capability_semantic_id)
+        else:
+            capability_semantic_id = self.semantic_factory.CAPABILITY
+        
         container_elements.append(
             self.element_factory.create_capability(
                 id_short=cap_name,
-                semantic_id=self.semantic_factory.CAPABILITY
+                semantic_id=capability_semantic_id
             )
         )
 
@@ -168,7 +177,7 @@ class CapabilitiesSubmodelBuilder:
                 first=model.ModelReference(
                     (model.Key(
                         type_=model.KeyTypes.SUBMODEL,
-                        value=f"{self.base_url}/submodels/instances/{system_id}/OfferedCapabilitiyDescription"
+                        value=f"{self.base_url}/submodels/instances/{system_id}/OfferedCapabilityDescription"
                     ),
                         model.Key(
                         type_=model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION,
@@ -237,7 +246,7 @@ class CapabilitiesSubmodelBuilder:
                 first=model.ModelReference(
                     (model.Key(
                         type_=model.KeyTypes.SUBMODEL,
-                        value=f"{self.base_url}/submodels/instances/{system_id}/OfferedCapabilitiyDescription"
+                        value=f"{self.base_url}/submodels/instances/{system_id}/OfferedCapabilityDescription"
                     ),
                         model.Key(
                         type_=model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION,
@@ -253,7 +262,7 @@ class CapabilitiesSubmodelBuilder:
                 second=model.ModelReference(
                     (model.Key(
                         type_=model.KeyTypes.SUBMODEL,
-                        value=f"{self.base_url}/submodels/instances/{system_id}/OfferedCapabilitiyDescription"
+                        value=f"{self.base_url}/submodels/instances/{system_id}/OfferedCapabilityDescription"
                     ),
                         model.Key(
                         type_=model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION,

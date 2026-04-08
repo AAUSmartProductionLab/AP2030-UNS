@@ -12,117 +12,6 @@ This repository contains Asset Administration Shell (AAS) definitions and JSON s
 All schemas are automatically synchronized from the `schemas/` directory. Click on any schema below to view its details.
 
 <!-- AUTO-GENERATED-SCHEMAS-START -->
-### AAS Process Descriptions
-
-- **[asepticFilling.json](AASDescriptions/Process/asepticFilling.json)**
-  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Process/asepticFilling.json)
-  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Process/asepticFilling.json)
-- **[dispensing.json](AASDescriptions/Process/dispensing.json)**
-  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Process/dispensing.json)
-  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Process/dispensing.json)
-- **[loading.json](AASDescriptions/Process/loading.json)**
-  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Process/loading.json)
-  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Process/loading.json)
-- **[planarSOP.json](AASDescriptions/Process/planarSOP.json)**
-  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Process/planarSOP.json)
-  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Process/planarSOP.json)
-- **[processTemplate.json](AASDescriptions/Process/processTemplate.json)**
-  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Process/processTemplate.json)
-  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Process/processTemplate.json)
-- **[production.json](AASDescriptions/Process/production.json)**
-  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Process/production.json)
-  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Process/production.json)
-- **[qualityControl.json](AASDescriptions/Process/qualityControl.json)**
-  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Process/qualityControl.json)
-  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Process/qualityControl.json)
-- **[scraping.json](AASDescriptions/Process/scraping.json)**
-  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Process/scraping.json)
-  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Process/scraping.json)
-- **[stoppering.json](AASDescriptions/Process/stoppering.json)**
-  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Process/stoppering.json)
-  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Process/stoppering.json)
-- **[unloading.json](AASDescriptions/Process/unloading.json)**
-  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Process/unloading.json)
-  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Process/unloading.json)
-
-### AAS Resource Descriptions
-
-- **[ResourceTemplate.json](AASDescriptions/Resource/Updated/ResourceTemplate.json)**
-  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/Updated/ResourceTemplate.json)
-  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/Updated/ResourceTemplate.json)
-- **[SyntegonStopperingSystemInstance.json](AASDescriptions/Resource/Updated/SyntegonStopperingSystemInstance.json)**
-  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/Updated/SyntegonStopperingSystemInstance.json)
-  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/Updated/SyntegonStopperingSystemInstance.json)
-- **[aauFillingLine.json](AASDescriptions/Resource/aauFillingLine.json)**
-  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/aauFillingLine.json)
-  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/aauFillingLine.json)
-- **[aauFillingLine.json](AASDescriptions/Resource/Updated/aauFillingLine.json)**
-  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/Updated/aauFillingLine.json)
-  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/Updated/aauFillingLine.json)
-- **[cytivaCappingSystemAAS.json](AASDescriptions/Resource/cytivaCappingSystemAAS.json)**
-  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/cytivaCappingSystemAAS.json)
-  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/cytivaCappingSystemAAS.json)
-- **[imaDispensingSystem.json](AASDescriptions/Resource/Updated/imaDispensingSystem.json)**
-  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/Updated/imaDispensingSystem.json)
-  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/Updated/imaDispensingSystem.json)
-- **[imaDispensingSystemAAS.json](AASDescriptions/Resource/imaDispensingSystemAAS.json)**
-  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/imaDispensingSystemAAS.json)
-  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/imaDispensingSystemAAS.json)
-- **[imaLoadingSystem.json](AASDescriptions/Resource/Updated/imaLoadingSystem.json)**
-  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/Updated/imaLoadingSystem.json)
-  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/Updated/imaLoadingSystem.json)
-- **[imaLoadingSystemAAS.json](AASDescriptions/Resource/imaLoadingSystemAAS.json)**
-  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/imaLoadingSystemAAS.json)
-  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/imaLoadingSystemAAS.json)
-- **[omronCamera.json](AASDescriptions/Resource/Updated/omronCamera.json)**
-  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/Updated/omronCamera.json)
-  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/Updated/omronCamera.json)
-- **[omronCameraSystemAAS.json](AASDescriptions/Resource/omronCameraSystemAAS.json)**
-  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/omronCameraSystemAAS.json)
-  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/omronCameraSystemAAS.json)
-- **[optimaStopperingSystem.json](AASDescriptions/Resource/Updated/optimaStopperingSystem.json)**
-  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/Updated/optimaStopperingSystem.json)
-  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/Updated/optimaStopperingSystem.json)
-- **[optimaUnloadingSystem.json](AASDescriptions/Resource/Updated/optimaUnloadingSystem.json)**
-  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/Updated/optimaUnloadingSystem.json)
-  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/Updated/optimaUnloadingSystem.json)
-- **[optimaUnloadingSystemAAS.json](AASDescriptions/Resource/optimaUnloadingSystemAAS.json)**
-  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/optimaUnloadingSystemAAS.json)
-  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/optimaUnloadingSystemAAS.json)
-- **[planarShuttle1.json](AASDescriptions/Resource/Updated/planarShuttle1.json)**
-  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/Updated/planarShuttle1.json)
-  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/Updated/planarShuttle1.json)
-- **[planarShuttle2.json](AASDescriptions/Resource/Updated/planarShuttle2.json)**
-  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/Updated/planarShuttle2.json)
-  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/Updated/planarShuttle2.json)
-- **[planarShuttle3.json](AASDescriptions/Resource/Updated/planarShuttle3.json)**
-  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/Updated/planarShuttle3.json)
-  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/Updated/planarShuttle3.json)
-- **[planarTable.json](AASDescriptions/Resource/Updated/planarTable.json)**
-  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/Updated/planarTable.json)
-  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/Updated/planarTable.json)
-- **[planarTableAAS.json](AASDescriptions/Resource/planarTableAAS.json)**
-  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/planarTableAAS.json)
-  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/planarTableAAS.json)
-- **[planarTableShuttle1AAS.json](AASDescriptions/Resource/planarTableShuttle1AAS.json)**
-  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/planarTableShuttle1AAS.json)
-  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/planarTableShuttle1AAS.json)
-- **[planarTableShuttle2AAS.json](AASDescriptions/Resource/planarTableShuttle2AAS.json)**
-  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/planarTableShuttle2AAS.json)
-  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/planarTableShuttle2AAS.json)
-- **[planarTableShuttle3AAS.json](AASDescriptions/Resource/planarTableShuttle3AAS.json)**
-  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/planarTableShuttle3AAS.json)
-  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/planarTableShuttle3AAS.json)
-- **[syntegonDispensingSystem.json](AASDescriptions/Resource/Updated/syntegonDispensingSystem.json)**
-  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/Updated/syntegonDispensingSystem.json)
-  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/Updated/syntegonDispensingSystem.json)
-- **[syntegonStopperingSystem.json](AASDescriptions/Resource/Updated/syntegonStopperingSystem.json)**
-  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/Updated/syntegonStopperingSystem.json)
-  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/Updated/syntegonStopperingSystem.json)
-- **[syntegonStopperingSystemAAS.json](AASDescriptions/Resource/syntegonStopperingSystemAAS.json)**
-  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/AASDescriptions/Resource/syntegonStopperingSystemAAS.json)
-  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/syntegonStopperingSystemAAS.json)
-
 ### MQTT Schemas
 
 - **[amrArclRequest.schema.json](MQTTSchemas/amrArclRequest.schema.json)**
@@ -164,6 +53,10 @@ All schemas are automatically synchronized from the `schemas/` directory. Click 
 - **[moveToPosition.schema.json](MQTTSchemas/moveToPosition.schema.json)**
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/moveToPosition.schema.json)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/MQTTSchemas/moveToPosition.schema.json)
+- **[orchestrationCommand.schema.json](MQTTSchemas/orchestrationCommand.schema.json)**
+  - Command to trigger production orchestration for a pre planned process using specified assets
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/orchestrationCommand.schema.json)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/MQTTSchemas/orchestrationCommand.schema.json)
 - **[order.schema.json](MQTTSchemas/order.schema.json)**
   - JSON Schema for an order
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/order.schema.json)
@@ -177,8 +70,19 @@ All schemas are automatically synchronized from the `schemas/` directory. Click 
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/planarStations.schema.json)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/MQTTSchemas/planarStations.schema.json)
 - **[planningCommand.schema.json](MQTTSchemas/planningCommand.schema.json)**
+  - Command to trigger production planning for a product using specified assets
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/planningCommand.schema.json)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/MQTTSchemas/planningCommand.schema.json)
+- **[planningResponse.schema.json](MQTTSchemas/planningResponse.schema.json)**
+  - Response to a planning command with capability matching results
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/planningResponse.schema.json)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/MQTTSchemas/planningResponse.schema.json)
+- **[position.schema.json](MQTTSchemas/position.schema.json)**
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/position.schema.json)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/MQTTSchemas/position.schema.json)
+- **[positionStamped.schema.json](MQTTSchemas/positionStamped.schema.json)**
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/positionStamped.schema.json)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/MQTTSchemas/positionStamped.schema.json)
 - **[productId.schema.json](MQTTSchemas/productId.schema.json)**
   - JSON Schema for the status the Id of a product. Usefull to associate stations with a product when they process it
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/productId.schema.json)
@@ -187,6 +91,10 @@ All schemas are automatically synchronized from the `schemas/` directory. Click 
   - JSON Schema for the status of a module. The current Uuid is expected when the module is not in a IDLE or RESETTING state
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/state.schema.json)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/MQTTSchemas/state.schema.json)
+- **[stateCommand.schema.json](MQTTSchemas/stateCommand.schema.json)**
+  - A command to transition a system or subsystem to a specific state
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/stateCommand.schema.json)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/MQTTSchemas/stateCommand.schema.json)
 - **[stationOccupation.schema.json](MQTTSchemas/stationOccupation.schema.json)**
   - JSON Schema for the status of a module. The current Uuid is expected when the module is not in a IDLE or RESETTING state
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/stationOccupation.schema.json)
@@ -213,6 +121,7 @@ The behavior tree XML files define the control logic for the production line con
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/BTDescriptions/asepticFilling.xml)
 
 - **[capping.xml](BTDescriptions/capping.xml)**
+  - Tree ID: `Capping`
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/BTDescriptions/capping.xml)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/BTDescriptions/capping.xml)
 
@@ -246,8 +155,23 @@ The behavior tree XML files define the control logic for the production line con
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/BTDescriptions/productionTask.xml)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/BTDescriptions/productionTask.xml)
 
+- **[production_HgH.xml](BTDescriptions/production_HgH.xml)**
+  - Tree ID: `Production`
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/BTDescriptions/production_HgH.xml)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/BTDescriptions/production_HgH.xml)
+
+- **[production_HgHAAS.xml](BTDescriptions/production_HgHAAS.xml)**
+  - Tree ID: `Production`
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/BTDescriptions/production_HgHAAS.xml)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/BTDescriptions/production_HgHAAS.xml)
+
+- **[production_MIM8AAS.xml](BTDescriptions/production_MIM8AAS.xml)**
+  - Tree ID: `Production`
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/BTDescriptions/production_MIM8AAS.xml)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/BTDescriptions/production_MIM8AAS.xml)
+
 - **[qualityControl.xml](BTDescriptions/qualityControl.xml)**
-  - Tree ID: `QualityControl`
+  - Tree ID: `Inspection`
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/BTDescriptions/qualityControl.xml)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/BTDescriptions/qualityControl.xml)
 
@@ -278,7 +202,7 @@ YAML configuration files for AAS resource definitions.
 
 <!-- AUTO-GENERATED-CONFIGS-START -->
 - **[aauFillingLine.yaml](configs/aauFillingLine.yaml)**
-  - Resource: `aauFillingLine`
+  - Resource: `aauFillingLineAAS`
   - Location: InnoLab, Nybrovej, AAU
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/configs/aauFillingLine.yaml)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/configs/aauFillingLine.yaml)
@@ -314,7 +238,7 @@ YAML configuration files for AAS resource definitions.
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/configs/optimaUnloading.yaml)
 
 - **[orchestrator.yaml](configs/orchestrator.yaml)**
-  - Resource: `orchestrator`
+  - Resource: `orchestratorAAS`
   - Location: InnoLab, Nybrovej, AAU
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/configs/orchestrator.yaml)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/configs/orchestrator.yaml)
@@ -344,7 +268,7 @@ YAML configuration files for AAS resource definitions.
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/configs/planarTable.yaml)
 
 - **[productionPlanner.yaml](configs/productionPlanner.yaml)**
-  - Resource: `productionPlanner`
+  - Resource: `productionPlannerAAS`
   - Location: InnoLab, Nybrovej, AAU
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/configs/productionPlanner.yaml)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/AASDescriptions/Resource/configs/productionPlanner.yaml)

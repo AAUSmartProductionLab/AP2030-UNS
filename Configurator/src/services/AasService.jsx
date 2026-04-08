@@ -41,8 +41,14 @@ class AasService {
     this.shellRegistryUrl = import.meta.env.VITE_AAS_SHELL_REGISTRY_URL || 'http://localhost:8082';
     
     // Root AAS configuration
+    this.rootAasId = import.meta.env.VITE_ROOT_AAS_ID ||
+      'https://smartproductionlab.aau.dk/aas/aauFillingLineAAS';
     this.rootSubmodelId = import.meta.env.VITE_ROOT_SUBMODEL_ID || 
-      'https://smartproductionlab.aau.dk/submodels/instances/aauFillingLine/HierarchicalStructures';
+      'https://smartproductionlab.aau.dk/submodels/instances/aauFillingLineAAS/HierarchicalStructures';
+    
+    // Planar Table AAS configuration (default child of aauFillingLine)
+    this.planarTableAasId = 'https://smartproductionlab.aau.dk/aas/planarTableAAS';
+    this.planarTableHierarchicalStructuresId = 'https://smartproductionlab.aau.dk/submodels/instances/planarTableAAS/HierarchicalStructures';
     
     // SDK Clients
     this.registryClient = new AasRegistryClient();
@@ -81,6 +87,251 @@ class AasService {
   }
 
   /**
+   * Normalize enum values to their string names
+   * @param {Object} enumObj - Enum object
+   * @param {string|number|null} value - Enum value
+   * @returns {string|null}
+   */
+  normalizeEnumValue(enumObj, value) {
+    if (value === null || value === undefined) return null;
+    if (typeof value === 'string') return value;
+    
+    // aas-core3 TypeScript enums are numeric, so enumObj[numericValue] gives the string name
+    // For example: ReferenceTypes[0] => "ExternalReference"
+    const enumName = enumObj?.[value];
+    if (typeof enumName === 'string') {
+      return enumName;
+    }
+    
+    // Fallback: if enumObj is not indexed properly, use known mappings
+    // This handles ReferenceTypes specifically
+    if (enumObj === ReferenceTypes) {
+      const refTypeMap = {
+        0: 'ExternalReference',
+        1: 'ModelReference'
+      };
+      return refTypeMap[value] || String(value);
+    }
+    
+    // Handle KeyTypes
+    if (enumObj === KeyTypes) {
+      const keyTypeMap = {
+        0: 'AnnotatedRelationshipElement',
+        1: 'AssetAdministrationShell',
+        2: 'BasicEventElement',
+        3: 'Blob',
+        4: 'Capability',
+        5: 'ConceptDescription',
+        6: 'DataElement',
+        7: 'Entity',
+        8: 'EventElement',
+        9: 'File',
+        10: 'FragmentReference',
+        11: 'GlobalReference',
+        12: 'Identifiable',
+        13: 'MultiLanguageProperty',
+        14: 'Operation',
+        15: 'Property',
+        16: 'Range',
+        17: 'Referable',
+        18: 'ReferenceElement',
+        19: 'RelationshipElement',
+        20: 'Submodel',
+        21: 'SubmodelElement',
+        22: 'SubmodelElementCollection',
+        23: 'SubmodelElementList'
+      };
+      return keyTypeMap[value] || String(value);
+    }
+    
+    return String(value);
+  }
+
+  /**
+   * Normalize DataTypeDefXsd to xs:* string
+   * @param {string|number} valueType
+   * @returns {string|null}
+   */
+  normalizeXsdType(valueType) {
+    if (valueType === null || valueType === undefined) return null;
+    if (typeof valueType === 'string') {
+      if (valueType.startsWith('xs:')) return valueType;
+      const mapByName = {
+        String: 'xs:string',
+        Float: 'xs:float',
+        Int: 'xs:int',
+        DateTime: 'xs:dateTime',
+        Boolean: 'xs:boolean',
+        Double: 'xs:double',
+        Long: 'xs:long',
+        Short: 'xs:short',
+        Byte: 'xs:byte'
+      };
+      return mapByName[valueType] || valueType;
+    }
+
+    const name = this.normalizeEnumValue(DataTypeDefXsd, valueType);
+    const mapByName = {
+      String: 'xs:string',
+      Float: 'xs:float',
+      Int: 'xs:int',
+      DateTime: 'xs:dateTime',
+      Boolean: 'xs:boolean',
+      Double: 'xs:double',
+      Long: 'xs:long',
+      Short: 'xs:short',
+      Byte: 'xs:byte'
+    };
+    return mapByName[name] || name;
+  }
+
+  /**
+   * Normalize Reference object to AAS JSON format (string enums)
+   * @param {Object} reference
+   * @returns {Object|null}
+   */
+  normalizeReference(reference) {
+    if (!reference) return null;
+    return {
+      type: this.normalizeEnumValue(ReferenceTypes, reference.type),
+      keys: (reference.keys || []).map(key => ({
+        type: this.normalizeEnumValue(KeyTypes, key.type),
+        value: key.value
+      })),
+      referredSemanticId: reference.referredSemanticId || null
+    };
+  }
+
+  /**
+   * Strip null/undefined values recursively from objects/arrays
+   * @param {any} value
+   * @returns {any}
+   */
+  stripNulls(value) {
+    if (Array.isArray(value)) {
+      return value
+        .map(item => this.stripNulls(item))
+        .filter(item => item !== undefined && item !== null);
+    }
+
+    if (value && typeof value === 'object') {
+      const cleaned = {};
+      Object.entries(value).forEach(([key, val]) => {
+        if (val === undefined || val === null) return;
+        const next = this.stripNulls(val);
+        if (next === undefined || next === null) return;
+        cleaned[key] = next;
+      });
+      return cleaned;
+    }
+
+    return value;
+  }
+
+  /**
+   * Normalize SubmodelElement to AAS JSON format (string enums, modelType fields)
+   * @param {Object} element
+   * @returns {Object}
+   */
+  normalizeSubmodelElement(element) {
+    if (!element) return null;
+
+    const base = {
+      extensions: element.extensions ?? null,
+      idShort: element.idShort,
+      displayName: element.displayName ?? null,
+      category: element.category ?? null,
+      description: element.description ?? null,
+      semanticId: this.normalizeReference(element.semanticId),
+      supplementalSemanticIds: (element.supplementalSemanticIds || null)?.map(ref => this.normalizeReference(ref)) || null,
+      qualifiers: element.qualifiers ?? null,
+      embeddedDataSpecifications: element.embeddedDataSpecifications ?? null
+    };
+
+    // RelationshipElement
+    if (element.first && element.second) {
+      return {
+        modelType: 'RelationshipElement',
+        ...base,
+        first: this.normalizeReference(element.first),
+        second: this.normalizeReference(element.second)
+      };
+    }
+
+    // Entity
+    if (element.entityType !== undefined || Array.isArray(element.statements)) {
+      return {
+        modelType: 'Entity',
+        ...base,
+        statements: (element.statements || []).map(el => this.normalizeSubmodelElement(el)),
+        entityType: this.normalizeEnumValue(EntityType, element.entityType),
+        globalAssetId: element.globalAssetId ?? null,
+        specificAssetIds: element.specificAssetIds ?? null
+      };
+    }
+
+    // SubmodelElementCollection
+    if (Array.isArray(element.value)) {
+      return {
+        modelType: 'SubmodelElementCollection',
+        ...base,
+        value: element.value.map(el => this.normalizeSubmodelElement(el))
+      };
+    }
+
+    // ReferenceElement
+    if (element.value && element.value.type !== undefined && element.value.keys) {
+      return {
+        modelType: 'ReferenceElement',
+        ...base,
+        value: this.normalizeReference(element.value)
+      };
+    }
+
+    // Property
+    if (element.valueType !== undefined) {
+      return {
+        modelType: 'Property',
+        ...base,
+        valueType: this.normalizeXsdType(element.valueType),
+        value: element.value ?? null,
+        valueId: element.valueId ?? null
+      };
+    }
+
+    // Fallback
+    return {
+      modelType: element.modelType || 'SubmodelElement',
+      ...base,
+      value: element.value ?? null
+    };
+  }
+
+  /**
+   * Normalize Submodel to AAS JSON format (string enums, modelType fields)
+   * @param {Object} submodel
+   * @returns {Object}
+   */
+  normalizeSubmodel(submodel) {
+    if (!submodel) return null;
+    return this.stripNulls({
+      modelType: 'Submodel',
+      id: submodel.id,
+      idShort: submodel.idShort,
+      displayName: submodel.displayName ?? null,
+      category: submodel.category ?? null,
+      description: submodel.description ?? null,
+      administration: submodel.administration ?? null,
+      kind: this.normalizeEnumValue(ModellingKind, submodel.kind) || 'Instance',
+      semanticId: this.normalizeReference(submodel.semanticId),
+      supplementalSemanticIds: (submodel.supplementalSemanticIds || null)?.map(ref => this.normalizeReference(ref)) || null,
+      qualifiers: submodel.qualifiers ?? null,
+      embeddedDataSpecifications: submodel.embeddedDataSpecifications ?? null,
+      submodelElements: (submodel.submodelElements || []).map(el => this.normalizeSubmodelElement(el))
+    });
+  }
+
+  /**
    * Generate a unique global asset ID using base64-encoded UUID
    * Format: https://smartproductionlab.aau.dk/assets/{base64(uuid)}
    * @param {string} uuid - The UUID to encode (if not provided, a new one should be passed)
@@ -116,6 +367,40 @@ class AasService {
       console.error('Failed to fetch shell descriptors:', error);
       toast.error(`Failed to fetch AAS modules: ${error.message}`);
       return [];
+    }
+  }
+
+  /**
+   * Build a lookup map from AAS ID and idShort to globalAssetId
+   * Fetches shell descriptors from registry and creates lookup maps
+   * @returns {Promise<Object>} Object with byId and byIdShort maps
+   */
+  async buildGlobalAssetIdLookup() {
+    try {
+      const shellDescriptors = await this.getAllShells();
+      const byId = {};
+      const byIdShort = {};
+      
+      for (const descriptor of shellDescriptors) {
+        if (descriptor.globalAssetId) {
+          if (descriptor.id) {
+            byId[descriptor.id] = descriptor.globalAssetId;
+          }
+          if (descriptor.idShort) {
+            byIdShort[descriptor.idShort] = descriptor.globalAssetId;
+            // Also map without 'AAS' suffix for convenience
+            const shortName = descriptor.idShort.replace(/AAS$/i, '');
+            if (shortName !== descriptor.idShort) {
+              byIdShort[shortName] = descriptor.globalAssetId;
+            }
+          }
+        }
+      }
+      
+      return { byId, byIdShort };
+    } catch (error) {
+      console.error('Failed to build globalAssetId lookup:', error);
+      return { byId: {}, byIdShort: {} };
     }
   }
 
@@ -463,6 +748,97 @@ class AasService {
   }
 
   /**
+   * Get a submodel by ID using raw REST (returns JSON as stored in repo)
+   * @param {string} submodelId - The submodel identifier
+   * @returns {Promise<Object>} The raw submodel JSON
+   */
+  async getSubmodelRaw(submodelId) {
+    const encodedId = this.base64UrlEncode(submodelId);
+    const url = `${this.repositoryUrl}/submodels/${encodedId}`;
+    const response = await fetch(url, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`Raw GET submodel failed: ${response.status} ${text}`);
+    }
+
+    return await response.json();
+  }
+
+  /**
+   * Put a submodel by ID using raw REST
+   * @param {string} submodelId - The submodel identifier
+   * @param {Object} submodelData - The raw submodel JSON
+   * @returns {Promise<Object>} The updated submodel JSON
+   */
+  async putSubmodelRaw(submodelId, submodelData) {
+    const encodedId = this.base64UrlEncode(submodelId);
+    const url = `${this.repositoryUrl}/submodels/${encodedId}`;
+    const response = await fetch(url, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(submodelData)
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`Raw PUT submodel failed: ${response.status} ${text}`);
+    }
+
+    try {
+      return await response.json();
+    } catch {
+      return submodelData;
+    }
+  }
+
+  /**
+   * Post a submodel using raw REST
+   * @param {Object} submodelData - The raw submodel JSON
+   * @returns {Promise<Object>} The created submodel JSON
+   */
+  async postSubmodelRaw(submodelData) {
+    const url = `${this.repositoryUrl}/submodels`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(submodelData)
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`Raw POST submodel failed: ${response.status} ${text}`);
+    }
+
+    try {
+      return await response.json();
+    } catch {
+      return submodelData;
+    }
+  }
+
+  /**
+   * Build a raw update payload by merging normalized payload into existing raw JSON
+   * @param {string} submodelId
+   * @param {Object} normalizedSubmodel
+   * @returns {Promise<Object>}
+   */
+  async buildRawUpdatePayload(submodelId, normalizedSubmodel) {
+    const existing = await this.getSubmodelRaw(submodelId);
+    return {
+      ...existing,
+      id: normalizedSubmodel.id || existing.id,
+      idShort: normalizedSubmodel.idShort || existing.idShort,
+      kind: normalizedSubmodel.kind || existing.kind,
+      semanticId: normalizedSubmodel.semanticId || existing.semanticId,
+      displayName: normalizedSubmodel.displayName ?? existing.displayName,
+      submodelElements: normalizedSubmodel.submodelElements || existing.submodelElements
+    };
+  }
+
+  /**
    * Update/put a submodel by ID (generic)
    * @param {string} submodelId - The submodel identifier
    * @param {Object} submodelData - The submodel data (SDK Submodel object or JSON)
@@ -470,19 +846,21 @@ class AasService {
    */
   async putSubmodel(submodelId, submodelData) {
     try {
-      const result = await this.submodelClient.putSubmodelById({
-        configuration: this.repositoryConfig,
-        submodelIdentifier: submodelId,
-        submodel: submodelData
-      });
-      
-      if (result.success) {
-        return result.data || submodelData;
+      console.log('putSubmodel - input submodelData:', JSON.stringify(submodelData, null, 2));
+      const normalizedSubmodel = this.normalizeSubmodel(submodelData);
+      console.log('putSubmodel - normalizedSubmodel:', JSON.stringify(normalizedSubmodel, null, 2));
+      try {
+        const rawPayload = await this.buildRawUpdatePayload(submodelId, normalizedSubmodel);
+        console.log('putSubmodel - rawPayload:', JSON.stringify(rawPayload, null, 2));
+        return await this.putSubmodelRaw(submodelId, rawPayload);
+      } catch (rawError) {
+        const rawMessage = rawError?.message || '';
+        if (rawMessage.includes('404') || rawMessage.includes('ElementDoesNotExistException')) {
+          return await this.postSubmodelRaw(normalizedSubmodel);
+        }
+        throw rawError;
       }
-      
-      throw new Error(result.error?.message || 'Failed to update submodel');
     } catch (error) {
-      console.error(`Failed to update submodel ${submodelId}:`, error);
       throw error;
     }
   }
@@ -494,18 +872,9 @@ class AasService {
    */
   async postSubmodel(submodelData) {
     try {
-      const result = await this.submodelClient.postSubmodel({
-        configuration: this.repositoryConfig,
-        submodel: submodelData
-      });
-      
-      if (result.success) {
-        return result.data || submodelData;
-      }
-      
-      throw new Error(result.error?.message || 'Failed to create submodel');
+      const normalizedSubmodel = this.normalizeSubmodel(submodelData);
+      return await this.postSubmodelRaw(normalizedSubmodel);
     } catch (error) {
-      console.error('Failed to create submodel:', error);
       throw error;
     }
   }
@@ -546,20 +915,19 @@ class AasService {
       return result;
     }
     
-    // Create new submodel
+    // Create new submodel using raw method for better error messages
     console.log(`Creating new submodel: ${submodelId}`);
     try {
-      const result = await this.submodelClient.postSubmodel({
-        configuration: this.repositoryConfig,
-        submodel: submodelData
-      });
+      // If submodel already has modelType, it's pre-normalized JSON - use as-is
+      // Otherwise normalize from SDK types to JSON
+      const submodelJson = submodelData.modelType === 'Submodel' 
+        ? submodelData 
+        : this.normalizeSubmodel(submodelData);
       
-      if (result.success) {
-        console.log(`Successfully created submodel: ${submodelId}`);
-        return result.data || submodelData;
-      }
-      
-      throw new Error(result.error?.message || 'Failed to create submodel');
+      console.log('Posting submodel JSON:', JSON.stringify(submodelJson, null, 2));
+      const result = await this.postSubmodelRaw(submodelJson);
+      console.log(`Successfully created submodel: ${submodelId}`);
+      return result;
     } catch (createError) {
       console.error(`Failed to create submodel ${submodelId}:`, createError);
       throw createError;
@@ -692,13 +1060,15 @@ class AasService {
 
   /**
    * Planar Table AAS and Parameters submodel IDs
+   * globalAssetId from registry: base64-encoded UUID format
    */
   get planarTableAssetId() {
-    return 'https://smartproductionlab.aau.dk/assets/planarTable';
+    // Correct globalAssetId from BaSyx registry (base64-encoded UUID)
+    return 'https://smartproductionlab.aau.dk/assets/ZTM1NTAzNzQtMDZkNi00N2Q4LWI1YTktMGNhMmY0MDEyNTk4';
   }
 
   get planarTableParametersSubmodelId() {
-    return 'https://smartproductionlab.aau.dk/submodels/instances/planarTable/Parameters';
+    return 'https://smartproductionlab.aau.dk/submodels/instances/planarTableAAS/Parameters';
   }
 
   /**
@@ -823,14 +1193,17 @@ class AasService {
     const baseUrl = 'https://smartproductionlab.aau.dk';
     const sanitizedFamily = productFamily ? productFamily.toLowerCase().replace(/\s+/g, '-') : 'unknown';
     const sanitizedProduct = productName ? productName.replace(/\s+/g, '') : 'unknown';
+    // idShort includes AAS suffix, used in submodel paths
+    const idShort = `products/${orderUuid}AAS`;
     return {
-      aasId: `${baseUrl}/aas/products/${orderUuid}`,
+      aasId: `${baseUrl}/aas/${idShort}`,
       assetId: this.generateGlobalAssetId(orderUuid),
       // AssetType uses ontology URL structure: role/category/specific-type/product
       assetType: `${baseUrl}/product/productFamily/${sanitizedFamily}/${sanitizedProduct}`,
-      batchInfoSubmodelId: `${baseUrl}/submodels/products/${orderUuid}/BatchInformation`,
-      requirementsSubmodelId: `${baseUrl}/submodels/products/${orderUuid}/Requirements`,
-      billOfMaterialsSubmodelId: `${baseUrl}/submodels/products/${orderUuid}/BillOfMaterials`
+      batchInfoSubmodelId: `${baseUrl}/submodels/instances/${idShort}/BatchInformation`,
+      requirementsSubmodelId: `${baseUrl}/submodels/instances/${idShort}/Requirements`,
+      billOfMaterialsSubmodelId: `${baseUrl}/submodels/instances/${idShort}/HierarchicalStructures`,
+      billOfProcessesSubmodelId: `${baseUrl}/submodels/instances/${idShort}/BillOfProcesses`
     };
   }
 
@@ -848,13 +1221,15 @@ class AasService {
     const batchInfoSubmodel = this.createBatchInformationSubmodel(batchData, ids.batchInfoSubmodelId);
     const requirementsSubmodel = this.createRequirementsSubmodel(batchData, ids.requirementsSubmodelId);
     const billOfMaterialsSubmodel = this.createBillOfMaterialsSubmodel(batchData, ids.billOfMaterialsSubmodelId);
+    const billOfProcessesSubmodel = this.createBillOfProcessesSubmodel(batchData, ids.billOfProcessesSubmodelId);
     
     return {
       ids,
       submodels: {
         batchInfo: batchInfoSubmodel,
         requirements: requirementsSubmodel,
-        billOfMaterials: billOfMaterialsSubmodel
+        billOfMaterials: billOfMaterialsSubmodel,
+        billOfProcesses: billOfProcessesSubmodel
       }
     };
   }
@@ -1009,7 +1384,7 @@ class AasService {
     );
     const archetypeProperty = this.createProperty('ArcheType', 'OneDown', DataTypeDefXsd.String, archetypeSemanticId);
     
-    // Create material entities based on packaging type
+    // Create material entities based on packaging type (as separate entities)
     const materialEntities = this.createMaterialEntities(batchData);
     
     // Create EntryNode for the product (IDTA 02011-1-1)
@@ -1020,17 +1395,19 @@ class AasService {
     
     const productFamily = batchData.productFamily || batchData.product;
     const productAssetId = this.getProductAasIds(batchData.Uuid, productFamily).assetId;
+    
+    // Product entity without nested children - relationships define the hierarchy
     const entryNode = this.createEntity(
       'Product',
       EntityType.SelfManagedEntity,
       productAssetId,
-      materialEntities,
+      [], // No nested statements - use relationships instead
       entryNodeSemanticId
     );
     
-    // Create relationships for bill of materials (HasPart naming convention)
+    // Create relationships for bill of materials using flat structure
     const relationships = materialEntities.map(material => {
-      return this.createBillOfMaterialsRelationship(
+      return this.createFlatBillOfMaterialsRelationship(
         `Has${material.idShort}`,
         submodelId,
         'Product',
@@ -1038,9 +1415,10 @@ class AasService {
       );
     });
     
-    const elements = [archetypeProperty, entryNode, ...relationships];
+    // All entities are direct children of submodel, relationships define hierarchy
+    const elements = [archetypeProperty, entryNode, ...materialEntities, ...relationships];
     
-    return this.createSubmodel(submodelId, 'BillOfMaterials', elements, semanticId);
+    return this.createSubmodel(submodelId, 'HierarchicalStructures', elements, semanticId, 'BillOfMaterials');
   }
 
   /**
@@ -1113,7 +1491,9 @@ class AasService {
    * Create relationship for bill of materials using IDTA 02011-1-1 HasPart semantic
    * HasPart: first = parent entity, second = child entity (parent has part child)
    */
-  createBillOfMaterialsRelationship(idShort, submodelId, parentId, childId) {
+  createBillOfMaterialsRelationship(idShort, submodelId, parentId, childId, aasId = null) {
+    // AASd-125 compliant: First key is AasIdentifiable (Submodel),
+    // subsequent keys are FragmentKeys (Entity)
     // First reference points to the parent entity
     const firstRef = this.createReference(
       ReferenceTypes.ModelReference,
@@ -1142,6 +1522,718 @@ class AasService {
     return this.createRelationshipElement(idShort, firstRef, secondRef, semanticId);
   }
 
+  // ========================================
+  // Bill of Processes Submodel (IDTA BoP pattern)
+  // Structure: BoP(SM) → Processes(SML) → Process(SMC) → Properties & nested SMCs
+  // ========================================
+
+  /**
+   * Standard semantic IDs from ECLASS and custom definitions
+   */
+  static BOP_SEMANTIC_IDS = {
+    // Submodel
+    BILL_OF_PROCESS: 'https://admin-shell.io/idta/BillOfProcess/1/0',
+    
+    // ECLASS property semantic IDs
+    DURATION: '0173-1#02-AAB381#003',           // Duration
+    VOLUME: '0173-1#02-AAB713#004',             // Volume
+    FLOW_RATE: '0173-1#02-AAK230#002',          // Flow rate
+    FORCE: '0173-1#02-AAB930#005',              // Force
+    TEMPERATURE: '0173-1#02-AAB048#003',        // Temperature
+    HUMIDITY: '0173-1#02-AAB046#003',           // Relative humidity
+    ACCURACY: '0173-1#02-AAI836#002',           // Accuracy
+    RESOLUTION: '0173-1#02-AAB991#004',         // Resolution
+    FREQUENCY: '0173-1#02-AAB942#004',          // Frequency
+    STANDARD_COMPLIANCE: '0173-1#02-AAQ325#001', // Standard compliance
+    
+    // ECLASS unit semantic IDs
+    UNIT_MILLILITRE: '0173-1#05-AAA689#002',
+    UNIT_CELSIUS: '0173-1#05-AAA567#002',
+    UNIT_SECOND: '0173-1#05-AAA153#002',
+    
+    // Custom capability semantic IDs
+    CAPABILITY_LOADING: 'https://smartproductionlab.aau.dk/Capability/Loading',
+    CAPABILITY_DISPENSING: 'https://smartproductionlab.aau.dk/Capability/Dispensing',
+    CAPABILITY_STOPPERING: 'https://smartproductionlab.aau.dk/Capability/Stoppering',
+    CAPABILITY_QC: 'https://smartproductionlab.aau.dk/Capability/QualityControl',
+    CAPABILITY_UNLOADING: 'https://smartproductionlab.aau.dk/Capability/Unloading',
+    CAPABILITY_WEIGHING: 'https://smartproductionlab.aau.dk/Capability/Weighing',
+    CAPABILITY_SCRAPING: 'https://smartproductionlab.aau.dk/Capability/Scraping'
+  };
+
+  /**
+   * Create Bill of Processes submodel
+   * @param {Object} batchData - Batch configuration data
+   * @param {string} submodelId - The submodel ID
+   * @returns {Object} The BillOfProcesses submodel - Pure JSON, no SDK types
+   */
+  createBillOfProcessesSubmodel(batchData, submodelId) {
+    // Create a simple Bill of Processes submodel using plain JSON
+    // This avoids SDK enum serialization issues
+    const fillVolume = this.extractFillVolume(batchData);
+    
+    // ECLASS and standard semantic IDs for physical quantities
+    const SEM = {
+      // Physical quantities (ECLASS)
+      FORCE: '0173-1#02-AAB930#005',
+      ACCURACY: '0173-1#02-AAI836#002',
+      VOLUME: '0173-1#02-AAB713#004',
+      FLOW_RATE: '0173-1#02-AAK230#002',
+      TEMPERATURE: '0173-1#02-AAB048#003',
+      SPEED: '0173-1#02-AAB966#004',
+      RESOLUTION: '0173-1#02-AAB991#004',
+      TIME: '0173-1#02-AAB381#003',
+      FREQUENCY: '0173-1#02-AAK299#003',
+      LENGTH: '0173-1#02-AAB001#006',
+      // Abstract Process types (semantic ID for Process SMC)
+      PROC_LOADING: 'https://smartproductionlab.aau.dk/Process/Loading',
+      PROC_DISPENSING: 'https://smartproductionlab.aau.dk/Process/Dispensing',
+      PROC_STOPPERING: 'https://smartproductionlab.aau.dk/Process/Stoppering',
+      PROC_INSPECTION: 'https://smartproductionlab.aau.dk/Process/Inspection',
+      PROC_UNLOADING: 'https://smartproductionlab.aau.dk/Process/Unloading',
+      // Capabilities (linked inside Process SMC)
+      CAP_LOADING: 'https://smartproductionlab.aau.dk/Capability/Loading',
+      CAP_DISPENSING: 'https://smartproductionlab.aau.dk/Capability/Dispensing',
+      CAP_STOPPERING: 'https://smartproductionlab.aau.dk/Capability/Stoppering',
+      CAP_QC: 'https://smartproductionlab.aau.dk/Capability/QualityControl',
+      CAP_UNLOADING: 'https://smartproductionlab.aau.dk/Capability/Unloading',
+      // Container semantic IDs
+      PROCESSES_LIST: 'https://smartproductionlab.aau.dk/Processes',
+      PROCESS: 'https://smartproductionlab.aau.dk/Process'
+    };
+
+    // UNECE unit codes for proper unit representation
+    const UNIT = {
+      NEWTON: 'N',           // Force
+      MILLIMETER: 'mm',      // Length
+      MILLILITER: 'mL',      // Volume (MLT)
+      ML_PER_SEC: 'mL/s',    // Flow rate
+      CELSIUS: '°C',         // Temperature (CEL)
+      MM_PER_SEC: 'mm/s',    // Speed
+      MEGAPIXEL: 'MP',       // Resolution
+      MILLISECOND: 'ms',     // Time
+      SECOND: 's',           // Time (SEC)
+      PERCENT: '%'           // Percentage (P1)
+    };
+
+    return {
+      modelType: 'Submodel',
+      id: submodelId,
+      idShort: 'BillOfProcesses',
+      kind: 'Instance',
+      semanticId: {
+        type: 'ExternalReference',
+        keys: [{ type: 'GlobalReference', value: 'https://admin-shell.io/idta/BillOfProcess/1/0' }]
+      },
+      submodelElements: [
+        {
+          modelType: 'SubmodelElementList',
+          idShort: 'Processes',
+          orderRelevant: true,
+          semanticId: {
+            type: 'ExternalReference',
+            keys: [{ type: 'GlobalReference', value: SEM.PROCESSES_LIST }]
+          },
+          semanticIdListElement: {
+            type: 'ExternalReference',
+            keys: [{ type: 'GlobalReference', value: SEM.PROCESS }]
+          },
+          typeValueListElement: 'SubmodelElementCollection',
+          value: [
+            // Process 1: Loading
+            this.createProcessSMC('Loading', SEM.PROC_LOADING, SEM.CAP_LOADING, 5.0, 
+              'Load empty primary container onto production shuttle', {
+              parameters: [
+                { name: 'GripForce', value: '10', unit: UNIT.NEWTON, type: 'xs:double', semanticId: SEM.FORCE }
+              ],
+              requirements: [
+                { 
+                  name: 'PositionAccuracy', 
+                  value: '0.5', 
+                  unit: UNIT.MILLIMETER, 
+                  type: 'xs:double', 
+                  semanticId: SEM.ACCURACY,
+                  assessment: { method: 'sensor', sensor: 'EncoderFeedback', standard: 'ISO 230-2' }
+                }
+              ]
+            }),
+            // Process 2: Dispensing
+            this.createProcessSMC('Dispensing', SEM.PROC_DISPENSING, SEM.CAP_DISPENSING, 8.0, 
+              `Dispense ${fillVolume}mL pharmaceutical product into container`, {
+              parameters: [
+                { name: 'FillVolume', value: String(fillVolume), unit: UNIT.MILLILITER, type: 'xs:double', semanticId: SEM.VOLUME },
+                { name: 'FlowRate', value: '1.0', unit: UNIT.ML_PER_SEC, type: 'xs:double', semanticId: SEM.FLOW_RATE },
+                { name: 'Temperature', value: '20', unit: UNIT.CELSIUS, type: 'xs:double', semanticId: SEM.TEMPERATURE }
+              ],
+              requirements: [
+                { 
+                  name: 'VolumeAccuracy', 
+                  value: '0.05', 
+                  unit: UNIT.MILLILITER, 
+                  type: 'xs:double', 
+                  semanticId: SEM.ACCURACY,
+                  assessment: { method: 'sensor', sensor: 'GravimetricBalance', standard: 'USP <1251>' }
+                },
+                { 
+                  name: 'Sterility', 
+                  value: 'compliant', 
+                  type: 'xs:string',
+                  assessment: { method: 'guideline', standard: 'ISO 13408-1', verification: 'EnvironmentalMonitoring' }
+                }
+              ]
+            }),
+            // Process 3: Stoppering
+            this.createProcessSMC('Stoppering', SEM.PROC_STOPPERING, SEM.CAP_STOPPERING, 3.0, 
+              'Insert elastomeric stopper to seal primary container', {
+              parameters: [
+                { name: 'InsertionForce', value: '50', unit: UNIT.NEWTON, type: 'xs:double', semanticId: SEM.FORCE },
+                { name: 'InsertionSpeed', value: '10', unit: UNIT.MM_PER_SEC, type: 'xs:double', semanticId: SEM.SPEED }
+              ],
+              requirements: [
+                { 
+                  name: 'SealIntegrity', 
+                  value: 'pass', 
+                  type: 'xs:string',
+                  assessment: { method: 'inspection', inspection: 'ContainerClosureIntegrity', standard: 'USP <1207>' }
+                },
+                { 
+                  name: 'InsertionForceMax', 
+                  value: '80', 
+                  unit: UNIT.NEWTON, 
+                  type: 'xs:double', 
+                  semanticId: SEM.FORCE,
+                  assessment: { method: 'sensor', sensor: 'ForceSensor', tolerance: '±10N' }
+                }
+              ]
+            }),
+            // Process 4: Inspection
+            this.createProcessSMC('Inspection', SEM.PROC_INSPECTION, SEM.CAP_QC, 2.0, 
+              'Automated visual inspection of filled and stoppered container', {
+              parameters: [
+                { name: 'CameraResolution', value: '5', unit: UNIT.MEGAPIXEL, type: 'xs:double', semanticId: SEM.RESOLUTION },
+                { name: 'ExposureTime', value: '10', unit: UNIT.MILLISECOND, type: 'xs:double', semanticId: SEM.TIME },
+                { name: 'FrameRate', value: '30', unit: 'fps', type: 'xs:int', semanticId: SEM.FREQUENCY }
+              ],
+              requirements: [
+                { 
+                  name: 'DefectDetectionSize', 
+                  value: '0.1', 
+                  unit: UNIT.MILLIMETER, 
+                  type: 'xs:double', 
+                  semanticId: SEM.LENGTH,
+                  assessment: { method: 'inspection', inspection: 'MachineVision', standard: 'ISO 21570' }
+                },
+                { 
+                  name: 'PassRate', 
+                  value: '99.5', 
+                  unit: UNIT.PERCENT, 
+                  type: 'xs:double',
+                  assessment: { method: 'statistical', verification: 'SPC', confidence: '95%' }
+                },
+                { 
+                  name: 'ParticulateMatter', 
+                  value: 'compliant', 
+                  type: 'xs:string',
+                  assessment: { method: 'guideline', standard: 'USP <788>', verification: 'VisualInspection' }
+                }
+              ]
+            }),
+            // Process 5: Unloading
+            this.createProcessSMC('Unloading', SEM.PROC_UNLOADING, SEM.CAP_UNLOADING, 4.0, 
+              'Transfer finished product from shuttle to output conveyor', {
+              parameters: [
+                { name: 'GripForce', value: '8', unit: UNIT.NEWTON, type: 'xs:double', semanticId: SEM.FORCE }
+              ],
+              requirements: [
+                { 
+                  name: 'PlacementAccuracy', 
+                  value: '1.0', 
+                  unit: UNIT.MILLIMETER, 
+                  type: 'xs:double', 
+                  semanticId: SEM.ACCURACY,
+                  assessment: { method: 'sensor', sensor: 'VisionSystem', standard: 'ISO 9283' }
+                }
+              ]
+            })
+          ]
+        }
+      ]
+    };
+  }
+
+  /**
+   * Create a Process SMC with semantic IDs and assessment criteria
+   * 
+   * NOTE: Per AASd-120 constraint, items in a SubmodelElementList must NOT have idShort.
+   * Instead, we use displayName (a valid Referable attribute) to identify the process.
+   * The semanticId on the collection identifies the process type.
+   * 
+   * @param {string} name - Process name (stored in displayName, NOT as idShort)
+   * @param {string} processSemanticId - Semantic ID for the abstract process type
+   * @param {string} capabilitySemanticId - Semantic ID for the required capability
+   * @param {number} duration - Estimated duration in seconds
+   * @param {string} description - Process description
+   * @param {Object} options - Parameters and requirements with semantic IDs
+   */
+  createProcessSMC(name, processSemanticId, capabilitySemanticId, duration, description, options = {}) {
+    const elements = [
+      {
+        modelType: 'Property',
+        idShort: 'Description',
+        valueType: 'xs:string',
+        value: description
+      },
+      {
+        modelType: 'Property',
+        idShort: 'EstimatedDuration',
+        valueType: 'xs:double',
+        value: String(duration),
+        semanticId: {
+          type: 'ExternalReference',
+          keys: [{ type: 'GlobalReference', value: '0173-1#02-AAB381#003' }]
+        },
+        qualifiers: [{ type: 'Unit', valueType: 'xs:string', value: 's' }]
+      },
+      {
+        modelType: 'ReferenceElement',
+        idShort: 'RequiredCapability',
+        value: {
+          type: 'ExternalReference',
+          keys: [{ type: 'GlobalReference', value: capabilitySemanticId }]
+        }
+      }
+    ];
+
+    // Add Parameters SMC if provided
+    if (options.parameters && options.parameters.length > 0) {
+      elements.push({
+        modelType: 'SubmodelElementCollection',
+        idShort: 'Parameters',
+        value: options.parameters.map(p => this.createParameterProperty(p))
+      });
+    }
+
+    // Add Requirements SMC if provided
+    if (options.requirements && options.requirements.length > 0) {
+      elements.push({
+        modelType: 'SubmodelElementCollection',
+        idShort: 'Requirements',
+        value: options.requirements.map(r => this.createRequirementSMC(r))
+      });
+    }
+
+    // AASd-120: Items in SubmodelElementList must NOT have idShort
+    // The process is identified by displayName (valid Referable attribute) and semanticId
+    return {
+      modelType: 'SubmodelElementCollection',
+      displayName: [{ language: 'en', text: name }],
+      semanticId: {
+        type: 'ExternalReference',
+        keys: [{ type: 'GlobalReference', value: processSemanticId }]
+      },
+      value: elements
+    };
+  }
+
+  /**
+   * Create a Parameter Property with semantic ID and unit
+   */
+  createParameterProperty(param) {
+    const prop = {
+      modelType: 'Property',
+      idShort: param.name,
+      valueType: param.type,
+      value: param.value
+    };
+
+    if (param.semanticId) {
+      prop.semanticId = {
+        type: 'ExternalReference',
+        keys: [{ type: 'GlobalReference', value: param.semanticId }]
+      };
+    }
+
+    if (param.unit) {
+      prop.qualifiers = [{ type: 'Unit', valueType: 'xs:string', value: param.unit }];
+    }
+
+    return prop;
+  }
+
+  /**
+   * Create a Requirement SMC with value, assessment criteria, and semantic ID
+   * Assessment can include: method, sensor, inspection, standard, verification, tolerance
+   */
+  createRequirementSMC(req) {
+    const elements = [
+      {
+        modelType: 'Property',
+        idShort: 'Value',
+        valueType: req.type,
+        value: req.value,
+        ...(req.unit ? { qualifiers: [{ type: 'Unit', valueType: 'xs:string', value: req.unit }] } : {}),
+        ...(req.semanticId ? {
+          semanticId: {
+            type: 'ExternalReference',
+            keys: [{ type: 'GlobalReference', value: req.semanticId }]
+          }
+        } : {})
+      }
+    ];
+
+    // Add assessment criteria if provided
+    if (req.assessment) {
+      const assessmentElements = [];
+      
+      // Assessment method (sensor, inspection, guideline, statistical)
+      if (req.assessment.method) {
+        assessmentElements.push({
+          modelType: 'Property',
+          idShort: 'Method',
+          valueType: 'xs:string',
+          value: req.assessment.method
+        });
+      }
+
+      // Sensor name for sensor-based assessment
+      if (req.assessment.sensor) {
+        assessmentElements.push({
+          modelType: 'Property',
+          idShort: 'Sensor',
+          valueType: 'xs:string',
+          value: req.assessment.sensor
+        });
+      }
+
+      // Inspection type for inspection-based assessment
+      if (req.assessment.inspection) {
+        assessmentElements.push({
+          modelType: 'Property',
+          idShort: 'InspectionType',
+          valueType: 'xs:string',
+          value: req.assessment.inspection
+        });
+      }
+
+      // Standard reference (ISO, USP, etc.)
+      if (req.assessment.standard) {
+        assessmentElements.push({
+          modelType: 'Property',
+          idShort: 'Standard',
+          valueType: 'xs:string',
+          value: req.assessment.standard
+        });
+      }
+
+      // Verification method
+      if (req.assessment.verification) {
+        assessmentElements.push({
+          modelType: 'Property',
+          idShort: 'Verification',
+          valueType: 'xs:string',
+          value: req.assessment.verification
+        });
+      }
+
+      // Tolerance specification
+      if (req.assessment.tolerance) {
+        assessmentElements.push({
+          modelType: 'Property',
+          idShort: 'Tolerance',
+          valueType: 'xs:string',
+          value: req.assessment.tolerance
+        });
+      }
+
+      // Confidence level for statistical methods
+      if (req.assessment.confidence) {
+        assessmentElements.push({
+          modelType: 'Property',
+          idShort: 'Confidence',
+          valueType: 'xs:string',
+          value: req.assessment.confidence
+        });
+      }
+
+      elements.push({
+        modelType: 'SubmodelElementCollection',
+        idShort: 'Assessment',
+        value: assessmentElements
+      });
+    }
+
+    return {
+      modelType: 'SubmodelElementCollection',
+      idShort: req.name,
+      ...(req.semanticId ? {
+        semanticId: {
+          type: 'ExternalReference',
+          keys: [{ type: 'GlobalReference', value: req.semanticId }]
+        }
+      } : {}),
+      value: elements
+    };
+  }
+
+  /**
+   * Extract fill volume from packaging string
+   * @param {Object} batchData - Batch data with packaging info
+   * @returns {number} Fill volume in mL
+   */
+  extractFillVolume(batchData) {
+    const packaging = batchData.packaging || '';
+    const match = packaging.match(/(\d+(?:\.\d+)?)\s*mL/i);
+    return match ? parseFloat(match[1]) : 3.0; // Default to 3mL
+  }
+
+  /**
+   * Create a Process SubmodelElementCollection
+   * @param {Object} processConfig - Process configuration
+   * @returns {Object} Process SMC
+   */
+  createProcessElement(processConfig) {
+    const elements = [];
+
+    // Capability reference (semantic ID)
+    const capabilitySemanticId = this.createReference(
+      ReferenceTypes.ExternalReference,
+      [this.createKey(KeyTypes.GlobalReference, processConfig.semanticId)]
+    );
+
+    // Description property
+    elements.push(this.createProperty(
+      'Description',
+      processConfig.description,
+      DataTypeDefXsd.String,
+      this.createReference(ReferenceTypes.ExternalReference,
+        [this.createKey(KeyTypes.GlobalReference, 'https://admin-shell.io/aas/3/0/Description')]
+      )
+    ));
+
+    // Sequence number property
+    elements.push(this.createProperty(
+      'SequenceNumber',
+      processConfig.sequenceNumber,
+      DataTypeDefXsd.Int,
+      this.createReference(ReferenceTypes.ExternalReference,
+        [this.createKey(KeyTypes.GlobalReference, 'https://admin-shell.io/idta/BillOfProcess/1/0/SequenceNumber')]
+      )
+    ));
+
+    // Estimated duration with unit qualifier
+    if (processConfig.estimatedDuration) {
+      const durationProp = this.createPropertyWithUnit(
+        'EstimatedDuration',
+        processConfig.estimatedDuration.value,
+        DataTypeDefXsd.Double,
+        processConfig.estimatedDuration.unit,
+        this.createReference(ReferenceTypes.ExternalReference,
+          [this.createKey(KeyTypes.GlobalReference, AasService.BOP_SEMANTIC_IDS.DURATION)]
+        )
+      );
+      elements.push(durationProp);
+    }
+
+    // Parameters SMC (optional)
+    if (processConfig.parameters && processConfig.parameters.length > 0) {
+      const paramElements = processConfig.parameters.map(param => this.createParameterElement(param));
+      const paramsSMC = this.createSubmodelElementCollection(
+        'Parameters',
+        paramElements,
+        this.createReference(ReferenceTypes.ExternalReference,
+          [this.createKey(KeyTypes.GlobalReference, 'https://admin-shell.io/idta/BillOfProcess/1/0/Parameters')]
+        )
+      );
+      elements.push(paramsSMC);
+    }
+
+    // Requirements SMC (optional)
+    if (processConfig.requirements && processConfig.requirements.length > 0) {
+      const reqElements = processConfig.requirements.map(req => this.createRequirementElement(req));
+      const reqsSMC = this.createSubmodelElementCollection(
+        'Requirements',
+        reqElements,
+        this.createReference(ReferenceTypes.ExternalReference,
+          [this.createKey(KeyTypes.GlobalReference, 'https://admin-shell.io/idta/BillOfProcess/1/0/Requirements')]
+        )
+      );
+      elements.push(reqsSMC);
+    }
+
+    // Create the Process SMC with semantic ID referencing capability
+    return this.createSubmodelElementCollection(
+      processConfig.idShort,
+      elements,
+      capabilitySemanticId
+    );
+  }
+
+  /**
+   * Create a Parameter SubmodelElementCollection
+   * @param {Object} paramConfig - Parameter configuration
+   * @returns {Object} Parameter SMC
+   */
+  createParameterElement(paramConfig) {
+    const elements = [];
+    const paramSemanticId = this.createReference(
+      ReferenceTypes.ExternalReference,
+      [this.createKey(KeyTypes.GlobalReference, paramConfig.semanticId)]
+    );
+
+    // Description
+    elements.push(this.createProperty(
+      'Description',
+      paramConfig.description,
+      DataTypeDefXsd.String
+    ));
+
+    // Value with appropriate type
+    const valueType = this.xsdStringToDataType(paramConfig.valueType || 'xs:double');
+    elements.push(this.createPropertyWithUnit(
+      'Value',
+      paramConfig.value,
+      valueType,
+      paramConfig.unit,
+      paramSemanticId
+    ));
+
+    return this.createSubmodelElementCollection(
+      paramConfig.idShort,
+      elements,
+      paramSemanticId
+    );
+  }
+
+  /**
+   * Create a Requirement SubmodelElementCollection
+   * Supports both simple value requirements and tolerance-based requirements
+   * @param {Object} reqConfig - Requirement configuration
+   * @returns {Object} Requirement SMC
+   */
+  createRequirementElement(reqConfig) {
+    const elements = [];
+    const reqSemanticId = this.createReference(
+      ReferenceTypes.ExternalReference,
+      [this.createKey(KeyTypes.GlobalReference, reqConfig.semanticId)]
+    );
+
+    // Description
+    elements.push(this.createProperty(
+      'Description',
+      reqConfig.description,
+      DataTypeDefXsd.String
+    ));
+
+    // For tolerance-based requirements
+    if (reqConfig.nominalValue !== undefined) {
+      const valueType = this.xsdStringToDataType(reqConfig.valueType || 'xs:double');
+      
+      elements.push(this.createPropertyWithUnit(
+        'NominalValue',
+        reqConfig.nominalValue,
+        valueType,
+        reqConfig.unit,
+        this.createReference(ReferenceTypes.ExternalReference,
+          [this.createKey(KeyTypes.GlobalReference, '0173-1#02-AAM955#002')] // ECLASS: Nominal value
+        )
+      ));
+
+      elements.push(this.createPropertyWithUnit(
+        'Tolerance',
+        reqConfig.tolerance,
+        valueType,
+        reqConfig.unit,
+        this.createReference(ReferenceTypes.ExternalReference,
+          [this.createKey(KeyTypes.GlobalReference, '0173-1#02-AAI023#002')] // ECLASS: Tolerance
+        )
+      ));
+
+      elements.push(this.createProperty(
+        'ToleranceType',
+        reqConfig.toleranceType || 'absolute',
+        DataTypeDefXsd.String,
+        this.createReference(ReferenceTypes.ExternalReference,
+          [this.createKey(KeyTypes.GlobalReference, 'https://admin-shell.io/idta/BillOfProcess/1/0/ToleranceType')]
+        )
+      ));
+    }
+    // For simple value requirements (e.g., compliance standards)
+    else if (reqConfig.value !== undefined) {
+      const valueType = this.xsdStringToDataType(reqConfig.valueType || 'xs:string');
+      elements.push(this.createProperty(
+        'Value',
+        reqConfig.value,
+        valueType,
+        reqSemanticId
+      ));
+
+      if (reqConfig.complianceType) {
+        elements.push(this.createProperty(
+          'ComplianceType',
+          reqConfig.complianceType,
+          DataTypeDefXsd.String,
+          this.createReference(ReferenceTypes.ExternalReference,
+            [this.createKey(KeyTypes.GlobalReference, 'https://admin-shell.io/idta/BillOfProcess/1/0/ComplianceType')]
+          )
+        ));
+      }
+    }
+
+    return this.createSubmodelElementCollection(
+      reqConfig.idShort,
+      elements,
+      reqSemanticId
+    );
+  }
+
+  /**
+   * Create a Property with Unit qualifier
+   * @param {string} idShort - Property ID
+   * @param {any} value - Property value
+   * @param {DataTypeDefXsd} valueType - XSD data type
+   * @param {string} unit - Unit string
+   * @param {Object} semanticId - Semantic ID reference
+   * @returns {Object} Property with unit qualifier
+   */
+  createPropertyWithUnit(idShort, value, valueType, unit, semanticId = null) {
+    const prop = this.createProperty(idShort, value, valueType, semanticId);
+    
+    // Add unit qualifier
+    if (unit) {
+      prop.qualifiers = [
+        {
+          type: 'Unit',
+          valueType: 'xs:string',
+          value: unit,
+          semanticId: this.createReference(ReferenceTypes.ExternalReference,
+            [this.createKey(KeyTypes.GlobalReference, 'https://admin-shell.io/aas/3/0/Qualifier/Unit')]
+          )
+        }
+      ];
+    }
+    
+    return prop;
+  }
+
+  /**
+   * Convert XSD type string to DataTypeDefXsd enum
+   * @param {string} xsdString - XSD type string (e.g., 'xs:double')
+   * @returns {DataTypeDefXsd} Enum value
+   */
+  xsdStringToDataType(xsdString) {
+    const mapping = {
+      'xs:string': DataTypeDefXsd.String,
+      'xs:double': DataTypeDefXsd.Double,
+      'xs:float': DataTypeDefXsd.Float,
+      'xs:int': DataTypeDefXsd.Int,
+      'xs:integer': DataTypeDefXsd.Int,
+      'xs:boolean': DataTypeDefXsd.Boolean,
+      'xs:dateTime': DataTypeDefXsd.DateTime,
+      'xs:long': DataTypeDefXsd.Long
+    };
+    return mapping[xsdString] || DataTypeDefXsd.String;
+  }
+
   /**
    * Save a complete Product AAS to the server
    * @param {Object} batchData - The batch configuration data
@@ -1156,6 +2248,7 @@ class AasService {
       await this.saveOrUpdateSubmodel(ids.batchInfoSubmodelId, submodels.batchInfo);
       await this.saveOrUpdateSubmodel(ids.requirementsSubmodelId, submodels.requirements);
       await this.saveOrUpdateSubmodel(ids.billOfMaterialsSubmodelId, submodels.billOfMaterials);
+      await this.saveOrUpdateSubmodel(ids.billOfProcessesSubmodelId, submodels.billOfProcesses);
       
       // Create the AAS shell with submodel references
       const aasShell = this.createProductAasShell(batchData, ids);
@@ -1206,6 +2299,10 @@ class AasService {
       this.createReference(
         ReferenceTypes.ModelReference,
         [this.createKey(KeyTypes.Submodel, ids.billOfMaterialsSubmodelId)]
+      ),
+      this.createReference(
+        ReferenceTypes.ModelReference,
+        [this.createKey(KeyTypes.Submodel, ids.billOfProcessesSubmodelId)]
       )
     ];
     
@@ -1391,16 +2488,21 @@ class AasService {
     const baseUrl = 'https://smartproductionlab.aau.dk';
     const sanitizedName = productName.replace(/\s+/g, '');
     const sanitizedFamily = productFamily ? productFamily.toLowerCase().replace(/\s+/g, '-') : 'unknown';
-    // Use batch UUID for unique asset ID, or generate placeholder if not provided
-    const assetId = batchUuid ? this.generateGlobalAssetId(batchUuid) : `${baseUrl}/assets/${sanitizedName.toLowerCase()}`;
+    // Use batch UUID for unique asset ID, or generate a new UUID if not provided
+    const assetId = batchUuid 
+      ? this.generateGlobalAssetId(batchUuid) 
+      : this.generateGlobalAssetId(crypto.randomUUID());
+    // idShort includes AAS suffix, used in submodel paths
+    const idShort = `${sanitizedName}AAS`;
     return {
-      aasId: `${baseUrl}/aas/${sanitizedName}AAS`,
+      aasId: `${baseUrl}/aas/${idShort}`,
       assetId,
       // AssetType uses ontology URL structure: role/category/specific-type/product
       assetType: `${baseUrl}/product/productFamily/${sanitizedFamily}/${sanitizedName}`,
-      batchInfoSubmodelId: `${baseUrl}/submodels/instances/${sanitizedName}/BatchInformation`,
-      requirementsSubmodelId: `${baseUrl}/submodels/instances/${sanitizedName}/Requirements`,
-      billOfMaterialsSubmodelId: `${baseUrl}/submodels/instances/${sanitizedName}/BillOfMaterials`
+      batchInfoSubmodelId: `${baseUrl}/submodels/instances/${idShort}/BatchInformation`,
+      requirementsSubmodelId: `${baseUrl}/submodels/instances/${idShort}/Requirements`,
+      billOfMaterialsSubmodelId: `${baseUrl}/submodels/instances/${idShort}/HierarchicalStructures`,
+      billOfProcessesSubmodelId: `${baseUrl}/submodels/instances/${idShort}/BillOfProcesses`
     };
   }
 
@@ -1425,11 +2527,13 @@ class AasService {
       const batchInfoSubmodel = this.createBatchInformationSubmodel(batchData, ids.batchInfoSubmodelId);
       const requirementsSubmodel = this.createRequirementsSubmodel(batchData, ids.requirementsSubmodelId);
       const billOfMaterialsSubmodel = this.createActiveBillOfMaterialsSubmodel(batchData, ids);
+      const billOfProcessesSubmodel = this.createBillOfProcessesSubmodel(batchData, ids.billOfProcessesSubmodelId);
       
       // Save each submodel to the repository (create or update)
       await this.saveOrUpdateSubmodel(ids.batchInfoSubmodelId, batchInfoSubmodel);
       await this.saveOrUpdateSubmodel(ids.requirementsSubmodelId, requirementsSubmodel);
       await this.saveOrUpdateSubmodel(ids.billOfMaterialsSubmodelId, billOfMaterialsSubmodel);
+      await this.saveOrUpdateSubmodel(ids.billOfProcessesSubmodelId, billOfProcessesSubmodel);
       
       // Create the AAS shell with submodel references
       const aasShell = this.createProductAasShell(batchData, ids);
@@ -1469,26 +2573,28 @@ class AasService {
     );
     const archetypeProperty = this.createProperty('ArcheType', 'OneDown', DataTypeDefXsd.String, archetypeSemanticId);
     
-    // Create material entities based on packaging type
+    // Create material entities based on packaging type (as separate entities, not nested)
     const materialEntities = this.createMaterialEntities(batchData);
     
-    // Create EntryNode for the product (IDTA 02011-1-1)
+    // Create EntryNode for the product (IDTA 02011-1-1) - without nested materials
     const entryNodeSemanticId = this.createReference(
       ReferenceTypes.ExternalReference,
       [this.createKey(KeyTypes.GlobalReference, 'https://admin-shell.io/idta/HierarchicalStructures/EntryNode/1/0')]
     );
     
+    // Product entity without nested children - relationships define the hierarchy
     const entryNode = this.createEntity(
       'Product',
       EntityType.SelfManagedEntity,
       ids.assetId,
-      materialEntities,
+      [], // No nested statements - use relationships instead
       entryNodeSemanticId
     );
     
     // Create relationships for bill of materials (HasPart naming convention)
+    // In flat structure, both parent and child are direct submodel elements
     const relationships = materialEntities.map(material => {
-      return this.createBillOfMaterialsRelationship(
+      return this.createFlatBillOfMaterialsRelationship(
         `Has${material.idShort}`,
         submodelId,
         'Product',
@@ -1496,9 +2602,42 @@ class AasService {
       );
     });
     
-    const elements = [archetypeProperty, entryNode, ...relationships];
+    // All entities are direct children of submodel, relationships define hierarchy
+    const elements = [archetypeProperty, entryNode, ...materialEntities, ...relationships];
     
-    return this.createSubmodel(submodelId, 'BillOfMaterials', elements, semanticId);
+    return this.createSubmodel(submodelId, 'HierarchicalStructures', elements, semanticId, 'BillOfMaterials');
+  }
+
+  /**
+   * Create relationship for flat bill of materials structure
+   * Both parent and child are direct submodel elements, referenced by idPath
+   */
+  createFlatBillOfMaterialsRelationship(idShort, submodelId, parentIdShort, childIdShort) {
+    // First reference points to the parent entity
+    const firstRef = this.createReference(
+      ReferenceTypes.ModelReference,
+      [
+        this.createKey(KeyTypes.Submodel, submodelId),
+        this.createKey(KeyTypes.Entity, parentIdShort)
+      ]
+    );
+    
+    // Second reference points to the child entity (sibling in submodel)
+    const secondRef = this.createReference(
+      ReferenceTypes.ModelReference,
+      [
+        this.createKey(KeyTypes.Submodel, submodelId),
+        this.createKey(KeyTypes.Entity, childIdShort)
+      ]
+    );
+    
+    // Use official IDTA 02011-1-1 HasPart semantic ID
+    const semanticId = this.createReference(
+      ReferenceTypes.ExternalReference,
+      [this.createKey(KeyTypes.GlobalReference, 'https://admin-shell.io/idta/HierarchicalStructures/HasPart/1/0')]
+    );
+    
+    return this.createRelationshipElement(idShort, firstRef, secondRef, semanticId);
   }
 
   /**
@@ -1594,7 +2733,9 @@ class AasService {
    * Create a Property using SDK types
    */
   createProperty(idShort, value, valueType = DataTypeDefXsd.String, semanticId = null) {
-    return new Property(
+    const stringValue = value?.toString() || '';
+    
+    const prop = new Property(
       valueType,
       null,  // extensions
       null,  // category
@@ -1605,8 +2746,13 @@ class AasService {
       null,  // supplementalSemanticIds
       null,  // qualifiers
       null,  // embeddedDataSpecifications
-      value?.toString() || ''
+      null   // value - set to null initially
     );
+    
+    // Explicitly set the value property after construction
+    prop.value = stringValue;
+    
+    return prop;
   }
 
   /**
@@ -1630,7 +2776,7 @@ class AasService {
   /**
    * Create a ReferenceElement using SDK types
    */
-  createReferenceElement(idShort, reference, semanticId = null) {
+  createReferenceElement(idShort, reference, semanticId = null, supplementalSemanticIds = null) {
     return new ReferenceElement(
       null,  // extensions
       null,  // category
@@ -1638,7 +2784,7 @@ class AasService {
       null,  // displayName
       null,  // description
       semanticId,
-      null,  // supplementalSemanticIds
+      supplementalSemanticIds,
       null,  // qualifiers
       null,  // embeddedDataSpecifications
       reference
@@ -1649,6 +2795,9 @@ class AasService {
    * Create an Entity using SDK types
    */
   createEntity(idShort, entityType, globalAssetId, statements, semanticId = null, specificAssetId = null) {
+    // Pass null instead of empty arrays for statements (AAS server requirement)
+    const statementsToUse = (statements && statements.length > 0) ? statements : null;
+    
     return new Entity(
       entityType,
       null,  // extensions
@@ -1660,7 +2809,7 @@ class AasService {
       null,  // supplementalSemanticIds
       null,  // qualifiers
       null,  // embeddedDataSpecifications
-      statements,
+      statementsToUse,
       globalAssetId,
       specificAssetId ? [specificAssetId] : null   // specificAssetIds
     );
@@ -1687,14 +2836,29 @@ class AasService {
 
   /**
    * Create a Submodel using SDK types
+   * @param {string} id - The submodel ID
+   * @param {string} idShort - The short identifier
+   * @param {Array} elements - The submodel elements
+   * @param {Object} semanticId - Optional semantic ID reference
+   * @param {string|Array} displayName - Optional display name (string or LangStringSet array)
    */
-  createSubmodel(id, idShort, elements, semanticId = null) {
+  createSubmodel(id, idShort, elements, semanticId = null, displayName = null) {
+    // Convert string displayName to LangStringSet format if needed
+    let displayNameSet = null;
+    if (displayName) {
+      if (typeof displayName === 'string') {
+        displayNameSet = [{ language: 'en', text: displayName }];
+      } else {
+        displayNameSet = displayName;
+      }
+    }
+    
     return new Submodel(
       id,
       null,  // extensions
       null,  // category
       idShort,
-      null,  // displayName
+      displayNameSet,  // displayName
       null,  // description
       null,  // administration
       ModellingKind.Instance,
@@ -1747,7 +2911,7 @@ class AasService {
   /**
    * Create an Entity node for a station
    */
-  createEntityNode(idShort, globalAssetId, x, y, yaw = 0, instanceSubmodelId = null) {
+  createEntityNode(idShort, globalAssetId, x, y, yaw = 0, instanceSubmodelId = null, instanceAasId = null) {
     // Create Location collection with x, y, yaw properties
     const locationSemanticId = this.createReference(
       ReferenceTypes.ExternalReference,
@@ -1770,16 +2934,30 @@ class AasService {
         ReferenceTypes.ExternalReference,
         [this.createKey(KeyTypes.GlobalReference, 'https://admin-shell.io/idta/HierarchicalStructures/SameAs/1/0')]
       );
-      
-      const sameAsReference = this.createReference(
-        ReferenceTypes.ModelReference,
-        [
-          this.createKey(KeyTypes.Submodel, instanceSubmodelId),
-          this.createKey(KeyTypes.Entity, 'EntryNode')
-        ]
+
+      const entryNodeSemanticId = this.createReference(
+        ReferenceTypes.ExternalReference,
+        [this.createKey(KeyTypes.GlobalReference, 'https://admin-shell.io/idta/HierarchicalStructures/EntryNode/1/0')]
       );
       
-      const sameAsElement = this.createReferenceElement('SameAs', sameAsReference, sameAsSemanticId);
+      // AASd-125 compliant: First key is AasIdentifiable (Submodel),
+      // subsequent keys are FragmentKeys (Entity)
+      const sameAsKeys = [
+        this.createKey(KeyTypes.Submodel, instanceSubmodelId),
+        this.createKey(KeyTypes.Entity, 'EntryNode')
+      ];
+
+      const sameAsReference = this.createReference(
+        ReferenceTypes.ModelReference,
+        sameAsKeys
+      );
+      
+      const sameAsElement = this.createReferenceElement(
+        'SameAs',
+        sameAsReference,
+        sameAsSemanticId,
+        [entryNodeSemanticId]
+      );
       statements.push(sameAsElement);
     }
     
@@ -1806,6 +2984,8 @@ class AasService {
   createRelationshipElementForHierarchy(idShort, parentNodeId, childNodeId) {
     const submodelId = this.rootSubmodelId;
     
+    // AASd-125 compliant: First key is AasIdentifiable (Submodel),
+    // subsequent keys are FragmentKeys (Entity)
     const firstRef = this.createReference(
       ReferenceTypes.ModelReference,
       [
@@ -1832,9 +3012,23 @@ class AasService {
     return this.createRelationshipElement(idShort, firstRef, secondRef, semanticId);
   }
 
-  transformLayoutDataToHierarchicalStructures(layoutData) {
+  async transformLayoutDataToHierarchicalStructures(layoutData) {
     const submodelId = this.rootSubmodelId;
-    const rootAssetId = 'https://smartproductionlab.aau.dk/assets/aauFillingLine';
+    const rootAssetId = 'https://smartproductionlab.aau.dk/assets/MWQ2ODY5ZDEtZTQ3Yy00NWU4LTlmYTAtNTI3YjVlMDk4MWFi';
+    
+    // Build globalAssetId lookup from registry shell descriptors
+    const assetIdLookup = await this.buildGlobalAssetIdLookup();
+    
+    // Create the PlanarTable entity as a default child (always included)
+    const planarTableEntity = this.createEntityNode(
+      'PlanarTable',
+      this.planarTableAssetId,
+      0, // x position (center of table)
+      0, // y position (center of table)
+      0, // yaw
+      this.planarTableHierarchicalStructuresId,
+      this.planarTableAasId
+    );
     
     // Build child entities from stations
     const childEntities = layoutData.Stations.map(station => {
@@ -1842,23 +3036,50 @@ class AasService {
       const assetType = station['AssetType'];
       const genericName = this.getGenericName(assetType, instanceName);
       
-      const globalAssetId = station['AssetId'] || 
-        `https://smartproductionlab.aau.dk/assets/${genericName.toLowerCase()}`;
+      // Lookup globalAssetId from registry: first try explicit AssetId, then AasId lookup, then idShort lookup
+      const instanceAasId = station['AasId'] || null;
+      let globalAssetId = station['AssetId'];
+      
+      if (!globalAssetId && instanceAasId) {
+        // Try to find globalAssetId by AAS ID from registry
+        globalAssetId = assetIdLookup.byId[instanceAasId];
+      }
+      if (!globalAssetId) {
+        // Try to find globalAssetId by idShort (station name) from registry
+        globalAssetId = assetIdLookup.byIdShort[genericName] || 
+                        assetIdLookup.byIdShort[`${genericName}AAS`];
+      }
+      if (!globalAssetId) {
+        // Final fallback: generate a new UUID-based asset ID for consistency
+        console.warn(`No globalAssetId found in registry for station ${genericName}, generating new UUID`);
+        globalAssetId = this.generateGlobalAssetId(crypto.randomUUID());
+      }
+      
       const instanceSubmodelId = station['SubmodelId'];
       
-      const approachPos = station["Approach Position"] || [0, 0, 0];
-      const xMM = Array.isArray(approachPos) ? approachPos[0] : 0;
-      const yMM = Array.isArray(approachPos) ? approachPos[1] : 0;
-      const yaw = Array.isArray(approachPos) ? approachPos[2] : 0;
+      const processPos = station["Process Position"] || [0, 0, 0];
+      const xMM = Array.isArray(processPos) ? processPos[0] : 0;
+      const yMM = Array.isArray(processPos) ? processPos[1] : 0;
+      const yaw = Array.isArray(processPos) ? processPos[2] : 0;
+      //const assetType = station["AssetType"] || 'unknown';
       
-      return this.createEntityNode(genericName, globalAssetId, xMM, yMM, yaw, instanceSubmodelId);
+      console.log(`[AAS Transform] ${genericName}: assetType="${assetType}", position=[${xMM}, ${yMM}, ${yaw}]`);
+      
+      return this.createEntityNode(genericName, globalAssetId, xMM, yMM, yaw, instanceSubmodelId, instanceAasId);
     });
     
-    // Build relationships
-    const relationships = layoutData.Stations.map(station => {
+    // Add planarTable as the first child entity (always included by default)
+    const allChildEntities = [planarTableEntity, ...childEntities];
+    
+    // Build relationships - include planarTable relationship first
+    const planarTableRelationship = this.createRelationshipElementForHierarchy('HasPlanarTable', 'EntryNode', 'PlanarTable');
+    
+    const stationRelationships = layoutData.Stations.map(station => {
       const genericName = this.getGenericName(station['AssetType'], station['Instance Name']);
       return this.createRelationshipElementForHierarchy(`Has${genericName}`, 'EntryNode', genericName);
     });
+    
+    const relationships = [planarTableRelationship, ...stationRelationships];
     
     // Create ArcheType property (IDTA 02011-1-1 uses "ArcheType" spelling)
     const archetypeSemanticId = this.createReference(
@@ -1872,7 +3093,7 @@ class AasService {
       ReferenceTypes.ExternalReference,
       [this.createKey(KeyTypes.GlobalReference, 'https://admin-shell.io/idta/HierarchicalStructures/EntryNode/1/0')]
     );
-    const entryNode = this.createEntity('EntryNode', EntityType.SelfManagedEntity, rootAssetId, childEntities, entryNodeSemanticId);
+    const entryNode = this.createEntity('EntryNode', EntityType.SelfManagedEntity, rootAssetId, allChildEntities, entryNodeSemanticId);
     
     // Create the Submodel with official IDTA 02011-1-1 semantic ID
     const submodelSemanticId = this.createReference(
@@ -1882,7 +3103,7 @@ class AasService {
     
     const submodelElements = [archetypeProperty, entryNode, ...relationships];
     
-    return this.createSubmodel(submodelId, 'HierarchicalStructures', submodelElements, submodelSemanticId);
+    return this.createSubmodel(submodelId, 'HierarchicalStructures', submodelElements, submodelSemanticId, 'BillOfMaterials');
   }
 
   transformHierarchicalStructuresToLayoutData(hierarchicalStructures, moduleCatalog) {
@@ -1935,6 +3156,7 @@ class AasService {
           );
           
           const submodelId = sameAsRef?.value?.keys?.find(k => k.type === 'Submodel')?.value || null;
+          const aasId = sameAsRef?.value?.keys?.find(k => k.type === 'AssetAdministrationShell')?.value || null;
           
           // Get asset ID (either globalAssetId or from specificAssetId)
           let assetId = entity.globalAssetId;
@@ -1954,7 +3176,7 @@ class AasService {
             Name: entity.idShort,
             'Instance Name': module?.name || entity.idShort,
             StationId: index,
-            AasId: assetId,
+            AasId: aasId || assetId,
             AssetType: module?.assetType || entity.idShort,
             SubmodelId: submodelId,
             'Approach Position': approachPosition,

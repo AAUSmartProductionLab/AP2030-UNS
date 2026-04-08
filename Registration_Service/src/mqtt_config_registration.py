@@ -32,8 +32,7 @@ class MQTTConfigRegistrationService:
                  registration_service: UnifiedRegistrationService,
                  mqtt_broker: str = "192.168.0.104",
                  mqtt_port: int = 1883,
-                 config_topic: str = "NN/Nybrovej/InnoLab/+/Registration/Config",
-                 legacy_topic: str = "NN/Nybrovej/InnoLab/+/Registration/Request",
+                 config_topic: str = "NN/Nybrovej/InnoLab/Registration/Config",
                  response_topic: str = "NN/Nybrovej/InnoLab/Registration/Response",
                  client_id: str = "unified-registration-service"):
         """
@@ -43,8 +42,7 @@ class MQTTConfigRegistrationService:
             registration_service: UnifiedRegistrationService instance
             mqtt_broker: MQTT broker hostname/IP
             mqtt_port: MQTT broker port
-            config_topic: Topic pattern for YAML config registration (supports + wildcard)
-            legacy_topic: Topic pattern for legacy AAS JSON registration (supports + wildcard)
+            config_topic: Topic for YAML config registration
             response_topic: Topic for registration responses
             client_id: MQTT client ID
         """
@@ -52,7 +50,6 @@ class MQTTConfigRegistrationService:
         self.mqtt_broker = mqtt_broker
         self.mqtt_port = mqtt_port
         self.config_topic = config_topic
-        self.legacy_topic = legacy_topic
         self.response_topic = response_topic
         self.client_id = client_id
 
@@ -69,12 +66,20 @@ class MQTTConfigRegistrationService:
         # Lock for service operations
         self.service_lock = threading.Lock()
 
+        # Batch processing configuration
+        # Wait this long after last message before restarting databridge
+        self.batch_debounce_seconds = 2.0
+        # Track when we need to restart databridge
+        self._pending_databridge_restart = False
+        self._last_registration_time = 0.0
+        self._batch_processed_count = 0
+
         # Statistics
         self.stats = {
             'config_received': 0,
-            'legacy_received': 0,
             'processed': 0,
-            'failed': 0
+            'failed': 0,
+            'databridge_restarts': 0
         }
 
     def start(self):
@@ -97,7 +102,6 @@ class MQTTConfigRegistrationService:
         logger.info(
             f"MQTT registration service started on {self.mqtt_broker}:{self.mqtt_port}")
         logger.info(f"Config topic: {self.config_topic}")
-        logger.info(f"Legacy topic: {self.legacy_topic}")
 
     def stop(self):
         """Stop MQTT listener and worker thread"""
@@ -142,11 +146,9 @@ class MQTTConfigRegistrationService:
         """Callback when connected to MQTT broker"""
         if reason_code == 0:
             logger.info("Connected to MQTT broker")
-            # Subscribe to both topics
+            # Subscribe to config topic
             client.subscribe(self.config_topic, qos=2)
-            client.subscribe(self.legacy_topic, qos=2)
-            logger.info(
-                f"Subscribed to: {self.config_topic}, {self.legacy_topic}")
+            logger.info(f"Subscribed to: {self.config_topic}")
         else:
             logger.error(f"Failed to connect: {reason_code}")
 
@@ -155,44 +157,16 @@ class MQTTConfigRegistrationService:
         if reason_code != 0:
             logger.warning(f"Unexpected disconnect: {reason_code}")
 
-    def _topic_matches_pattern(self, topic: str, pattern: str) -> bool:
-        """
-        Check if a topic matches an MQTT pattern with + wildcard.
-
-        Args:
-            topic: The actual topic received
-            pattern: The pattern with potential + wildcards
-
-        Returns:
-            True if topic matches pattern
-        """
-        topic_parts = topic.split('/')
-        pattern_parts = pattern.split('/')
-
-        if len(topic_parts) != len(pattern_parts):
-            return False
-
-        for topic_part, pattern_part in zip(topic_parts, pattern_parts):
-            if pattern_part == '+':
-                continue  # Single-level wildcard matches any single level
-            if topic_part != pattern_part:
-                return False
-
-        return True
-
     def _on_message(self, client, userdata, msg):
         """Handle incoming MQTT messages"""
         try:
             topic = msg.topic
             payload_str = msg.payload.decode('utf-8')
 
-            # Determine message type based on topic pattern matching
-            if self._topic_matches_pattern(topic, self.config_topic):
+            # Handle config registration messages
+            if topic == self.config_topic:
                 self.stats['config_received'] += 1
                 self._handle_config_message(payload_str)
-            elif self._topic_matches_pattern(topic, self.legacy_topic):
-                self.stats['legacy_received'] += 1
-                self._handle_legacy_message(payload_str)
             else:
                 logger.warning(f"Unknown topic: {topic}")
 
@@ -317,15 +291,25 @@ class MQTTConfigRegistrationService:
             self.stats['failed'] += 1
 
     def _worker_loop(self):
-        """Worker thread that processes registration queue"""
-        logger.info("Registration worker started")
+        """
+        Worker thread that processes registration queue with batch optimization.
+
+        Instead of restarting the databridge after every registration, this worker:
+        1. Processes all queued registrations without restarting databridge
+        2. After the queue is empty and a debounce period passes, restarts databridge once
+
+        This significantly improves performance when multiple assets register simultaneously.
+        """
+        logger.info("Registration worker started (batch mode enabled)")
 
         while self.running:
             try:
-                # Get next item
+                # Get next item with timeout
                 try:
-                    item = self.registration_queue.get(timeout=1.0)
+                    item = self.registration_queue.get(timeout=0.5)
                 except queue.Empty:
+                    # Queue is empty - check if we need to restart databridge
+                    self._check_pending_databridge_restart()
                     continue
 
                 request_id = item.get('request_id')
@@ -333,7 +317,8 @@ class MQTTConfigRegistrationService:
                 msg_type = item.get('type')
 
                 logger.info(
-                    f"Processing {msg_type} registration for: {asset_id}")
+                    f"Processing {msg_type} registration for: {asset_id} "
+                    f"(queue size: {self.registration_queue.qsize()})")
 
                 with self.service_lock:
                     if msg_type == 'config':
@@ -346,8 +331,12 @@ class MQTTConfigRegistrationService:
                 if success:
                     logger.info(f"Successfully registered: {asset_id}")
                     self._send_response(
-                        request_id, True, f"Asset {asset_id} registered")
+                        request_id, True, f"Asset {asset_id} registered (databridge restart pending)")
                     self.stats['processed'] += 1
+                    # Mark that we need to restart databridge and update timing
+                    self._pending_databridge_restart = True
+                    self._last_registration_time = time.time()
+                    self._batch_processed_count += 1
                 else:
                     logger.error(f"Failed to register: {asset_id}")
                     self._send_response(request_id, False,
@@ -360,15 +349,72 @@ class MQTTConfigRegistrationService:
                 logger.error(f"Worker error: {e}")
                 self.stats['failed'] += 1
 
+        # On shutdown, ensure final databridge restart if needed
+        if self._pending_databridge_restart:
+            self._do_databridge_restart()
+
         logger.info("Registration worker stopped")
 
+    def _check_pending_databridge_restart(self):
+        """
+        Check if we should restart the databridge.
+
+        Restart conditions:
+        1. There are pending registrations that need databridge restart
+        2. The queue is empty (all registrations processed)
+        3. Enough time has passed since the last registration (debounce)
+        """
+        if not self._pending_databridge_restart:
+            return
+
+        # Check if queue is truly empty
+        if not self.registration_queue.empty():
+            return
+
+        # Check debounce period
+        time_since_last = time.time() - self._last_registration_time
+        if time_since_last < self.batch_debounce_seconds:
+            return
+
+        # All conditions met - restart databridge
+        self._do_databridge_restart()
+
+    def _do_databridge_restart(self):
+        """Perform the actual databridge restart and reset batch state."""
+        try:
+            batch_count = self._batch_processed_count
+            logger.info(
+                f"Restarting DataBridge after batch of {batch_count} registration(s)...")
+
+            with self.service_lock:
+                success = self.registration_service._restart_databridge()
+
+            if success:
+                logger.info(
+                    f"✓ DataBridge restarted successfully for batch of {batch_count} asset(s)")
+                self.stats['databridge_restarts'] += 1
+            else:
+                logger.error("DataBridge restart failed")
+
+        except Exception as e:
+            logger.error(f"Error restarting databridge: {e}")
+        finally:
+            # Reset batch state
+            self._pending_databridge_restart = False
+            self._batch_processed_count = 0
+
     def _process_config_registration(self, item: Dict[str, Any]) -> bool:
-        """Process config-based registration"""
+        """
+        Process config-based registration without restarting services.
+
+        The databridge restart is deferred until the batch is complete.
+        """
         try:
             config_data = item.get('config_data')
             return self.registration_service.register_from_yaml_config(
                 config_data=config_data,
-                validate_aas=True
+                validate_aas=True,
+                restart_services=False  # Defer restart until batch is complete
             )
         except Exception as e:
             logger.error(f"Config registration failed: {e}")
@@ -407,9 +453,11 @@ class MQTTConfigRegistrationService:
             logger.error(f"Failed to send response: {e}")
 
     def get_stats(self) -> Dict[str, Any]:
-        """Get current statistics"""
+        """Get current statistics including batch processing info"""
         return {
             **self.stats,
             'queue_size': self.registration_queue.qsize(),
-            'running': self.running
+            'running': self.running,
+            'pending_databridge_restart': self._pending_databridge_restart,
+            'batch_pending_count': self._batch_processed_count
         }

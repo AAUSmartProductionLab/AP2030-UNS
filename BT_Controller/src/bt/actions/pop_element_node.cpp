@@ -7,6 +7,12 @@
 
 void PopElementNode::initializeTopicsFromAAS()
 {
+    // Already initialized, skip
+    if (topics_initialized_)
+    {
+        return;
+    }
+
     try
     {
         auto xbot_topic_opt = this->config().blackboard->getAnyLocked("Xbot");
@@ -22,9 +28,8 @@ void PopElementNode::initializeTopicsFromAAS()
         // Use xbot_topic directly (should be resolved from blackboard)
         std::string asset_id = xbot_topic;
 
-        // Create Topic objects
-        // TODO fix this
-        auto product_association_opt = aas_client_.fetchInterface(asset_id, this->name(), "product_association");
+        // Create Topic objects - ProductID property with output endpoint (data being published)
+        auto product_association_opt = aas_client_.fetchInterface(asset_id, "ProductID", "input");
 
         if (!product_association_opt.has_value())
         {
@@ -33,6 +38,7 @@ void PopElementNode::initializeTopicsFromAAS()
         }
 
         MqttPubBase::setTopic("input", product_association_opt.value());
+        topics_initialized_ = true;
     }
     catch (const std::exception &e)
     {

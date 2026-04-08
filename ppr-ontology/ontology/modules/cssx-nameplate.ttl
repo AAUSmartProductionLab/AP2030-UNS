@@ -1,0 +1,182 @@
+@prefix : <http://www.w3id.org/aau-ra/cssx#> .
+@prefix css: <http://www.w3id.org/hsu-aut/css#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+#################################################################
+#    Classes
+#################################################################
+
+###  http://www.w3id.org/aau-ra/cssx#Manufacturer
+:Manufacturer rdf:type owl:Class ;
+  rdfs:comment "Organization or party responsible for producing a product or resource." .
+
+###  http://www.w3id.org/aau-ra/cssx#AddressInformation
+:AddressInformation rdf:type owl:Class ;
+  rdfs:comment "Address information associated with a manufacturer." .
+
+###  http://www.w3id.org/aau-ra/cssx#Markings
+:Markings rdf:type owl:Class ;
+  rdfs:comment "Set of markings associated with a product or resource." .
+
+###  http://www.w3id.org/aau-ra/cssx#Marking
+:Marking rdf:type owl:Class ;
+  rdfs:comment "A marking, label, or compliance identifier." .
+
+###  http://www.w3id.org/aau-ra/cssx#AssetSpecificProperties
+:AssetSpecificProperties rdf:type owl:Class ;
+  rdfs:comment "Collection of asset-specific properties." .
+
+###  http://www.w3id.org/aau-ra/cssx#AssetSpecificProperty
+:AssetSpecificProperty rdf:type owl:Class ;
+  rdfs:comment "An asset-specific property entry." .
+
+css:Resource rdfs:subClassOf [ rdf:type owl:Restriction ;
+  owl:onProperty :hasManufacturer ;
+  owl:someValuesFrom :Manufacturer
+] .
+
+css:Resource rdfs:subClassOf [ rdf:type owl:Restriction ;
+  owl:onProperty :serialNumber ;
+  owl:minCardinality "1"^^xsd:nonNegativeInteger
+] .
+
+:Manufacturer rdfs:subClassOf [ rdf:type owl:Restriction ;
+  owl:onProperty :manufacturerName ;
+  owl:minCardinality "1"^^xsd:nonNegativeInteger
+] .
+
+#################################################################
+#    Object Properties
+#################################################################
+
+###  http://www.w3id.org/aau-ra/cssx#hasManufacturer
+:hasManufacturer rdf:type owl:ObjectProperty ;
+  rdfs:domain [ rdf:type owl:Class ; owl:unionOf ( css:Product css:Resource ) ] ;
+  rdfs:range :Manufacturer .
+
+###  http://www.w3id.org/aau-ra/cssx#hasAddressInformation
+:hasAddressInformation rdf:type owl:ObjectProperty ;
+  rdfs:domain :Manufacturer ;
+  rdfs:range :AddressInformation .
+
+###  http://www.w3id.org/aau-ra/cssx#hasMarkings
+:hasMarkings rdf:type owl:ObjectProperty , owl:FunctionalProperty ;
+  rdfs:domain [ rdf:type owl:Class ; owl:unionOf ( css:Product css:Resource ) ] ;
+  rdfs:range :Markings .
+
+###  http://www.w3id.org/aau-ra/cssx#hasMarking
+:hasMarking rdf:type owl:ObjectProperty ;
+  rdfs:domain :Markings ;
+  rdfs:range :Marking .
+
+###  http://www.w3id.org/aau-ra/cssx#hasAssetSpecificProperties
+:hasAssetSpecificProperties rdf:type owl:ObjectProperty , owl:FunctionalProperty ;
+  rdfs:domain [ rdf:type owl:Class ; owl:unionOf ( css:Product css:Resource ) ] ;
+  rdfs:range :AssetSpecificProperties .
+
+###  http://www.w3id.org/aau-ra/cssx#hasAssetSpecificProperty
+:hasAssetSpecificProperty rdf:type owl:ObjectProperty ;
+  rdfs:domain :AssetSpecificProperties ;
+  rdfs:range :AssetSpecificProperty .
+
+#################################################################
+#    Datatype Properties
+#################################################################
+
+###  http://www.w3id.org/aau-ra/cssx#uriOfTheProduct
+:uriOfTheProduct rdf:type owl:DatatypeProperty , owl:FunctionalProperty ;
+  rdfs:domain [ rdf:type owl:Class ; owl:unionOf ( css:Product css:Resource ) ] ;
+  rdfs:range xsd:anyURI .
+
+###  http://www.w3id.org/aau-ra/cssx#manufacturerName
+:manufacturerName rdf:type owl:DatatypeProperty ;
+  rdfs:domain :Manufacturer ;
+  rdfs:range rdf:langString .
+
+###  http://www.w3id.org/aau-ra/cssx#manufacturerProductDesignation
+:manufacturerProductDesignation rdf:type owl:DatatypeProperty ;
+  rdfs:domain [ rdf:type owl:Class ; owl:unionOf ( css:Product css:Resource ) ] ;
+  rdfs:range rdf:langString .
+
+###  http://www.w3id.org/aau-ra/cssx#modelName
+:modelName rdf:type owl:DatatypeProperty ;
+  rdfs:subPropertyOf :manufacturerProductDesignation ;
+  rdfs:domain [ rdf:type owl:Class ; owl:unionOf ( css:Product css:Resource ) ] ;
+  rdfs:range rdf:langString .
+
+###  http://www.w3id.org/aau-ra/cssx#manufacturerProductRoot
+:manufacturerProductRoot rdf:type owl:DatatypeProperty , owl:FunctionalProperty ;
+  rdfs:domain [ rdf:type owl:Class ; owl:unionOf ( css:Product css:Resource ) ] ;
+  rdfs:range rdf:langString .
+
+###  http://www.w3id.org/aau-ra/cssx#manufacturerProductFamily
+:manufacturerProductFamily rdf:type owl:DatatypeProperty , owl:FunctionalProperty ;
+  rdfs:domain [ rdf:type owl:Class ; owl:unionOf ( css:Product css:Resource ) ] ;
+  rdfs:range rdf:langString .
+
+###  http://www.w3id.org/aau-ra/cssx#manufacturerProductType
+:manufacturerProductType rdf:type owl:DatatypeProperty , owl:FunctionalProperty ;
+  rdfs:domain [ rdf:type owl:Class ; owl:unionOf ( css:Product css:Resource ) ] ;
+  rdfs:range xsd:string .
+
+###  http://www.w3id.org/aau-ra/cssx#orderCodeOfManufacturer
+:orderCodeOfManufacturer rdf:type owl:DatatypeProperty ;
+  rdfs:domain [ rdf:type owl:Class ; owl:unionOf ( css:Product css:Resource ) ] ;
+  rdfs:range xsd:string .
+
+###  http://www.w3id.org/aau-ra/cssx#productArticleNumberOfManufacturer
+:productArticleNumberOfManufacturer rdf:type owl:DatatypeProperty , owl:FunctionalProperty ;
+  rdfs:domain [ rdf:type owl:Class ; owl:unionOf ( css:Product css:Resource ) ] ;
+  rdfs:range xsd:string .
+
+###  http://www.w3id.org/aau-ra/cssx#serialNumber
+:serialNumber rdf:type owl:DatatypeProperty , owl:FunctionalProperty ;
+  rdfs:domain [ rdf:type owl:Class ; owl:unionOf ( css:Product css:Resource ) ] ;
+  rdfs:range xsd:string .
+
+###  http://www.w3id.org/aau-ra/cssx#yearOfConstruction
+:yearOfConstruction rdf:type owl:DatatypeProperty , owl:FunctionalProperty ;
+  rdfs:domain [ rdf:type owl:Class ; owl:unionOf ( css:Product css:Resource ) ] ;
+  rdfs:range xsd:string .
+
+###  http://www.w3id.org/aau-ra/cssx#dateOfManufacture
+:dateOfManufacture rdf:type owl:DatatypeProperty , owl:FunctionalProperty ;
+  rdfs:domain [ rdf:type owl:Class ; owl:unionOf ( css:Product css:Resource ) ] ;
+  rdfs:range xsd:date .
+
+###  http://www.w3id.org/aau-ra/cssx#hardwareVersion
+:hardwareVersion rdf:type owl:DatatypeProperty , owl:FunctionalProperty ;
+  rdfs:domain [ rdf:type owl:Class ; owl:unionOf ( css:Product css:Resource ) ] ;
+  rdfs:range xsd:string .
+
+###  http://www.w3id.org/aau-ra/cssx#firmwareVersion
+:firmwareVersion rdf:type owl:DatatypeProperty , owl:FunctionalProperty ;
+  rdfs:domain [ rdf:type owl:Class ; owl:unionOf ( css:Product css:Resource ) ] ;
+  rdfs:range xsd:string .
+
+###  http://www.w3id.org/aau-ra/cssx#softwareVersion
+:softwareVersion rdf:type owl:DatatypeProperty , owl:FunctionalProperty ;
+  rdfs:domain [ rdf:type owl:Class ; owl:unionOf ( css:Product css:Resource ) ] ;
+  rdfs:range xsd:string .
+
+###  http://www.w3id.org/aau-ra/cssx#countryOfOrigin
+:countryOfOrigin rdf:type owl:DatatypeProperty , owl:FunctionalProperty ;
+  rdfs:domain [ rdf:type owl:Class ; owl:unionOf ( css:Product css:Resource ) ] ;
+  rdfs:range xsd:string .
+
+###  http://www.w3id.org/aau-ra/cssx#uniqueFacilityIdentifier
+:uniqueFacilityIdentifier rdf:type owl:DatatypeProperty , owl:FunctionalProperty ;
+  rdfs:domain [ rdf:type owl:Class ; owl:unionOf ( css:Product css:Resource ) ] ;
+  rdfs:range xsd:string .
+
+###  http://www.w3id.org/aau-ra/cssx#companyLogoUri
+:companyLogoUri rdf:type owl:DatatypeProperty , owl:FunctionalProperty ;
+  rdfs:domain [ rdf:type owl:Class ; owl:unionOf ( css:Product css:Resource ) ] ;
+  rdfs:range xsd:anyURI .
+
+#################################################################
+#    Individuals
+#################################################################

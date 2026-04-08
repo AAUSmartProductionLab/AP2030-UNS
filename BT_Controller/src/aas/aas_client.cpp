@@ -6,6 +6,20 @@
 #include <openssl/evp.h>
 #include "utils.h"
 
+namespace {
+    // Case-insensitive string comparison helper
+    std::string toLower(const std::string& s) {
+        std::string result = s;
+        std::transform(result.begin(), result.end(), result.begin(),
+                       [](unsigned char c) { return std::tolower(c); });
+        return result;
+    }
+    
+    bool equalsIgnoreCase(const std::string& a, const std::string& b) {
+        return toLower(a) == toLower(b);
+    }
+}
+
 static size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *userp)
 {
     ((std::string *)userp)->append((char *)contents, size * nmemb);
@@ -274,7 +288,7 @@ std::optional<mqtt_utils::Topic> AASClient::fetchInterface(const std::string &as
                     {
                         for (const auto &action : interaction_type_elem["value"])
                         {
-                            if (action["idShort"] == interaction)
+                            if (equalsIgnoreCase(action["idShort"].get<std::string>(), interaction))
                             {
                                 interaction_data = action;
                                 is_action = true;
@@ -286,7 +300,7 @@ std::optional<mqtt_utils::Topic> AASClient::fetchInterface(const std::string &as
                     {
                         for (const auto &property : interaction_type_elem["value"])
                         {
-                            if (property["idShort"] == interaction)
+                            if (equalsIgnoreCase(property["idShort"].get<std::string>(), interaction))
                             {
                                 interaction_data = property;
                                 is_action = false;
@@ -299,6 +313,58 @@ std::optional<mqtt_utils::Topic> AASClient::fetchInterface(const std::string &as
                         break;
                 }
                 break;
+            }
+        }
+
+        if (interaction_data.empty())
+        {
+            // Interaction not found directly - try to resolve via Variables submodel InterfaceReference
+            std::cout << "Interaction '" << interaction << "' not found directly, checking Variables submodel..." << std::endl;
+
+            auto resolved_interface = resolveInterfaceReference(asset_id, interaction);
+            if (resolved_interface && *resolved_interface != interaction)
+            {
+                // Found an InterfaceReference - search again with the resolved name
+                std::cout << "Retrying with resolved interface name: " << *resolved_interface << std::endl;
+
+                for (const auto &elem : interface_mqtt["value"])
+                {
+                    if (elem["idShort"] == "InteractionMetadata")
+                    {
+                        // Search in actions first
+                        for (const auto &interaction_type_elem : elem["value"])
+                        {
+                            if (interaction_type_elem["idShort"] == "actions")
+                            {
+                                for (const auto &action : interaction_type_elem["value"])
+                                {
+                                    if (equalsIgnoreCase(action["idShort"].get<std::string>(), *resolved_interface))
+                                    {
+                                        interaction_data = action;
+                                        is_action = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            else if (interaction_type_elem["idShort"] == "properties")
+                            {
+                                for (const auto &property : interaction_type_elem["value"])
+                                {
+                                    if (equalsIgnoreCase(property["idShort"].get<std::string>(), *resolved_interface))
+                                    {
+                                        interaction_data = property;
+                                        is_action = false;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            if (!interaction_data.empty())
+                                break;
+                        }
+                        break;
+                    }
+                }
             }
         }
 
@@ -317,7 +383,8 @@ std::optional<mqtt_utils::Topic> AASClient::fetchInterface(const std::string &as
 
         for (const auto &elem : interaction_data["value"])
         {
-            if (elem["idShort"] == "forms")
+            // Check for "Forms" (capital F as per AAS convention) or "forms" (lowercase)
+            if (elem["idShort"] == "Forms" || elem["idShort"] == "forms")
             {
                 forms_data = elem;
             }
@@ -535,12 +602,27 @@ std::optional<nlohmann::json> AASClient::fetchSubmodelData(
             return std::nullopt;
         }
 
-        // Find the AAS with matching idShort
-        std::string expected_id_short = asset_id + "AAS";
+        // Find the AAS with matching id (asset_id is the full AAS ID like https://smartproductionlab.aau.dk/aas/MIM8AAS)
         std::string shell_endpoint;
         for (const auto &shell : registry_response["result"])
         {
-            if (shell.contains("idShort") && shell["idShort"] == expected_id_short)
+            // Match by full id first, then try idShort for backwards compatibility
+            bool matches = false;
+            if (shell.contains("id") && shell["id"].get<std::string>() == asset_id)
+            {
+                matches = true;
+            }
+            else if (shell.contains("idShort"))
+            {
+                // Try matching idShort for legacy support (e.g., "MIM8AAS" or adding "AAS" suffix)
+                std::string id_short = shell["idShort"].get<std::string>();
+                if (id_short == asset_id || asset_id.find(id_short) != std::string::npos)
+                {
+                    matches = true;
+                }
+            }
+            
+            if (matches)
             {
                 if (shell.contains("endpoints") && shell["endpoints"].is_array() && !shell["endpoints"].empty())
                 {
@@ -747,6 +829,366 @@ std::optional<nlohmann::json> AASClient::fetchHierarchicalStructure(const std::s
     }
 }
 
+std::optional<nlohmann::json> AASClient::fetchStationPosition(
+    const std::string &station_asset_id,
+    const std::string &filling_line_asset_id)
+{
+    try
+    {
+        std::cout << "Fetching position for station: " << station_asset_id 
+                  << " from line: " << filling_line_asset_id << std::endl;
+
+        // Step 1: Fetch the filling line's HierarchicalStructures submodel
+        auto hs_data = fetchHierarchicalStructure(filling_line_asset_id);
+        if (!hs_data.has_value())
+        {
+            std::cerr << "Failed to fetch HierarchicalStructures for filling line" << std::endl;
+            return std::nullopt;
+        }
+
+        // Step 2: Find the EntryNode
+        const auto &submodel_elements = hs_data.value()["submodelElements"];
+        nlohmann::json entry_node;
+        for (const auto &elem : submodel_elements)
+        {
+            if (elem["idShort"] == "EntryNode")
+            {
+                entry_node = elem;
+                break;
+            }
+        }
+
+        if (entry_node.empty())
+        {
+            std::cerr << "EntryNode not found in HierarchicalStructures" << std::endl;
+            return std::nullopt;
+        }
+
+        // Step 3: Search through statements to find the station entity
+        // The station_asset_id is the full AAS ID, we need to find the entity with matching globalAssetId
+        // or find by looking at the SameAs reference that points to the station's HierarchicalStructures
+        if (!entry_node.contains("statements") || !entry_node["statements"].is_array())
+        {
+            std::cerr << "EntryNode has no statements" << std::endl;
+            return std::nullopt;
+        }
+
+        for (const auto &statement : entry_node["statements"])
+        {
+            if (statement["modelType"] != "Entity")
+                continue;
+
+            // Check if this entity references our station
+            // Method 1: Check SameAs reference for the station's submodel ID
+            bool is_matching_station = false;
+            std::string entity_name = statement.value("idShort", "");
+
+            if (statement.contains("statements") && statement["statements"].is_array())
+            {
+                for (const auto &inner_stmt : statement["statements"])
+                {
+                    if (inner_stmt.value("idShort", "") == "SameAs" && 
+                        inner_stmt["modelType"] == "ReferenceElement")
+                    {
+                        // Check if the reference points to our station's submodel
+                        if (inner_stmt.contains("value") && inner_stmt["value"].contains("keys"))
+                        {
+                            for (const auto &key : inner_stmt["value"]["keys"])
+                            {
+                                std::string key_value = key.value("value", "");
+                                // Check if this references the station's AAS (extracting AAS ID from submodel ID)
+                                // Submodel ID format: .../submodels/instances/{systemIdAAS}/HierarchicalStructures
+                                if (key_value.find(station_asset_id) != std::string::npos)
+                                {
+                                    is_matching_station = true;
+                                    break;
+                                }
+                                // Also check by extracting system name from station_asset_id
+                                // station_asset_id: https://...aas/imaDispensingSystemAAS
+                                // key_value: https://...submodels/instances/imaDispensingSystemAAS/HierarchicalStructures
+                                size_t aas_pos = station_asset_id.rfind("/aas/");
+                                if (aas_pos != std::string::npos)
+                                {
+                                    std::string system_id = station_asset_id.substr(aas_pos + 5);
+                                    if (key_value.find(system_id) != std::string::npos)
+                                    {
+                                        is_matching_station = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (!is_matching_station)
+                continue;
+
+            // Found the matching station entity, now extract Location
+            if (statement.contains("statements") && statement["statements"].is_array())
+            {
+                for (const auto &inner_stmt : statement["statements"])
+                {
+                    if (inner_stmt.value("idShort", "") == "Location" && 
+                        inner_stmt["modelType"] == "SubmodelElementCollection")
+                    {
+                        nlohmann::json position;
+                        if (inner_stmt.contains("value") && inner_stmt["value"].is_array())
+                        {
+                            for (const auto &prop : inner_stmt["value"])
+                            {
+                                std::string prop_name = prop.value("idShort", "");
+                                if (prop_name == "x" || prop_name == "X")
+                                {
+                                    position["x"] = std::stof(prop.value("value", "0"));
+                                }
+                                else if (prop_name == "y" || prop_name == "Y")
+                                {
+                                    position["y"] = std::stof(prop.value("value", "0"));
+                                }
+                                else if (prop_name == "yaw" || prop_name == "Yaw" || 
+                                         prop_name == "theta" || prop_name == "Theta")
+                                {
+                                    position["theta"] = std::stof(prop.value("value", "0"));
+                                }
+                            }
+                        }
+
+                        if (position.contains("x") && position.contains("y"))
+                        {
+                            std::cout << "Found position for " << entity_name << ": x=" 
+                                      << position["x"] << ", y=" << position["y"];
+                            if (position.contains("theta"))
+                                std::cout << ", theta=" << position["theta"];
+                            std::cout << std::endl;
+                            return position;
+                        }
+                    }
+                }
+            }
+        }
+
+        std::cerr << "Could not find station " << station_asset_id << " in HierarchicalStructures" << std::endl;
+        return std::nullopt;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Error fetching station position: " << e.what() << std::endl;
+        return std::nullopt;
+    }
+}
+
+std::optional<nlohmann::json> AASClient::fetchRequiredCapabilities(const std::string &aas_shell_id)
+{
+    try
+    {
+        std::cout << "Fetching RequiredCapabilities submodel for AAS: " << aas_shell_id << std::endl;
+
+        // Step 1: Fetch the full shell to get submodel references
+        std::string encoded_id = base64url_encode(aas_shell_id);
+        std::string shell_endpoint = "/shells/" + encoded_id;
+        nlohmann::json shell_data = makeGetRequest(shell_endpoint);
+
+        if (!shell_data.contains("submodels") || !shell_data["submodels"].is_array())
+        {
+            std::cerr << "Shell missing submodels array" << std::endl;
+            return std::nullopt;
+        }
+
+        // Step 2: Find the RequiredCapabilities submodel reference
+        std::string submodel_id;
+        for (const auto &submodel_ref : shell_data["submodels"])
+        {
+            if (submodel_ref.contains("keys") && submodel_ref["keys"].is_array())
+            {
+                std::string ref_value = submodel_ref["keys"][0]["value"];
+                if (ref_value.find("RequiredCapabilities") != std::string::npos)
+                {
+                    submodel_id = ref_value;
+                    break;
+                }
+            }
+        }
+
+        if (submodel_id.empty())
+        {
+            std::cerr << "RequiredCapabilities submodel reference not found for AAS: " << aas_shell_id << std::endl;
+            return std::nullopt;
+        }
+
+        std::cout << "Found RequiredCapabilities submodel reference: " << submodel_id << std::endl;
+
+        // Step 3: Fetch the submodel using base64url-encoded ID
+        std::string submodel_id_b64 = base64url_encode(submodel_id);
+        std::string submodel_url = "/submodels/" + submodel_id_b64;
+
+        nlohmann::json submodel_data = makeGetRequest(submodel_url);
+        std::cout << "Successfully fetched RequiredCapabilities submodel" << std::endl;
+
+        return submodel_data;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Error fetching RequiredCapabilities: " << e.what() << std::endl;
+        return std::nullopt;
+    }
+}
+
+std::optional<nlohmann::json> AASClient::fetchProcessInformation(const std::string &aas_shell_id)
+{
+    try
+    {
+        std::cout << "Fetching ProcessInformation submodel for AAS: " << aas_shell_id << std::endl;
+
+        // Step 1: Fetch the full shell to get submodel references
+        std::string encoded_id = base64url_encode(aas_shell_id);
+        std::string shell_endpoint = "/shells/" + encoded_id;
+        nlohmann::json shell_data = makeGetRequest(shell_endpoint);
+
+        if (!shell_data.contains("submodels") || !shell_data["submodels"].is_array())
+        {
+            std::cerr << "Shell missing submodels array" << std::endl;
+            return std::nullopt;
+        }
+
+        // Step 2: Find the ProcessInformation submodel reference
+        std::string submodel_id;
+        for (const auto &submodel_ref : shell_data["submodels"])
+        {
+            if (submodel_ref.contains("keys") && submodel_ref["keys"].is_array())
+            {
+                std::string ref_value = submodel_ref["keys"][0]["value"];
+                if (ref_value.find("ProcessInformation") != std::string::npos)
+                {
+                    submodel_id = ref_value;
+                    break;
+                }
+            }
+        }
+
+        if (submodel_id.empty())
+        {
+            std::cerr << "ProcessInformation submodel reference not found for AAS: " << aas_shell_id << std::endl;
+            return std::nullopt;
+        }
+
+        std::cout << "Found ProcessInformation submodel reference: " << submodel_id << std::endl;
+
+        // Step 3: Fetch the submodel using base64url-encoded ID
+        std::string submodel_id_b64 = base64url_encode(submodel_id);
+        std::string submodel_url = "/submodels/" + submodel_id_b64;
+
+        nlohmann::json submodel_data = makeGetRequest(submodel_url);
+        std::cout << "Successfully fetched ProcessInformation submodel" << std::endl;
+
+        return submodel_data;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Error fetching ProcessInformation: " << e.what() << std::endl;
+        return std::nullopt;
+    }
+}
+
+std::optional<std::string> AASClient::fetchPolicyBTUrl(const std::string &aas_shell_id)
+{
+    try
+    {
+        std::cout << "Fetching Policy submodel for AAS: " << aas_shell_id << std::endl;
+
+        // Step 1: Fetch the full shell to get submodel references
+        std::string encoded_id = base64url_encode(aas_shell_id);
+        std::string shell_endpoint = "/shells/" + encoded_id;
+        nlohmann::json shell_data = makeGetRequest(shell_endpoint);
+
+        if (!shell_data.contains("submodels") || !shell_data["submodels"].is_array())
+        {
+            std::cerr << "Shell missing submodels array" << std::endl;
+            return std::nullopt;
+        }
+
+        // Step 2: Find the Policy submodel reference
+        std::string submodel_id;
+        for (const auto &submodel_ref : shell_data["submodels"])
+        {
+            if (submodel_ref.contains("keys") && submodel_ref["keys"].is_array())
+            {
+                std::string ref_value = submodel_ref["keys"][0]["value"];
+                if (ref_value.find("Policy") != std::string::npos)
+                {
+                    submodel_id = ref_value;
+                    break;
+                }
+            }
+        }
+
+        if (submodel_id.empty())
+        {
+            std::cerr << "Policy submodel reference not found for AAS: " << aas_shell_id << std::endl;
+            return std::nullopt;
+        }
+
+        std::cout << "Found Policy submodel reference: " << submodel_id << std::endl;
+
+        // Step 3: Fetch the submodel using base64url-encoded ID
+        std::string submodel_id_b64 = base64url_encode(submodel_id);
+        std::string submodel_url = "/submodels/" + submodel_id_b64;
+
+        nlohmann::json submodel_data = makeGetRequest(submodel_url);
+
+        // Step 4: Navigate through submodel to find the Policy element with File property
+        // Structure: Policy submodel -> submodelElements -> Policy (SMC) -> value -> File
+        if (!submodel_data.contains("submodelElements") || !submodel_data["submodelElements"].is_array())
+        {
+            std::cerr << "Policy submodel missing submodelElements array" << std::endl;
+            return std::nullopt;
+        }
+
+        for (const auto &element : submodel_data["submodelElements"])
+        {
+            if (!element.contains("idShort"))
+                continue;
+
+            std::string id_short = element["idShort"].get<std::string>();
+            std::string model_type = element.value("modelType", "");
+
+            // Check for File type element (AAS File element with modelType: "File")
+            // The File element can have any idShort (commonly "Policy" or "File")
+            if (model_type == "File" && element.contains("value"))
+            {
+                std::string bt_url = element["value"].get<std::string>();
+                std::cout << "Found BT description URL in File element '" << id_short << "': " << bt_url << std::endl;
+                return bt_url;
+            }
+
+            // Also check for SubmodelElementCollection containing a File element
+            if (model_type == "SubmodelElementCollection" && 
+                element.contains("value") && element["value"].is_array())
+            {
+                for (const auto &nested_elem : element["value"])
+                {
+                    std::string nested_model_type = nested_elem.value("modelType", "");
+                    if (nested_model_type == "File" && nested_elem.contains("value"))
+                    {
+                        std::string bt_url = nested_elem["value"].get<std::string>();
+                        std::cout << "Found BT description URL in nested File element: " << bt_url << std::endl;
+                        return bt_url;
+                    }
+                }
+            }
+        }
+
+        std::cerr << "Could not find File property in Policy submodel" << std::endl;
+        return std::nullopt;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Error fetching Policy BT URL: " << e.what() << std::endl;
+        return std::nullopt;
+    }
+}
+
 std::optional<nlohmann::json> AASClient::lookupAssetById(const std::string &asset_id)
 {
     try
@@ -801,6 +1243,94 @@ std::optional<std::string> AASClient::lookupAasIdFromAssetId(const std::string &
     catch (const std::exception &e)
     {
         std::cerr << "Error looking up AAS ID from asset ID: " << e.what() << std::endl;
+        return std::nullopt;
+    }
+}
+
+std::optional<std::string> AASClient::resolveInterfaceReference(
+    const std::string &asset_id,
+    const std::string &interaction)
+{
+    try
+    {
+        std::cout << "Resolving interface reference for interaction: " << interaction
+                  << " in Variables submodel of asset: " << asset_id << std::endl;
+
+        // Fetch the Variables submodel
+        auto variables_data = fetchSubmodelData(asset_id, "Variables");
+        if (!variables_data)
+        {
+            std::cout << "No Variables submodel found for asset: " << asset_id << std::endl;
+            return std::nullopt;
+        }
+
+        // Look for a collection with the interaction name
+        if (!variables_data->contains("submodelElements") ||
+            !(*variables_data)["submodelElements"].is_array())
+        {
+            std::cout << "Variables submodel has no submodelElements" << std::endl;
+            return std::nullopt;
+        }
+
+        for (const auto &elem : (*variables_data)["submodelElements"])
+        {
+            if (!elem.contains("idShort") || elem["idShort"] != interaction)
+            {
+                continue;
+            }
+
+            // Found the matching collection, look for InterfaceReference
+            if (!elem.contains("value") || !elem["value"].is_array())
+            {
+                continue;
+            }
+
+            for (const auto &child : elem["value"])
+            {
+                if (!child.contains("idShort") || child["idShort"] != "InterfaceReference")
+                {
+                    continue;
+                }
+
+                // Found InterfaceReference - extract the target interface name from the keys
+                // The value is a ReferenceElement with keys array
+                if (!child.contains("value") || !child["value"].contains("keys") ||
+                    !child["value"]["keys"].is_array())
+                {
+                    std::cerr << "InterfaceReference has invalid structure" << std::endl;
+                    return std::nullopt;
+                }
+
+                // The last key in the path is the actual interface name
+                // Keys structure: Submodel -> InterfaceMQTT -> InteractionMetadata -> properties -> <InterfaceName>
+                const auto &keys = child["value"]["keys"];
+                if (keys.empty())
+                {
+                    std::cerr << "InterfaceReference has no keys" << std::endl;
+                    return std::nullopt;
+                }
+
+                // Get the last key which is the interface name
+                const auto &last_key = keys[keys.size() - 1];
+                if (!last_key.contains("value"))
+                {
+                    std::cerr << "InterfaceReference last key has no value" << std::endl;
+                    return std::nullopt;
+                }
+
+                std::string resolved_interface = last_key["value"].get<std::string>();
+                std::cout << "Resolved interface reference: " << interaction
+                          << " -> " << resolved_interface << std::endl;
+                return resolved_interface;
+            }
+        }
+
+        std::cout << "No InterfaceReference found for interaction: " << interaction << std::endl;
+        return std::nullopt;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Error resolving interface reference: " << e.what() << std::endl;
         return std::nullopt;
     }
 }

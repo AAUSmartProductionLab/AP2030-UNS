@@ -159,47 +159,48 @@ class SkillsSubmodelBuilder:
         # Track property names to avoid duplicates between input and output
         input_prop_names = set()
 
-        # Parse input schema if present
+        # Parse input schema if present - expand arrays into individual variables
         input_schema_url = action_config.get('input')
         if input_schema_url:
             schema = self.schema_handler.load_schema(input_schema_url)
             if schema:
-                # extract_properties handles both direct 'properties' and 'allOf' compositions
-                props = self.schema_handler.extract_properties(schema)
-                for prop_name, prop_info in props.items():
-                    prop_type = prop_info.get('type', 'string')
-                    prop_desc = prop_info.get('description', '')
+                # Use extract_operation_variables to expand arrays (e.g., Position -> X, Y, Theta)
+                vars = self.schema_handler.extract_operation_variables(schema)
+                for var_name, var_info in vars.items():
+                    var_type = var_info.get('type', 'string')
+                    var_desc = var_info.get('description', '')
+                    
                     input_variables.append(
                         self._create_operation_variable(
-                            prop_name, prop_type, prop_desc)
+                            var_name, var_type, var_desc)
                     )
-                    input_prop_names.add(prop_name)
+                    input_prop_names.add(var_name)
 
-        # Parse output schema if present
+        # Parse output schema if present - expand arrays into individual variables
         output_schema_url = action_config.get('output')
         if output_schema_url:
             schema = self.schema_handler.load_schema(output_schema_url)
             if schema:
-                # extract_properties handles both direct 'properties' and 'allOf' compositions
-                props = self.schema_handler.extract_properties(schema)
-                for prop_name, prop_info in props.items():
-                    prop_type = prop_info.get('type', 'string')
-                    prop_desc = prop_info.get('description', '')
+                # Use extract_operation_variables to expand arrays
+                vars = self.schema_handler.extract_operation_variables(schema)
+                for var_name, var_info in vars.items():
+                    var_type = var_info.get('type', 'string')
+                    var_desc = var_info.get('description', '')
 
                     # If property exists in both input and output, it becomes in-output
-                    if prop_name in input_prop_names:
+                    if var_name in input_prop_names:
                         # Move from input to in-output
                         inoutput_variables.append(
                             self._create_operation_variable(
-                                prop_name, prop_type, prop_desc)
+                                var_name, var_type, var_desc)
                         )
                         # Remove from input_variables
                         input_variables = [
-                            v for v in input_variables if v.id_short != prop_name]
+                            v for v in input_variables if v.id_short != var_name]
                     else:
                         output_variables.append(
                             self._create_operation_variable(
-                                prop_name, prop_type, prop_desc)
+                                var_name, var_type, var_desc)
                         )
 
         # Get description from action title or key
@@ -215,7 +216,7 @@ class SkillsSubmodelBuilder:
 
         # Use element factory to create the operation
         return self.element_factory.create_operation(
-            id_short="Operation",
+            id_short=action_name,
             input_vars=input_variables if input_variables else None,
             output_vars=output_variables if output_variables else None,
             inoutput_vars=inoutput_variables if inoutput_variables else None,

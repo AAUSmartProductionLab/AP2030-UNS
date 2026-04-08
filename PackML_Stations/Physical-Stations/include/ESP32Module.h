@@ -77,17 +77,17 @@ private:
 #ifdef WIFI_SSID_ENV
         const char *ssid = WIFI_SSID_ENV;
 #else
-        const char *ssid = "AP2030";  // Fallback default
+        const char *ssid = "AAU5G_CISCO";  // Fallback default
 #endif
 #ifdef WIFI_PASSWORD_ENV
         const char *password = WIFI_PASSWORD_ENV;
 #else
-        const char *password = "NovoNordisk";  // Fallback default
+        const char *password = "5G_rules";  // Fallback default
 #endif
 #ifdef MQTT_SERVER
         const char *mqttServer = MQTT_SERVER;
 #else
-        const char *mqttServer = "192.168.0.104";  // Fallback default
+        const char *mqttServer = "192.168.100.123";  // Fallback default
 #endif
 #ifdef MQTT_PORT_NUM
         int mqttPort = MQTT_PORT_NUM;

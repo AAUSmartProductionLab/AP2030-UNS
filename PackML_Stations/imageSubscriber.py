@@ -6,9 +6,9 @@ import paho.mqtt.client as mqtt
 import os
 
 # MQTT broker settings
-MQTT_BROKER = os.getenv("MQTT_BROKER", "hivemq-broker")
+MQTT_BROKER = os.getenv("MQTT_BROKER", "192.168.100.123")
 MQTT_PORT = int(os.getenv("MQTT_PORT", "1883"))
-MQTT_TOPIC = "NN/Nybrovej/InnoLab/Camera/DATA/Image"
+MQTT_TOPIC = "NN/Nybrovej/InnoLab/QualityControl/DATA/Image"
 
 # Callback when connecting to the MQTT broker
 

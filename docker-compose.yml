@@ -1,5 +1,6 @@
 services:
-  
+
+######################################### TOOLS AND SERVICES ######################################  
   # hivemq-broker:
   #   image: hivemq/hivemq4:latest
   #   container_name: hivemq-broker
@@ -68,37 +69,38 @@ services:
     networks:
       - hivemq-network
     restart: unless-stopped
-  grafana:
-    image: grafana/grafana:latest
-    container_name: grafana
-    user: "472"
-    volumes:
-      - ./Grafana/grafana-data:/var/lib/grafana
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
-      - GF_USERS_ALLOW_SIGN_UP=false
-      - GF_PLUGINS_PREINSTALL=grafana-clock-panel,grafana-simple-json-datasource, volkovlabs-image-panel
-    ports:
-      - "3000:3000"
-    networks:
-      - hivemq-network
-    depends_on:
-      - timescaledb
-    restart: unless-stopped
+    
+  # grafana:
+  #   image: grafana/grafana:latest
+  #   container_name: grafana
+  #   user: "472"
+  #   volumes:
+  #     - ./Grafana/grafana-data:/var/lib/grafana
+  #   environment:
+  #     - GF_SECURITY_ADMIN_PASSWORD=admin
+  #     - GF_USERS_ALLOW_SIGN_UP=false
+  #     - GF_PLUGINS_PREINSTALL=grafana-clock-panel,grafana-simple-json-datasource, volkovlabs-image-panel
+  #   ports:
+  #     - "3000:3000"
+  #   networks:
+  #     - hivemq-network
+  #   depends_on:
+  #     - timescaledb
+  #   restart: unless-stopped
  
-  groot:
-    build:
-      context: ./Groot2
-      dockerfile: groot2.dockerfile
-    container_name: groot2-web
-    volumes:
-      - ./BT_Controller/config/bt_description:/bt_description
-      - ./offlineResponse_1656FB-A61627-4A4CB2-F0C0CA-8531ED-BD332C.dat:/bt_description/offlineResponse_1656FB-A61627-4A4CB2-F0C0CA-8531ED-BD332C.dat
-    ports:
-      - "6080:6080"
-    networks:
-      - hivemq-network
-    restart: unless-stopped
+  # groot:
+  #   build:
+  #     context: ./Groot2
+  #     dockerfile: groot2.dockerfile
+  #   container_name: groot2-web
+  #   volumes:
+  #     - ./BT_Controller/config/bt_description:/bt_description
+  #     - ./offlineResponse_1656FB-A61627-4A4CB2-F0C0CA-8531ED-BD332C.dat:/bt_description/offlineResponse_1656FB-A61627-4A4CB2-F0C0CA-8531ED-BD332C.dat
+  #   ports:
+  #     - "6080:6080"
+  #   networks:
+  #     - hivemq-network
+  #   restart: unless-stopped
 
   mqtt-explorer:
     image: smeagolworms4/mqtt-explorer
@@ -128,47 +130,56 @@ services:
       - hivemq-network
     restart: unless-stopped
 
-  bt_controller:
-    build:
-      context: .
-      dockerfile: BT_Controller/dockerfile
-    container_name: bt_controller
-    environment:
-      - MQTT_BROKER=${MQTT_BROKER:-hivemq-broker}
-      - MQTT_PORT=${MQTT_PORT:-1883}
-      - AAS_SERVER=${AAS_SERVER:-aas-env}
-      - AAS_PORT=${AAS_PORT:-8081}
-      - AAS_REGISTRY=${AAS_REGISTRY:-aas-registry}
-      - AAS_REGISTRY_PORT=${AAS_REGISTRY_PORT:-8080}
-    volumes:
-      - ./BT_Controller/config:/AP2030-UNS/BT_Controller/config
-      - ./BTDescriptions:/AP2030-UNS/MQTTSchemas
-      - ./AASDescriptions:/AP2030-UNS/AASDescriptions
-    ports:
-    - "1667:1667"
-    networks:
-      - hivemq-network
-    depends_on:
-      hivemq-broker:
-        condition: service_started
-      registration-service:
-        condition: service_started
+  # bt_controller:
+  #   build:
+  #     context: .
+  #     dockerfile: BT_Controller/dockerfile
+  #   container_name: bt_controller
+  #   environment:
+  #     - MQTT_BROKER=${MQTT_BROKER:-hivemq-broker}
+  #     - MQTT_PORT=${MQTT_PORT:-1883}
+  #     - AAS_SERVER=${AAS_SERVER:-aas-env}
+  #     - AAS_PORT=${AAS_PORT:-8081}
+  #     - AAS_REGISTRY=${AAS_REGISTRY:-aas-registry}
+  #     - AAS_REGISTRY_PORT=${AAS_REGISTRY_PORT:-8080}
+  #   volumes:
+  #     - ./BT_Controller/config:/AP2030-UNS/BT_Controller/config
+  #     - ./BTDescriptions:/AP2030-UNS/MQTTSchemas
+  #     - ./AASDescriptions:/AP2030-UNS/AASDescriptions
+  #   ports:
+  #   - "1667:1667"
+  #   networks:
+  #     - hivemq-network
+  #   depends_on:
+  #     hivemq-broker:
+  #       condition: service_started
+  #     registration-service:
+  #       condition: service_healthy
 
+################################## PACKML STATIONS AND MODULES ###############################
   planar_controller:
     build:
       context: ./Planar_Controller
       dockerfile: Dockerfile
     container_name: planar_controller
     environment:
-      - MQTT_BROKER=${MQTT_BROKER:-hivemq-broker}
-      - MQTT_PORT=${MQTT_PORT:-1883}
+      - MQTT_BROKER=hivemq-broker
+      - MQTT_PORT=1883
       - PMC_IP=${PMC_IP:-192.168.0.199}
     volumes:
       - ./MQTTSchemas:/app/MQTTSchemas
+      - ./AASDescriptions:/app/AASDescriptions
     networks:
       - hivemq-network
     depends_on:
-      - hivemq-broker
+      hivemq-broker:
+        condition: service_started
+      aas-env:
+        condition: service_started
+      databridge:
+        condition: service_started
+      registration-service:
+        condition: service_healthy
     restart: unless-stopped
 
   production_planner:
@@ -184,10 +195,8 @@ services:
         condition: service_started
       databridge:
         condition: service_started
-      operation-delegation:
-        condition: service_started
       registration-service:
-        condition: service_started
+        condition: service_healthy
 
   filling_station:
     extends:
@@ -202,10 +211,8 @@ services:
         condition: service_started
       databridge:
         condition: service_started
-      operation-delegation:
-        condition: service_started
       registration-service:
-        condition: service_started
+        condition: service_healthy
 
   # camera_station:
   #   extends:
@@ -229,10 +236,8 @@ services:
         condition: service_started
       databridge:
         condition: service_started
-      operation-delegation:
-        condition: service_started
       registration-service:
-        condition: service_started
+        condition: service_healthy
 
   load_station:
     extends:
@@ -247,10 +252,8 @@ services:
         condition: service_started
       databridge:
         condition: service_started
-      operation-delegation:
-        condition: service_started
       registration-service:
-        condition: service_started
+        condition: service_healthy
 
   unload_station:
     extends:
@@ -265,44 +268,10 @@ services:
         condition: service_started
       databridge:
         condition: service_started
-      operation-delegation:
-        condition: service_started
       registration-service:
-        condition: service_started
-
-
+        condition: service_healthy
 
 ################################### BASYX CONTAINERS ####################################
-
-  # Operation Delegation Service - translates AAS Operations to MQTT commands
-  operation-delegation:
-    build:
-      context: ./OperationDelegation
-      dockerfile: Dockerfile
-    container_name: operation-delegation
-    environment:
-      - MQTT_BROKER=${MQTT_BROKER:-hivemq-broker}
-      - MQTT_PORT=${MQTT_PORT:-1883}
-      - PORT=8087
-      - OPERATION_TIMEOUT=30
-      - TOPIC_CONFIG_PATH=/app/config/topics.json
-      - AAS_SERVER_URL=http://${AAS_SERVER:-aas-env}:${AAS_PORT:-8081}
-      - AAS_BASE_URL=https://smartproductionlab.aau.dk
-    volumes:
-      - ./OperationDelegation/config:/app/config:ro
-    ports:
-      - '8087:8087'
-    restart: unless-stopped
-    depends_on:
-      - hivemq-broker
-    networks:
-      - hivemq-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8087/health"]
-      interval: 30s
-      timeout: 3s
-      retries: 3
-      start_period: 10s
 
   aas-env:
     image: eclipsebasyx/aas-environment:2.0.0-SNAPSHOT
@@ -436,6 +405,7 @@ services:
       SUBMODEL_REPO_PATH: http://${EXTERNAL_HOST:-localhost}:8081/submodels
       CD_REPO_PATH: http://${EXTERNAL_HOST:-localhost}:8081/concept-descriptions
       AAS_DISCOVERY_PATH: http://${EXTERNAL_HOST:-localhost}:8084/lookup/shells
+      LOGO_PATH: novo logo.png
       PRIMARY_COLOR: '#0036AA'
       DASHBOARD_SERVICE_PATH: http://${EXTERNAL_HOST:-localhost}:8085/api/elements
     restart: always
@@ -448,11 +418,19 @@ services:
     image: aaronzi/basyx-dashboard-api:SNAPSHOT_02
     container_name: dashboard-api
     environment:
-      - EXTERNAL_HOST=${EXTERNAL_HOST:-localhost}
+      - SERVER_PORT=8085
+      - SPRING_DATA_MONGODB_HOST=mongo
+      - SPRING_DATA_MONGODB_DATABASE=aas-dashboard
+      - SPRING_DATA_MONGODB_AUTHENTICATION_DATABASE=admin
+      - SPRING_DATA_MONGODB_USERNAME=mongoAdmin
+      - SPRING_DATA_MONGODB_PASSWORD=mongoPassword
+      - BASYX_CORS_ALLOWED_ORIGINS=*
+      - BASYX_CORS_ALLOWED_METHODS=GET,POST,PATCH,DELETE,PUT,OPTIONS,HEAD
+      - BASYX_EXTERNALURL=http://${EXTERNAL_HOST:-localhost}:8085
     ports:
       - '8085:8085'
     volumes:
-      - ./basyx/aas-dashboard.yml:/application.yml
+      - ./logo:/usr/src/app/dist/Logo
     restart: always
     depends_on:
       mongo:
@@ -475,49 +453,78 @@ services:
   
   registration-service:
     build:
-      context: ./Registration_Service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./Registration_Service/Dockerfile
     container_name: registration-service
     environment:
       - PYTHONUNBUFFERED=1
       - BASYX_URL=http://${AAS_SERVER:-aas-env}:${AAS_PORT:-8081}
-      - MQTT_BROKER=${MQTT_BROKER:-hivemq-broker}
-      - MQTT_PORT=${MQTT_PORT:-1883}
-      - DELEGATION_SERVICE_URL=http://${DELEGATION_SERVICE:-operation-delegation}:8087
+      - MQTT_BROKER=hivemq-broker
+      - MQTT_PORT=1883
+      # Delegation URL for BaSyx to call - must be reachable from aas-env container
+      - DELEGATION_SERVICE_URL=http://registration-service:8087
       - EXTERNAL_HOST=${EXTERNAL_HOST:-localhost}
+      - AAS_SERVER_URL=http://${AAS_SERVER:-aas-env}:${AAS_PORT:-8081}
+      - AAS_BASE_URL=https://smartproductionlab.aau.dk
     volumes:
       # DataBridge config directory for writing configs
       - ./databridge:/databridge
-      # Operation Delegation config for writing topics.json
-      - ./OperationDelegation/config:/app/OperationDelegation/config
       # AAS configs for registration
       - ./AASDescriptions/Resource/configs:/app/configs:ro
-      # Docker socket for container restarts
+      # MQTT Schemas for schema-based message generation
+      - ./MQTTSchemas:/app/MQTTSchemas:ro
+      # Docker socket for container restarts (DataBridge)
       - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      # Operation Delegation HTTP API port
+      - '8087:8087'
     command:
       - python
       - unified-registration-service.py
       - --mqtt-broker
-      - ${MQTT_BROKER:-hivemq-broker}
+      - hivemq-broker
       - --mqtt-port
-      - "${MQTT_PORT:-1883}"
+      - "1883"
       - --basyx-url
       - http://${AAS_SERVER:-aas-env}:${AAS_PORT:-8081}
       - --delegation-url
-      - http://${DELEGATION_SERVICE:-operation-delegation}:8087
+      - ${DELEGATION_SERVICE_URL:-http://localhost:8087}
       - listen
+      - --delegation-port
+      - "8087"
     restart: unless-stopped
     depends_on:
       hivemq-broker:
         condition: service_started
       aas-env:
         condition: service_started
-      databridge:
-        condition: service_started
-      operation-delegation:
-        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8087/health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 10s
     networks:
       - hivemq-network
+
+  # planar-motor-simulator:
+  #   build:
+  #     context: ./PlanarMotorSimulator
+  #     dockerfile: Dockerfile
+  #   container_name: planar-motor-simulator
+  #   environment:
+  #     - DISPLAY=${DISPLAY:-}
+  #     - RUN_GUI=${RUN_GUI:-false}
+  #     - AUTO_START=${AUTO_START:-true}
+  #     - START_BTN_X=400
+  #     - START_BTN_Y=480
+  #   ports:
+  #     - "8888:8888/udp"
+  #     - "8888:8888/tcp"
+  #   volumes:
+  #     - /tmp/.X11-unix:/tmp/.X11-unix:rw
+  #   network_mode: host
+  #   restart: unless-stopped
 
 
 #################¤ NETWORKS AND VOLUMES ####################
