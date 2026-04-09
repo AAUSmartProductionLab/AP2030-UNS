@@ -34,6 +34,9 @@ system_base_json_description: |
   CRITICAL RULES:
   - Keep the provided JSON structure and keys.
   - Fill values carefully from the specification.
+  - Return a PROFILE JSON object only (single root object with profile fields), not a full AAS package.
+  - Do NOT output top-level AAS package keys such as: assetAdministrationShells, submodels, conceptDescriptions.
+  - For date-like fields (for example DateOfManufacture), always return lexical form YYYY-MM-DD.
   - Output ONLY JSON. No prose, no markdown fences.
   {uncertainty_rules}
 
@@ -78,6 +81,7 @@ user_prompt_base_json_description: |
   {profile_example_json}
 
   Return ONLY the complete populated JSON profile object.
+  Do not return a full AAS package (no assetAdministrationShells/submodels/conceptDescriptions).
 
 retry_template: |
   Your AAS JSON has validation errors (attempt {attempt}/{max_attempts}). Fix ALL issues listed below and return the corrected complete JSON.
@@ -105,6 +109,8 @@ retry_template_json_description: |
   {ontology_issue_lines}
 
   Important:
+  - Return a PROFILE JSON object only. Never return full AAS package keys (assetAdministrationShells/submodels/conceptDescriptions).
   - Keep [VERIFY: ...] only for uncertain data values, never for identifiers/references.
   - Ensure idShort/id/globalAssetId/reference key values are AAS-safe and never contain placeholders.
+  - For DateOfManufacture, return a concrete YYYY-MM-DD value (no [VERIFY: ...] marker).
   - Return ONLY the complete corrected JSON profile object.

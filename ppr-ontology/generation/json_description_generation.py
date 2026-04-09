@@ -7,17 +7,8 @@ from typing import Any
 import yaml
 
 from .config import Config
-
-
-_CORE_PROFILE_KEYS = {
-    "idShort",
-    "id",
-    "globalAssetId",
-    "derivedFrom",
-    "assetType",
-    "serialNumber",
-    "location",
-}
+from .profile_structure import ensure_requested_submodel_sections, prune_profile_sections
+from .text_parsing import extract_outer_json_object, strip_code_fences as _strip_code_fences
 
 
 def _strip_base_url_prefixes(node: Any, base_url: str) -> Any:
@@ -33,104 +24,9 @@ def _strip_base_url_prefixes(node: Any, base_url: str) -> Any:
     return node
 
 
-def _selected_profile_section_keys(cfg: Config) -> set[str]:
-    selected = {name.strip().lower() for name in cfg.submodels}
-    allowed: set[str] = set(_CORE_PROFILE_KEYS)
-
-    if "nameplate" in selected or "digitalnameplate" in selected:
-        allowed.add("DigitalNameplate")
-    if "hierarchicalstructures" in selected:
-        allowed.add("HierarchicalStructures")
-    if "aid" in selected or "assetinterfacesdescription" in selected:
-        allowed.update({"AssetInterfacesDescription", "AssetInterfaceDescription", "AID"})
-    if "operationaldata" in selected or "variables" in selected:
-        allowed.update({"OperationalData", "Variables"})
-    if "parameters" in selected:
-        allowed.add("Parameters")
-    if "capabilities" in selected:
-        allowed.add("Capabilities")
-    if "skills" in selected:
-        allowed.add("Skills")
-
-    return allowed
-
-
-def _prune_profile_sections(profile: dict[str, Any], cfg: Config) -> dict[str, Any]:
-    if not profile:
-        return profile
-
-    system_name = next(iter(profile.keys()))
-    body = profile.get(system_name)
-    if not isinstance(body, dict):
-        return profile
-
-    allowed = _selected_profile_section_keys(cfg)
-    pruned_body = {k: v for k, v in body.items() if k in allowed}
-    return {system_name: pruned_body}
-
-
-def _ensure_requested_submodel_sections(body: dict[str, Any], cfg: Config) -> None:
-    selected = {name.strip().lower() for name in cfg.submodels}
-
-    if ("nameplate" in selected or "digitalnameplate" in selected) and "DigitalNameplate" not in body:
-        body["DigitalNameplate"] = {
-            "ManufacturerName": "[VERIFY: manufacturer name]",
-            "SerialNumber": str(body.get("serialNumber", "[VERIFY: serial number]")),
-            "ManufacturerProductDesignation": cfg.asset_name,
-            "DateOfManufacture": "[VERIFY: manufacture date YYYY-MM-DD]",
-        }
-
-    if "hierarchicalstructures" in selected and "HierarchicalStructures" not in body:
-        body["HierarchicalStructures"] = {
-            "Name": "BillOfMaterials",
-            "Archetype": "OneUp",
-            "IsPartOf": {
-                "ParentSystem": {
-                    "globalAssetId": "[VERIFY: parent globalAssetId]"
-                }
-            },
-        }
-
-    if ("aid" in selected or "assetinterfacesdescription" in selected) and "AssetInterfacesDescription" not in body:
-        body["AssetInterfacesDescription"] = {
-            "InterfaceMQTT": {
-                "Title": cfg.asset_name,
-                "EndpointMetadata": {
-                    "base": "[VERIFY: mqtt endpoint]",
-                    "contentType": "application/json",
-                },
-                "InteractionMetadata": {
-                    "actions": {},
-                    "properties": {},
-                },
-            }
-        }
-
-    if (
-        "operationaldata" in selected or "variables" in selected
-    ) and "OperationalData" not in body and "Variables" not in body:
-        body["OperationalData"] = {}
-
-    if "parameters" in selected and "Parameters" not in body:
-        body["Parameters"] = {}
-
-    if "capabilities" in selected and "Capabilities" not in body:
-        body["Capabilities"] = {}
-
-    if "skills" in selected and "Skills" not in body:
-        body["Skills"] = {}
-
-
 def strip_code_fences(text: str) -> str:
-    value = text.strip()
-    if value.startswith("```"):
-        lines = value.splitlines()
-        if lines:
-            lines = lines[1:]
-        if lines and lines[-1].strip() == "```":
-            lines = lines[:-1]
-        value = "\n".join(lines).strip()
-    return value
+    # Compatibility wrapper; shared implementation lives in text_parsing.py.
+    return _strip_code_fences(text)
 
 
 def _assemble_profile_example_document(cfg: Config) -> dict[str, Any]:
@@ -144,11 +40,11 @@ def _assemble_profile_example_document(cfg: Config) -> dict[str, Any]:
             try:
                 parsed = yaml.safe_load(source_text)
                 if isinstance(parsed, dict):
-                    pruned = _prune_profile_sections(parsed, cfg)
+                    pruned = prune_profile_sections(parsed, cfg)
                     system_name = next(iter(pruned.keys())) if pruned else ""
                     body = pruned.get(system_name)
                     if isinstance(body, dict):
-                        _ensure_requested_submodel_sections(body, cfg)
+                        ensure_requested_submodel_sections(body, cfg)
                     return _strip_base_url_prefixes(pruned, cfg.base_url)
             except Exception:
                 pass
@@ -169,7 +65,7 @@ def _assemble_profile_example_document(cfg: Config) -> dict[str, Any]:
     }
 
     body = profile[system_name]
-    _ensure_requested_submodel_sections(body, cfg)
+    ensure_requested_submodel_sections(body, cfg)
 
     return profile
 
@@ -303,11 +199,7 @@ def assemble_profile_semantic_guide_json(cfg: Config) -> str:
 
 
 def profile_json_text_to_document(text: str) -> dict[str, Any]:
-    cleaned = strip_code_fences(text)
-    start = cleaned.find("{")
-    end = cleaned.rfind("}")
-    if start != -1 and end != -1 and end >= start:
-        cleaned = cleaned[start : end + 1]
+    cleaned = extract_outer_json_object(text)
     document = json.loads(cleaned)
     if not isinstance(document, dict):
         raise ValueError("Profile output must be a JSON object.")

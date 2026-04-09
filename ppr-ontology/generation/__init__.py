@@ -1,16 +1,6 @@
-"""Public entrypoints for the generation package.
+"""Generation package.
 
-This allows package-style invocation, e.g.:
-	import generation
-	generation.run()
+Backend services import modules directly from this package.
 """
 
-from .run import main
-
-
-def run() -> None:
-	"""Run the generation pipeline CLI entry point."""
-	main()
-
-
-__all__ = ["main", "run"]
+__all__: list[str] = []

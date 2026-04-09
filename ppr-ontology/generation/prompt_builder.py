@@ -77,9 +77,23 @@ def build_user_prompt(
     cfg: Config,
     pdf_base64: str | None,
     pdf_text: str | None,
+    spec_sheet_text: str | None = None,
+    supplemental_context: str | None = None,
 ) -> str:
     mandatory     = {"Nameplate", "HierarchicalStructures"}
     all_submodels = list(dict.fromkeys([*mandatory, *cfg.submodels]))
+
+    extra_sections: list[str] = []
+    if spec_sheet_text and spec_sheet_text.strip():
+        extra_sections.append(
+            "User-provided specification text:\n"
+            + spec_sheet_text.strip()
+        )
+    if supplemental_context and supplemental_context.strip():
+        extra_sections.append(
+            "Extracted supplemental file context (XML/JSON/NodeSet/PDF):\n"
+            + supplemental_context.strip()
+        )
 
     if cfg.provider == "gemini":
         spec_note = (
@@ -92,6 +106,14 @@ def build_user_prompt(
             _template("user_spec_note_text_with_pdf").format(pdf_text=pdf_text)
             if pdf_text
             else _template("user_spec_note_no_pdf").format(asset_name=cfg.asset_name)
+        )
+
+    if extra_sections:
+        spec_note = (
+            spec_note
+            + "\n\nUse the following additional source material as ground truth when available:\n\n"
+            + "\n\n---\n\n".join(extra_sections)
+            + "\n\nIf OPC UA NodeSet information is present, prioritise mapping methods/skills into Skills, variables into Variables, and endpoint/address/interface details into AssetInterfacesDescription (AID) whenever those submodels are selected."
         )
 
     if cfg.generation_mode == "json-description":

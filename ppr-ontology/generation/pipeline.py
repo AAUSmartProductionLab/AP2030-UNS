@@ -13,25 +13,14 @@ from pathlib import Path
 
 from .config import Config
 from .AAS_builder import profile_json_text_to_aas_json
-from .json_description_generation import profile_json_text_to_document, validate_profile_document
+from .json_description_generation import (
+	profile_json_text_to_document,
+	validate_profile_document,
+)
 from .llm_client import call_llm
 from .prompt_builder import build_retry_message
+from .text_parsing import extract_outer_json_object, strip_code_fences
 from .validator import run_shacl
-from .json_description_generation import strip_code_fences
-
-
-def _strip_fences(text: str) -> str:
-	text = text.strip()
-	if text.startswith("```"):
-		text = text.split("\n", 1)[1] if "\n" in text else text[3:]
-		if text.endswith("```"):
-			text = text[:-3]
-		text = text.strip()
-	first_brace = text.find("{")
-	last_brace = text.rfind("}")
-	if first_brace != -1 and last_brace != -1:
-		text = text[first_brace:last_brace + 1]
-	return text
 
 
 def run_pipeline(
@@ -89,6 +78,7 @@ def run_pipeline(
 				system_instruction=system_instruction,
 				gemini_contents=gemini_contents if cfg.provider == "gemini" else None,
 				groq_history=groq_history if cfg.provider != "gemini" else None,
+				generation_mode=cfg.generation_mode,
 			)
 
 			if not raw_text:
@@ -104,7 +94,7 @@ def run_pipeline(
 				raw_text = strip_code_fences(raw_text)
 				aas_json = raw_text
 			else:
-				raw_text = _strip_fences(raw_text)
+				raw_text = extract_outer_json_object(raw_text)
 				aas_json = raw_text
 
 			verify_count = len(re.findall(r'\[VERIFY:', raw_text))
@@ -131,27 +121,39 @@ def run_pipeline(
 						_log("  Full AAS JSON detected in json-description mode — requesting profile JSON instead.")
 					else:
 						profile_issues = validate_profile_document(document, cfg)
-						metamodel_issues = [{"severity": "Violation", "message": message} for message in profile_issues]
-						if metamodel_issues:
+						profile_issue_dicts = [{"severity": "Violation", "message": message} for message in profile_issues]
+
+						try:
+							aas_json, _ = profile_json_text_to_aas_json(raw_text, cfg)
+						except Exception as exc:
+							_log(f"  Profile-to-AAS conversion FAILED: {exc}")
+							issues = [
+								*profile_issue_dicts,
+								{"severity": "Violation", "message": f"Profile to AAS conversion failed: {exc}"},
+							]
+							metamodel_issues = issues
 							ontology_issues = []
-							issues = [*metamodel_issues]
 							conforms = False
-							_log(f"  Profile JSON checks: conforms={conforms}, total_issues={len(issues)}")
 						else:
-							try:
-								aas_json, _ = profile_json_text_to_aas_json(raw_text, cfg)
-							except Exception as exc:
-								_log(f"  Profile-to-AAS conversion FAILED: {exc}")
-								issues = [{"severity": "Violation", "message": f"Profile to AAS conversion failed: {exc}"}]
-								metamodel_issues = issues
-								ontology_issues = []
-								conforms = False
+							if profile_issue_dicts:
+								_log(
+									"  Profile JSON checks reported issues; converted to AAS anyway for downstream validation."
+								)
 							else:
 								_log("  Profile conversion OK — running metamodel + ontology validation...")
-								t0 = time.time()
-								conforms, issues, metamodel_issues, ontology_issues = run_shacl(aas_json, tmp_dir)
-								_log(f"  Validation: conforms={conforms}, total_issues={len(issues)}  ({time.time()-t0:.1f}s)")
-								_log(f"    Metamodel issues: {len(metamodel_issues)}  |  Ontology issues: {len(ontology_issues)}")
+
+							t0 = time.time()
+							shacl_conforms, shacl_issues, shacl_meta, shacl_onto = run_shacl(aas_json, tmp_dir)
+
+							metamodel_issues = [*profile_issue_dicts, *shacl_meta]
+							ontology_issues = shacl_onto
+							issues = [*metamodel_issues, *ontology_issues]
+							conforms = shacl_conforms and not profile_issue_dicts
+
+							_log(f"  Validation: conforms={conforms}, total_issues={len(issues)}  ({time.time()-t0:.1f}s)")
+							_log(
+								f"    Profile issues: {len(profile_issue_dicts)}  |  Metamodel issues: {len(shacl_meta)}  |  Ontology issues: {len(ontology_issues)}"
+							)
 			else:
 				try:
 					json.loads(raw_text)
