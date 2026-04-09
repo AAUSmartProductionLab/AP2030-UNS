@@ -2,7 +2,7 @@ import { Fragment, useState, useRef, useEffect } from 'react';
 import { useAppStore, ALL_SUBMODELS, REQUIRED_SUBMODELS, type SubmodelKey } from '../../store/useAppStore';
 import { SUBMODEL_META } from './catalogMeta';
 import { useGenerateAI, type PipelineStages, type StageStatus } from '../../hooks/useGenerateAI';
-import { api, type GenerateAasRequest, type GenerationConfig } from '../../api/client';
+import { api, type GenerateAasRequest, type GenerationConfig, type SupplementalFilePayload } from '../../api/client';
 
 // ---------------------------------------------------------------------------
 // PipelineProgress — node-based progress bar
@@ -130,6 +130,14 @@ interface GenerateAIDialogProps {
   onImport: (aasJson: string) => void;
 }
 
+interface UploadedSpecFile {
+  id: string;
+  name: string;
+  mimeType: string;
+  size: number;
+  contentBase64: string;
+}
+
 export function GenerateAIDialog({ isOpen, onClose, onImport }: GenerateAIDialogProps) {
   const identitySystemId = useAppStore((s) => s.identitySystemId);
   const identityId = useAppStore((s) => s.identityId);
@@ -140,8 +148,7 @@ export function GenerateAIDialog({ isOpen, onClose, onImport }: GenerateAIDialog
 
   // --- Asset fields ---
   const [specSheetText, setSpecSheetText] = useState('');
-  const [pdfFile, setPdfFile] = useState<File | null>(null);
-  const [pdfBase64, setPdfBase64] = useState<string | null>(null);
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedSpecFile[]>([]);
   const [assetName, setAssetName] = useState(identitySystemId || '');
   const [baseUrl, setBaseUrl] = useState(defaultBaseUrl);
   const [selectedSubmodels, setSelectedSubmodels] = useState<SubmodelKey[]>([...REQUIRED_SUBMODELS]);
@@ -157,7 +164,7 @@ export function GenerateAIDialog({ isOpen, onClose, onImport }: GenerateAIDialog
   const [forceFullOutput, setForceFullOutput] = useState(true);
   const [maxPdfChars, setMaxPdfChars] = useState<number | null>(8000);
   const [maxAttempts, setMaxAttempts] = useState(2);
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(true);
 
   // --- UI state ---
   const { status, result, errorMsg, logs, pipeline, generate, reset } = useGenerateAI();
@@ -197,6 +204,7 @@ export function GenerateAIDialog({ isOpen, onClose, onImport }: GenerateAIDialog
 
   if (!isOpen) return null;
 
+  const providerOptions = genConfig?.providers ?? ['gemini', 'groq'];
   const availableModels = genConfig?.models[provider] ?? [];
   const modelLabel = model || availableModels[0] || '(default)';
 
@@ -207,35 +215,64 @@ export function GenerateAIDialog({ isOpen, onClose, onImport }: GenerateAIDialog
     );
   };
 
-  const handlePdfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) { setPdfFile(null); setPdfBase64(null); return; }
-    setPdfFile(file);
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = reader.result as string;
-      setPdfBase64(dataUrl.split(',')[1]);
-    };
-    reader.readAsDataURL(file);
-  };
+  const fileToBase64 = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = String(reader.result || '');
+        const encoded = dataUrl.includes(',') ? dataUrl.split(',')[1] : '';
+        resolve(encoded);
+      };
+      reader.onerror = () => reject(new Error(`Failed to read file: ${file.name}`));
+      reader.readAsDataURL(file);
+    });
 
-  const handleRemovePdf = () => {
-    setPdfFile(null);
-    setPdfBase64(null);
+  const handleFilesChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+
+    const prepared = await Promise.all(files.map(async (file) => ({
+      id: `${file.name}-${file.size}-${file.lastModified}-${Math.random().toString(36).slice(2, 8)}`,
+      name: file.name,
+      mimeType: file.type || 'application/octet-stream',
+      size: file.size,
+      contentBase64: await fileToBase64(file),
+    })));
+
+    setUploadedFiles((prev) => {
+      const seen = new Set(prev.map((f) => `${f.name}|${f.size}`));
+      const uniqueNew = prepared.filter((f) => !seen.has(`${f.name}|${f.size}`));
+      return [...prev, ...uniqueNew];
+    });
+
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const canGenerate = specSheetText.trim().length > 0 || pdfBase64 !== null;
+  const handleRemoveFile = (fileId: string) => {
+    setUploadedFiles((prev) => prev.filter((f) => f.id !== fileId));
+  };
+
+  const handleClearFiles = () => {
+    setUploadedFiles([]);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const canGenerate = specSheetText.trim().length > 0 || uploadedFiles.length > 0;
 
   const handleGenerate = async () => {
     if (!canGenerate) return;
+    const supplementalFiles: SupplementalFilePayload[] = uploadedFiles.map((f) => ({
+      file_name: f.name,
+      mime_type: f.mimeType,
+      content_base64: f.contentBase64,
+    }));
+
     const req: GenerateAasRequest = {
       asset_name: assetName.replace(/\s+/g, '') || 'UnknownAsset',
       base_url: baseUrl || 'https://smartproductionlab.aau.dk',
       selected_submodels: selectedSubmodels,
       spec_sheet_text: specSheetText,
-      spec_sheet_pdf_base64: pdfBase64 || undefined,
-      spec_sheet_pdf_mime_type: pdfFile?.type || undefined,
+      supplemental_files: supplementalFiles,
       provider,
       model: model || undefined,
       generation_mode: generationMode,
@@ -311,7 +348,7 @@ export function GenerateAIDialog({ isOpen, onClose, onImport }: GenerateAIDialog
                   <div className="form-row form-row--inline">
                     <label className="form-label">Provider</label>
                     <div className="generate-ai-radio-group">
-                      {(genConfig?.providers ?? ['gemini', 'groq']).map((p) => (
+                      {providerOptions.map((p) => (
                         <label key={p} className={`generate-ai-radio${provider === p ? ' generate-ai-radio--active' : ''}`}>
                           <input type="radio" name="provider" value={p} checked={provider === p}
                             onChange={() => setProvider(p)} />
@@ -320,6 +357,13 @@ export function GenerateAIDialog({ isOpen, onClose, onImport }: GenerateAIDialog
                       ))}
                     </div>
                   </div>
+
+                  {provider === 'claude' && (
+                    <div className="form-row form-row--inline">
+                      <label className="form-label">Claude Auth</label>
+                      <span className="form-hint">Uses local Claude CLI authentication/session on the backend host.</span>
+                    </div>
+                  )}
 
                   {/* Model */}
                   <div className="form-row form-row--inline">
@@ -331,7 +375,7 @@ export function GenerateAIDialog({ isOpen, onClose, onImport }: GenerateAIDialog
                         {availableModels.map((m) => <option key={m} value={m}>{m}</option>)}
                       </select>
                     ) : (
-                      <input className="form-input" type="text" placeholder="e.g. gemini-2.5-flash"
+                      <input className="form-input" type="text" placeholder="e.g. claude-opus-4-5-20251101"
                         value={model} onChange={(e) => setModel(e.target.value)} />
                     )}
                   </div>
@@ -356,13 +400,13 @@ export function GenerateAIDialog({ isOpen, onClose, onImport }: GenerateAIDialog
                     <span className="form-hint">retries on SHACL failure</span>
                   </div>
 
-                  {/* Max PDF chars */}
+                  {/* Max file chars */}
                   <div className="form-row form-row--inline">
-                    <label className="form-label">Max PDF chars</label>
+                    <label className="form-label">Max file chars</label>
                     <input className="form-input form-input--narrow" type="number" min={0} step={1000}
                       value={maxPdfChars ?? ''} placeholder="unlimited"
                       onChange={(e) => setMaxPdfChars(e.target.value === '' ? null : Number(e.target.value))} />
-                    <span className="form-hint">blank = no limit</span>
+                    <span className="form-hint">text extraction cap per file (blank = no limit)</span>
                   </div>
 
                   {/* Toggles */}
@@ -404,36 +448,55 @@ export function GenerateAIDialog({ isOpen, onClose, onImport }: GenerateAIDialog
                 </div>
               </div>
 
-              {/* PDF upload */}
+              {/* Multi-file upload */}
               <div className="form-row">
-                <label className="form-label">Specification Sheet — PDF</label>
-                {pdfFile ? (
-                  <div className="generate-ai-pdf-selected">
-                    <span className="generate-ai-pdf-name">📄 {pdfFile.name}</span>
-                    <button className="btn btn--ghost btn--xs" onClick={handleRemovePdf} type="button">✕ Remove</button>
-                  </div>
-                ) : (
-                  <div className="generate-ai-pdf-upload">
-                    <input ref={fileInputRef} type="file" accept="application/pdf"
-                      onChange={handlePdfChange} id="pdf-upload" style={{ display: 'none' }} />
-                    <label htmlFor="pdf-upload" className="btn btn--ghost btn--sm generate-ai-pdf-label">
-                      Upload PDF
-                    </label>
-                    <span className="generate-ai-pdf-hint">or paste text below</span>
+                <label className="form-label">Specification Files (multi-format)</label>
+
+                <div className="generate-ai-pdf-upload">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    accept=".pdf,.xml,.nodeset,.nodeset2,.json,.yaml,.yml,.txt,.csv"
+                    onChange={handleFilesChange}
+                    id="supp-files-upload"
+                    style={{ display: 'none' }}
+                  />
+                  <label htmlFor="supp-files-upload" className="btn btn--ghost btn--sm generate-ai-pdf-label">
+                    Add Files
+                  </label>
+                  <span className="generate-ai-pdf-hint">OPC-UA NodeSet XML/NodeSet2, JSON, PDF, text, etc.</span>
+                </div>
+
+                {uploadedFiles.length > 0 && (
+                  <div className="generate-ai-files-list">
+                    {uploadedFiles.map((f) => (
+                      <div key={f.id} className="generate-ai-pdf-selected">
+                        <span className="generate-ai-pdf-name" title={`${f.name} (${Math.ceil(f.size / 1024)} KB)`}>
+                          📄 {f.name}
+                        </span>
+                        <button className="btn btn--ghost btn--xs" onClick={() => handleRemoveFile(f.id)} type="button">
+                          ✕ Remove
+                        </button>
+                      </div>
+                    ))}
+                    <button className="btn btn--ghost btn--xs" onClick={handleClearFiles} type="button">
+                      Clear All Files
+                    </button>
                   </div>
                 )}
               </div>
 
               <div className="form-row">
                 <label className="form-label">
-                  {pdfFile ? 'Additional Notes (optional)' : 'Paste Specification Text'}
+                  {uploadedFiles.length > 0 ? 'Additional Notes (optional)' : 'Paste Specification Text'}
                 </label>
                 <textarea className="form-textarea form-textarea--large"
-                  placeholder={pdfFile
+                  placeholder={uploadedFiles.length > 0
                     ? 'Optional: add notes or highlight specific details for the AI...'
                     : 'Paste the component spec sheet, datasheet, or description here.'}
                   value={specSheetText} onChange={(e) => setSpecSheetText(e.target.value)}
-                  rows={pdfFile ? 3 : 8} />
+                  rows={uploadedFiles.length > 0 ? 3 : 8} />
               </div>
 
               {status === 'error' && (

@@ -39,6 +39,7 @@ export interface GenerateAasRequest {
   spec_sheet_text: string;
   spec_sheet_pdf_base64?: string;
   spec_sheet_pdf_mime_type?: string;
+  supplemental_files?: SupplementalFilePayload[];
 
   // Provider & model
   provider?: string;
@@ -51,6 +52,12 @@ export interface GenerateAasRequest {
   force_full_aas_output?: boolean;
   max_pdf_chars?: number | null;
   max_attempts?: number;
+}
+
+export interface SupplementalFilePayload {
+  file_name: string;
+  mime_type?: string;
+  content_base64: string;
 }
 
 export interface GenerateAasResponse {
