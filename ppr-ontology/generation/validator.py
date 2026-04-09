@@ -6,11 +6,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
-# run_resourceaas_validation is in tools/ which is on sys.path via config.py
-from run_resourceaas_validation import run_validation_detailed  # noqa: E402
 from .config import load_validation_paths
+from tools.run_resourceaas_validation import run_validation_detailed
 
 _SHAPES, _ONTOLOGIES = load_validation_paths()
+
+
 def run_shacl(json_text: str, tmp_dir: Path) -> tuple[bool, list[dict], list[dict], list[dict]]:
     """
     Write json_text to tmp_dir, run SHACL validation, parse the report.

@@ -6,8 +6,14 @@ from typing import Any
 from pyshacl import validate
 from rdflib import Graph, OWL, Namespace, RDF
 
-from mock_resourceaas_to_rdf import convert
-from validate_with_basyx import validate_json_with_basyx
+try:
+    # Package import path (used by API/generation modules).
+    from .mock_resourceaas_to_rdf import convert
+    from .validate_with_basyx import validate_json_with_basyx
+except ImportError:
+    # Fallback when running this file directly as a script.
+    from mock_resourceaas_to_rdf import convert
+    from validate_with_basyx import validate_json_with_basyx
 
 
 def _resolve_combined_shapes(shape_paths: list[Path]) -> list[Path]:

@@ -17,12 +17,7 @@ _PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
-# tools/ is not a package; add it to path for direct import
-_TOOLS_DIR = _PROJECT_ROOT / "tools"
-if str(_TOOLS_DIR) not in sys.path:
-    sys.path.insert(0, str(_TOOLS_DIR))
-
-from run_resourceaas_validation import run_validation  # noqa: E402
+from tools.run_resourceaas_validation import run_validation  # noqa: E402
 from api.models import ValidateRequest, ValidateResponse, ValidationIssue  # noqa: E402
 from generation.config import load_validation_paths  # noqa: E402
 
