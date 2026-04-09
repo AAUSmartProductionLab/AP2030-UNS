@@ -24,17 +24,11 @@ if str(_TOOLS_DIR) not in sys.path:
 
 from run_resourceaas_validation import run_validation  # noqa: E402
 from api.models import ValidateRequest, ValidateResponse, ValidationIssue  # noqa: E402
+from generation.config import load_validation_paths  # noqa: E402
 
 router = APIRouter()
 
-_SHAPES = [
-    _PROJECT_ROOT / "shacl" / "generated" / "shapes.generated.shacl.ttl",
-    _PROJECT_ROOT / "shacl" / "manual" / "resourceaas-sparql-rules.shacl.ttl",
-]
-_ONTOLOGIES = [
-    _PROJECT_ROOT / "ontology" / "CSS-Ontology.ttl",
-    _PROJECT_ROOT / "ontology" / "CSSx.ttl",
-]
+_SHAPES, _ONTOLOGIES = load_validation_paths()
 
 _SEVERITY_MAP = {
     "http://www.w3.org/ns/shacl#Violation": "Violation",

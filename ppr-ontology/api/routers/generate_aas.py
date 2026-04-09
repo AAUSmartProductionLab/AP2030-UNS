@@ -11,14 +11,16 @@ import asyncio
 import base64
 import concurrent.futures
 import json
+import re
 import sys
 import tempfile
+import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import AsyncGenerator, Optional
 
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(_PROJECT_ROOT) not in sys.path:
@@ -37,6 +39,11 @@ router = APIRouter()
 # Pydantic models
 # ---------------------------------------------------------------------------
 
+class SupplementalFile(BaseModel):
+    file_name: str
+    mime_type: Optional[str] = None
+    content_base64: str
+
 class GenerateAasRequest(BaseModel):
     # Asset identity
     asset_name: str = "UnknownAsset"
@@ -47,9 +54,10 @@ class GenerateAasRequest(BaseModel):
     spec_sheet_text: str = ""
     spec_sheet_pdf_base64: Optional[str] = None
     spec_sheet_pdf_mime_type: str = "application/pdf"
+    supplemental_files: list[SupplementalFile] = Field(default_factory=list)
 
     # Provider & model selection
-    provider: str = "gemini"          # "gemini" | "groq"
+    provider: str = "gemini"          # "gemini" | "groq" | "claude"
     model: Optional[str] = None       # specific model first; falls back to config list
 
     # Generation options
@@ -67,6 +75,145 @@ class GenerationConfigResponse(BaseModel):
     defaults: dict
 
 
+def _extract_xml_opcua_summary(xml_text: str, file_name: str) -> str:
+    """Extract a compact OPC UA NodeSet summary that can guide submodel population."""
+
+    def _local(tag: str) -> str:
+        if "}" in tag:
+            return tag.split("}", 1)[1]
+        return tag
+
+    try:
+        root = ET.fromstring(xml_text)
+    except Exception as exc:
+        return f"[File: {file_name}] OPC UA XML parse failed: {exc}"
+
+    tag_name = _local(root.tag)
+    if tag_name.lower() != "uanodeset" and "opcfoundation.org/UA" not in root.tag:
+        return ""
+
+    namespace_uris: list[str] = []
+    models: list[str] = []
+    variables: list[str] = []
+    methods: list[str] = []
+    objects: list[str] = []
+    endpoint_hits: list[str] = []
+
+    for elem in root.iter():
+        local = _local(elem.tag)
+
+        if local == "Uri" and elem.text and elem.text.strip():
+            namespace_uris.append(elem.text.strip())
+
+        if local == "Model":
+            model_uri = elem.attrib.get("ModelUri")
+            if model_uri:
+                models.append(model_uri)
+
+        browse_name = elem.attrib.get("BrowseName", "")
+        node_id = elem.attrib.get("NodeId", "")
+
+        if local == "UAVariable":
+            dtype = elem.attrib.get("DataType", "")
+            desc = browse_name or node_id or "(unnamed variable)"
+            if dtype:
+                desc = f"{desc} [{dtype}]"
+            variables.append(desc)
+        elif local == "UAMethod":
+            methods.append(browse_name or node_id or "(unnamed method)")
+        elif local == "UAObject":
+            objects.append(browse_name or node_id or "(unnamed object)")
+
+        if local in {"EndpointUrl", "DiscoveryUrl", "Url", "Address", "Endpoint", "ServerUri"}:
+            text_val = (elem.text or "").strip()
+            if text_val:
+                endpoint_hits.append(text_val)
+
+        if not endpoint_hits and elem.text:
+            text_val = elem.text.strip()
+            if text_val and re.search(r"(opc\.tcp://|https?://|\bIP\b|\bAddress\b)", text_val, flags=re.IGNORECASE):
+                endpoint_hits.append(text_val)
+
+    object_skill_candidates = [
+        o for o in objects
+        if re.search(r"(skill|operation|command|capability)", o, flags=re.IGNORECASE)
+    ]
+    skill_candidates = list(dict.fromkeys([*methods, *object_skill_candidates]))
+
+    def _head(items: list[str], n: int = 20) -> str:
+        if not items:
+            return "none"
+        uniq = list(dict.fromkeys(items))
+        shown = uniq[:n]
+        tail = f" (+{len(uniq) - n} more)" if len(uniq) > n else ""
+        return "; ".join(shown) + tail
+
+    summary_lines = [
+        f"[File: {file_name}] OPC UA NodeSet summary:",
+        f"- Namespaces: {_head(namespace_uris, 8)}",
+        f"- Models: {_head(models, 8)}",
+        f"- Variables ({len(variables)}): {_head(variables, 25)}",
+        f"- Methods ({len(methods)}): {_head(methods, 25)}",
+        f"- Skill candidates ({len(skill_candidates)}): {_head(skill_candidates, 25)}",
+        f"- Endpoint/address hints: {_head(endpoint_hits, 15)}",
+        "- Mapping guidance: map methods/skill candidates to Skills, variables to Variables, and endpoint/address hints to AssetInterfacesDescription (AID) when those submodels are selected.",
+    ]
+    return "\n".join(summary_lines)
+
+
+def _decode_text_bytes(data: bytes) -> str:
+    for enc in ("utf-8", "utf-16", "latin-1"):
+        try:
+            return data.decode(enc)
+        except Exception:
+            continue
+    return data.decode("utf-8", errors="replace")
+
+
+def _extract_file_context(
+    uploaded: SupplementalFile,
+    provider: str,
+    max_chars: Optional[int],
+) -> tuple[str, Optional[str]]:
+    """
+    Returns (text_context, pdf_base64_for_gemini).
+    pdf_base64_for_gemini is only set when provider is gemini and file is PDF.
+    """
+    file_name = uploaded.file_name
+    mime = (uploaded.mime_type or "").lower()
+    suffix = Path(file_name).suffix.lower()
+
+    raw = base64.b64decode(uploaded.content_base64)
+
+    if mime == "application/pdf" or suffix == ".pdf":
+        if provider == "gemini":
+            return f"[File: {file_name}] PDF attached as binary context for Gemini.", uploaded.content_base64
+        try:
+            import pymupdf4llm  # type: ignore
+
+            with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
+                f.write(raw)
+                tmp_pdf = Path(f.name)
+            text = pymupdf4llm.to_markdown(str(tmp_pdf))
+            tmp_pdf.unlink(missing_ok=True)
+            if max_chars:
+                text = text[:max_chars]
+            return f"[File: {file_name}] PDF extracted text:\n{text}", None
+        except Exception as exc:
+            return f"[File: {file_name}] PDF extraction failed: {exc}", None
+
+    text = _decode_text_bytes(raw)
+    if max_chars:
+        text = text[:max_chars]
+
+    if suffix in {".xml", ".nodeset", ".nodeset2"} or "xml" in mime:
+        opcua_summary = _extract_xml_opcua_summary(text, file_name)
+        if opcua_summary:
+            return opcua_summary + "\n\nRaw excerpt:\n" + text[:6000], None
+
+    return f"[File: {file_name}]\n{text}", None
+
+
 # ---------------------------------------------------------------------------
 # GET /api/generation-config
 # ---------------------------------------------------------------------------
@@ -77,10 +224,11 @@ async def get_generation_config() -> GenerationConfigResponse:
     try:
         cfg = load_config()
         return GenerationConfigResponse(
-            providers=["gemini", "groq"],
+            providers=["gemini", "groq", "claude"],
             models={
                 "gemini": cfg.gemini_models,
                 "groq": cfg.groq_models,
+                "claude": cfg.claude_models,
             },
             defaults={
                 "provider": cfg.provider,
@@ -94,8 +242,8 @@ async def get_generation_config() -> GenerationConfigResponse:
         )
     except Exception:
         return GenerationConfigResponse(
-            providers=["gemini", "groq"],
-            models={"gemini": [], "groq": []},
+            providers=["gemini", "groq", "claude"],
+            models={"gemini": [], "groq": [], "claude": []},
             defaults={},
         )
 
@@ -126,10 +274,18 @@ async def _stream_pipeline(req: GenerateAasRequest) -> AsyncGenerator[str, None]
         return
 
     # -- Resolve API key --
-    api_key = (
-        base_cfg.gemini_api_key if req.provider == "gemini" else base_cfg.groq_api_key
-    )
-    if not api_key:
+    if req.provider == "gemini":
+        api_key = base_cfg.gemini_api_key
+    elif req.provider == "groq":
+        api_key = base_cfg.groq_api_key
+    elif req.provider == "claude":
+        # Claude Code CLI uses local auth/session; API key may be empty here.
+        api_key = base_cfg.claude_api_key
+    else:
+        yield _sse({"type": "error", "message": f"Unsupported provider '{req.provider}'"})
+        return
+
+    if req.provider in {"gemini", "groq"} and not api_key:
         yield _sse({
             "type": "error",
             "message": (
@@ -140,9 +296,12 @@ async def _stream_pipeline(req: GenerateAasRequest) -> AsyncGenerator[str, None]
         return
 
     # -- Resolve model list (put user-selected model first) --
-    base_models = (
-        base_cfg.gemini_models if req.provider == "gemini" else base_cfg.groq_models
-    )
+    if req.provider == "gemini":
+        base_models = base_cfg.gemini_models
+    elif req.provider == "groq":
+        base_models = base_cfg.groq_models
+    else:
+        base_models = base_cfg.claude_models
     if req.model:
         model_list = [req.model, *[m for m in base_models if m != req.model]]
     else:
@@ -166,8 +325,10 @@ async def _stream_pipeline(req: GenerateAasRequest) -> AsyncGenerator[str, None]
         models=model_list,
         gemini_models=base_cfg.gemini_models,
         groq_models=base_cfg.groq_models,
+        claude_models=base_cfg.claude_models,
         gemini_api_key=base_cfg.gemini_api_key,
         groq_api_key=base_cfg.groq_api_key,
+        claude_api_key=base_cfg.claude_api_key,
         gen_dir=base_cfg.gen_dir,
         root_dir=base_cfg.root_dir,
         context_dir=base_cfg.context_dir,
@@ -252,28 +413,63 @@ async def _stream_pipeline(req: GenerateAasRequest) -> AsyncGenerator[str, None]
             # Build prompts
             system_instruction = build_system_instruction(cfg, context_text, rag_text_blocks)
 
-            # Handle PDF for non-Gemini providers: decode base64 → extract text
-            pdf_base64 = req.spec_sheet_pdf_base64
+            incoming_files = list(req.supplemental_files)
+            if req.spec_sheet_pdf_base64:
+                incoming_files.append(
+                    SupplementalFile(
+                        file_name="spec-sheet.pdf",
+                        mime_type=req.spec_sheet_pdf_mime_type or "application/pdf",
+                        content_base64=req.spec_sheet_pdf_base64,
+                    )
+                )
+
+            spec_text_blocks: list[str] = []
+
+            # Gemini accepts inline PDF parts; text providers receive extracted text only.
+            pdf_base64: Optional[str] = None
             pdf_text: Optional[str] = None
 
-            if pdf_base64 and req.provider != "gemini":
-                try:
-                    import pymupdf4llm  # type: ignore
-                    pdf_bytes = base64.b64decode(pdf_base64)
-                    with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
-                        f.write(pdf_bytes)
-                        tmp_pdf = Path(f.name)
-                    text = pymupdf4llm.to_markdown(str(tmp_pdf))
-                    tmp_pdf.unlink(missing_ok=True)
-                    if req.max_pdf_chars:
-                        text = text[: req.max_pdf_chars]
-                    pdf_text = text
-                    pdf_base64 = None  # Groq uses text, not base64
-                except ImportError:
-                    # pymupdf4llm not installed — fall through to text-only
-                    pdf_base64 = None
+            if incoming_files:
+                asyncio.run_coroutine_threadsafe(
+                    queue.put({
+                        "type": "log",
+                        "message": f"Processing {len(incoming_files)} supplemental file(s)...",
+                    }),
+                    loop,
+                )
 
-            user_prompt = build_user_prompt(cfg, pdf_base64, pdf_text)
+            for uploaded in incoming_files:
+                try:
+                    text_context, gemini_pdf = _extract_file_context(uploaded, req.provider, req.max_pdf_chars)
+                except Exception as exc:
+                    text_context = f"[File: {uploaded.file_name}] processing failed: {exc}"
+                    gemini_pdf = None
+
+                if text_context:
+                    spec_text_blocks.append(text_context)
+                if gemini_pdf and not pdf_base64:
+                    pdf_base64 = gemini_pdf
+                elif gemini_pdf and pdf_base64:
+                    spec_text_blocks.append(
+                        f"[File: {uploaded.file_name}] Additional PDF detected. Only one inline PDF can be attached for Gemini; use extracted text or summary from other files."
+                    )
+
+            supplemental_context: Optional[str] = None
+            if spec_text_blocks:
+                combined = "\n\n---\n\n".join(spec_text_blocks)
+                if req.provider != "gemini" and req.max_pdf_chars:
+                    combined = combined[: max(2000, req.max_pdf_chars * 3)]
+                supplemental_context = combined
+                if req.provider != "gemini":
+                    pdf_text = combined
+
+            user_prompt = build_user_prompt(
+                cfg,
+                pdf_base64,
+                pdf_text,
+                spec_sheet_text=req.spec_sheet_text,
+                supplemental_context=supplemental_context,
+            )
 
             aas_json, conforms, issues, attempts = run_pipeline(
                 cfg,
