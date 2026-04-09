@@ -200,3 +200,7 @@ PlanarMotorSimulator/setup.exe
 PlanarMotorSimulator/Simulation Installer.msi
 config.yaml
 deprecated/
+
+# ppr-ontology generated outputs
+ppr-ontology/generation/output/*
+!ppr-ontology/generation/output/.gitkeep
