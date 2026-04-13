@@ -24,7 +24,7 @@ from packml_runtime.simulator import PackMLStateMachine
 
 from .aas_to_pddl_conversion import collect_planning_context, run_ai_planning_pipeline
 from .bt_synthesis.api import generate_bt_filename, save_bt_xml
-from .process_aas_generation_publishing.core.process_aas_generator import (
+from .process_aas_generation_publishing.process_aas_generator import (
     ProcessAASConfig,
     ProcessAASGenerator,
 )

@@ -14,7 +14,7 @@ REPO_ROOT = Planner_ROOT.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from Planner.process_aas_generation_publishing.core.process_aas_generator import ProcessAASGenerator
+from Planner.process_aas_generation_publishing.process_aas_generator import ProcessAASGenerator
 
 
 class ProcessAASBundleTests(unittest.TestCase):
