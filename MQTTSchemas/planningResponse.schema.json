@@ -1,7 +1,7 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "title": "Planning Response Schema",
-    "description": "Response to a planning command with capability matching results",
+    "description": "Response to a planning command using AI planning and BT policy conversion",
     "type": "object",
     "allOf": [
         {
@@ -18,72 +18,66 @@
                     "type": "string",
                     "description": "The AAS ID of the product that was planned"
                 },
-                "MatchingSummary": {
+                "PlanningSummary": {
                     "type": "object",
-                    "description": "Summary of capability matching results",
+                    "description": "Summary of the planner solve mode and status",
                     "properties": {
-                        "TotalSteps": {
-                            "type": "integer",
-                            "description": "Total number of process steps in BillOfProcesses"
+                        "Mode": {
+                            "type": "string",
+                            "description": "Planner result mode, e.g. plan or policy"
                         },
-                        "MatchedSteps": {
-                            "type": "integer",
-                            "description": "Number of successfully matched steps"
+                        "Backend": {
+                            "type": "string",
+                            "description": "Planner backend that produced the result"
                         },
-                        "UnmatchedSteps": {
-                            "type": "integer",
-                            "description": "Number of steps without matching resources"
+                        "Status": {
+                            "type": "string",
+                            "description": "Solver status string from the backend"
                         },
-                        "AvailableMovers": {
+                        "WarningsCount": {
                             "type": "integer",
-                            "description": "Number of available mover/shuttle resources"
-                        },
-                        "IsComplete": {
-                            "type": "boolean",
-                            "description": "Whether all process steps have at least one match"
+                            "minimum": 0,
+                            "description": "Number of planning warnings emitted during solve/export"
                         }
                     }
                 },
-                "UnmatchedCapabilities": {
+                "PlanningWarnings": {
                     "type": "array",
-                    "description": "List of capabilities that could not be matched to any resource",
+                    "description": "Warnings emitted by parsing, solve, or BT conversion",
                     "items": {
-                        "type": "object",
-                        "properties": {
-                            "ProcessStep": {
-                                "type": "string",
-                                "description": "Name of the process step"
-                            },
-                            "RequiredCapability": {
-                                "type": "string",
-                                "description": "Semantic ID of the required capability"
-                            }
-                        }
+                        "type": "string"
                     }
                 },
-                "MatchedCapabilities": {
+                "PlannedCapabilities": {
                     "type": "array",
-                    "description": "List of successfully matched capabilities",
+                    "description": "Capabilities derived from planner actions for Process AAS generation",
                     "items": {
                         "type": "object",
                         "properties": {
-                            "ProcessStep": {
+                            "Name": {
                                 "type": "string",
-                                "description": "Name of the process step"
+                                "description": "Capability name"
                             },
-                            "RequiredCapability": {
+                            "SemanticId": {
                                 "type": "string",
-                                "description": "Semantic ID of the required capability"
+                                "description": "Capability semantic ID"
                             },
-                            "MatchedResource": {
-                                "type": "string",
-                                "description": "Name of the matched resource"
-                            },
-                            "ResourceAasId": {
-                                "type": "string",
-                                "description": "AAS ID of the matched resource"
+                            "Resources": {
+                                "type": "object",
+                                "description": "Mapping from resource name to resource AAS ID",
+                                "additionalProperties": {
+                                    "type": "string"
+                                }
                             }
-                        }
+                        },
+                        "required": ["Name", "SemanticId", "Resources"]
+                    }
+                },
+                "PlanningArtifacts": {
+                    "type": "object",
+                    "description": "Optional artifact paths from the planning pipeline",
+                    "additionalProperties": {
+                        "type": "string"
                     }
                 },
                 "ErrorMessage": {
