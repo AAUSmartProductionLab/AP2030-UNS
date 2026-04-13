@@ -1,0 +1,88 @@
+@prefix aasv: <http://www.w3id.org/aau-ra/resourceaas-validation#> .
+@prefix css: <http://www.w3id.org/hsu-aut/css#> .
+@prefix cssx: <http://www.w3id.org/aau-ra/cssx#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+[] a sh:ValidationReport ;
+    sh:conforms false ;
+    sh:result [ a sh:ValidationResult ;
+            sh:focusNode <https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1> ;
+            sh:resultMessage "Value is not Literal with datatype xsd:date" ;
+            sh:resultPath cssx:dateOfManufacture ;
+            sh:resultSeverity sh:Violation ;
+            sh:sourceConstraintComponent sh:DatatypeConstraintComponent ;
+            sh:sourceShape css:Resource-dateOfManufacture ;
+            sh:value "[VERIFY: DateOfManufacture not found in datasheet]"^^xsd:date ],
+        [ a sh:ValidationResult ;
+            sh:focusNode <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1/HierarchicalStructures> ;
+            sh:resultMessage "Less than 1 values on <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1/HierarchicalStructures>->aasv:hasBomEntry" ;
+            sh:resultPath aasv:hasBomEntry ;
+            sh:resultSeverity sh:Violation ;
+            sh:sourceConstraintComponent sh:MinCountConstraintComponent ;
+            sh:sourceShape aasv:HierarchicalStructuresSubmodel-hasBomEntry ],
+        [ a sh:ValidationResult ;
+            sh:focusNode <https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1> ;
+            sh:resultMessage "Value is not Literal with datatype rdf:langString" ;
+            sh:resultPath cssx:manufacturerProductDesignation ;
+            sh:resultSeverity sh:Violation ;
+            sh:sourceConstraintComponent sh:DatatypeConstraintComponent ;
+            sh:sourceShape css:Resource-manufacturerProductDesignation ;
+            sh:value "CA18CLC12BPM1" ],
+        [ a sh:ValidationResult ;
+            sh:focusNode <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1/HierarchicalStructures> ;
+            sh:resultMessage "HierarchicalStructures has an Archetype set but no entity entries (IsPartOf/HasPart) are defined yet." ;
+            sh:resultSeverity sh:Violation ;
+            sh:sourceConstraint [ a sh:SPARQLConstraint ;
+                    sh:message "HierarchicalStructures has an Archetype set but no entity entries (IsPartOf/HasPart) are defined yet." ;
+                    sh:select """\r
+      PREFIX aasv: <http://www.w3id.org/aau-ra/resourceaas-validation#>\r
+      SELECT $this\r
+      WHERE {\r
+        FILTER (\r
+          EXISTS { $this aasv:bomArchetype ?arch . }\r
+          && !EXISTS { $this aasv:hasBomEntry ?entry . }\r
+        )\r
+      }\r
+    """ ;
+                    sh:severity sh:Warning ] ;
+            sh:sourceConstraintComponent sh:SPARQLConstraintComponent ;
+            sh:sourceShape aasv:HierarchicalStructuresSparqlShape ;
+            sh:value <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1/HierarchicalStructures> ],
+        [ a sh:ValidationResult ;
+            sh:focusNode <https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1#resource-bom-1> ;
+            sh:resultMessage "Less than 1 values on <https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1#resource-bom-1>->cssx:hasBoMItem" ;
+            sh:resultPath cssx:hasBoMItem ;
+            sh:resultSeverity sh:Violation ;
+            sh:sourceConstraintComponent sh:MinCountConstraintComponent ;
+            sh:sourceShape cssx:ResourceBoM-hasBoMItem ],
+        [ a sh:ValidationResult ;
+            sh:focusNode <https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1#resource-bom-1> ;
+            sh:resultMessage "Less than 1 values on <https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1#resource-bom-1>->cssx:hasBoMItem" ;
+            sh:resultPath cssx:hasBoMItem ;
+            sh:resultSeverity sh:Violation ;
+            sh:sourceConstraintComponent sh:MinCountConstraintComponent ;
+            sh:sourceShape cssx:BoM-hasBoMItem ],
+        [ a sh:ValidationResult ;
+            sh:focusNode <https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1> ;
+            sh:resultMessage "Less than 1 values on <https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1>->css:providesSkill" ;
+            sh:resultPath css:providesSkill ;
+            sh:resultSeverity sh:Violation ;
+            sh:sourceConstraintComponent sh:MinCountConstraintComponent ;
+            sh:sourceShape css:Resource-providesSkill ],
+        [ a sh:ValidationResult ;
+            sh:focusNode <https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1> ;
+            sh:resultMessage "Value is not Literal with datatype rdf:langString" ;
+            sh:resultPath cssx:manufacturerProductFamily ;
+            sh:resultSeverity sh:Violation ;
+            sh:sourceConstraintComponent sh:DatatypeConstraintComponent ;
+            sh:sourceShape css:Resource-manufacturerProductFamily ;
+            sh:value "[VERIFY: ManufacturerProductFamily not found in datasheet]" ],
+        [ a sh:ValidationResult ;
+            sh:focusNode <https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1> ;
+            sh:resultMessage "Less than 1 values on <https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1>->css:providesCapability" ;
+            sh:resultPath css:providesCapability ;
+            sh:resultSeverity sh:Violation ;
+            sh:sourceConstraintComponent sh:MinCountConstraintComponent ;
+            sh:sourceShape css:Resource-providesCapability ] .
+
