@@ -22,16 +22,16 @@
                         ["https://smartproductionlab.aau.dk/aas/aauFillingLine"]
                     ]
                 },
-                "Product": {
+                "Order": {
                     "type": "string",
                     "format": "uri",
-                    "description": "AAS ID of the product to produce. Must contain BillOfProcesses and Requirements submodels.",
+                    "description": "AAS ID of the Asset that represents  the order from the MES",
                     "examples": [
                         "https://smartproductionlab.aau.dk/aas/HgHAAS"
                     ]
                 }
             },
-            "required": ["Assets", "Product"]
+            "required": ["Assets", "Order"]
         }
     ]
 }
