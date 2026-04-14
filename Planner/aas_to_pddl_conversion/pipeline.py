@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Dict, Optional
 
+from .bop_ordering import compile_bop_ordering
 from .merge import merge_sources
 from .models import AIPlanningPipelineResult, AIPlanningSource
 from .parsing import parse_source
@@ -20,6 +21,7 @@ def run_ai_planning_pipeline(
     *,
     planning_timeout_seconds: float,
     strict_semantic_solve: bool,
+    bop_config: Optional[Dict[str, Any]] = None,
     artifacts_dir: Optional[str] = None,
 ) -> AIPlanningPipelineResult:
     """Run parse->merge->build->solve->export sequence for planning sources."""
@@ -34,6 +36,7 @@ def run_ai_planning_pipeline(
         warnings.extend(parsed.warnings)
 
     merged = merge_sources(parsed_sources, warnings)
+    compile_bop_ordering(merged, bop_config, warnings)
     up_problem = build_up_problem(merged, warnings, semantic_natural_transitions=True)
     artifacts = export_problem_artifacts(up_problem, artifacts_dir, warnings)
 

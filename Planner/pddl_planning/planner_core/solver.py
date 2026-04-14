@@ -5,9 +5,8 @@ This module is the first step toward a single public solver API built around
 
 Current behavior:
 - unified-planning ``Problem`` objects are solved through UP oneshot planners.
-- unified-planning ``Problem`` objects can also be routed directly into PR2 with ``backend='pr2'`` for the supported deterministic subset.
-- The direct PR2 path also supports native oneof action outcomes on the vendored unified-planning fork.
-- Full UP-side support for richer FOND constructs beyond action oneof outcomes is still incomplete.
+- ``backend='pr2'`` uses the UP-registered ``pr2`` engine explicitly.
+- ``backend='auto'`` relies on UP factory selection based on ``problem.kind``.
 """
 
 from __future__ import annotations
@@ -25,7 +24,6 @@ if _VENDORED_UP_ROOT.exists():
         sys.path.insert(0, vendored_up_root)
 
 from .solve_result import SolveResult
-from ..pr2_bridge.adapter import PR2Solver
 
 
 BackendName = Literal["auto", "pr2", "up"]
@@ -94,35 +92,20 @@ def solve_from_files(
     ``auto`` parses files with unified-planning and applies the same routing
     policy as ``solve()``.
     """
-    if backend in ("auto", "up"):
-        up_problem = _read_problem_with_unified_planning(domain_file, problem_file)
-        return _solve_unified_planning_problem(
-            up_problem,
-            backend=backend,
-            planner_name=planner_name,
-            timeout=timeout,
-            params=params,
-            extra_args=extra_args,
-            disable_object_sampling=disable_object_sampling,
-            keep_files=keep_files,
-        )
-
-    if backend != "pr2":
+    if backend not in ("auto", "up", "pr2"):
         raise ValueError(f"Unsupported backend: {backend}")
 
-    solver = PR2Solver(
+    up_problem = _read_problem_with_unified_planning(domain_file, problem_file)
+    return _solve_unified_planning_problem(
+        up_problem,
+        backend=backend,
+        planner_name=planner_name,
+        timeout=timeout,
+        params=params,
+        extra_args=extra_args,
         disable_object_sampling=disable_object_sampling,
-        extra_args=list(extra_args or []),
-        timeout=_normalize_timeout(timeout),
         keep_files=keep_files,
     )
-    result = solver.solve_from_files(
-        str(domain_file),
-        str(problem_file),
-        timeout=_normalize_timeout(timeout),
-        extra_args=list(extra_args or []),
-    )
-    return SolveResult.from_pr2(result)
 
 
 def _solve_unified_planning_problem(
@@ -136,42 +119,25 @@ def _solve_unified_planning_problem(
     disable_object_sampling: bool,
     keep_files: bool,
 ) -> SolveResult:
-    if backend == "auto" and _should_route_auto_to_pr2(problem):
-        solver = PR2Solver(
-            disable_object_sampling=disable_object_sampling,
-            extra_args=list(extra_args or []),
-            timeout=_normalize_timeout(timeout),
-            keep_files=keep_files,
-        )
-        result = solver.solve_unified_planning_problem(
-            problem,
-            timeout=_normalize_timeout(timeout),
-            extra_args=list(extra_args or []),
-        )
-        return SolveResult.from_pr2(result, backend_name="pr2-direct")
-
-    if backend == "pr2":
-        solver = PR2Solver(
-            disable_object_sampling=disable_object_sampling,
-            extra_args=list(extra_args or []),
-            timeout=_normalize_timeout(timeout),
-            keep_files=keep_files,
-        )
-        result = solver.solve_unified_planning_problem(
-            problem,
-            timeout=_normalize_timeout(timeout),
-            extra_args=list(extra_args or []),
-        )
-        return SolveResult.from_pr2(result, backend_name="pr2-direct")
-    if backend not in ("auto", "up"):
+    if backend not in ("auto", "up", "pr2"):
         raise ValueError(f"Unsupported backend: {backend}")
 
     up = _import_unified_planning()
     planner_kwargs: Dict[str, Any] = {"problem_kind": problem.kind}
-    if planner_name is not None:
+
+    if backend == "pr2":
+        planner_kwargs["name"] = "pr2"
+    elif backend == "up" and planner_name is None:
+        planner_kwargs["name"] = "aries"
+    elif planner_name is not None:
         planner_kwargs["name"] = planner_name
-    if params:
-        planner_kwargs["params"] = params
+
+    planner_params: Dict[str, Any] = dict(params or {})
+    if backend == "pr2":
+        planner_params.setdefault("disable_object_sampling", disable_object_sampling)
+        planner_params.setdefault("extra_args", list(extra_args or []))
+    if planner_params:
+        planner_kwargs["params"] = planner_params
 
     solve_kwargs: Dict[str, Any] = {}
     if timeout is not None:
@@ -181,7 +147,7 @@ def _solve_unified_planning_problem(
         result = planner.solve(problem, **solve_kwargs)
         backend_name = getattr(planner, "name", None) or planner_name or "unified-planning"
 
-    return SolveResult.from_up(result, backend_name=backend_name)
+    return SolveResult.from_up(result, backend_name=backend_name, problem=problem)
 
 
 def _read_problem_with_unified_planning(domain_file: str | Path, problem_file: str | Path) -> Any:
@@ -206,22 +172,6 @@ def _import_unified_planning():
         ) from exc
     return up
 
-
-def _should_route_auto_to_pr2(problem: Any) -> bool:
-    """Return True when backend='auto' should use PR2 for policy semantics."""
-    kind = getattr(problem, "kind", None)
-    has_nondet_method = getattr(kind, "has_non_deterministic_effects", None)
-    if callable(has_nondet_method):
-        try:
-            if bool(has_nondet_method()):
-                return True
-        except Exception:
-            pass
-
-    for action in getattr(problem, "actions", []):
-        if len(getattr(action, "oneof_effects", [])) > 0:
-            return True
-    return False
 
 
 def _normalize_timeout(timeout: Optional[float]) -> Optional[int]:

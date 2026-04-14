@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import (
+    Any,
     Dict,
     FrozenSet,
     List,
@@ -19,34 +20,19 @@ from typing import (
     Tuple,
 )
 
-try:
-    from pddl_planning.pr2_bridge.pddl_grounding import (
-        Formula,
-        GroundProblem,
-        Not,
-        Oneof,
-        Operator,
-        Or,
-        Primitive,
-        When,
-        And,
-        flatten_oneof as _flatten_oneof,
-        ground_pddl,
-    )
-except ModuleNotFoundError:
-    from Planner.pddl_planning.pr2_bridge.pddl_grounding import (
-        Formula,
-        GroundProblem,
-        Not,
-        Oneof,
-        Operator,
-        Or,
-        Primitive,
-        When,
-        And,
-        flatten_oneof as _flatten_oneof,
-        ground_pddl,
-    )
+from .pddl_grounding import (
+    Formula,
+    GroundProblem,
+    Not,
+    Oneof,
+    Operator,
+    Or,
+    Primitive,
+    When,
+    And,
+    flatten_oneof as _flatten_oneof,
+    ground_pddl,
+)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -295,6 +281,186 @@ def _extract_outcomes(op: Operator) -> List[Tuple[FrozenSet[str], FrozenSet[str]
 def _extract_goal(goal_formula: Formula) -> Tuple[FrozenSet[str], FrozenSet[str]]:
     """Extract goal fluents from the ground problem's goal formula."""
     return _extract_preconditions(goal_formula)
+
+
+def _collect_up_precondition_literals(expr: Any, pos: Set[str], neg: Set[str]) -> None:
+    if hasattr(expr, "is_true") and expr.is_true():
+        return
+    if hasattr(expr, "is_and") and expr.is_and():
+        for arg in getattr(expr, "args", []):
+            _collect_up_precondition_literals(arg, pos, neg)
+        return
+    if hasattr(expr, "is_not") and expr.is_not():
+        args = list(getattr(expr, "args", []))
+        if len(args) == 1 and hasattr(args[0], "is_fluent_exp") and args[0].is_fluent_exp():
+            neg.add(str(args[0]).strip().lower())
+        else:
+            neg.add(str(expr).strip().lower())
+        return
+    if hasattr(expr, "is_fluent_exp") and expr.is_fluent_exp():
+        pos.add(str(expr).strip().lower())
+        return
+    pos.add(str(expr).strip().lower())
+
+
+def _collect_up_effect_literals(effects: List[Any]) -> Tuple[Set[str], Set[str]]:
+    adds: Set[str] = set()
+    dels: Set[str] = set()
+    for effect in effects:
+        if not hasattr(effect, "is_assignment") or not effect.is_assignment():
+            continue
+        fluent_text = str(effect.fluent).strip().lower()
+        if not fluent_text:
+            continue
+        value = effect.value
+        if hasattr(value, "is_true") and value.is_true():
+            adds.add(fluent_text)
+        elif hasattr(value, "is_false") and value.is_false():
+            dels.add(fluent_text)
+    return adds, dels
+
+
+def _deduplicate_outcomes(
+    outcomes: List[Tuple[FrozenSet[str], FrozenSet[str]]],
+) -> List[Tuple[FrozenSet[str], FrozenSet[str]]]:
+    seen: Set[Tuple[FrozenSet[str], FrozenSet[str]]] = set()
+    unique: List[Tuple[FrozenSet[str], FrozenSet[str]]] = []
+    for outcome in outcomes:
+        if outcome not in seen:
+            seen.add(outcome)
+            unique.append(outcome)
+    return unique
+
+
+def build_causal_info_from_problem(problem: Any, policy_actions: Set[str]) -> CausalInfo:
+    """Build causal analysis directly from a UP Problem and grounded policy actions."""
+    em = problem.environment.expression_manager
+    actions: Dict[str, GroundedAction] = {}
+    all_fluent_strs: Set[str] = set()
+
+    for action_text in policy_actions:
+        tokens = action_text.split()
+        if len(tokens) == 0:
+            continue
+
+        action_name = tokens[0]
+        arg_names = tokens[1:]
+        try:
+            action = problem.action(action_name)
+        except Exception:
+            continue
+
+        if len(arg_names) != len(action.parameters):
+            continue
+
+        substitutions = {}
+        substitution_failed = False
+        for parameter, arg_name in zip(action.parameters, arg_names):
+            try:
+                substitutions[parameter] = em.ObjectExp(problem.object(arg_name))
+            except Exception:
+                substitution_failed = True
+                break
+        if substitution_failed:
+            continue
+
+        pos_pre: Set[str] = set()
+        neg_pre: Set[str] = set()
+        for pre in list(getattr(action, "preconditions", [])):
+            grounded_pre = pre.substitute(substitutions)
+            _collect_up_precondition_literals(grounded_pre, pos_pre, neg_pre)
+        all_fluent_strs |= pos_pre
+        all_fluent_strs |= neg_pre
+
+        grounded_effects = [
+            effect.expand_effect(problem)
+            if hasattr(effect, "expand_effect") else [effect]
+            for effect in list(getattr(action, "effects", []))
+        ]
+        expanded_base_effects: List[Any] = []
+        for effect_group in grounded_effects:
+            for effect in effect_group:
+                expanded_base_effects.append(
+                    effect.__class__(
+                        fluent=effect.fluent.substitute(substitutions),
+                        value=effect.value.substitute(substitutions),
+                        condition=effect.condition.substitute(substitutions),
+                        kind=effect.kind,
+                        forall=effect.forall,
+                    )
+                )
+
+        base_adds, base_dels = _collect_up_effect_literals(expanded_base_effects)
+        outcomes: List[Tuple[FrozenSet[str], FrozenSet[str]]] = []
+        oneof_groups = list(getattr(action, "oneof_effects", []))
+        if oneof_groups:
+            for oneof_group in oneof_groups:
+                for outcome_effects in oneof_group.outcomes:
+                    grounded_outcome_effects = []
+                    for effect in outcome_effects:
+                        grounded_outcome_effects.append(
+                            effect.__class__(
+                                fluent=effect.fluent.substitute(substitutions),
+                                value=effect.value.substitute(substitutions),
+                                condition=effect.condition.substitute(substitutions),
+                                kind=effect.kind,
+                                forall=effect.forall,
+                            )
+                        )
+                    o_adds, o_dels = _collect_up_effect_literals(grounded_outcome_effects)
+                    outcomes.append(
+                        (
+                            frozenset(base_adds | o_adds),
+                            frozenset(base_dels | o_dels),
+                        )
+                    )
+        else:
+            outcomes.append((frozenset(base_adds), frozenset(base_dels)))
+
+        outcomes = _deduplicate_outcomes(outcomes)
+        for adds, dels in outcomes:
+            all_fluent_strs |= set(adds)
+            all_fluent_strs |= set(dels)
+
+        actions[action_text] = GroundedAction(
+            name=action_text,
+            preconditions=frozenset(pos_pre),
+            neg_preconditions=frozenset(neg_pre),
+            outcomes=outcomes if outcomes else [(frozenset(), frozenset())],
+        )
+
+    achievers: Dict[str, List[str]] = {}
+    deleters: Dict[str, List[str]] = {}
+    all_adds: Set[str] = set()
+    all_dels: Set[str] = set()
+
+    for action_name, grounded_action in actions.items():
+        for fluent in grounded_action.all_adds:
+            achievers.setdefault(fluent, []).append(action_name)
+            all_adds.add(fluent)
+        for fluent in grounded_action.all_dels:
+            deleters.setdefault(fluent, []).append(action_name)
+            all_dels.add(fluent)
+
+    goal_pos: Set[str] = set()
+    goal_neg: Set[str] = set()
+    for goal in list(getattr(problem, "goals", [])):
+        _collect_up_precondition_literals(goal, goal_pos, goal_neg)
+    all_fluent_strs |= goal_pos
+    all_fluent_strs |= goal_neg
+
+    modified_fluents = all_adds | all_dels
+    static = frozenset(all_fluent_strs - modified_fluents)
+
+    return CausalInfo(
+        actions=actions,
+        achievers=achievers,
+        deleters=deleters,
+        goal_fluents=frozenset(goal_pos),
+        goal_neg_fluents=frozenset(goal_neg),
+        static_fluents=static,
+        all_fluents=frozenset(all_fluent_strs),
+    )
 
 
 # ═══════════════════════════════════════════════════════════════════════════

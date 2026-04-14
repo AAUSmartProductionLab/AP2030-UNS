@@ -16,14 +16,23 @@ import time
 from pathlib import Path
 
 _Planner_ROOT = Path(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-_PR2_ROOT = os.path.join(_Planner_ROOT, "pr2")
+_REPO_ROOT = _Planner_ROOT.parent
+_UP_PR2_ROOT = (
+    _REPO_ROOT
+    / "unified-planning"
+    / "unified_planning"
+    / "engines"
+    / "up_pr2"
+    / "pr2"
+)
+_PR2_ROOT = _UP_PR2_ROOT
 sys.path.insert(0, str(_PR2_ROOT))
 sys.path.insert(0, str(_Planner_ROOT))
 
 
 from bt_synthesis.api import policy_to_bt, bt_to_xml
 from pddl_planning.planner_core.solver import solve_from_files
-from pddl_planning.pr2_bridge.visualization import create_force_graph_html
+from pddl_planning.visualization import create_force_graph_html
 
 
 def main():
@@ -32,9 +41,9 @@ def main():
     prob_file = sys.argv[2] if len(sys.argv) > 2 else "p3.pddl"
 
     domain_path = os.path.join(
-        _PR2_ROOT, f"fond-benchmarks/{domain_dir}/domain.pddl")
+        str(_PR2_ROOT), f"fond-benchmarks/{domain_dir}/domain.pddl")
     problem_path = os.path.join(
-        _PR2_ROOT, f"fond-benchmarks/{domain_dir}/{prob_file}")
+        str(_PR2_ROOT), f"fond-benchmarks/{domain_dir}/{prob_file}")
 
     if not os.path.exists(problem_path):
         print(f"Problem file not found: {problem_path}")

@@ -7,3 +7,7 @@ pddl
 pyparsing
 networkx
 ConfigSpace
+unified-planning
+up-pyperplan
+up-fast-downward
+up-enhsp

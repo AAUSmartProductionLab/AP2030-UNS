@@ -17,7 +17,7 @@ _Planner_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_Planner_ROOT))
 
 from pddl_planning.planner_core.solver import solve
-from pddl_planning.pr2_bridge.visualization import create_force_graph_html
+from pddl_planning.visualization import create_force_graph_html
 
 
 HGH_BOP = [

@@ -1,4 +1,4 @@
-"""PDDL planning package grouping solver facade and PR2 bridge."""
+"""PDDL planning package grouping solver facade and visualization helpers."""
 
 from .planner_core.solve_result import SolveResult
 from .planner_core.solve_pipeline import solve_with_reduced_fallback

@@ -156,7 +156,10 @@ class PlannerService:
 
         logger.info("Step 5: Running planning sequence...")
         try:
-            pipeline_result = self._run_planning_pipeline(planning_sources)
+            pipeline_result = self._run_planning_pipeline(
+                planning_sources,
+                bop_config=planning_context.order_config.get("BillOfProcesses"),
+            )
         except Exception as exc:
             logger.error("Planning sequence failed: %s", exc)
             return PlanningResult(
@@ -241,11 +244,17 @@ class PlannerService:
             ],
         )
 
-    def _run_planning_pipeline(self, planning_sources: List[Any]):
+    def _run_planning_pipeline(
+        self,
+        planning_sources: List[Any],
+        *,
+        bop_config: Optional[Dict[str, Any]] = None,
+    ):
         return self.pipeline_runner(
             planning_sources,
             planning_timeout_seconds=self.config.planning_timeout_seconds,
             strict_semantic_solve=self.config.strict_semantic_solve,
+            bop_config=bop_config,
             artifacts_dir=self.config.ai_artifacts_dir,
         )
 

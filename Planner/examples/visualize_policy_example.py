@@ -15,11 +15,20 @@ import sys
 from pathlib import Path
 
 _Planner_ROOT = Path(__file__).resolve().parent.parent
-_PR2_ROOT = _Planner_ROOT / "pr2"
+_REPO_ROOT = _Planner_ROOT.parent
+_UP_PR2_ROOT = (
+    _REPO_ROOT
+    / "unified-planning"
+    / "unified_planning"
+    / "engines"
+    / "up_pr2"
+    / "pr2"
+)
+_PR2_ROOT = _UP_PR2_ROOT
 sys.path.insert(0, str(_Planner_ROOT))
 
 from pddl_planning.planner_core.solver import solve_from_files
-from pddl_planning.pr2_bridge.visualization import create_force_graph_html
+from pddl_planning.visualization import create_force_graph_html
 
 
 def main():

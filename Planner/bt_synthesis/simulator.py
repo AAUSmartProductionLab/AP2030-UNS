@@ -46,10 +46,7 @@ from typing import Any, Callable, Dict, FrozenSet, List, Optional, Set, Tuple
 
 import py_trees
 
-try:
-    from pddl_planning.pr2_bridge.pddl_grounding import And, Primitive, ground_pddl
-except ModuleNotFoundError:
-    from Planner.pddl_planning.pr2_bridge.pddl_grounding import And, Primitive, ground_pddl
+from .pddl_grounding import And, Primitive, ground_pddl
 
 from .causal import (
     GroundedAction,

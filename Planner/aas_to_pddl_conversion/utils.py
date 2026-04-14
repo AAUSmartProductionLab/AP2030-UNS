@@ -28,3 +28,36 @@ def coerce_numeric_literal(value: Any) -> Optional[float]:
         except ValueError:
             return None
     return None
+
+
+def semantic_tail(value: str) -> str:
+    if not value:
+        return ""
+    text = str(value).strip()
+    if not text:
+        return ""
+    if "#" in text:
+        text = text.rsplit("#", 1)[-1]
+    text = text.rstrip("/")
+    if "/" in text:
+        text = text.rsplit("/", 1)[-1]
+    return text
+
+
+def normalize_identifier(value: str) -> str:
+    normalized = re.sub(r"[^a-z0-9]", "", str(value or "").lower())
+    return normalized
+
+
+def capability_name(value: Any) -> str:
+    tail = semantic_tail(str(value or ""))
+    return normalize_identifier(tail)
+
+
+def match_capability(required_capability: Any, provided_capability: Any) -> bool:
+    """Return True when capability identifiers likely refer to the same capability."""
+    left = capability_name(required_capability)
+    right = capability_name(provided_capability)
+    if not left or not right:
+        return False
+    return left == right

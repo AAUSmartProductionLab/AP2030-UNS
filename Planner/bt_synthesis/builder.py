@@ -23,7 +23,6 @@ from __future__ import annotations
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 from typing import (
-    TYPE_CHECKING,
     Dict,
     FrozenSet,
     List,
@@ -32,13 +31,7 @@ from typing import (
     Tuple,
 )
 
-if TYPE_CHECKING:
-    try:
-        from pddl_planning.pr2_bridge.adapter import FSAP, PR2Result, PolicyRule
-    except ModuleNotFoundError:
-        from Planner.pddl_planning.pr2_bridge.adapter import FSAP, PR2Result, PolicyRule
-
-from .causal import CausalInfo, build_causal_info
+from .causal import CausalInfo, build_causal_info, build_causal_info_from_problem
 from .nodes import (
     BTNode,
     BehaviorTree,
@@ -55,16 +48,111 @@ from .nodes import (
 )
 from .optimizer import deduplicate_subtrees, parameterize_subtrees
 from .literals import parse_predicate, strip_negation
-try:
-    from pddl_planning.pr2_bridge.policy_graph import (
-        build_policy_state_graph,
-        compute_rule_distances as compute_rule_distances_from_graph,
-    )
-except ModuleNotFoundError:
-    from Planner.pddl_planning.pr2_bridge.policy_graph import (
-        build_policy_state_graph,
-        compute_rule_distances as compute_rule_distances_from_graph,
-    )
+from .policy_graph import (
+    build_policy_state_graph,
+    compute_rule_distances as compute_rule_distances_from_graph,
+)
+
+
+@dataclass(frozen=True)
+class _PolicyRuleView:
+    condition: FrozenSet[str]
+    action: str
+    action_name: str
+    action_args: Tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class _FSAPView:
+    condition: FrozenSet[str]
+    action: str
+    action_name: str
+    action_args: Tuple[str, ...]
+
+
+def _value_is_false(value: object) -> bool:
+    text = str(value).strip().lower()
+    return text in {"false", "false()"}
+
+
+def _condition_to_literals(raw_condition: object) -> FrozenSet[str]:
+    if isinstance(raw_condition, frozenset):
+        return frozenset(str(l).strip().lower() for l in raw_condition if str(l).strip())
+    if isinstance(raw_condition, set):
+        return frozenset(str(l).strip().lower() for l in raw_condition if str(l).strip())
+    if isinstance(raw_condition, dict):
+        literals: Set[str] = set()
+        for fluent, value in raw_condition.items():
+            fluent_text = str(fluent).strip().lower()
+            if not fluent_text:
+                continue
+            if _value_is_false(value):
+                literals.add(f"not({fluent_text})")
+            else:
+                literals.add(fluent_text)
+        return frozenset(literals)
+    if raw_condition is None:
+        return frozenset()
+    return frozenset({str(raw_condition).strip().lower()})
+
+
+def _rule_action_text(rule: object) -> str:
+    action = getattr(rule, "action", None)
+    if action is not None:
+        return str(action).strip()
+    action_name = str(getattr(rule, "action_name", "")).strip()
+    action_args = tuple(str(a).strip() for a in getattr(rule, "action_args", tuple()))
+    return " ".join([action_name, *action_args]).strip()
+
+
+def _normalize_policy_rules(policy_rules: List[object]) -> List[_PolicyRuleView]:
+    normalized: List[_PolicyRuleView] = []
+    for rule in policy_rules:
+        raw_literals = getattr(rule, "raw_condition_literals", None)
+        condition = _condition_to_literals(raw_literals if raw_literals else getattr(rule, "condition", frozenset()))
+        action_name = str(getattr(rule, "action_name", "")).strip()
+        action_args = tuple(str(a).strip() for a in getattr(rule, "action_args", tuple()))
+        action = _rule_action_text(rule)
+        if not action_name:
+            action_name = action.split()[0] if action else ""
+        if not action_args and action:
+            tokens = action.split()
+            if len(tokens) > 1:
+                action_args = tuple(tokens[1:])
+        normalized.append(
+            _PolicyRuleView(
+                condition=condition,
+                action=action,
+                action_name=action_name,
+                action_args=action_args,
+            )
+        )
+    return normalized
+
+
+def _normalize_fsaps(fsaps: List[object]) -> List[_FSAPView]:
+    normalized: List[_FSAPView] = []
+    for fsap in fsaps:
+        raw_literals = getattr(fsap, "raw_condition_literals", None)
+        condition = _condition_to_literals(raw_literals if raw_literals else getattr(fsap, "condition", frozenset()))
+        action_name = str(getattr(fsap, "action_name", "")).strip()
+        action_args = tuple(str(a).strip() for a in getattr(fsap, "action_args", tuple()))
+        action = _rule_action_text(fsap)
+        if not action_name:
+            action_name = action.split()[0] if action else ""
+        if not action_args and action:
+            tokens = action.split()
+            if len(tokens) > 1:
+                action_args = tuple(tokens[1:])
+        normalized.append(
+            _FSAPView(
+                condition=condition,
+                action=action,
+                action_name=action_name,
+                action_args=action_args,
+            )
+        )
+    return normalized
 
 
 # ===================================================================
@@ -260,7 +348,7 @@ def _build_factored_fsap_or(
 
 def _build_fsap_guard(
     action: str,
-    fsaps: List["FSAP"],
+    fsaps: List[_FSAPView],
     context: FrozenSet[str] = frozenset(),
 ) -> Optional[BTNode]:
     """Build a guard that succeeds iff no FSAP condition is active.
@@ -315,17 +403,12 @@ def _build_fsap_guard(
 
 
 def _strip_conditions(
-    rules: List["PolicyRule"],
+    rules: List[_PolicyRuleView],
     to_remove: FrozenSet[str],
-) -> List["PolicyRule"]:
+) -> List[_PolicyRuleView]:
     """Return new PolicyRule list with specified literals removed."""
-    try:
-        from pddl_planning.pr2_bridge.adapter import PolicyRule
-    except ModuleNotFoundError:
-        from Planner.pddl_planning.pr2_bridge.adapter import PolicyRule
-
     return [
-        PolicyRule(
+        _PolicyRuleView(
             condition=frozenset(c for c in rule.condition if c not in to_remove),
             action=rule.action,
             action_name=rule.action_name,
@@ -341,7 +424,7 @@ def _strip_conditions(
 
 
 def _compute_rule_distances(
-    rules: List["PolicyRule"],
+    rules: List[_PolicyRuleView],
     causal: CausalInfo,
 ) -> Dict[int, int]:
     """Compute goal-distance for each policy rule via shared policy graph logic."""
@@ -368,7 +451,7 @@ def _compute_rule_distances(
 
 def _compute_phase_postconditions(
     rule_dist: Dict[int, int],
-    rules: List["PolicyRule"],
+    rules: List[_PolicyRuleView],
     causal: CausalInfo,
 ) -> Dict[int, FrozenSet[str]]:
     """Derive per-phase post-conditions from the policy graph.
@@ -517,20 +600,20 @@ class _FallbackGroup:
     """A pair of rules differing by exactly one complementary literal."""
     shared: FrozenSet[str]
     pos_literal: str
-    pos_rule: "PolicyRule"
-    neg_rule: "PolicyRule"
+    pos_rule: _PolicyRuleView
+    neg_rule: _PolicyRuleView
 
 
 @dataclass
 class _DistanceGroupItems:
     """Items in a distance group: pre-identified pairs + remaining singles."""
     pairs: List[_FallbackGroup] = field(default_factory=list)
-    singles: List["PolicyRule"] = field(default_factory=list)
+    singles: List[_PolicyRuleView] = field(default_factory=list)
 
 
 def _find_complementary_pairs(
-    rules: List["PolicyRule"],
-) -> Tuple[List[Tuple[_FallbackGroup, int, int]], List[Tuple["PolicyRule", int]]]:
+    rules: List[_PolicyRuleView],
+) -> Tuple[List[Tuple[_FallbackGroup, int, int]], List[Tuple[_PolicyRuleView, int]]]:
     """Detect rules differing by exactly one complementary literal pair."""
     used: Set[int] = set()
     pairs: List[Tuple[_FallbackGroup, int, int]] = []
@@ -587,8 +670,8 @@ def _find_complementary_pairs(
 
 
 def _find_mutex_family_rules(
-    rules: List["PolicyRule"],
-) -> Optional[Tuple[str, int, Dict[str, List["PolicyRule"]]]]:
+    rules: List[_PolicyRuleView],
+) -> Optional[Tuple[str, int, Dict[str, List[_PolicyRuleView]]]]:
     """Detect mutually-exclusive predicate family for multi-way dispatch."""
     lit_to_idxs: Dict[str, List[int]] = defaultdict(list)
     for idx, r in enumerate(rules):
@@ -625,7 +708,7 @@ def _find_mutex_family_rules(
                 f"{_pname}({', '.join('*' if i == vary_pos else a for i, a in enumerate(members[0][1]))})"
             )
 
-            dispatch: Dict[str, List["PolicyRule"]] = defaultdict(list)
+            dispatch: Dict[str, List[_PolicyRuleView]] = defaultdict(list)
             covered_idxs: Set[int] = set()
             for lit, _args in members:
                 for widx in lit_to_idxs[lit]:
@@ -665,8 +748,8 @@ def _find_mutex_family_rules(
 
 
 def _hoist_common(
-    rules: List["PolicyRule"],
-) -> Tuple[FrozenSet[str], List["PolicyRule"]]:
+    rules: List[_PolicyRuleView],
+) -> Tuple[FrozenSet[str], List[_PolicyRuleView]]:
     """Extract conditions shared by ALL rules and return reduced rules."""
     if not rules:
         return frozenset(), []
@@ -677,13 +760,9 @@ def _hoist_common(
     if not common:
         return frozenset(), rules
 
-    try:
-        from pddl_planning.pr2_bridge.adapter import PolicyRule
-    except ModuleNotFoundError:
-        from Planner.pddl_planning.pr2_bridge.adapter import PolicyRule
     common_fs = frozenset(common)
     reduced = [
-        PolicyRule(
+        _PolicyRuleView(
             condition=frozenset(r.condition - common_fs),
             action=r.action,
             action_name=r.action_name,
@@ -694,7 +773,7 @@ def _hoist_common(
     return common_fs, reduced
 
 
-def _build_goal_branch(goal_rules: List["PolicyRule"]) -> Optional[BTNode]:
+def _build_goal_branch(goal_rules: List[_PolicyRuleView]) -> Optional[BTNode]:
     """Build the goal-check branch from all ``goal`` policy rules.
 
     Uses the shared ``_build_postcond_check`` helper -- the goal branch
@@ -718,8 +797,8 @@ def _build_goal_branch(goal_rules: List["PolicyRule"]) -> Optional[BTNode]:
 
 
 def _build_action_leaf(
-    rule: "PolicyRule",
-    fsaps: List["FSAP"],
+    rule: _PolicyRuleView,
+    fsaps: List[_FSAPView],
     context: FrozenSet[str],
     causal: Optional[CausalInfo] = None,
     phase_postcond: FrozenSet[str] = frozenset(),
@@ -750,7 +829,7 @@ def _build_action_leaf(
 
 def _build_fallback_branch(
     group: _FallbackGroup,
-    fsaps: List["FSAP"],
+    fsaps: List[_FSAPView],
     context: FrozenSet[str],
     causal: Optional[CausalInfo] = None,
     phase_postcond: FrozenSet[str] = frozenset(),
@@ -809,8 +888,8 @@ def _build_fallback_branch(
 
 
 def _build_merged_action_branch(
-    rules: List["PolicyRule"],
-    fsaps: List["FSAP"],
+    rules: List[_PolicyRuleView],
+    fsaps: List[_FSAPView],
     context: FrozenSet[str],
     causal: Optional[CausalInfo] = None,
     phase_postcond: FrozenSet[str] = frozenset(),
@@ -872,7 +951,7 @@ def _build_merged_action_branch(
 
 def _build_group_subtree(
     items: _DistanceGroupItems,
-    fsaps: List["FSAP"],
+    fsaps: List[_FSAPView],
     context: FrozenSet[str],
     group_name: str,
     causal: Optional[CausalInfo] = None,
@@ -903,20 +982,16 @@ def _build_group_subtree(
             group_common &= cs
 
     if group_common:
-        try:
-            from pddl_planning.pr2_bridge.adapter import PolicyRule as _PR
-        except ModuleNotFoundError:
-            from Planner.pddl_planning.pr2_bridge.adapter import PolicyRule as _PR
         # Strip common conditions from pairs.
         new_pairs: List[_FallbackGroup] = []
         for pair in items.pairs:
-            new_pos = _PR(
+            new_pos = _PolicyRuleView(
                 condition=frozenset(pair.pos_rule.condition - group_common),
                 action=pair.pos_rule.action,
                 action_name=pair.pos_rule.action_name,
                 action_args=pair.pos_rule.action_args,
             )
-            new_neg = _PR(
+            new_neg = _PolicyRuleView(
                 condition=frozenset(pair.neg_rule.condition - group_common),
                 action=pair.neg_rule.action,
                 action_name=pair.neg_rule.action_name,
@@ -930,7 +1005,7 @@ def _build_group_subtree(
             ))
         # Strip common conditions from singles.
         new_singles = [
-            _PR(
+            _PolicyRuleView(
                 condition=frozenset(s.condition - group_common),
                 action=s.action,
                 action_name=s.action_name,
@@ -960,12 +1035,12 @@ def _build_group_subtree(
 
         singles_ctx = context | common_singles
 
-        by_action: Dict[str, List["PolicyRule"]] = defaultdict(list)
+        by_action: Dict[str, List[_PolicyRuleView]] = defaultdict(list)
         for r in reduced_singles:
             by_action[r.action].append(r)
 
-        plain_singles: List["PolicyRule"] = []
-        merged_groups: List[List["PolicyRule"]] = []
+        plain_singles: List[_PolicyRuleView] = []
+        merged_groups: List[List[_PolicyRuleView]] = []
         for action, group_rules in sorted(by_action.items()):
             if len(group_rules) == 1:
                 plain_singles.append(group_rules[0])
@@ -982,12 +1057,8 @@ def _build_group_subtree(
                 dispatch_children: List[BTNode] = []
                 for lit in sorted(dispatch):
                     lit_rules = dispatch[lit]
-                    try:
-                        from pddl_planning.pr2_bridge.adapter import PolicyRule as PR
-                    except ModuleNotFoundError:
-                        from Planner.pddl_planning.pr2_bridge.adapter import PolicyRule as PR
                     sub_rules = [
-                        PR(
+                        _PolicyRuleView(
                             condition=frozenset(r.condition - {lit}),
                             action=r.action,
                             action_name=r.action_name,
@@ -1076,16 +1147,25 @@ def _build_group_subtree(
 # ===================================================================
 
 
-def policy_to_bt(result: "PR2Result") -> BehaviorTree:
-    """Convert a PR2 policy into a goal-distance-ordered reactive BT."""
-    goal_rules = [r for r in result.policy if r.action_name == "goal"]
-    action_rules = [r for r in result.policy if r.action_name != "goal"]
+def policy_to_bt(result: object, problem: Optional[object] = None) -> BehaviorTree:
+    """Convert a policy plan into a goal-distance-ordered reactive BT."""
+    normalized_rules = _normalize_policy_rules(list(getattr(result, "policy", [])))
+    normalized_fsaps = _normalize_fsaps(list(getattr(result, "fsaps", [])))
+
+    goal_rules = [r for r in normalized_rules if r.action_name == "goal"]
+    action_rules = [r for r in normalized_rules if r.action_name != "goal"]
 
     # Causal analysis for goal-distance ordering.
     causal: Optional[CausalInfo] = None
     policy_action_names = {r.action for r in action_rules}
 
-    if result.domain_pddl and result.problem_pddl:
+    if problem is not None:
+        try:
+            causal = build_causal_info_from_problem(problem, policy_action_names)
+        except Exception:
+            causal = None
+
+    if causal is None and getattr(result, "domain_pddl", None) and getattr(result, "problem_pddl", None):
         try:
             causal = build_causal_info(
                 result.domain_pddl,
@@ -1180,7 +1260,7 @@ def policy_to_bt(result: "PR2Result") -> BehaviorTree:
 
         postcond = phase_postconds.get(dist, frozenset())
         subtree = _build_group_subtree(
-            items, result.fsaps, outer_ctx, group_name, causal, postcond,
+            items, normalized_fsaps, outer_ctx, group_name, causal, postcond,
         )
         # Wrap with group-level post-condition gate.
         if postcond:

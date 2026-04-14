@@ -69,6 +69,7 @@ class PlannerServiceTests(unittest.TestCase):
                 "id": "https://example/aas/productA",
                 "idShort": "productA",
                 "BatchInformation": {},
+                "BillOfProcesses": {"Processes": []},
                 "Requirements": {},
             },
             requirements={},
@@ -101,7 +102,7 @@ class PlannerServiceTests(unittest.TestCase):
         self.assertEqual(result.planner_backend, "up")
         self.assertEqual(result.planner_mode, "plan")
 
-        run_pipeline.assert_called_once_with(planning_sources)
+        run_pipeline.assert_called_once_with(planning_sources, bop_config={"Processes": []})
 
     def test_plan_and_register_success_uses_pipeline_capabilities_for_process_config(self):
         config = PlannerConfig(
@@ -116,6 +117,7 @@ class PlannerServiceTests(unittest.TestCase):
             "id": "https://example/aas/productA",
             "idShort": "productA",
             "BatchInformation": {},
+            "BillOfProcesses": {"Processes": []},
             "Requirements": {"x": 1},
         }
         planning_sources = [object()]
@@ -185,7 +187,7 @@ class PlannerServiceTests(unittest.TestCase):
             process_bundle,
         )
 
-        run_pipeline.assert_called_once_with(planning_sources)
+        run_pipeline.assert_called_once_with(planning_sources, bop_config={"Processes": []})
 
 
 if __name__ == "__main__":

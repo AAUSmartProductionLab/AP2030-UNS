@@ -33,6 +33,8 @@ class PipelineFacadeTests(unittest.TestCase):
             with patch("Planner.aas_to_pddl_conversion.pipeline.parse_source", return_value=parsed), patch(
                 "Planner.aas_to_pddl_conversion.pipeline.merge_sources", return_value=merged
             ), patch(
+                "Planner.aas_to_pddl_conversion.pipeline.compile_bop_ordering"
+            ) as compile_bop_mock, patch(
                 "Planner.aas_to_pddl_conversion.pipeline.build_up_problem", side_effect=["semantic-problem", "reduced"]
             ), patch(
                 "Planner.aas_to_pddl_conversion.pipeline.solve_with_reduced_fallback", return_value=solve_result
@@ -50,6 +52,7 @@ class PipelineFacadeTests(unittest.TestCase):
                     [source],
                     planning_timeout_seconds=12.0,
                     strict_semantic_solve=True,
+                    bop_config={"Processes": []},
                     artifacts_dir=tmp_dir,
                 )
 
@@ -65,6 +68,10 @@ class PipelineFacadeTests(unittest.TestCase):
         solve_call = solve_mock.call_args.kwargs
         self.assertEqual(solve_call["timeout"], 12.0)
         self.assertFalse(solve_call["allow_reduced_fallback"])
+
+        compile_call_args = compile_bop_mock.call_args.args
+        self.assertEqual(compile_call_args[0], merged)
+        self.assertEqual(compile_call_args[1], {"Processes": []})
 
 
 if __name__ == "__main__":

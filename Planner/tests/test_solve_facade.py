@@ -96,7 +96,7 @@ class SolveFacadeTests(unittest.TestCase):
         result = solve(build_problem(), backend="pr2")
         self.assertTrue(result.is_policy)
         self.assertTrue(result.is_solved)
-        self.assertEqual(result.backend_name, "pr2-direct")
+        self.assertEqual(result.backend_name, "pr2")
         self.assertGreater(len(result.policy), 0)
         self.assertGreaterEqual(len(result.fsaps), 0)
         self.assertTrue(result.domain_pddl)
@@ -113,7 +113,7 @@ class SolveFacadeTests(unittest.TestCase):
     def test_auto_backend_routes_nondeterministic_problem_to_pr2(self):
         result = solve(build_nondeterministic_problem(), backend="auto")
         self.assertTrue(result.is_policy)
-        self.assertEqual(result.backend_name, "pr2-direct")
+        self.assertEqual(result.backend_name, "pr2")
         self.assertTrue(result.is_solved)
 
 
