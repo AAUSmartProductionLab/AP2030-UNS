@@ -234,7 +234,7 @@ css:TransitionConstraint a rdfs:Class,
         <http://www.w3id.org/aau-ra/cssx-skills.ttl>,
         <http://www.w3id.org/aau-ra/cssx-technical-data.ttl>,
         <http://www.w3id.org/hsu-aut/css>,
-        <https://www.w3.org/2019/wot/td> ;
+        <https://raw.githubusercontent.com/w3c/wot-resources/main/td/v1.1/ontology/td.ttl> ;
     owl:versionIRI <http://www.w3id.org/aau-ra/cssx/0.1.0> .
 
 aasv:HierarchicalStructuresSparqlShape a sh:NodeShape ;

@@ -5,12 +5,12 @@
 @prefix xml: <http://www.w3.org/XML/1998/namespace> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix td: <https://www.w3.org/2019/wot/td#> .
+#@prefix td: <https://www.w3.org/2019/wot/td#> .
 
 <http://www.w3id.org/aau-ra/cssx> rdf:type owl:Ontology ;
   owl:versionIRI <http://www.w3id.org/aau-ra/cssx/0.1.0> ;
   owl:imports <http://www.w3id.org/hsu-aut/css> ,
-              <https://www.w3.org/2019/wot/td> ,
+              <https://raw.githubusercontent.com/w3c/wot-resources/main/td/v1.1/ontology/td.ttl> ,
               <./modules/cssx-nameplate.ttl> ,
               <./modules/cssx-bom.ttl> ,
               <./modules/cssx-capabilities.ttl> ,
@@ -19,5 +19,6 @@
               <./modules/cssx-parameters.ttl> ,
               <./modules/cssx-resource-interface.ttl> ,
               <./modules/cssx-technical-data.ttl> ,
-              <./modules/cssx-aas-validation.ttl> ;
+              <./modules/cssx-aas-validation.ttl> ,
+              <./modules/cssx-resource-hierarchy.ttl> ;
   rdfs:comment "CSS extension ontology for PPR concepts aligned with submodel template needs." .
