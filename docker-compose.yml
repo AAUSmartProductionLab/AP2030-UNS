@@ -1,5 +1,6 @@
 services:
-  
+
+######################################### TOOLS AND SERVICES ######################################  
   # hivemq-broker:
   #   image: hivemq/hivemq4:latest
   #   container_name: hivemq-broker
@@ -128,31 +129,31 @@ services:
   #     - hivemq-network
   #   restart: unless-stopped
 
-  bt_controller:
-    build:
-      context: .
-      dockerfile: BT_Controller/dockerfile
-    container_name: bt_controller
-    environment:
-      - MQTT_BROKER=${MQTT_BROKER:-hivemq-broker}
-      - MQTT_PORT=${MQTT_PORT:-1883}
-      - AAS_SERVER=${AAS_SERVER:-aas-env}
-      - AAS_PORT=${AAS_PORT:-8081}
-      - AAS_REGISTRY=${AAS_REGISTRY:-aas-registry}
-      - AAS_REGISTRY_PORT=${AAS_REGISTRY_PORT:-8080}
-    volumes:
-      - ./BT_Controller/config:/AP2030-UNS/BT_Controller/config
-      - ./BTDescriptions:/AP2030-UNS/MQTTSchemas
-      - ./AASDescriptions:/AP2030-UNS/AASDescriptions
-    ports:
-    - "1667:1667"
-    networks:
-      - hivemq-network
-    depends_on:
-      hivemq-broker:
-        condition: service_started
-      registration-service:
-        condition: service_healthy
+  # bt_controller:
+  #   build:
+  #     context: .
+  #     dockerfile: BT_Controller/dockerfile
+  #   container_name: bt_controller
+  #   environment:
+  #     - MQTT_BROKER=${MQTT_BROKER:-hivemq-broker}
+  #     - MQTT_PORT=${MQTT_PORT:-1883}
+  #     - AAS_SERVER=${AAS_SERVER:-aas-env}
+  #     - AAS_PORT=${AAS_PORT:-8081}
+  #     - AAS_REGISTRY=${AAS_REGISTRY:-aas-registry}
+  #     - AAS_REGISTRY_PORT=${AAS_REGISTRY_PORT:-8080}
+  #   volumes:
+  #     - ./BT_Controller/config:/AP2030-UNS/BT_Controller/config
+  #     - ./BTDescriptions:/AP2030-UNS/MQTTSchemas
+  #     - ./AASDescriptions:/AP2030-UNS/AASDescriptions
+  #   ports:
+  #   - "1667:1667"
+  #   networks:
+  #     - hivemq-network
+  #   depends_on:
+  #     hivemq-broker:
+  #       condition: service_started
+  #     registration-service:
+  #       condition: service_healthy
 
   # planar_controller:
   #   build:
@@ -267,8 +268,6 @@ services:
         condition: service_started
       registration-service:
         condition: service_healthy
-
-
 
 ################################### BASYX CONTAINERS ####################################
 
@@ -458,8 +457,8 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - BASYX_URL=http://${AAS_SERVER:-aas-env}:${AAS_PORT:-8081}
-      - MQTT_BROKER=${MQTT_BROKER:-hivemq-broker}
-      - MQTT_PORT=${MQTT_PORT:-1883}
+      - MQTT_BROKER=hivemq-broker
+      - MQTT_PORT=1883
       # Delegation URL for BaSyx to call - must be reachable from aas-env container
       - DELEGATION_SERVICE_URL=http://registration-service:8087
       - EXTERNAL_HOST=${EXTERNAL_HOST:-localhost}
@@ -481,9 +480,9 @@ services:
       - python
       - unified-registration-service.py
       - --mqtt-broker
-      - ${MQTT_BROKER:-hivemq-broker}
+      - hivemq-broker
       - --mqtt-port
-      - "${MQTT_PORT:-1883}"
+      - "1883"
       - --basyx-url
       - http://${AAS_SERVER:-aas-env}:${AAS_PORT:-8081}
       - --delegation-url
@@ -506,6 +505,24 @@ services:
     networks:
       - hivemq-network
 
+  # planar-motor-simulator:
+  #   build:
+  #     context: ./PlanarMotorSimulator
+  #     dockerfile: Dockerfile
+  #   container_name: planar-motor-simulator
+  #   environment:
+  #     - DISPLAY=${DISPLAY:-}
+  #     - RUN_GUI=${RUN_GUI:-false}
+  #     - AUTO_START=${AUTO_START:-true}
+  #     - START_BTN_X=400
+  #     - START_BTN_Y=480
+  #   ports:
+  #     - "8888:8888/udp"
+  #     - "8888:8888/tcp"
+  #   volumes:
+  #     - /tmp/.X11-unix:/tmp/.X11-unix:rw
+  #   network_mode: host
+  #   restart: unless-stopped
   # planar-motor-simulator:
   #   build:
   #     context: ./PlanarMotorSimulator

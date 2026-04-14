@@ -198,5 +198,11 @@ offlineResponse_1656FB-A61627-4A4CB2-F0C0CA-8531ED-BD332C.dat
 Grafana/grafana-data/grafana.db
 PlanarMotorSimulator/setup.exe
 PlanarMotorSimulator/Simulation Installer.msi
+config.yaml
+deprecated/
 Planner/output/*
 simulated_stations/robotics/ur5/*
+
+# ppr-ontology generated outputs
+ppr-ontology/generation/output/*
+!ppr-ontology/generation/output/.gitkeep

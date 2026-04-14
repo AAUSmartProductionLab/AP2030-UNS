@@ -1,0 +1,3820 @@
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<http://www.w3id.org/aau-ra/cssx#AssetSpecificProperties> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment "Collection of asset-specific properties." ;
+    sh:property <http://www.w3id.org/aau-ra/cssx#AssetSpecificProperties-hasAssetSpecificProperty> .
+
+<http://www.w3id.org/aau-ra/cssx#BoM> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment "Bill of Material as a hierarchy of items." ;
+    rdfs:subClassOf _:n2979bea82b7944d5a3300af067f4ca24b2 ;
+    sh:property <http://www.w3id.org/aau-ra/cssx#BoM-hasBoMItem> .
+
+<http://www.w3id.org/aau-ra/cssx#BoMItem> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment "BoM item describing a component instance or part." ;
+    rdfs:subClassOf _:n2979bea82b7944d5a3300af067f4ca24b3 ;
+    sh:property <http://www.w3id.org/aau-ra/cssx#BoMItem-hasPart>,
+        <http://www.w3id.org/aau-ra/cssx#BoMItem-isPartOf>,
+        <http://www.w3id.org/aau-ra/cssx#BoMItem-itemNumber>,
+        <http://www.w3id.org/aau-ra/cssx#BoMItem-quantity>,
+        <http://www.w3id.org/aau-ra/cssx#BoMItem-quantityUnit> .
+
+<http://www.w3id.org/aau-ra/cssx#CapabilityPortfolio> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment "Collection of capability specifications associated with a resource." ;
+    sh:property <http://www.w3id.org/aau-ra/cssx#CapabilityPortfolio-portfolioHasCapability> .
+
+<http://www.w3id.org/aau-ra/cssx#CapabilityQualification> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment "Qualification and evidence metadata associated with a capability." ;
+    sh:property <http://www.w3id.org/aau-ra/cssx#CapabilityQualification-qualificationStatus> .
+
+<http://www.w3id.org/aau-ra/cssx#EndpointMetadata> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment "AID endpoint metadata container aligned with WoT Form semantics." ;
+    rdfs:subClassOf <https://www.w3.org/2019/wot/td#Form> ;
+    sh:property <http://www.w3id.org/aau-ra/cssx#EndpointMetadata-endpointBaseUri>,
+        <http://www.w3id.org/aau-ra/cssx#EndpointMetadata-hasSecurityDefinition>,
+        <http://www.w3id.org/aau-ra/cssx#EndpointMetadata-interfaceContentType> .
+
+<http://www.w3id.org/aau-ra/cssx#InteractionMetadata> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment "Metadata describing interaction affordances of an interface." ;
+    sh:property <http://www.w3id.org/aau-ra/cssx#InteractionMetadata-hasInteractionPoint> .
+
+<http://www.w3id.org/aau-ra/cssx#LogicalData> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment "Logical operational data such as flags or boolean variables." ;
+    rdfs:subClassOf _:n3f0afda306c242f289c94b05ffbe242cb2,
+        <http://www.w3id.org/aau-ra/cssx#OperationalData> ;
+    sh:property <http://www.w3id.org/aau-ra/cssx#LogicalData-dataReferencesInterface> .
+
+<http://www.w3id.org/aau-ra/cssx#Manufacturer> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment "Organization or party responsible for producing a product or resource." ;
+    rdfs:subClassOf [ a rdfs:Resource,
+                owl:Restriction ;
+            owl:minCardinality "1"^^xsd:nonNegativeInteger ;
+            owl:onProperty <http://www.w3id.org/aau-ra/cssx#manufacturerName> ] ;
+    sh:property <http://www.w3id.org/aau-ra/cssx#Manufacturer-hasAddressInformation>,
+        <http://www.w3id.org/aau-ra/cssx#Manufacturer-manufacturerName> .
+
+<http://www.w3id.org/aau-ra/cssx#Markings> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment "Set of markings associated with a product or resource." ;
+    sh:property <http://www.w3id.org/aau-ra/cssx#Markings-hasMarking> .
+
+<http://www.w3id.org/aau-ra/cssx#MeasuredValue> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment "Value object associated with a measurement data point." ;
+    sh:property <http://www.w3id.org/aau-ra/cssx#MeasuredValue-measuredNumericValue>,
+        <http://www.w3id.org/aau-ra/cssx#MeasuredValue-measuredUnit> .
+
+<http://www.w3id.org/aau-ra/cssx#MeasurementData> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment "Measured operational data such as sensor readings." ;
+    rdfs:subClassOf [ a rdfs:Resource,
+                owl:Restriction ;
+            owl:onProperty <http://www.w3id.org/aau-ra/cssx#hasMeasuredValue> ;
+            owl:someValuesFrom <http://www.w3id.org/aau-ra/cssx#MeasuredValue> ],
+        _:n3f0afda306c242f289c94b05ffbe242cb2,
+        <http://www.w3id.org/aau-ra/cssx#OperationalData> ;
+    sh:property <http://www.w3id.org/aau-ra/cssx#MeasurementData-dataReferencesInterface>,
+        <http://www.w3id.org/aau-ra/cssx#MeasurementData-hasMeasuredValue>,
+        <http://www.w3id.org/aau-ra/cssx#MeasurementData-hasMeasurementQualifier>,
+        <http://www.w3id.org/aau-ra/cssx#MeasurementData-measurementTimestamp> .
+
+<http://www.w3id.org/aau-ra/cssx#OperationalCapability> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment "Capability in plug-and-produce context, expected to be realizable by at least one skill." ;
+    rdfs:subClassOf [ a rdfs:Resource,
+                owl:Restriction ;
+            owl:onProperty <http://www.w3id.org/hsu-aut/css#isRealizedBySkill> ;
+            owl:someValuesFrom <http://www.w3id.org/hsu-aut/css#Skill> ],
+        _:n1a27d560ed0d4ea491656a1d5c802b1db38,
+        _:n1a27d560ed0d4ea491656a1d5c802b1db40,
+        <http://www.w3id.org/hsu-aut/css#Capability> ;
+    sh:property <http://www.w3id.org/aau-ra/cssx#OperationalCapability-capabilityIdShort>,
+        <http://www.w3id.org/aau-ra/cssx#OperationalCapability-capabilityRequiresInterface>,
+        <http://www.w3id.org/aau-ra/cssx#OperationalCapability-capabilitySemanticId>,
+        <http://www.w3id.org/aau-ra/cssx#OperationalCapability-capabilityUsesOperationalData>,
+        <http://www.w3id.org/aau-ra/cssx#OperationalCapability-capabilityUsesResourceParameter>,
+        <http://www.w3id.org/aau-ra/cssx#OperationalCapability-hasCapabilityConstraintProfile>,
+        <http://www.w3id.org/aau-ra/cssx#OperationalCapability-hasCapabilityQualification>,
+        <http://www.w3id.org/aau-ra/cssx#OperationalCapability-isRealizedBySkill>,
+        <http://www.w3id.org/aau-ra/cssx#OperationalCapability-sourceSemanticId> .
+
+<http://www.w3id.org/aau-ra/cssx#OperationalData> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment "Operational data associated with a resource during use." ;
+    rdfs:subClassOf _:n3f0afda306c242f289c94b05ffbe242cb2 ;
+    sh:property <http://www.w3id.org/aau-ra/cssx#OperationalData-dataReferencesInterface>,
+        <http://www.w3id.org/aau-ra/cssx#OperationalData-hasDataConcept> .
+
+<http://www.w3id.org/aau-ra/cssx#OperationalSpecification> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment "Product-related operational specifications such as handling, operating, or storage constraints." ;
+    sh:property <http://www.w3id.org/aau-ra/cssx#OperationalSpecification-handlingInstruction>,
+        <http://www.w3id.org/aau-ra/cssx#OperationalSpecification-operationalConstraint>,
+        <http://www.w3id.org/aau-ra/cssx#OperationalSpecification-storageCondition> .
+
+<http://www.w3id.org/aau-ra/cssx#OrderData> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment "Production-order-relevant data for planning and execution, excluding nameplate identification data." ;
+    sh:property <http://www.w3id.org/aau-ra/cssx#OrderData-orderBatchSize>,
+        <http://www.w3id.org/aau-ra/cssx#OrderData-orderQuantity>,
+        <http://www.w3id.org/aau-ra/cssx#OrderData-orderStatus>,
+        <http://www.w3id.org/aau-ra/cssx#OrderData-orderTimestamp>,
+        <http://www.w3id.org/aau-ra/cssx#OrderData-packagingType> .
+
+<http://www.w3id.org/aau-ra/cssx#ParameterGroup> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment "Group of resource parameters." ;
+    sh:property <http://www.w3id.org/aau-ra/cssx#ParameterGroup-groupHasParameter> .
+
+<http://www.w3id.org/aau-ra/cssx#ParameterScope> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment "Scope classification for a resource parameter (e.g., module, line, station)." ;
+    sh:property <http://www.w3id.org/aau-ra/cssx#ParameterScope-scopeValue> .
+
+<http://www.w3id.org/aau-ra/cssx#ProductBoM> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment "BoM describing the product composition." ;
+    rdfs:subClassOf _:n2979bea82b7944d5a3300af067f4ca24b2,
+        <http://www.w3id.org/aau-ra/cssx#BoM> ;
+    sh:property <http://www.w3id.org/aau-ra/cssx#ProductBoM-hasBoMItem> .
+
+<http://www.w3id.org/aau-ra/cssx#ProductBoMItem> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment "BoM item referencing a product component." ;
+    rdfs:subClassOf _:n2979bea82b7944d5a3300af067f4ca24b3,
+        <http://www.w3id.org/aau-ra/cssx#BoMItem> ;
+    sh:property <http://www.w3id.org/aau-ra/cssx#ProductBoMItem-itemNumber>,
+        <http://www.w3id.org/aau-ra/cssx#ProductBoMItem-productBoMItemForProduct> .
+
+<http://www.w3id.org/aau-ra/cssx#ProductClassification> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment "Classification information used to categorize a product for engineering and production purposes." ;
+    sh:property <http://www.w3id.org/aau-ra/cssx#ProductClassification-classificationCode>,
+        <http://www.w3id.org/aau-ra/cssx#ProductClassification-classificationLabel>,
+        <http://www.w3id.org/aau-ra/cssx#ProductClassification-classificationSystem> .
+
+<http://www.w3id.org/aau-ra/cssx#ProductTechnicalData> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment "Technical and production-relevant data for a product, excluding identification/nameplate data." ;
+    sh:property <http://www.w3id.org/aau-ra/cssx#ProductTechnicalData-hasOperationalSpecification>,
+        <http://www.w3id.org/aau-ra/cssx#ProductTechnicalData-hasOrderData>,
+        <http://www.w3id.org/aau-ra/cssx#ProductTechnicalData-hasProductClassification> .
+
+<http://www.w3id.org/aau-ra/cssx#ResourceBoM> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment "BoM describing the resource composition." ;
+    rdfs:subClassOf _:n2979bea82b7944d5a3300af067f4ca24b2,
+        <http://www.w3id.org/aau-ra/cssx#BoM> ;
+    sh:property <http://www.w3id.org/aau-ra/cssx#ResourceBoM-hasBoMItem> .
+
+<http://www.w3id.org/aau-ra/cssx#ResourceBoMItem> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment "BoM item referencing a resource component." ;
+    rdfs:subClassOf _:n2979bea82b7944d5a3300af067f4ca24b3,
+        <http://www.w3id.org/aau-ra/cssx#BoMItem> ;
+    sh:property <http://www.w3id.org/aau-ra/cssx#ResourceBoMItem-itemNumber>,
+        <http://www.w3id.org/aau-ra/cssx#ResourceBoMItem-resourceBoMItemForResource> .
+
+<http://www.w3id.org/aau-ra/cssx#ResourceInterface> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment "Interface of a resource used to access or control its functions." ;
+    sh:property <http://www.w3id.org/aau-ra/cssx#ResourceInterface-hasEndpointMetadata>,
+        <http://www.w3id.org/aau-ra/cssx#ResourceInterface-hasInteractionMetadata>,
+        <http://www.w3id.org/aau-ra/cssx#ResourceInterface-interfaceTitle> .
+
+<http://www.w3id.org/aau-ra/cssx#ResourceParameter> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment "Static configuration parameter of a resource." ;
+    sh:property <http://www.w3id.org/aau-ra/cssx#ResourceParameter-hasParameterScope>,
+        <http://www.w3id.org/aau-ra/cssx#ResourceParameter-isReadOnly>,
+        <http://www.w3id.org/aau-ra/cssx#ResourceParameter-parameterDescription>,
+        <http://www.w3id.org/aau-ra/cssx#ResourceParameter-parameterName>,
+        <http://www.w3id.org/aau-ra/cssx#ResourceParameter-parameterUnit>,
+        <http://www.w3id.org/aau-ra/cssx#ResourceParameter-parameterValue>,
+        <http://www.w3id.org/aau-ra/cssx#ResourceParameter-parameterValueType> .
+
+<http://www.w3id.org/aau-ra/cssx#SecurityDefinition> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment "Container for interface security definitions." ;
+    sh:property <http://www.w3id.org/aau-ra/cssx#SecurityDefinition-hasSecurityScheme> .
+
+<http://www.w3id.org/aau-ra/cssx#SkillMode> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment "Allowed execution mode for a skill (e.g., AUTO, MANUAL)." ;
+    sh:property <http://www.w3id.org/aau-ra/cssx#SkillMode-skillModeValue> .
+
+<http://www.w3id.org/aau-ra/cssx#SkillOperation> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment "Abstract operation exposed by a skill." ;
+    sh:property <http://www.w3id.org/aau-ra/cssx#SkillOperation-operationDescription>,
+        <http://www.w3id.org/aau-ra/cssx#SkillOperation-operationHasInput>,
+        <http://www.w3id.org/aau-ra/cssx#SkillOperation-operationHasOutput>,
+        <http://www.w3id.org/aau-ra/cssx#SkillOperation-operationName>,
+        <http://www.w3id.org/aau-ra/cssx#SkillOperation-operationUsesInterface> .
+
+<http://www.w3id.org/aau-ra/cssx#StateData> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment "Operational state variables of a resource." ;
+    rdfs:subClassOf _:n3f0afda306c242f289c94b05ffbe242cb2,
+        <http://www.w3id.org/aau-ra/cssx#OperationalData> ;
+    sh:property <http://www.w3id.org/aau-ra/cssx#StateData-dataReferencesInterface> .
+
+<http://www.w3id.org/aau-ra/cssx#TimeSeriesData> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment "Operational data represented as time series." ;
+    rdfs:subClassOf _:n3f0afda306c242f289c94b05ffbe242cb2,
+        <http://www.w3id.org/aau-ra/cssx#OperationalData> ;
+    sh:property <http://www.w3id.org/aau-ra/cssx#TimeSeriesData-dataReferencesInterface>,
+        <http://www.w3id.org/aau-ra/cssx#TimeSeriesData-hasTimeSeriesMetadata>,
+        <http://www.w3id.org/aau-ra/cssx#TimeSeriesData-hasTimeSeriesSegment> .
+
+<http://www.w3id.org/aau-ra/cssx#TimeSeriesSegment> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment "Segment of a time-series dataset." ;
+    sh:property <http://www.w3id.org/aau-ra/cssx#TimeSeriesSegment-timeSeriesEnd>,
+        <http://www.w3id.org/aau-ra/cssx#TimeSeriesSegment-timeSeriesStart>,
+        <http://www.w3id.org/aau-ra/cssx#TimeSeriesSegment-timeSeriesValueCount> .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#BomEntry> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:subClassOf <http://www.w3id.org/aau-ra/resourceaas-validation#ResourceAASProjection> ;
+    sh:property <http://www.w3id.org/aau-ra/resourceaas-validation#BomEntry-bomEntryGlobalAssetId>,
+        <http://www.w3id.org/aau-ra/resourceaas-validation#BomEntry-bomEntryName> .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#HierarchicalStructuresSubmodel> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:subClassOf [ a rdfs:Resource,
+                owl:Restriction ;
+            owl:minCardinality "1"^^xsd:nonNegativeInteger ;
+            owl:onProperty <http://www.w3id.org/aau-ra/resourceaas-validation#hasBomEntry> ],
+        <http://www.w3id.org/aau-ra/resourceaas-validation#ResourceAASProjection> ;
+    sh:property <http://www.w3id.org/aau-ra/resourceaas-validation#HierarchicalStructuresSubmodel-bomArchetype>,
+        <http://www.w3id.org/aau-ra/resourceaas-validation#HierarchicalStructuresSubmodel-bomName>,
+        <http://www.w3id.org/aau-ra/resourceaas-validation#HierarchicalStructuresSubmodel-hasBomEntry> .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#MappedElement> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:subClassOf <http://www.w3id.org/aau-ra/resourceaas-validation#ResourceAASProjection> ;
+    sh:property <http://www.w3id.org/aau-ra/resourceaas-validation#MappedElement-sourceElementPath> .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#ResourceAASProjection> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment "Marker class for projected ResourceAAS validation nodes." ;
+    sh:property <http://www.w3id.org/aau-ra/resourceaas-validation#ResourceAASProjection-hasIdShort>,
+        <http://www.w3id.org/aau-ra/resourceaas-validation#ResourceAASProjection-hasMappedElement>,
+        <http://www.w3id.org/aau-ra/resourceaas-validation#ResourceAASProjection-sourceIdShort>,
+        <http://www.w3id.org/aau-ra/resourceaas-validation#ResourceAASProjection-sourceSemanticId>,
+        <http://www.w3id.org/aau-ra/resourceaas-validation#ResourceAASProjection-sourceSubmodelSemanticId> .
+
+<http://www.w3id.org/hsu-aut/css#Capability> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment """Implementation-independent specification of a function in industrial production to achieve an effect in the physical or virtual world.
+
+Notes:
+- A capability can be restricted by constraints.
+- A capability can be specified by capability properties.
+- A capability can be realized by skills""" ;
+    rdfs:subClassOf _:n1a27d560ed0d4ea491656a1d5c802b1db38,
+        _:n1a27d560ed0d4ea491656a1d5c802b1db40 ;
+    owl:disjointWith <http://www.w3id.org/hsu-aut/css#Resource>,
+        <http://www.w3id.org/hsu-aut/css#ServiceOffer>,
+        <http://www.w3id.org/hsu-aut/css#ServiceProvider>,
+        <http://www.w3id.org/hsu-aut/css#ServiceRequester>,
+        <http://www.w3id.org/hsu-aut/css#Skill>,
+        <http://www.w3id.org/hsu-aut/css#SkillInterface>,
+        <http://www.w3id.org/hsu-aut/css#SkillParameter> ;
+    sh:property <http://www.w3id.org/hsu-aut/css#Capability-isRealizedBy>,
+        <http://www.w3id.org/hsu-aut/css#Capability-isRealizedBySkill>,
+        <http://www.w3id.org/hsu-aut/css#Capability-isRestrictedBy>,
+        <http://www.w3id.org/hsu-aut/css#Capability-isSpecifiedBy>,
+        <http://www.w3id.org/hsu-aut/css#Capability-sourceSemanticId> .
+
+<http://www.w3id.org/hsu-aut/css#Process> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment """Production-relevant activity at any level of granularity that might affect materials and is performed by resources.
+
+Notes:
+- In general, a process can be decomposed into sub-processes or single activities.
+- A process can require capabilities to express that any suitable resource used for
+performing this process needs to provide compatible capabilities.
+- A process step relates to materials that constitute either input or output for the processing in this step""" ;
+    owl:disjointWith <http://www.w3id.org/hsu-aut/css#Resource>,
+        <http://www.w3id.org/hsu-aut/css#Service>,
+        <http://www.w3id.org/hsu-aut/css#ServiceOffer>,
+        <http://www.w3id.org/hsu-aut/css#ServiceProvider>,
+        <http://www.w3id.org/hsu-aut/css#Skill>,
+        <http://www.w3id.org/hsu-aut/css#SkillInterface>,
+        <http://www.w3id.org/hsu-aut/css#SkillParameter> ;
+    sh:property <http://www.w3id.org/hsu-aut/css#Process-hasInput>,
+        <http://www.w3id.org/hsu-aut/css#Process-hasOutput>,
+        <http://www.w3id.org/hsu-aut/css#Process-requiresCapability> .
+
+<http://www.w3id.org/hsu-aut/css#Product> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment """Physical object being used as an input or created as an output of a production process.
+
+Notes:
+- The term Product may be used for objects in various states of manufacturing and may be seen as a generic term for raw materials, work in process and finished goods. Consumable supplies such as fuel, lubricants or cleaning agents may also be regarded as products. Furthermore, both purchased parts as well as parts manufactured in-house may be regarded as products.
+- Besides the actual product, there can be additional artifacts related to that product that are created and used in different life cycle phases to specify the product.
+▪ 3D/CAD models
+▪ specifications
+▪ BOM
+- A Service Requester may use these additional artifacts to formulate requirements against products.""" ;
+    owl:disjointWith <http://www.w3id.org/hsu-aut/css#Service>,
+        <http://www.w3id.org/hsu-aut/css#ServiceOffer>,
+        <http://www.w3id.org/hsu-aut/css#ServiceProvider>,
+        <http://www.w3id.org/hsu-aut/css#ServiceRequester>,
+        <http://www.w3id.org/hsu-aut/css#Skill>,
+        <http://www.w3id.org/hsu-aut/css#SkillInterface>,
+        <http://www.w3id.org/hsu-aut/css#SkillParameter> ;
+    sh:property <http://www.w3id.org/hsu-aut/css#Product-companyLogoUri>,
+        <http://www.w3id.org/hsu-aut/css#Product-countryOfOrigin>,
+        <http://www.w3id.org/hsu-aut/css#Product-dateOfManufacture>,
+        <http://www.w3id.org/hsu-aut/css#Product-firmwareVersion>,
+        <http://www.w3id.org/hsu-aut/css#Product-hardwareVersion>,
+        <http://www.w3id.org/hsu-aut/css#Product-hasAssetSpecificProperties>,
+        <http://www.w3id.org/hsu-aut/css#Product-hasManufacturer>,
+        <http://www.w3id.org/hsu-aut/css#Product-hasMarkings>,
+        <http://www.w3id.org/hsu-aut/css#Product-hasProductBoM>,
+        <http://www.w3id.org/hsu-aut/css#Product-hasProductTechnicalData>,
+        <http://www.w3id.org/hsu-aut/css#Product-manufacturerProductDesignation>,
+        <http://www.w3id.org/hsu-aut/css#Product-manufacturerProductFamily>,
+        <http://www.w3id.org/hsu-aut/css#Product-manufacturerProductRoot>,
+        <http://www.w3id.org/hsu-aut/css#Product-manufacturerProductType>,
+        <http://www.w3id.org/hsu-aut/css#Product-modelName>,
+        <http://www.w3id.org/hsu-aut/css#Product-orderCodeOfManufacturer>,
+        <http://www.w3id.org/hsu-aut/css#Product-productArticleNumberOfManufacturer>,
+        <http://www.w3id.org/hsu-aut/css#Product-serialNumber>,
+        <http://www.w3id.org/hsu-aut/css#Product-softwareVersion>,
+        <http://www.w3id.org/hsu-aut/css#Product-uniqueFacilityIdentifier>,
+        <http://www.w3id.org/hsu-aut/css#Product-uriOfTheProduct>,
+        <http://www.w3id.org/hsu-aut/css#Product-yearOfConstruction> .
+
+<http://www.w3id.org/hsu-aut/css#Property> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment """Quality or characteristic inherent in or ascribed to any CSS model element
+
+Notes:
+- Properties may be used to describe and differentiate all kinds of PPR entities (i.e., products, process steps, resources)
+- Capabilities, services and offers are specified by properties in order to detail their description with regard to certain entities (e.g. products, process steps, resources)""" ;
+    owl:disjointWith <http://www.w3id.org/hsu-aut/css#Resource>,
+        <http://www.w3id.org/hsu-aut/css#Service>,
+        <http://www.w3id.org/hsu-aut/css#ServiceOffer>,
+        <http://www.w3id.org/hsu-aut/css#ServiceProvider>,
+        <http://www.w3id.org/hsu-aut/css#ServiceRequester>,
+        <http://www.w3id.org/hsu-aut/css#Skill>,
+        <http://www.w3id.org/hsu-aut/css#SkillInterface> ;
+    sh:property <http://www.w3id.org/hsu-aut/css#Property-isRealizedBy>,
+        <http://www.w3id.org/hsu-aut/css#Property-isRealizedBySkillParameter> .
+
+<http://www.w3id.org/hsu-aut/css#PropertyConstraint> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment "A PropertyConstraint is a constraint that determines the applicability of a Capability and that refers to one or more Properties of the same Capability (see Figure 15). An important aspect of PropertyConstraints is that they always refer to a single Capability and assume no knowledge of a sequence of Capabilities or dependencies between Capabilities." ;
+    rdfs:subClassOf <http://www.w3id.org/hsu-aut/css#Constraint> ;
+    sh:property <http://www.w3id.org/hsu-aut/css#PropertyConstraint-referencesProperty> .
+
+<http://www.w3id.org/hsu-aut/css#Resource> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment """Entity capable of performing functions specified as Capabilities and potentially implemented as Skills.
+
+Notes
+- A production resource may consist of hardware, software or both
+- A production resource may only provide capabilities (i.e. when engineering a resource, for planning purposes) and may additionally provide skills for automatic execution of the specified function.
+- A human becomes a Production Resource, if that person is able to perform a function specified as a capability.""" ;
+    rdfs:subClassOf [ a rdfs:Resource,
+                owl:Restriction ;
+            owl:minCardinality "1"^^xsd:nonNegativeInteger ;
+            owl:onProperty <http://www.w3id.org/aau-ra/resourceaas-validation#hasDigitalNameplateSubmodel> ],
+        [ a rdfs:Resource,
+                owl:Restriction ;
+            owl:maxCardinality "1"^^xsd:nonNegativeInteger ;
+            owl:onProperty <http://www.w3id.org/aau-ra/resourceaas-validation#hasDigitalNameplateSubmodel> ],
+        [ a rdfs:Resource,
+                owl:Restriction ;
+            owl:minCardinality "1"^^xsd:nonNegativeInteger ;
+            owl:onProperty <http://www.w3id.org/aau-ra/resourceaas-validation#hasHierarchicalStructuresSubmodel> ],
+        [ a rdfs:Resource,
+                owl:Restriction ;
+            owl:maxCardinality "1"^^xsd:nonNegativeInteger ;
+            owl:onProperty <http://www.w3id.org/aau-ra/resourceaas-validation#hasHierarchicalStructuresSubmodel> ],
+        [ a rdfs:Resource,
+                owl:Restriction ;
+            owl:maxCardinality "1"^^xsd:nonNegativeInteger ;
+            owl:onProperty <http://www.w3id.org/aau-ra/resourceaas-validation#hasAIDSubmodel> ],
+        [ a rdfs:Resource,
+                owl:Restriction ;
+            owl:minCardinality "1"^^xsd:nonNegativeInteger ;
+            owl:onProperty <http://www.w3id.org/hsu-aut/css#providesCapability> ],
+        [ a rdfs:Resource,
+                owl:Restriction ;
+            owl:minCardinality "1"^^xsd:nonNegativeInteger ;
+            owl:onProperty <http://www.w3id.org/hsu-aut/css#providesSkill> ],
+        [ a rdfs:Resource,
+                owl:Restriction ;
+            owl:onClass <http://www.w3id.org/aau-ra/cssx#ResourceBoM> ;
+            owl:onProperty <http://www.w3id.org/aau-ra/cssx#hasResourceBoM> ;
+            owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ],
+        [ a rdfs:Resource,
+                owl:Restriction ;
+            owl:onProperty <http://www.w3id.org/aau-ra/cssx#hasManufacturer> ;
+            owl:someValuesFrom <http://www.w3id.org/aau-ra/cssx#Manufacturer> ],
+        [ a rdfs:Resource,
+                owl:Restriction ;
+            owl:minCardinality "1"^^xsd:nonNegativeInteger ;
+            owl:onProperty <http://www.w3id.org/aau-ra/cssx#serialNumber> ] ;
+    owl:disjointWith <http://www.w3id.org/hsu-aut/css#Service>,
+        <http://www.w3id.org/hsu-aut/css#ServiceOffer>,
+        <http://www.w3id.org/hsu-aut/css#Skill>,
+        <http://www.w3id.org/hsu-aut/css#SkillInterface>,
+        <http://www.w3id.org/hsu-aut/css#SkillParameter>,
+        <http://www.w3id.org/hsu-aut/css#StateMachine> ;
+    sh:property <http://www.w3id.org/hsu-aut/css#Resource-behaviorConformsTo>,
+        <http://www.w3id.org/hsu-aut/css#Resource-companyLogoUri>,
+        <http://www.w3id.org/hsu-aut/css#Resource-countryOfOrigin>,
+        <http://www.w3id.org/hsu-aut/css#Resource-dateOfManufacture>,
+        <http://www.w3id.org/hsu-aut/css#Resource-firmwareVersion>,
+        <http://www.w3id.org/hsu-aut/css#Resource-hardwareVersion>,
+        <http://www.w3id.org/hsu-aut/css#Resource-hasAIDSubmodel>,
+        <http://www.w3id.org/hsu-aut/css#Resource-hasAssetSpecificProperties>,
+        <http://www.w3id.org/hsu-aut/css#Resource-hasCapabilitiesSubmodel>,
+        <http://www.w3id.org/hsu-aut/css#Resource-hasCapabilityPortfolio>,
+        <http://www.w3id.org/hsu-aut/css#Resource-hasDigitalNameplateSubmodel>,
+        <http://www.w3id.org/hsu-aut/css#Resource-hasHierarchicalStructuresSubmodel>,
+        <http://www.w3id.org/hsu-aut/css#Resource-hasManufacturer>,
+        <http://www.w3id.org/hsu-aut/css#Resource-hasMarkings>,
+        <http://www.w3id.org/hsu-aut/css#Resource-hasOperationalData>,
+        <http://www.w3id.org/hsu-aut/css#Resource-hasOperationalDataSubmodel>,
+        <http://www.w3id.org/hsu-aut/css#Resource-hasParameterGroup>,
+        <http://www.w3id.org/hsu-aut/css#Resource-hasParametersSubmodel>,
+        <http://www.w3id.org/hsu-aut/css#Resource-hasResourceBoM>,
+        <http://www.w3id.org/hsu-aut/css#Resource-hasResourceInterface>,
+        <http://www.w3id.org/hsu-aut/css#Resource-hasResourceParameter>,
+        <http://www.w3id.org/hsu-aut/css#Resource-hasSkillsSubmodel>,
+        <http://www.w3id.org/hsu-aut/css#Resource-hasSubmodel>,
+        <http://www.w3id.org/hsu-aut/css#Resource-manufacturerProductDesignation>,
+        <http://www.w3id.org/hsu-aut/css#Resource-manufacturerProductFamily>,
+        <http://www.w3id.org/hsu-aut/css#Resource-manufacturerProductRoot>,
+        <http://www.w3id.org/hsu-aut/css#Resource-manufacturerProductType>,
+        <http://www.w3id.org/hsu-aut/css#Resource-modelName>,
+        <http://www.w3id.org/hsu-aut/css#Resource-orderCodeOfManufacturer>,
+        <http://www.w3id.org/hsu-aut/css#Resource-productArticleNumberOfManufacturer>,
+        <http://www.w3id.org/hsu-aut/css#Resource-provides>,
+        <http://www.w3id.org/hsu-aut/css#Resource-providesCapability>,
+        <http://www.w3id.org/hsu-aut/css#Resource-providesOperationalCapability>,
+        <http://www.w3id.org/hsu-aut/css#Resource-providesSkill>,
+        <http://www.w3id.org/hsu-aut/css#Resource-serialNumber>,
+        <http://www.w3id.org/hsu-aut/css#Resource-softwareVersion>,
+        <http://www.w3id.org/hsu-aut/css#Resource-uniqueFacilityIdentifier>,
+        <http://www.w3id.org/hsu-aut/css#Resource-uriOfTheProduct>,
+        <http://www.w3id.org/hsu-aut/css#Resource-yearOfConstruction> .
+
+<http://www.w3id.org/hsu-aut/css#Service> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment """Description of the commercial aspects and means of provision of offered capabilities.
+
+Notes:
+- The term “service” should be understood in the sense of economics and shall not be confused with e.g., web services.
+- The capabilities and means of provisions are specified by properties
+- A service is demanded by service requesters and provided by a service provider
+- A service is an input for an offer proposed by""" ;
+    owl:disjointWith <http://www.w3id.org/hsu-aut/css#ServiceOffer>,
+        <http://www.w3id.org/hsu-aut/css#ServiceProvider>,
+        <http://www.w3id.org/hsu-aut/css#ServiceRequester>,
+        <http://www.w3id.org/hsu-aut/css#Skill>,
+        <http://www.w3id.org/hsu-aut/css#SkillInterface>,
+        <http://www.w3id.org/hsu-aut/css#SkillParameter>,
+        <http://www.w3id.org/hsu-aut/css#StateMachine> ;
+    sh:property <http://www.w3id.org/hsu-aut/css#Service-assures>,
+        <http://www.w3id.org/hsu-aut/css#Service-isInputFor>,
+        <http://www.w3id.org/hsu-aut/css#Service-isSpecifiedBy>,
+        <http://www.w3id.org/hsu-aut/css#Service-offersUseOf> .
+
+<http://www.w3id.org/hsu-aut/css#ServiceProvider> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment "Provides Services and can propose ServiceOffers to ServiceRequesters." ;
+    owl:disjointWith <http://www.w3id.org/hsu-aut/css#Skill>,
+        <http://www.w3id.org/hsu-aut/css#SkillInterface>,
+        <http://www.w3id.org/hsu-aut/css#SkillParameter>,
+        <http://www.w3id.org/hsu-aut/css#StateMachine> ;
+    sh:property <http://www.w3id.org/hsu-aut/css#ServiceProvider-offers>,
+        <http://www.w3id.org/hsu-aut/css#ServiceProvider-proposes> .
+
+<http://www.w3id.org/hsu-aut/css#ServiceRequester> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment """Demands Services under particular commercial aspects by providing either a specification of
+services or a specification of product requirements.""" ;
+    owl:disjointWith <http://www.w3id.org/hsu-aut/css#Skill>,
+        <http://www.w3id.org/hsu-aut/css#SkillInterface>,
+        <http://www.w3id.org/hsu-aut/css#SkillParameter>,
+        <http://www.w3id.org/hsu-aut/css#StateMachine> ;
+    sh:property <http://www.w3id.org/hsu-aut/css#ServiceRequester-demands>,
+        <http://www.w3id.org/hsu-aut/css#ServiceRequester-receives>,
+        <http://www.w3id.org/hsu-aut/css#ServiceRequester-requiresProduct> .
+
+<http://www.w3id.org/hsu-aut/css#Skill> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment """Executable implementation of an encapsulated (automation) function specified by a Capability.
+
+Notes:
+- A skill must have a skill interface. 
+- One capability can be realized by more than one skill. 
+- A skill may have any number of SkillParameters. 
+- A skill’s behavior conforms to a state machine. 
+- A skill controls a process step""" ;
+    rdfs:subClassOf [ a rdfs:Resource,
+                owl:Restriction ;
+            owl:minCardinality "1"^^xsd:nonNegativeInteger ;
+            owl:onProperty <http://www.w3id.org/aau-ra/resourceaas-validation#sourceSemanticId> ],
+        [ a rdfs:Resource,
+                owl:Restriction ;
+            owl:onClass <http://www.w3id.org/hsu-aut/css#SkillInterface> ;
+            owl:onProperty <http://www.w3id.org/hsu-aut/css#accessibleThrough> ;
+            owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ] ;
+    owl:disjointWith <http://www.w3id.org/hsu-aut/css#SkillParameter> ;
+    sh:property <http://www.w3id.org/hsu-aut/css#Skill-accessibleThrough>,
+        <http://www.w3id.org/hsu-aut/css#Skill-behaviorConformsTo>,
+        <http://www.w3id.org/hsu-aut/css#Skill-controls>,
+        <http://www.w3id.org/hsu-aut/css#Skill-hasCurrentState>,
+        <http://www.w3id.org/hsu-aut/css#Skill-hasParameter>,
+        <http://www.w3id.org/hsu-aut/css#Skill-hasSkillCondition>,
+        <http://www.w3id.org/hsu-aut/css#Skill-hasSkillEffect>,
+        <http://www.w3id.org/hsu-aut/css#Skill-hasSkillMode>,
+        <http://www.w3id.org/hsu-aut/css#Skill-hasSkillOperation>,
+        <http://www.w3id.org/hsu-aut/css#Skill-hasSkillPredicate>,
+        <http://www.w3id.org/hsu-aut/css#Skill-hasTrigger>,
+        <http://www.w3id.org/hsu-aut/css#Skill-sourceSemanticId>,
+        <http://www.w3id.org/hsu-aut/css#Skill-usesSkill> .
+
+<http://www.w3id.org/hsu-aut/css#SkillInterface> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment """Access point to configure, control and monitor a skill.
+
+Notes:
+- A skill interface exposes interaction points to be used by other external systems
+(e.g. MES, other skills).
+- A skill interface exposes the state machine of a skill so that skill states can be
+monitored and transitions triggered.
+- A skill interface exposes the parameters of a skill so that they can be written and read.""" ;
+    owl:disjointWith <http://www.w3id.org/hsu-aut/css#SkillParameter>,
+        <http://www.w3id.org/hsu-aut/css#StateMachine> ;
+    sh:property <http://www.w3id.org/hsu-aut/css#SkillInterface-exposes>,
+        <http://www.w3id.org/hsu-aut/css#SkillInterface-exposesSkillParameter>,
+        <http://www.w3id.org/hsu-aut/css#SkillInterface-exposesSkillTrigger>,
+        <http://www.w3id.org/hsu-aut/css#SkillInterface-exposesStateMachine>,
+        <http://www.w3id.org/hsu-aut/css#SkillInterface-skillInterfaceUsesSoftwareInterface> .
+
+<http://www.w3id.org/hsu-aut/css#SkillTrigger> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    sh:property <http://www.w3id.org/hsu-aut/css#SkillTrigger-hasParameter> .
+
+<http://www.w3id.org/hsu-aut/css#State> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    sh:property <http://www.w3id.org/hsu-aut/css#State-hasIncomingTransition>,
+        <http://www.w3id.org/hsu-aut/css#State-hasOutgoingTransition> .
+
+<http://www.w3id.org/hsu-aut/css#StateMachine> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    sh:property <http://www.w3id.org/hsu-aut/css#StateMachine-consistsOfState>,
+        <http://www.w3id.org/hsu-aut/css#StateMachine-consistsOfTransition> .
+
+<http://www.w3id.org/hsu-aut/css#Transition> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    sh:property <http://www.w3id.org/hsu-aut/css#Transition-hasSourceState>,
+        <http://www.w3id.org/hsu-aut/css#Transition-hasTargetState>,
+        <http://www.w3id.org/hsu-aut/css#Transition-isInvokedBy> .
+
+<http://www.w3id.org/hsu-aut/css#TransitionConstraint> a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment "A TransitionConstraint is an expression between multiple Capabilities or Services, determining the applicability of a Capability or Service in a wider context. In a Transition-Constraint, a dependent Capability or Service is restricted by one or more referenced Capabilities or Services. TransitionConstraints can be used to formulate requirements going beyond PropertyConstraints, especially sequence requirements." ;
+    rdfs:subClassOf <http://www.w3id.org/hsu-aut/css#Constraint> ;
+    sh:property <http://www.w3id.org/hsu-aut/css#TransitionConstraint-references> .
+
+<http://www.w3id.org/aau-ra/cssx> a rdfs:Resource,
+        owl:Ontology ;
+    rdfs:comment "CSS extension ontology for PPR concepts aligned with submodel template needs." ;
+    owl:imports <http://www.w3id.org/aau-ra/modules/cssx-aas-validation.ttl>,
+        <http://www.w3id.org/aau-ra/modules/cssx-bom.ttl>,
+        <http://www.w3id.org/aau-ra/modules/cssx-capabilities.ttl>,
+        <http://www.w3id.org/aau-ra/modules/cssx-nameplate.ttl>,
+        <http://www.w3id.org/aau-ra/modules/cssx-operational-data.ttl>,
+        <http://www.w3id.org/aau-ra/modules/cssx-parameters.ttl>,
+        <http://www.w3id.org/aau-ra/modules/cssx-resource-interface.ttl>,
+        <http://www.w3id.org/aau-ra/modules/cssx-skills.ttl>,
+        <http://www.w3id.org/aau-ra/modules/cssx-technical-data.ttl>,
+        <http://www.w3id.org/hsu-aut/css>,
+        <https://raw.githubusercontent.com/w3c/wot-resources/main/td/v1.1/ontology/td.ttl> ;
+    owl:versionIRI <http://www.w3id.org/aau-ra/cssx/0.1.0> .
+
+<http://www.w3id.org/aau-ra/cssx#CalibrationParameter> a rdfs:Resource,
+        owl:Class ;
+    rdfs:comment "Parameter describing a calibration or alignment setting." ;
+    rdfs:subClassOf <http://www.w3id.org/aau-ra/cssx#ResourceParameter> .
+
+<http://www.w3id.org/aau-ra/cssx#ConfigurationParameter> a rdfs:Resource,
+        owl:Class ;
+    rdfs:comment "General configuration parameter of a resource." ;
+    rdfs:subClassOf <http://www.w3id.org/aau-ra/cssx#ResourceParameter> .
+
+<http://www.w3id.org/aau-ra/cssx#ElectricalInterface> a rdfs:Resource,
+        owl:Class ;
+    rdfs:comment "Electrical interface for power or signal connections." ;
+    rdfs:subClassOf <http://www.w3id.org/aau-ra/cssx#ResourceInterface> .
+
+<http://www.w3id.org/aau-ra/cssx#LimitParameter> a rdfs:Resource,
+        owl:Class ;
+    rdfs:comment "Parameter defining operational limits or bounds." ;
+    rdfs:subClassOf <http://www.w3id.org/aau-ra/cssx#ResourceParameter> .
+
+<http://www.w3id.org/aau-ra/cssx#LocationParameter> a rdfs:Resource,
+        owl:Class ;
+    rdfs:comment "Parameter describing a resource location." ;
+    rdfs:subClassOf <http://www.w3id.org/aau-ra/cssx#ResourceParameter>,
+        <http://www.w3id.org/aau-ra/cssx#SpatialParameter> .
+
+<http://www.w3id.org/aau-ra/cssx#OrientationParameter> a rdfs:Resource,
+        owl:Class ;
+    rdfs:comment "Parameter describing a resource orientation." ;
+    rdfs:subClassOf <http://www.w3id.org/aau-ra/cssx#ResourceParameter>,
+        <http://www.w3id.org/aau-ra/cssx#SpatialParameter> .
+
+<http://www.w3id.org/aau-ra/cssx#PhysicalInterface> a rdfs:Resource,
+        owl:Class ;
+    rdfs:comment "Physical interface for mechanical or material connections." ;
+    rdfs:subClassOf <http://www.w3id.org/aau-ra/cssx#ResourceInterface> .
+
+<http://www.w3id.org/aau-ra/cssx#capabilityIdShort-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#OperationalCapability> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#capabilityIdShort> .
+
+<http://www.w3id.org/aau-ra/cssx#capabilityRequiresInterface-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#OperationalCapability> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#capabilityRequiresInterface> .
+
+<http://www.w3id.org/aau-ra/cssx#capabilitySemanticId-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#OperationalCapability> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#capabilitySemanticId> .
+
+<http://www.w3id.org/aau-ra/cssx#capabilityUsesOperationalData-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#OperationalCapability> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#capabilityUsesOperationalData> .
+
+<http://www.w3id.org/aau-ra/cssx#capabilityUsesResourceParameter-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#OperationalCapability> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#capabilityUsesResourceParameter> .
+
+<http://www.w3id.org/aau-ra/cssx#classificationCode-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#ProductClassification> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#classificationCode> .
+
+<http://www.w3id.org/aau-ra/cssx#classificationLabel-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#ProductClassification> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#classificationLabel> .
+
+<http://www.w3id.org/aau-ra/cssx#classificationSystem-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#ProductClassification> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#classificationSystem> .
+
+<http://www.w3id.org/aau-ra/cssx#dataReferencesInterface-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#OperationalData> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#dataReferencesInterface> .
+
+<http://www.w3id.org/aau-ra/cssx#endpointBaseUri-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#EndpointMetadata> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#endpointBaseUri> .
+
+<http://www.w3id.org/aau-ra/cssx#groupHasParameter-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#ParameterGroup> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#groupHasParameter> .
+
+<http://www.w3id.org/aau-ra/cssx#handlingInstruction-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#OperationalSpecification> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#handlingInstruction> .
+
+<http://www.w3id.org/aau-ra/cssx#hasAddressInformation-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#Manufacturer> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#hasAddressInformation> .
+
+<http://www.w3id.org/aau-ra/cssx#hasAssetSpecificProperty-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#AssetSpecificProperties> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#hasAssetSpecificProperty> .
+
+<http://www.w3id.org/aau-ra/cssx#hasBoMItem-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#BoM> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#hasBoMItem> .
+
+<http://www.w3id.org/aau-ra/cssx#hasCapabilityConstraintProfile-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#OperationalCapability> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#hasCapabilityConstraintProfile> .
+
+<http://www.w3id.org/aau-ra/cssx#hasCapabilityPortfolio-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Resource> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#hasCapabilityPortfolio> .
+
+<http://www.w3id.org/aau-ra/cssx#hasCapabilityQualification-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#OperationalCapability> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#hasCapabilityQualification> .
+
+<http://www.w3id.org/aau-ra/cssx#hasDataConcept-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#OperationalData> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#hasDataConcept> .
+
+<http://www.w3id.org/aau-ra/cssx#hasEndpointMetadata-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#ResourceInterface> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#hasEndpointMetadata> .
+
+<http://www.w3id.org/aau-ra/cssx#hasInteractionMetadata-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#ResourceInterface> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#hasInteractionMetadata> .
+
+<http://www.w3id.org/aau-ra/cssx#hasInteractionPoint-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#InteractionMetadata> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#hasInteractionPoint> .
+
+<http://www.w3id.org/aau-ra/cssx#hasMarking-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#Markings> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#hasMarking> .
+
+<http://www.w3id.org/aau-ra/cssx#hasMeasuredValue-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#MeasurementData> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#hasMeasuredValue> .
+
+<http://www.w3id.org/aau-ra/cssx#hasMeasurementQualifier-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#MeasurementData> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#hasMeasurementQualifier> .
+
+<http://www.w3id.org/aau-ra/cssx#hasOperationalData-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Resource> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#hasOperationalData> .
+
+<http://www.w3id.org/aau-ra/cssx#hasOperationalSpecification-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#ProductTechnicalData> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#hasOperationalSpecification> .
+
+<http://www.w3id.org/aau-ra/cssx#hasOrderData-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#ProductTechnicalData> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#hasOrderData> .
+
+<http://www.w3id.org/aau-ra/cssx#hasParameterGroup-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Resource> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#hasParameterGroup> .
+
+<http://www.w3id.org/aau-ra/cssx#hasParameterScope-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#ResourceParameter> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#hasParameterScope> .
+
+<http://www.w3id.org/aau-ra/cssx#hasPart-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#BoMItem> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#hasPart> .
+
+<http://www.w3id.org/aau-ra/cssx#hasProductBoM-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Product> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#hasProductBoM> .
+
+<http://www.w3id.org/aau-ra/cssx#hasProductClassification-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#ProductTechnicalData> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#hasProductClassification> .
+
+<http://www.w3id.org/aau-ra/cssx#hasProductTechnicalData-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Product> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#hasProductTechnicalData> .
+
+<http://www.w3id.org/aau-ra/cssx#hasResourceBoM-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Resource> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#hasResourceBoM> .
+
+<http://www.w3id.org/aau-ra/cssx#hasResourceInterface-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Resource> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#hasResourceInterface> .
+
+<http://www.w3id.org/aau-ra/cssx#hasResourceParameter-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Resource> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#hasResourceParameter> .
+
+<http://www.w3id.org/aau-ra/cssx#hasSecurityDefinition-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#EndpointMetadata> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#hasSecurityDefinition> .
+
+<http://www.w3id.org/aau-ra/cssx#hasSecurityScheme-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#SecurityDefinition> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#hasSecurityScheme> .
+
+<http://www.w3id.org/aau-ra/cssx#hasSkillCondition-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Skill> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#hasSkillCondition> .
+
+<http://www.w3id.org/aau-ra/cssx#hasSkillEffect-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Skill> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#hasSkillEffect> .
+
+<http://www.w3id.org/aau-ra/cssx#hasSkillMode-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Skill> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#hasSkillMode> .
+
+<http://www.w3id.org/aau-ra/cssx#hasSkillOperation-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Skill> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#hasSkillOperation> .
+
+<http://www.w3id.org/aau-ra/cssx#hasSkillPredicate-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Skill> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#hasSkillPredicate> .
+
+<http://www.w3id.org/aau-ra/cssx#hasTimeSeriesMetadata-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#TimeSeriesData> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#hasTimeSeriesMetadata> .
+
+<http://www.w3id.org/aau-ra/cssx#hasTimeSeriesSegment-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#TimeSeriesData> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#hasTimeSeriesSegment> .
+
+<http://www.w3id.org/aau-ra/cssx#interactionCategory-shape> a sh:NodeShape ;
+    sh:class <https://www.w3.org/2019/wot/td#InteractionAffordance> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#interactionCategory> .
+
+<http://www.w3id.org/aau-ra/cssx#interactionName-shape> a sh:NodeShape ;
+    sh:class <https://www.w3.org/2019/wot/td#InteractionAffordance> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#interactionName> .
+
+<http://www.w3id.org/aau-ra/cssx#interfaceContentType-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#EndpointMetadata> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#interfaceContentType> .
+
+<http://www.w3id.org/aau-ra/cssx#interfaceTitle-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#ResourceInterface> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#interfaceTitle> .
+
+<http://www.w3id.org/aau-ra/cssx#isPartOf-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#BoMItem> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#isPartOf> .
+
+<http://www.w3id.org/aau-ra/cssx#isReadOnly-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#ResourceParameter> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#isReadOnly> .
+
+<http://www.w3id.org/aau-ra/cssx#itemNumber-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#BoMItem> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#itemNumber> .
+
+<http://www.w3id.org/aau-ra/cssx#manufacturerName-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#Manufacturer> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#manufacturerName> .
+
+<http://www.w3id.org/aau-ra/cssx#measuredNumericValue-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#MeasuredValue> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#measuredNumericValue> .
+
+<http://www.w3id.org/aau-ra/cssx#measuredUnit-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#MeasuredValue> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#measuredUnit> .
+
+<http://www.w3id.org/aau-ra/cssx#measurementTimestamp-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#MeasurementData> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#measurementTimestamp> .
+
+<http://www.w3id.org/aau-ra/cssx#operationDescription-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#SkillOperation> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#operationDescription> .
+
+<http://www.w3id.org/aau-ra/cssx#operationHasInput-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#SkillOperation> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#operationHasInput> .
+
+<http://www.w3id.org/aau-ra/cssx#operationHasOutput-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#SkillOperation> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#operationHasOutput> .
+
+<http://www.w3id.org/aau-ra/cssx#operationName-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#SkillOperation> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#operationName> .
+
+<http://www.w3id.org/aau-ra/cssx#operationUsesInterface-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#SkillOperation> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#operationUsesInterface> .
+
+<http://www.w3id.org/aau-ra/cssx#operationalConstraint-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#OperationalSpecification> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#operationalConstraint> .
+
+<http://www.w3id.org/aau-ra/cssx#orderBatchSize-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#OrderData> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#orderBatchSize> .
+
+<http://www.w3id.org/aau-ra/cssx#orderQuantity-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#OrderData> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#orderQuantity> .
+
+<http://www.w3id.org/aau-ra/cssx#orderStatus-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#OrderData> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#orderStatus> .
+
+<http://www.w3id.org/aau-ra/cssx#orderTimestamp-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#OrderData> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#orderTimestamp> .
+
+<http://www.w3id.org/aau-ra/cssx#packagingType-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#OrderData> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#packagingType> .
+
+<http://www.w3id.org/aau-ra/cssx#parameterDescription-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#ResourceParameter> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#parameterDescription> .
+
+<http://www.w3id.org/aau-ra/cssx#parameterName-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#ResourceParameter> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#parameterName> .
+
+<http://www.w3id.org/aau-ra/cssx#parameterUnit-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#ResourceParameter> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#parameterUnit> .
+
+<http://www.w3id.org/aau-ra/cssx#parameterValue-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#ResourceParameter> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#parameterValue> .
+
+<http://www.w3id.org/aau-ra/cssx#parameterValueType-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#ResourceParameter> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#parameterValueType> .
+
+<http://www.w3id.org/aau-ra/cssx#portfolioHasCapability-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#CapabilityPortfolio> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#portfolioHasCapability> .
+
+<http://www.w3id.org/aau-ra/cssx#productBoMItemForProduct-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#ProductBoMItem> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#productBoMItemForProduct> .
+
+<http://www.w3id.org/aau-ra/cssx#providesOperationalCapability-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Resource> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#providesOperationalCapability> .
+
+<http://www.w3id.org/aau-ra/cssx#qualificationStatus-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#CapabilityQualification> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#qualificationStatus> .
+
+<http://www.w3id.org/aau-ra/cssx#quantity-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#BoMItem> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#quantity> .
+
+<http://www.w3id.org/aau-ra/cssx#quantityUnit-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#BoMItem> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#quantityUnit> .
+
+<http://www.w3id.org/aau-ra/cssx#resourceBoMItemForResource-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#ResourceBoMItem> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#resourceBoMItemForResource> .
+
+<http://www.w3id.org/aau-ra/cssx#scopeValue-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#ParameterScope> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#scopeValue> .
+
+<http://www.w3id.org/aau-ra/cssx#securitySchemeName-shape> a sh:NodeShape ;
+    sh:class <https://www.w3.org/2019/wot/td#SecurityScheme> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#securitySchemeName> .
+
+<http://www.w3id.org/aau-ra/cssx#skillInterfaceUsesSoftwareInterface-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#SkillInterface> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#skillInterfaceUsesSoftwareInterface> .
+
+<http://www.w3id.org/aau-ra/cssx#skillModeValue-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#SkillMode> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#skillModeValue> .
+
+<http://www.w3id.org/aau-ra/cssx#storageCondition-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#OperationalSpecification> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#storageCondition> .
+
+<http://www.w3id.org/aau-ra/cssx#timeSeriesEnd-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#TimeSeriesSegment> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#timeSeriesEnd> .
+
+<http://www.w3id.org/aau-ra/cssx#timeSeriesStart-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#TimeSeriesSegment> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#timeSeriesStart> .
+
+<http://www.w3id.org/aau-ra/cssx#timeSeriesValueCount-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#TimeSeriesSegment> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#timeSeriesValueCount> .
+
+<http://www.w3id.org/aau-ra/cssx#usesSkill-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Skill> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/cssx#usesSkill> .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#bomArchetype-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/resourceaas-validation#HierarchicalStructuresSubmodel> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/resourceaas-validation#bomArchetype> .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#bomEntryGlobalAssetId-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/resourceaas-validation#BomEntry> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/resourceaas-validation#bomEntryGlobalAssetId> .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#bomEntryName-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/resourceaas-validation#BomEntry> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/resourceaas-validation#bomEntryName> .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#bomName-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/resourceaas-validation#HierarchicalStructuresSubmodel> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/resourceaas-validation#bomName> .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#hasAIDSubmodel-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Resource> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/resourceaas-validation#hasAIDSubmodel> .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#hasBomEntry-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/resourceaas-validation#HierarchicalStructuresSubmodel> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/resourceaas-validation#hasBomEntry> .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#hasCapabilitiesSubmodel-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Resource> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/resourceaas-validation#hasCapabilitiesSubmodel> .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#hasDigitalNameplateSubmodel-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Resource> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/resourceaas-validation#hasDigitalNameplateSubmodel> .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#hasHierarchicalStructuresSubmodel-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Resource> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/resourceaas-validation#hasHierarchicalStructuresSubmodel> .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#hasIdShort-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/resourceaas-validation#ResourceAASProjection> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/resourceaas-validation#hasIdShort> .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#hasMappedElement-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/resourceaas-validation#ResourceAASProjection> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/resourceaas-validation#hasMappedElement> .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#hasOperationalDataSubmodel-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Resource> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/resourceaas-validation#hasOperationalDataSubmodel> .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#hasParametersSubmodel-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Resource> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/resourceaas-validation#hasParametersSubmodel> .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#hasSkillsSubmodel-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Resource> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/resourceaas-validation#hasSkillsSubmodel> .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#hasSubmodel-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Resource> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/resourceaas-validation#hasSubmodel> .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#sourceElementPath-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/resourceaas-validation#MappedElement> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/resourceaas-validation#sourceElementPath> .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#sourceIdShort-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/resourceaas-validation#ResourceAASProjection> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/resourceaas-validation#sourceIdShort> .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#sourceSubmodelSemanticId-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/aau-ra/resourceaas-validation#ResourceAASProjection> ;
+    sh:targetSubjectsOf <http://www.w3id.org/aau-ra/resourceaas-validation#sourceSubmodelSemanticId> .
+
+<http://www.w3id.org/hsu-aut/css#InputParameter> a rdfs:Resource,
+        owl:Class ;
+    rdfs:subClassOf <http://www.w3id.org/hsu-aut/css#SkillParameter> .
+
+<http://www.w3id.org/hsu-aut/css#OutputParameter> a rdfs:Resource,
+        owl:Class ;
+    rdfs:subClassOf <http://www.w3id.org/hsu-aut/css#SkillParameter> .
+
+<http://www.w3id.org/hsu-aut/css#accessibleThrough-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Skill> ;
+    sh:targetSubjectsOf <http://www.w3id.org/hsu-aut/css#accessibleThrough> .
+
+<http://www.w3id.org/hsu-aut/css#assures-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Service> ;
+    sh:targetSubjectsOf <http://www.w3id.org/hsu-aut/css#assures> .
+
+<http://www.w3id.org/hsu-aut/css#behaviorConformsTo-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Resource>,
+        <http://www.w3id.org/hsu-aut/css#Skill> ;
+    sh:targetSubjectsOf <http://www.w3id.org/hsu-aut/css#behaviorConformsTo> .
+
+<http://www.w3id.org/hsu-aut/css#consistsOfState-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#StateMachine> ;
+    sh:targetSubjectsOf <http://www.w3id.org/hsu-aut/css#consistsOfState> .
+
+<http://www.w3id.org/hsu-aut/css#consistsOfTransition-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#StateMachine> ;
+    sh:targetSubjectsOf <http://www.w3id.org/hsu-aut/css#consistsOfTransition> .
+
+<http://www.w3id.org/hsu-aut/css#controls-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Skill> ;
+    sh:targetSubjectsOf <http://www.w3id.org/hsu-aut/css#controls> .
+
+<http://www.w3id.org/hsu-aut/css#demands-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#ServiceRequester> ;
+    sh:targetSubjectsOf <http://www.w3id.org/hsu-aut/css#demands> .
+
+<http://www.w3id.org/hsu-aut/css#exposes-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#SkillInterface> ;
+    sh:targetSubjectsOf <http://www.w3id.org/hsu-aut/css#exposes> .
+
+<http://www.w3id.org/hsu-aut/css#exposesSkillParameter-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#SkillInterface> ;
+    sh:targetSubjectsOf <http://www.w3id.org/hsu-aut/css#exposesSkillParameter> .
+
+<http://www.w3id.org/hsu-aut/css#exposesSkillTrigger-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#SkillInterface> ;
+    sh:targetSubjectsOf <http://www.w3id.org/hsu-aut/css#exposesSkillTrigger> .
+
+<http://www.w3id.org/hsu-aut/css#exposesStateMachine-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#SkillInterface> ;
+    sh:targetSubjectsOf <http://www.w3id.org/hsu-aut/css#exposesStateMachine> .
+
+<http://www.w3id.org/hsu-aut/css#hasCurrentState-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Skill> ;
+    sh:targetSubjectsOf <http://www.w3id.org/hsu-aut/css#hasCurrentState> .
+
+<http://www.w3id.org/hsu-aut/css#hasIncomingTransition-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#State> ;
+    sh:targetSubjectsOf <http://www.w3id.org/hsu-aut/css#hasIncomingTransition> .
+
+<http://www.w3id.org/hsu-aut/css#hasInput-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Process> ;
+    sh:targetSubjectsOf <http://www.w3id.org/hsu-aut/css#hasInput> .
+
+<http://www.w3id.org/hsu-aut/css#hasOutgoingTransition-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#State> ;
+    sh:targetSubjectsOf <http://www.w3id.org/hsu-aut/css#hasOutgoingTransition> .
+
+<http://www.w3id.org/hsu-aut/css#hasOutput-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Process> ;
+    sh:targetSubjectsOf <http://www.w3id.org/hsu-aut/css#hasOutput> .
+
+<http://www.w3id.org/hsu-aut/css#hasSourceState-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Transition> ;
+    sh:targetSubjectsOf <http://www.w3id.org/hsu-aut/css#hasSourceState> .
+
+<http://www.w3id.org/hsu-aut/css#hasTargetState-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Transition> ;
+    sh:targetSubjectsOf <http://www.w3id.org/hsu-aut/css#hasTargetState> .
+
+<http://www.w3id.org/hsu-aut/css#hasTrigger-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Skill> ;
+    sh:targetSubjectsOf <http://www.w3id.org/hsu-aut/css#hasTrigger> .
+
+<http://www.w3id.org/hsu-aut/css#isInputFor-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Service> ;
+    sh:targetSubjectsOf <http://www.w3id.org/hsu-aut/css#isInputFor> .
+
+<http://www.w3id.org/hsu-aut/css#isInvokedBy-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Transition> ;
+    sh:targetSubjectsOf <http://www.w3id.org/hsu-aut/css#isInvokedBy> .
+
+<http://www.w3id.org/hsu-aut/css#isRealizedBySkill-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Capability> ;
+    sh:targetSubjectsOf <http://www.w3id.org/hsu-aut/css#isRealizedBySkill> .
+
+<http://www.w3id.org/hsu-aut/css#isRealizedBySkillParameter-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Property> ;
+    sh:targetSubjectsOf <http://www.w3id.org/hsu-aut/css#isRealizedBySkillParameter> .
+
+<http://www.w3id.org/hsu-aut/css#isRestrictedBy-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Capability> ;
+    sh:targetSubjectsOf <http://www.w3id.org/hsu-aut/css#isRestrictedBy> .
+
+<http://www.w3id.org/hsu-aut/css#offers-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#ServiceProvider> ;
+    sh:targetSubjectsOf <http://www.w3id.org/hsu-aut/css#offers> .
+
+<http://www.w3id.org/hsu-aut/css#offersUseOf-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Service> ;
+    sh:targetSubjectsOf <http://www.w3id.org/hsu-aut/css#offersUseOf> .
+
+<http://www.w3id.org/hsu-aut/css#proposes-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#ServiceProvider> ;
+    sh:targetSubjectsOf <http://www.w3id.org/hsu-aut/css#proposes> .
+
+<http://www.w3id.org/hsu-aut/css#provides-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Resource> ;
+    sh:targetSubjectsOf <http://www.w3id.org/hsu-aut/css#provides> .
+
+<http://www.w3id.org/hsu-aut/css#providesCapability-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Resource> ;
+    sh:targetSubjectsOf <http://www.w3id.org/hsu-aut/css#providesCapability> .
+
+<http://www.w3id.org/hsu-aut/css#providesSkill-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Resource> ;
+    sh:targetSubjectsOf <http://www.w3id.org/hsu-aut/css#providesSkill> .
+
+<http://www.w3id.org/hsu-aut/css#receives-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#ServiceRequester> ;
+    sh:targetSubjectsOf <http://www.w3id.org/hsu-aut/css#receives> .
+
+<http://www.w3id.org/hsu-aut/css#references-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#TransitionConstraint> ;
+    sh:targetSubjectsOf <http://www.w3id.org/hsu-aut/css#references> .
+
+<http://www.w3id.org/hsu-aut/css#referencesProperty-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#PropertyConstraint> ;
+    sh:targetSubjectsOf <http://www.w3id.org/hsu-aut/css#referencesProperty> .
+
+<http://www.w3id.org/hsu-aut/css#requiresCapability-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Process> ;
+    sh:targetSubjectsOf <http://www.w3id.org/hsu-aut/css#requiresCapability> .
+
+<http://www.w3id.org/hsu-aut/css#requiresProduct-shape> a sh:NodeShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#ServiceRequester> ;
+    sh:targetSubjectsOf <http://www.w3id.org/hsu-aut/css#requiresProduct> .
+
+rdf:first a rdf:Property ;
+    rdfs:subPropertyOf rdf:first .
+
+rdf:rest a rdf:Property ;
+    rdfs:subPropertyOf rdf:rest .
+
+rdf:type a rdf:Property ;
+    rdfs:subPropertyOf rdf:type .
+
+rdfs:comment a rdf:Property ;
+    rdfs:subPropertyOf rdfs:comment .
+
+rdfs:domain a rdf:Property ;
+    rdfs:subPropertyOf rdfs:domain .
+
+rdfs:isDefinedBy a rdf:Property ;
+    rdfs:subPropertyOf rdfs:isDefinedBy .
+
+rdfs:range a rdf:Property ;
+    rdfs:subPropertyOf rdfs:range .
+
+rdfs:subClassOf a rdf:Property ;
+    rdfs:subPropertyOf rdfs:subClassOf .
+
+rdfs:subPropertyOf a rdf:Property ;
+    rdfs:subPropertyOf rdfs:subPropertyOf .
+
+owl:disjointWith a rdf:Property ;
+    rdfs:subPropertyOf owl:disjointWith .
+
+owl:imports a rdf:Property ;
+    rdfs:subPropertyOf owl:imports .
+
+owl:intersectionOf a rdf:Property ;
+    rdfs:subPropertyOf owl:intersectionOf .
+
+owl:maxCardinality a rdf:Property ;
+    rdfs:subPropertyOf owl:maxCardinality .
+
+owl:minCardinality a rdf:Property ;
+    rdfs:subPropertyOf owl:minCardinality .
+
+owl:onClass a rdf:Property ;
+    rdfs:subPropertyOf owl:onClass .
+
+owl:onProperty a rdf:Property ;
+    rdfs:subPropertyOf owl:onProperty .
+
+owl:qualifiedCardinality a rdf:Property ;
+    rdfs:subPropertyOf owl:qualifiedCardinality .
+
+owl:someValuesFrom a rdf:Property ;
+    rdfs:subPropertyOf owl:someValuesFrom .
+
+owl:unionOf a rdf:Property ;
+    rdfs:subPropertyOf owl:unionOf .
+
+owl:versionIRI a rdf:Property ;
+    rdfs:subPropertyOf owl:versionIRI .
+
+<http://www.w3id.org/aau-ra/cssx#AssetSpecificProperties-hasAssetSpecificProperty> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#AssetSpecificProperty> ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#hasAssetSpecificProperty> .
+
+<http://www.w3id.org/aau-ra/cssx#BoM-hasBoMItem> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#BoMItem> ;
+    sh:minCount 1 ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#hasBoMItem> .
+
+<http://www.w3id.org/aau-ra/cssx#BoMItem-hasPart> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#BoMItem> ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#hasPart> .
+
+<http://www.w3id.org/aau-ra/cssx#BoMItem-isPartOf> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#BoMItem> ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#isPartOf> .
+
+<http://www.w3id.org/aau-ra/cssx#BoMItem-itemNumber> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:maxCount 1 ;
+    sh:minCount 1 ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#itemNumber> .
+
+<http://www.w3id.org/aau-ra/cssx#BoMItem-quantity> a sh:PropertyShape ;
+    sh:class xsd:decimal ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#quantity> .
+
+<http://www.w3id.org/aau-ra/cssx#BoMItem-quantityUnit> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#quantityUnit> .
+
+<http://www.w3id.org/aau-ra/cssx#CapabilityPortfolio-portfolioHasCapability> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#OperationalCapability> ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#portfolioHasCapability> .
+
+<http://www.w3id.org/aau-ra/cssx#CapabilityQualification-qualificationStatus> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#qualificationStatus> .
+
+<http://www.w3id.org/aau-ra/cssx#EndpointMetadata-endpointBaseUri> a sh:PropertyShape ;
+    sh:datatype xsd:anyURI ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#endpointBaseUri> .
+
+<http://www.w3id.org/aau-ra/cssx#EndpointMetadata-hasSecurityDefinition> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#SecurityDefinition> ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#hasSecurityDefinition> .
+
+<http://www.w3id.org/aau-ra/cssx#EndpointMetadata-interfaceContentType> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#interfaceContentType> .
+
+<http://www.w3id.org/aau-ra/cssx#InteractionMetadata-hasInteractionPoint> a sh:PropertyShape ;
+    sh:class <https://www.w3.org/2019/wot/td#InteractionAffordance> ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#hasInteractionPoint> .
+
+<http://www.w3id.org/aau-ra/cssx#LogicalData-dataReferencesInterface> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#ResourceInterface> ;
+    sh:minCount 1 ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#dataReferencesInterface> .
+
+<http://www.w3id.org/aau-ra/cssx#Manufacturer-hasAddressInformation> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#AddressInformation> ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#hasAddressInformation> .
+
+<http://www.w3id.org/aau-ra/cssx#Manufacturer-manufacturerName> a sh:PropertyShape ;
+    sh:datatype rdf:langString ;
+    sh:minCount 1 ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#manufacturerName> .
+
+<http://www.w3id.org/aau-ra/cssx#Markings-hasMarking> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#Marking> ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#hasMarking> .
+
+<http://www.w3id.org/aau-ra/cssx#MeasuredValue-measuredNumericValue> a sh:PropertyShape ;
+    sh:class xsd:decimal ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#measuredNumericValue> .
+
+<http://www.w3id.org/aau-ra/cssx#MeasuredValue-measuredUnit> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#measuredUnit> .
+
+<http://www.w3id.org/aau-ra/cssx#MeasurementData-dataReferencesInterface> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#ResourceInterface> ;
+    sh:minCount 1 ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#dataReferencesInterface> .
+
+<http://www.w3id.org/aau-ra/cssx#MeasurementData-hasMeasuredValue> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#MeasuredValue> ;
+    sh:minCount 1 ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#hasMeasuredValue> .
+
+<http://www.w3id.org/aau-ra/cssx#MeasurementData-hasMeasurementQualifier> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#MeasurementQualifier> ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#hasMeasurementQualifier> .
+
+<http://www.w3id.org/aau-ra/cssx#MeasurementData-measurementTimestamp> a sh:PropertyShape ;
+    sh:datatype xsd:dateTime ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#measurementTimestamp> .
+
+<http://www.w3id.org/aau-ra/cssx#OperationalCapability-capabilityIdShort> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#capabilityIdShort> .
+
+<http://www.w3id.org/aau-ra/cssx#OperationalCapability-capabilityRequiresInterface> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#ResourceInterface> ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#capabilityRequiresInterface> .
+
+<http://www.w3id.org/aau-ra/cssx#OperationalCapability-capabilitySemanticId> a sh:PropertyShape ;
+    sh:datatype xsd:anyURI ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#capabilitySemanticId> .
+
+<http://www.w3id.org/aau-ra/cssx#OperationalCapability-capabilityUsesOperationalData> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#OperationalData> ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#capabilityUsesOperationalData> .
+
+<http://www.w3id.org/aau-ra/cssx#OperationalCapability-capabilityUsesResourceParameter> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#ResourceParameter> ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#capabilityUsesResourceParameter> .
+
+<http://www.w3id.org/aau-ra/cssx#OperationalCapability-hasCapabilityConstraintProfile> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#CapabilityConstraintProfile> ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#hasCapabilityConstraintProfile> .
+
+<http://www.w3id.org/aau-ra/cssx#OperationalCapability-hasCapabilityQualification> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#CapabilityQualification> ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#hasCapabilityQualification> .
+
+<http://www.w3id.org/aau-ra/cssx#OperationalCapability-isRealizedBySkill> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Skill> ;
+    sh:minCount 1 ;
+    sh:path <http://www.w3id.org/hsu-aut/css#isRealizedBySkill> .
+
+<http://www.w3id.org/aau-ra/cssx#OperationalCapability-sourceSemanticId> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:minCount 1 ;
+    sh:path <http://www.w3id.org/aau-ra/resourceaas-validation#sourceSemanticId> .
+
+<http://www.w3id.org/aau-ra/cssx#OperationalData-dataReferencesInterface> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#ResourceInterface> ;
+    sh:minCount 1 ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#dataReferencesInterface> .
+
+<http://www.w3id.org/aau-ra/cssx#OperationalData-hasDataConcept> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#DataConcept> ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#hasDataConcept> .
+
+<http://www.w3id.org/aau-ra/cssx#OperationalSpecification-handlingInstruction> a sh:PropertyShape ;
+    sh:datatype rdf:langString ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#handlingInstruction> .
+
+<http://www.w3id.org/aau-ra/cssx#OperationalSpecification-operationalConstraint> a sh:PropertyShape ;
+    sh:datatype rdf:langString ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#operationalConstraint> .
+
+<http://www.w3id.org/aau-ra/cssx#OperationalSpecification-storageCondition> a sh:PropertyShape ;
+    sh:datatype rdf:langString ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#storageCondition> .
+
+<http://www.w3id.org/aau-ra/cssx#OrderData-orderBatchSize> a sh:PropertyShape ;
+    sh:class xsd:decimal ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#orderBatchSize> .
+
+<http://www.w3id.org/aau-ra/cssx#OrderData-orderQuantity> a sh:PropertyShape ;
+    sh:class xsd:decimal ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#orderQuantity> .
+
+<http://www.w3id.org/aau-ra/cssx#OrderData-orderStatus> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#orderStatus> .
+
+<http://www.w3id.org/aau-ra/cssx#OrderData-orderTimestamp> a sh:PropertyShape ;
+    sh:datatype xsd:dateTime ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#orderTimestamp> .
+
+<http://www.w3id.org/aau-ra/cssx#OrderData-packagingType> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#packagingType> .
+
+<http://www.w3id.org/aau-ra/cssx#ParameterGroup-groupHasParameter> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#ResourceParameter> ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#groupHasParameter> .
+
+<http://www.w3id.org/aau-ra/cssx#ParameterScope-scopeValue> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#scopeValue> .
+
+<http://www.w3id.org/aau-ra/cssx#ProductBoM-hasBoMItem> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#BoMItem> ;
+    sh:minCount 1 ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#hasBoMItem> .
+
+<http://www.w3id.org/aau-ra/cssx#ProductBoMItem-itemNumber> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:maxCount 1 ;
+    sh:minCount 1 ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#itemNumber> .
+
+<http://www.w3id.org/aau-ra/cssx#ProductBoMItem-productBoMItemForProduct> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Product> ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#productBoMItemForProduct> .
+
+<http://www.w3id.org/aau-ra/cssx#ProductClassification-classificationCode> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#classificationCode> .
+
+<http://www.w3id.org/aau-ra/cssx#ProductClassification-classificationLabel> a sh:PropertyShape ;
+    sh:datatype rdf:langString ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#classificationLabel> .
+
+<http://www.w3id.org/aau-ra/cssx#ProductClassification-classificationSystem> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#classificationSystem> .
+
+<http://www.w3id.org/aau-ra/cssx#ProductTechnicalData-hasOperationalSpecification> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#OperationalSpecification> ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#hasOperationalSpecification> .
+
+<http://www.w3id.org/aau-ra/cssx#ProductTechnicalData-hasOrderData> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#OrderData> ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#hasOrderData> .
+
+<http://www.w3id.org/aau-ra/cssx#ProductTechnicalData-hasProductClassification> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#ProductClassification> ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#hasProductClassification> .
+
+<http://www.w3id.org/aau-ra/cssx#ResourceBoM-hasBoMItem> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#BoMItem> ;
+    sh:minCount 1 ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#hasBoMItem> .
+
+<http://www.w3id.org/aau-ra/cssx#ResourceBoMItem-itemNumber> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:maxCount 1 ;
+    sh:minCount 1 ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#itemNumber> .
+
+<http://www.w3id.org/aau-ra/cssx#ResourceBoMItem-resourceBoMItemForResource> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Resource> ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#resourceBoMItemForResource> .
+
+<http://www.w3id.org/aau-ra/cssx#ResourceInterface-hasEndpointMetadata> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#EndpointMetadata> ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#hasEndpointMetadata> .
+
+<http://www.w3id.org/aau-ra/cssx#ResourceInterface-hasInteractionMetadata> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#InteractionMetadata> ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#hasInteractionMetadata> .
+
+<http://www.w3id.org/aau-ra/cssx#ResourceInterface-interfaceTitle> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#interfaceTitle> .
+
+<http://www.w3id.org/aau-ra/cssx#ResourceParameter-hasParameterScope> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#ParameterScope> ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#hasParameterScope> .
+
+<http://www.w3id.org/aau-ra/cssx#ResourceParameter-isReadOnly> a sh:PropertyShape ;
+    sh:datatype xsd:boolean ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#isReadOnly> .
+
+<http://www.w3id.org/aau-ra/cssx#ResourceParameter-parameterDescription> a sh:PropertyShape ;
+    sh:datatype rdf:langString ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#parameterDescription> .
+
+<http://www.w3id.org/aau-ra/cssx#ResourceParameter-parameterName> a sh:PropertyShape ;
+    sh:datatype rdf:langString ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#parameterName> .
+
+<http://www.w3id.org/aau-ra/cssx#ResourceParameter-parameterUnit> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#parameterUnit> .
+
+<http://www.w3id.org/aau-ra/cssx#ResourceParameter-parameterValue> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#parameterValue> .
+
+<http://www.w3id.org/aau-ra/cssx#ResourceParameter-parameterValueType> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#parameterValueType> .
+
+<http://www.w3id.org/aau-ra/cssx#SecurityDefinition-hasSecurityScheme> a sh:PropertyShape ;
+    sh:class <https://www.w3.org/2019/wot/td#SecurityScheme> ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#hasSecurityScheme> .
+
+<http://www.w3id.org/aau-ra/cssx#SkillMode-skillModeValue> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#skillModeValue> .
+
+<http://www.w3id.org/aau-ra/cssx#SkillOperation-operationDescription> a sh:PropertyShape ;
+    sh:datatype rdf:langString ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#operationDescription> .
+
+<http://www.w3id.org/aau-ra/cssx#SkillOperation-operationHasInput> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#SkillParameter> ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#operationHasInput> .
+
+<http://www.w3id.org/aau-ra/cssx#SkillOperation-operationHasOutput> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#SkillParameter> ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#operationHasOutput> .
+
+<http://www.w3id.org/aau-ra/cssx#SkillOperation-operationName> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#operationName> .
+
+<http://www.w3id.org/aau-ra/cssx#SkillOperation-operationUsesInterface> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#SoftwareInterface> ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#operationUsesInterface> .
+
+<http://www.w3id.org/aau-ra/cssx#StateData-dataReferencesInterface> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#ResourceInterface> ;
+    sh:minCount 1 ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#dataReferencesInterface> .
+
+<http://www.w3id.org/aau-ra/cssx#TimeSeriesData-dataReferencesInterface> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#ResourceInterface> ;
+    sh:minCount 1 ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#dataReferencesInterface> .
+
+<http://www.w3id.org/aau-ra/cssx#TimeSeriesData-hasTimeSeriesMetadata> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#TimeSeriesMetadata> ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#hasTimeSeriesMetadata> .
+
+<http://www.w3id.org/aau-ra/cssx#TimeSeriesData-hasTimeSeriesSegment> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#TimeSeriesSegment> ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#hasTimeSeriesSegment> .
+
+<http://www.w3id.org/aau-ra/cssx#TimeSeriesSegment-timeSeriesEnd> a sh:PropertyShape ;
+    sh:datatype xsd:dateTime ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#timeSeriesEnd> .
+
+<http://www.w3id.org/aau-ra/cssx#TimeSeriesSegment-timeSeriesStart> a sh:PropertyShape ;
+    sh:datatype xsd:dateTime ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#timeSeriesStart> .
+
+<http://www.w3id.org/aau-ra/cssx#TimeSeriesSegment-timeSeriesValueCount> a sh:PropertyShape ;
+    sh:datatype xsd:integer ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#timeSeriesValueCount> .
+
+<http://www.w3id.org/aau-ra/cssx#interactionCategory> a rdfs:Resource,
+        owl:DatatypeProperty ;
+    rdfs:domain <https://www.w3.org/2019/wot/td#InteractionAffordance> ;
+    rdfs:range xsd:string .
+
+<http://www.w3id.org/aau-ra/cssx#interactionName> a rdfs:Resource,
+        owl:DatatypeProperty ;
+    rdfs:domain <https://www.w3.org/2019/wot/td#InteractionAffordance> ;
+    rdfs:range xsd:string .
+
+<http://www.w3id.org/aau-ra/cssx#securitySchemeName> a rdfs:Resource,
+        owl:DatatypeProperty ;
+    rdfs:domain <https://www.w3.org/2019/wot/td#SecurityScheme> ;
+    rdfs:range xsd:string .
+
+<http://www.w3id.org/aau-ra/cssx/0.1.0> a rdfs:Resource .
+
+<http://www.w3id.org/aau-ra/modules/cssx-aas-validation.ttl> a rdfs:Resource .
+
+<http://www.w3id.org/aau-ra/modules/cssx-bom.ttl> a rdfs:Resource .
+
+<http://www.w3id.org/aau-ra/modules/cssx-capabilities.ttl> a rdfs:Resource .
+
+<http://www.w3id.org/aau-ra/modules/cssx-nameplate.ttl> a rdfs:Resource .
+
+<http://www.w3id.org/aau-ra/modules/cssx-operational-data.ttl> a rdfs:Resource .
+
+<http://www.w3id.org/aau-ra/modules/cssx-parameters.ttl> a rdfs:Resource .
+
+<http://www.w3id.org/aau-ra/modules/cssx-resource-interface.ttl> a rdfs:Resource .
+
+<http://www.w3id.org/aau-ra/modules/cssx-skills.ttl> a rdfs:Resource .
+
+<http://www.w3id.org/aau-ra/modules/cssx-technical-data.ttl> a rdfs:Resource .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#BomEntry-bomEntryGlobalAssetId> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:path <http://www.w3id.org/aau-ra/resourceaas-validation#bomEntryGlobalAssetId> .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#BomEntry-bomEntryName> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:path <http://www.w3id.org/aau-ra/resourceaas-validation#bomEntryName> .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#HierarchicalStructuresSubmodel-bomArchetype> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:path <http://www.w3id.org/aau-ra/resourceaas-validation#bomArchetype> .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#HierarchicalStructuresSubmodel-bomName> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:path <http://www.w3id.org/aau-ra/resourceaas-validation#bomName> .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#HierarchicalStructuresSubmodel-hasBomEntry> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/resourceaas-validation#BomEntry> ;
+    sh:minCount 1 ;
+    sh:path <http://www.w3id.org/aau-ra/resourceaas-validation#hasBomEntry> .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#MappedElement-sourceElementPath> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:path <http://www.w3id.org/aau-ra/resourceaas-validation#sourceElementPath> .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#ResourceAASProjection-hasIdShort> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:path <http://www.w3id.org/aau-ra/resourceaas-validation#hasIdShort> .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#ResourceAASProjection-hasMappedElement> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/resourceaas-validation#MappedElement> ;
+    sh:path <http://www.w3id.org/aau-ra/resourceaas-validation#hasMappedElement> .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#ResourceAASProjection-sourceIdShort> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:path <http://www.w3id.org/aau-ra/resourceaas-validation#sourceIdShort> .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#ResourceAASProjection-sourceSemanticId> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:path <http://www.w3id.org/aau-ra/resourceaas-validation#sourceSemanticId> .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#ResourceAASProjection-sourceSubmodelSemanticId> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:path <http://www.w3id.org/aau-ra/resourceaas-validation#sourceSubmodelSemanticId> .
+
+<http://www.w3id.org/hsu-aut/css> a rdfs:Resource,
+        owl:Ontology ;
+    rdfs:comment """An ontology for the Capability, Skill and Service reference model defined by Plattform Industrie 4.0. See https://www.plattform-i40.de/IP/Redaktion/DE/Downloads/Publikation/CapabilitiesSkillsServices.html for a description of the abstract reference model.
+
+Includes extensions defined in https://www.plattform-i40.de/IP/Redaktion/DE/Downloads/Publikation/2025-i40-capabilities.pdf?__blob=publicationFile&v=5.""" ;
+    rdfs:isDefinedBy "https://www.plattform-i40.de/IP/Redaktion/DE/Downloads/Publikation/2025-i40-capabilities.pdf?__blob=publicationFile&v=5",
+        "https://www.plattform-i40.de/IP/Redaktion/DE/Downloads/Publikation/CapabilitiesSkillsServices.html" ;
+    owl:versionIRI <http://www.w3id.org/hsu-aut/css/2.0.1> .
+
+<http://www.w3id.org/hsu-aut/css#Capability-isRealizedBy> a sh:PropertyShape ;
+    sh:path <http://www.w3id.org/hsu-aut/css#isRealizedBy> .
+
+<http://www.w3id.org/hsu-aut/css#Capability-isRealizedBySkill> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Skill> ;
+    sh:minCount 1 ;
+    sh:path <http://www.w3id.org/hsu-aut/css#isRealizedBySkill> .
+
+<http://www.w3id.org/hsu-aut/css#Capability-isRestrictedBy> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Constraint> ;
+    sh:path <http://www.w3id.org/hsu-aut/css#isRestrictedBy> .
+
+<http://www.w3id.org/hsu-aut/css#Capability-isSpecifiedBy> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Property> ;
+    sh:path <http://www.w3id.org/hsu-aut/css#isSpecifiedBy> .
+
+<http://www.w3id.org/hsu-aut/css#Capability-sourceSemanticId> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:minCount 1 ;
+    sh:path <http://www.w3id.org/aau-ra/resourceaas-validation#sourceSemanticId> .
+
+<http://www.w3id.org/hsu-aut/css#Process-hasInput> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Product> ;
+    sh:path <http://www.w3id.org/hsu-aut/css#hasInput> .
+
+<http://www.w3id.org/hsu-aut/css#Process-hasOutput> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Product> ;
+    sh:path <http://www.w3id.org/hsu-aut/css#hasOutput> .
+
+<http://www.w3id.org/hsu-aut/css#Process-requiresCapability> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Capability> ;
+    sh:path <http://www.w3id.org/hsu-aut/css#requiresCapability> .
+
+<http://www.w3id.org/hsu-aut/css#Product-companyLogoUri> a sh:PropertyShape ;
+    sh:datatype xsd:anyURI ;
+    sh:maxCount 1 ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#companyLogoUri> .
+
+<http://www.w3id.org/hsu-aut/css#Product-countryOfOrigin> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:maxCount 1 ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#countryOfOrigin> .
+
+<http://www.w3id.org/hsu-aut/css#Product-dateOfManufacture> a sh:PropertyShape ;
+    sh:datatype xsd:date ;
+    sh:maxCount 1 ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#dateOfManufacture> .
+
+<http://www.w3id.org/hsu-aut/css#Product-firmwareVersion> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:maxCount 1 ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#firmwareVersion> .
+
+<http://www.w3id.org/hsu-aut/css#Product-hardwareVersion> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:maxCount 1 ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#hardwareVersion> .
+
+<http://www.w3id.org/hsu-aut/css#Product-hasAssetSpecificProperties> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#AssetSpecificProperties> ;
+    sh:maxCount 1 ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#hasAssetSpecificProperties> .
+
+<http://www.w3id.org/hsu-aut/css#Product-hasManufacturer> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#Manufacturer> ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#hasManufacturer> .
+
+<http://www.w3id.org/hsu-aut/css#Product-hasMarkings> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#Markings> ;
+    sh:maxCount 1 ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#hasMarkings> .
+
+<http://www.w3id.org/hsu-aut/css#Product-hasProductBoM> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#ProductBoM> ;
+    sh:maxCount 1 ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#hasProductBoM> .
+
+<http://www.w3id.org/hsu-aut/css#Product-hasProductTechnicalData> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#ProductTechnicalData> ;
+    sh:maxCount 1 ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#hasProductTechnicalData> .
+
+<http://www.w3id.org/hsu-aut/css#Product-manufacturerProductDesignation> a sh:PropertyShape ;
+    sh:datatype rdf:langString ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#manufacturerProductDesignation> .
+
+<http://www.w3id.org/hsu-aut/css#Product-manufacturerProductFamily> a sh:PropertyShape ;
+    sh:datatype rdf:langString ;
+    sh:maxCount 1 ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#manufacturerProductFamily> .
+
+<http://www.w3id.org/hsu-aut/css#Product-manufacturerProductRoot> a sh:PropertyShape ;
+    sh:datatype rdf:langString ;
+    sh:maxCount 1 ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#manufacturerProductRoot> .
+
+<http://www.w3id.org/hsu-aut/css#Product-manufacturerProductType> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:maxCount 1 ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#manufacturerProductType> .
+
+<http://www.w3id.org/hsu-aut/css#Product-modelName> a sh:PropertyShape ;
+    sh:datatype rdf:langString ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#modelName> .
+
+<http://www.w3id.org/hsu-aut/css#Product-orderCodeOfManufacturer> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#orderCodeOfManufacturer> .
+
+<http://www.w3id.org/hsu-aut/css#Product-productArticleNumberOfManufacturer> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:maxCount 1 ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#productArticleNumberOfManufacturer> .
+
+<http://www.w3id.org/hsu-aut/css#Product-serialNumber> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:maxCount 1 ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#serialNumber> .
+
+<http://www.w3id.org/hsu-aut/css#Product-softwareVersion> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:maxCount 1 ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#softwareVersion> .
+
+<http://www.w3id.org/hsu-aut/css#Product-uniqueFacilityIdentifier> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:maxCount 1 ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#uniqueFacilityIdentifier> .
+
+<http://www.w3id.org/hsu-aut/css#Product-uriOfTheProduct> a sh:PropertyShape ;
+    sh:datatype xsd:anyURI ;
+    sh:maxCount 1 ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#uriOfTheProduct> .
+
+<http://www.w3id.org/hsu-aut/css#Product-yearOfConstruction> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:maxCount 1 ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#yearOfConstruction> .
+
+<http://www.w3id.org/hsu-aut/css#Property-isRealizedBy> a sh:PropertyShape ;
+    sh:path <http://www.w3id.org/hsu-aut/css#isRealizedBy> .
+
+<http://www.w3id.org/hsu-aut/css#Property-isRealizedBySkillParameter> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#SkillParameter> ;
+    sh:path <http://www.w3id.org/hsu-aut/css#isRealizedBySkillParameter> .
+
+<http://www.w3id.org/hsu-aut/css#PropertyConstraint-referencesProperty> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Property> ;
+    sh:path <http://www.w3id.org/hsu-aut/css#referencesProperty> .
+
+<http://www.w3id.org/hsu-aut/css#Resource-behaviorConformsTo> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#StateMachine> ;
+    sh:path <http://www.w3id.org/hsu-aut/css#behaviorConformsTo> .
+
+<http://www.w3id.org/hsu-aut/css#Resource-companyLogoUri> a sh:PropertyShape ;
+    sh:datatype xsd:anyURI ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#companyLogoUri> .
+
+<http://www.w3id.org/hsu-aut/css#Resource-countryOfOrigin> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#countryOfOrigin> .
+
+<http://www.w3id.org/hsu-aut/css#Resource-dateOfManufacture> a sh:PropertyShape ;
+    sh:datatype xsd:date ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#dateOfManufacture> .
+
+<http://www.w3id.org/hsu-aut/css#Resource-firmwareVersion> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#firmwareVersion> .
+
+<http://www.w3id.org/hsu-aut/css#Resource-hardwareVersion> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#hardwareVersion> .
+
+<http://www.w3id.org/hsu-aut/css#Resource-hasAIDSubmodel> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/resourceaas-validation#AIDSubmodel> ;
+    sh:maxCount 1 ;
+    sh:path <http://www.w3id.org/aau-ra/resourceaas-validation#hasAIDSubmodel> .
+
+<http://www.w3id.org/hsu-aut/css#Resource-hasAssetSpecificProperties> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#AssetSpecificProperties> ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#hasAssetSpecificProperties> .
+
+<http://www.w3id.org/hsu-aut/css#Resource-hasCapabilitiesSubmodel> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/resourceaas-validation#CapabilitiesSubmodel> ;
+    sh:path <http://www.w3id.org/aau-ra/resourceaas-validation#hasCapabilitiesSubmodel> .
+
+<http://www.w3id.org/hsu-aut/css#Resource-hasCapabilityPortfolio> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#CapabilityPortfolio> ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#hasCapabilityPortfolio> .
+
+<http://www.w3id.org/hsu-aut/css#Resource-hasDigitalNameplateSubmodel> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/resourceaas-validation#DigitalNameplateSubmodel> ;
+    sh:maxCount 1 ;
+    sh:minCount 1 ;
+    sh:path <http://www.w3id.org/aau-ra/resourceaas-validation#hasDigitalNameplateSubmodel> .
+
+<http://www.w3id.org/hsu-aut/css#Resource-hasHierarchicalStructuresSubmodel> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/resourceaas-validation#HierarchicalStructuresSubmodel> ;
+    sh:maxCount 1 ;
+    sh:minCount 1 ;
+    sh:path <http://www.w3id.org/aau-ra/resourceaas-validation#hasHierarchicalStructuresSubmodel> .
+
+<http://www.w3id.org/hsu-aut/css#Resource-hasManufacturer> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#Manufacturer> ;
+    sh:minCount 1 ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#hasManufacturer> .
+
+<http://www.w3id.org/hsu-aut/css#Resource-hasMarkings> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#Markings> ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#hasMarkings> .
+
+<http://www.w3id.org/hsu-aut/css#Resource-hasOperationalData> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#OperationalData> ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#hasOperationalData> .
+
+<http://www.w3id.org/hsu-aut/css#Resource-hasOperationalDataSubmodel> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/resourceaas-validation#OperationalDataSubmodel> ;
+    sh:path <http://www.w3id.org/aau-ra/resourceaas-validation#hasOperationalDataSubmodel> .
+
+<http://www.w3id.org/hsu-aut/css#Resource-hasParameterGroup> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#ParameterGroup> ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#hasParameterGroup> .
+
+<http://www.w3id.org/hsu-aut/css#Resource-hasParametersSubmodel> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/resourceaas-validation#ParametersSubmodel> ;
+    sh:path <http://www.w3id.org/aau-ra/resourceaas-validation#hasParametersSubmodel> .
+
+<http://www.w3id.org/hsu-aut/css#Resource-hasResourceBoM> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#ResourceBoM> ;
+    sh:maxCount 1 ;
+    sh:minCount 1 ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#hasResourceBoM> .
+
+<http://www.w3id.org/hsu-aut/css#Resource-hasResourceInterface> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#ResourceInterface> ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#hasResourceInterface> .
+
+<http://www.w3id.org/hsu-aut/css#Resource-hasResourceParameter> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#ResourceParameter> ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#hasResourceParameter> .
+
+<http://www.w3id.org/hsu-aut/css#Resource-hasSkillsSubmodel> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/resourceaas-validation#SkillsSubmodel> ;
+    sh:path <http://www.w3id.org/aau-ra/resourceaas-validation#hasSkillsSubmodel> .
+
+<http://www.w3id.org/hsu-aut/css#Resource-hasSubmodel> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/resourceaas-validation#ResourceAASProjection> ;
+    sh:path <http://www.w3id.org/aau-ra/resourceaas-validation#hasSubmodel> .
+
+<http://www.w3id.org/hsu-aut/css#Resource-manufacturerProductDesignation> a sh:PropertyShape ;
+    sh:datatype rdf:langString ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#manufacturerProductDesignation> .
+
+<http://www.w3id.org/hsu-aut/css#Resource-manufacturerProductFamily> a sh:PropertyShape ;
+    sh:datatype rdf:langString ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#manufacturerProductFamily> .
+
+<http://www.w3id.org/hsu-aut/css#Resource-manufacturerProductRoot> a sh:PropertyShape ;
+    sh:datatype rdf:langString ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#manufacturerProductRoot> .
+
+<http://www.w3id.org/hsu-aut/css#Resource-manufacturerProductType> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#manufacturerProductType> .
+
+<http://www.w3id.org/hsu-aut/css#Resource-modelName> a sh:PropertyShape ;
+    sh:datatype rdf:langString ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#modelName> .
+
+<http://www.w3id.org/hsu-aut/css#Resource-orderCodeOfManufacturer> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#orderCodeOfManufacturer> .
+
+<http://www.w3id.org/hsu-aut/css#Resource-productArticleNumberOfManufacturer> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#productArticleNumberOfManufacturer> .
+
+<http://www.w3id.org/hsu-aut/css#Resource-provides> a sh:PropertyShape ;
+    sh:path <http://www.w3id.org/hsu-aut/css#provides> .
+
+<http://www.w3id.org/hsu-aut/css#Resource-providesCapability> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Capability> ;
+    sh:minCount 1 ;
+    sh:path <http://www.w3id.org/hsu-aut/css#providesCapability> .
+
+<http://www.w3id.org/hsu-aut/css#Resource-providesOperationalCapability> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#OperationalCapability> ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#providesOperationalCapability> .
+
+<http://www.w3id.org/hsu-aut/css#Resource-providesSkill> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Skill> ;
+    sh:minCount 1 ;
+    sh:path <http://www.w3id.org/hsu-aut/css#providesSkill> .
+
+<http://www.w3id.org/hsu-aut/css#Resource-serialNumber> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:minCount 1 ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#serialNumber> .
+
+<http://www.w3id.org/hsu-aut/css#Resource-softwareVersion> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#softwareVersion> .
+
+<http://www.w3id.org/hsu-aut/css#Resource-uniqueFacilityIdentifier> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#uniqueFacilityIdentifier> .
+
+<http://www.w3id.org/hsu-aut/css#Resource-uriOfTheProduct> a sh:PropertyShape ;
+    sh:datatype xsd:anyURI ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#uriOfTheProduct> .
+
+<http://www.w3id.org/hsu-aut/css#Resource-yearOfConstruction> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#yearOfConstruction> .
+
+<http://www.w3id.org/hsu-aut/css#Service-assures> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Product> ;
+    sh:path <http://www.w3id.org/hsu-aut/css#assures> .
+
+<http://www.w3id.org/hsu-aut/css#Service-isInputFor> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#ServiceOffer> ;
+    sh:path <http://www.w3id.org/hsu-aut/css#isInputFor> .
+
+<http://www.w3id.org/hsu-aut/css#Service-isSpecifiedBy> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Property> ;
+    sh:path <http://www.w3id.org/hsu-aut/css#isSpecifiedBy> .
+
+<http://www.w3id.org/hsu-aut/css#Service-offersUseOf> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Capability> ;
+    sh:path <http://www.w3id.org/hsu-aut/css#offersUseOf> .
+
+<http://www.w3id.org/hsu-aut/css#ServiceProvider-offers> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Service> ;
+    sh:path <http://www.w3id.org/hsu-aut/css#offers> .
+
+<http://www.w3id.org/hsu-aut/css#ServiceProvider-proposes> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#ServiceOffer> ;
+    sh:path <http://www.w3id.org/hsu-aut/css#proposes> .
+
+<http://www.w3id.org/hsu-aut/css#ServiceRequester-demands> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Service> ;
+    sh:path <http://www.w3id.org/hsu-aut/css#demands> .
+
+<http://www.w3id.org/hsu-aut/css#ServiceRequester-receives> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#ServiceOffer> ;
+    sh:path <http://www.w3id.org/hsu-aut/css#receives> .
+
+<http://www.w3id.org/hsu-aut/css#ServiceRequester-requiresProduct> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Product> ;
+    sh:path <http://www.w3id.org/hsu-aut/css#requiresProduct> .
+
+<http://www.w3id.org/hsu-aut/css#Skill-accessibleThrough> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#SkillInterface> ;
+    sh:maxCount 1 ;
+    sh:minCount 1 ;
+    sh:path <http://www.w3id.org/hsu-aut/css#accessibleThrough> .
+
+<http://www.w3id.org/hsu-aut/css#Skill-behaviorConformsTo> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#StateMachine> ;
+    sh:path <http://www.w3id.org/hsu-aut/css#behaviorConformsTo> .
+
+<http://www.w3id.org/hsu-aut/css#Skill-controls> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Process> ;
+    sh:path <http://www.w3id.org/hsu-aut/css#controls> .
+
+<http://www.w3id.org/hsu-aut/css#Skill-hasCurrentState> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#State> ;
+    sh:path <http://www.w3id.org/hsu-aut/css#hasCurrentState> .
+
+<http://www.w3id.org/hsu-aut/css#Skill-hasParameter> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#SkillParameter> ;
+    sh:path <http://www.w3id.org/hsu-aut/css#hasParameter> .
+
+<http://www.w3id.org/hsu-aut/css#Skill-hasSkillCondition> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#SkillCondition> ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#hasSkillCondition> .
+
+<http://www.w3id.org/hsu-aut/css#Skill-hasSkillEffect> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#SkillEffect> ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#hasSkillEffect> .
+
+<http://www.w3id.org/hsu-aut/css#Skill-hasSkillMode> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#SkillMode> ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#hasSkillMode> .
+
+<http://www.w3id.org/hsu-aut/css#Skill-hasSkillOperation> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#SkillOperation> ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#hasSkillOperation> .
+
+<http://www.w3id.org/hsu-aut/css#Skill-hasSkillPredicate> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#SkillPredicate> ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#hasSkillPredicate> .
+
+<http://www.w3id.org/hsu-aut/css#Skill-hasTrigger> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#SkillTrigger> ;
+    sh:path <http://www.w3id.org/hsu-aut/css#hasTrigger> .
+
+<http://www.w3id.org/hsu-aut/css#Skill-sourceSemanticId> a sh:PropertyShape ;
+    sh:datatype xsd:string ;
+    sh:minCount 1 ;
+    sh:path <http://www.w3id.org/aau-ra/resourceaas-validation#sourceSemanticId> .
+
+<http://www.w3id.org/hsu-aut/css#Skill-usesSkill> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Skill> ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#usesSkill> .
+
+<http://www.w3id.org/hsu-aut/css#SkillInterface-exposes> a sh:PropertyShape ;
+    sh:path <http://www.w3id.org/hsu-aut/css#exposes> .
+
+<http://www.w3id.org/hsu-aut/css#SkillInterface-exposesSkillParameter> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#SkillParameter> ;
+    sh:path <http://www.w3id.org/hsu-aut/css#exposesSkillParameter> .
+
+<http://www.w3id.org/hsu-aut/css#SkillInterface-exposesSkillTrigger> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#SkillTrigger> ;
+    sh:path <http://www.w3id.org/hsu-aut/css#exposesSkillTrigger> .
+
+<http://www.w3id.org/hsu-aut/css#SkillInterface-exposesStateMachine> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#StateMachine> ;
+    sh:path <http://www.w3id.org/hsu-aut/css#exposesStateMachine> .
+
+<http://www.w3id.org/hsu-aut/css#SkillInterface-skillInterfaceUsesSoftwareInterface> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/aau-ra/cssx#SoftwareInterface> ;
+    sh:path <http://www.w3id.org/aau-ra/cssx#skillInterfaceUsesSoftwareInterface> .
+
+<http://www.w3id.org/hsu-aut/css#SkillTrigger-hasParameter> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#SkillParameter> ;
+    sh:path <http://www.w3id.org/hsu-aut/css#hasParameter> .
+
+<http://www.w3id.org/hsu-aut/css#State-hasIncomingTransition> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Transition> ;
+    sh:path <http://www.w3id.org/hsu-aut/css#hasIncomingTransition> .
+
+<http://www.w3id.org/hsu-aut/css#State-hasOutgoingTransition> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Transition> ;
+    sh:path <http://www.w3id.org/hsu-aut/css#hasOutgoingTransition> .
+
+<http://www.w3id.org/hsu-aut/css#StateMachine-consistsOfState> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#State> ;
+    sh:path <http://www.w3id.org/hsu-aut/css#consistsOfState> .
+
+<http://www.w3id.org/hsu-aut/css#StateMachine-consistsOfTransition> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#Transition> ;
+    sh:path <http://www.w3id.org/hsu-aut/css#consistsOfTransition> .
+
+<http://www.w3id.org/hsu-aut/css#Transition-hasSourceState> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#State> ;
+    sh:path <http://www.w3id.org/hsu-aut/css#hasSourceState> .
+
+<http://www.w3id.org/hsu-aut/css#Transition-hasTargetState> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#State> ;
+    sh:path <http://www.w3id.org/hsu-aut/css#hasTargetState> .
+
+<http://www.w3id.org/hsu-aut/css#Transition-isInvokedBy> a sh:PropertyShape ;
+    sh:class <http://www.w3id.org/hsu-aut/css#SkillTrigger> ;
+    sh:path <http://www.w3id.org/hsu-aut/css#isInvokedBy> .
+
+<http://www.w3id.org/hsu-aut/css#TransitionConstraint-references> a sh:PropertyShape ;
+    sh:path <http://www.w3id.org/hsu-aut/css#references> .
+
+<http://www.w3id.org/hsu-aut/css/2.0.1> a rdfs:Resource .
+
+<https://www.w3.org/2019/wot/td> a rdfs:Resource .
+
+<https://www.w3.org/2019/wot/td#Form> a rdfs:Resource .
+
+<https://www.w3.org/2019/wot/td#Thing> a rdfs:Resource .
+
+"A PropertyConstraint is a constraint that determines the applicability of a Capability and that refers to one or more Properties of the same Capability (see Figure 15). An important aspect of PropertyConstraints is that they always refer to a single Capability and assume no knowledge of a sequence of Capabilities or dependencies between Capabilities." a rdfs:Resource .
+
+"A TransitionConstraint is an expression between multiple Capabilities or Services, determining the applicability of a Capability or Service in a wider context. In a Transition-Constraint, a dependent Capability or Service is restricted by one or more referenced Capabilities or Services. TransitionConstraints can be used to formulate requirements going beyond PropertyConstraints, especially sequence requirements." a rdfs:Resource .
+
+"A marking, label, or compliance identifier." a rdfs:Resource .
+
+"AID endpoint metadata container aligned with WoT Form semantics." a rdfs:Resource .
+
+"Abstract operation exposed by a skill." a rdfs:Resource .
+
+"""Access point to configure, control and monitor a skill.
+
+Notes:
+- A skill interface exposes interaction points to be used by other external systems
+(e.g. MES, other skills).
+- A skill interface exposes the state machine of a skill so that skill states can be
+monitored and transitions triggered.
+- A skill interface exposes the parameters of a skill so that they can be written and read.""" a rdfs:Resource .
+
+"Address information associated with a manufacturer." a rdfs:Resource .
+
+"Allowed execution mode for a skill (e.g., AUTO, MANUAL)." a rdfs:Resource .
+
+"An asset-specific property entry." a rdfs:Resource .
+
+"""An ontology for the Capability, Skill and Service reference model defined by Plattform Industrie 4.0. See https://www.plattform-i40.de/IP/Redaktion/DE/Downloads/Publikation/CapabilitiesSkillsServices.html for a description of the abstract reference model.
+
+Includes extensions defined in https://www.plattform-i40.de/IP/Redaktion/DE/Downloads/Publikation/2025-i40-capabilities.pdf?__blob=publicationFile&v=5.""" a rdfs:Resource .
+
+"Bill of Material as a hierarchy of items." a rdfs:Resource .
+
+"BoM describing the product composition." a rdfs:Resource .
+
+"BoM describing the resource composition." a rdfs:Resource .
+
+"BoM item describing a component instance or part." a rdfs:Resource .
+
+"BoM item referencing a product component." a rdfs:Resource .
+
+"BoM item referencing a resource component." a rdfs:Resource .
+
+"Bridges AID InteractionMetadata to WoT TD interaction affordances." a rdfs:Resource .
+
+"CSS extension ontology for PPR concepts aligned with submodel template needs." a rdfs:Resource .
+
+"Capability in plug-and-produce context, expected to be realizable by at least one skill." a rdfs:Resource .
+
+"Classification information used to categorize a product for engineering and production purposes." a rdfs:Resource .
+
+"Collection of asset-specific properties." a rdfs:Resource .
+
+"Collection of capability specifications associated with a resource." a rdfs:Resource .
+
+"Conceptual descriptor for operational data semantics." a rdfs:Resource .
+
+"""Condition imposed on a capability that further details its applicability. 
+
+Notes:
+- A capability constraint can be formulated as one of the following three constraint types:
+▪ A precondition, i.e., a condition that must hold before a function can be executed.
+▪ A postcondition, i.e., a condition that must hold after a function has been executed.
+▪ An invariant, i.e., a condition that must hold during the execution of a
+function.
+- A capability constraint restricts the values of the properties associated with the respective capability.
+- A capability constraint can involve one or more properties""" a rdfs:Resource .
+
+"Condition that constrains when a skill operation can be executed." a rdfs:Resource .
+
+"Constraint profile applied to an operational capability." a rdfs:Resource .
+
+"Container for interface security definitions." a rdfs:Resource .
+
+"""Data unit to configure, control and monitor the execution of a skill.
+
+Notes:
+- Skill parameters might be used as in- /output parameters
+- Skill parameters might be used as results
+- Skill parameters might have a relation or be equivalent to capability properties""" a rdfs:Resource .
+
+"""Demands Services under particular commercial aspects by providing either a specification of
+services or a specification of product requirements.""" a rdfs:Resource .
+
+"""Description of the commercial aspects and means of provision of offered capabilities.
+
+Notes:
+- The term “service” should be understood in the sense of economics and shall not be confused with e.g., web services.
+- The capabilities and means of provisions are specified by properties
+- A service is demanded by service requesters and provided by a service provider
+- A service is an input for an offer proposed by""" a rdfs:Resource .
+
+"Effect asserted after skill execution." a rdfs:Resource .
+
+"Electrical interface for power or signal connections." a rdfs:Resource .
+
+"""Entity capable of performing functions specified as Capabilities and potentially implemented as Skills.
+
+Notes
+- A production resource may consist of hardware, software or both
+- A production resource may only provide capabilities (i.e. when engineering a resource, for planning purposes) and may additionally provide skills for automatic execution of the specified function.
+- A human becomes a Production Resource, if that person is able to perform a function specified as a capability.""" a rdfs:Resource .
+
+"""Executable implementation of an encapsulated (automation) function specified by a Capability.
+
+Notes:
+- A skill must have a skill interface. 
+- One capability can be realized by more than one skill. 
+- A skill may have any number of SkillParameters. 
+- A skill’s behavior conforms to a state machine. 
+- A skill controls a process step""" a rdfs:Resource .
+
+"General configuration parameter of a resource." a rdfs:Resource .
+
+"Group of resource parameters." a rdfs:Resource .
+
+"""Implementation-independent specification of a function in industrial production to achieve an effect in the physical or virtual world.
+
+Notes:
+- A capability can be restricted by constraints.
+- A capability can be specified by capability properties.
+- A capability can be realized by skills""" a rdfs:Resource .
+
+"Interface of a resource used to access or control its functions." a rdfs:Resource .
+
+"Logical operational data such as flags or boolean variables." a rdfs:Resource .
+
+"Marker class for projected ResourceAAS validation nodes." a rdfs:Resource .
+
+"Measured operational data such as sensor readings." a rdfs:Resource .
+
+"Metadata describing a time-series dataset." a rdfs:Resource .
+
+"Metadata describing interaction affordances of an interface." a rdfs:Resource .
+
+"Operational data associated with a resource during use." a rdfs:Resource .
+
+"Operational data represented as time series." a rdfs:Resource .
+
+"Operational state variables of a resource." a rdfs:Resource .
+
+"Organization or party responsible for producing a product or resource." a rdfs:Resource .
+
+"Parameter defining operational limits or bounds." a rdfs:Resource .
+
+"Parameter describing a calibration or alignment setting." a rdfs:Resource .
+
+"Parameter describing a resource location." a rdfs:Resource .
+
+"Parameter describing a resource orientation." a rdfs:Resource .
+
+"Physical interface for mechanical or material connections." a rdfs:Resource .
+
+"""Physical object being used as an input or created as an output of a production process.
+
+Notes:
+- The term Product may be used for objects in various states of manufacturing and may be seen as a generic term for raw materials, work in process and finished goods. Consumable supplies such as fuel, lubricants or cleaning agents may also be regarded as products. Furthermore, both purchased parts as well as parts manufactured in-house may be regarded as products.
+- Besides the actual product, there can be additional artifacts related to that product that are created and used in different life cycle phases to specify the product.
+▪ 3D/CAD models
+▪ specifications
+▪ BOM
+- A Service Requester may use these additional artifacts to formulate requirements against products.""" a rdfs:Resource .
+
+"Predicate used to express skill executability or logical guards." a rdfs:Resource .
+
+"Product-related operational specifications such as handling, operating, or storage constraints." a rdfs:Resource .
+
+"Production-order-relevant data for planning and execution, excluding nameplate identification data." a rdfs:Resource .
+
+"""Production-relevant activity at any level of granularity that might affect materials and is performed by resources.
+
+Notes:
+- In general, a process can be decomposed into sub-processes or single activities.
+- A process can require capabilities to express that any suitable resource used for
+performing this process needs to provide compatible capabilities.
+- A process step relates to materials that constitute either input or output for the processing in this step""" a rdfs:Resource .
+
+"""Proposal for a binding contract from the Service Provider to execute one or more particular services that a ServiceRequester can receive and accept.
+
+Notes:
+- A ServiceOffer should determine the commercial aspects of the service provision
+and may remain valid for a certain period of time.
+- An Offer may consist of partial offers proposed by different service providers""" a rdfs:Resource .
+
+"Provides Services and can propose ServiceOffers to ServiceRequesters." a rdfs:Resource .
+
+"Qualification and evidence metadata associated with a capability." a rdfs:Resource .
+
+"Qualifier metadata describing context or quality of a measurement." a rdfs:Resource .
+
+"""Quality or characteristic inherent in or ascribed to any CSS model element
+
+Notes:
+- Properties may be used to describe and differentiate all kinds of PPR entities (i.e., products, process steps, resources)
+- Capabilities, services and offers are specified by properties in order to detail their description with regard to certain entities (e.g. products, process steps, resources)""" a rdfs:Resource .
+
+"Scope classification for a resource parameter (e.g., module, line, station)." a rdfs:Resource .
+
+"Segment of a time-series dataset." a rdfs:Resource .
+
+"Set of markings associated with a product or resource." a rdfs:Resource .
+
+"Skills are invoked through software interfaces." a rdfs:Resource .
+
+"Software interface for digital communication or control." a rdfs:Resource .
+
+"Spatial configuration parameter such as location or orientation." a rdfs:Resource .
+
+"Static configuration parameter of a resource." a rdfs:Resource .
+
+"Technical and production-relevant data for a product, excluding identification/nameplate data." a rdfs:Resource .
+
+"Value object associated with a measurement data point." a rdfs:Resource .
+
+"https://www.plattform-i40.de/IP/Redaktion/DE/Downloads/Publikation/2025-i40-capabilities.pdf?__blob=publicationFile&v=5" a rdfs:Resource .
+
+"https://www.plattform-i40.de/IP/Redaktion/DE/Downloads/Publikation/CapabilitiesSkillsServices.html" a rdfs:Resource .
+
+xsd:boolean a rdfs:Resource .
+
+xsd:integer a rdfs:Resource .
+
+owl:Ontology a rdfs:Resource .
+
+<http://www.w3id.org/aau-ra/cssx#AddressInformation> a rdfs:Resource,
+        owl:Class ;
+    rdfs:comment "Address information associated with a manufacturer." .
+
+<http://www.w3id.org/aau-ra/cssx#AssetSpecificProperty> a rdfs:Resource,
+        owl:Class ;
+    rdfs:comment "An asset-specific property entry." .
+
+<http://www.w3id.org/aau-ra/cssx#CapabilityConstraintProfile> a rdfs:Resource,
+        owl:Class ;
+    rdfs:comment "Constraint profile applied to an operational capability." ;
+    rdfs:subClassOf <http://www.w3id.org/hsu-aut/css#Constraint> .
+
+<http://www.w3id.org/aau-ra/cssx#DataConcept> a rdfs:Resource,
+        owl:Class ;
+    rdfs:comment "Conceptual descriptor for operational data semantics." .
+
+<http://www.w3id.org/aau-ra/cssx#Marking> a rdfs:Resource,
+        owl:Class ;
+    rdfs:comment "A marking, label, or compliance identifier." .
+
+<http://www.w3id.org/aau-ra/cssx#MeasurementQualifier> a rdfs:Resource,
+        owl:Class ;
+    rdfs:comment "Qualifier metadata describing context or quality of a measurement." .
+
+<http://www.w3id.org/aau-ra/cssx#SkillCondition> a rdfs:Resource,
+        owl:Class ;
+    rdfs:comment "Condition that constrains when a skill operation can be executed." .
+
+<http://www.w3id.org/aau-ra/cssx#SkillEffect> a rdfs:Resource,
+        owl:Class ;
+    rdfs:comment "Effect asserted after skill execution." .
+
+<http://www.w3id.org/aau-ra/cssx#SkillPredicate> a rdfs:Resource,
+        owl:Class ;
+    rdfs:comment "Predicate used to express skill executability or logical guards." .
+
+<http://www.w3id.org/aau-ra/cssx#SpatialParameter> a rdfs:Resource,
+        owl:Class ;
+    rdfs:comment "Spatial configuration parameter such as location or orientation." ;
+    rdfs:subClassOf <http://www.w3id.org/aau-ra/cssx#ResourceParameter> .
+
+<http://www.w3id.org/aau-ra/cssx#TimeSeriesMetadata> a rdfs:Resource,
+        owl:Class ;
+    rdfs:comment "Metadata describing a time-series dataset." .
+
+<http://www.w3id.org/aau-ra/cssx#capabilityIdShort> a rdfs:Resource,
+        owl:DatatypeProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#OperationalCapability> ;
+    rdfs:range xsd:string .
+
+<http://www.w3id.org/aau-ra/cssx#capabilityRequiresInterface> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#OperationalCapability> ;
+    rdfs:range <http://www.w3id.org/aau-ra/cssx#ResourceInterface> .
+
+<http://www.w3id.org/aau-ra/cssx#capabilitySemanticId> a rdfs:Resource,
+        owl:DatatypeProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#OperationalCapability> ;
+    rdfs:range xsd:anyURI .
+
+<http://www.w3id.org/aau-ra/cssx#capabilityUsesOperationalData> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#OperationalCapability> ;
+    rdfs:range <http://www.w3id.org/aau-ra/cssx#OperationalData> .
+
+<http://www.w3id.org/aau-ra/cssx#capabilityUsesResourceParameter> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#OperationalCapability> ;
+    rdfs:range <http://www.w3id.org/aau-ra/cssx#ResourceParameter> .
+
+<http://www.w3id.org/aau-ra/cssx#classificationCode> a rdfs:Resource,
+        owl:DatatypeProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#ProductClassification> ;
+    rdfs:range xsd:string .
+
+<http://www.w3id.org/aau-ra/cssx#classificationLabel> a rdfs:Resource,
+        owl:DatatypeProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#ProductClassification> ;
+    rdfs:range rdf:langString .
+
+<http://www.w3id.org/aau-ra/cssx#classificationSystem> a rdfs:Resource,
+        owl:DatatypeProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#ProductClassification> ;
+    rdfs:range xsd:string .
+
+<http://www.w3id.org/aau-ra/cssx#companyLogoUri> a rdfs:Resource,
+        owl:DatatypeProperty,
+        owl:FunctionalProperty ;
+    rdfs:domain [ a rdfs:Resource,
+                owl:Class ;
+            owl:unionOf [ a rdfs:Resource ;
+                    rdf:first <http://www.w3id.org/hsu-aut/css#Product> ;
+                    rdf:rest [ a rdfs:Resource ;
+                            rdf:first <http://www.w3id.org/hsu-aut/css#Resource> ;
+                            rdf:rest () ] ] ] ;
+    rdfs:range xsd:anyURI .
+
+<http://www.w3id.org/aau-ra/cssx#countryOfOrigin> a rdfs:Resource,
+        owl:DatatypeProperty,
+        owl:FunctionalProperty ;
+    rdfs:domain [ a rdfs:Resource,
+                owl:Class ;
+            owl:unionOf [ a rdfs:Resource ;
+                    rdf:first <http://www.w3id.org/hsu-aut/css#Product> ;
+                    rdf:rest [ a rdfs:Resource ;
+                            rdf:first <http://www.w3id.org/hsu-aut/css#Resource> ;
+                            rdf:rest () ] ] ] ;
+    rdfs:range xsd:string .
+
+<http://www.w3id.org/aau-ra/cssx#dateOfManufacture> a rdfs:Resource,
+        owl:DatatypeProperty,
+        owl:FunctionalProperty ;
+    rdfs:domain [ a rdfs:Resource,
+                owl:Class ;
+            owl:unionOf [ a rdfs:Resource ;
+                    rdf:first <http://www.w3id.org/hsu-aut/css#Product> ;
+                    rdf:rest [ a rdfs:Resource ;
+                            rdf:first <http://www.w3id.org/hsu-aut/css#Resource> ;
+                            rdf:rest () ] ] ] ;
+    rdfs:range xsd:date .
+
+<http://www.w3id.org/aau-ra/cssx#endpointBaseUri> a rdfs:Resource,
+        owl:DatatypeProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#EndpointMetadata> ;
+    rdfs:range xsd:anyURI .
+
+<http://www.w3id.org/aau-ra/cssx#firmwareVersion> a rdfs:Resource,
+        owl:DatatypeProperty,
+        owl:FunctionalProperty ;
+    rdfs:domain [ a rdfs:Resource,
+                owl:Class ;
+            owl:unionOf [ a rdfs:Resource ;
+                    rdf:first <http://www.w3id.org/hsu-aut/css#Product> ;
+                    rdf:rest [ a rdfs:Resource ;
+                            rdf:first <http://www.w3id.org/hsu-aut/css#Resource> ;
+                            rdf:rest () ] ] ] ;
+    rdfs:range xsd:string .
+
+<http://www.w3id.org/aau-ra/cssx#groupHasParameter> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#ParameterGroup> ;
+    rdfs:range <http://www.w3id.org/aau-ra/cssx#ResourceParameter> .
+
+<http://www.w3id.org/aau-ra/cssx#handlingInstruction> a rdfs:Resource,
+        owl:DatatypeProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#OperationalSpecification> ;
+    rdfs:range rdf:langString .
+
+<http://www.w3id.org/aau-ra/cssx#hardwareVersion> a rdfs:Resource,
+        owl:DatatypeProperty,
+        owl:FunctionalProperty ;
+    rdfs:domain [ a rdfs:Resource,
+                owl:Class ;
+            owl:unionOf [ a rdfs:Resource ;
+                    rdf:first <http://www.w3id.org/hsu-aut/css#Product> ;
+                    rdf:rest [ a rdfs:Resource ;
+                            rdf:first <http://www.w3id.org/hsu-aut/css#Resource> ;
+                            rdf:rest () ] ] ] ;
+    rdfs:range xsd:string .
+
+<http://www.w3id.org/aau-ra/cssx#hasAddressInformation> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#Manufacturer> ;
+    rdfs:range <http://www.w3id.org/aau-ra/cssx#AddressInformation> .
+
+<http://www.w3id.org/aau-ra/cssx#hasAssetSpecificProperties> a rdfs:Resource,
+        owl:FunctionalProperty,
+        owl:ObjectProperty ;
+    rdfs:domain [ a rdfs:Resource,
+                owl:Class ;
+            owl:unionOf [ a rdfs:Resource ;
+                    rdf:first <http://www.w3id.org/hsu-aut/css#Product> ;
+                    rdf:rest [ a rdfs:Resource ;
+                            rdf:first <http://www.w3id.org/hsu-aut/css#Resource> ;
+                            rdf:rest () ] ] ] ;
+    rdfs:range <http://www.w3id.org/aau-ra/cssx#AssetSpecificProperties> .
+
+<http://www.w3id.org/aau-ra/cssx#hasAssetSpecificProperty> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#AssetSpecificProperties> ;
+    rdfs:range <http://www.w3id.org/aau-ra/cssx#AssetSpecificProperty> .
+
+<http://www.w3id.org/aau-ra/cssx#hasCapabilityConstraintProfile> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#OperationalCapability> ;
+    rdfs:range <http://www.w3id.org/aau-ra/cssx#CapabilityConstraintProfile> ;
+    rdfs:subPropertyOf <http://www.w3id.org/hsu-aut/css#isRestrictedBy> .
+
+<http://www.w3id.org/aau-ra/cssx#hasCapabilityPortfolio> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#Resource> ;
+    rdfs:range <http://www.w3id.org/aau-ra/cssx#CapabilityPortfolio> .
+
+<http://www.w3id.org/aau-ra/cssx#hasCapabilityQualification> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#OperationalCapability> ;
+    rdfs:range <http://www.w3id.org/aau-ra/cssx#CapabilityQualification> .
+
+<http://www.w3id.org/aau-ra/cssx#hasDataConcept> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#OperationalData> ;
+    rdfs:range <http://www.w3id.org/aau-ra/cssx#DataConcept> .
+
+<http://www.w3id.org/aau-ra/cssx#hasEndpointMetadata> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#ResourceInterface> ;
+    rdfs:range <http://www.w3id.org/aau-ra/cssx#EndpointMetadata> .
+
+<http://www.w3id.org/aau-ra/cssx#hasInteractionMetadata> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#ResourceInterface> ;
+    rdfs:range <http://www.w3id.org/aau-ra/cssx#InteractionMetadata> .
+
+<http://www.w3id.org/aau-ra/cssx#hasInteractionPoint> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:comment "Bridges AID InteractionMetadata to WoT TD interaction affordances." ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#InteractionMetadata> ;
+    rdfs:range <https://www.w3.org/2019/wot/td#InteractionAffordance> .
+
+<http://www.w3id.org/aau-ra/cssx#hasMarking> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#Markings> ;
+    rdfs:range <http://www.w3id.org/aau-ra/cssx#Marking> .
+
+<http://www.w3id.org/aau-ra/cssx#hasMarkings> a rdfs:Resource,
+        owl:FunctionalProperty,
+        owl:ObjectProperty ;
+    rdfs:domain [ a rdfs:Resource,
+                owl:Class ;
+            owl:unionOf [ a rdfs:Resource ;
+                    rdf:first <http://www.w3id.org/hsu-aut/css#Product> ;
+                    rdf:rest [ a rdfs:Resource ;
+                            rdf:first <http://www.w3id.org/hsu-aut/css#Resource> ;
+                            rdf:rest () ] ] ] ;
+    rdfs:range <http://www.w3id.org/aau-ra/cssx#Markings> .
+
+<http://www.w3id.org/aau-ra/cssx#hasMeasurementQualifier> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#MeasurementData> ;
+    rdfs:range <http://www.w3id.org/aau-ra/cssx#MeasurementQualifier> .
+
+<http://www.w3id.org/aau-ra/cssx#hasOperationalData> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#Resource> ;
+    rdfs:range <http://www.w3id.org/aau-ra/cssx#OperationalData> .
+
+<http://www.w3id.org/aau-ra/cssx#hasOperationalSpecification> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#ProductTechnicalData> ;
+    rdfs:range <http://www.w3id.org/aau-ra/cssx#OperationalSpecification> .
+
+<http://www.w3id.org/aau-ra/cssx#hasOrderData> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#ProductTechnicalData> ;
+    rdfs:range <http://www.w3id.org/aau-ra/cssx#OrderData> .
+
+<http://www.w3id.org/aau-ra/cssx#hasParameterGroup> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#Resource> ;
+    rdfs:range <http://www.w3id.org/aau-ra/cssx#ParameterGroup> .
+
+<http://www.w3id.org/aau-ra/cssx#hasParameterScope> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#ResourceParameter> ;
+    rdfs:range <http://www.w3id.org/aau-ra/cssx#ParameterScope> .
+
+<http://www.w3id.org/aau-ra/cssx#hasPart> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#BoMItem> ;
+    rdfs:range <http://www.w3id.org/aau-ra/cssx#BoMItem> .
+
+<http://www.w3id.org/aau-ra/cssx#hasProductBoM> a rdfs:Resource,
+        owl:FunctionalProperty,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#Product> ;
+    rdfs:range <http://www.w3id.org/aau-ra/cssx#ProductBoM> .
+
+<http://www.w3id.org/aau-ra/cssx#hasProductClassification> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#ProductTechnicalData> ;
+    rdfs:range <http://www.w3id.org/aau-ra/cssx#ProductClassification> .
+
+<http://www.w3id.org/aau-ra/cssx#hasProductTechnicalData> a rdfs:Resource,
+        owl:FunctionalProperty,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#Product> ;
+    rdfs:range <http://www.w3id.org/aau-ra/cssx#ProductTechnicalData> .
+
+<http://www.w3id.org/aau-ra/cssx#hasResourceInterface> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#Resource> ;
+    rdfs:range <http://www.w3id.org/aau-ra/cssx#ResourceInterface> .
+
+<http://www.w3id.org/aau-ra/cssx#hasResourceParameter> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#Resource> ;
+    rdfs:range <http://www.w3id.org/aau-ra/cssx#ResourceParameter> .
+
+<http://www.w3id.org/aau-ra/cssx#hasSecurityDefinition> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#EndpointMetadata> ;
+    rdfs:range <http://www.w3id.org/aau-ra/cssx#SecurityDefinition> .
+
+<http://www.w3id.org/aau-ra/cssx#hasSecurityScheme> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#SecurityDefinition> ;
+    rdfs:range <https://www.w3.org/2019/wot/td#SecurityScheme> .
+
+<http://www.w3id.org/aau-ra/cssx#hasSkillCondition> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#Skill> ;
+    rdfs:range <http://www.w3id.org/aau-ra/cssx#SkillCondition> .
+
+<http://www.w3id.org/aau-ra/cssx#hasSkillEffect> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#Skill> ;
+    rdfs:range <http://www.w3id.org/aau-ra/cssx#SkillEffect> .
+
+<http://www.w3id.org/aau-ra/cssx#hasSkillMode> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#Skill> ;
+    rdfs:range <http://www.w3id.org/aau-ra/cssx#SkillMode> .
+
+<http://www.w3id.org/aau-ra/cssx#hasSkillOperation> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#Skill> ;
+    rdfs:range <http://www.w3id.org/aau-ra/cssx#SkillOperation> .
+
+<http://www.w3id.org/aau-ra/cssx#hasSkillPredicate> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#Skill> ;
+    rdfs:range <http://www.w3id.org/aau-ra/cssx#SkillPredicate> .
+
+<http://www.w3id.org/aau-ra/cssx#hasTimeSeriesMetadata> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#TimeSeriesData> ;
+    rdfs:range <http://www.w3id.org/aau-ra/cssx#TimeSeriesMetadata> .
+
+<http://www.w3id.org/aau-ra/cssx#hasTimeSeriesSegment> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#TimeSeriesData> ;
+    rdfs:range <http://www.w3id.org/aau-ra/cssx#TimeSeriesSegment> .
+
+<http://www.w3id.org/aau-ra/cssx#interfaceContentType> a rdfs:Resource,
+        owl:DatatypeProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#EndpointMetadata> ;
+    rdfs:range xsd:string .
+
+<http://www.w3id.org/aau-ra/cssx#interfaceTitle> a rdfs:Resource,
+        owl:DatatypeProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#ResourceInterface> ;
+    rdfs:range xsd:string .
+
+<http://www.w3id.org/aau-ra/cssx#isPartOf> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#BoMItem> ;
+    rdfs:range <http://www.w3id.org/aau-ra/cssx#BoMItem> .
+
+<http://www.w3id.org/aau-ra/cssx#isReadOnly> a rdfs:Resource,
+        owl:DatatypeProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#ResourceParameter> ;
+    rdfs:range xsd:boolean .
+
+<http://www.w3id.org/aau-ra/cssx#manufacturerProductFamily> a rdfs:Resource,
+        owl:DatatypeProperty,
+        owl:FunctionalProperty ;
+    rdfs:domain [ a rdfs:Resource,
+                owl:Class ;
+            owl:unionOf [ a rdfs:Resource ;
+                    rdf:first <http://www.w3id.org/hsu-aut/css#Product> ;
+                    rdf:rest [ a rdfs:Resource ;
+                            rdf:first <http://www.w3id.org/hsu-aut/css#Resource> ;
+                            rdf:rest () ] ] ] ;
+    rdfs:range rdf:langString .
+
+<http://www.w3id.org/aau-ra/cssx#manufacturerProductRoot> a rdfs:Resource,
+        owl:DatatypeProperty,
+        owl:FunctionalProperty ;
+    rdfs:domain [ a rdfs:Resource,
+                owl:Class ;
+            owl:unionOf [ a rdfs:Resource ;
+                    rdf:first <http://www.w3id.org/hsu-aut/css#Product> ;
+                    rdf:rest [ a rdfs:Resource ;
+                            rdf:first <http://www.w3id.org/hsu-aut/css#Resource> ;
+                            rdf:rest () ] ] ] ;
+    rdfs:range rdf:langString .
+
+<http://www.w3id.org/aau-ra/cssx#manufacturerProductType> a rdfs:Resource,
+        owl:DatatypeProperty,
+        owl:FunctionalProperty ;
+    rdfs:domain [ a rdfs:Resource,
+                owl:Class ;
+            owl:unionOf [ a rdfs:Resource ;
+                    rdf:first <http://www.w3id.org/hsu-aut/css#Product> ;
+                    rdf:rest [ a rdfs:Resource ;
+                            rdf:first <http://www.w3id.org/hsu-aut/css#Resource> ;
+                            rdf:rest () ] ] ] ;
+    rdfs:range xsd:string .
+
+<http://www.w3id.org/aau-ra/cssx#measuredNumericValue> a rdfs:Resource,
+        owl:DatatypeProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#MeasuredValue> ;
+    rdfs:range xsd:decimal .
+
+<http://www.w3id.org/aau-ra/cssx#measuredUnit> a rdfs:Resource,
+        owl:DatatypeProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#MeasuredValue> ;
+    rdfs:range xsd:string .
+
+<http://www.w3id.org/aau-ra/cssx#measurementTimestamp> a rdfs:Resource,
+        owl:DatatypeProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#MeasurementData> ;
+    rdfs:range xsd:dateTime .
+
+<http://www.w3id.org/aau-ra/cssx#modelName> a rdfs:Resource,
+        owl:DatatypeProperty ;
+    rdfs:domain [ a rdfs:Resource,
+                owl:Class ;
+            owl:unionOf [ a rdfs:Resource ;
+                    rdf:first <http://www.w3id.org/hsu-aut/css#Product> ;
+                    rdf:rest [ a rdfs:Resource ;
+                            rdf:first <http://www.w3id.org/hsu-aut/css#Resource> ;
+                            rdf:rest () ] ] ] ;
+    rdfs:range rdf:langString ;
+    rdfs:subPropertyOf <http://www.w3id.org/aau-ra/cssx#manufacturerProductDesignation> .
+
+<http://www.w3id.org/aau-ra/cssx#operationDescription> a rdfs:Resource,
+        owl:DatatypeProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#SkillOperation> ;
+    rdfs:range rdf:langString .
+
+<http://www.w3id.org/aau-ra/cssx#operationHasInput> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#SkillOperation> ;
+    rdfs:range <http://www.w3id.org/hsu-aut/css#SkillParameter> .
+
+<http://www.w3id.org/aau-ra/cssx#operationHasOutput> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#SkillOperation> ;
+    rdfs:range <http://www.w3id.org/hsu-aut/css#SkillParameter> .
+
+<http://www.w3id.org/aau-ra/cssx#operationName> a rdfs:Resource,
+        owl:DatatypeProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#SkillOperation> ;
+    rdfs:range xsd:string .
+
+<http://www.w3id.org/aau-ra/cssx#operationUsesInterface> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#SkillOperation> ;
+    rdfs:range <http://www.w3id.org/aau-ra/cssx#SoftwareInterface> .
+
+<http://www.w3id.org/aau-ra/cssx#operationalConstraint> a rdfs:Resource,
+        owl:DatatypeProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#OperationalSpecification> ;
+    rdfs:range rdf:langString .
+
+<http://www.w3id.org/aau-ra/cssx#orderBatchSize> a rdfs:Resource,
+        owl:DatatypeProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#OrderData> ;
+    rdfs:range xsd:decimal .
+
+<http://www.w3id.org/aau-ra/cssx#orderCodeOfManufacturer> a rdfs:Resource,
+        owl:DatatypeProperty ;
+    rdfs:domain [ a rdfs:Resource,
+                owl:Class ;
+            owl:unionOf [ a rdfs:Resource ;
+                    rdf:first <http://www.w3id.org/hsu-aut/css#Product> ;
+                    rdf:rest [ a rdfs:Resource ;
+                            rdf:first <http://www.w3id.org/hsu-aut/css#Resource> ;
+                            rdf:rest () ] ] ] ;
+    rdfs:range xsd:string .
+
+<http://www.w3id.org/aau-ra/cssx#orderQuantity> a rdfs:Resource,
+        owl:DatatypeProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#OrderData> ;
+    rdfs:range xsd:decimal .
+
+<http://www.w3id.org/aau-ra/cssx#orderStatus> a rdfs:Resource,
+        owl:DatatypeProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#OrderData> ;
+    rdfs:range xsd:string .
+
+<http://www.w3id.org/aau-ra/cssx#orderTimestamp> a rdfs:Resource,
+        owl:DatatypeProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#OrderData> ;
+    rdfs:range xsd:dateTime .
+
+<http://www.w3id.org/aau-ra/cssx#packagingType> a rdfs:Resource,
+        owl:DatatypeProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#OrderData> ;
+    rdfs:range xsd:string .
+
+<http://www.w3id.org/aau-ra/cssx#parameterDescription> a rdfs:Resource,
+        owl:DatatypeProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#ResourceParameter> ;
+    rdfs:range rdf:langString .
+
+<http://www.w3id.org/aau-ra/cssx#parameterName> a rdfs:Resource,
+        owl:DatatypeProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#ResourceParameter> ;
+    rdfs:range rdf:langString .
+
+<http://www.w3id.org/aau-ra/cssx#parameterUnit> a rdfs:Resource,
+        owl:DatatypeProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#ResourceParameter> ;
+    rdfs:range xsd:string .
+
+<http://www.w3id.org/aau-ra/cssx#parameterValue> a rdfs:Resource,
+        owl:DatatypeProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#ResourceParameter> ;
+    rdfs:range xsd:string .
+
+<http://www.w3id.org/aau-ra/cssx#parameterValueType> a rdfs:Resource,
+        owl:DatatypeProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#ResourceParameter> ;
+    rdfs:range xsd:string .
+
+<http://www.w3id.org/aau-ra/cssx#portfolioHasCapability> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#CapabilityPortfolio> ;
+    rdfs:range <http://www.w3id.org/aau-ra/cssx#OperationalCapability> .
+
+<http://www.w3id.org/aau-ra/cssx#productArticleNumberOfManufacturer> a rdfs:Resource,
+        owl:DatatypeProperty,
+        owl:FunctionalProperty ;
+    rdfs:domain [ a rdfs:Resource,
+                owl:Class ;
+            owl:unionOf [ a rdfs:Resource ;
+                    rdf:first <http://www.w3id.org/hsu-aut/css#Product> ;
+                    rdf:rest [ a rdfs:Resource ;
+                            rdf:first <http://www.w3id.org/hsu-aut/css#Resource> ;
+                            rdf:rest () ] ] ] ;
+    rdfs:range xsd:string .
+
+<http://www.w3id.org/aau-ra/cssx#productBoMItemForProduct> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#ProductBoMItem> ;
+    rdfs:range <http://www.w3id.org/hsu-aut/css#Product> .
+
+<http://www.w3id.org/aau-ra/cssx#providesOperationalCapability> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#Resource> ;
+    rdfs:range <http://www.w3id.org/aau-ra/cssx#OperationalCapability> ;
+    rdfs:subPropertyOf <http://www.w3id.org/hsu-aut/css#provides>,
+        <http://www.w3id.org/hsu-aut/css#providesCapability> .
+
+<http://www.w3id.org/aau-ra/cssx#qualificationStatus> a rdfs:Resource,
+        owl:DatatypeProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#CapabilityQualification> ;
+    rdfs:range xsd:string .
+
+<http://www.w3id.org/aau-ra/cssx#quantity> a rdfs:Resource,
+        owl:DatatypeProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#BoMItem> ;
+    rdfs:range xsd:decimal .
+
+<http://www.w3id.org/aau-ra/cssx#quantityUnit> a rdfs:Resource,
+        owl:DatatypeProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#BoMItem> ;
+    rdfs:range xsd:string .
+
+<http://www.w3id.org/aau-ra/cssx#resourceBoMItemForResource> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#ResourceBoMItem> ;
+    rdfs:range <http://www.w3id.org/hsu-aut/css#Resource> .
+
+<http://www.w3id.org/aau-ra/cssx#scopeValue> a rdfs:Resource,
+        owl:DatatypeProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#ParameterScope> ;
+    rdfs:range xsd:string .
+
+<http://www.w3id.org/aau-ra/cssx#skillInterfaceUsesSoftwareInterface> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:comment "Skills are invoked through software interfaces." ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#SkillInterface> ;
+    rdfs:range <http://www.w3id.org/aau-ra/cssx#SoftwareInterface> .
+
+<http://www.w3id.org/aau-ra/cssx#skillModeValue> a rdfs:Resource,
+        owl:DatatypeProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#SkillMode> ;
+    rdfs:range xsd:string .
+
+<http://www.w3id.org/aau-ra/cssx#softwareVersion> a rdfs:Resource,
+        owl:DatatypeProperty,
+        owl:FunctionalProperty ;
+    rdfs:domain [ a rdfs:Resource,
+                owl:Class ;
+            owl:unionOf [ a rdfs:Resource ;
+                    rdf:first <http://www.w3id.org/hsu-aut/css#Product> ;
+                    rdf:rest [ a rdfs:Resource ;
+                            rdf:first <http://www.w3id.org/hsu-aut/css#Resource> ;
+                            rdf:rest () ] ] ] ;
+    rdfs:range xsd:string .
+
+<http://www.w3id.org/aau-ra/cssx#storageCondition> a rdfs:Resource,
+        owl:DatatypeProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#OperationalSpecification> ;
+    rdfs:range rdf:langString .
+
+<http://www.w3id.org/aau-ra/cssx#timeSeriesEnd> a rdfs:Resource,
+        owl:DatatypeProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#TimeSeriesSegment> ;
+    rdfs:range xsd:dateTime .
+
+<http://www.w3id.org/aau-ra/cssx#timeSeriesStart> a rdfs:Resource,
+        owl:DatatypeProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#TimeSeriesSegment> ;
+    rdfs:range xsd:dateTime .
+
+<http://www.w3id.org/aau-ra/cssx#timeSeriesValueCount> a rdfs:Resource,
+        owl:DatatypeProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#TimeSeriesSegment> ;
+    rdfs:range xsd:integer .
+
+<http://www.w3id.org/aau-ra/cssx#uniqueFacilityIdentifier> a rdfs:Resource,
+        owl:DatatypeProperty,
+        owl:FunctionalProperty ;
+    rdfs:domain [ a rdfs:Resource,
+                owl:Class ;
+            owl:unionOf [ a rdfs:Resource ;
+                    rdf:first <http://www.w3id.org/hsu-aut/css#Product> ;
+                    rdf:rest [ a rdfs:Resource ;
+                            rdf:first <http://www.w3id.org/hsu-aut/css#Resource> ;
+                            rdf:rest () ] ] ] ;
+    rdfs:range xsd:string .
+
+<http://www.w3id.org/aau-ra/cssx#uriOfTheProduct> a rdfs:Resource,
+        owl:DatatypeProperty,
+        owl:FunctionalProperty ;
+    rdfs:domain [ a rdfs:Resource,
+                owl:Class ;
+            owl:unionOf [ a rdfs:Resource ;
+                    rdf:first <http://www.w3id.org/hsu-aut/css#Product> ;
+                    rdf:rest [ a rdfs:Resource ;
+                            rdf:first <http://www.w3id.org/hsu-aut/css#Resource> ;
+                            rdf:rest () ] ] ] ;
+    rdfs:range xsd:anyURI .
+
+<http://www.w3id.org/aau-ra/cssx#usesSkill> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#Skill> ;
+    rdfs:range <http://www.w3id.org/hsu-aut/css#Skill> .
+
+<http://www.w3id.org/aau-ra/cssx#yearOfConstruction> a rdfs:Resource,
+        owl:DatatypeProperty,
+        owl:FunctionalProperty ;
+    rdfs:domain [ a rdfs:Resource,
+                owl:Class ;
+            owl:unionOf [ a rdfs:Resource ;
+                    rdf:first <http://www.w3id.org/hsu-aut/css#Product> ;
+                    rdf:rest [ a rdfs:Resource ;
+                            rdf:first <http://www.w3id.org/hsu-aut/css#Resource> ;
+                            rdf:rest () ] ] ] ;
+    rdfs:range xsd:string .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#DigitalNameplateSubmodel> a rdfs:Resource,
+        owl:Class ;
+    rdfs:subClassOf <http://www.w3id.org/aau-ra/resourceaas-validation#ResourceAASProjection> .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#bomArchetype> a rdfs:Resource,
+        owl:DatatypeProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/resourceaas-validation#HierarchicalStructuresSubmodel> ;
+    rdfs:range xsd:string .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#bomEntryGlobalAssetId> a rdfs:Resource,
+        owl:DatatypeProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/resourceaas-validation#BomEntry> ;
+    rdfs:range xsd:string .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#bomEntryName> a rdfs:Resource,
+        owl:DatatypeProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/resourceaas-validation#BomEntry> ;
+    rdfs:range xsd:string .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#bomName> a rdfs:Resource,
+        owl:DatatypeProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/resourceaas-validation#HierarchicalStructuresSubmodel> ;
+    rdfs:range xsd:string .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#hasCapabilitiesSubmodel> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#Resource> ;
+    rdfs:range <http://www.w3id.org/aau-ra/resourceaas-validation#CapabilitiesSubmodel> ;
+    rdfs:subPropertyOf <http://www.w3id.org/aau-ra/resourceaas-validation#hasSubmodel> .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#hasIdShort> a rdfs:Resource,
+        owl:DatatypeProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/resourceaas-validation#ResourceAASProjection> ;
+    rdfs:range xsd:string .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#hasMappedElement> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/resourceaas-validation#ResourceAASProjection> ;
+    rdfs:range <http://www.w3id.org/aau-ra/resourceaas-validation#MappedElement> .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#hasOperationalDataSubmodel> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#Resource> ;
+    rdfs:range <http://www.w3id.org/aau-ra/resourceaas-validation#OperationalDataSubmodel> ;
+    rdfs:subPropertyOf <http://www.w3id.org/aau-ra/resourceaas-validation#hasSubmodel> .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#hasParametersSubmodel> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#Resource> ;
+    rdfs:range <http://www.w3id.org/aau-ra/resourceaas-validation#ParametersSubmodel> ;
+    rdfs:subPropertyOf <http://www.w3id.org/aau-ra/resourceaas-validation#hasSubmodel> .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#hasSkillsSubmodel> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#Resource> ;
+    rdfs:range <http://www.w3id.org/aau-ra/resourceaas-validation#SkillsSubmodel> ;
+    rdfs:subPropertyOf <http://www.w3id.org/aau-ra/resourceaas-validation#hasSubmodel> .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#sourceElementPath> a rdfs:Resource,
+        owl:DatatypeProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/resourceaas-validation#MappedElement> ;
+    rdfs:range xsd:string .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#sourceIdShort> a rdfs:Resource,
+        owl:DatatypeProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/resourceaas-validation#ResourceAASProjection> ;
+    rdfs:range xsd:string .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#sourceSubmodelSemanticId> a rdfs:Resource,
+        owl:DatatypeProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/resourceaas-validation#ResourceAASProjection> ;
+    rdfs:range xsd:string .
+
+<http://www.w3id.org/hsu-aut/css#assures> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#Service> ;
+    rdfs:range <http://www.w3id.org/hsu-aut/css#Product> .
+
+<http://www.w3id.org/hsu-aut/css#consistsOfState> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#StateMachine> ;
+    rdfs:range <http://www.w3id.org/hsu-aut/css#State> .
+
+<http://www.w3id.org/hsu-aut/css#consistsOfTransition> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#StateMachine> ;
+    rdfs:range <http://www.w3id.org/hsu-aut/css#Transition> .
+
+<http://www.w3id.org/hsu-aut/css#controls> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#Skill> ;
+    rdfs:range <http://www.w3id.org/hsu-aut/css#Process> .
+
+<http://www.w3id.org/hsu-aut/css#demands> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#ServiceRequester> ;
+    rdfs:range <http://www.w3id.org/hsu-aut/css#Service> .
+
+<http://www.w3id.org/hsu-aut/css#exposesSkillParameter> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#SkillInterface> ;
+    rdfs:range <http://www.w3id.org/hsu-aut/css#SkillParameter> ;
+    rdfs:subPropertyOf <http://www.w3id.org/hsu-aut/css#exposes> .
+
+<http://www.w3id.org/hsu-aut/css#exposesSkillTrigger> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#SkillInterface> ;
+    rdfs:range <http://www.w3id.org/hsu-aut/css#SkillTrigger> ;
+    rdfs:subPropertyOf <http://www.w3id.org/hsu-aut/css#exposes> .
+
+<http://www.w3id.org/hsu-aut/css#exposesStateMachine> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#SkillInterface> ;
+    rdfs:range <http://www.w3id.org/hsu-aut/css#StateMachine> ;
+    rdfs:subPropertyOf <http://www.w3id.org/hsu-aut/css#exposes> .
+
+<http://www.w3id.org/hsu-aut/css#hasCurrentState> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#Skill> ;
+    rdfs:range <http://www.w3id.org/hsu-aut/css#State> .
+
+<http://www.w3id.org/hsu-aut/css#hasIncomingTransition> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#State> ;
+    rdfs:range <http://www.w3id.org/hsu-aut/css#Transition> .
+
+<http://www.w3id.org/hsu-aut/css#hasInput> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#Process> ;
+    rdfs:range <http://www.w3id.org/hsu-aut/css#Product> .
+
+<http://www.w3id.org/hsu-aut/css#hasOutgoingTransition> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#State> ;
+    rdfs:range <http://www.w3id.org/hsu-aut/css#Transition> .
+
+<http://www.w3id.org/hsu-aut/css#hasOutput> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#Process> ;
+    rdfs:range <http://www.w3id.org/hsu-aut/css#Product> .
+
+<http://www.w3id.org/hsu-aut/css#hasParameter> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain [ a rdfs:Resource,
+                owl:Class ;
+            owl:unionOf [ a rdfs:Resource ;
+                    rdf:first <http://www.w3id.org/hsu-aut/css#Skill> ;
+                    rdf:rest [ a rdfs:Resource ;
+                            rdf:first <http://www.w3id.org/hsu-aut/css#SkillTrigger> ;
+                            rdf:rest () ] ] ] ;
+    rdfs:range <http://www.w3id.org/hsu-aut/css#SkillParameter> .
+
+<http://www.w3id.org/hsu-aut/css#hasSourceState> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#Transition> ;
+    rdfs:range <http://www.w3id.org/hsu-aut/css#State> .
+
+<http://www.w3id.org/hsu-aut/css#hasTargetState> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#Transition> ;
+    rdfs:range <http://www.w3id.org/hsu-aut/css#State> .
+
+<http://www.w3id.org/hsu-aut/css#hasTrigger> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#Skill> ;
+    rdfs:range <http://www.w3id.org/hsu-aut/css#SkillTrigger> .
+
+<http://www.w3id.org/hsu-aut/css#isInputFor> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#Service> ;
+    rdfs:range <http://www.w3id.org/hsu-aut/css#ServiceOffer> .
+
+<http://www.w3id.org/hsu-aut/css#isInvokedBy> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#Transition> ;
+    rdfs:range <http://www.w3id.org/hsu-aut/css#SkillTrigger> .
+
+<http://www.w3id.org/hsu-aut/css#isRealizedBySkillParameter> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#Property> ;
+    rdfs:range <http://www.w3id.org/hsu-aut/css#SkillParameter> ;
+    rdfs:subPropertyOf <http://www.w3id.org/hsu-aut/css#isRealizedBy> .
+
+<http://www.w3id.org/hsu-aut/css#isSpecifiedBy> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain [ a rdfs:Resource,
+                owl:Class ;
+            owl:unionOf [ a rdfs:Resource ;
+                    rdf:first <http://www.w3id.org/hsu-aut/css#Capability> ;
+                    rdf:rest [ a rdfs:Resource ;
+                            rdf:first <http://www.w3id.org/hsu-aut/css#Service> ;
+                            rdf:rest () ] ] ] ;
+    rdfs:range <http://www.w3id.org/hsu-aut/css#Property> .
+
+<http://www.w3id.org/hsu-aut/css#offers> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#ServiceProvider> ;
+    rdfs:range <http://www.w3id.org/hsu-aut/css#Service> .
+
+<http://www.w3id.org/hsu-aut/css#offersUseOf> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#Service> ;
+    rdfs:range <http://www.w3id.org/hsu-aut/css#Capability> .
+
+<http://www.w3id.org/hsu-aut/css#proposes> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#ServiceProvider> ;
+    rdfs:range <http://www.w3id.org/hsu-aut/css#ServiceOffer> .
+
+<http://www.w3id.org/hsu-aut/css#receives> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#ServiceRequester> ;
+    rdfs:range <http://www.w3id.org/hsu-aut/css#ServiceOffer> .
+
+<http://www.w3id.org/hsu-aut/css#references> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#TransitionConstraint> ;
+    rdfs:range [ a rdfs:Resource,
+                owl:Class ;
+            owl:unionOf [ a rdfs:Resource ;
+                    rdf:first <http://www.w3id.org/hsu-aut/css#Capability> ;
+                    rdf:rest [ a rdfs:Resource ;
+                            rdf:first <http://www.w3id.org/hsu-aut/css#Service> ;
+                            rdf:rest () ] ] ] .
+
+<http://www.w3id.org/hsu-aut/css#referencesProperty> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#PropertyConstraint> ;
+    rdfs:range <http://www.w3id.org/hsu-aut/css#Property> .
+
+<http://www.w3id.org/hsu-aut/css#requiresCapability> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#Process> ;
+    rdfs:range <http://www.w3id.org/hsu-aut/css#Capability> .
+
+<http://www.w3id.org/hsu-aut/css#requiresProduct> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#ServiceRequester> ;
+    rdfs:range <http://www.w3id.org/hsu-aut/css#Product> .
+
+xsd:date a rdfs:Resource .
+
+<http://www.w3id.org/aau-ra/cssx#hasManufacturer> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain [ a rdfs:Resource,
+                owl:Class ;
+            owl:unionOf [ a rdfs:Resource ;
+                    rdf:first <http://www.w3id.org/hsu-aut/css#Product> ;
+                    rdf:rest [ a rdfs:Resource ;
+                            rdf:first <http://www.w3id.org/hsu-aut/css#Resource> ;
+                            rdf:rest () ] ] ] ;
+    rdfs:range <http://www.w3id.org/aau-ra/cssx#Manufacturer> .
+
+<http://www.w3id.org/aau-ra/cssx#hasMeasuredValue> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#MeasurementData> ;
+    rdfs:range <http://www.w3id.org/aau-ra/cssx#MeasuredValue> .
+
+<http://www.w3id.org/aau-ra/cssx#hasResourceBoM> a rdfs:Resource,
+        owl:FunctionalProperty,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#Resource> ;
+    rdfs:range <http://www.w3id.org/aau-ra/cssx#ResourceBoM> .
+
+<http://www.w3id.org/aau-ra/cssx#manufacturerName> a rdfs:Resource,
+        owl:DatatypeProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#Manufacturer> ;
+    rdfs:range rdf:langString .
+
+<http://www.w3id.org/aau-ra/cssx#manufacturerProductDesignation> a rdfs:Resource,
+        owl:DatatypeProperty ;
+    rdfs:domain [ a rdfs:Resource,
+                owl:Class ;
+            owl:unionOf [ a rdfs:Resource ;
+                    rdf:first <http://www.w3id.org/hsu-aut/css#Product> ;
+                    rdf:rest [ a rdfs:Resource ;
+                            rdf:first <http://www.w3id.org/hsu-aut/css#Resource> ;
+                            rdf:rest () ] ] ] ;
+    rdfs:range rdf:langString .
+
+<http://www.w3id.org/aau-ra/cssx#serialNumber> a rdfs:Resource,
+        owl:DatatypeProperty,
+        owl:FunctionalProperty ;
+    rdfs:domain [ a rdfs:Resource,
+                owl:Class ;
+            owl:unionOf [ a rdfs:Resource ;
+                    rdf:first <http://www.w3id.org/hsu-aut/css#Product> ;
+                    rdf:rest [ a rdfs:Resource ;
+                            rdf:first <http://www.w3id.org/hsu-aut/css#Resource> ;
+                            rdf:rest () ] ] ] ;
+    rdfs:range xsd:string .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#OperationalDataSubmodel> a rdfs:Resource,
+        owl:Class ;
+    rdfs:subClassOf <http://www.w3id.org/aau-ra/resourceaas-validation#ResourceAASProjection> .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#ParametersSubmodel> a rdfs:Resource,
+        owl:Class ;
+    rdfs:subClassOf <http://www.w3id.org/aau-ra/resourceaas-validation#ResourceAASProjection> .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#hasAIDSubmodel> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#Resource> ;
+    rdfs:range <http://www.w3id.org/aau-ra/resourceaas-validation#AIDSubmodel> ;
+    rdfs:subPropertyOf <http://www.w3id.org/aau-ra/resourceaas-validation#hasSubmodel> .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#hasBomEntry> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/resourceaas-validation#HierarchicalStructuresSubmodel> ;
+    rdfs:range <http://www.w3id.org/aau-ra/resourceaas-validation#BomEntry> .
+
+<http://www.w3id.org/hsu-aut/css#accessibleThrough> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#Skill> ;
+    rdfs:range <http://www.w3id.org/hsu-aut/css#SkillInterface> .
+
+<http://www.w3id.org/hsu-aut/css#behaviorConformsTo> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#Resource>,
+        <http://www.w3id.org/hsu-aut/css#Skill> ;
+    rdfs:range <http://www.w3id.org/hsu-aut/css#StateMachine> .
+
+<http://www.w3id.org/hsu-aut/css#isRestrictedBy> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#Capability> ;
+    rdfs:range <http://www.w3id.org/hsu-aut/css#Constraint> .
+
+<http://www.w3id.org/aau-ra/cssx#SoftwareInterface> a rdfs:Resource,
+        owl:Class ;
+    rdfs:comment "Software interface for digital communication or control." ;
+    rdfs:subClassOf <http://www.w3id.org/aau-ra/cssx#ResourceInterface>,
+        <https://www.w3.org/2019/wot/td#Thing> .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#CapabilitiesSubmodel> a rdfs:Resource,
+        owl:Class ;
+    rdfs:subClassOf <http://www.w3id.org/aau-ra/resourceaas-validation#ResourceAASProjection> .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#hasDigitalNameplateSubmodel> a rdfs:Resource,
+        owl:FunctionalProperty,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#Resource> ;
+    rdfs:range <http://www.w3id.org/aau-ra/resourceaas-validation#DigitalNameplateSubmodel> ;
+    rdfs:subPropertyOf <http://www.w3id.org/aau-ra/resourceaas-validation#hasSubmodel> .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#hasHierarchicalStructuresSubmodel> a rdfs:Resource,
+        owl:FunctionalProperty,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#Resource> ;
+    rdfs:range <http://www.w3id.org/aau-ra/resourceaas-validation#HierarchicalStructuresSubmodel> ;
+    rdfs:subPropertyOf <http://www.w3id.org/aau-ra/resourceaas-validation#hasSubmodel> .
+
+<http://www.w3id.org/hsu-aut/css#isRealizedBy> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain [ a rdfs:Resource,
+                owl:Class ;
+            owl:unionOf [ a rdfs:Resource ;
+                    rdf:first <http://www.w3id.org/hsu-aut/css#Capability> ;
+                    rdf:rest [ a rdfs:Resource ;
+                            rdf:first <http://www.w3id.org/hsu-aut/css#Property> ;
+                            rdf:rest () ] ] ] ;
+    rdfs:range [ a rdfs:Resource,
+                owl:Class ;
+            owl:unionOf [ a rdfs:Resource ;
+                    rdf:first <http://www.w3id.org/hsu-aut/css#Skill> ;
+                    rdf:rest [ a rdfs:Resource ;
+                            rdf:first <http://www.w3id.org/hsu-aut/css#SkillParameter> ;
+                            rdf:rest () ] ] ] .
+
+<https://www.w3.org/2019/wot/td#SecurityScheme> a rdfs:Resource .
+
+<http://www.w3id.org/aau-ra/cssx#hasBoMItem> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#BoM> ;
+    rdfs:range <http://www.w3id.org/aau-ra/cssx#BoMItem> .
+
+<http://www.w3id.org/aau-ra/cssx#itemNumber> a rdfs:Resource,
+        owl:DatatypeProperty,
+        owl:FunctionalProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#BoMItem> ;
+    rdfs:range xsd:string .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#AIDSubmodel> a rdfs:Resource,
+        owl:Class ;
+    rdfs:subClassOf <http://www.w3id.org/aau-ra/resourceaas-validation#ResourceAASProjection> .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#SkillsSubmodel> a rdfs:Resource,
+        owl:Class ;
+    rdfs:subClassOf <http://www.w3id.org/aau-ra/resourceaas-validation#ResourceAASProjection> .
+
+<http://www.w3id.org/hsu-aut/css#Constraint> a rdfs:Resource,
+        owl:Class ;
+    rdfs:comment """Condition imposed on a capability that further details its applicability. 
+
+Notes:
+- A capability constraint can be formulated as one of the following three constraint types:
+▪ A precondition, i.e., a condition that must hold before a function can be executed.
+▪ A postcondition, i.e., a condition that must hold after a function has been executed.
+▪ An invariant, i.e., a condition that must hold during the execution of a
+function.
+- A capability constraint restricts the values of the properties associated with the respective capability.
+- A capability constraint can involve one or more properties""" ;
+    owl:disjointWith <http://www.w3id.org/hsu-aut/css#Resource>,
+        <http://www.w3id.org/hsu-aut/css#Service>,
+        <http://www.w3id.org/hsu-aut/css#ServiceOffer>,
+        <http://www.w3id.org/hsu-aut/css#ServiceProvider>,
+        <http://www.w3id.org/hsu-aut/css#ServiceRequester>,
+        <http://www.w3id.org/hsu-aut/css#Skill>,
+        <http://www.w3id.org/hsu-aut/css#SkillInterface>,
+        <http://www.w3id.org/hsu-aut/css#SkillParameter> .
+
+<http://www.w3id.org/hsu-aut/css#exposes> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#SkillInterface> ;
+    rdfs:range [ a rdfs:Resource,
+                owl:Class ;
+            owl:unionOf [ a rdfs:Resource ;
+                    rdf:first <http://www.w3id.org/hsu-aut/css#SkillParameter> ;
+                    rdf:rest [ a rdfs:Resource ;
+                            rdf:first <http://www.w3id.org/hsu-aut/css#SkillTrigger> ;
+                            rdf:rest [ a rdfs:Resource ;
+                                    rdf:first <http://www.w3id.org/hsu-aut/css#StateMachine> ;
+                                    rdf:rest () ] ] ] ] .
+
+<http://www.w3id.org/hsu-aut/css#isRealizedBySkill> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#Capability> ;
+    rdfs:range <http://www.w3id.org/hsu-aut/css#Skill> ;
+    rdfs:subPropertyOf <http://www.w3id.org/hsu-aut/css#isRealizedBy> .
+
+<http://www.w3id.org/hsu-aut/css#provides> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#Resource> .
+
+<http://www.w3id.org/hsu-aut/css#providesSkill> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#Resource> ;
+    rdfs:range <http://www.w3id.org/hsu-aut/css#Skill> ;
+    rdfs:subPropertyOf <http://www.w3id.org/hsu-aut/css#provides> .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#sourceSemanticId> a rdfs:Resource,
+        owl:DatatypeProperty ;
+    rdfs:domain [ a rdfs:Resource,
+                owl:Class ;
+            owl:unionOf [ a rdfs:Resource ;
+                    rdf:first <http://www.w3id.org/aau-ra/resourceaas-validation#ResourceAASProjection> ;
+                    rdf:rest [ a rdfs:Resource ;
+                            rdf:first <http://www.w3id.org/hsu-aut/css#Capability> ;
+                            rdf:rest [ a rdfs:Resource ;
+                                    rdf:first <http://www.w3id.org/hsu-aut/css#Skill> ;
+                                    rdf:rest () ] ] ] ] ;
+    rdfs:range xsd:string .
+
+<http://www.w3id.org/hsu-aut/css#providesCapability> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#Resource> ;
+    rdfs:range <http://www.w3id.org/hsu-aut/css#Capability> ;
+    rdfs:subPropertyOf <http://www.w3id.org/hsu-aut/css#provides> .
+
+<https://www.w3.org/2019/wot/td#InteractionAffordance> a rdfs:Resource .
+
+<http://www.w3id.org/aau-ra/cssx#dataReferencesInterface> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/aau-ra/cssx#OperationalData> ;
+    rdfs:range <http://www.w3id.org/aau-ra/cssx#ResourceInterface> .
+
+xsd:dateTime a rdfs:Resource .
+
+xsd:decimal a rdfs:Resource .
+
+xsd:anyURI a rdfs:Resource .
+
+<http://www.w3id.org/hsu-aut/css#ServiceOffer> a rdfs:Resource,
+        owl:Class ;
+    rdfs:comment """Proposal for a binding contract from the Service Provider to execute one or more particular services that a ServiceRequester can receive and accept.
+
+Notes:
+- A ServiceOffer should determine the commercial aspects of the service provision
+and may remain valid for a certain period of time.
+- An Offer may consist of partial offers proposed by different service providers""" ;
+    owl:disjointWith <http://www.w3id.org/hsu-aut/css#ServiceProvider>,
+        <http://www.w3id.org/hsu-aut/css#ServiceRequester>,
+        <http://www.w3id.org/hsu-aut/css#Skill>,
+        <http://www.w3id.org/hsu-aut/css#SkillInterface>,
+        <http://www.w3id.org/hsu-aut/css#SkillParameter>,
+        <http://www.w3id.org/hsu-aut/css#StateMachine> .
+
+"1"^^xsd:nonNegativeInteger a rdfs:Resource .
+
+<http://www.w3id.org/aau-ra/resourceaas-validation#hasSubmodel> a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain <http://www.w3id.org/hsu-aut/css#Resource> ;
+    rdfs:range <http://www.w3id.org/aau-ra/resourceaas-validation#ResourceAASProjection> .
+
+owl:FunctionalProperty a rdfs:Resource .
+
+<http://www.w3id.org/hsu-aut/css#SkillParameter> a rdfs:Resource,
+        owl:Class ;
+    rdfs:comment """Data unit to configure, control and monitor the execution of a skill.
+
+Notes:
+- Skill parameters might be used as in- /output parameters
+- Skill parameters might be used as results
+- Skill parameters might have a relation or be equivalent to capability properties""" ;
+    owl:disjointWith <http://www.w3id.org/hsu-aut/css#StateMachine> .
+
+rdf:langString a rdfs:Resource .
+
+() a rdfs:Resource .
+
+owl:Restriction a rdfs:Resource .
+
+owl:DatatypeProperty a rdfs:Resource .
+
+xsd:string a rdfs:Resource .
+
+owl:ObjectProperty a rdfs:Resource .
+
+owl:Class a rdfs:Resource .
+
+[] a rdfs:Resource,
+        owl:Class ;
+    rdfs:subClassOf [ a rdfs:Resource,
+                owl:Restriction ;
+            owl:onProperty <http://www.w3id.org/hsu-aut/css#providesCapability> ;
+            owl:someValuesFrom <http://www.w3id.org/hsu-aut/css#Capability> ] ;
+    owl:intersectionOf [ a rdfs:Resource ;
+            rdf:first <http://www.w3id.org/hsu-aut/css#Resource> ;
+            rdf:rest [ a rdfs:Resource ;
+                    rdf:first [ a rdfs:Resource,
+                                owl:Restriction ;
+                            owl:onProperty <http://www.w3id.org/hsu-aut/css#providesSkill> ;
+                            owl:someValuesFrom <http://www.w3id.org/hsu-aut/css#Skill> ] ;
+                    rdf:rest () ] ] .
+
+[] a rdfs:Resource,
+        owl:Class ;
+    rdfs:subClassOf [ a rdfs:Resource,
+                owl:Restriction ;
+            owl:onProperty <http://www.w3id.org/hsu-aut/css#providesSkill> ;
+            owl:someValuesFrom <http://www.w3id.org/hsu-aut/css#Skill> ] ;
+    owl:intersectionOf [ a rdfs:Resource ;
+            rdf:first <http://www.w3id.org/hsu-aut/css#Resource> ;
+            rdf:rest [ a rdfs:Resource ;
+                    rdf:first [ a rdfs:Resource,
+                                owl:Restriction ;
+                            owl:onProperty <http://www.w3id.org/hsu-aut/css#providesCapability> ;
+                            owl:someValuesFrom <http://www.w3id.org/hsu-aut/css#Capability> ] ;
+                    rdf:rest () ] ] .
+
+[] a rdfs:Resource,
+        owl:Class ;
+    rdfs:subClassOf [ a rdfs:Resource,
+                owl:Restriction ;
+            owl:onProperty <http://www.w3id.org/aau-ra/resourceaas-validation#hasSubmodel> ;
+            owl:someValuesFrom <http://www.w3id.org/aau-ra/resourceaas-validation#AIDSubmodel> ] ;
+    owl:intersectionOf [ a rdfs:Resource ;
+            rdf:first <http://www.w3id.org/hsu-aut/css#Resource> ;
+            rdf:rest [ a rdfs:Resource ;
+                    rdf:first [ a rdfs:Resource,
+                                owl:Restriction ;
+                            owl:onProperty <http://www.w3id.org/aau-ra/resourceaas-validation#hasSubmodel> ;
+                            owl:someValuesFrom <http://www.w3id.org/aau-ra/resourceaas-validation#OperationalDataSubmodel> ] ;
+                    rdf:rest () ] ] .
+
+[] a rdfs:Resource,
+        owl:Class ;
+    rdfs:subClassOf [ a rdfs:Resource,
+                owl:Restriction ;
+            owl:onProperty <http://www.w3id.org/aau-ra/resourceaas-validation#hasSubmodel> ;
+            owl:someValuesFrom <http://www.w3id.org/aau-ra/resourceaas-validation#AIDSubmodel> ] ;
+    owl:intersectionOf [ a rdfs:Resource ;
+            rdf:first <http://www.w3id.org/hsu-aut/css#Resource> ;
+            rdf:rest [ a rdfs:Resource ;
+                    rdf:first [ a rdfs:Resource,
+                                owl:Restriction ;
+                            owl:onProperty <http://www.w3id.org/aau-ra/resourceaas-validation#hasSubmodel> ;
+                            owl:someValuesFrom <http://www.w3id.org/aau-ra/resourceaas-validation#ParametersSubmodel> ] ;
+                    rdf:rest () ] ] .
+
+[] a rdfs:Resource,
+        owl:Class ;
+    rdfs:subClassOf [ a rdfs:Resource,
+                owl:Restriction ;
+            owl:onProperty <http://www.w3id.org/aau-ra/resourceaas-validation#hasSubmodel> ;
+            owl:someValuesFrom <http://www.w3id.org/aau-ra/resourceaas-validation#SkillsSubmodel> ] ;
+    owl:intersectionOf [ a rdfs:Resource ;
+            rdf:first <http://www.w3id.org/hsu-aut/css#Resource> ;
+            rdf:rest [ a rdfs:Resource ;
+                    rdf:first [ a rdfs:Resource,
+                                owl:Restriction ;
+                            owl:onProperty <http://www.w3id.org/aau-ra/resourceaas-validation#hasSubmodel> ;
+                            owl:someValuesFrom <http://www.w3id.org/aau-ra/resourceaas-validation#CapabilitiesSubmodel> ] ;
+                    rdf:rest () ] ] .
+
+[] a rdfs:Resource,
+        owl:Class ;
+    rdfs:subClassOf [ a rdfs:Resource,
+                owl:Restriction ;
+            owl:onProperty <http://www.w3id.org/aau-ra/resourceaas-validation#hasSubmodel> ;
+            owl:someValuesFrom <http://www.w3id.org/aau-ra/resourceaas-validation#CapabilitiesSubmodel> ] ;
+    owl:intersectionOf [ a rdfs:Resource ;
+            rdf:first <http://www.w3id.org/hsu-aut/css#Resource> ;
+            rdf:rest [ a rdfs:Resource ;
+                    rdf:first [ a rdfs:Resource,
+                                owl:Restriction ;
+                            owl:onProperty <http://www.w3id.org/aau-ra/resourceaas-validation#hasSubmodel> ;
+                            owl:someValuesFrom <http://www.w3id.org/aau-ra/resourceaas-validation#SkillsSubmodel> ] ;
+                    rdf:rest () ] ] .
+
+[] a rdfs:Resource,
+        owl:Class ;
+    rdfs:subClassOf [ a rdfs:Resource,
+                owl:Restriction ;
+            owl:onProperty <http://www.w3id.org/aau-ra/resourceaas-validation#hasSubmodel> ;
+            owl:someValuesFrom <http://www.w3id.org/aau-ra/resourceaas-validation#AIDSubmodel> ] ;
+    owl:intersectionOf [ a rdfs:Resource ;
+            rdf:first <http://www.w3id.org/hsu-aut/css#Resource> ;
+            rdf:rest [ a rdfs:Resource ;
+                    rdf:first [ a rdfs:Resource,
+                                owl:Restriction ;
+                            owl:onProperty <http://www.w3id.org/aau-ra/resourceaas-validation#hasSubmodel> ;
+                            owl:someValuesFrom <http://www.w3id.org/aau-ra/resourceaas-validation#SkillsSubmodel> ] ;
+                    rdf:rest () ] ] .
+
+_:n1a27d560ed0d4ea491656a1d5c802b1db38 a rdfs:Resource,
+        owl:Restriction ;
+    owl:minCardinality "1"^^xsd:nonNegativeInteger ;
+    owl:onProperty <http://www.w3id.org/aau-ra/resourceaas-validation#sourceSemanticId> .
+
+_:n1a27d560ed0d4ea491656a1d5c802b1db40 a rdfs:Resource,
+        owl:Restriction ;
+    owl:minCardinality "1"^^xsd:nonNegativeInteger ;
+    owl:onProperty <http://www.w3id.org/hsu-aut/css#isRealizedBySkill> .
+
+_:n2979bea82b7944d5a3300af067f4ca24b2 a rdfs:Resource,
+        owl:Restriction ;
+    owl:onProperty <http://www.w3id.org/aau-ra/cssx#hasBoMItem> ;
+    owl:someValuesFrom <http://www.w3id.org/aau-ra/cssx#BoMItem> .
+
+_:n2979bea82b7944d5a3300af067f4ca24b3 a rdfs:Resource,
+        owl:Restriction ;
+    owl:minCardinality "1"^^xsd:nonNegativeInteger ;
+    owl:onProperty <http://www.w3id.org/aau-ra/cssx#itemNumber> .
+
+_:n3f0afda306c242f289c94b05ffbe242cb2 a rdfs:Resource,
+        owl:Restriction ;
+    owl:onProperty <http://www.w3id.org/aau-ra/cssx#dataReferencesInterface> ;
+    owl:someValuesFrom <http://www.w3id.org/aau-ra/cssx#ResourceInterface> .
+

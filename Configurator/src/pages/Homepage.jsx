@@ -200,7 +200,7 @@ export default function Homepage() {
           <div className="external-indicator">External Link</div>
         </a>
         {/* AAS */}
-        <a href={`http://${serverIp}:3000`} target="_blank" rel="noopener noreferrer" className="service-card with-bg-image external">
+        <a href={`http://${serverIp}:3001`} target="_blank" rel="noopener noreferrer" className="service-card with-bg-image external">
           <img src="/BasyxAAS.jpeg" alt="" className="card-image-bg" />
           <div className="card-content">
             <div className="card-icon"></div>
