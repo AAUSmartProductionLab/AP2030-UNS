@@ -303,7 +303,7 @@ owl2sh-semi-closed:rdfsRange2shClassOrDatatype
         FILTER(?range != rdfs:Literal) .
 				BIND (
           IF(
-            ?range IN (xsd:boolean, xsd:string, xsd:date, xsd:dateTime, xsd:integer,xsd:integer, xsd:float, xsd:double, xsd:duration, xsd:anyURI, rdf:langString),
+            ?range IN (xsd:boolean, xsd:string, xsd:date, xsd:dateTime, xsd:integer, xsd:float, xsd:double, xsd:decimal, xsd:long, xsd:short, xsd:byte, xsd:nonNegativeInteger, xsd:positiveInteger, xsd:unsignedInt, xsd:unsignedLong, xsd:duration, xsd:anyURI, xsd:base64Binary, xsd:hexBinary, xsd:time, xsd:gYear, xsd:gYearMonth, rdf:langString),
             sh:datatype,
             sh:class
           ) AS ?parameter) .
@@ -756,7 +756,7 @@ ex:ConstitutionalOwner
           ?restriction owl:someValuesFrom ?someValuesFrom .
           ?someValuesFrom owl:allValuesFrom ?allValuesFrom .
           FILTER isIRI(?allValuesFrom) .
-          FILTER (!(?allValuesFrom IN (xsd:boolean, xsd:string, xsd:date, xsd:dateTime, xsd:integer,xsd:integer, xsd:float, xsd:double, xsd:duration, xsd:anyURI))) .
+          FILTER (!(?allValuesFrom IN (xsd:boolean, xsd:string, xsd:date, xsd:dateTime, xsd:integer, xsd:float, xsd:double, xsd:decimal, xsd:long, xsd:short, xsd:byte, xsd:nonNegativeInteger, xsd:positiveInteger, xsd:unsignedInt, xsd:unsignedLong, xsd:duration, xsd:anyURI, xsd:base64Binary, xsd:hexBinary, xsd:time, xsd:gYear, xsd:gYearMonth, rdf:langString))) .
           FILTER isBlank(?someValuesFrom) .
         }
         ?restriction owl:onProperty ?property .
@@ -814,7 +814,7 @@ owl2sh-semi-closed:owlSomeValuesFromIRI2dashHasValueWithClass
         ?restriction owl:someValuesFrom ?someValuesFrom .
         ?restriction owl:onProperty ?property .
         FILTER (isIRI(?someValuesFrom))
-        FILTER (!(?someValuesFrom IN (xsd:boolean, xsd:string, xsd:date, xsd:dateTime, xsd:integer,xsd:integer, xsd:float, xsd:double, xsd:duration, xsd:anyURI))) .
+        FILTER (!(?someValuesFrom IN (xsd:boolean, xsd:string, xsd:date, xsd:dateTime, xsd:integer, xsd:float, xsd:double, xsd:decimal, xsd:long, xsd:short, xsd:byte, xsd:nonNegativeInteger, xsd:positiveInteger, xsd:unsignedInt, xsd:unsignedLong, xsd:duration, xsd:anyURI, xsd:base64Binary, xsd:hexBinary, xsd:time, xsd:gYear, xsd:gYearMonth, rdf:langString))) .
         FILTER NOT EXISTS { ?property rdfs:range ?someValuesFrom } .
         BIND (owl2sh-semi-closed:getPropertyShape(?property, $this) AS ?propertyShape) .
       }
@@ -844,7 +844,7 @@ owl2sh-semi-closed:owlAllValuesFrom2shClassOrDatatype
         BIND (owl2sh-semi-closed:getPropertyShape(?property, $this) AS ?propertyShape) .
         BIND (
           IF(
-            (?allValuesFrom IN (xsd:boolean, xsd:string, xsd:date, xsd:dateTime, xsd:integer,xsd:integer, xsd:float, xsd:double, xsd:duration, xsd:anyURI)),
+            (?allValuesFrom IN (xsd:boolean, xsd:string, xsd:date, xsd:dateTime, xsd:integer, xsd:float, xsd:double, xsd:decimal, xsd:long, xsd:short, xsd:byte, xsd:nonNegativeInteger, xsd:positiveInteger, xsd:unsignedInt, xsd:unsignedLong, xsd:duration, xsd:anyURI, xsd:base64Binary, xsd:hexBinary, xsd:time, xsd:gYear, xsd:gYearMonth, rdf:langString)),
             sh:datatype,
             sh:class
           )
