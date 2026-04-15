@@ -1,6 +1,6 @@
-imaLoadingSystem2AAS:
-    idShort: imaLoadingSystem2AAS
-    id: 'https://smartproductionlab.aau.dk/aas/imaLoadingSystem2AAS'
+imaLoadingSystemAAS:
+    idShort: imaLoadingSystemAAS
+    id: 'https://smartproductionlab.aau.dk/aas/imaLoadingSystemAAS'
     globalAssetId: 'https://smartproductionlab.aau.dk/assets/ZDNlYmVhZjItZTAyMC00NWMwLTg5NjEtODRiNTFkOWE0NzVl2'
     derivedFrom: 'https://smartproductionlab.aau.dk/aas/templates/resource'
     assetType: 'https://smartproductionlab.aau.dk/Resource/CPPM/LoadingSystem/imaLoadingSystem'
@@ -132,16 +132,12 @@ imaLoadingSystem2AAS:
                             externalRef: "https://smartproductionlab.aau.dk/Product"
                     transformation: 'parameter1.Variables.OccupationState.ProcessQueue[0] == parameter2.Parameters.Uuid'
 
-                -   key: "OccupationLoad"
-                    type: "function"
-                    semantic_id: "https://smartproductionlab.aau.dk/PDDL/Term/Functions/OccupationLoad"
+                -   key: "Free"
+                    semantic_id: "https://smartproductionlab.aau.dk/PDDL/Term/Predicates/Free"
                     parameters:
                         -   name: "Resource"
                             externalRef: "https://smartproductionlab.aau.dk/Resource"
-                        -   name: "Product"
-                            externalRef: "https://smartproductionlab.aau.dk/Product"
-                    value: 0.0
-                    transformation: 'size(parameter1.Variables.OccupationState.ProcessQueue)'
+                    transformation: 'parameter1.Variables.OccupationState.ProcessQueue == []'
 
             Actions:
                 -   key: "Loading"
@@ -154,10 +150,7 @@ imaLoadingSystem2AAS:
                             externalRef: "https://smartproductionlab.aau.dk/Product"
                         -   name: "TransportSystem"
                             externalRef: "https://smartproductionlab.aau.dk/CPS/Transport"
-                    duration:
-                        =:
-                            right:
-                                const: 5.0
+                            
                     conditions:
                         at_start:
                             - predicate:
@@ -168,13 +161,18 @@ imaLoadingSystem2AAS:
                                 parameters: [0, 1]
                     effects:
                         at_end:
-                            - predicate:
-                                external: "https://smartproductionlab.aau.dk/PDDL/Term/Predicates/On"
-                                parameters: [1, 2]
-                            - predicate:
-                                external: "https://smartproductionlab.aau.dk/PDDL/Term/Predicates/At"
-                                parameters: [1, 0]
-
+                            oneOf:
+                                - and:
+                                    - predicate:
+                                        external: "https://smartproductionlab.aau.dk/PDDL/Term/Predicates/On"
+                                        parameters: [1, 2]
+                                    - predicate:
+                                        external: "https://smartproductionlab.aau.dk/PDDL/Term/Predicates/At"
+                                        parameters: [1, 0]
+                                - not:
+                                    - predicate:
+                                        external: "https://smartproductionlab.aau.dk/PDDL/Term/Predicates/On"
+                                        parameters: [1, 2]
                 -   key: "Occupy"
                     SkillReference: "Occupy"
                     parameters:
@@ -197,6 +195,11 @@ imaLoadingSystem2AAS:
                             - predicate:
                                 ref: "Occupied"
                                 parameters: [0, 1]
+                            - not:
+                                predicate:
+                                    ref: "Free"
+                                    parameters: [0]
+
 
                 -   key: "Release"
                     SkillReference: "Release"
@@ -216,137 +219,35 @@ imaLoadingSystem2AAS:
                                 parameters: [0, 1]
                     effects:
                         at_end:
-                            - predicate:
-                                ref: "Occupied"
-                                parameters: [0, 1]
-
-            Processes:
-                -   key: "MaintainOccupation"
-                    parameters:
-                        -   name: "LoadingSystem"
-                            modelRef:
-                                - AAS: "self"
-                        -   name: "Product"
-                            modelRef:
-                                - AAS: "https://smartproductionlab.aau.dk/aas/MIM8AAS"
-                    precondition:
-                        - predicate:
-                            ref: "Operational"
-                            parameters: [0]
-                        - predicate:
-                            ref: "Occupied"
-                            parameters: [0, 1]
-                    effect:
-                        continuous:
-                            - increase:
-                                function:
-                                    ref: "OccupationLoad"
+                            - not:
+                                - predicate:
+                                    ref: "Occupied"
                                     parameters: [0, 1]
-                                value: 1.0
-
-            Events:
-                -   key: "AutoReleaseOnStop"
-                    parameters:
-                        -   name: "LoadingSystem"
-                            modelRef:
-                                - AAS: "self"
-                        -   name: "Product"
-                            modelRef:
-                                - AAS: "https://smartproductionlab.aau.dk/aas/MIM8AAS"
-                    precondition:
-                        - not:
-                            predicate:
-                                ref: "Operational"
+                            - predicate:
+                                ref: "Free"
                                 parameters: [0]
-                        - predicate:
-                            ref: "Occupied"
-                            parameters: [0, 1]
-                    effect:
-                        - not:
-                            predicate:
-                                ref: "Occupied"
-                                parameters: [0, 1]
-
-            Constraints:
-                -   always:
-                        - predicate:
-                            ref: "Operational"
-                            parameters: [0]
-
-                -   at-most-once:
-                        - predicate:
-                            ref: "Occupied"
-                            parameters: [0, 1]
 
         Problem:
             Objects:
-                -   name: "imaLoadingSystem2"
+                -   name: "imaLoadingSystem"
                     modelRef:
                         - AAS: "self"
-                -   name: "MIM8"
-                    modelRef:
-                        - AAS: "https://smartproductionlab.aau.dk/aas/MIM8AAS"
 
             Init:
                 -   predicate:
                     ref: "Operational"
                     parameters: [0]
-                - not:
-                    -   predicate:
-                        ref: "Occupied"
-                        parameters: [0, 1]
+                -   predicate:
+                    ref: "Free"
+                    parameters: [0]
 
             Goal:
                 - predicate:
                     ref: "Operational"
                     parameters: [0]
-                - not:
-                    - predicate:
-                        ref: "Occupied"
-                        parameters: [0, 1]
-                - preference:
-                    name: "goal_operational"
-                    term:
-                        predicate:
-                            ref: "Operational"
-                            parameters: [0]
-
-            Constraints:
-                -   always:
-                        - predicate:
-                            ref: "Operational"
-                            parameters: [0]
-
-                -   sometime:
-                        - predicate:
-                            ref: "Occupied"
-                            parameters: [0, 1]
-
-                - preference:
-                    name: "avoid_multiple_occupation"
-                    term:
-                        at-most-once:
-                            - predicate:
-                                ref: "Occupied"
-                                parameters: [0, 1]
-
-            Metric:
-                optimize: "minimize"
-                expression:
-                    - "+":
-                        - "*":
-                            - function:
-                                preference: "goal_operational"
-                            - const:
-                                name: "Weight"
-                                value: 10
-                        - "*":
-                            - function:
-                                preference: "avoid_multiple_occupation"
-                            - const:
-                                name: "Weight"
-                                value: 5
-
+                -   predicate:
+                    ref: "Free"
+                    parameters: [0]
     Skills:
         -   key: "Loading"
             description: "Loading function for pharmaceutical primary packaging"
