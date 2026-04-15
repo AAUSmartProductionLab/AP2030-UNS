@@ -211,12 +211,18 @@ def add_nameplate_mapping(graph: Graph, resource: URIRef, nameplate_submodel: di
         "URIOfTheProduct": (CSSX.uriOfTheProduct, None),
         "ManufacturerProductDesignation": (CSSX.manufacturerProductDesignation, None),
         "ManufacturerProductFamily": (CSSX.manufacturerProductFamily, None),
+        "ManufacturerProductRoot": (CSSX.manufacturerProductRoot, None),
+        "ManufacturerProductType": (CSSX.manufacturerProductType, None),
         "ManufacturerArticleNumber": (CSSX.productArticleNumberOfManufacturer, None),
         "SerialNumber": (CSSX.serialNumber, None),
+        "BatchNumber": (CSSX.batchNumber, None),
         "YearOfConstruction": (CSSX.yearOfConstruction, None),
         "DateOfManufacture": (CSSX.dateOfManufacture, None),
         "HardwareVersion": (CSSX.hardwareVersion, None),
+        "FirmwareVersion": (CSSX.firmwareVersion, None),
         "SoftwareVersion": (CSSX.softwareVersion, None),
+        "CountryOfOrigin": (CSSX.countryOfOrigin, None),
+        "CompanyLogo": (CSSX.companyLogoUri, XSD.anyURI),
     }
 
     for element in nameplate_submodel.get("submodelElements", []):
@@ -247,12 +253,14 @@ def add_nameplate_mapping(graph: Graph, resource: URIRef, nameplate_submodel: di
         if not mapped:
             continue
 
-        predicate, _ = mapped
+        predicate, forced_datatype = mapped
         if model_type == "Property":
             value = element.get("value")
             if value not in (None, ""):
                 value_str = str(value)
-                if predicate == CSSX.yearOfConstruction:
+                if forced_datatype == XSD.anyURI:
+                    graph.add((resource, predicate, Literal(value_str, datatype=XSD.anyURI)))
+                elif predicate == CSSX.yearOfConstruction:
                     graph.add((resource, predicate, Literal(value_str)))
                 elif predicate == CSSX.dateOfManufacture:
                     graph.add((resource, predicate, Literal(value_str, datatype=XSD.date)))
@@ -264,7 +272,8 @@ def add_nameplate_mapping(graph: Graph, resource: URIRef, nameplate_submodel: di
             entry = first_multilang_entry(element)
             if entry:
                 text, language = entry
-                if language and predicate in {CSSX.manufacturerProductDesignation, CSSX.manufacturerProductFamily}:
+                if language and predicate in {CSSX.manufacturerProductDesignation, CSSX.manufacturerProductFamily,
+                                              CSSX.manufacturerProductRoot, CSSX.manufacturerProductType}:
                     graph.add((resource, predicate, Literal(text, lang=language)))
                 else:
                     graph.add((resource, predicate, Literal(text)))
@@ -365,14 +374,6 @@ def extract_skills(graph: Graph, resource: URIRef, skills_submodel: dict, softwa
             graph.add((skill_uri, AASV.sourceSemanticId,
                       Literal(semantic_from_property)))
 
-        display_name = None
-        for child in element.get("value", []):
-            if isinstance(child, dict) and child.get("idShort") == "DisplayName":
-                display_name = first_multilang_text(child)
-                break
-        if display_name:
-            graph.add((skill_uri, RDFS.label, Literal(display_name)))
-
         skill_interface = URIRef(
             f"{resource}#skill-interface-{normalize_local_name(skill_idshort)}")
         graph.add((skill_interface, RDF.type, CSS.SkillInterface))
@@ -389,7 +390,90 @@ def extract_skills(graph: Graph, resource: URIRef, skills_submodel: dict, softwa
             graph.add(
                 (skill_uri, AASV.sourceSubmodelSemanticId, Literal(semantic)))
 
+        _extract_skill_sub_elements(graph, skill_uri, skill_idshort, element)
+
     return skill_by_idshort
+
+
+def _extract_skill_sub_elements(graph: Graph, skill_uri: URIRef, skill_idshort: str, element: dict) -> None:
+    """Extract PPR-specific skill sub-structures (Condition, Effects, Predicate) and standard CSS SkillParameters."""
+    _PPR_CONDITION_SEMANTIC = "https://smartproductionlab.aau.dk/PPR/SkillDescription/Condition"
+    _PPR_EFFECTS_SEMANTIC = "https://smartproductionlab.aau.dk/PPR/SkillDescription/Effects"
+    _PPR_PREDICATE_SEMANTIC = "https://smartproductionlab.aau.dk/PPR/SkillDescription/Predicate"
+
+    display_name = None
+    for child in element.get("value", []):
+        if not isinstance(child, dict):
+            continue
+        child_idshort = str(child.get("idShort", "")).strip()
+        child_model_type = child.get("modelType", "")
+        child_semantic = first_semantic_id(child)
+
+        if child_idshort == "DisplayName" and child_model_type == "MultiLanguageProperty":
+            display_name = first_multilang_text(child)
+
+        elif child_model_type == "SubmodelElementCollection":
+            child_idshort_lower = child_idshort.lower()
+
+            # Standard CSS: InputParameter / OutputParameter
+            if "inputparameter" in child_idshort_lower or "outputparameter" in child_idshort_lower:
+                param_type = CSS.InputParameter if "input" in child_idshort_lower else CSS.OutputParameter
+                param_uri = URIRef(f"{skill_uri}#param-{normalize_local_name(child_idshort)}")
+                graph.add((param_uri, RDF.type, CSS.SkillParameter))
+                graph.add((param_uri, RDF.type, param_type))
+                graph.add((skill_uri, CSS.hasParameter, param_uri))
+                graph.add((param_uri, AASV.sourceIdShort, Literal(child_idshort)))
+                continue
+
+            # Standard CSS: Trigger
+            if "trigger" in child_idshort_lower:
+                trigger_uri = URIRef(f"{skill_uri}#trigger-{normalize_local_name(child_idshort)}")
+                graph.add((trigger_uri, RDF.type, CSS.SkillTrigger))
+                graph.add((skill_uri, CSS.hasTrigger, trigger_uri))
+                graph.add((trigger_uri, AASV.sourceIdShort, Literal(child_idshort)))
+                continue
+
+            # PPR-specific: Condition
+            is_condition = (child_idshort == "Condition" or
+                            (child_semantic and "Condition" in child_semantic))
+            if is_condition:
+                cond_uri = URIRef(f"{skill_uri}#condition-{normalize_local_name(child_idshort)}")
+                graph.add((cond_uri, RDF.type, CSSX.SkillCondition))
+                graph.add((skill_uri, CSSX.hasSkillCondition, cond_uri))
+                graph.add((cond_uri, AASV.sourceIdShort, Literal(child_idshort)))
+                if child_semantic:
+                    graph.add((cond_uri, AASV.sourceSemanticId, Literal(child_semantic)))
+                continue
+
+            # PPR-specific: Effects
+            is_effects = (child_idshort == "Effects" or
+                          (child_semantic and "Effects" in child_semantic))
+            if is_effects:
+                effect_uri = URIRef(f"{skill_uri}#effects-{normalize_local_name(child_idshort)}")
+                graph.add((effect_uri, RDF.type, CSSX.SkillEffect))
+                graph.add((skill_uri, CSSX.hasSkillEffect, effect_uri))
+                graph.add((effect_uri, AASV.sourceIdShort, Literal(child_idshort)))
+                if child_semantic:
+                    graph.add((effect_uri, AASV.sourceSemanticId, Literal(child_semantic)))
+                continue
+
+            # PPR-specific: Predicate (e.g. Predicate_IsExecutable)
+            is_predicate = ("predicate" in child_idshort_lower or
+                            (child_semantic and "Predicate" in child_semantic))
+            if is_predicate:
+                pred_uri = URIRef(f"{skill_uri}#predicate-{normalize_local_name(child_idshort)}")
+                graph.add((pred_uri, RDF.type, CSSX.SkillPredicate))
+                graph.add((skill_uri, CSSX.hasSkillPredicate, pred_uri))
+                graph.add((pred_uri, AASV.sourceIdShort, Literal(child_idshort)))
+                if child_semantic:
+                    graph.add((pred_uri, AASV.sourceSemanticId, Literal(child_semantic)))
+                body = element_property_value(child, "BodyExpression")
+                if body:
+                    graph.add((pred_uri, RDFS.comment, Literal(body)))
+                continue
+
+    if display_name:
+        graph.add((skill_uri, RDFS.label, Literal(display_name)))
 
 
 def _add_bom_mapping(graph: Graph, bom_submodel_uri: URIRef, bom_submodel: dict) -> list[URIRef]:
@@ -475,6 +559,151 @@ def _link_capabilities_to_skills(
                 graph.add((capability_uri, CSS.isRealizedBySkill, skill_uri))
 
 
+def add_aid_mapping(graph: Graph, resource: URIRef, aid_submodel: dict, software_interface: URIRef) -> None:
+    """Extract AID interface metadata into RDF (endpoint base URI, content type, interaction names)."""
+    for interface_element in aid_submodel.get("submodelElements", []):
+        if not isinstance(interface_element, dict):
+            continue
+        if interface_element.get("modelType") != "SubmodelElementCollection":
+            continue
+
+        interface_idshort = str(interface_element.get("idShort", "")).strip()
+        interface_safe = normalize_local_name(interface_idshort) if interface_idshort else "interface"
+        interface_uri = URIRef(f"{software_interface}#{interface_safe}")
+        graph.add((interface_uri, RDF.type, CSSX.SoftwareInterface))
+        graph.add((resource, CSSX.hasResourceInterface, interface_uri))
+
+        for child in interface_element.get("value", []):
+            if not isinstance(child, dict):
+                continue
+            child_idshort = child.get("idShort", "")
+
+            if child.get("modelType") == "Property" and child_idshort == "title":
+                title_val = child.get("value")
+                if title_val:
+                    graph.add((interface_uri, CSSX.interfaceTitle, Literal(str(title_val))))
+
+            elif child_idshort == "EndpointMetadata" and child.get("modelType") == "SubmodelElementCollection":
+                for meta in child.get("value", []):
+                    if not isinstance(meta, dict) or meta.get("modelType") != "Property":
+                        continue
+                    meta_idshort = meta.get("idShort", "")
+                    meta_val = meta.get("value")
+                    if not meta_val:
+                        continue
+                    if meta_idshort == "base":
+                        graph.add((interface_uri, CSSX.endpointBaseUri, Literal(str(meta_val), datatype=XSD.anyURI)))
+                    elif meta_idshort == "contentType":
+                        graph.add((interface_uri, CSSX.interfaceContentType, Literal(str(meta_val))))
+
+            elif child_idshort == "InteractionMetadata" and child.get("modelType") == "SubmodelElementCollection":
+                for category_elem in child.get("value", []):
+                    if not isinstance(category_elem, dict):
+                        continue
+                    if category_elem.get("modelType") != "SubmodelElementCollection":
+                        continue
+                    category_name = str(category_elem.get("idShort", "")).strip()
+                    for interaction in category_elem.get("value", []):
+                        if not isinstance(interaction, dict):
+                            continue
+                        if interaction.get("modelType") != "SubmodelElementCollection":
+                            continue
+                        interaction_name = str(interaction.get("idShort", "")).strip()
+                        if not interaction_name:
+                            continue
+                        interaction_safe = normalize_local_name(interaction_name)
+                        interaction_uri = URIRef(f"{interface_uri}#interaction-{interaction_safe}")
+                        graph.add((interaction_uri, RDF.type, CSSX.InteractionMetadata))
+                        graph.add((interface_uri, CSSX.hasInteractionMetadata, interaction_uri))
+                        graph.add((interaction_uri, CSSX.interactionName, Literal(interaction_name)))
+                        graph.add((interaction_uri, CSSX.interactionCategory, Literal(category_name)))
+
+
+def add_operational_data_mapping(graph: Graph, resource: URIRef, operational_data_uri: URIRef,
+                                 opdata_submodel: dict, software_interface: URIRef | None) -> None:
+    """Extract OperationalData submodel elements as DataConcept metadata nodes.
+
+    DataConcept nodes carry source idShort and semanticId so SHACL rules can verify
+    which data points the AAS declares.  We intentionally avoid using properties with
+    domain ``MeasurementData`` (e.g. ``measurementTimestamp``, ``hasMeasuredValue``)
+    because RDFS domain inference would retype the DataConcept as MeasurementData and
+    trigger cardinality constraints that don't apply to a pure metadata projection.
+    """
+    for element in opdata_submodel.get("submodelElements", []):
+        if not isinstance(element, dict):
+            continue
+        if element.get("modelType") != "SubmodelElementCollection":
+            continue
+
+        elem_idshort = str(element.get("idShort", "")).strip()
+        if not elem_idshort:
+            continue
+
+        safe = normalize_local_name(elem_idshort)
+        concept_uri = URIRef(f"{operational_data_uri}#{safe}")
+        graph.add((concept_uri, RDF.type, CSSX.DataConcept))
+        graph.add((operational_data_uri, CSSX.hasDataConcept, concept_uri))
+        graph.add((concept_uri, AASV.sourceIdShort, Literal(elem_idshort)))
+
+        semantic = first_semantic_id(element)
+        if semantic:
+            graph.add((concept_uri, AASV.sourceSemanticId, Literal(semantic)))
+
+
+def add_parameters_mapping(graph: Graph, resource: URIRef, parameter_uri: URIRef, parameters_submodel: dict) -> None:
+    """Extract Parameters submodel elements into ResourceParameter RDF nodes."""
+    for element in parameters_submodel.get("submodelElements", []):
+        if not isinstance(element, dict):
+            continue
+        if element.get("modelType") != "SubmodelElementCollection":
+            continue
+
+        param_idshort = str(element.get("idShort", "")).strip()
+        if not param_idshort:
+            continue
+
+        safe = normalize_local_name(param_idshort)
+        param_node = URIRef(f"{parameter_uri}#{safe}")
+        graph.add((param_node, RDF.type, CSSX.ResourceParameter))
+        graph.add((resource, CSSX.hasResourceParameter, param_node))
+        graph.add((param_node, AASV.sourceIdShort, Literal(param_idshort)))
+
+        semantic = first_semantic_id(element)
+        if semantic:
+            graph.add((param_node, AASV.sourceSemanticId, Literal(semantic)))
+
+        for child in element.get("value", []):
+            if not isinstance(child, dict):
+                continue
+            child_idshort = child.get("idShort", "")
+            child_model_type = child.get("modelType", "")
+
+            if child_idshort == "DisplayName" and child_model_type == "MultiLanguageProperty":
+                entry = first_multilang_entry(child)
+                if entry:
+                    text, language = entry
+                    if language:
+                        graph.add((param_node, CSSX.parameterName, Literal(text, lang=language)))
+                    else:
+                        graph.add((param_node, CSSX.parameterName, Literal(text)))
+
+            elif child_model_type == "Property":
+                prop_val = child.get("value")
+                if prop_val in (None, ""):
+                    continue
+                if child_idshort == "ParameterValue":
+                    graph.add((param_node, CSSX.parameterValue, Literal(str(prop_val))))
+                elif child_idshort == "Unit":
+                    graph.add((param_node, CSSX.parameterUnit, Literal(str(prop_val))))
+                elif child_idshort == "IsReadOnly":
+                    bool_val = str(prop_val).lower() in ("true", "1", "yes")
+                    graph.add((param_node, CSSX.isReadOnly, Literal(bool_val, datatype=XSD.boolean)))
+                elif child_idshort == "Scope":
+                    graph.add((param_node, CSSX.scopeValue, Literal(str(prop_val))))
+                elif child_idshort == "ParameterValueType":
+                    graph.add((param_node, CSSX.parameterValueType, Literal(str(prop_val))))
+
+
 def convert(aas_json: Path, output_ttl: Path) -> None:
     with aas_json.open("r", encoding="utf-8") as file_handle:
         document = json.load(file_handle)
@@ -553,21 +782,33 @@ def convert(aas_json: Path, output_ttl: Path) -> None:
         if nameplate_submodel:
             add_nameplate_mapping(graph, resource, nameplate_submodel)
 
-    if has_type(present_submodels, AASV.AIDSubmodel, graph):
+    aid_submodel_uri = find_submodel_by_type(present_submodels, AASV.AIDSubmodel, graph)
+    if aid_submodel_uri is not None:
         graph.add((software_interface, RDF.type, CSSX.SoftwareInterface))
         graph.add((resource, CSSX.hasResourceInterface, software_interface))
+        aid_submodel_data = get_submodel_idshort(document, aid_submodel_uri)
+        if aid_submodel_data:
+            add_aid_mapping(graph, resource, aid_submodel_data, software_interface)
 
-    if has_type(present_submodels, AASV.OperationalDataSubmodel, graph):
+    opdata_submodel_uri = find_submodel_by_type(present_submodels, AASV.OperationalDataSubmodel, graph)
+    if opdata_submodel_uri is not None:
         operational_data = URIRef(f"{shell_id}#operational-data-1")
         graph.add((operational_data, RDF.type, CSSX.OperationalData))
         graph.add((resource, CSSX.hasOperationalData, operational_data))
         if software_interface is not None:
             graph.add((operational_data, CSSX.dataReferencesInterface, software_interface))
+        opdata_submodel_data = get_submodel_idshort(document, opdata_submodel_uri)
+        if opdata_submodel_data:
+            add_operational_data_mapping(graph, resource, operational_data, opdata_submodel_data, software_interface)
 
-    if has_type(present_submodels, AASV.ParametersSubmodel, graph):
+    params_submodel_uri = find_submodel_by_type(present_submodels, AASV.ParametersSubmodel, graph)
+    if params_submodel_uri is not None:
         parameter = URIRef(f"{shell_id}#resource-parameter-1")
         graph.add((parameter, RDF.type, CSSX.ResourceParameter))
         graph.add((resource, CSSX.hasResourceParameter, parameter))
+        params_submodel_data = get_submodel_idshort(document, params_submodel_uri)
+        if params_submodel_data:
+            add_parameters_mapping(graph, resource, parameter, params_submodel_data)
 
     capabilities_submodel_uri = find_submodel_by_type(
         present_submodels, AASV.CapabilitiesSubmodel, graph)
