@@ -208,3 +208,4 @@ Planner/output/*
 # ppr-ontology generated outputs
 ppr-ontology/generation/output/*
 !ppr-ontology/generation/output/.gitkeep
+.claude/settings.local.json

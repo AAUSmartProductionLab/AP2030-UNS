@@ -292,7 +292,7 @@ owl2sh-open:rdfsRange2shClassOrDatatype
         FILTER(?range != rdfs:Literal) .
 				BIND (
           IF(
-            (?range IN (xsd:boolean, xsd:string, xsd:date, xsd:dateTime, xsd:integer, xsd:float, xsd:double, xsd:duration, xsd:anyURI, rdf:langString)),
+            (?range IN (xsd:boolean, xsd:string, xsd:date, xsd:dateTime, xsd:integer, xsd:float, xsd:double, xsd:decimal, xsd:long, xsd:short, xsd:byte, xsd:nonNegativeInteger, xsd:positiveInteger, xsd:unsignedInt, xsd:unsignedLong, xsd:duration, xsd:anyURI, xsd:base64Binary, xsd:hexBinary, xsd:time, xsd:gYear, xsd:gYearMonth, rdf:langString)),
             sh:datatype,
             sh:class
           ) AS ?parameter) .
@@ -801,7 +801,7 @@ owl2sh-open:owlSomeValuesFromIRI2dashHasValueWithClass
         ?restriction owl:someValuesFrom ?someValuesFrom .
         ?restriction owl:onProperty ?property .
         FILTER (isIRI(?someValuesFrom))
-        FILTER (!(?someValuesFrom IN (xsd:boolean, xsd:string, xsd:date, xsd:dateTime, xsd:integer, xsd:float, xsd:double, xsd:duration, xsd:anyURI))) .
+        FILTER (!(?someValuesFrom IN (xsd:boolean, xsd:string, xsd:date, xsd:dateTime, xsd:integer, xsd:float, xsd:double, xsd:decimal, xsd:long, xsd:short, xsd:byte, xsd:nonNegativeInteger, xsd:positiveInteger, xsd:unsignedInt, xsd:unsignedLong, xsd:duration, xsd:anyURI, xsd:base64Binary, xsd:hexBinary, xsd:time, xsd:gYear, xsd:gYearMonth, rdf:langString))) .
         FILTER NOT EXISTS { ?property rdfs:range ?someValuesFrom } .
         BIND (owl2sh-open:getPropertyShape(?property, $this) AS ?propertyShape) .
       }
@@ -831,7 +831,7 @@ owl2sh-open:owlAllValuesFrom2shClassOrDatatype
         BIND (owl2sh-open:getPropertyShape(?property, $this) AS ?propertyShape) .
         BIND (
           IF(
-            (?allValuesFrom IN (xsd:boolean, xsd:string, xsd:date, xsd:dateTime, xsd:integer, xsd:float, xsd:double, xsd:duration, xsd:anyURI)),
+            (?allValuesFrom IN (xsd:boolean, xsd:string, xsd:date, xsd:dateTime, xsd:integer, xsd:float, xsd:double, xsd:decimal, xsd:long, xsd:short, xsd:byte, xsd:nonNegativeInteger, xsd:positiveInteger, xsd:unsignedInt, xsd:unsignedLong, xsd:duration, xsd:anyURI, xsd:base64Binary, xsd:hexBinary, xsd:time, xsd:gYear, xsd:gYearMonth, rdf:langString)),
             sh:datatype,
             sh:class
           )

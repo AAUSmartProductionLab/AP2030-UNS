@@ -7,7 +7,7 @@
       "description": [
         {
           "language": "en",
-          "text": "Syntegon MLF 5000 \u2013 Pharmaceutical Dispensing and Weighing Module (Dispensing Unit + Weighing System only). Resource AAS within a filling line context."
+          "text": "Syntegon MLF 5000 – Pharmaceutical Dispensing and Weighing Module (Dispensing Unit + Weighing System only). Resource AAS within a filling line context."
         }
       ],
       "assetInformation": {
@@ -119,13 +119,13 @@
               "modelType": "Property",
               "idShort": "FillVolumeRangeML",
               "valueType": "xs:string",
-              "value": "0.1 \u2013 50"
+              "value": "0.1 – 50"
             },
             {
               "modelType": "Property",
               "idShort": "ContainerTypes",
               "valueType": "xs:string",
-              "value": "ISO 8362-1 vials 2\u201350 mL, ISO 11040-4 cartridges 1\u20132.25 mL"
+              "value": "ISO 8362-1 vials 2–50 mL, ISO 11040-4 cartridges 1–2.25 mL"
             },
             {
               "modelType": "Entity",
@@ -158,13 +158,13 @@
                   "modelType": "Property",
                   "idShort": "FillVolumeRangeML",
                   "valueType": "xs:string",
-                  "value": "0.1 \u2013 50"
+                  "value": "0.1 – 50"
                 },
                 {
                   "modelType": "Property",
                   "idShort": "FillAccuracyPercent",
                   "valueType": "xs:string",
-                  "value": "\u00b10.5"
+                  "value": "±0.5"
                 },
                 {
                   "modelType": "Property",
@@ -214,13 +214,13 @@
                       "modelType": "Property",
                       "idShort": "FillVolumeRange",
                       "valueType": "xs:string",
-                      "value": "0.1\u201350 mL"
+                      "value": "0.1–50 mL"
                     },
                     {
                       "modelType": "Property",
                       "idShort": "Accuracy",
                       "valueType": "xs:string",
-                      "value": "\u00b10.5%"
+                      "value": "±0.5%"
                     }
                   ]
                 },
@@ -549,13 +549,13 @@
                   "modelType": "Property",
                   "idShort": "WeighingMethod",
                   "valueType": "xs:string",
-                  "value": "Gravimetric \u2013 net weight via tare/gross cycle"
+                  "value": "Gravimetric – net weight via tare/gross cycle"
                 },
                 {
                   "modelType": "Property",
                   "idShort": "CheckWeighRange",
                   "valueType": "xs:string",
-                  "value": "0.05 \u2013 220 g"
+                  "value": "0.05 – 220 g"
                 },
                 {
                   "modelType": "Property",
@@ -629,7 +629,7 @@
                       "modelType": "Property",
                       "idShort": "GMP_Calibrated",
                       "valueType": "xs:string",
-                      "value": "Yes \u2013 Ph.Eur. / USP qualified"
+                      "value": "Yes – Ph.Eur. / USP qualified"
                     }
                   ],
                   "globalAssetId": "https://pharma-example.org/ids/assets/AnalyticalBalance-MLF-001"
@@ -1098,7 +1098,7 @@
                       "modelType": "Property",
                       "idShort": "AllowedTypes",
                       "valueType": "xs:string",
-                      "value": "Aqueous solutions, suspensions, oils (viscosity \u2264 500 mPa\u00b7s)"
+                      "value": "Aqueous solutions, suspensions, oils (viscosity ≤ 500 mPa·s)"
                     }
                   ],
                   "semanticId": {
@@ -1559,7 +1559,7 @@
                     "description": [
                       {
                         "language": "en",
-                        "text": "Accepted \u00b1 deviation from target fill weight [g]"
+                        "text": "Accepted ± deviation from target fill weight [g]"
                       }
                     ],
                     "semanticId": {
@@ -1974,7 +1974,7 @@
                     "description": [
                       {
                         "language": "en",
-                        "text": "Acceptance tolerance \u00b1 for the net weight check [g]"
+                        "text": "Acceptance tolerance ± for the net weight check [g]"
                       }
                     ],
                     "semanticId": {
@@ -2073,7 +2073,7 @@
                     "description": [
                       {
                         "language": "en",
-                        "text": "Calculated net weight (gross \u2212 tare) [g]"
+                        "text": "Calculated net weight (gross − tare) [g]"
                       }
                     ]
                   }
@@ -2329,7 +2329,7 @@
                     "description": [
                       {
                         "language": "en",
-                        "text": "Pump speed during priming \u2014 slow to avoid air entrainment [rpm]"
+                        "text": "Pump speed during priming — slow to avoid air entrainment [rpm]"
                       }
                     ],
                     "semanticId": {
@@ -3731,7 +3731,7 @@
                   "modelType": "Property",
                   "idShort": "Unit",
                   "valueType": "xs:string",
-                  "value": "\u00b0C",
+                  "value": "°C",
                   "semanticId": {
                     "type": "ExternalReference",
                     "keys": [
@@ -5641,7 +5641,8 @@
                             "value": "nosec_sc"
                           }
                         ]
-                      }
+                      },
+                      "idShort": "item_0"
                     }
                   ]
                 },
@@ -6881,7 +6882,7 @@
                           "modelType": "Property",
                           "idShort": "unit",
                           "valueType": "xs:string",
-                          "value": "\u00b0C",
+                          "value": "°C",
                           "semanticId": {
                             "type": "ExternalReference",
                             "keys": [
@@ -6950,7 +6951,7 @@
                                   "modelType": "Property",
                                   "idShort": "unit",
                                   "valueType": "xs:string",
-                                  "value": "\u00b0C",
+                                  "value": "°C",
                                   "semanticId": {
                                     "type": "ExternalReference",
                                     "keys": [
@@ -7979,103 +7980,103 @@
                                   "value": [
                                     {
                                       "modelType": "Property",
-                                      "idShort": "",
+                                      "idShort": "item_0",
                                       "valueType": "xs:string",
                                       "value": "IDLE"
                                     },
                                     {
                                       "modelType": "Property",
-                                      "idShort": "",
+                                      "idShort": "item_1",
                                       "valueType": "xs:string",
                                       "value": "STARTING"
                                     },
                                     {
                                       "modelType": "Property",
-                                      "idShort": "",
+                                      "idShort": "item_2",
                                       "valueType": "xs:string",
                                       "value": "EXECUTE"
                                     },
                                     {
                                       "modelType": "Property",
-                                      "idShort": "",
+                                      "idShort": "item_3",
                                       "valueType": "xs:string",
                                       "value": "COMPLETING"
                                     },
                                     {
                                       "modelType": "Property",
-                                      "idShort": "",
+                                      "idShort": "item_4",
                                       "valueType": "xs:string",
                                       "value": "COMPLETE"
                                     },
                                     {
                                       "modelType": "Property",
-                                      "idShort": "",
+                                      "idShort": "item_5",
                                       "valueType": "xs:string",
                                       "value": "RESETTING"
                                     },
                                     {
                                       "modelType": "Property",
-                                      "idShort": "",
+                                      "idShort": "item_6",
                                       "valueType": "xs:string",
                                       "value": "HOLDING"
                                     },
                                     {
                                       "modelType": "Property",
-                                      "idShort": "",
+                                      "idShort": "item_7",
                                       "valueType": "xs:string",
                                       "value": "HELD"
                                     },
                                     {
                                       "modelType": "Property",
-                                      "idShort": "",
+                                      "idShort": "item_8",
                                       "valueType": "xs:string",
                                       "value": "UNHOLDING"
                                     },
                                     {
                                       "modelType": "Property",
-                                      "idShort": "",
+                                      "idShort": "item_9",
                                       "valueType": "xs:string",
                                       "value": "SUSPENDING"
                                     },
                                     {
                                       "modelType": "Property",
-                                      "idShort": "",
+                                      "idShort": "item_10",
                                       "valueType": "xs:string",
                                       "value": "SUSPENDED"
                                     },
                                     {
                                       "modelType": "Property",
-                                      "idShort": "",
+                                      "idShort": "item_11",
                                       "valueType": "xs:string",
                                       "value": "UNSUSPENDING"
                                     },
                                     {
                                       "modelType": "Property",
-                                      "idShort": "",
+                                      "idShort": "item_12",
                                       "valueType": "xs:string",
                                       "value": "ABORTING"
                                     },
                                     {
                                       "modelType": "Property",
-                                      "idShort": "",
+                                      "idShort": "item_13",
                                       "valueType": "xs:string",
                                       "value": "ABORTED"
                                     },
                                     {
                                       "modelType": "Property",
-                                      "idShort": "",
+                                      "idShort": "item_14",
                                       "valueType": "xs:string",
                                       "value": "CLEARING"
                                     },
                                     {
                                       "modelType": "Property",
-                                      "idShort": "",
+                                      "idShort": "item_15",
                                       "valueType": "xs:string",
                                       "value": "STOPPING"
                                     },
                                     {
                                       "modelType": "Property",
-                                      "idShort": "",
+                                      "idShort": "item_16",
                                       "valueType": "xs:string",
                                       "value": "STOPPED"
                                     }
@@ -8529,7 +8530,8 @@
                             "value": "nosec_sc"
                           }
                         ]
-                      }
+                      },
+                      "idShort": "item_0"
                     }
                   ]
                 },
@@ -9973,7 +9975,7 @@
               "value": [
                 {
                   "language": "en",
-                  "text": "Pump speed\u2013to\u2013volume scaling factor (from volume calibration)"
+                  "text": "Pump speed–to–volume scaling factor (from volume calibration)"
                 }
               ]
             },
@@ -10336,7 +10338,7 @@
               "modelType": "Property",
               "idShort": "Unit",
               "valueType": "xs:string",
-              "value": "\u00b0C",
+              "value": "°C",
               "semanticId": {
                 "type": "ExternalReference",
                 "keys": [

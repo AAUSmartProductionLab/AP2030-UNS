@@ -1,0 +1,30 @@
+@prefix aasv: <http://www.w3id.org/aau-ra/resourceaas-validation#> .
+@prefix css: <http://www.w3id.org/hsu-aut/css#> .
+@prefix cssx: <http://www.w3id.org/aau-ra/cssx#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+[] a sh:ValidationReport ;
+    sh:conforms false ;
+    sh:result [ a sh:ValidationResult ;
+            sh:focusNode <https://pharma-example.org/ids/aas/PHARM-DISP-VF-001> ;
+            sh:resultMessage "Less than 1 values on <https://pharma-example.org/ids/aas/PHARM-DISP-VF-001>->aasv:hasDigitalNameplateSubmodel" ;
+            sh:resultPath aasv:hasDigitalNameplateSubmodel ;
+            sh:resultSeverity sh:Violation ;
+            sh:sourceConstraintComponent sh:MinCountConstraintComponent ;
+            sh:sourceShape css:Resource-hasDigitalNameplateSubmodel ],
+        [ a sh:ValidationResult ;
+            sh:focusNode <https://pharma-example.org/ids/aas/PHARM-DISP-VF-001> ;
+            sh:resultMessage "Less than 1 values on <https://pharma-example.org/ids/aas/PHARM-DISP-VF-001>->cssx:serialNumber" ;
+            sh:resultPath cssx:serialNumber ;
+            sh:resultSeverity sh:Violation ;
+            sh:sourceConstraintComponent sh:MinCountConstraintComponent ;
+            sh:sourceShape css:Resource-serialNumber ],
+        [ a sh:ValidationResult ;
+            sh:focusNode <https://pharma-example.org/ids/aas/PHARM-DISP-VF-001> ;
+            sh:resultMessage "Less than 1 values on <https://pharma-example.org/ids/aas/PHARM-DISP-VF-001>->cssx:hasManufacturer" ;
+            sh:resultPath cssx:hasManufacturer ;
+            sh:resultSeverity sh:Violation ;
+            sh:sourceConstraintComponent sh:MinCountConstraintComponent ;
+            sh:sourceShape css:Resource-hasManufacturer ] .
+

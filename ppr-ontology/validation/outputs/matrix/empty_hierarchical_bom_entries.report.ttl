@@ -1,0 +1,29 @@
+@prefix aasv: <http://www.w3id.org/aau-ra/resourceaas-validation#> .
+@prefix cssx: <http://www.w3id.org/aau-ra/cssx#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+[] a sh:ValidationReport ;
+    sh:conforms false ;
+    sh:result [ a sh:ValidationResult ;
+            sh:focusNode <https://pharma-example.org/ids/aas/PHARM-DISP-VF-001#resource-bom-1> ;
+            sh:resultMessage "Less than 1 values on <https://pharma-example.org/ids/aas/PHARM-DISP-VF-001#resource-bom-1>->cssx:hasBoMItem" ;
+            sh:resultPath cssx:hasBoMItem ;
+            sh:resultSeverity sh:Violation ;
+            sh:sourceConstraintComponent sh:MinCountConstraintComponent ;
+            sh:sourceShape cssx:BoM-hasBoMItem ],
+        [ a sh:ValidationResult ;
+            sh:focusNode <https://pharma-example.org/ids/aas/PHARM-DISP-VF-001#resource-bom-1> ;
+            sh:resultMessage "Less than 1 values on <https://pharma-example.org/ids/aas/PHARM-DISP-VF-001#resource-bom-1>->cssx:hasBoMItem" ;
+            sh:resultPath cssx:hasBoMItem ;
+            sh:resultSeverity sh:Violation ;
+            sh:sourceConstraintComponent sh:MinCountConstraintComponent ;
+            sh:sourceShape cssx:ResourceBoM-hasBoMItem ],
+        [ a sh:ValidationResult ;
+            sh:focusNode <https://pharma-example.org/ids/sm/PHARM-DISP-VF-001/HierarchicalStructures> ;
+            sh:resultMessage "Less than 1 values on <https://pharma-example.org/ids/sm/PHARM-DISP-VF-001/HierarchicalStructures>->aasv:hasBomEntry" ;
+            sh:resultPath aasv:hasBomEntry ;
+            sh:resultSeverity sh:Violation ;
+            sh:sourceConstraintComponent sh:MinCountConstraintComponent ;
+            sh:sourceShape aasv:HierarchicalStructuresSubmodel-hasBomEntry ] .
+
