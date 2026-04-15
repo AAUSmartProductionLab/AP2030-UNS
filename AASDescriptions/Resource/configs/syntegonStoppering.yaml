@@ -109,134 +109,134 @@ syntegonStopperingSystemAAS:
     realizedBy: "Stopper"
     semantic_id: https://smartproductionlab.aau.dk/Capability/Stoppering
 
-    AI-Planning:
-        Domain:
-            Fluents:
-                -   key: "Operational"
-                    semantic_id: "https://smartproductionlab.aau.dk/PDDL/Term/Predicates/Operational"
-                    parameters:
-                        -   name: "Resource"
-                            externalRef: "https://smartproductionlab.aau.dk/Resource"
-                    transformation: 'parameter1.Variables.PackMLState.State == "Execute"'
+  AI-Planning:
+    Domain:
+        Fluents:
+            -   key: "Operational"
+                semantic_id: "https://smartproductionlab.aau.dk/PDDL/Term/Predicates/Operational"
+                parameters:
+                    -   name: "Resource"
+                        externalRef: "https://smartproductionlab.aau.dk/Resource"
+                transformation: 'parameter1.Variables.PackMLState.State == "Execute"'
 
-                -   key: "Occupied"
-                    semantic_id: "https://smartproductionlab.aau.dk/PDDL/Term/Predicates/Occupied"
-                    parameters:
-                        -   name: "Resource"
-                            externalRef: "https://smartproductionlab.aau.dk/Resource"
-                        -   name: "Product"
-                            externalRef: "https://smartproductionlab.aau.dk/Product"
-                    transformation: 'parameter1.Variables.OccupationState.ProcessQueue[0] == parameter2.Parameters.Uuid'
+            -   key: "Occupied"
+                semantic_id: "https://smartproductionlab.aau.dk/PDDL/Term/Predicates/Occupied"
+                parameters:
+                    -   name: "Resource"
+                        externalRef: "https://smartproductionlab.aau.dk/Resource"
+                    -   name: "Product"
+                        externalRef: "https://smartproductionlab.aau.dk/Product"
+                transformation: 'parameter1.Variables.OccupationState.ProcessQueue[0] == parameter2.Parameters.Uuid'
 
-                -   key: "Free"
-                    semantic_id: "https://smartproductionlab.aau.dk/PDDL/Term/Predicates/Free"
-                    parameters:
-                        -   name: "Resource"
-                            externalRef: "https://smartproductionlab.aau.dk/Resource"
-                    transformation: 'parameter1.Variables.OccupationState.ProcessQueue == []'
+            -   key: "Free"
+                semantic_id: "https://smartproductionlab.aau.dk/PDDL/Term/Predicates/Free"
+                parameters:
+                    -   name: "Resource"
+                        externalRef: "https://smartproductionlab.aau.dk/Resource"
+                transformation: 'parameter1.Variables.OccupationState.ProcessQueue == []'
 
-            Actions:
-                -   key: "Stoppering"
-                    SkillReference: "Stoppering"
-                    parameters:
-                        -   name: "StopperingSystem"
-                            modelRef:
-                                - AAS: "self"
-                        -   name: "Product"
-                            externalRef: "https://smartproductionlab.aau.dk/Product"
+        Actions:
+            -   key: "Stoppering"
+                SkillReference: "Stoppering"
+                parameters:
+                    -   name: "StopperingSystem"
+                        modelRef:
+                            - AAS: "self"
+                    -   name: "Product"
+                        externalRef: "https://smartproductionlab.aau.dk/Product"
+                        
+                conditions:
+                    at_start:
+                        - predicate:
+                            ref: "Operational"
+                            parameters: [0]
+                        - predicate:
+                            ref: "Occupied"
+                            parameters: [0, 1]
+                        - predicate:
+                            external: "https://smartproductionlab.aau.dk/PDDL/Term/Predicates/At"
+                            parameters: [1, 0]
+                effects:
+                    at_end:
+                        - predicate:
+                            refs: "https://smartproductionlab.aau.dk/PDDL/Term/Predicates/Stoppered"
+                            parameters: [1]
                             
-                    conditions:
-                        at_start:
-                            - predicate:
-                                ref: "Operational"
-                                parameters: [0]
-                            - predicate:
+            -   key: "Occupy"
+                SkillReference: "Occupy"
+                parameters:
+                    -   name: "StopperingSystem"
+                        modelRef:
+                            - AAS: "self"
+                    -   name: "Product"
+                        externalRef: "https://smartproductionlab.aau.dk/Product"
+                conditions:
+                    at_start:
+                        - predicate:
+                            ref: "Operational"
+                            parameters: [0]
+                        - not:
+                            predicate:
                                 ref: "Occupied"
                                 parameters: [0, 1]
-                            - predicate:
-                                external: "https://smartproductionlab.aau.dk/PDDL/Term/Predicates/At"
-                                parameters: [1, 0]
-                    effects:
-                        at_end:
-                            - predicate:
-                              refs: "https://smartproductionlab.aau.dk/PDDL/Term/Predicates/Stoppered"
-                              parameters: [1]
-                              
-                -   key: "Occupy"
-                    SkillReference: "Occupy"
-                    parameters:
-                        -   name: "StopperingSystem"
-                            modelRef:
-                                - AAS: "self"
-                        -   name: "Product"
-                            externalRef: "https://smartproductionlab.aau.dk/Product"
-                    conditions:
-                        at_start:
-                            - predicate:
-                                ref: "Operational"
-                                parameters: [0]
-                            - not:
-                                predicate:
-                                    ref: "Occupied"
-                                    parameters: [0, 1]
-                    effects:
-                        at_end:
-                            - predicate:
-                                ref: "Occupied"
-                                parameters: [0, 1]
-                            - not:
-                                predicate:
-                                    ref: "Free"
-                                    parameters: [0]
-
-
-                -   key: "Release"
-                    SkillReference: "Release"
-                    parameters:
-                        -   name: "LoadingSystem"
-                            modelRef:
-                                - AAS: "self"
-                        -   name: "Product"
-                            externalRef: "https://smartproductionlab.aau.dk/Product"
-                    conditions:
-                        at_start:
-                            - predicate:
-                                ref: "Operational"
-                                parameters: [0]
-                            - predicate:
-                                ref: "Occupied"
-                                parameters: [0, 1]
-                    effects:
-                        at_end:
-                            - not:
-                                - predicate:
-                                    ref: "Occupied"
-                                    parameters: [0, 1]
-                            - predicate:
+                effects:
+                    at_end:
+                        - predicate:
+                            ref: "Occupied"
+                            parameters: [0, 1]
+                        - not:
+                            predicate:
                                 ref: "Free"
                                 parameters: [0]
 
-        Problem:
-            Objects:
-                -   name: "syntegonStopperingSystem"
-                    modelRef:
-                        - AAS: "self"
 
-            Init:
-                -   predicate:
-                    ref: "Operational"
-                    parameters: [0]
-                -   predicate:
-                    ref: "Free"
-                    parameters: [0]
+            -   key: "Release"
+                SkillReference: "Release"
+                parameters:
+                    -   name: "StopperingSystem"
+                        modelRef:
+                            - AAS: "self"
+                    -   name: "Product"
+                        externalRef: "https://smartproductionlab.aau.dk/Product"
+                conditions:
+                    at_start:
+                        - predicate:
+                            ref: "Operational"
+                            parameters: [0]
+                        - predicate:
+                            ref: "Occupied"
+                            parameters: [0, 1]
+                effects:
+                    at_end:
+                        - not:
+                            - predicate:
+                                ref: "Occupied"
+                                parameters: [0, 1]
+                        - predicate:
+                            ref: "Free"
+                            parameters: [0]
 
-            Goal:
-                - predicate:
-                    ref: "Operational"
-                    parameters: [0]
-                -   predicate:
-                    ref: "Free"
-                    parameters: [0]
+    Problem:
+        Objects:
+            -   name: "syntegonStopperingSystem"
+                modelRef:
+                    - AAS: "self"
+
+        Init:
+            -   predicate:
+                ref: "Operational"
+                parameters: [0]
+            -   predicate:
+                ref: "Free"
+                parameters: [0]
+
+        Goal:
+            - predicate:
+                ref: "Operational"
+                parameters: [0]
+            -   predicate:
+                ref: "Free"
+                parameters: [0]
 
   Skills:
   - key: Stoppering
