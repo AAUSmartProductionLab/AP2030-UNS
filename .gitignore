@@ -201,6 +201,10 @@ PlanarMotorSimulator/Simulation Installer.msi
 config.yaml
 deprecated/
 
+physical_stations/*
+simulated_stations/robotics/*
+Planner/output/*
+
 # ppr-ontology generated outputs
 ppr-ontology/generation/output/*
 !ppr-ontology/generation/output/.gitkeep
