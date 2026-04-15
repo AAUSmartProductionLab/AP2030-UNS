@@ -154,7 +154,7 @@ def planning_callback(topic, client, message, properties):
         if isinstance(message, dict):
             # New schema: Assets and Product
             asset_ids = message.get('Assets')
-            product_aas_id = message.get('Product')
+            product_aas_id = message.get('Order')
             
             # Fallback to old schema for backwards compatibility
             if not asset_ids:

@@ -130,31 +130,31 @@ services:
       - hivemq-network
     restart: unless-stopped
 
-  # bt_controller:
-  #   build:
-  #     context: .
-  #     dockerfile: BT_Controller/dockerfile
-  #   container_name: bt_controller
-  #   environment:
-  #     - MQTT_BROKER=${MQTT_BROKER:-hivemq-broker}
-  #     - MQTT_PORT=${MQTT_PORT:-1883}
-  #     - AAS_SERVER=${AAS_SERVER:-aas-env}
-  #     - AAS_PORT=${AAS_PORT:-8081}
-  #     - AAS_REGISTRY=${AAS_REGISTRY:-aas-registry}
-  #     - AAS_REGISTRY_PORT=${AAS_REGISTRY_PORT:-8080}
-  #   volumes:
-  #     - ./BT_Controller/config:/AP2030-UNS/BT_Controller/config
-  #     - ./BTDescriptions:/AP2030-UNS/MQTTSchemas
-  #     - ./AASDescriptions:/AP2030-UNS/AASDescriptions
-  #   ports:
-  #   - "1667:1667"
-  #   networks:
-  #     - hivemq-network
-  #   depends_on:
-  #     hivemq-broker:
-  #       condition: service_started
-  #     registration-service:
-  #       condition: service_healthy
+  bt_controller:
+    build:
+      context: .
+      dockerfile: BT_Controller/dockerfile
+    container_name: bt_controller
+    environment:
+      - MQTT_BROKER=${MQTT_BROKER:-hivemq-broker}
+      - MQTT_PORT=${MQTT_PORT:-1883}
+      - AAS_SERVER=${AAS_SERVER:-aas-env}
+      - AAS_PORT=${AAS_PORT:-8081}
+      - AAS_REGISTRY=${AAS_REGISTRY:-aas-registry}
+      - AAS_REGISTRY_PORT=${AAS_REGISTRY_PORT:-8080}
+    volumes:
+      - ./BT_Controller/config:/AP2030-UNS/BT_Controller/config
+      - ./BTDescriptions:/AP2030-UNS/MQTTSchemas
+      - ./AASDescriptions:/AP2030-UNS/AASDescriptions
+    ports:
+    - "1667:1667"
+    networks:
+      - hivemq-network
+    depends_on:
+      hivemq-broker:
+        condition: service_started
+      registration-service:
+        condition: service_healthy
 
 ################################## PACKML STATIONS AND MODULES ###############################
   planar_controller:
