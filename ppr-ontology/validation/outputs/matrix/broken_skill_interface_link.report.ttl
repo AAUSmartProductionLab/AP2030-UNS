@@ -1,0 +1,55 @@
+@prefix aasv: <http://www.w3id.org/aau-ra/resourceaas-validation#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+[] a sh:ValidationReport ;
+    sh:conforms false ;
+    sh:result [ a sh:ValidationResult ;
+            sh:focusNode <https://pharma-example.org/ids/aas/PHARM-DISP-VF-001> ;
+            sh:resultMessage "Each SkillInterface must use a ResourceInterface provided by the same Resource." ;
+            sh:resultSeverity sh:Violation ;
+            sh:sourceConstraint [ a sh:SPARQLConstraint ;
+                    sh:message "Each SkillInterface must use a ResourceInterface provided by the same Resource." ;
+                    sh:select """\r
+      PREFIX css: <http://www.w3id.org/hsu-aut/css#>\r
+      PREFIX cssx: <http://www.w3id.org/aau-ra/cssx#>\r
+      SELECT $this\r
+      WHERE {\r
+        $this css:providesSkill ?skill .\r
+        ?skill css:accessibleThrough ?skillInterface .\r
+        FILTER NOT EXISTS {\r
+          ?skillInterface cssx:skillInterfaceUsesSoftwareInterface ?resourceInterface .\r
+          $this cssx:hasResourceInterface ?resourceInterface .\r
+        }\r
+      }\r
+    """ ] ;
+            sh:sourceConstraintComponent sh:SPARQLConstraintComponent ;
+            sh:sourceShape aasv:ResourceAASDependencySparqlShape ;
+            sh:value <https://pharma-example.org/ids/aas/PHARM-DISP-VF-001> ],
+        [ a sh:ValidationResult ;
+            sh:focusNode <https://pharma-example.org/ids/aas/PHARM-DISP-VF-001> ;
+            sh:resultMessage "If Skills are present, a SoftwareInterface must be present and linked to the skill interface." ;
+            sh:resultSeverity sh:Violation ;
+            sh:sourceConstraint [ a sh:SPARQLConstraint ;
+                    sh:message "If Skills are present, a SoftwareInterface must be present and linked to the skill interface." ;
+                    sh:select """\r
+      PREFIX css: <http://www.w3id.org/hsu-aut/css#>\r
+      PREFIX cssx: <http://www.w3id.org/aau-ra/cssx#>\r
+      SELECT $this\r
+      WHERE {\r
+        FILTER (\r
+          EXISTS { $this css:providesSkill ?skill }\r
+          && !EXISTS {\r
+            $this cssx:hasResourceInterface ?resourceInterface .\r
+            ?resourceInterface a cssx:SoftwareInterface .\r
+            ?skill css:accessibleThrough ?skillInterface .\r
+            ?skillInterface a css:SkillInterface .\r
+            ?skillInterface cssx:skillInterfaceUsesSoftwareInterface ?resourceInterface .\r
+          }\r
+        )\r
+      }\r
+    """ ] ;
+            sh:sourceConstraintComponent sh:SPARQLConstraintComponent ;
+            sh:sourceShape aasv:ResourceAASDependencySparqlShape ;
+            sh:value <https://pharma-example.org/ids/aas/PHARM-DISP-VF-001> ] .
+
