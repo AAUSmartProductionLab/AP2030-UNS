@@ -383,6 +383,46 @@ class MqttService {
   }
 
   /**
+   * Publish a command to the BT controller using its command-specific topics.
+   * @param {string} command The BT command (Start, Stop, Suspend, Unsuspend, Reset)
+   * @param {object} additionalPayload Optional additional payload fields
+   * @returns {Promise<boolean>} Whether the publish was successful
+   */
+  publishBtControllerCommand(command, additionalPayload = {}) {
+    const commandTopics = {
+      Start: 'NN/Nybrovej/InnoLab/Orchestrator/CMD/Start',
+      Stop: 'NN/Nybrovej/InnoLab/Orchestrator/CMD/Stop',
+      Suspend: 'NN/Nybrovej/InnoLab/Orchestrator/CMD/Suspend',
+      Unsuspend: 'NN/Nybrovej/InnoLab/Orchestrator/CMD/Unsuspend',
+      Reset: 'NN/Nybrovej/InnoLab/Orchestrator/CMD/Reset',
+    };
+
+    const topic = commandTopics[command];
+    if (!topic) {
+      console.warn(`MqttService: Unsupported BT controller command: ${command}`);
+      return Promise.resolve(false);
+    }
+
+    const payload = {
+      Uuid: uuidv4(),
+      TimeStamp: new Date().toISOString(),
+      ...additionalPayload,
+    };
+
+    return new Promise((resolve) => {
+      this.publish(topic, JSON.stringify(payload), { qos: 2, retain: false }, (error) => {
+        if (error) {
+          console.error(`MqttService: Failed to publish BT command ${command} to ${topic}:`, error);
+          resolve(false);
+        } else {
+          console.log(`MqttService: Published BT command ${command} to ${topic}`);
+          resolve(true);
+        }
+      });
+    });
+  }
+
+  /**
    * Generic state command publisher - sends a state transition command to any subsystem.
    * Conforms to stateCommand.schema.json
    * @param {string} topic The CMD/State topic for the target system

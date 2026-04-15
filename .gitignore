@@ -203,6 +203,12 @@ deprecated/
 Planner/output/*
 simulated_stations/robotics/ur5/*
 
+physical_stations/*
+simulated_stations/robotics/*
+Planner/output/*
+
 # ppr-ontology generated outputs
 ppr-ontology/generation/output/*
+ppr-ontology/validation/outputs/*
 !ppr-ontology/generation/output/.gitkeep
+.claude/settings.local.json

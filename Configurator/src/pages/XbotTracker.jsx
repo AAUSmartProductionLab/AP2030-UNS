@@ -727,21 +727,21 @@ const XbotTracker = () => {
     };
   }, [xbots, LERP_FACTOR, SNAP_THRESHOLD]);
 
-  // Behavior Tree Control Handlers - using unified state commands
+  // Behavior Tree Control Handlers - route via SystemControlService
   const handleBtStartSystem = useCallback(() => {
-    mqttService.publishStateCommand(SystemControlService.SUBSYSTEMS.BT_CONTROLLER, 'Start');
+    systemControlService.sendSubsystemCommand('BT_CONTROLLER', SystemControlService.COMMANDS.START);
   }, []);
   const handleBtStopSystem = useCallback(() => {
-    mqttService.publishStateCommand(SystemControlService.SUBSYSTEMS.BT_CONTROLLER, 'Stop');
+    systemControlService.sendSubsystemCommand('BT_CONTROLLER', SystemControlService.COMMANDS.STOP);
   }, []);
   const handleBtResetSystem = useCallback(() => {
-    mqttService.publishStateCommand(SystemControlService.SUBSYSTEMS.BT_CONTROLLER, 'Reset');
+    systemControlService.sendSubsystemCommand('BT_CONTROLLER', SystemControlService.COMMANDS.RESET);
   }, []);
   const handleBtToggleSuspendSystem = useCallback(() => {
     if (isBtSuspended) {
-      mqttService.publishStateCommand(SystemControlService.SUBSYSTEMS.BT_CONTROLLER, 'Unsuspend');
+      systemControlService.sendSubsystemCommand('BT_CONTROLLER', SystemControlService.COMMANDS.UNSUSPEND);
     } else {
-      mqttService.publishStateCommand(SystemControlService.SUBSYSTEMS.BT_CONTROLLER, 'Suspend');
+      systemControlService.sendSubsystemCommand('BT_CONTROLLER', SystemControlService.COMMANDS.SUSPEND);
     }
     setIsBtSuspended(!isBtSuspended);
   }, [isBtSuspended]);

@@ -24,15 +24,23 @@ import { toast } from 'react-toastify';
  * - Clear: Aborted → Clearing → Stopped
  */
 class SystemControlService {
-  // Define subsystem topics that should receive state commands
+  // Define subsystem topics that receive generic CMD/State commands
   static SUBSYSTEMS = {
     PLANAR: 'NN/Nybrovej/InnoLab/Planar/CMD/State',
-    BT_CONTROLLER: 'NN/Nybrovej/InnoLab/bt_controller/CMD/State'
     // FILLING: 'NN/Nybrovej/InnoLab/Filling/CMD/State',
     // LOADING: 'NN/Nybrovej/InnoLab/Loading/CMD/State',
     // STOPPERING: 'NN/Nybrovej/InnoLab/Stoppering/CMD/State',
     // UNLOADING: 'NN/Nybrovej/InnoLab/Unloading/CMD/State',
     // CAMERA: 'NN/Nybrovej/InnoLab/Camera/CMD/State',
+  };
+
+  // BT controller uses command-specific topics instead of CMD/State
+  static BT_CONTROLLER_COMMAND_TOPICS = {
+    Start: 'NN/Nybrovej/InnoLab/Orchestrator/CMD/Start',
+    Stop: 'NN/Nybrovej/InnoLab/Orchestrator/CMD/Stop',
+    Suspend: 'NN/Nybrovej/InnoLab/Orchestrator/CMD/Suspend',
+    Unsuspend: 'NN/Nybrovej/InnoLab/Orchestrator/CMD/Unsuspend',
+    Reset: 'NN/Nybrovej/InnoLab/Orchestrator/CMD/Reset',
   };
 
   // Valid PackML commands (what the user sends)
@@ -295,18 +303,39 @@ class SystemControlService {
   }
 
   /**
-   * Send a state command to a specific subsystem
-   * @param {string} subsystemKey Key from SUBSYSTEMS  
-   * @param {string} stateId State from STATES
+   * Check whether a command can be routed to a subsystem
+   * @param {string} subsystemKey
+   * @param {string} command
+   * @returns {boolean}
+   */
+  supportsSubsystemCommand(subsystemKey, command) {
+    if (subsystemKey === 'BT_CONTROLLER') {
+      return Boolean(SystemControlService.BT_CONTROLLER_COMMAND_TOPICS[command]);
+    }
+    return Boolean(SystemControlService.SUBSYSTEMS[subsystemKey]);
+  }
+
+  /**
+   * Send a command to a specific subsystem
+   * @param {string} subsystemKey Key from SUBSYSTEMS or BT_CONTROLLER
+   * @param {string} command Command from COMMANDS
    * @returns {Promise<boolean>}
    */
-  async sendSubsystemCommand(subsystemKey, stateId) {
+  async sendSubsystemCommand(subsystemKey, command) {
+    if (subsystemKey === 'BT_CONTROLLER') {
+      if (!SystemControlService.BT_CONTROLLER_COMMAND_TOPICS[command]) {
+        console.warn(`SystemControlService: Command ${command} is not supported by BT_CONTROLLER`);
+        return false;
+      }
+      return mqttService.publishBtControllerCommand(command);
+    }
+
     const topic = SystemControlService.SUBSYSTEMS[subsystemKey];
     if (!topic) {
       console.error(`SystemControlService: Unknown subsystem ${subsystemKey}`);
       return false;
     }
-    return mqttService.publishStateCommand(topic, stateId);
+    return mqttService.publishStateCommand(topic, command);
   }
 
   /**
@@ -328,20 +357,21 @@ class SystemControlService {
     const promises = [];
 
     for (const subsystemKey of this.enabledSubsystems) {
-      const topic = SystemControlService.SUBSYSTEMS[subsystemKey];
-      if (topic) {
-        const promise = mqttService.publishStateCommand(topic, command)
-          .then(success => {
-            results[subsystemKey] = success;
-            return success;
-          })
-          .catch(err => {
-            console.error(`SystemControlService: Error sending to ${subsystemKey}:`, err);
-            results[subsystemKey] = false;
-            return false;
-          });
-        promises.push(promise);
+      if (!this.supportsSubsystemCommand(subsystemKey, command)) {
+        continue;
       }
+
+      const promise = this.sendSubsystemCommand(subsystemKey, command)
+        .then(success => {
+          results[subsystemKey] = success;
+          return success;
+        })
+        .catch(err => {
+          console.error(`SystemControlService: Error sending to ${subsystemKey}:`, err);
+          results[subsystemKey] = false;
+          return false;
+        });
+      promises.push(promise);
     }
 
     await Promise.all(promises);

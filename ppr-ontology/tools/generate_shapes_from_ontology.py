@@ -19,7 +19,11 @@ def import_uri_to_local_path(import_uri: str, parent_file: Path) -> Path | None:
                     return candidate
         return None
     if parsed.scheme == "file":
-        return Path(parsed.path)
+        file_path = parsed.path
+        # On Windows, file:///C:/path gives /C:/path — strip leading slash before drive letter.
+        if len(file_path) >= 3 and file_path[0] == "/" and file_path[2] == ":":
+            file_path = file_path[1:]
+        return Path(file_path)
     if parsed.scheme:
         return None
     return (parent_file.parent / import_uri).resolve()
