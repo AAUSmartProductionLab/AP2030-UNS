@@ -6,6 +6,7 @@
  */
 
 import { toast } from 'react-toastify';
+import mqttService from './MqttService';
 import { 
   AasRegistryClient, 
   AasRepositoryClient,
@@ -1554,14 +1555,14 @@ class AasService {
     UNIT_CELSIUS: '0173-1#05-AAA567#002',
     UNIT_SECOND: '0173-1#05-AAA153#002',
     
-    // Custom capability semantic IDs
-    CAPABILITY_LOADING: 'https://smartproductionlab.aau.dk/Capability/Loading',
-    CAPABILITY_DISPENSING: 'https://smartproductionlab.aau.dk/Capability/Dispensing',
-    CAPABILITY_STOPPERING: 'https://smartproductionlab.aau.dk/Capability/Stoppering',
-    CAPABILITY_QC: 'https://smartproductionlab.aau.dk/Capability/QualityControl',
-    CAPABILITY_UNLOADING: 'https://smartproductionlab.aau.dk/Capability/Unloading',
-    CAPABILITY_WEIGHING: 'https://smartproductionlab.aau.dk/Capability/Weighing',
-    CAPABILITY_SCRAPING: 'https://smartproductionlab.aau.dk/Capability/Scraping'
+    // CSSx capability semantic IDs (prefix expanded by Registration Service)
+    CAPABILITY_LOADING: 'cssx:Loading',
+    CAPABILITY_DISPENSING: 'cssx:Dispensing',
+    CAPABILITY_STOPPERING: 'cssx:Stoppering',
+    CAPABILITY_QC: 'cssx:QualityControl',
+    CAPABILITY_UNLOADING: 'cssx:Unloading',
+    CAPABILITY_WEIGHING: 'cssx:Weighing',
+    CAPABILITY_SCRAPING: 'cssx:Scraping'
   };
 
   /**
@@ -1594,12 +1595,12 @@ class AasService {
       PROC_STOPPERING: 'https://smartproductionlab.aau.dk/Process/Stoppering',
       PROC_INSPECTION: 'https://smartproductionlab.aau.dk/Process/Inspection',
       PROC_UNLOADING: 'https://smartproductionlab.aau.dk/Process/Unloading',
-      // Capabilities (linked inside Process SMC)
-      CAP_LOADING: 'https://smartproductionlab.aau.dk/Capability/Loading',
-      CAP_DISPENSING: 'https://smartproductionlab.aau.dk/Capability/Dispensing',
-      CAP_STOPPERING: 'https://smartproductionlab.aau.dk/Capability/Stoppering',
-      CAP_QC: 'https://smartproductionlab.aau.dk/Capability/QualityControl',
-      CAP_UNLOADING: 'https://smartproductionlab.aau.dk/Capability/Unloading',
+      // CSSx capability semantic IDs
+      CAP_LOADING: 'cssx:Loading',
+      CAP_DISPENSING: 'cssx:Dispensing',
+      CAP_STOPPERING: 'cssx:Stoppering',
+      CAP_QC: 'cssx:QualityControl',
+      CAP_UNLOADING: 'cssx:Unloading',
       // Container semantic IDs
       PROCESSES_LIST: 'https://smartproductionlab.aau.dk/Processes',
       PROCESS: 'https://smartproductionlab.aau.dk/Process'
@@ -2499,6 +2500,7 @@ class AasService {
     const idShort = `${sanitizedName}AAS`;
     return {
       aasId: `${baseUrl}/aas/${idShort}`,
+      idShort,
       assetId,
       // AssetType uses ontology URL structure: role/category/specific-type/product
       assetType: `${baseUrl}/product/productFamily/${sanitizedFamily}/${sanitizedName}`,
@@ -2510,8 +2512,202 @@ class AasService {
   }
 
   /**
-   * Post the active product AAS when batch moves to top of queue
-   * Uses product name for AAS ID (e.g., MIM8AAS)
+   * Build a Product YAML config string from batch data.
+   * The YAML follows the same schema as AASDescriptions/Product/configs/*.yaml
+   * and is consumed by the Registration Service to generate a proper AAS.
+   * @param {Object} batchData - The batch queue item
+   * @returns {{ yaml: string, ids: Object }} YAML string and generated IDs
+   */
+  buildProductConfigYaml(batchData) {
+    const productName = batchData.product;
+    const productFamily = batchData.productFamily || productName;
+    const batchUuid = batchData.Uuid;
+    const ids = this.getActiveProductAasIds(productName, productFamily, batchUuid);
+
+    const fillVolume = this.extractFillVolume(batchData);
+    const quantity = parseInt(batchData.volume) || 0;
+    const packaging = batchData.packaging || 'Cartridge (3mL)';
+    const containerType = packaging.includes('Cartridge') ? 'Cartridge' : 'Prefilled Syringe';
+    const containerVolume = packaging.match(/(\d+(?:\.\d+)?)\s*mL/i)?.[1] || '3';
+
+    const temperature = batchData.productionTemperature || '22.0';
+    const humidity = batchData.humidity || '45.0';
+    const ipcWeighing = batchData.ipcWeighing ?? 100;
+    const ipcInspection = batchData.ipcInspection ?? 100;
+    const qcCount = batchData.qcCount || '50';
+    const orderTimestamp = batchData.orderTimestamp || new Date().toISOString();
+
+    const lines = [];
+    const I = '    ';  // 4-space indent
+
+    // Root key
+    lines.push(`${ids.idShort}:`);
+    lines.push(`${I}idShort: ${ids.idShort}`);
+    lines.push(`${I}id: '${ids.aasId}'`);
+    lines.push(`${I}globalAssetId: '${ids.assetId}'`);
+    lines.push(`${I}derivedFrom: 'https://smartproductionlab.aau.dk/aas/templates/product'`);
+    lines.push(`${I}assetType: '${ids.assetType}'`);
+    lines.push(``);
+
+    // ProductInformation
+    lines.push(`${I}ProductInformation:`);
+    lines.push(`${I}${I}ProductName: '${productName}'`);
+    lines.push(`${I}${I}ProductFamily: '${productFamily}'`);
+    lines.push(``);
+
+    // BatchInformation
+    lines.push(`${I}BatchInformation:`);
+    lines.push(`${I}${I}OrderNumber: '${batchUuid}'`);
+    lines.push(`${I}${I}OrderTimestamp: '${orderTimestamp}'`);
+    lines.push(`${I}${I}Quantity: ${quantity}`);
+    lines.push(`${I}${I}Unit: 'units'`);
+    lines.push(`${I}${I}Packaging: '${packaging}'`);
+    lines.push(`${I}${I}Status: 'planned'`);
+    lines.push(``);
+
+    // BillOfProcesses
+    lines.push(`${I}BillOfProcesses:`);
+    lines.push(`${I}${I}semanticId: 'https://admin-shell.io/idta/BillOfProcess/1/0'`);
+    lines.push(`${I}${I}idShort: 'BillOfProcesses'`);
+    lines.push(`${I}${I}Processes:`);
+
+    lines.push(`${I}${I}${I}- idShort: 'Loading'`);
+    lines.push(`${I}${I}${I}  semanticId: 'cssx:Loading'`);
+    lines.push(`${I}${I}${I}  description: 'Load empty primary container onto production shuttle'`);
+    lines.push(`${I}${I}${I}  sequenceNumber: 1`);
+    lines.push(`${I}${I}${I}  estimatedDuration:`);
+    lines.push(`${I}${I}${I}    value: 5.0`);
+    lines.push(`${I}${I}${I}    unit: 's'`);
+    lines.push(``);
+
+    lines.push(`${I}${I}${I}- idShort: 'Dispensing'`);
+    lines.push(`${I}${I}${I}  semanticId: 'cssx:Dispensing'`);
+    lines.push(`${I}${I}${I}  description: 'Dispense ${fillVolume}mL pharmaceutical product into container'`);
+    lines.push(`${I}${I}${I}  sequenceNumber: 2`);
+    lines.push(`${I}${I}${I}  estimatedDuration:`);
+    lines.push(`${I}${I}${I}    value: 8.0`);
+    lines.push(`${I}${I}${I}    unit: 's'`);
+    lines.push(`${I}${I}${I}  parameters:`);
+    lines.push(`${I}${I}${I}    - idShort: 'FillVolume'`);
+    lines.push(`${I}${I}${I}      value: ${fillVolume}`);
+    lines.push(`${I}${I}${I}      valueType: 'xs:double'`);
+    lines.push(`${I}${I}${I}      unit: 'mL'`);
+    lines.push(``);
+
+    lines.push(`${I}${I}${I}- idShort: 'Stoppering'`);
+    lines.push(`${I}${I}${I}  semanticId: 'cssx:Stoppering'`);
+    lines.push(`${I}${I}${I}  description: 'Insert elastomeric stopper to seal primary container'`);
+    lines.push(`${I}${I}${I}  sequenceNumber: 3`);
+    lines.push(`${I}${I}${I}  estimatedDuration:`);
+    lines.push(`${I}${I}${I}    value: 3.0`);
+    lines.push(`${I}${I}${I}    unit: 's'`);
+    lines.push(``);
+
+    lines.push(`${I}${I}${I}- idShort: 'Inspection'`);
+    lines.push(`${I}${I}${I}  semanticId: 'cssx:QualityControl'`);
+    lines.push(`${I}${I}${I}  description: 'Automated visual inspection of filled and stoppered container'`);
+    lines.push(`${I}${I}${I}  sequenceNumber: 4`);
+    lines.push(`${I}${I}${I}  estimatedDuration:`);
+    lines.push(`${I}${I}${I}    value: 2.0`);
+    lines.push(`${I}${I}${I}    unit: 's'`);
+    lines.push(``);
+
+    lines.push(`${I}${I}${I}- idShort: 'Unloading'`);
+    lines.push(`${I}${I}${I}  semanticId: 'cssx:Unloading'`);
+    lines.push(`${I}${I}${I}  description: 'Transfer finished product from shuttle to output conveyor'`);
+    lines.push(`${I}${I}${I}  sequenceNumber: 5`);
+    lines.push(`${I}${I}${I}  estimatedDuration:`);
+    lines.push(`${I}${I}${I}    value: 4.0`);
+    lines.push(`${I}${I}${I}    unit: 's'`);
+    lines.push(``);
+
+    // Requirements
+    lines.push(`${I}Requirements:`);
+    lines.push(`${I}${I}Environmental:`);
+    lines.push(`${I}${I}${I}- idShort: 'AmbientTemperature'`);
+    lines.push(`${I}${I}${I}  nominalValue: ${temperature}`);
+    lines.push(`${I}${I}${I}  tolerance: 2.0`);
+    lines.push(`${I}${I}${I}  unit: '°C'`);
+    lines.push(`${I}${I}${I}  valueType: 'xs:double'`);
+    lines.push(`${I}${I}${I}- idShort: 'RelativeHumidity'`);
+    lines.push(`${I}${I}${I}  nominalValue: ${humidity}`);
+    lines.push(`${I}${I}${I}  tolerance: 5.0`);
+    lines.push(`${I}${I}${I}  unit: '%RH'`);
+    lines.push(`${I}${I}${I}  valueType: 'xs:double'`);
+    lines.push(`${I}${I}InProcessControl:`);
+    lines.push(`${I}${I}${I}- idShort: 'WeighingCheck'`);
+    lines.push(`${I}${I}${I}  samplingRate: ${ipcWeighing}`);
+    lines.push(`${I}${I}${I}  unit: '%'`);
+    lines.push(`${I}${I}${I}- idShort: 'InspectionCheck'`);
+    lines.push(`${I}${I}${I}  samplingRate: ${ipcInspection}`);
+    lines.push(`${I}${I}${I}  unit: '%'`);
+    lines.push(`${I}${I}QualityControl:`);
+    lines.push(`${I}${I}${I}- idShort: 'LabSamples'`);
+    lines.push(`${I}${I}${I}  quantity: ${qcCount}`);
+    lines.push(`${I}${I}${I}  unit: 'units'`);
+    lines.push(``);
+
+    // HierarchicalStructures (Bill of Materials)
+    lines.push(`${I}HierarchicalStructures:`);
+    lines.push(`${I}${I}archetype: 'OneDown'`);
+    lines.push(`${I}${I}entryNode: '${productName}Product'`);
+    lines.push(`${I}${I}Nodes:`);
+    lines.push(`${I}${I}${I}- idShort: '${productName}Product'`);
+    lines.push(`${I}${I}${I}  entityType: 'SelfManagedEntity'`);
+    lines.push(`${I}${I}${I}  globalAssetId: '${ids.assetId}'`);
+    lines.push(`${I}${I}${I}- idShort: 'PrimaryContainer'`);
+    lines.push(`${I}${I}${I}  entityType: 'CoManagedEntity'`);
+    lines.push(`${I}${I}${I}  description: '${containerType} (${containerVolume}mL)'`);
+    lines.push(`${I}${I}${I}- idShort: 'ElastomericStopper'`);
+    lines.push(`${I}${I}${I}  entityType: 'CoManagedEntity'`);
+    lines.push(`${I}${I}${I}- idShort: 'BulkProduct'`);
+    lines.push(`${I}${I}${I}  entityType: 'CoManagedEntity'`);
+    lines.push(`${I}${I}${I}  description: 'Bulk ${productName} pharmaceutical solution'`);
+    lines.push(`${I}${I}Relationships:`);
+    lines.push(`${I}${I}${I}- idShort: 'ProductHasContainer'`);
+    lines.push(`${I}${I}${I}  first: '${productName}Product'`);
+    lines.push(`${I}${I}${I}  second: 'PrimaryContainer'`);
+    lines.push(`${I}${I}${I}- idShort: 'ProductHasStopper'`);
+    lines.push(`${I}${I}${I}  first: '${productName}Product'`);
+    lines.push(`${I}${I}${I}  second: 'ElastomericStopper'`);
+    lines.push(`${I}${I}${I}- idShort: 'ProductHasBulk'`);
+    lines.push(`${I}${I}${I}  first: '${productName}Product'`);
+    lines.push(`${I}${I}${I}  second: 'BulkProduct'`);
+    lines.push(``);
+
+    // AI-Planning
+    lines.push(`${I}AI-Planning:`);
+    lines.push(`${I}${I}Domain:`);
+    lines.push(`${I}${I}${I}Fluents:`);
+    lines.push(`${I}${I}${I}${I}-   key: "On"`);
+    lines.push(`${I}${I}${I}${I}    semantic_id: "https://smartproductionlab.aau.dk/PDDL/Term/Predicates/On"`);
+    lines.push(`${I}${I}${I}${I}    parameters:`);
+    lines.push(`${I}${I}${I}${I}        -   name: "Product"`);
+    lines.push(`${I}${I}${I}${I}            modelRef:`);
+    lines.push(`${I}${I}${I}${I}                - AAS: "self"`);
+    lines.push(`${I}${I}${I}${I}        -   name: "Transport"`);
+    lines.push(`${I}${I}${I}${I}            externalRef: "cssx:Transport"`);
+    lines.push(`${I}${I}${I}${I}-   key: "At"`);
+    lines.push(`${I}${I}${I}${I}    semantic_id: "https://smartproductionlab.aau.dk/PDDL/Term/Predicates/At"`);
+    lines.push(`${I}${I}${I}${I}    parameters:`);
+    lines.push(`${I}${I}${I}${I}        -   name: "Product"`);
+    lines.push(`${I}${I}${I}${I}            modelRef:`);
+    lines.push(`${I}${I}${I}${I}                - AAS: "self"`);
+    lines.push(`${I}${I}${I}${I}        -   name: "Location"`);
+    lines.push(`${I}${I}${I}${I}            externalRef: "cssx:LocationParameter"`);
+    lines.push(`${I}${I}Problem:`);
+    lines.push(`${I}${I}${I}Objects:`);
+    lines.push(`${I}${I}${I}${I}-   name: "${productName}"`);
+    lines.push(`${I}${I}${I}${I}    modelRef:`);
+    lines.push(`${I}${I}${I}${I}        - AAS: "self"`);
+
+    return { yaml: lines.join('\n'), ids };
+  }
+
+  /**
+   * Post the active product AAS when batch moves to top of queue.
+   * Builds a YAML config and publishes it via MQTT to the Registration Service,
+   * which generates the full AAS with all submodels.
    * @param {Object} batchData - The batch at the top of the queue
    * @returns {Promise<Object>} The created AAS information
    */
@@ -2521,34 +2717,21 @@ class AasService {
       if (!productName) {
         throw new Error('Product name is required');
       }
-      
-      const productFamily = batchData.productFamily || productName;
-      const batchUuid = batchData.Uuid;
-      const ids = this.getActiveProductAasIds(productName, productFamily, batchUuid);
-      
-      // Create submodels with the active product IDs
-      const batchInfoSubmodel = this.createBatchInformationSubmodel(batchData, ids.batchInfoSubmodelId);
-      const requirementsSubmodel = this.createRequirementsSubmodel(batchData, ids.requirementsSubmodelId);
-      const billOfMaterialsSubmodel = this.createActiveBillOfMaterialsSubmodel(batchData, ids);
-      const billOfProcessesSubmodel = this.createBillOfProcessesSubmodel(batchData, ids.billOfProcessesSubmodelId);
-      
-      // Save each submodel to the repository (create or update)
-      await this.saveOrUpdateSubmodel(ids.batchInfoSubmodelId, batchInfoSubmodel);
-      await this.saveOrUpdateSubmodel(ids.requirementsSubmodelId, requirementsSubmodel);
-      await this.saveOrUpdateSubmodel(ids.billOfMaterialsSubmodelId, billOfMaterialsSubmodel);
-      await this.saveOrUpdateSubmodel(ids.billOfProcessesSubmodelId, billOfProcessesSubmodel);
-      
-      // Create the AAS shell with submodel references
-      const aasShell = this.createProductAasShell(batchData, ids);
-      await this.saveOrUpdateAasShell(ids.aasId, aasShell);
-      
-      toast.success(`Active Product AAS posted: ${productName}AAS`);
-      
+
+      const { yaml, ids } = this.buildProductConfigYaml(batchData);
+
+      const published = await mqttService.publishProductConfig(yaml);
+      if (!published) {
+        throw new Error('Failed to publish product config via MQTT');
+      }
+
+      toast.success(`Product config published: ${ids.idShort}`);
+
       return {
         success: true,
         ids,
-        aasName: `${productName}AAS`,
-        message: `Active Product AAS posted with ID: ${ids.aasId}`
+        aasName: ids.idShort,
+        message: `Product config published to Registration Service: ${ids.aasId}`
       };
     } catch (error) {
       console.error('Failed to post active Product AAS:', error);

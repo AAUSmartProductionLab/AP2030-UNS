@@ -448,6 +448,29 @@ class MqttService {
       });
     });
   }
+
+  /**
+   * Publish a Product YAML config to the Registration Service.
+   * The Registration Service listens on NN/Nybrovej/InnoLab/Registration/Config
+   * and generates a full AAS from the YAML payload.
+   * @param {string} yamlString - Raw YAML config content
+   * @returns {Promise<boolean>} Whether the publish was successful
+   */
+  publishProductConfig(yamlString) {
+    const topic = 'NN/Nybrovej/InnoLab/Registration/Config';
+    return new Promise((resolve) => {
+      this.publish(topic, yamlString, { qos: 2, retain: false }, (error) => {
+        if (error) {
+          console.error('MqttService: Failed to publish product config:', error);
+          toast.error('Failed to publish product config to Registration Service');
+          resolve(false);
+        } else {
+          console.log('MqttService: Published product config to Registration Service');
+          resolve(true);
+        }
+      });
+    });
+  }
 }
 
 
