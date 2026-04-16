@@ -14,7 +14,7 @@ Usage:
 from src.core.constants import (
     DEFAULT_MQTT_BROKER,
     DEFAULT_MQTT_PORT,
-    PathDefaults
+    PathDefaults,
 )
 import paho.mqtt.client as mqtt
 import yaml
@@ -236,8 +236,12 @@ Examples:
 
     parser.add_argument(
         '--config-dir',
-        default=f'../{PathDefaults.CONFIG_DIR}',
-        help=f'Directory containing config YAML files (default: ../{PathDefaults.CONFIG_DIR})'
+        nargs='+',
+        default=[
+            f'../{PathDefaults.CONFIG_DIR}',
+            f'../{PathDefaults.PRODUCT_CONFIG_DIR}',
+        ],
+        help=f'Directories containing config YAML files (default: Resource + Product configs)'
     )
     parser.add_argument(
         '--mqtt-broker',
@@ -279,13 +283,14 @@ Examples:
 
     args = parser.parse_args()
 
-    # Resolve config directory path
+    # Resolve config directory paths
     script_dir = Path(__file__).parent
-    config_dir = script_dir / args.config_dir
+    config_dirs = [script_dir / d for d in args.config_dir]
 
     print_header("Asset Registration via MQTT")
     print(f"{Colors.BOLD}Configuration:{Colors.END}")
-    print(f"  Config Dir: {config_dir}")
+    for cd in config_dirs:
+        print(f"  Config Dir: {cd}")
     print(f"  MQTT Broker: {args.mqtt_broker}:{args.mqtt_port}")
     print(f"  Base Topic: {args.base_topic}")
     print(f"  Delay: {args.delay}s")
@@ -296,7 +301,9 @@ Examples:
 
     # Find config files
     print_info("Scanning for configuration files...")
-    config_files = find_config_files(str(config_dir))
+    config_files = []
+    for cd in config_dirs:
+        config_files.extend(find_config_files(str(cd)))
 
     if not config_files:
         print_failure("No configuration files found!")

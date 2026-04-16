@@ -89,7 +89,115 @@ class HierarchicalStructuresSubmodelBuilder:
     
     def _create_entry_node(self, system_id: str, global_asset_id: str,
                           hs_config: Dict, archetype: str, aas_id: str) -> model.Entity:
-        """Create the EntryNode entity with Node children and relationships."""
+        """Create the EntryNode entity with Node children and relationships.
+        
+        Supports two config formats:
+        1. Dict format (Resource AAS): IsPartOf/HasPart: {entityName: {globalAssetId: ...}}
+        2. Nodes/Relationships format (Product AAS): Nodes: [{idShort:, entityType:, ...}], Relationships: [{first:, second:}]
+        """
+        entry_node_statements = []
+        
+        # Check for Nodes/Relationships format first (Product AAS style)
+        nodes_list = hs_config.get('Nodes', None)
+        relationships_list = hs_config.get('Relationships', None)
+        entry_node_name = hs_config.get('entryNode', None)
+        
+        if isinstance(nodes_list, list) and nodes_list:
+            entry_node_statements = self._build_from_nodes_relationships(
+                system_id, nodes_list, relationships_list or [], entry_node_name, archetype
+            )
+        else:
+            # Legacy dict format (Resource AAS)
+            entry_node_statements = self._build_from_dict_format(
+                system_id, hs_config, archetype, aas_id
+            )
+        
+        entry_node = model.Entity(
+            id_short="EntryNode",
+            entity_type=model.EntityType.SELF_MANAGED_ENTITY,
+            global_asset_id=global_asset_id,
+            semantic_id=self.semantic_factory.ENTRY_NODE,
+            statement=entry_node_statements if entry_node_statements else []
+        )
+        
+        return entry_node
+    
+    def _build_from_nodes_relationships(
+        self, system_id: str, nodes_list: list, relationships_list: list,
+        entry_node_name: str, archetype: str
+    ) -> list:
+        """Build statements from Nodes/Relationships list format (Product AAS)."""
+        statements = []
+        submodel_id = f"{self.base_url}/submodels/instances/{system_id}/HierarchicalStructures"
+        
+        # Create child Node entities (skip the entry node itself)
+        for node_cfg in nodes_list:
+            if not isinstance(node_cfg, dict):
+                continue
+            id_short = node_cfg.get('idShort', '')
+            if not id_short or id_short == entry_node_name:
+                continue
+            
+            entity_type_str = node_cfg.get('entityType', 'CoManagedEntity')
+            is_self_managed = entity_type_str == 'SelfManagedEntity'
+            node_global_asset_id = node_cfg.get('globalAssetId', None)
+            
+            node_entity = self.element_factory.create_entity(
+                id_short=id_short,
+                entity_type=model.EntityType.SELF_MANAGED_ENTITY if is_self_managed else model.EntityType.CO_MANAGED_ENTITY,
+                global_asset_id=node_global_asset_id if is_self_managed else None,
+                semantic_id=self.semantic_factory.HIERARCHICAL_NODE
+            )
+            statements.append(node_entity)
+        
+        # Create Relationship elements
+        relationship_prefix = "HasPart" if archetype == 'OneDown' else "IsPartOf"
+        for rel_cfg in relationships_list:
+            if not isinstance(rel_cfg, dict):
+                continue
+            rel_id_short = rel_cfg.get('idShort', '')
+            first_name = rel_cfg.get('first', '')
+            second_name = rel_cfg.get('second', '')
+            if not first_name or not second_name:
+                continue
+            
+            # First entity reference
+            first_keys = [model.Key(model.KeyTypes.SUBMODEL, submodel_id)]
+            if first_name == entry_node_name:
+                first_keys.append(model.Key(model.KeyTypes.ENTITY, "EntryNode"))
+            else:
+                first_keys.append(model.Key(model.KeyTypes.ENTITY, "EntryNode"))
+                first_keys.append(model.Key(model.KeyTypes.ENTITY, first_name))
+            
+            # Second entity reference
+            second_keys = [model.Key(model.KeyTypes.SUBMODEL, submodel_id)]
+            if second_name == entry_node_name:
+                second_keys.append(model.Key(model.KeyTypes.ENTITY, "EntryNode"))
+            else:
+                second_keys.append(model.Key(model.KeyTypes.ENTITY, "EntryNode"))
+                second_keys.append(model.Key(model.KeyTypes.ENTITY, second_name))
+            
+            sem = rel_cfg.get('semanticId')
+            sem_ref = self.semantic_factory.HIERARCHICAL_RELATIONSHIP
+            if sem:
+                sem_ref = model.ExternalReference(
+                    (model.Key(type_=model.KeyTypes.GLOBAL_REFERENCE, value=sem),)
+                )
+            
+            rel = self.element_factory.create_relationship(
+                id_short=rel_id_short or f"{relationship_prefix}_{second_name}",
+                first=model.ModelReference(tuple(first_keys), model.Entity),
+                second=model.ModelReference(tuple(second_keys), model.Entity),
+                semantic_id=sem_ref
+            )
+            statements.append(rel)
+        
+        return statements
+    
+    def _build_from_dict_format(
+        self, system_id: str, hs_config: Dict, archetype: str, aas_id: str
+    ) -> list:
+        """Build statements from IsPartOf/HasPart dict format (Resource AAS)."""
         node_entities = []
         entry_node_statements = []
         
@@ -110,14 +218,10 @@ class HierarchicalStructuresSubmodelBuilder:
         
         # Process each entity in the hierarchy (dict format)
         for entity_name, entity_config in statements_to_process.items():
-            # entity_config should be a dict with globalAssetId, systemId, aasId, etc.
             if not isinstance(entity_config, dict):
                 entity_config = {}
             
-            # Auto-derive missing IDs
-            # Convention: systemId should include 'AAS' suffix for submodel path consistency
             entity_system_id = entity_config.get('systemId', entity_name)
-            # Ensure AAS suffix is present for submodel ID consistency
             if not entity_system_id.endswith('AAS'):
                 entity_system_id_for_submodel = entity_system_id + 'AAS'
             else:
@@ -133,30 +237,18 @@ class HierarchicalStructuresSubmodelBuilder:
             )
             entity_global_asset_id = entity_config.get('globalAssetId', '')
             
-            # Create Node entity with SameAs reference (includes target AAS ID for jump button)
             node_entity = self._create_node_entity(
                 entity_name, entity_global_asset_id, entity_submodel_id, entity_aas_id
             )
             node_entities.append(node_entity)
             
-            # Create relationship element (uses current submodel, not target)
             relationship = self._create_relationship(
                 system_id, entity_name, relationship_prefix, aas_id
             )
             entry_node_statements.append(relationship)
         
-        # Add all Node entities to EntryNode statements
         entry_node_statements.extend(node_entities)
-        
-        entry_node = model.Entity(
-            id_short="EntryNode",
-            entity_type=model.EntityType.SELF_MANAGED_ENTITY,
-            global_asset_id=global_asset_id,
-            semantic_id=self.semantic_factory.ENTRY_NODE,
-            statement=entry_node_statements if entry_node_statements else []
-        )
-        
-        return entry_node
+        return entry_node_statements
     
     def _create_node_entity(self, entity_name: str, global_asset_id: str,
                            submodel_id: str, aas_id: str = None) -> model.Entity:

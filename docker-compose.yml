@@ -469,6 +469,7 @@ services:
       - ./databridge:/databridge
       # AAS configs for registration
       - ./AASDescriptions/Resource/configs:/app/configs:ro
+      - ./AASDescriptions/Product/configs:/app/product_configs:ro
       # MQTT Schemas for schema-based message generation
       - ./MQTTSchemas:/app/MQTTSchemas:ro
       # Docker socket for container restarts (DataBridge)

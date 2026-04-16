@@ -125,6 +125,7 @@ class PathDefaults:
     DATABRIDGE_DIR: Final[str] = "databridge"
     DATABRIDGE_QUERIES: Final[str] = "databridge/queries"
     CONFIG_DIR: Final[str] = "AASDescriptions/Resource/configs"
+    PRODUCT_CONFIG_DIR: Final[str] = "AASDescriptions/Product/configs"
 
 
 class MQTTTopics:

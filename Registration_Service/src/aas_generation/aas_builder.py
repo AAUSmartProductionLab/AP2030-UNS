@@ -149,6 +149,16 @@ class AASBuilder:
         if 'Policy' in config:
             submodel_names.append('Policy')
         
+        # Product AAS specific submodels
+        if 'ProductInformation' in config:
+            submodel_names.append('ProductInformation')
+        if 'BatchInformation' in config:
+            submodel_names.append('BatchInformation')
+        if 'BillOfProcesses' in config:
+            submodel_names.append('BillOfProcesses')
+        if 'Requirements' in config:
+            submodel_names.append('Requirements')
+        
         return submodel_names
 
     

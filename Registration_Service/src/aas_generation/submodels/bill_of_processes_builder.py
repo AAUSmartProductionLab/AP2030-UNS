@@ -24,69 +24,53 @@ class BillOfProcessesSubmodelBuilder:
     BILL_OF_PROCESSES_SEMANTIC_ID = SemanticIdCatalog.BILL_OF_PROCESSES_SUBMODEL
     PROCESS_STEP_SEMANTIC_ID = SemanticIdCatalog.PROCESS_STEP_SUBMODEL
     
+    # CSSx capability IRI prefix
+    CSSX_BASE = "http://www.w3id.org/aau-ra/cssx#"
+    
     def __init__(self, base_url: str, semantic_factory, element_factory):
-        """
-        Initialize the BillOfProcesses submodel builder.
-        
-        Args:
-            base_url: Base URL for AAS identifiers
-            semantic_factory: SemanticIdFactory instance for semantic IDs
-            element_factory: AASElementFactory instance for element creation
-        """
         self.base_url = base_url
         self.semantic_factory = semantic_factory
         self.element_factory = element_factory
     
-    def build(self, system_id: str, config: Dict) -> model.Submodel:
+    def build(self, system_id: str, config: Dict) -> Optional[model.Submodel]:
         """
         Create the BillOfProcesses submodel.
         
+        Process steps are direct children of the submodel (no Processes wrapper).
+        Each step has id_short='Step_N', a displayName with the capability name,
+        and a semanticId referencing the CSSx capability class IRI.
+        
         Config format:
             BillOfProcesses:
-                semantic_id: 'optional-override'
                 Processes:
-                    - ProcessName:
-                        step: 1
-                        semantic_id: 'https://...'
-                        description: 'Description'
-                        estimatedDuration: 5.0
-                        parameters:
-                            key: value
-        
-        Args:
-            system_id: Unique identifier for the system
-            config: Configuration dictionary containing BillOfProcesses section
-            
-        Returns:
-            BillOfProcesses submodel instance
+                    - idShort: 'Loading'
+                      semanticId: 'cssx:Loading'
+                      sequenceNumber: 1
+                      ...
         """
         bop_config = config.get('BillOfProcesses', {}) or {}
+        if not bop_config:
+            return None
+
         processes = bop_config.get('Processes', [])
         
-        # Create process step elements
+        # Create process step elements as direct submodel children
         process_elements = []
-        
         for process_entry in processes:
             if isinstance(process_entry, dict):
-                for process_name, process_config in process_entry.items():
-                    if isinstance(process_config, dict):
-                        step_element = self._create_process_step(
-                            process_name, process_config
-                        )
-                        process_elements.append(step_element)
+                process_name = process_entry.get('idShort', '')
+                if process_name:
+                    step_element = self._create_process_step(
+                        process_name, process_entry
+                    )
+                    process_elements.append(step_element)
         
-        # Create the Processes list
-        processes_list = model.SubmodelElementList(
-            id_short="Processes",
-            type_value_list_element=model.SubmodelElementCollection,
-            value=process_elements,
-            semantic_id=self._create_semantic_reference(
-                SemanticIdCatalog.PROCESS_LIST_SUBMODEL
-            )
-        )
+        if not process_elements:
+            return None
         
         # Create submodel semantic ID
-        semantic_id_value = bop_config.get('semantic_id', self.BILL_OF_PROCESSES_SEMANTIC_ID)
+        semantic_id_value = bop_config.get(
+            'semanticId', bop_config.get('semantic_id', self.BILL_OF_PROCESSES_SEMANTIC_ID))
         
         submodel = model.Submodel(
             id_=f"{self.base_url}/submodels/instances/{system_id}/BillOfProcesses",
@@ -94,7 +78,7 @@ class BillOfProcessesSubmodelBuilder:
             kind=model.ModellingKind.INSTANCE,
             semantic_id=self._create_semantic_reference(semantic_id_value),
             administration=model.AdministrativeInformation(version="1", revision="0"),
-            submodel_element=[processes_list]
+            submodel_element=process_elements
         )
         
         return submodel
@@ -105,41 +89,19 @@ class BillOfProcessesSubmodelBuilder:
         process_config: Dict
     ) -> model.SubmodelElementCollection:
         """
-        Create a process step element.
+        Create a process step as a SubmodelElementCollection.
         
-        NOTE: Per AASd-120 constraint, items in a SubmodelElementList must NOT have id_short.
-        Instead, we use displayName (a valid Referable attribute) to identify the process.
-        The semanticId on the collection identifies the process type.
-        
-        Args:
-            process_name: Name of the process step (stored in displayName)
-            process_config: Configuration for the process step
-            
-        Returns:
-            SubmodelElementCollection representing the process step
+        id_short is Step_N (from sequenceNumber). displayName carries the
+        human-readable name. semanticId is the CSSx capability class IRI.
         """
         elements = []
         
-        # Step number
-        step_num = process_config.get('step', 0)
-        elements.append(
-            model.Property(
-                id_short="Step",
-                value_type=model.datatypes.Int,
-                value=step_num
-            )
-        )
+        # Step/sequence number
+        step_num = process_config.get('sequenceNumber', process_config.get('step', 0))
         
-        # Semantic ID as property (for easy querying)
-        semantic_id = process_config.get('semantic_id', '')
-        if semantic_id:
-            elements.append(
-                model.Property(
-                    id_short="SemanticId",
-                    value_type=model.datatypes.String,
-                    value=semantic_id
-                )
-            )
+        # Resolve semantic ID — expand cssx: prefix if present
+        raw_sem_id = process_config.get('semanticId', process_config.get('semantic_id', ''))
+        semantic_id = self._resolve_capability_iri(raw_sem_id)
         
         # Description
         description = process_config.get('description', '')
@@ -152,41 +114,42 @@ class BillOfProcessesSubmodelBuilder:
                 )
             )
         
-        # Estimated duration
-        duration = process_config.get('estimatedDuration', 0.0)
-        if duration:
-            elements.append(
-                model.Property(
-                    id_short="EstimatedDuration",
-                    value_type=model.datatypes.Float,
-                    value=float(duration)
-                )
-            )
-        
-        # Parameters as nested collection
-        parameters = process_config.get('parameters', {})
-        if parameters:
-            param_elements = []
-            for param_name, param_value in parameters.items():
-                # Determine value type
-                if isinstance(param_value, bool):
-                    value_type = model.datatypes.Boolean
-                elif isinstance(param_value, int):
-                    value_type = model.datatypes.Int
-                elif isinstance(param_value, float):
-                    value_type = model.datatypes.Float
-                else:
-                    value_type = model.datatypes.String
-                    param_value = str(param_value)
-                
-                param_elements.append(
-                    model.Property(
-                        id_short=param_name,
-                        value_type=value_type,
-                        value=param_value
+        # Estimated duration (support both flat float and nested dict {value:, unit:})
+        duration_cfg = process_config.get('estimatedDuration', None)
+        if duration_cfg is not None:
+            if isinstance(duration_cfg, dict):
+                dur_value = duration_cfg.get('value', 0.0)
+                dur_unit = duration_cfg.get('unit', 's')
+                elements.append(
+                    model.SubmodelElementCollection(
+                        id_short="EstimatedDuration",
+                        value=[
+                            model.Property(
+                                id_short="Value",
+                                value_type=model.datatypes.Float,
+                                value=float(dur_value)
+                            ),
+                            model.Property(
+                                id_short="Unit",
+                                value_type=model.datatypes.String,
+                                value=dur_unit
+                            ),
+                        ]
                     )
                 )
-            
+            else:
+                elements.append(
+                    model.Property(
+                        id_short="EstimatedDuration",
+                        value_type=model.datatypes.Float,
+                        value=float(duration_cfg)
+                    )
+                )
+        
+        # Parameters (list-of-dict or dict)
+        parameters = process_config.get('parameters', None)
+        if parameters:
+            param_elements = self._create_parameter_elements(parameters)
             if param_elements:
                 elements.append(
                     model.SubmodelElementCollection(
@@ -194,21 +157,90 @@ class BillOfProcessesSubmodelBuilder:
                         value=param_elements
                     )
                 )
+
+        # Requirements (list-of-dict)
+        requirements = process_config.get('requirements', None)
+        if requirements:
+            req_elements = self._create_parameter_elements(requirements)
+            if req_elements:
+                elements.append(
+                    model.SubmodelElementCollection(
+                        id_short="Requirements",
+                        value=req_elements
+                    )
+                )
         
-        # Create collection with semantic ID from process config
-        # AASd-120: Items in SubmodelElementList must NOT have id_short
-        # The process is identified by displayName (valid Referable attribute) and semanticId
-        collection_semantic_id = None
-        if semantic_id:
-            collection_semantic_id = self._create_semantic_reference(semantic_id)
+        # Build semantic reference from the capability IRI
+        collection_semantic_id = self._create_semantic_reference(semantic_id) if semantic_id else None
         
         return model.SubmodelElementCollection(
-            id_short=None,
+            id_short=f"Step_{step_num}",
             display_name=model.MultiLanguageNameType({"en": process_name}),
             value=elements,
             semantic_id=collection_semantic_id
         )
     
+    def _resolve_capability_iri(self, raw: str) -> str:
+        """Expand cssx: prefix to full IRI, or return as-is."""
+        if not raw:
+            return ''
+        if raw.startswith('cssx:'):
+            return self.CSSX_BASE + raw[5:]
+        return raw
+    
+    def _create_parameter_elements(self, params) -> List:
+        """Create elements from a list-of-dict or dict parameter config.
+
+        Each dict entry may have idShort, value, valueType, unit, nominalValue,
+        tolerance, description, semanticId, etc.
+        """
+        elements = []
+        if isinstance(params, list):
+            for p in params:
+                if not isinstance(p, dict):
+                    continue
+                id_short = p.get('idShort', '')
+                if not id_short:
+                    continue
+                props = []
+                for k, v in p.items():
+                    if k in ('idShort', 'semanticId', 'unitSemanticId',
+                             'complianceType', 'toleranceType'):
+                        continue
+                    if isinstance(v, list):
+                        v = '; '.join(str(x) for x in v)
+                    if isinstance(v, bool):
+                        vt = model.datatypes.Boolean
+                    elif isinstance(v, int):
+                        vt = model.datatypes.Int
+                    elif isinstance(v, float):
+                        vt = model.datatypes.Float
+                    else:
+                        vt = model.datatypes.String
+                        v = str(v)
+                    props.append(model.Property(id_short=k, value_type=vt, value=v))
+                sem = p.get('semanticId')
+                elements.append(
+                    model.SubmodelElementCollection(
+                        id_short=id_short,
+                        value=props,
+                        semantic_id=self._create_semantic_reference(sem) if sem else None
+                    )
+                )
+        elif isinstance(params, dict):
+            for name, val in params.items():
+                if isinstance(val, bool):
+                    vt = model.datatypes.Boolean
+                elif isinstance(val, int):
+                    vt = model.datatypes.Int
+                elif isinstance(val, float):
+                    vt = model.datatypes.Float
+                else:
+                    vt = model.datatypes.String
+                    val = str(val)
+                elements.append(model.Property(id_short=name, value_type=vt, value=val))
+        return elements
+
     def _create_semantic_reference(self, semantic_id: str) -> model.ExternalReference:
         """Create an external reference for a semantic ID"""
         return model.ExternalReference(
@@ -227,59 +259,53 @@ class RequirementsSubmodelBuilder:
     - Environmental conditions
     - In-process controls with rates
     - Quality control specifications
+    
+    Config format (list-of-dict):
+        Requirements:
+            Environmental:
+                - idShort: 'AmbientTemperature'
+                  nominalValue: 22.0
+                  tolerance: 2.0
+                  unit: '°C'
+            InProcessControl:
+                - idShort: 'WeighingCheck'
+                  samplingRate: 100
+                  unit: '%'
+            QualityControl:
+                - idShort: 'LabSamples'
+                  quantity: 50
+                  unit: 'units'
     """
     
     REQUIREMENTS_SEMANTIC_ID = SemanticIdCatalog.REQUIREMENTS_SUBMODEL
     
     def __init__(self, base_url: str, semantic_factory, element_factory):
-        """
-        Initialize the Requirements submodel builder.
-        
-        Args:
-            base_url: Base URL for AAS identifiers
-            semantic_factory: SemanticIdFactory instance
-            element_factory: AASElementFactory instance
-        """
         self.base_url = base_url
         self.semantic_factory = semantic_factory
         self.element_factory = element_factory
     
-    def build(self, system_id: str, config: Dict) -> model.Submodel:
-        """
-        Create the Requirements submodel.
-        
-        Args:
-            system_id: Unique identifier for the system
-            config: Configuration dictionary containing Requirements section
-            
-        Returns:
-            Requirements submodel instance
-        """
+    def build(self, system_id: str, config: Dict) -> Optional[model.Submodel]:
         req_config = config.get('Requirements', {}) or {}
+        if not req_config:
+            return None
         
         submodel_elements = []
         
-        # Environmental requirements
-        env_config = req_config.get('Environmental', {})
-        if env_config:
-            env_collection = self._create_environmental_collection(env_config)
-            submodel_elements.append(env_collection)
+        for section_name in ('Environmental', 'InProcessControl', 'QualityControl'):
+            section_cfg = req_config.get(section_name, None)
+            if not section_cfg:
+                continue
+            collection = self._create_section_collection(section_name, section_cfg)
+            if collection:
+                submodel_elements.append(collection)
         
-        # In-process control requirements
-        ipc_config = req_config.get('InProcessControl', {})
-        if ipc_config:
-            ipc_collection = self._create_ipc_collection(ipc_config)
-            submodel_elements.append(ipc_collection)
+        if not submodel_elements:
+            return None
         
-        # Quality control requirements
-        qc_config = req_config.get('QualityControl', {})
-        if qc_config:
-            qc_collection = self._create_qc_collection(qc_config)
-            submodel_elements.append(qc_collection)
+        semantic_id_value = req_config.get(
+            'semanticId', req_config.get('semantic_id', self.REQUIREMENTS_SEMANTIC_ID))
         
-        semantic_id_value = req_config.get('semantic_id', self.REQUIREMENTS_SEMANTIC_ID)
-        
-        submodel = model.Submodel(
+        return model.Submodel(
             id_=f"{self.base_url}/submodels/instances/{system_id}/Requirements",
             id_short="Requirements",
             kind=model.ModellingKind.INSTANCE,
@@ -287,170 +313,80 @@ class RequirementsSubmodelBuilder:
             administration=model.AdministrativeInformation(version="1", revision="0"),
             submodel_element=submodel_elements
         )
-        
-        return submodel
     
-    def _create_environmental_collection(self, config: Dict) -> model.SubmodelElementCollection:
-        """Create Environmental requirements collection"""
+    def _create_section_collection(
+        self, section_name: str, section_cfg
+    ) -> Optional[model.SubmodelElementCollection]:
+        """Create a requirements section (Environmental, IPC, or QC) from list or dict."""
         elements = []
         
-        for req_name, req_config in config.items():
-            if isinstance(req_config, dict):
-                req_elements = self._create_requirement_elements(req_config)
+        if isinstance(section_cfg, list):
+            for item in section_cfg:
+                if not isinstance(item, dict):
+                    continue
+                id_short = item.get('idShort', '')
+                if not id_short:
+                    continue
+                props = []
+                for k, v in item.items():
+                    if k in ('idShort', 'semanticId', 'unitSemanticId',
+                             'complianceType', 'toleranceType'):
+                        continue
+                    if isinstance(v, list):
+                        v = '; '.join(str(x) for x in v)
+                    if isinstance(v, bool):
+                        vt = model.datatypes.Boolean
+                    elif isinstance(v, int):
+                        vt = model.datatypes.Int
+                    elif isinstance(v, float):
+                        vt = model.datatypes.Float
+                    else:
+                        vt = model.datatypes.String
+                        v = str(v)
+                    props.append(model.Property(id_short=k, value_type=vt, value=v))
+                sem = item.get('semanticId')
+                elements.append(
+                    model.SubmodelElementCollection(
+                        id_short=id_short,
+                        value=props,
+                        semantic_id=self._create_semantic_reference(sem) if sem else None
+                    )
+                )
+        elif isinstance(section_cfg, dict):
+            for req_name, req_config in section_cfg.items():
+                if not isinstance(req_config, dict):
+                    continue
+                props = self._dict_to_properties(req_config)
+                sem = req_config.get('semantic_id', req_config.get('semanticId'))
                 elements.append(
                     model.SubmodelElementCollection(
                         id_short=req_name,
-                        value=req_elements,
-                        semantic_id=self._create_semantic_reference(
-                            req_config.get('semantic_id', '')
-                        ) if req_config.get('semantic_id') else None
+                        value=props,
+                        semantic_id=self._create_semantic_reference(sem) if sem else None
                     )
                 )
         
-        return model.SubmodelElementCollection(
-            id_short="Environmental",
-            value=elements
-        )
+        if not elements:
+            return None
+        return model.SubmodelElementCollection(id_short=section_name, value=elements)
     
-    def _create_ipc_collection(self, config: Dict) -> model.SubmodelElementCollection:
-        """Create In-Process Control requirements collection"""
-        elements = []
-        
-        for req_name, req_config in config.items():
-            if isinstance(req_config, dict):
-                req_elements = self._create_rate_requirement_elements(req_config)
-                elements.append(
-                    model.SubmodelElementCollection(
-                        id_short=req_name,
-                        value=req_elements,
-                        semantic_id=self._create_semantic_reference(
-                            req_config.get('semantic_id', '')
-                        ) if req_config.get('semantic_id') else None
-                    )
-                )
-        
-        return model.SubmodelElementCollection(
-            id_short="InProcessControl",
-            value=elements
-        )
-    
-    def _create_qc_collection(self, config: Dict) -> model.SubmodelElementCollection:
-        """Create Quality Control requirements collection"""
-        elements = []
-        
-        for req_name, req_config in config.items():
-            if isinstance(req_config, dict):
-                req_elements = self._create_rate_requirement_elements(req_config)
-                
-                # Add sample size if present
-                if 'sampleSize' in req_config:
-                    req_elements.append(
-                        model.Property(
-                            id_short="SampleSize",
-                            value_type=model.datatypes.Int,
-                            value=req_config['sampleSize']
-                        )
-                    )
-                
-                elements.append(
-                    model.SubmodelElementCollection(
-                        id_short=req_name,
-                        value=req_elements,
-                        semantic_id=self._create_semantic_reference(
-                            req_config.get('semantic_id', '')
-                        ) if req_config.get('semantic_id') else None
-                    )
-                )
-        
-        return model.SubmodelElementCollection(
-            id_short="QualityControl",
-            value=elements
-        )
-    
-    def _create_requirement_elements(self, config: Dict) -> List:
-        """Create elements for a basic requirement"""
-        elements = []
-        
-        if 'value' in config:
-            value = config['value']
-            if isinstance(value, (int, float)):
-                elements.append(
-                    model.Property(
-                        id_short="Value",
-                        value_type=model.datatypes.Float if isinstance(value, float) else model.datatypes.Int,
-                        value=value
-                    )
-                )
+    def _dict_to_properties(self, cfg: Dict) -> List:
+        """Convert a flat dict to a list of Property elements."""
+        props = []
+        for k, v in cfg.items():
+            if k in ('semantic_id', 'semanticId'):
+                continue
+            if isinstance(v, bool):
+                vt = model.datatypes.Boolean
+            elif isinstance(v, int):
+                vt = model.datatypes.Int
+            elif isinstance(v, float):
+                vt = model.datatypes.Float
             else:
-                elements.append(
-                    model.Property(
-                        id_short="Value",
-                        value_type=model.datatypes.String,
-                        value=str(value)
-                    )
-                )
-        
-        if 'unit' in config:
-            elements.append(
-                model.Property(
-                    id_short="Unit",
-                    value_type=model.datatypes.String,
-                    value=config['unit']
-                )
-            )
-        
-        if 'tolerance' in config:
-            elements.append(
-                model.Property(
-                    id_short="Tolerance",
-                    value_type=model.datatypes.Float,
-                    value=float(config['tolerance'])
-                )
-            )
-        
-        return elements
-    
-    def _create_rate_requirement_elements(self, config: Dict) -> List:
-        """Create elements for a rate-based requirement"""
-        elements = []
-        
-        if 'rate' in config:
-            elements.append(
-                model.Property(
-                    id_short="Rate",
-                    value_type=model.datatypes.Float,
-                    value=float(config['rate'])
-                )
-            )
-        
-        if 'unit' in config:
-            elements.append(
-                model.Property(
-                    id_short="Unit",
-                    value_type=model.datatypes.String,
-                    value=config['unit']
-                )
-            )
-        
-        if 'appliesTo' in config:
-            elements.append(
-                model.Property(
-                    id_short="AppliesTo",
-                    value_type=model.datatypes.String,
-                    value=config['appliesTo']
-                )
-            )
-        
-        if 'description' in config:
-            elements.append(
-                model.Property(
-                    id_short="Description",
-                    value_type=model.datatypes.String,
-                    value=config['description']
-                )
-            )
-        
-        return elements
+                vt = model.datatypes.String
+                v = str(v)
+            props.append(model.Property(id_short=k, value_type=vt, value=v))
+        return props
     
     def _create_semantic_reference(self, semantic_id: str) -> model.ExternalReference:
         """Create an external reference for a semantic ID"""

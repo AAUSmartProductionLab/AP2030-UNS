@@ -18,6 +18,7 @@ from basyx.aas import model
 from basyx.aas.adapter.json import json_serialization
 from .aas_validator import AASValidator
 from .aas_generation import AASElementFactory, SchemaHandler, SemanticIdFactory, AASBuilder
+from .aas_generation.prefix_resolver import expand_prefixes_in_config
 from .aas_generation.submodels import (
     AssetInterfacesBuilder,
     VariablesSubmodelBuilder,
@@ -26,8 +27,12 @@ from .aas_generation.submodels import (
     ParametersSubmodelBuilder,
     HierarchicalStructuresSubmodelBuilder,
     CapabilitiesSubmodelBuilder,
+    BillOfProcessesSubmodelBuilder,
+    RequirementsSubmodelBuilder,
+    ProductInformationSubmodelBuilder,
+    BatchInformationSubmodelBuilder,
     # Process AAS specific builders
-    ProcessInformationSubmodelBuilder,
+    ProcessInfoSubmodelBuilder,
     RequiredCapabilitiesSubmodelBuilder,
     PolicySubmodelBuilder,
 )
@@ -48,6 +53,9 @@ class AASGenerator:
         # Load configuration
         with open(config_path, 'r') as f:
             self.config = yaml.safe_load(f)
+
+        # Expand prefixed IRIs (e.g. cssx:Loading -> full URI)
+        self.config = expand_prefixes_in_config(self.config)
 
         # Extract system info from config
         self.system_id = list(self.config.keys())[0]
@@ -119,8 +127,18 @@ class AASGenerator:
             self.base_url, self.semantic_factory, self.element_factory
         )
 
+        # Product AAS specific builders
+        self.bill_of_processes_builder = BillOfProcessesSubmodelBuilder(
+            self.base_url, self.semantic_factory, self.element_factory
+        )
+        self.requirements_builder = RequirementsSubmodelBuilder(
+            self.base_url, self.semantic_factory, self.element_factory
+        )
+        self.product_info_builder = ProductInformationSubmodelBuilder(self.base_url)
+        self.batch_info_builder = BatchInformationSubmodelBuilder(self.base_url)
+
         # Process AAS specific builders
-        self.process_info_builder = ProcessInformationSubmodelBuilder(
+        self.process_info_builder = ProcessInfoSubmodelBuilder(
             self.base_url, self.semantic_factory, self.element_factory
         )
         self.required_capabilities_builder = RequiredCapabilitiesSubmodelBuilder(
@@ -296,6 +314,12 @@ class AASGenerator:
         if ai_planning_submodel is not None:
             submodels.append(ai_planning_submodel)
 
+        # Product AAS specific submodels (conditional on config sections)
+        product_submodels = self._build_product_submodels()
+        for submodel in product_submodels:
+            if submodel is not None:
+                obj_store.add(submodel)
+
         for submodel in submodels:
             obj_store.add(submodel)
 
@@ -331,6 +355,36 @@ class AASGenerator:
 
         if has_policy:
             submodels.append(self.policy_builder.build(
+                self.system_id, self.system_config))
+
+        return submodels
+
+    def _build_product_submodels(self) -> list:
+        """
+        Build Product AAS specific submodels if the config contains them.
+
+        Checks for ProductInformation, BatchInformation, BillOfProcesses,
+        and Requirements sections in the config.
+
+        Returns:
+            List of Product-specific submodels (may contain None values)
+        """
+        submodels = []
+
+        if 'ProductInformation' in self.system_config:
+            submodels.append(self.product_info_builder.build(
+                self.system_id, self.system_config))
+
+        if 'BatchInformation' in self.system_config:
+            submodels.append(self.batch_info_builder.build(
+                self.system_id, self.system_config))
+
+        if 'BillOfProcesses' in self.system_config:
+            submodels.append(self.bill_of_processes_builder.build(
+                self.system_id, self.system_config))
+
+        if 'Requirements' in self.system_config:
+            submodels.append(self.requirements_builder.build(
                 self.system_id, self.system_config))
 
         return submodels
