@@ -125,3 +125,8 @@ css:Resource rdf:type owl:Class .
 #################################################################
 #    CPS Types
 #################################################################
+
+###  http://www.w3id.org/aau-ra/cssx#Transport
+:Transport rdf:type owl:Class ;
+  rdfs:subClassOf :CPS ;
+  rdfs:comment "A transport sub-system that moves products between production modules (e.g. planar motor shuttle)." .

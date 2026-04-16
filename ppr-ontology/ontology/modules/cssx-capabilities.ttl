@@ -111,6 +111,65 @@ css:isRestrictedBy rdf:type owl:ObjectProperty .
   rdfs:range xsd:string .
 
 #################################################################
+#    Specific Capability Types (Aseptic Filling Line)
+#################################################################
+
+###  http://www.w3id.org/aau-ra/cssx#LoadingCapability
+:LoadingCapability rdf:type owl:Class ;
+  rdfs:subClassOf :OperationalCapability ;
+  rdfs:comment "Capability to load primary containers onto a transport carrier." .
+
+###  http://www.w3id.org/aau-ra/cssx#DispensingCapability
+:DispensingCapability rdf:type owl:Class ;
+  rdfs:subClassOf :OperationalCapability ;
+  rdfs:comment "Capability to dispense bulk product into a primary container." .
+
+###  http://www.w3id.org/aau-ra/cssx#StopperingCapability
+:StopperingCapability rdf:type owl:Class ;
+  rdfs:subClassOf :OperationalCapability ;
+  rdfs:comment "Capability to insert an elastomeric stopper to seal a primary container." .
+
+###  http://www.w3id.org/aau-ra/cssx#CappingCapability
+:CappingCapability rdf:type owl:Class ;
+  rdfs:subClassOf :OperationalCapability ;
+  rdfs:comment "Capability to apply a cap or crimp seal to a primary container." .
+
+###  http://www.w3id.org/aau-ra/cssx#QualityControlCapability
+:QualityControlCapability rdf:type owl:Class ;
+  rdfs:subClassOf :OperationalCapability ;
+  rdfs:comment "Capability to perform automated quality inspection (e.g. visual inspection)." .
+
+###  http://www.w3id.org/aau-ra/cssx#UnloadingCapability
+:UnloadingCapability rdf:type owl:Class ;
+  rdfs:subClassOf :OperationalCapability ;
+  rdfs:comment "Capability to transfer finished product from a transport carrier to output." .
+
+###  http://www.w3id.org/aau-ra/cssx#MoveToPositionCapability
+:MoveToPositionCapability rdf:type owl:Class ;
+  rdfs:subClassOf :OperationalCapability ;
+  rdfs:comment "Capability to move a transport carrier to a target position." .
+
+###  http://www.w3id.org/aau-ra/cssx#CaptureCapability
+:CaptureCapability rdf:type owl:Class ;
+  rdfs:subClassOf :OperationalCapability ;
+  rdfs:comment "Capability to capture image data for quality control or documentation." .
+
+###  http://www.w3id.org/aau-ra/cssx#ScrapingCapability
+:ScrapingCapability rdf:type owl:Class ;
+  rdfs:subClassOf :OperationalCapability ;
+  rdfs:comment "Capability to remove a defective unit from the production line." .
+
+###  http://www.w3id.org/aau-ra/cssx#WeighingCapability
+:WeighingCapability rdf:type owl:Class ;
+  rdfs:subClassOf :OperationalCapability ;
+  rdfs:comment "Capability to perform gravimetric measurement of a container or product." .
+
+###  http://www.w3id.org/aau-ra/cssx#MotionSystemCapability
+:MotionSystemCapability rdf:type owl:Class ;
+  rdfs:subClassOf :OperationalCapability ;
+  rdfs:comment "Capability of a motion system (e.g. planar motor table)." .
+
+#################################################################
 #    SHACL-aligned OWL constraints
 #################################################################
 

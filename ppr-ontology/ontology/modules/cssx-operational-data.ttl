@@ -137,5 +137,34 @@
   rdfs:range xsd:integer .
 
 #################################################################
+#    Specific Operational Data Types
+#################################################################
+
+###  http://www.w3id.org/aau-ra/cssx#StationOccupation
+:StationOccupation rdf:type owl:Class ;
+  rdfs:subClassOf :StateData ;
+  rdfs:comment "Station occupation state tracking which products are queued or processed." .
+
+###  http://www.w3id.org/aau-ra/cssx#WeightMeasurement
+:WeightMeasurement rdf:type owl:Class ;
+  rdfs:subClassOf :MeasurementData ;
+  rdfs:comment "Gravimetric measurement value." .
+
+###  http://www.w3id.org/aau-ra/cssx#ImageData
+:ImageData rdf:type owl:Class ;
+  rdfs:subClassOf :MeasurementData ;
+  rdfs:comment "Image capture data for quality control or documentation." .
+
+###  http://www.w3id.org/aau-ra/cssx#ProductIdentifier
+:ProductIdentifier rdf:type owl:Class ;
+  rdfs:subClassOf :LogicalData ;
+  rdfs:comment "Identifier tracking which product is being processed." .
+
+###  http://www.w3id.org/aau-ra/cssx#DispensingMeasurement
+:DispensingMeasurement rdf:type owl:Class ;
+  rdfs:subClassOf :MeasurementData ;
+  rdfs:comment "Measurement data from a dispensing operation (e.g. fill weight)." .
+
+#################################################################
 #    Individuals
 #################################################################

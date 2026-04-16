@@ -25,6 +25,24 @@
 :OrderData rdf:type owl:Class ;
   rdfs:comment "Production-order-relevant data for planning and execution, excluding nameplate identification data." .
 
+###  http://www.w3id.org/aau-ra/cssx#ProductRequirement
+:ProductRequirement rdf:type owl:Class ;
+  rdfs:comment "A quality or regulatory requirement imposed on a product." .
+
+###  http://www.w3id.org/aau-ra/cssx#DefectClassification
+:DefectClassification rdf:type owl:Class ;
+  rdfs:subClassOf :ProductRequirement ;
+  rdfs:comment "Requirement specifying defect classification criteria for quality control." .
+
+###  http://www.w3id.org/aau-ra/cssx#LabSamples
+:LabSamples rdf:type owl:Class ;
+  rdfs:subClassOf :ProductRequirement ;
+  rdfs:comment "Requirement for laboratory sample collection during production." .
+
+###  http://www.w3id.org/aau-ra/cssx#PolicySubmodel
+:PolicySubmodel rdf:type owl:Class ;
+  rdfs:comment "Submodel capturing production policy and constraint rules." .
+
 #################################################################
 #    Object Properties
 #################################################################

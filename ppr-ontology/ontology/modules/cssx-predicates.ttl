@@ -1,0 +1,139 @@
+@prefix : <http://www.w3id.org/aau-ra/cssx#> .
+@prefix css: <http://www.w3id.org/hsu-aut/css#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+#################################################################
+#    External declarations (defined in other CSSx / CSS modules)
+#################################################################
+
+:SkillPredicate rdf:type owl:Class .
+:Transport rdf:type owl:Class .
+:LocationParameter rdf:type owl:Class .
+css:Resource rdf:type owl:Class .
+css:Product rdf:type owl:Class .
+
+#################################################################
+#    Predicate-parameter object properties
+#
+#    Each predicate has one or two typed parameter slots.
+#    :predicateParam1 / :predicateParam2 link a predicate class
+#    to the OWL class that constrains that parameter position.
+#################################################################
+
+###  http://www.w3id.org/aau-ra/cssx#predicateParam1
+:predicateParam1 rdf:type owl:ObjectProperty ;
+  rdfs:domain :SkillPredicate ;
+  rdfs:comment "Class constraining the first parameter of a planning predicate." .
+
+###  http://www.w3id.org/aau-ra/cssx#predicateParam2
+:predicateParam2 rdf:type owl:ObjectProperty ;
+  rdfs:domain :SkillPredicate ;
+  rdfs:comment "Class constraining the second parameter of a planning predicate." .
+
+#################################################################
+#    Predicate Taxonomy
+#    Concrete planning predicates used in AI-Planning submodels.
+#    Each is a subclass of SkillPredicate.  OWL restrictions on
+#    predicateParam1 / predicateParam2 declare the parameter
+#    signature so that downstream tooling can type-check fluent
+#    usage in skill preconditions and effects.
+#################################################################
+
+###  Spatial predicates ------------------------------------------
+
+###  http://www.w3id.org/aau-ra/cssx#On
+###  On(Product, Transport) — product is physically on a transport carrier.
+:On rdf:type owl:Class ;
+  rdfs:subClassOf :SkillPredicate ;
+  rdfs:subClassOf [ rdf:type owl:Restriction ;
+    owl:onProperty :predicateParam1 ;
+    owl:allValuesFrom css:Product ] ;
+  rdfs:subClassOf [ rdf:type owl:Restriction ;
+    owl:onProperty :predicateParam2 ;
+    owl:allValuesFrom :Transport ] ;
+  rdfs:comment "On(Product, Transport) — product is physically on a transport carrier." .
+
+###  http://www.w3id.org/aau-ra/cssx#At
+###  At(Entity, Location) — an entity (Product, Transport, or Resource) is
+###  at a named location.  The first parameter accepts any of those types.
+:At rdf:type owl:Class ;
+  rdfs:subClassOf :SkillPredicate ;
+  rdfs:subClassOf [ rdf:type owl:Restriction ;
+    owl:onProperty :predicateParam1 ;
+    owl:allValuesFrom [ rdf:type owl:Class ;
+      owl:unionOf ( css:Product :Transport css:Resource ) ] ] ;
+  rdfs:subClassOf [ rdf:type owl:Restriction ;
+    owl:onProperty :predicateParam2 ;
+    owl:allValuesFrom :LocationParameter ] ;
+  rdfs:comment "At(Product|Transport|Resource, Location) — an entity is at a named location or station." .
+
+###  Resource state predicates -----------------------------------
+
+###  http://www.w3id.org/aau-ra/cssx#Operational
+###  Operational(Resource) — unary, resource is in an operational state.
+:Operational rdf:type owl:Class ;
+  rdfs:subClassOf :SkillPredicate ;
+  rdfs:subClassOf [ rdf:type owl:Restriction ;
+    owl:onProperty :predicateParam1 ;
+    owl:allValuesFrom css:Resource ] ;
+  rdfs:comment "Operational(Resource) — resource is in an operational (ready) state." .
+
+###  http://www.w3id.org/aau-ra/cssx#Occupied
+###  Occupied(Resource, Product) — resource is currently occupied by a product.
+:Occupied rdf:type owl:Class ;
+  rdfs:subClassOf :SkillPredicate ;
+  rdfs:subClassOf [ rdf:type owl:Restriction ;
+    owl:onProperty :predicateParam1 ;
+    owl:allValuesFrom css:Resource ] ;
+  rdfs:subClassOf [ rdf:type owl:Restriction ;
+    owl:onProperty :predicateParam2 ;
+    owl:allValuesFrom css:Product ] ;
+  rdfs:comment "Occupied(Resource, Product) — resource or station is currently occupied by a product." .
+
+###  http://www.w3id.org/aau-ra/cssx#Free
+###  Free(Resource) — unary, resource is free and available.
+:Free rdf:type owl:Class ;
+  rdfs:subClassOf :SkillPredicate ;
+  rdfs:subClassOf [ rdf:type owl:Restriction ;
+    owl:onProperty :predicateParam1 ;
+    owl:allValuesFrom css:Resource ] ;
+  rdfs:comment "Free(Resource) — resource or station is free and available." .
+
+###  Process-result predicates -----------------------------------
+###  All unary on Product — they record that a production step has
+###  been applied to the product.
+
+###  http://www.w3id.org/aau-ra/cssx#Dispensed
+:Dispensed rdf:type owl:Class ;
+  rdfs:subClassOf :SkillPredicate ;
+  rdfs:subClassOf [ rdf:type owl:Restriction ;
+    owl:onProperty :predicateParam1 ;
+    owl:allValuesFrom css:Product ] ;
+  rdfs:comment "Dispensed(Product) — product has been dispensed into the primary container." .
+
+###  http://www.w3id.org/aau-ra/cssx#Stoppered
+:Stoppered rdf:type owl:Class ;
+  rdfs:subClassOf :SkillPredicate ;
+  rdfs:subClassOf [ rdf:type owl:Restriction ;
+    owl:onProperty :predicateParam1 ;
+    owl:allValuesFrom css:Product ] ;
+  rdfs:comment "Stoppered(Product) — primary container has been sealed with a stopper." .
+
+###  http://www.w3id.org/aau-ra/cssx#Capped
+:Capped rdf:type owl:Class ;
+  rdfs:subClassOf :SkillPredicate ;
+  rdfs:subClassOf [ rdf:type owl:Restriction ;
+    owl:onProperty :predicateParam1 ;
+    owl:allValuesFrom css:Product ] ;
+  rdfs:comment "Capped(Product) — primary container has been capped or crimp-sealed." .
+
+###  http://www.w3id.org/aau-ra/cssx#Captured
+:Captured rdf:type owl:Class ;
+  rdfs:subClassOf :SkillPredicate ;
+  rdfs:subClassOf [ rdf:type owl:Restriction ;
+    owl:onProperty :predicateParam1 ;
+    owl:allValuesFrom css:Product ] ;
+  rdfs:comment "Captured(Product) — image data has been captured for quality control." .

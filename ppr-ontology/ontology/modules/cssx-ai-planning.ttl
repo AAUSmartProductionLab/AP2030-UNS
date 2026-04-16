@@ -1,0 +1,304 @@
+@prefix : <http://www.w3id.org/aau-ra/cssx#> .
+@prefix css: <http://www.w3id.org/hsu-aut/css#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+#################################################################
+#    AI Planning Structural Classes
+#
+#    These classes type the AAS submodel elements used to represent
+#    automated planning domains and problems within a Resource AAS.
+#################################################################
+
+###  http://www.w3id.org/aau-ra/cssx#AIPlanningSubmodel
+:AIPlanningSubmodel rdf:type owl:Class ;
+  rdfs:comment "Top-level AI Planning submodel attached to a resource AAS." .
+
+###  http://www.w3id.org/aau-ra/cssx#PlanningDomain
+:PlanningDomain rdf:type owl:Class ;
+  rdfs:comment "Domain section of an AI Planning model (actions, fluents)." .
+
+###  http://www.w3id.org/aau-ra/cssx#PlanningProblem
+:PlanningProblem rdf:type owl:Class ;
+  rdfs:comment "Problem section of an AI Planning model (objects, init, goal)." .
+
+###  http://www.w3id.org/aau-ra/cssx#ActionCollection
+:ActionCollection rdf:type owl:Class ;
+  rdfs:comment "Collection of planning action definitions within a domain." .
+
+###  http://www.w3id.org/aau-ra/cssx#ActionDefinition
+:ActionDefinition rdf:type owl:Class ;
+  rdfs:comment "Individual planning action definition with parameters, conditions and effects." .
+
+###  http://www.w3id.org/aau-ra/cssx#FluentCollection
+:FluentCollection rdf:type owl:Class ;
+  rdfs:comment "Collection of fluent (state predicate) definitions within a domain." .
+
+###  http://www.w3id.org/aau-ra/cssx#ProblemInit
+:ProblemInit rdf:type owl:Class ;
+  rdfs:comment "Initial state of a planning problem (set of ground predicates)." .
+
+###  http://www.w3id.org/aau-ra/cssx#ProblemGoal
+:ProblemGoal rdf:type owl:Class ;
+  rdfs:comment "Goal state of a planning problem." .
+
+###  http://www.w3id.org/aau-ra/cssx#ProblemMetric
+:ProblemMetric rdf:type owl:Class ;
+  rdfs:comment "Optimization metric for a planning problem." .
+
+###  http://www.w3id.org/aau-ra/cssx#PlanningConstraints
+:PlanningConstraints rdf:type owl:Class ;
+  rdfs:comment "Trajectory constraints on a planning problem." .
+
+#################################################################
+#    PDDL Structural Element Classes
+#
+#    These classes type the AAS elements that encode PDDL constructs
+#    (terms, parameters, objects, conditions, effects, etc.).
+#################################################################
+
+###  http://www.w3id.org/aau-ra/cssx#PDDLTerm
+:PDDLTerm rdf:type owl:Class ;
+  rdfs:comment "A PDDL term (predicate application, logical connective, or arithmetic expression)." .
+
+###  http://www.w3id.org/aau-ra/cssx#PDDLParameter
+:PDDLParameter rdf:type owl:Class ;
+  rdfs:comment "A typed parameter of a PDDL action or fluent." .
+
+###  http://www.w3id.org/aau-ra/cssx#PDDLParameterList
+:PDDLParameterList rdf:type owl:Class ;
+  rdfs:comment "Ordered collection of PDDL parameters." .
+
+###  http://www.w3id.org/aau-ra/cssx#PDDLObject
+:PDDLObject rdf:type owl:Class ;
+  rdfs:comment "A ground object in a PDDL problem." .
+
+###  http://www.w3id.org/aau-ra/cssx#PDDLObjectList
+:PDDLObjectList rdf:type owl:Class ;
+  rdfs:comment "Collection of PDDL objects in a problem." .
+
+###  http://www.w3id.org/aau-ra/cssx#PDDLDuration
+:PDDLDuration rdf:type owl:Class ;
+  rdfs:comment "Duration specification of a durative PDDL action." .
+
+###  http://www.w3id.org/aau-ra/cssx#PDDLConditionList
+:PDDLConditionList rdf:type owl:Class ;
+  rdfs:comment "Collection of PDDL conditions (preconditions of an action)." .
+
+###  http://www.w3id.org/aau-ra/cssx#PDDLEffectList
+:PDDLEffectList rdf:type owl:Class ;
+  rdfs:comment "Collection of PDDL effects (postconditions of an action)." .
+
+###  http://www.w3id.org/aau-ra/cssx#PDDLMetricViolation
+:PDDLMetricViolation rdf:type owl:Class ;
+  rdfs:comment "Metric is-violated marker for preference-based planning." .
+
+#################################################################
+#    PDDL Term Type Hierarchy
+#################################################################
+
+###  http://www.w3id.org/aau-ra/cssx#PDDLLogicTerm
+:PDDLLogicTerm rdf:type owl:Class ;
+  rdfs:subClassOf :PDDLTerm ;
+  rdfs:comment "Logical connective term (and, or, not, imply, forall, exists, when)." .
+
+###  http://www.w3id.org/aau-ra/cssx#PDDLArithmeticTerm
+:PDDLArithmeticTerm rdf:type owl:Class ;
+  rdfs:subClassOf :PDDLTerm ;
+  rdfs:comment "Arithmetic or numeric comparison term." .
+
+###  http://www.w3id.org/aau-ra/cssx#PDDLNondeterministicTerm
+:PDDLNondeterministicTerm rdf:type owl:Class ;
+  rdfs:subClassOf :PDDLTerm ;
+  rdfs:comment "Nondeterministic term (oneof)." .
+
+###  http://www.w3id.org/aau-ra/cssx#PDDLTemporalTerm
+:PDDLTemporalTerm rdf:type owl:Class ;
+  rdfs:subClassOf :PDDLTerm ;
+  rdfs:comment "Temporal constraint term (always, sometime, within, etc.)." .
+
+#################################################################
+#    PDDL Operator Classes
+#
+#    Specific operator classes used as supplemental semantic IDs
+#    to identify the concrete operator on AAS term elements.
+#################################################################
+
+###  Nondeterministic operators
+:OneOf rdf:type owl:Class ;
+  rdfs:subClassOf :PDDLNondeterministicTerm ;
+  rdfs:comment "Nondeterministic choice operator (FOND oneof)." .
+
+###  Logic operators
+:And rdf:type owl:Class ;
+  rdfs:subClassOf :PDDLLogicTerm ;
+  rdfs:comment "Logical conjunction (and)." .
+
+:Or rdf:type owl:Class ;
+  rdfs:subClassOf :PDDLLogicTerm ;
+  rdfs:comment "Logical disjunction (or)." .
+
+:Not rdf:type owl:Class ;
+  rdfs:subClassOf :PDDLLogicTerm ;
+  rdfs:comment "Logical negation (not)." .
+
+:Imply rdf:type owl:Class ;
+  rdfs:subClassOf :PDDLLogicTerm ;
+  rdfs:comment "Logical implication (imply)." .
+
+:Forall rdf:type owl:Class ;
+  rdfs:subClassOf :PDDLLogicTerm ;
+  rdfs:comment "Universal quantifier (forall)." .
+
+:Exists rdf:type owl:Class ;
+  rdfs:subClassOf :PDDLLogicTerm ;
+  rdfs:comment "Existential quantifier (exists)." .
+
+:When rdf:type owl:Class ;
+  rdfs:subClassOf :PDDLLogicTerm ;
+  rdfs:comment "Conditional effect (when)." .
+
+###  Arithmetic comparison operators
+:Equal rdf:type owl:Class ;
+  rdfs:subClassOf :PDDLArithmeticTerm ;
+  rdfs:comment "Numeric equality comparison (=)." .
+
+:LessThan rdf:type owl:Class ;
+  rdfs:subClassOf :PDDLArithmeticTerm ;
+  rdfs:comment "Numeric less-than comparison (<)." .
+
+:LessOrEqual rdf:type owl:Class ;
+  rdfs:subClassOf :PDDLArithmeticTerm ;
+  rdfs:comment "Numeric less-or-equal comparison (<=)." .
+
+:GreaterThan rdf:type owl:Class ;
+  rdfs:subClassOf :PDDLArithmeticTerm ;
+  rdfs:comment "Numeric greater-than comparison (>)." .
+
+:GreaterOrEqual rdf:type owl:Class ;
+  rdfs:subClassOf :PDDLArithmeticTerm ;
+  rdfs:comment "Numeric greater-or-equal comparison (>=)." .
+
+###  Arithmetic operation operators
+:Add rdf:type owl:Class ;
+  rdfs:subClassOf :PDDLArithmeticTerm ;
+  rdfs:comment "Numeric addition (+)." .
+
+:Subtract rdf:type owl:Class ;
+  rdfs:subClassOf :PDDLArithmeticTerm ;
+  rdfs:comment "Numeric subtraction (-)." .
+
+:Multiply rdf:type owl:Class ;
+  rdfs:subClassOf :PDDLArithmeticTerm ;
+  rdfs:comment "Numeric multiplication (*)." .
+
+:Divide rdf:type owl:Class ;
+  rdfs:subClassOf :PDDLArithmeticTerm ;
+  rdfs:comment "Numeric division (/)." .
+
+:Assign rdf:type owl:Class ;
+  rdfs:subClassOf :PDDLArithmeticTerm ;
+  rdfs:comment "Numeric fluent assignment (assign)." .
+
+:Increase rdf:type owl:Class ;
+  rdfs:subClassOf :PDDLArithmeticTerm ;
+  rdfs:comment "Numeric fluent increase (increase)." .
+
+:Decrease rdf:type owl:Class ;
+  rdfs:subClassOf :PDDLArithmeticTerm ;
+  rdfs:comment "Numeric fluent decrease (decrease)." .
+
+:ScaleUp rdf:type owl:Class ;
+  rdfs:subClassOf :PDDLArithmeticTerm ;
+  rdfs:comment "Numeric fluent scale-up (scale-up)." .
+
+:ScaleDown rdf:type owl:Class ;
+  rdfs:subClassOf :PDDLArithmeticTerm ;
+  rdfs:comment "Numeric fluent scale-down (scale-down)." .
+
+###  Temporal constraint operators
+:Always rdf:type owl:Class ;
+  rdfs:subClassOf :PDDLTemporalTerm ;
+  rdfs:comment "Trajectory constraint: condition holds at every state (always)." .
+
+:Sometime rdf:type owl:Class ;
+  rdfs:subClassOf :PDDLTemporalTerm ;
+  rdfs:comment "Trajectory constraint: condition holds at some state (sometime)." .
+
+:Within rdf:type owl:Class ;
+  rdfs:subClassOf :PDDLTemporalTerm ;
+  rdfs:comment "Trajectory constraint: condition holds within a time bound (within)." .
+
+:AtMostOnce rdf:type owl:Class ;
+  rdfs:subClassOf :PDDLTemporalTerm ;
+  rdfs:comment "Trajectory constraint: condition becomes true at most once (at-most-once)." .
+
+:SometimeAfter rdf:type owl:Class ;
+  rdfs:subClassOf :PDDLTemporalTerm ;
+  rdfs:comment "Trajectory constraint: B holds sometime after A (sometime-after)." .
+
+:SometimeBefore rdf:type owl:Class ;
+  rdfs:subClassOf :PDDLTemporalTerm ;
+  rdfs:comment "Trajectory constraint: B holds sometime before A (sometime-before)." .
+
+:AlwaysWithin rdf:type owl:Class ;
+  rdfs:subClassOf :PDDLTemporalTerm ;
+  rdfs:comment "Trajectory constraint: B holds within time after A (always-within)." .
+
+:HoldDuring rdf:type owl:Class ;
+  rdfs:subClassOf :PDDLTemporalTerm ;
+  rdfs:comment "Trajectory constraint: condition holds during a time interval (hold-during)." .
+
+:HoldAfter rdf:type owl:Class ;
+  rdfs:subClassOf :PDDLTemporalTerm ;
+  rdfs:comment "Trajectory constraint: condition holds after a time point (hold-after)." .
+
+:Preference rdf:type owl:Class ;
+  rdfs:subClassOf :PDDLTemporalTerm ;
+  rdfs:comment "Named soft constraint for preference-based planning (preference)." .
+
+#################################################################
+#    Object Properties
+#################################################################
+
+###  http://www.w3id.org/aau-ra/cssx#hasPlanningDomain
+:hasPlanningDomain rdf:type owl:ObjectProperty ;
+  rdfs:domain :AIPlanningSubmodel ;
+  rdfs:range :PlanningDomain .
+
+###  http://www.w3id.org/aau-ra/cssx#hasPlanningProblem
+:hasPlanningProblem rdf:type owl:ObjectProperty ;
+  rdfs:domain :AIPlanningSubmodel ;
+  rdfs:range :PlanningProblem .
+
+###  http://www.w3id.org/aau-ra/cssx#hasActionCollection
+:hasActionCollection rdf:type owl:ObjectProperty ;
+  rdfs:domain :PlanningDomain ;
+  rdfs:range :ActionCollection .
+
+###  http://www.w3id.org/aau-ra/cssx#hasFluentCollection
+:hasFluentCollection rdf:type owl:ObjectProperty ;
+  rdfs:domain :PlanningDomain ;
+  rdfs:range :FluentCollection .
+
+###  http://www.w3id.org/aau-ra/cssx#hasActionDefinition
+:hasActionDefinition rdf:type owl:ObjectProperty ;
+  rdfs:domain :ActionCollection ;
+  rdfs:range :ActionDefinition .
+
+###  http://www.w3id.org/aau-ra/cssx#hasProblemInit
+:hasProblemInit rdf:type owl:ObjectProperty ;
+  rdfs:domain :PlanningProblem ;
+  rdfs:range :ProblemInit .
+
+###  http://www.w3id.org/aau-ra/cssx#hasProblemGoal
+:hasProblemGoal rdf:type owl:ObjectProperty ;
+  rdfs:domain :PlanningProblem ;
+  rdfs:range :ProblemGoal .
+
+###  http://www.w3id.org/aau-ra/cssx#hasProblemMetric
+:hasProblemMetric rdf:type owl:ObjectProperty ;
+  rdfs:domain :PlanningProblem ;
+  rdfs:range :ProblemMetric .

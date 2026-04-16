@@ -14,6 +14,8 @@
               <./modules/cssx-nameplate.ttl> ,
               <./modules/cssx-bom.ttl> ,
               <./modules/cssx-capabilities.ttl> ,
+              <./modules/cssx-predicates.ttl> ,
+              <./modules/cssx-ai-planning.ttl> ,
               <./modules/cssx-skills.ttl> ,
               <./modules/cssx-operational-data.ttl> ,
               <./modules/cssx-parameters.ttl> ,

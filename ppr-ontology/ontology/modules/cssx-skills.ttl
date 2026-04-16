@@ -121,3 +121,72 @@ css:Skill rdfs:subClassOf [ rdf:type owl:Restriction ;
 #################################################################
 #    Individuals
 #################################################################
+
+#################################################################
+#    Specific Skill Types (Aseptic Filling Line)
+#################################################################
+
+###  http://www.w3id.org/aau-ra/cssx#LoadingSkill
+:LoadingSkill rdf:type owl:Class ;
+  rdfs:subClassOf css:Skill ;
+  rdfs:comment "Skill to load primary containers onto a transport carrier." .
+
+###  http://www.w3id.org/aau-ra/cssx#DispensingSkill
+:DispensingSkill rdf:type owl:Class ;
+  rdfs:subClassOf css:Skill ;
+  rdfs:comment "Skill to dispense bulk product into a primary container." .
+
+###  http://www.w3id.org/aau-ra/cssx#StopperingSkill
+:StopperingSkill rdf:type owl:Class ;
+  rdfs:subClassOf css:Skill ;
+  rdfs:comment "Skill to insert an elastomeric stopper to seal a primary container." .
+
+###  http://www.w3id.org/aau-ra/cssx#CappingSkill
+:CappingSkill rdf:type owl:Class ;
+  rdfs:subClassOf css:Skill ;
+  rdfs:comment "Skill to apply a cap or crimp seal to a primary container." .
+
+###  http://www.w3id.org/aau-ra/cssx#CaptureSkill
+:CaptureSkill rdf:type owl:Class ;
+  rdfs:subClassOf css:Skill ;
+  rdfs:comment "Skill to capture image data for quality control or documentation." .
+
+###  http://www.w3id.org/aau-ra/cssx#QualityControlSkill
+:QualityControlSkill rdf:type owl:Class ;
+  rdfs:subClassOf css:Skill ;
+  rdfs:comment "Skill to perform automated quality inspection." .
+
+###  http://www.w3id.org/aau-ra/cssx#UnloadingSkill
+:UnloadingSkill rdf:type owl:Class ;
+  rdfs:subClassOf css:Skill ;
+  rdfs:comment "Skill to transfer finished product from a transport carrier to output." .
+
+###  http://www.w3id.org/aau-ra/cssx#MoveToPositionSkill
+:MoveToPositionSkill rdf:type owl:Class ;
+  rdfs:subClassOf css:Skill ;
+  rdfs:comment "Skill to move a transport carrier to a target position." .
+
+###  http://www.w3id.org/aau-ra/cssx#ScrapingSkill
+:ScrapingSkill rdf:type owl:Class ;
+  rdfs:subClassOf css:Skill ;
+  rdfs:comment "Skill to remove a defective unit from the production line." .
+
+###  http://www.w3id.org/aau-ra/cssx#HaltSkill
+:HaltSkill rdf:type owl:Class ;
+  rdfs:subClassOf css:Skill ;
+  rdfs:comment "Skill to halt the current operation on a resource." .
+
+###  http://www.w3id.org/aau-ra/cssx#OccupySkill
+:OccupySkill rdf:type owl:Class ;
+  rdfs:subClassOf css:Skill ;
+  rdfs:comment "Skill to occupy a resource for exclusive use." .
+
+###  http://www.w3id.org/aau-ra/cssx#ReleaseSkill
+:ReleaseSkill rdf:type owl:Class ;
+  rdfs:subClassOf css:Skill ;
+  rdfs:comment "Skill to release a resource from exclusive use." .
+
+###  http://www.w3id.org/aau-ra/cssx#ProductionPlanningSkill
+:ProductionPlanningSkill rdf:type owl:Class ;
+  rdfs:subClassOf css:Skill ;
+  rdfs:comment "Skill to generate a production plan from a process AAS." .
