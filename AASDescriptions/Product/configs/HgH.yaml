@@ -40,7 +40,7 @@ HgHAAS:
         Processes:
             # Each process is a SubmodelElementCollection
             - idShort: 'Loading'
-              semanticId: 'https://smartproductionlab.aau.dk/Capability/Loading'
+              semanticId: 'cssx:LoadingCapability'
               # ECLASS: 0173-1#02-AAO677#002 - Manufacturing process
               description: 'Load empty primary container onto production shuttle'
               sequenceNumber: 1
@@ -50,7 +50,7 @@ HgHAAS:
                 semanticId: '0173-1#02-AAB381#003'  # ECLASS: Duration
               
             - idShort: 'Dispensing'
-              semanticId: 'https://smartproductionlab.aau.dk/Capability/Dispensing'
+              semanticId: 'cssx:DispensingCapability'
               description: 'Dispense pharmaceutical product into primary container'
               sequenceNumber: 2
               estimatedDuration:
@@ -92,7 +92,7 @@ HgHAAS:
                   complianceType: 'mandatory'
 
             - idShort: 'Stoppering'
-              semanticId: 'https://smartproductionlab.aau.dk/Capability/Stoppering'
+              semanticId: 'cssx:StopperingCapability'
               description: 'Insert elastomeric stopper to seal primary container'
               sequenceNumber: 3
               estimatedDuration:
@@ -117,7 +117,7 @@ HgHAAS:
                   complianceType: 'mandatory'
 
             - idShort: 'Inspection'
-              semanticId: 'https://smartproductionlab.aau.dk/Capability/QualityControl'
+              semanticId: 'cssx:QualityControlCapability'
               description: 'Automated visual inspection of filled and stoppered container'
               sequenceNumber: 4
               estimatedDuration:
@@ -156,7 +156,7 @@ HgHAAS:
                   valueType: 'xs:double'
                   
                 - idShort: 'DefectTypes'
-                  semanticId: 'https://smartproductionlab.aau.dk/Requirements/DefectClassification'
+                  semanticId: 'cssx:DefectClassification'
                   description: 'Types of defects to be detected'
                   value:
                     - 'Fill Level Deviation'
@@ -166,7 +166,7 @@ HgHAAS:
                   valueType: 'xs:string[]'
 
             - idShort: 'Unloading'
-              semanticId: 'https://smartproductionlab.aau.dk/Capability/Unloading'
+              semanticId: 'cssx:UnloadingCapability'
               description: 'Transfer finished product from shuttle to output conveyor'
               sequenceNumber: 5
               estimatedDuration:
@@ -212,23 +212,23 @@ HgHAAS:
               
         InProcessControl:
             - idShort: 'WeighingCheck'
-              semanticId: 'https://smartproductionlab.aau.dk/Capability/Weighing'
+              semanticId: 'cssx:WeighingCapability'
               description: 'In-process weight verification after dispensing'
-              appliesTo: 'https://smartproductionlab.aau.dk/Capability/Dispensing'
+              appliesTo: 'cssx:DispensingCapability'
               samplingRate: 100
               unit: '%'
               
         QualityControl:
             - idShort: 'VisualInspectionRate'
-              semanticId: 'https://smartproductionlab.aau.dk/Capability/QualityControl'
+              semanticId: 'cssx:QualityControlCapability'
               description: 'Percentage of units undergoing visual inspection'
-              appliesTo: 'https://smartproductionlab.aau.dk/Capability/QualityControl'
+              appliesTo: 'cssx:QualityControlCapability'
               samplingRate: 85
               unit: '%'
               calculatedSampleSize: 34000  # 85% of 40000
               
             - idShort: 'LabSamples'
-              semanticId: 'https://smartproductionlab.aau.dk/Requirements/LabSamples'
+              semanticId: 'cssx:LabSamples'
               description: 'Samples retained for laboratory quality testing'
               quantity: 150
               unit: 'units'
@@ -288,10 +288,42 @@ HgHAAS:
     # ============================================================================
     ErrorRecovery:
         - idShort: 'Scraping'
-          semanticId: 'https://smartproductionlab.aau.dk/Capability/Scraping'
+          semanticId: 'cssx:ScrapingCapability'
           description: 'Remove defective unit from production line'
           triggeredBy:
             - 'QualityControl.Fail'
             - 'Dispensing.Error'
             - 'Stoppering.Error'
           targetStation: 'ScrapStation'
+
+    # ============================================================================
+    # AI-Planning Submodel
+    # The product owns the On(Product, Transport) predicate that
+    # describes which transport resource currently carries the product.
+    # ============================================================================
+    AI-Planning:
+        Domain:
+            Fluents:
+                -   key: "On"
+                    semantic_id: "cssx:On"
+                    parameters:
+                        -   name: "Product"
+                            modelRef:
+                                - AAS: "self"
+                        -   name: "Transport"
+                            externalRef: "cssx:Transport"
+
+                -   key: "At"
+                    semantic_id: "cssx:At"
+                    parameters:
+                        -   name: "Product"
+                            modelRef:
+                                - AAS: "self"
+                        -   name: "Location"
+                            externalRef: "cssx:LocationParameter"
+
+        Problem:
+            Objects:
+                -   name: "HgH"
+                    modelRef:
+                        - AAS: "self"

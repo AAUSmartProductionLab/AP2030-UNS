@@ -57,5 +57,5 @@ productionPlannerAAS:
   Skills:
   - key: Plan
     description: "Generate a production plan for the provided product using the available assets"
-    semantic_id: "https://smartproductionlab.aau.dk/skills/productionPlanning"
+    semantic_id: "cssx:ProductionPlanningSkill"
     InterfaceReference: Plan

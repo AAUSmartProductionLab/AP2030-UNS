@@ -40,7 +40,7 @@ HgHAAS:
         Processes:
             # Each process is a SubmodelElementCollection
             - idShort: 'Loading'
-              semanticId: 'https://smartproductionlab.aau.dk/Capability/Loading'
+              semanticId: 'cssx:Loading'
               # ECLASS: 0173-1#02-AAO677#002 - Manufacturing process
               description: 'Load empty primary container onto production shuttle'
               sequenceNumber: 1
@@ -50,7 +50,7 @@ HgHAAS:
                 semanticId: '0173-1#02-AAB381#003'  # ECLASS: Duration
               
             - idShort: 'Dispensing'
-              semanticId: 'https://smartproductionlab.aau.dk/Capability/Dispensing'
+              semanticId: 'cssx:Dispensing'
               description: 'Dispense pharmaceutical product into primary container'
               sequenceNumber: 2
               estimatedDuration:
@@ -92,7 +92,7 @@ HgHAAS:
                   complianceType: 'mandatory'
 
             - idShort: 'Stoppering'
-              semanticId: 'https://smartproductionlab.aau.dk/Capability/Stoppering'
+              semanticId: 'cssx:Stoppering'
               description: 'Insert elastomeric stopper to seal primary container'
               sequenceNumber: 3
               estimatedDuration:
@@ -117,7 +117,7 @@ HgHAAS:
                   complianceType: 'mandatory'
 
             - idShort: 'Inspection'
-              semanticId: 'https://smartproductionlab.aau.dk/Capability/QualityControl'
+              semanticId: 'cssx:QualityControl'
               description: 'Automated visual inspection of filled and stoppered container'
               sequenceNumber: 4
               estimatedDuration:
@@ -166,7 +166,7 @@ HgHAAS:
                   valueType: 'xs:string[]'
 
             - idShort: 'Unloading'
-              semanticId: 'https://smartproductionlab.aau.dk/Capability/Unloading'
+              semanticId: 'cssx:Unloading'
               description: 'Transfer finished product from shuttle to output conveyor'
               sequenceNumber: 5
               estimatedDuration:
@@ -212,7 +212,7 @@ HgHAAS:
               
         InProcessControl:
             - idShort: 'WeighingCheck'
-              semanticId: 'https://smartproductionlab.aau.dk/Capability/Weighing'
+              semanticId: 'cssx:Weighing'
               description: 'In-process weight verification after dispensing'
               appliesTo: 'https://smartproductionlab.aau.dk/Capability/Dispensing'
               samplingRate: 100
@@ -220,7 +220,7 @@ HgHAAS:
               
         QualityControl:
             - idShort: 'VisualInspectionRate'
-              semanticId: 'https://smartproductionlab.aau.dk/Capability/QualityControl'
+              semanticId: 'cssx:QualityControl'
               description: 'Percentage of units undergoing visual inspection'
               appliesTo: 'https://smartproductionlab.aau.dk/Capability/QualityControl'
               samplingRate: 85
@@ -288,10 +288,42 @@ HgHAAS:
     # ============================================================================
     ErrorRecovery:
         - idShort: 'Scraping'
-          semanticId: 'https://smartproductionlab.aau.dk/Capability/Scraping'
+          semanticId: 'cssx:Scraping'
           description: 'Remove defective unit from production line'
           triggeredBy:
             - 'QualityControl.Fail'
             - 'Dispensing.Error'
             - 'Stoppering.Error'
           targetStation: 'ScrapStation'
+
+    # ============================================================================
+    # AI-Planning Submodel
+    # The product owns the On(Product, Transport) predicate that
+    # describes which transport resource currently carries the product.
+    # ============================================================================
+    AI-Planning:
+        Domain:
+            Fluents:
+                -   key: "On"
+                    semantic_id: "cssx:On"
+                    parameters:
+                        -   name: "Product"
+                            modelRef:
+                                - AAS: "self"
+                        -   name: "Transport"
+                            externalRef: "cssx:Transport"
+
+                -   key: "At"
+                    semantic_id: "cssx:At"
+                    parameters:
+                        -   name: "Product"
+                            modelRef:
+                                - AAS: "self"
+                        -   name: "Location"
+                            externalRef: "cssx:LocationParameter"
+
+        Problem:
+            Objects:
+                -   name: "HgH"
+                    modelRef:
+                        - AAS: "self"

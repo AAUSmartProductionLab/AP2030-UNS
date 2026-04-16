@@ -19,7 +19,7 @@ aauFillingLineAAS:
     # Skills:
         # dispense:
         #     description: "dispenseing function for pharmaceutical primary packaging"
-        #     semantic_id: "https://smartproductionlab.aau.dk/dispenseing"
+        #     semantic_id: "cssx:DispensingMeasurement"
         #     input_variable:
         #         Uuid: "string"
         #     output_variable:
@@ -28,7 +28,7 @@ aauFillingLineAAS:
         #     interface: "dispense"
         # Occupy:
         #     description: "dispenseing function for pharmaceutical primary packaging"
-        #     semantic_id: "https://smartproductionlab.aau.dk/Occupy"
+        #     semantic_id: "cssx:OccupySkill"
         #     input_variable:
         #         Uuid: "string"
         #     output_variable:
@@ -37,7 +37,7 @@ aauFillingLineAAS:
         #     interface: "occupy"
         # Release:
         #     description: "dispenseing function for pharmaceutical primary packaging"
-        #     semantic_id: "https://smartproductionlab.aau.dk/Release"
+        #     semantic_id: "cssx:ReleaseSkill"
         #     input_variable:
         #         Uuid: "string"
         #     output_variable:
@@ -46,7 +46,7 @@ aauFillingLineAAS:
         #     interface: "release"
         # Halt:
         #     description: "dispenseing function for pharmaceutical primary packaging"
-        #     semantic_id: "https://smartproductionlab.aau.dk/Halt"
+        #     semantic_id: "cssx:HaltSkill"
         #     input_variable:
         #         Uuid: "string"
         #     output_variable:

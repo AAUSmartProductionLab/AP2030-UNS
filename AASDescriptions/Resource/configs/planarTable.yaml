@@ -57,5 +57,5 @@ planarTableAAS:
   Skills:
   - key: halt
     description: "Halt all planar table operations"
-    semantic_id: "https://smartproductionlab.aau.dk/skills/halt"
+    semantic_id: "cssx:HaltSkill"
     InterfaceReference: halt
