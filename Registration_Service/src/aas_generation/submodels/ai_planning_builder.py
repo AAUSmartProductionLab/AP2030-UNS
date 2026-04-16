@@ -285,7 +285,7 @@ class AIPlanningSubmodelBuilder:
     def _build_model_reference_from_dsl(self, system_id: str, model_ref: Any) -> model.ModelReference:
         return self._references.build_model_reference_from_dsl(system_id=system_id, model_ref=model_ref)
 
-    def _build_fluents_section(self, fluents_cfg: List[Dict[str, Any]]) -> model.SubmodelElementCollection:
+    def _build_fluents_section(self, system_id: str, fluents_cfg: List[Dict[str, Any]]) -> model.SubmodelElementCollection:
         fluent_elements: List[model.SubmodelElementCollection] = []
 
         for idx, fluent_cfg in enumerate(fluents_cfg):
@@ -298,7 +298,7 @@ class AIPlanningSubmodelBuilder:
 
             parameters = fluent_cfg.get("parameters", []) or []
             if isinstance(parameters, list) and parameters:
-                parameter_element = self._build_domain_fluent_parameters(parameters)
+                parameter_element = self._build_domain_fluent_parameters(system_id, parameters)
                 if parameter_element is not None:
                     elements.append(parameter_element)
 
@@ -335,14 +335,20 @@ class AIPlanningSubmodelBuilder:
             actions_cfg=actions_cfg,
         )
 
-    def _build_domain_fluent_parameters(self, parameters: List[Dict[str, Any]]) -> Optional[model.SubmodelElementList]:
+    def _build_domain_fluent_parameters(self, system_id: str, parameters: List[Dict[str, Any]]) -> Optional[model.SubmodelElementList]:
         def resolve_reference(parameter: Dict[str, Any]) -> Optional[model.Reference]:
+            model_ref = parameter.get("ModelReference") or parameter.get("modelRef")
             external = parameter.get("externalRef") or parameter.get("ExternalReference")
-            if not external:
-                return None
-            return model.ExternalReference(
-                key=(model.Key(model.KeyTypes.GLOBAL_REFERENCE, str(external)),)
-            )
+
+            if model_ref:
+                return self._build_model_reference_from_dsl(system_id, model_ref)
+
+            if external:
+                return model.ExternalReference(
+                    key=(model.Key(model.KeyTypes.GLOBAL_REFERENCE, str(external)),)
+                )
+
+            return None
 
         return self._build_parameter_reference_list(
             parameters=parameters,

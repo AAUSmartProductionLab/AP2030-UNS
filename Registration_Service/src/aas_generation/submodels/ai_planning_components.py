@@ -256,7 +256,7 @@ class _DomainSectionBuilder:
 
     def __init__(
         self,
-        build_fluents_section: Callable[[List[Dict[str, Any]]], model.SubmodelElementCollection],
+        build_fluents_section: Callable[[str, List[Dict[str, Any]]], model.SubmodelElementCollection],
         build_actions_section: Callable[[str, List[Dict[str, Any]]], model.SubmodelElementCollection],
         build_processes_section: Callable[[str, Any], model.SubmodelElementCollection],
         build_events_section: Callable[[str, Any], model.SubmodelElementCollection],
@@ -273,7 +273,7 @@ class _DomainSectionBuilder:
 
         fluents_cfg = domain_cfg.get("Fluents", []) or []
         if isinstance(fluents_cfg, list) and fluents_cfg:
-            elements.append(self._build_fluents_section(fluents_cfg))
+            elements.append(self._build_fluents_section(system_id, fluents_cfg))
 
         actions_cfg = domain_cfg.get("Actions", []) or []
         if isinstance(actions_cfg, list) and actions_cfg:

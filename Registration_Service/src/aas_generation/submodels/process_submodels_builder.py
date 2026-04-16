@@ -124,12 +124,12 @@ class RequiredCapabilitiesSubmodelBuilder:
         Expected config format (new simplified):
             RequiredCapabilities:
                 Loading:
-                    semantic_id: "https://smartproductionlab.aau.dk/Capability/Loading"
+                    semantic_id: "cssx:LoadingCapability"
                     description: "Load container onto shuttle"
                     resources:
                         imaLoadingSystem: "https://smartproductionlab.aau.dk/aas/imaLoadingSystemAAS"
                 MoveToPosition:
-                    semantic_id: "https://smartproductionlab.aau.dk/Capability/MoveToPosition"
+                    semantic_id: "cssx:MoveToPositionCapability"
                     description: "Movement capability for product transport"
                     resources:
                         planarShuttle1: "https://smartproductionlab.aau.dk/aas/planarShuttle1AAS"

@@ -15,6 +15,7 @@ from pathlib import Path
 import yaml
 
 from .aas_generation.schema_handler import SchemaHandler
+from .aas_generation.prefix_resolver import expand_prefixes_in_config
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +43,9 @@ class ConfigParser:
         if not config_data:
             raise ValueError(
                 "Either config_data or config_path must be provided")
+
+        # Expand any prefixed IRIs (e.g. cssx:Transport) to full URIs
+        config_data = expand_prefixes_in_config(config_data)
 
         # Config contains a single system with the system ID as the top-level key
         self.system_id = list(config_data.keys())[0]

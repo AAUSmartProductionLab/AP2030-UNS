@@ -233,9 +233,12 @@ class SkillBuilder:
         # Get description from action title or key
         description = action_config.get('title', action_name)
 
-        # Create semantic ID from action name
-        semantic_id = SemanticIdFactory.create_skill_semantic_id(
-            action_name)
+        # Use semantic_id from skill config if provided, otherwise construct one
+        config_semantic_id = self.config.get('semantic_id')
+        if config_semantic_id:
+            semantic_id = SemanticIdFactory.create_external_reference(config_semantic_id)
+        else:
+            semantic_id = SemanticIdFactory.create_skill_semantic_id(action_name)
 
         # Build the qualifiers for the operation
         qualifiers = self._create_operation_qualifiers(

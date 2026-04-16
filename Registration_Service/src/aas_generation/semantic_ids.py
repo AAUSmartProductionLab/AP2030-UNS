@@ -13,6 +13,7 @@ class SemanticIdCatalog:
 
     SMART_PRODUCTION_LAB_BASE = "https://smartproductionlab.aau.dk"
     PLANNING_WIKI_BASE = "https://planning.wiki/ref"
+    CSSX_BASE = "http://www.w3id.org/aau-ra/cssx#"
 
     # IDTA and common submodel semantic IDs
     IDTA_ASSET_INTERFACES = "https://admin-shell.io/idta/AssetInterfacesDescription/1/0"
@@ -40,13 +41,13 @@ class SemanticIdCatalog:
     LEGACY_CAPABILITIES_SUBMODEL = "http://smartproductionlab.aau.dk/submodels/OfferedCapabilityDescription/1/0"
 
     # Process-related submodel semantic IDs
-    PROCESS_INFORMATION_SUBMODEL = f"{SMART_PRODUCTION_LAB_BASE}/submodels/ProcessInformation/1/0"
-    REQUIRED_CAPABILITIES_SUBMODEL = f"{SMART_PRODUCTION_LAB_BASE}/submodels/RequiredCapabilities/1/0"
-    POLICY_SUBMODEL = f"{SMART_PRODUCTION_LAB_BASE}/submodels/Policy/1/0"
-    BILL_OF_PROCESSES_SUBMODEL = f"{SMART_PRODUCTION_LAB_BASE}/submodels/BillOfProcesses/1/0"
-    PROCESS_STEP_SUBMODEL = f"{SMART_PRODUCTION_LAB_BASE}/submodels/ProcessStep/1/0"
-    PROCESS_LIST_SUBMODEL = f"{SMART_PRODUCTION_LAB_BASE}/submodels/ProcessList/1/0"
-    REQUIREMENTS_SUBMODEL = f"{SMART_PRODUCTION_LAB_BASE}/submodels/Requirements/1/0"
+    PROCESS_INFORMATION_SUBMODEL = f"{CSSX_BASE}ProcessInformationSubmodel"
+    REQUIRED_CAPABILITIES_SUBMODEL = f"{CSSX_BASE}RequiredCapabilitiesSubmodel"
+    POLICY_SUBMODEL = f"{CSSX_BASE}PolicySubmodel"
+    BILL_OF_PROCESSES_SUBMODEL = f"{CSSX_BASE}BillOfProcessesSubmodel"
+    PROCESS_STEP_SUBMODEL = f"{CSSX_BASE}ProcessStepSubmodel"
+    PROCESS_LIST_SUBMODEL = f"{CSSX_BASE}ProcessListSubmodel"
+    REQUIREMENTS_SUBMODEL = f"{CSSX_BASE}RequirementsSubmodel"
 
     # W3C Thing Description semantic IDs
     WOT_TD = "https://www.w3.org/2019/wot/td"
@@ -68,87 +69,113 @@ class SemanticIdCatalog:
     SERIAL_NUMBER = "https://admin-shell.io/aas/3/0/SpecificAssetId/SerialNumber"
     LOCATION = "https://admin-shell.io/aas/3/0/SpecificAssetId/Location"
 
-    # AI Planning submodel and sections
-    AI_PLANNING_SUBMODEL = f"{SMART_PRODUCTION_LAB_BASE}/submodels/AIPlanning/1/0"
-    AI_PLANNING_DOMAIN = f"{SMART_PRODUCTION_LAB_BASE}/AIPlanning/Domain"
-    AI_PLANNING_PROBLEM = f"{SMART_PRODUCTION_LAB_BASE}/AIPlanning/Problem"
-    AI_PLANNING_DOMAIN_ACTIONS = f"{SMART_PRODUCTION_LAB_BASE}/AIPlanning/Domain/Actions"
-    AI_PLANNING_DOMAIN_ACTION = f"{SMART_PRODUCTION_LAB_BASE}/AIPlanning/Domain/Action"
-    AI_PLANNING_DOMAIN_FLUENTS = f"{SMART_PRODUCTION_LAB_BASE}/AIPlanning/Domain/Fluents"
-    AI_PLANNING_PROBLEM_METRIC = f"{SMART_PRODUCTION_LAB_BASE}/AIPlanning/Problem/Metric"
+    # AI Planning submodel and sections (proper ontology classes)
+    AI_PLANNING_SUBMODEL = f"{CSSX_BASE}AIPlanningSubmodel"
+    AI_PLANNING_DOMAIN = f"{CSSX_BASE}PlanningDomain"
+    AI_PLANNING_PROBLEM = f"{CSSX_BASE}PlanningProblem"
+    AI_PLANNING_DOMAIN_ACTIONS = f"{CSSX_BASE}ActionCollection"
+    AI_PLANNING_DOMAIN_ACTION = f"{CSSX_BASE}ActionDefinition"
+    AI_PLANNING_DOMAIN_FLUENTS = f"{CSSX_BASE}FluentCollection"
+    AI_PLANNING_PROBLEM_METRIC = f"{CSSX_BASE}ProblemMetric"
 
-    # PDDL core terms/elements
-    PDDL_TERM = f"{SMART_PRODUCTION_LAB_BASE}/PDDL/Term"
-    PDDL_PARAMETERS = f"{SMART_PRODUCTION_LAB_BASE}/PDDL/Parameters"
-    PDDL_PARAMETER = f"{SMART_PRODUCTION_LAB_BASE}/PDDL/Parameter"
-    PDDL_OBJECTS = f"{SMART_PRODUCTION_LAB_BASE}/PDDL/Objects"
-    PDDL_OBJECT = f"{SMART_PRODUCTION_LAB_BASE}/PDDL/Object"
-    PDDL_DURATION = f"{SMART_PRODUCTION_LAB_BASE}/PDDL/Duration"
-    PDDL_CONDITIONS = f"{SMART_PRODUCTION_LAB_BASE}/PDDL/Conditions"
-    PDDL_EFFECTS = f"{SMART_PRODUCTION_LAB_BASE}/PDDL/Effects"
-    PDDL_METRIC_IS_VIOLATED = f"{SMART_PRODUCTION_LAB_BASE}/PDDL/Metric/is-violated"
+    # PDDL core terms/elements (proper ontology classes)
+    PDDL_TERM = f"{CSSX_BASE}PDDLTerm"
+    PDDL_PARAMETERS = f"{CSSX_BASE}PDDLParameterList"
+    PDDL_PARAMETER = f"{CSSX_BASE}PDDLParameter"
+    PDDL_OBJECTS = f"{CSSX_BASE}PDDLObjectList"
+    PDDL_OBJECT = f"{CSSX_BASE}PDDLObject"
+    PDDL_DURATION = f"{CSSX_BASE}PDDLDuration"
+    PDDL_CONDITIONS = f"{CSSX_BASE}PDDLConditionList"
+    PDDL_EFFECTS = f"{CSSX_BASE}PDDLEffectList"
+    PDDL_METRIC_IS_VIOLATED = f"{CSSX_BASE}PDDLMetricViolation"
 
-    PDDL_LOGIC_BASE = f"{SMART_PRODUCTION_LAB_BASE}/PDDL/Term/Logic"
-    PDDL_ARITH_BASE = f"{SMART_PRODUCTION_LAB_BASE}/PDDL/Term/Arithmetic"
-    PDDL_NONDET_BASE = f"{SMART_PRODUCTION_LAB_BASE}/PDDL/Term/Nondeterministic"
-    PDDL_TEMPORAL_BASE = f"{SMART_PRODUCTION_LAB_BASE}/PDDL/Term/Temporal"
+    PDDL_LOGIC_BASE = f"{CSSX_BASE}PDDLLogicTerm"
+    PDDL_ARITH_BASE = f"{CSSX_BASE}PDDLArithmeticTerm"
+    PDDL_NONDET_BASE = f"{CSSX_BASE}PDDLNondeterministicTerm"
+    PDDL_TEMPORAL_BASE = f"{CSSX_BASE}PDDLTemporalTerm"
 
     LOGIC_SEMANTIC_IDS = {
-        "and": f"{PLANNING_WIKI_BASE}/pddl/domain#and",
-        "or": f"{PLANNING_WIKI_BASE}/pddl/domain#or",
-        "not": f"{PLANNING_WIKI_BASE}/pddl/domain#not",
-        "imply": f"{PLANNING_WIKI_BASE}/pddl/domain#imply",
-        "forall": f"{PLANNING_WIKI_BASE}/pddl/domain#forall",
-        "exists": f"{PLANNING_WIKI_BASE}/pddl/domain#exists",
-        "when": f"{PLANNING_WIKI_BASE}/pddl/domain#when",
+        "and": f"{CSSX_BASE}And",
+        "or": f"{CSSX_BASE}Or",
+        "not": f"{CSSX_BASE}Not",
+        "imply": f"{CSSX_BASE}Imply",
+        "forall": f"{CSSX_BASE}Forall",
+        "exists": f"{CSSX_BASE}Exists",
+        "when": f"{CSSX_BASE}When",
     }
 
     ARITHMETIC_SEMANTIC_IDS = {
-        "=": f"{PDDL_ARITH_BASE}/Equal",
-        "eq": f"{PDDL_ARITH_BASE}/Equal",
-        "<": f"{PDDL_ARITH_BASE}/LessThan",
-        "<=": f"{PDDL_ARITH_BASE}/LessOrEqual",
-        ">": f"{PDDL_ARITH_BASE}/GreaterThan",
-        ">=": f"{PDDL_ARITH_BASE}/GreaterOrEqual",
-        "+": f"{PLANNING_WIKI_BASE}/pddl21/domain#add",
-        "-": f"{PLANNING_WIKI_BASE}/pddl21/domain#subtract",
-        "*": f"{PLANNING_WIKI_BASE}/pddl21/domain#multiply",
-        "/": f"{PLANNING_WIKI_BASE}/pddl21/domain#divide",
-        "assign": f"{PLANNING_WIKI_BASE}/pddl21/domain#assign",
-        "increase": f"{PLANNING_WIKI_BASE}/pddl21/domain#increase",
-        "decrease": f"{PLANNING_WIKI_BASE}/pddl21/domain#decrease",
-        "scale-up": f"{PLANNING_WIKI_BASE}/pddl21/domain#scale-up",
-        "scale-down": f"{PLANNING_WIKI_BASE}/pddl21/domain#scale-down",
+        "=": f"{CSSX_BASE}Equal",
+        "eq": f"{CSSX_BASE}Equal",
+        "<": f"{CSSX_BASE}LessThan",
+        "<=": f"{CSSX_BASE}LessOrEqual",
+        ">": f"{CSSX_BASE}GreaterThan",
+        ">=": f"{CSSX_BASE}GreaterOrEqual",
+        "+": f"{CSSX_BASE}Add",
+        "-": f"{CSSX_BASE}Subtract",
+        "*": f"{CSSX_BASE}Multiply",
+        "/": f"{CSSX_BASE}Divide",
+        "assign": f"{CSSX_BASE}Assign",
+        "increase": f"{CSSX_BASE}Increase",
+        "decrease": f"{CSSX_BASE}Decrease",
+        "scale-up": f"{CSSX_BASE}ScaleUp",
+        "scale-down": f"{CSSX_BASE}ScaleDown",
     }
 
     NONDET_SEMANTIC_IDS = {
-        "oneof": f"{PDDL_NONDET_BASE}/OneOf",
+        "oneof": f"{CSSX_BASE}OneOf",
     }
 
     TEMPORAL_SEMANTIC_IDS = {
-        "always": f"{PLANNING_WIKI_BASE}/pddl3/domain#always",
-        "sometime": f"{PLANNING_WIKI_BASE}/pddl3/domain#sometime",
-        "within": f"{PLANNING_WIKI_BASE}/pddl3/domain#within",
-        "at-most-once": f"{PLANNING_WIKI_BASE}/pddl3/domain#at-most-once",
-        "sometime-after": f"{PLANNING_WIKI_BASE}/pddl3/domain#sometime-after",
-        "sometime-before": f"{PLANNING_WIKI_BASE}/pddl3/domain#sometime-before",
-        "always-within": f"{PLANNING_WIKI_BASE}/pddl3/domain#always-within",
-        "hold-during": f"{PLANNING_WIKI_BASE}/pddl3/domain#hold-during",
-        "hold-after": f"{PLANNING_WIKI_BASE}/pddl3/domain#hold-after",
-        "preference": f"{PLANNING_WIKI_BASE}/pddl3/problem#preferences",
+        "always": f"{CSSX_BASE}Always",
+        "sometime": f"{CSSX_BASE}Sometime",
+        "within": f"{CSSX_BASE}Within",
+        "at-most-once": f"{CSSX_BASE}AtMostOnce",
+        "sometime-after": f"{CSSX_BASE}SometimeAfter",
+        "sometime-before": f"{CSSX_BASE}SometimeBefore",
+        "always-within": f"{CSSX_BASE}AlwaysWithin",
+        "hold-during": f"{CSSX_BASE}HoldDuring",
+        "hold-after": f"{CSSX_BASE}HoldAfter",
+        "preference": f"{CSSX_BASE}Preference",
+    }
+
+    # Mapping from AI Planning section names to ontology class IRIs
+    _AI_PLANNING_SECTION_MAP = {
+        "Domain": f"{CSSX_BASE}PlanningDomain",
+        "Problem": f"{CSSX_BASE}PlanningProblem",
+        "Constraints": f"{CSSX_BASE}PlanningConstraints",
+    }
+
+    _AI_PLANNING_DOMAIN_SECTION_MAP = {
+        "Actions": f"{CSSX_BASE}ActionCollection",
+        "Action": f"{CSSX_BASE}ActionDefinition",
+        "Fluents": f"{CSSX_BASE}FluentCollection",
+    }
+
+    _AI_PLANNING_PROBLEM_SECTION_MAP = {
+        "Init": f"{CSSX_BASE}ProblemInit",
+        "Goal": f"{CSSX_BASE}ProblemGoal",
+        "Metric": f"{CSSX_BASE}ProblemMetric",
+        "Objects": f"{CSSX_BASE}PDDLObjectList",
     }
 
     @classmethod
     def ai_planning_section(cls, section_name: str) -> str:
-        return f"{cls.SMART_PRODUCTION_LAB_BASE}/AIPlanning/{section_name}"
+        return cls._AI_PLANNING_SECTION_MAP.get(
+            section_name, f"{cls.CSSX_BASE}AIPlanningSubmodel"
+        )
 
     @classmethod
     def ai_planning_domain_section(cls, section_name: str) -> str:
-        return f"{cls.SMART_PRODUCTION_LAB_BASE}/AIPlanning/Domain/{section_name}"
+        return cls._AI_PLANNING_DOMAIN_SECTION_MAP.get(
+            section_name, f"{cls.CSSX_BASE}PlanningDomain"
+        )
 
     @classmethod
     def ai_planning_problem_section(cls, section_name: str) -> str:
-        return f"{cls.SMART_PRODUCTION_LAB_BASE}/AIPlanning/Problem/{section_name}"
+        return cls._AI_PLANNING_PROBLEM_SECTION_MAP.get(
+            section_name, f"{cls.CSSX_BASE}PlanningProblem"
+        )
 
     @classmethod
     def recognized_submodel_templates(cls) -> set:
