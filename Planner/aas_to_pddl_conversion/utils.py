@@ -51,7 +51,13 @@ def normalize_identifier(value: str) -> str:
 
 def capability_name(value: Any) -> str:
     tail = semantic_tail(str(value or ""))
-    return normalize_identifier(tail)
+    normalized = normalize_identifier(tail)
+    # Strip known suffixes so that e.g. DispensingCapability and DispensingSkill
+    # both map to "dispensing" for matching purposes.
+    for suffix in ("capability", "skill"):
+        if normalized.endswith(suffix) and len(normalized) > len(suffix):
+            normalized = normalized[: -len(suffix)]
+    return normalized
 
 
 def match_capability(required_capability: Any, provided_capability: Any) -> bool:

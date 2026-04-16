@@ -270,6 +270,7 @@ def parse_term(term: Dict[str, Any], source_name: str, source_objects: List[str]
         "not",
         "and",
         "or",
+        "oneof",
         "+",
         "-",
         "*",
@@ -308,10 +309,35 @@ def parse_term(term: Dict[str, Any], source_name: str, source_objects: List[str]
     return None
 
 
+# Map lowered CSSx class-name tails to canonical PDDL operator strings.
+_TAIL_TO_OPERATOR: Dict[str, str] = {
+    # Arithmetic symbols
+    "equal": "=",
+    "lessthan": "<",
+    "lessorequal": "<=",
+    "greaterthan": ">",
+    "greaterorequal": ">=",
+    "add": "+",
+    "subtract": "-",
+    "multiply": "*",
+    "divide": "/",
+    # Hyphenated operators
+    "scaleup": "scale-up",
+    "scaledown": "scale-down",
+    "atmostonce": "at-most-once",
+    "sometimeafter": "sometime-after",
+    "sometimebefore": "sometime-before",
+    "alwayswithin": "always-within",
+    "holdduring": "hold-during",
+    "holdafter": "hold-after",
+}
+
+
 def term_operator(term: Dict[str, Any]) -> Optional[str]:
     for sid in term.get("supplementalSemanticIds", []):
         sem = semantic_from_ref(sid)
         tail = semantic_tail(sem).lower()
+        tail = _TAIL_TO_OPERATOR.get(tail, tail)
         if tail in {"not", "and", "or"}:
             return tail
         if tail:

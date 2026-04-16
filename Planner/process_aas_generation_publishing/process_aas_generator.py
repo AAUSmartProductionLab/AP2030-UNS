@@ -290,7 +290,7 @@ class ProcessAASGenerator:
 
             semantic_id = str(getattr(capability, 'semantic_id', '') or '').strip()
             if not semantic_id:
-                semantic_id = f"https://smartproductionlab.aau.dk/Capability/{cap_name}"
+                semantic_id = f"http://www.w3id.org/aau-ra/cssx#{cap_name}Capability"
 
             resources = dict(getattr(capability, 'resources', {}) or {})
 
@@ -308,7 +308,7 @@ class ProcessAASGenerator:
         # This is needed for the BT controller to prefetch interfaces for PackMLState checks
         if planar_table_id:
             capability_groups['PlanarTable'] = {
-                'semantic_id': 'https://smartproductionlab.aau.dk/Capability/MotionSystem',
+                'semantic_id': 'http://www.w3id.org/aau-ra/cssx#MotionSystemCapability',
                 'description': 'Planar motion system for shuttle coordination',
                 'resources': {
                     'planarTableAAS': planar_table_id

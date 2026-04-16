@@ -64,6 +64,16 @@ def solve_with_reduced_fallback(
         except Exception as exc:
             warnings.append(f"Could not map compiled plan back to original actions: {exc}")
 
+    if semantic_result is not None and map_back_action_instance is not None and getattr(semantic_result, "is_policy", False):
+        try:
+            up_result = semantic_result.require_plan_result()
+            policy_plan = semantic_result.require_policy_result()
+            mapped_policy = policy_plan.replace_action_instances(map_back_action_instance)
+            up_result.plan = mapped_policy
+            object.__setattr__(semantic_result, "policy_plan", mapped_policy)
+        except Exception as exc:
+            warnings.append(f"Could not map compiled policy back to original actions: {exc}")
+
     if semantic_result is not None and getattr(semantic_result, "is_solved", False):
         return semantic_result
 

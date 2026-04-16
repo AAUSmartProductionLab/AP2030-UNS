@@ -11,3 +11,4 @@ unified-planning
 up-pyperplan
 up-fast-downward
 up-enhsp
+rdflib

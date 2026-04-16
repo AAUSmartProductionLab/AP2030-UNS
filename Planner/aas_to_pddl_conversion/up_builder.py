@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from .models import PlanningCapability
+from .ontology_resolver import load_type_parent_map
 from .utils import coerce_numeric_literal, safe_id
 
 
@@ -35,7 +36,9 @@ def build_up_problem(
 
     problem = Problem("merged_ai_planning")
     all_type_names = collect_type_names(merged)
-    type_parents = infer_type_parent_map(merged, warnings)
+    type_parents = load_type_parent_map(warnings=warnings)
+    if type_parents is None:
+        type_parents = infer_type_parent_map(merged, warnings)
     type_map = build_type_map(all_type_names, type_parents, UserType, warnings)
     global ACTIVE_TYPE_PARENTS
     ACTIVE_TYPE_PARENTS = dict(type_parents)
@@ -627,7 +630,7 @@ def build_capabilities(merged: Dict[str, Any]) -> List[PlanningCapability]:
             continue
 
         name = action.get("skill_target") or action["key"]
-        semantic_id = action.get("semantic_id") or f"https://smartproductionlab.aau.dk/Capability/{name}"
+        semantic_id = action.get("semantic_id") or f"http://www.w3id.org/aau-ra/cssx#{name}Capability"
 
         resources: Dict[str, str] = {}
         for aas_id, aas_name in action.get("sources", []):
@@ -869,6 +872,80 @@ def term_to_atom(
     return fluent(*args)
 
 
+def collect_effect_specs_from_term(
+    term: Dict[str, Any],
+    action: Any,
+    action_param_types: List[str],
+    fluent_map: Dict[str, Any],
+    fluent_param_types: Dict[str, List[str]],
+    object_map: Dict[str, Any],
+    object_types: Dict[str, str],
+    warnings: List[str],
+) -> List[Tuple[Any, bool]]:
+    kind = term.get("kind")
+
+    if kind == "unsupported":
+        warnings.append(f"Unsupported effect operator '{term.get('op')}' ignored.")
+        return []
+
+    if kind == "atom":
+        atom = term_to_atom(
+            term,
+            fluent_map,
+            fluent_param_types,
+            action,
+            action_param_types,
+            object_map,
+            object_types,
+            warnings,
+        )
+        if atom is None:
+            return []
+        return [(atom, True)]
+
+    if kind == "op":
+        op = term.get("op")
+        children = term.get("children", [])
+
+        if op == "not" and children:
+            atom = term_to_atom(
+                children[0],
+                fluent_map,
+                fluent_param_types,
+                action,
+                action_param_types,
+                object_map,
+                object_types,
+                warnings,
+            )
+            if atom is None:
+                return []
+            return [(atom, False)]
+
+        if op == "and":
+            specs: List[Tuple[Any, bool]] = []
+            for child in children:
+                specs.extend(
+                    collect_effect_specs_from_term(
+                        child,
+                        action,
+                        action_param_types,
+                        fluent_map,
+                        fluent_param_types,
+                        object_map,
+                        object_types,
+                        warnings,
+                    )
+                )
+            return specs
+
+        warnings.append(f"Unsupported effect composition '{op}' ignored.")
+        return []
+
+    warnings.append("Unsupported effect term kind ignored.")
+    return []
+
+
 def add_effects_from_term(
     term: Dict[str, Any],
     action: Any,
@@ -929,6 +1006,39 @@ def add_effects_from_term(
                     object_types,
                     warnings,
                 )
+            return
+
+        if op == "oneof":
+            if not hasattr(action, "add_oneof_effect"):
+                warnings.append("oneof effects are only supported for instantaneous actions; ignored.")
+                return
+
+            outcomes: List[List[Tuple[Any, bool]]] = []
+            for child in children:
+                specs = collect_effect_specs_from_term(
+                    child,
+                    action,
+                    action_param_types,
+                    fluent_map,
+                    fluent_param_types,
+                    object_map,
+                    object_types,
+                    warnings,
+                )
+                if specs:
+                    outcomes.append(specs)
+
+            if len(outcomes) >= 2:
+                action.add_oneof_effect(outcomes)
+                return
+
+            if len(outcomes) == 1:
+                for atom, value in outcomes[0]:
+                    action.add_effect(atom, value)
+                warnings.append("oneof effect collapsed to a single valid outcome; applied deterministically.")
+                return
+
+            warnings.append("oneof effect had no valid outcomes; ignored.")
             return
 
         warnings.append(f"Unsupported effect composition '{op}' ignored.")

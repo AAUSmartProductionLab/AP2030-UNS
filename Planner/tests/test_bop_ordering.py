@@ -18,20 +18,20 @@ class BoPOrderingTests(unittest.TestCase):
     def test_match_capability_accepts_capability_skill_uri_variants(self):
         self.assertTrue(
             match_capability(
-                "https://smartproductionlab.aau.dk/Capability/Dispensing",
-                "https://smartproductionlab.aau.dk/skills/Dispensing",
+                "http://www.w3id.org/aau-ra/cssx#DispensingCapability",
+                "http://www.w3id.org/aau-ra/cssx#DispensingSkill",
             )
         )
         self.assertTrue(
             match_capability(
-                "https://smartproductionlab.aau.dk/Capability/QualityControl",
+                "http://www.w3id.org/aau-ra/cssx#QualityControlCapability",
                 "quality-control",
             )
         )
         self.assertFalse(
             match_capability(
-                "https://smartproductionlab.aau.dk/Capability/Dispensing",
-                "https://smartproductionlab.aau.dk/skills/Stoppering",
+                "http://www.w3id.org/aau-ra/cssx#DispensingCapability",
+                "http://www.w3id.org/aau-ra/cssx#StopperingSkill",
             )
         )
 
@@ -50,8 +50,8 @@ class BoPOrderingTests(unittest.TestCase):
             "actions": [
                 {
                     "key": "RunDispensing",
-                    "semantic_id": "https://smartproductionlab.aau.dk/skills/Dispensing",
-                    "skill_target": "https://smartproductionlab.aau.dk/skills/Dispensing",
+                    "semantic_id": "http://www.w3id.org/aau-ra/cssx#DispensingSkill",
+                    "skill_target": "http://www.w3id.org/aau-ra/cssx#DispensingSkill",
                     "parameters": [],
                     "preconditions": [],
                     "effects": [{"kind": "atom", "fluent": "station_ready", "params": [{"kind": "object", "name": "stationA"}]}],
@@ -60,8 +60,8 @@ class BoPOrderingTests(unittest.TestCase):
                 },
                 {
                     "key": "RunStoppering",
-                    "semantic_id": "https://smartproductionlab.aau.dk/skills/Stoppering",
-                    "skill_target": "https://smartproductionlab.aau.dk/skills/Stoppering",
+                    "semantic_id": "http://www.w3id.org/aau-ra/cssx#StopperingSkill",
+                    "skill_target": "http://www.w3id.org/aau-ra/cssx#StopperingSkill",
                     "parameters": [],
                     "preconditions": [],
                     "effects": [],
@@ -70,8 +70,8 @@ class BoPOrderingTests(unittest.TestCase):
                 },
                 {
                     "key": "MoveShuttle",
-                    "semantic_id": "https://smartproductionlab.aau.dk/skills/MoveToPosition",
-                    "skill_target": "https://smartproductionlab.aau.dk/skills/MoveToPosition",
+                    "semantic_id": "http://www.w3id.org/aau-ra/cssx#MoveToPositionSkill",
+                    "skill_target": "http://www.w3id.org/aau-ra/cssx#MoveToPositionSkill",
                     "parameters": [],
                     "preconditions": [],
                     "effects": [],
@@ -105,13 +105,13 @@ class BoPOrderingTests(unittest.TestCase):
                 {
                     "Dispensing": {
                         "step": 1,
-                        "semantic_id": "https://smartproductionlab.aau.dk/Capability/Dispensing",
+                        "semantic_id": "http://www.w3id.org/aau-ra/cssx#DispensingCapability",
                     }
                 },
                 {
                     "Stoppering": {
                         "step": 2,
-                        "semantic_id": "https://smartproductionlab.aau.dk/Capability/Stoppering",
+                        "semantic_id": "http://www.w3id.org/aau-ra/cssx#StopperingCapability",
                     }
                 },
             ]
