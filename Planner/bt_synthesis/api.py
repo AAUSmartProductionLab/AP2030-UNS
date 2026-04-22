@@ -24,6 +24,7 @@ from .nodes import (  # noqa: F401
     ConditionNode,
     ActionNode,
     ForbiddenActionNode,
+    Sequence,
     ReactiveSelector,
     ReactiveSequence,
     Inverter,

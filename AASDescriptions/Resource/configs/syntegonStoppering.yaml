@@ -140,6 +140,7 @@ syntegonStopperingSystemAAS:
 
         Actions:
             -   key: "Stoppering"
+                semantic_id: "cssx:StopperingCapability"
                 SkillReference: "Stoppering"
                 parameters:
                     -   name: "StopperingSystem"
@@ -147,6 +148,13 @@ syntegonStopperingSystemAAS:
                             - AAS: "self"
                     -   name: "Product"
                         externalRef: "css:Product"
+                    -   name: "TransportSystem"
+                        externalRef: "cssx:Transport"
+                    -   name: "StopperingLocation"
+                        modelRef:
+                            - AAS: "self"
+                              Submodel: "Parameters"
+                              Element: "Location"
                         
                 conditions:
                     at_start:
@@ -157,8 +165,11 @@ syntegonStopperingSystemAAS:
                             ref: "Occupied"
                             parameters: [0, 1]
                         - predicate:
-                            external: "cssx:At"
-                            parameters: [1, 0]
+                            external: "cssx:On"
+                            parameters: [1, 2]
+                        - predicate:
+                            external: "cssx:ProductAt"
+                            parameters: [1, 3]
                 effects:
                     at_end:
                         - predicate:
@@ -166,6 +177,7 @@ syntegonStopperingSystemAAS:
                             parameters: [1]
                             
             -   key: "Occupy"
+                semantic_id: "cssx:OccupyCapability"
                 SkillReference: "Occupy"
                 parameters:
                     -   name: "StopperingSystem"
@@ -194,6 +206,7 @@ syntegonStopperingSystemAAS:
 
 
             -   key: "Release"
+                semantic_id: "cssx:ReleaseCapability"
                 SkillReference: "Release"
                 parameters:
                     -   name: "StopperingSystem"
@@ -224,7 +237,7 @@ syntegonStopperingSystemAAS:
             -   name: "syntegonStopperingSystem"
                 modelRef:
                     - AAS: "self"
-            -   name: "syntegonStopperingStation"
+            -   name: "stopperingLocation"
                 modelRef:
                     - AAS: "self"
                       Submodel: "Parameters"

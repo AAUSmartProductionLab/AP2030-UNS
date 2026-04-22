@@ -15,6 +15,7 @@ Node hierarchy
     ├── SuccessLeaf          — always succeeds (goal reached)
     ├── FailureLeaf          — always fails
     ├── SubTreeRef           — reference to a parameterized template
+    ├── Sequence             — non-reactive sequence (resume on RUNNING)
     ├── ReactiveSelector     — reactive fallback (tries children L→R)
     ├── ReactiveSequence     — reactive sequence (re-checks from first)
     └── Inverter             — decorator: SUCCESS ↔ FAILURE
@@ -221,6 +222,45 @@ class ReactiveSequence(BTNode):
 
     def pretty(self, indent: int = 0) -> str:
         lines = [" " * indent + f"[→] {self.name}"]
+        for child in self.children:
+            lines.append(child.pretty(indent + 4))
+        return "\n".join(lines)
+
+
+class Sequence(BTNode):
+    """Non-reactive sequence.
+
+    Unlike ReactiveSequence, this node resumes from the last RUNNING child
+    on the next tick instead of restarting from the first child.
+    """
+
+    def __init__(
+        self,
+        name: str,
+        children: List[BTNode],
+        *,
+        is_rule_leaf: bool = False,
+    ):
+        super().__init__(name, is_rule_leaf=is_rule_leaf)
+        self.children = children
+        self._running_index = 0
+
+    def tick(self, world: "WorldState") -> Status:
+        while self._running_index < len(self.children):
+            status = self.children[self._running_index].tick(world)
+            if status == Status.SUCCESS:
+                self._running_index += 1
+                continue
+            if status == Status.RUNNING:
+                return Status.RUNNING
+            self._running_index = 0
+            return Status.FAILURE
+
+        self._running_index = 0
+        return Status.SUCCESS
+
+    def pretty(self, indent: int = 0) -> str:
+        lines = [" " * indent + f"[=>] {self.name}"]
         for child in self.children:
             lines.append(child.pretty(indent + 4))
         return "\n".join(lines)

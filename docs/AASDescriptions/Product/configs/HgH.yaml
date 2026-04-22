@@ -313,14 +313,35 @@ HgHAAS:
                         -   name: "Transport"
                             externalRef: "cssx:Transport"
 
-                -   key: "At"
-                    semantic_id: "cssx:At"
+                -   key: "ProductAt"
+                    semantic_id: "cssx:ProductAt"
                     parameters:
                         -   name: "Product"
                             modelRef:
                                 - AAS: "self"
                         -   name: "Location"
                             externalRef: "cssx:LocationParameter"
+
+                -   key: "Dispensed"
+                    semantic_id: "cssx:Dispensed"
+                    parameters:
+                        -   name: "Product"
+                            modelRef:
+                                - AAS: "self"
+
+                -   key: "Stoppered"
+                    semantic_id: "cssx:Stoppered"
+                    parameters:
+                        -   name: "Product"
+                            modelRef:
+                                - AAS: "self"
+
+                -   key: "Captured"
+                    semantic_id: "cssx:Captured"
+                    parameters:
+                        -   name: "Product"
+                            modelRef:
+                                - AAS: "self"
 
         Problem:
             Objects:

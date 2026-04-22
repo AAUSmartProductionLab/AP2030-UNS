@@ -1,215 +1,660 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<root BTCPP_format="4" main_tree_to_execute="Production">
-  <BehaviorTree ID="Production">
-    <Sequence>
-      <Configure Product="{product}" ProductIDs="{ProductIDs}"/>
-      <Parallel failure_count="-1" success_count="1">
-        <SubTree ID="AsepticFilling" Xbot="{Xbot1}" ProductID="" _autoremap="true"/>
-        <SubTree ID="AsepticFilling" Xbot="{Xbot2}" ProductID="" _autoremap="true"/>
-        <SubTree ID="AsepticFilling" Xbot="{Xbot3}" ProductID="" _autoremap="true"/>
-      </Parallel>
+<?xml version='1.0' encoding='utf-8'?>
+<root BTCPP_format="4" main_tree_to_execute="MainTree">
+  <BehaviorTree ID="MainTree">
+    <ReactiveFallback name="PolicyRoot">
+      <SubTree ID="PolicyRules" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Capture_mim8_planarshuttle2">
+    <Sequence name="Capture_mim8_planarshuttle2">
+      <Condition ID="FluentCheck" name="free(imadispensingsystem)" fluent="free(imadispensingsystem)" />
+      <Condition ID="FluentCheck" name="free(imaloadingsystem)" fluent="free(imaloadingsystem)" />
+      <Condition ID="FluentCheck" name="free(planarshuttle2)" fluent="free(planarshuttle2)" />
+      <Condition ID="FluentCheck" name="free(planarshuttle3)" fluent="free(planarshuttle3)" />
+      <Condition ID="FluentCheck" name="free(syntegonstopperingsystem)" fluent="free(syntegonstopperingsystem)" />
+      <Condition ID="FluentCheck" name="occupied(omroncamerasystem, mim8)" fluent="occupied(omroncamerasystem, mim8)" />
+      <Condition ID="FluentCheck" name="on(mim8, planarshuttle2)" fluent="on(mim8, planarshuttle2)" />
+      <Condition ID="FluentCheck" name="productat(mim8, capturelocation)" fluent="productat(mim8, capturelocation)" />
+      <Condition ID="FluentCheck" name="productat(mim8, unloadinglocation)" fluent="productat(mim8, unloadinglocation)" />
+      <Condition ID="FluentCheck" name="step_ready(order_product, step_4_inspection)" fluent="step_ready(order_product, step_4_inspection)" />
+      <Action ID="ExecuteAction" name="capture mim8 planarshuttle2" action_name="capture" action_args="mim8 planarshuttle2" />
     </Sequence>
   </BehaviorTree>
-  <BehaviorTree ID="AsepticFilling">
-    <Occupy Uuid="{Uuid}" Assets="https://smartproductionlab.aau.dk/aas/planarTableShuttle1AAS;https://smartproductionlab.aau.dk/aas/planarTableShuttle2AAS;https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS" SelectedAsset="{Xbot}">
-      <KeepRunningUntilEmpty if_empty="SUCCESS" Queue="{ProductIDs}">
-        <ReactiveSequence>
-          <ReactiveFallback>
-            <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="PackMLState" Asset="{Xbot}"/>
-            <Sleep msec="10000"/>
-          </ReactiveFallback>
-          <SequenceWithMemory>
-            <SubTree ID="Loading" Assets="https://smartproductionlab.aau.dk/aas/imaLoadingSystemAAS" Xbot="{Xbot}" XbotUuid="{Uuid}" ProductID="{ProductID}" ProductIDs="{ProductIDs}" Station="{Station}" _autoremap="false"/>
-            <SubTree ID="Dispensing" Assets="https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS" Xbot="{Xbot}" XbotUuid="{Uuid}" ProductID="{ProductID}" ProductIDs="{ProductIDs}" Station="{Station}" _autoremap="false"/>
-            <SubTree ID="Stoppering" Assets="https://smartproductionlab.aau.dk/aas/syntegonStopperingSystemAAS" Xbot="{Xbot}" XbotUuid="{Uuid}" ProductID="{ProductID}" ProductIDs="{ProductIDs}" Station="{Station}" _autoremap="false"/>
-            <SubTree ID="Inspection" Assets="https://smartproductionlab.aau.dk/aas/omronCameraSystemAAS" Xbot="{Xbot}" XbotUuid="{Uuid}" ProductID="{ProductID}" ProductIDs="{ProductIDs}" Station="{Station}" IPCInspection="{IPCInspection}" BatchSize="{BatchSize}" _autoremap="false"/>
-            <SubTree ID="Unloading" Assets="https://smartproductionlab.aau.dk/aas/optimaUnloadingSystemAAS" Xbot="{Xbot}" XbotUuid="{Uuid}" ProductID="{ProductID}" ProductIDs="{ProductIDs}" Station="{Station}" _autoremap="false"/>
-          </SequenceWithMemory>
-        </ReactiveSequence>
-      </KeepRunningUntilEmpty>
-    </Occupy>
+  <BehaviorTree ID="Dispensing_mim8_planarshuttle2">
+    <Sequence name="Dispensing_mim8_planarshuttle2">
+      <Condition ID="FluentCheck" name="free(imaloadingsystem)" fluent="free(imaloadingsystem)" />
+      <Condition ID="FluentCheck" name="free(planarshuttle2)" fluent="free(planarshuttle2)" />
+      <Condition ID="FluentCheck" name="free(planarshuttle3)" fluent="free(planarshuttle3)" />
+      <Condition ID="FluentCheck" name="occupied(imadispensingsystem, mim8)" fluent="occupied(imadispensingsystem, mim8)" />
+      <Condition ID="FluentCheck" name="on(mim8, planarshuttle2)" fluent="on(mim8, planarshuttle2)" />
+      <Condition ID="FluentCheck" name="productat(mim8, capturelocation)" fluent="productat(mim8, capturelocation)" />
+      <Condition ID="FluentCheck" name="productat(mim8, dispensinglocation)" fluent="productat(mim8, dispensinglocation)" />
+      <Condition ID="FluentCheck" name="productat(mim8, stopperinglocation)" fluent="productat(mim8, stopperinglocation)" />
+      <Condition ID="FluentCheck" name="productat(mim8, unloadinglocation)" fluent="productat(mim8, unloadinglocation)" />
+      <Condition ID="FluentCheck" name="step_ready(order_product, step_2_dispensing)" fluent="step_ready(order_product, step_2_dispensing)" />
+      <Action ID="ExecuteAction" name="dispensing mim8 planarshuttle2" action_name="dispensing" action_args="mim8 planarshuttle2" />
+    </Sequence>
   </BehaviorTree>
-  <BehaviorTree ID="Loading">
-    <SequenceWithMemory>
-      <PopElement ProductID="{ProductID}" if_empty="SUCCESS" Queue="{ProductIDs}"/>
-      <Occupy Uuid="{ProductID}" Assets="{Assets}">
-        <ReactiveSequence>
-          <ReactiveFallback>
-            <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="PackMLState" Asset="{SelectedAsset}"/>
-            <Sleep msec="10000"/>
-          </ReactiveFallback>
-          <Sequence>
-            <moveToPosition Uuid="{XbotUuid}" TargetPosition="{SelectedAsset}" Asset="{Xbot}"/>
-            <Command_Execution Parameters="'{}'" Uuid="{ProductID}" Operation="Loading" Asset="{SelectedAsset}"/>
-          </Sequence>
-        </ReactiveSequence>
-      </Occupy>
-    </SequenceWithMemory>
+  <BehaviorTree ID="Loading_mim8_planarshuttle2">
+    <Sequence name="Loading_mim8_planarshuttle2">
+      <Condition ID="FluentCheck" name="occupied(imaloadingsystem, mim8)" fluent="occupied(imaloadingsystem, mim8)" />
+      <Action ID="ExecuteAction" name="loading mim8 planarshuttle2" action_name="loading" action_args="mim8 planarshuttle2" />
+    </Sequence>
   </BehaviorTree>
-  <BehaviorTree ID="Unloading">
-    <Occupy Uuid="{ProductID}" Assets="{Assets}">
-      <ReactiveSequence>
-        <ReactiveFallback>
-          <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="PackMLState" Asset="{SelectedAsset}"/>
-          <Sleep msec="10000"/>
-        </ReactiveFallback>
-        <Sequence>
-          <moveToPosition Uuid="{XbotUuid}" TargetPosition="{SelectedAsset}" Asset="{Xbot}"/>
-          <Command_Execution Parameters="'{}'" Uuid="{ProductID}" Operation="Unloading" Asset="{SelectedAsset}"/>
-        </Sequence>
-      </ReactiveSequence>
-    </Occupy>
+  <BehaviorTree ID="Movetoposition2_planarshuttle2_mim8_loadinglocation_unloadinglocation">
+    <Sequence name="Movetoposition2_planarshuttle2_mim8_loadinglocation_unloadinglocation">
+      <Condition ID="FluentCheck" name="occupied(planarshuttle2, mim8)" fluent="occupied(planarshuttle2, mim8)" />
+      <Action ID="ExecuteAction" name="movetoposition_2 planarshuttle2 mim8 loadinglocation unloadinglocation" action_name="movetoposition_2" action_args="planarshuttle2 mim8 loadinglocation unloadinglocation" />
+    </Sequence>
   </BehaviorTree>
-  <BehaviorTree ID="Dispensing">
-    <Occupy Uuid="{ProductID}" Assets="{Assets}">
-      <ReactiveSequence>
-        <ReactiveFallback>
-          <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="PackMLState" Asset="{SelectedAsset}"/>
-          <Sleep msec="10000"/>
-        </ReactiveFallback>
-        <Sequence>
-          <moveToPosition Uuid="{XbotUuid}" TargetPosition="{SelectedAsset}" Asset="{Xbot}"/>
-          <Command_Execution Parameters="'{}'" Uuid="{ProductID}" Operation="Dispensing" Asset="{SelectedAsset}"/>
-        </Sequence>
-      </ReactiveSequence>
-    </Occupy>
+  <BehaviorTree ID="Movetoposition_planarshuttle2_initiallocation2_loadinglocation">
+    <Sequence name="Movetoposition_planarshuttle2_initiallocation2_loadinglocation">
+      <Condition ID="FluentCheck" name="occupied(planarshuttle3, mim8)" fluent="occupied(planarshuttle3, mim8)" />
+      <Action ID="ExecuteAction" name="movetoposition planarshuttle2 initiallocation2 loadinglocation" action_name="movetoposition" action_args="planarshuttle2 initiallocation2 loadinglocation" />
+    </Sequence>
   </BehaviorTree>
-  <BehaviorTree ID="Inspection">
-    <SamplingGate SamplingRate="{IPCInspection}" BatchSize="{BatchSize}" Queue="{ProductIDs}">
-      <Occupy Uuid="{ProductID}" Assets="{Assets}">
-        <ReactiveSequence>
-          <ReactiveFallback>
-            <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="PackMLState" Asset="{SelectedAsset}"/>
-            <Sleep msec="10000"/>
-          </ReactiveFallback>
-          <Sequence>
-            <moveToPosition Uuid="{XbotUuid}" TargetPosition="{SelectedAsset}" Asset="{Xbot}"/>
-            <Command_Execution Parameters="'{}'" Uuid="{ProductID}" Operation="Capture" Asset="{SelectedAsset}"/>
-          </Sequence>
-        </ReactiveSequence>
-      </Occupy>
-    </SamplingGate>
+  <BehaviorTree ID="Occupy2_mim8">
+    <Sequence name="Occupy2_mim8">
+      <Condition ID="FluentCheck" name="not(occupied(planarshuttle2, mim8))" fluent="not(occupied(planarshuttle2, mim8))" />
+      <Action ID="ExecuteAction" name="occupy_2 mim8" action_name="occupy_2" action_args="mim8" />
+    </Sequence>
   </BehaviorTree>
-  <BehaviorTree ID="Stoppering">
-    <Occupy Uuid="{ProductID}" Assets="{Assets}">
-      <ReactiveSequence>
-        <ReactiveFallback>
-          <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="PackMLState" Asset="{SelectedAsset}"/>
-          <Sleep msec="10000"/>
-        </ReactiveFallback>
-        <Sequence>
-          <moveToPosition Uuid="{XbotUuid}" TargetPosition="{SelectedAsset}" Asset="{Xbot}"/>
-          <Command_Execution Parameters="'{}'" Uuid="{ProductID}" Operation="Stoppering" Asset="{SelectedAsset}"/>
-        </Sequence>
-      </ReactiveSequence>
-    </Occupy>
+  <BehaviorTree ID="Occupy3_mim8">
+    <Sequence name="Occupy3_mim8">
+      <Condition ID="FluentCheck" name="not(occupied(planarshuttle3, mim8))" fluent="not(occupied(planarshuttle3, mim8))" />
+      <Action ID="ExecuteAction" name="occupy_3 mim8" action_name="occupy_3" action_args="mim8" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Occupy4_mim8">
+    <Sequence name="Occupy4_mim8">
+      <Condition ID="FluentCheck" name="free(planarshuttle2)" fluent="free(planarshuttle2)" />
+      <Action ID="ExecuteAction" name="occupy_4 mim8" action_name="occupy_4" action_args="mim8" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Occupy5_mim8">
+    <Sequence name="Occupy5_mim8">
+      <Condition ID="FluentCheck" name="free(imadispensingsystem)" fluent="free(imadispensingsystem)" />
+      <Action ID="ExecuteAction" name="occupy_5 mim8" action_name="occupy_5" action_args="mim8" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Occupy6_mim8">
+    <Sequence name="Occupy6_mim8">
+      <Condition ID="FluentCheck" name="not(occupied(imaloadingsystem, mim8))" fluent="not(occupied(imaloadingsystem, mim8))" />
+      <Action ID="ExecuteAction" name="occupy_6 mim8" action_name="occupy_6" action_args="mim8" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Occupy7_mim8">
+    <Sequence name="Occupy7_mim8">
+      <Condition ID="FluentCheck" name="free(omroncamerasystem)" fluent="free(omroncamerasystem)" />
+      <Action ID="ExecuteAction" name="occupy_7 mim8" action_name="occupy_7" action_args="mim8" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Occupy8_mim8">
+    <Sequence name="Occupy8_mim8">
+      <Condition ID="FluentCheck" name="free(syntegonstopperingsystem)" fluent="free(syntegonstopperingsystem)" />
+      <Action ID="ExecuteAction" name="occupy_8 mim8" action_name="occupy_8" action_args="mim8" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="PolicyRules">
+    <Sequence name="PolicyRules">
+      <Condition ID="FluentCheck" name="free(planarshuttle1)" fluent="free(planarshuttle1)" />
+      <SubTree ID="Progression" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Progression">
+    <ReactiveFallback name="Progression">
+      <SubTree ID="When_notstep_doneorder_product_step_5_unloading" />
+      <SubTree ID="Release7_mim8" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Progression_with_notstep_doneorder_product_step_5_unloading">
+    <ReactiveFallback name="Progression_with_notstep_doneorder_product_step_5_unloading">
+      <SubTree ID="When_notoccupiedoptimaunloadingsystem_mim8" />
+      <SubTree ID="Unloading_mim8_planarshuttle2" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8">
+    <ReactiveFallback name="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8">
+      <SubTree ID="When_notstep_doneorder_product_step_4_inspection" />
+      <SubTree ID="When_step_readyorder_product_step_5_unloading" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_else_notstep_doneorder_product_step_4_inspection_with_step_readyorder_product_step_5_unloading_with_productatmim8_unloadinglocation_with_onmim8_planarshuttle2_with_freesyntegonstopperingsystem_with_freeplanarshuttle3_with_freeplanarshuttle2_with_freeimaloadingsystem_with_freeimadispensingsystem">
+    <ReactiveFallback name="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_else_notstep_doneorder_product_step_4_inspection_with_step_readyorder_product_step_5_unloading_with_productatmim8_unloadinglocation_with_onmim8_planarshuttle2_with_freesyntegonstopperingsystem_with_freeplanarshuttle3_with_freeplanarshuttle2_with_freeimaloadingsystem_with_freeimadispensingsystem">
+      <SubTree ID="Occupy7_mim8" />
+      <SubTree ID="Release8_mim8" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection">
+    <ReactiveFallback name="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection">
+      <SubTree ID="When_notoccupiedomroncamerasystem_mim8" />
+      <SubTree ID="Capture_mim8_planarshuttle2" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8">
+    <ReactiveFallback name="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8">
+      <SubTree ID="When_notstep_doneorder_product_step_3_stoppering" />
+      <SubTree ID="When_step_readyorder_product_step_4_inspection" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8_else_notstep_doneorder_product_step_3_stoppering_with_step_readyorder_product_step_4_inspection_with_productatmim8_unloadinglocation_with_productatmim8_capturelocation_with_onmim8_planarshuttle2_with_freeplanarshuttle3_with_freeplanarshuttle2_with_freeimaloadingsystem_with_freeimadispensingsystem">
+    <ReactiveFallback name="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8_else_notstep_doneorder_product_step_3_stoppering_with_step_readyorder_product_step_4_inspection_with_productatmim8_unloadinglocation_with_productatmim8_capturelocation_with_onmim8_planarshuttle2_with_freeplanarshuttle3_with_freeplanarshuttle2_with_freeimaloadingsystem_with_freeimadispensingsystem">
+      <SubTree ID="Occupy8_mim8" />
+      <SubTree ID="Release5_mim8" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8_with_notstep_doneorder_product_step_3_stoppering">
+    <ReactiveFallback name="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8_with_notstep_doneorder_product_step_3_stoppering">
+      <SubTree ID="When_notoccupiedsyntegonstopperingsystem_mim8" />
+      <SubTree ID="Stoppering_mim8_planarshuttle2" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8_with_notstep_doneorder_product_step_3_stoppering_with_notoccupiedsyntegonstopperingsystem_mim8">
+    <ReactiveFallback name="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8_with_notstep_doneorder_product_step_3_stoppering_with_notoccupiedsyntegonstopperingsystem_mim8">
+      <SubTree ID="When_notstep_doneorder_product_step_2_dispensing" />
+      <SubTree ID="When_step_readyorder_product_step_3_stoppering" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8_with_notstep_doneorder_product_step_3_stoppering_with_notoccupiedsyntegonstopperingsystem_mim8_else_notstep_doneorder_product_step_2_dispensing_with_step_readyorder_product_step_3_stoppering_with_productatmim8_unloadinglocation_with_productatmim8_stopperinglocation_with_productatmim8_capturelocation_with_onmim8_planarshuttle2_with_freeplanarshuttle3_with_freeplanarshuttle2_with_freeimaloadingsystem">
+    <ReactiveFallback name="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8_with_notstep_doneorder_product_step_3_stoppering_with_notoccupiedsyntegonstopperingsystem_mim8_else_notstep_doneorder_product_step_2_dispensing_with_step_readyorder_product_step_3_stoppering_with_productatmim8_unloadinglocation_with_productatmim8_stopperinglocation_with_productatmim8_capturelocation_with_onmim8_planarshuttle2_with_freeplanarshuttle3_with_freeplanarshuttle2_with_freeimaloadingsystem">
+      <SubTree ID="Occupy5_mim8" />
+      <SubTree ID="Release4_mim8" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8_with_notstep_doneorder_product_step_3_stoppering_with_notoccupiedsyntegonstopperingsystem_mim8_with_notstep_doneorder_product_step_2_dispensing">
+    <ReactiveFallback name="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8_with_notstep_doneorder_product_step_3_stoppering_with_notoccupiedsyntegonstopperingsystem_mim8_with_notstep_doneorder_product_step_2_dispensing">
+      <SubTree ID="When_notoccupiedimadispensingsystem_mim8" />
+      <SubTree ID="Dispensing_mim8_planarshuttle2" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8_with_notstep_doneorder_product_step_3_stoppering_with_notoccupiedsyntegonstopperingsystem_mim8_with_notstep_doneorder_product_step_2_dispensing_with_notoccupiedimadispensingsystem_mim8">
+    <ReactiveFallback name="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8_with_notstep_doneorder_product_step_3_stoppering_with_notoccupiedsyntegonstopperingsystem_mim8_with_notstep_doneorder_product_step_2_dispensing_with_notoccupiedimadispensingsystem_mim8">
+      <SubTree ID="When_freeplanarshuttle3_4" />
+      <SubTree ID="When_step_readyorder_product_step_1_loading" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8_with_notstep_doneorder_product_step_3_stoppering_with_notoccupiedsyntegonstopperingsystem_mim8_with_notstep_doneorder_product_step_2_dispensing_with_notoccupiedimadispensingsystem_mim8_else_freeplanarshuttle3_with_step_readyorder_product_step_1_loading_with_notstep_doneorder_product_step_1_loading_with_notoccupiedplanarshuttle2_mim8_with_notoccupiedimaloadingsystem_mim8">
+    <ReactiveFallback name="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8_with_notstep_doneorder_product_step_3_stoppering_with_notoccupiedsyntegonstopperingsystem_mim8_with_notstep_doneorder_product_step_2_dispensing_with_notoccupiedimadispensingsystem_mim8_else_freeplanarshuttle3_with_step_readyorder_product_step_1_loading_with_notstep_doneorder_product_step_1_loading_with_notoccupiedplanarshuttle2_mim8_with_notoccupiedimaloadingsystem_mim8">
+      <SubTree ID="When_resourceatplanarshuttle2_initiallocation2" />
+      <SubTree ID="Release3_mim8" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8_with_notstep_doneorder_product_step_3_stoppering_with_notoccupiedsyntegonstopperingsystem_mim8_with_notstep_doneorder_product_step_2_dispensing_with_notoccupiedimadispensingsystem_mim8_else_freeplanarshuttle3_with_step_readyorder_product_step_1_loading_with_notstep_doneorder_product_step_1_loading_with_notoccupiedplanarshuttle2_mim8_with_notoccupiedimaloadingsystem_mim8_with_resourceatplanarshuttle2_initiallocation2_with_freeplanarshuttle2">
+    <ReactiveFallback name="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8_with_notstep_doneorder_product_step_3_stoppering_with_notoccupiedsyntegonstopperingsystem_mim8_with_notstep_doneorder_product_step_2_dispensing_with_notoccupiedimadispensingsystem_mim8_else_freeplanarshuttle3_with_step_readyorder_product_step_1_loading_with_notstep_doneorder_product_step_1_loading_with_notoccupiedplanarshuttle2_mim8_with_notoccupiedimaloadingsystem_mim8_with_resourceatplanarshuttle2_initiallocation2_with_freeplanarshuttle2">
+      <SubTree ID="Movetoposition_planarshuttle2_initiallocation2_loadinglocation" />
+      <SubTree ID="Occupy3_mim8" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8_with_notstep_doneorder_product_step_3_stoppering_with_notoccupiedsyntegonstopperingsystem_mim8_with_notstep_doneorder_product_step_2_dispensing_with_notoccupiedimadispensingsystem_mim8_with_freeplanarshuttle3">
+    <ReactiveFallback name="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8_with_notstep_doneorder_product_step_3_stoppering_with_notoccupiedsyntegonstopperingsystem_mim8_with_notstep_doneorder_product_step_2_dispensing_with_notoccupiedimadispensingsystem_mim8_with_freeplanarshuttle3">
+      <SubTree ID="When_step_readyorder_product_step_2_dispensing" />
+      <SubTree ID="When_step_readyorder_product_step_1_loading_2" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8_with_notstep_doneorder_product_step_3_stoppering_with_notoccupiedsyntegonstopperingsystem_mim8_with_notstep_doneorder_product_step_2_dispensing_with_notoccupiedimadispensingsystem_mim8_with_freeplanarshuttle3_else_step_readyorder_product_step_2_dispensing_with_step_readyorder_product_step_1_loading_with_resourceatplanarshuttle2_loadinglocation_with_notstep_doneorder_product_step_1_loading_with_notoccupiedplanarshuttle2_mim8">
+    <ReactiveFallback name="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8_with_notstep_doneorder_product_step_3_stoppering_with_notoccupiedsyntegonstopperingsystem_mim8_with_notstep_doneorder_product_step_2_dispensing_with_notoccupiedimadispensingsystem_mim8_with_freeplanarshuttle3_else_step_readyorder_product_step_2_dispensing_with_step_readyorder_product_step_1_loading_with_resourceatplanarshuttle2_loadinglocation_with_notstep_doneorder_product_step_1_loading_with_notoccupiedplanarshuttle2_mim8">
+      <SubTree ID="Loading_mim8_planarshuttle2" />
+      <SubTree ID="Occupy6_mim8" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8_with_notstep_doneorder_product_step_3_stoppering_with_notoccupiedsyntegonstopperingsystem_mim8_with_notstep_doneorder_product_step_2_dispensing_with_notoccupiedimadispensingsystem_mim8_with_freeplanarshuttle3_with_step_readyorder_product_step_2_dispensing_with_onmim8_planarshuttle2">
+    <ReactiveFallback name="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8_with_notstep_doneorder_product_step_3_stoppering_with_notoccupiedsyntegonstopperingsystem_mim8_with_notstep_doneorder_product_step_2_dispensing_with_notoccupiedimadispensingsystem_mim8_with_freeplanarshuttle3_with_step_readyorder_product_step_2_dispensing_with_onmim8_planarshuttle2">
+      <SubTree ID="When_freeimaloadingsystem_4" />
+      <SubTree ID="Release6_mim8" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8_with_notstep_doneorder_product_step_3_stoppering_with_notoccupiedsyntegonstopperingsystem_mim8_with_notstep_doneorder_product_step_2_dispensing_with_notoccupiedimadispensingsystem_mim8_with_freeplanarshuttle3_with_step_readyorder_product_step_2_dispensing_with_onmim8_planarshuttle2_with_freeimaloadingsystem">
+    <ReactiveFallback name="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8_with_notstep_doneorder_product_step_3_stoppering_with_notoccupiedsyntegonstopperingsystem_mim8_with_notstep_doneorder_product_step_2_dispensing_with_notoccupiedimadispensingsystem_mim8_with_freeplanarshuttle3_with_step_readyorder_product_step_2_dispensing_with_onmim8_planarshuttle2_with_freeimaloadingsystem">
+      <SubTree ID="When_productatmim8_unloadinglocation_4" />
+      <SubTree ID="When_resourceatplanarshuttle2_loadinglocation_2" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8_with_notstep_doneorder_product_step_3_stoppering_with_notoccupiedsyntegonstopperingsystem_mim8_with_notstep_doneorder_product_step_2_dispensing_with_notoccupiedimadispensingsystem_mim8_with_freeplanarshuttle3_with_step_readyorder_product_step_2_dispensing_with_onmim8_planarshuttle2_with_freeimaloadingsystem_else_productatmim8_unloadinglocation_with_resourceatplanarshuttle2_loadinglocation_with_productatmim8_loadinglocation">
+    <ReactiveFallback name="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8_with_notstep_doneorder_product_step_3_stoppering_with_notoccupiedsyntegonstopperingsystem_mim8_with_notstep_doneorder_product_step_2_dispensing_with_notoccupiedimadispensingsystem_mim8_with_freeplanarshuttle3_with_step_readyorder_product_step_2_dispensing_with_onmim8_planarshuttle2_with_freeimaloadingsystem_else_productatmim8_unloadinglocation_with_resourceatplanarshuttle2_loadinglocation_with_productatmim8_loadinglocation">
+      <SubTree ID="Movetoposition2_planarshuttle2_mim8_loadinglocation_unloadinglocation" />
+      <SubTree ID="Occupy2_mim8" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8_with_notstep_doneorder_product_step_3_stoppering_with_notoccupiedsyntegonstopperingsystem_mim8_with_notstep_doneorder_product_step_2_dispensing_with_notoccupiedimadispensingsystem_mim8_with_freeplanarshuttle3_with_step_readyorder_product_step_2_dispensing_with_onmim8_planarshuttle2_with_freeimaloadingsystem_with_productatmim8_unloadinglocation">
+    <ReactiveFallback name="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8_with_notstep_doneorder_product_step_3_stoppering_with_notoccupiedsyntegonstopperingsystem_mim8_with_notstep_doneorder_product_step_2_dispensing_with_notoccupiedimadispensingsystem_mim8_with_freeplanarshuttle3_with_step_readyorder_product_step_2_dispensing_with_onmim8_planarshuttle2_with_freeimaloadingsystem_with_productatmim8_unloadinglocation">
+      <SubTree ID="When_productatmim8_capturelocation_3" />
+      <SubTree ID="Movetoposition2" arg0="planarshuttle2" arg1="mim8" arg2="unloadinglocation" arg3="capturelocation" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8_with_notstep_doneorder_product_step_3_stoppering_with_notoccupiedsyntegonstopperingsystem_mim8_with_notstep_doneorder_product_step_2_dispensing_with_notoccupiedimadispensingsystem_mim8_with_freeplanarshuttle3_with_step_readyorder_product_step_2_dispensing_with_onmim8_planarshuttle2_with_freeimaloadingsystem_with_productatmim8_unloadinglocation_with_productatmim8_capturelocation">
+    <ReactiveFallback name="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8_with_notstep_doneorder_product_step_3_stoppering_with_notoccupiedsyntegonstopperingsystem_mim8_with_notstep_doneorder_product_step_2_dispensing_with_notoccupiedimadispensingsystem_mim8_with_freeplanarshuttle3_with_step_readyorder_product_step_2_dispensing_with_onmim8_planarshuttle2_with_freeimaloadingsystem_with_productatmim8_unloadinglocation_with_productatmim8_capturelocation">
+      <SubTree ID="When_productatmim8_stopperinglocation_2" />
+      <SubTree ID="Movetoposition2" arg0="planarshuttle2" arg1="mim8" arg2="capturelocation" arg3="stopperinglocation" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8_with_notstep_doneorder_product_step_3_stoppering_with_notoccupiedsyntegonstopperingsystem_mim8_with_notstep_doneorder_product_step_2_dispensing_with_notoccupiedimadispensingsystem_mim8_with_freeplanarshuttle3_with_step_readyorder_product_step_2_dispensing_with_onmim8_planarshuttle2_with_freeimaloadingsystem_with_productatmim8_unloadinglocation_with_productatmim8_capturelocation_with_productatmim8_stopperinglocation">
+    <ReactiveFallback name="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8_with_notstep_doneorder_product_step_3_stoppering_with_notoccupiedsyntegonstopperingsystem_mim8_with_notstep_doneorder_product_step_2_dispensing_with_notoccupiedimadispensingsystem_mim8_with_freeplanarshuttle3_with_step_readyorder_product_step_2_dispensing_with_onmim8_planarshuttle2_with_freeimaloadingsystem_with_productatmim8_unloadinglocation_with_productatmim8_capturelocation_with_productatmim8_stopperinglocation">
+      <SubTree ID="When_productatmim8_dispensinglocation" />
+      <SubTree ID="Movetoposition2" arg0="planarshuttle2" arg1="mim8" arg2="stopperinglocation" arg3="dispensinglocation" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8_with_notstep_doneorder_product_step_3_stoppering_with_notoccupiedsyntegonstopperingsystem_mim8_with_notstep_doneorder_product_step_2_dispensing_with_notoccupiedimadispensingsystem_mim8_with_freeplanarshuttle3_with_step_readyorder_product_step_2_dispensing_with_onmim8_planarshuttle2_with_freeimaloadingsystem_with_productatmim8_unloadinglocation_with_productatmim8_capturelocation_with_productatmim8_stopperinglocation_with_productatmim8_dispensinglocation">
+    <ReactiveFallback name="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8_with_notstep_doneorder_product_step_3_stoppering_with_notoccupiedsyntegonstopperingsystem_mim8_with_notstep_doneorder_product_step_2_dispensing_with_notoccupiedimadispensingsystem_mim8_with_freeplanarshuttle3_with_step_readyorder_product_step_2_dispensing_with_onmim8_planarshuttle2_with_freeimaloadingsystem_with_productatmim8_unloadinglocation_with_productatmim8_capturelocation_with_productatmim8_stopperinglocation_with_productatmim8_dispensinglocation">
+      <SubTree ID="Occupy4_mim8" />
+      <SubTree ID="Release2_mim8" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Release2_mim8">
+    <Sequence name="Release2_mim8">
+      <Condition ID="FluentCheck" name="occupied(planarshuttle2, mim8)" fluent="occupied(planarshuttle2, mim8)" />
+      <Action ID="ExecuteAction" name="release_2 mim8" action_name="release_2" action_args="mim8" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Release3_mim8">
+    <Sequence name="Release3_mim8">
+      <Condition ID="FluentCheck" name="occupied(planarshuttle3, mim8)" fluent="occupied(planarshuttle3, mim8)" />
+      <Condition ID="FluentCheck" name="resourceat(planarshuttle2, loadinglocation)" fluent="resourceat(planarshuttle2, loadinglocation)" />
+      <Action ID="ExecuteAction" name="release_3 mim8" action_name="release_3" action_args="mim8" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Release4_mim8">
+    <Sequence name="Release4_mim8">
+      <Condition ID="FluentCheck" name="occupied(imadispensingsystem, mim8)" fluent="occupied(imadispensingsystem, mim8)" />
+      <Action ID="ExecuteAction" name="release_4 mim8" action_name="release_4" action_args="mim8" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Release5_mim8">
+    <Sequence name="Release5_mim8">
+      <Condition ID="FluentCheck" name="occupied(syntegonstopperingsystem, mim8)" fluent="occupied(syntegonstopperingsystem, mim8)" />
+      <Action ID="ExecuteAction" name="release_5 mim8" action_name="release_5" action_args="mim8" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Release6_mim8">
+    <Sequence name="Release6_mim8">
+      <Condition ID="FluentCheck" name="not(occupied(planarshuttle2, mim8))" fluent="not(occupied(planarshuttle2, mim8))" />
+      <Condition ID="FluentCheck" name="occupied(imaloadingsystem, mim8)" fluent="occupied(imaloadingsystem, mim8)" />
+      <Condition ID="FluentCheck" name="productat(mim8, loadinglocation)" fluent="productat(mim8, loadinglocation)" />
+      <Condition ID="FluentCheck" name="resourceat(planarshuttle2, loadinglocation)" fluent="resourceat(planarshuttle2, loadinglocation)" />
+      <Action ID="ExecuteAction" name="release_6 mim8" action_name="release_6" action_args="mim8" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Release7_mim8">
+    <Sequence name="Release7_mim8">
+      <Condition ID="FluentCheck" name="free(imadispensingsystem)" fluent="free(imadispensingsystem)" />
+      <Condition ID="FluentCheck" name="free(imaloadingsystem)" fluent="free(imaloadingsystem)" />
+      <Condition ID="FluentCheck" name="free(omroncamerasystem)" fluent="free(omroncamerasystem)" />
+      <Condition ID="FluentCheck" name="free(planarshuttle2)" fluent="free(planarshuttle2)" />
+      <Condition ID="FluentCheck" name="free(planarshuttle3)" fluent="free(planarshuttle3)" />
+      <Condition ID="FluentCheck" name="free(syntegonstopperingsystem)" fluent="free(syntegonstopperingsystem)" />
+      <Condition ID="FluentCheck" name="occupied(optimaunloadingsystem, mim8)" fluent="occupied(optimaunloadingsystem, mim8)" />
+      <Condition ID="FluentCheck" name="step_done(order_product, step_5_unloading)" fluent="step_done(order_product, step_5_unloading)" />
+      <Action ID="ExecuteAction" name="release_7 mim8" action_name="release_7" action_args="mim8" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Release8_mim8">
+    <Sequence name="Release8_mim8">
+      <Condition ID="FluentCheck" name="occupied(omroncamerasystem, mim8)" fluent="occupied(omroncamerasystem, mim8)" />
+      <Action ID="ExecuteAction" name="release_8 mim8" action_name="release_8" action_args="mim8" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Stoppering_mim8_planarshuttle2">
+    <Sequence name="Stoppering_mim8_planarshuttle2">
+      <Condition ID="FluentCheck" name="free(imadispensingsystem)" fluent="free(imadispensingsystem)" />
+      <Condition ID="FluentCheck" name="free(imaloadingsystem)" fluent="free(imaloadingsystem)" />
+      <Condition ID="FluentCheck" name="free(planarshuttle2)" fluent="free(planarshuttle2)" />
+      <Condition ID="FluentCheck" name="free(planarshuttle3)" fluent="free(planarshuttle3)" />
+      <Condition ID="FluentCheck" name="occupied(syntegonstopperingsystem, mim8)" fluent="occupied(syntegonstopperingsystem, mim8)" />
+      <Condition ID="FluentCheck" name="on(mim8, planarshuttle2)" fluent="on(mim8, planarshuttle2)" />
+      <Condition ID="FluentCheck" name="productat(mim8, capturelocation)" fluent="productat(mim8, capturelocation)" />
+      <Condition ID="FluentCheck" name="productat(mim8, stopperinglocation)" fluent="productat(mim8, stopperinglocation)" />
+      <Condition ID="FluentCheck" name="productat(mim8, unloadinglocation)" fluent="productat(mim8, unloadinglocation)" />
+      <Condition ID="FluentCheck" name="step_ready(order_product, step_3_stoppering)" fluent="step_ready(order_product, step_3_stoppering)" />
+      <Action ID="ExecuteAction" name="stoppering mim8 planarshuttle2" action_name="stoppering" action_args="mim8 planarshuttle2" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Unloading_mim8_planarshuttle2">
+    <Sequence name="Unloading_mim8_planarshuttle2">
+      <Condition ID="FluentCheck" name="free(imadispensingsystem)" fluent="free(imadispensingsystem)" />
+      <Condition ID="FluentCheck" name="free(imaloadingsystem)" fluent="free(imaloadingsystem)" />
+      <Condition ID="FluentCheck" name="free(omroncamerasystem)" fluent="free(omroncamerasystem)" />
+      <Condition ID="FluentCheck" name="free(planarshuttle2)" fluent="free(planarshuttle2)" />
+      <Condition ID="FluentCheck" name="free(planarshuttle3)" fluent="free(planarshuttle3)" />
+      <Condition ID="FluentCheck" name="free(syntegonstopperingsystem)" fluent="free(syntegonstopperingsystem)" />
+      <Condition ID="FluentCheck" name="occupied(optimaunloadingsystem, mim8)" fluent="occupied(optimaunloadingsystem, mim8)" />
+      <Condition ID="FluentCheck" name="on(mim8, planarshuttle2)" fluent="on(mim8, planarshuttle2)" />
+      <Condition ID="FluentCheck" name="productat(mim8, unloadinglocation)" fluent="productat(mim8, unloadinglocation)" />
+      <Condition ID="FluentCheck" name="step_ready(order_product, step_5_unloading)" fluent="step_ready(order_product, step_5_unloading)" />
+      <Action ID="ExecuteAction" name="unloading mim8 planarshuttle2" action_name="unloading" action_args="mim8 planarshuttle2" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_freeimadispensingsystem">
+    <Sequence name="When_freeimadispensingsystem">
+      <Condition ID="FluentCheck" name="free(imadispensingsystem)" fluent="free(imadispensingsystem)" />
+      <SubTree ID="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_else_notstep_doneorder_product_step_4_inspection_with_step_readyorder_product_step_5_unloading_with_productatmim8_unloadinglocation_with_onmim8_planarshuttle2_with_freesyntegonstopperingsystem_with_freeplanarshuttle3_with_freeplanarshuttle2_with_freeimaloadingsystem_with_freeimadispensingsystem" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_freeimadispensingsystem_2">
+    <Sequence name="When_freeimadispensingsystem">
+      <Condition ID="FluentCheck" name="free(imadispensingsystem)" fluent="free(imadispensingsystem)" />
+      <SubTree ID="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8_else_notstep_doneorder_product_step_3_stoppering_with_step_readyorder_product_step_4_inspection_with_productatmim8_unloadinglocation_with_productatmim8_capturelocation_with_onmim8_planarshuttle2_with_freeplanarshuttle3_with_freeplanarshuttle2_with_freeimaloadingsystem_with_freeimadispensingsystem" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_freeimaloadingsystem">
+    <Sequence name="When_freeimaloadingsystem">
+      <Condition ID="FluentCheck" name="free(imaloadingsystem)" fluent="free(imaloadingsystem)" />
+      <SubTree ID="When_freeimadispensingsystem" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_freeimaloadingsystem_2">
+    <Sequence name="When_freeimaloadingsystem">
+      <Condition ID="FluentCheck" name="free(imaloadingsystem)" fluent="free(imaloadingsystem)" />
+      <SubTree ID="When_freeimadispensingsystem_2" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_freeimaloadingsystem_3">
+    <Sequence name="When_freeimaloadingsystem">
+      <Condition ID="FluentCheck" name="free(imaloadingsystem)" fluent="free(imaloadingsystem)" />
+      <SubTree ID="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8_with_notstep_doneorder_product_step_3_stoppering_with_notoccupiedsyntegonstopperingsystem_mim8_else_notstep_doneorder_product_step_2_dispensing_with_step_readyorder_product_step_3_stoppering_with_productatmim8_unloadinglocation_with_productatmim8_stopperinglocation_with_productatmim8_capturelocation_with_onmim8_planarshuttle2_with_freeplanarshuttle3_with_freeplanarshuttle2_with_freeimaloadingsystem" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_freeimaloadingsystem_4">
+    <Sequence name="When_freeimaloadingsystem">
+      <Condition ID="FluentCheck" name="free(imaloadingsystem)" fluent="free(imaloadingsystem)" />
+      <SubTree ID="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8_with_notstep_doneorder_product_step_3_stoppering_with_notoccupiedsyntegonstopperingsystem_mim8_with_notstep_doneorder_product_step_2_dispensing_with_notoccupiedimadispensingsystem_mim8_with_freeplanarshuttle3_with_step_readyorder_product_step_2_dispensing_with_onmim8_planarshuttle2_with_freeimaloadingsystem" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_freeplanarshuttle2">
+    <Sequence name="When_freeplanarshuttle2">
+      <Condition ID="FluentCheck" name="free(planarshuttle2)" fluent="free(planarshuttle2)" />
+      <SubTree ID="When_freeimaloadingsystem" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_freeplanarshuttle2_2">
+    <Sequence name="When_freeplanarshuttle2">
+      <Condition ID="FluentCheck" name="free(planarshuttle2)" fluent="free(planarshuttle2)" />
+      <SubTree ID="When_freeimaloadingsystem_2" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_freeplanarshuttle2_3">
+    <Sequence name="When_freeplanarshuttle2">
+      <Condition ID="FluentCheck" name="free(planarshuttle2)" fluent="free(planarshuttle2)" />
+      <SubTree ID="When_freeimaloadingsystem_3" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_freeplanarshuttle2_4">
+    <Sequence name="When_freeplanarshuttle2">
+      <Condition ID="FluentCheck" name="free(planarshuttle2)" fluent="free(planarshuttle2)" />
+      <SubTree ID="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8_with_notstep_doneorder_product_step_3_stoppering_with_notoccupiedsyntegonstopperingsystem_mim8_with_notstep_doneorder_product_step_2_dispensing_with_notoccupiedimadispensingsystem_mim8_else_freeplanarshuttle3_with_step_readyorder_product_step_1_loading_with_notstep_doneorder_product_step_1_loading_with_notoccupiedplanarshuttle2_mim8_with_notoccupiedimaloadingsystem_mim8_with_resourceatplanarshuttle2_initiallocation2_with_freeplanarshuttle2" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_freeplanarshuttle3">
+    <Sequence name="When_freeplanarshuttle3">
+      <Condition ID="FluentCheck" name="free(planarshuttle3)" fluent="free(planarshuttle3)" />
+      <SubTree ID="When_freeplanarshuttle2" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_freeplanarshuttle3_2">
+    <Sequence name="When_freeplanarshuttle3">
+      <Condition ID="FluentCheck" name="free(planarshuttle3)" fluent="free(planarshuttle3)" />
+      <SubTree ID="When_freeplanarshuttle2_2" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_freeplanarshuttle3_3">
+    <Sequence name="When_freeplanarshuttle3">
+      <Condition ID="FluentCheck" name="free(planarshuttle3)" fluent="free(planarshuttle3)" />
+      <SubTree ID="When_freeplanarshuttle2_3" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_freeplanarshuttle3_4">
+    <Sequence name="When_freeplanarshuttle3">
+      <Condition ID="FluentCheck" name="free(planarshuttle3)" fluent="free(planarshuttle3)" />
+      <SubTree ID="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8_with_notstep_doneorder_product_step_3_stoppering_with_notoccupiedsyntegonstopperingsystem_mim8_with_notstep_doneorder_product_step_2_dispensing_with_notoccupiedimadispensingsystem_mim8_with_freeplanarshuttle3" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_freesyntegonstopperingsystem">
+    <Sequence name="When_freesyntegonstopperingsystem">
+      <Condition ID="FluentCheck" name="free(syntegonstopperingsystem)" fluent="free(syntegonstopperingsystem)" />
+      <SubTree ID="When_freeplanarshuttle3" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_notoccupiedimadispensingsystem_mim8">
+    <Sequence name="When_notoccupiedimadispensingsystem_mim8">
+      <Condition ID="FluentCheck" name="not(occupied(imadispensingsystem, mim8))" fluent="not(occupied(imadispensingsystem, mim8))" />
+      <SubTree ID="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8_with_notstep_doneorder_product_step_3_stoppering_with_notoccupiedsyntegonstopperingsystem_mim8_with_notstep_doneorder_product_step_2_dispensing_with_notoccupiedimadispensingsystem_mim8" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_notoccupiedimaloadingsystem_mim8">
+    <Sequence name="When_notoccupiedimaloadingsystem_mim8">
+      <Condition ID="FluentCheck" name="not(occupied(imaloadingsystem, mim8))" fluent="not(occupied(imaloadingsystem, mim8))" />
+      <SubTree ID="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8_with_notstep_doneorder_product_step_3_stoppering_with_notoccupiedsyntegonstopperingsystem_mim8_with_notstep_doneorder_product_step_2_dispensing_with_notoccupiedimadispensingsystem_mim8_else_freeplanarshuttle3_with_step_readyorder_product_step_1_loading_with_notstep_doneorder_product_step_1_loading_with_notoccupiedplanarshuttle2_mim8_with_notoccupiedimaloadingsystem_mim8" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_notoccupiedomroncamerasystem_mim8">
+    <Sequence name="When_notoccupiedomroncamerasystem_mim8">
+      <Condition ID="FluentCheck" name="not(occupied(omroncamerasystem, mim8))" fluent="not(occupied(omroncamerasystem, mim8))" />
+      <SubTree ID="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_notoccupiedoptimaunloadingsystem_mim8">
+    <Sequence name="When_notoccupiedoptimaunloadingsystem_mim8">
+      <Condition ID="FluentCheck" name="not(occupied(optimaunloadingsystem, mim8))" fluent="not(occupied(optimaunloadingsystem, mim8))" />
+      <SubTree ID="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_notoccupiedplanarshuttle2_mim8">
+    <Sequence name="When_notoccupiedplanarshuttle2_mim8">
+      <Condition ID="FluentCheck" name="not(occupied(planarshuttle2, mim8))" fluent="not(occupied(planarshuttle2, mim8))" />
+      <SubTree ID="When_notoccupiedimaloadingsystem_mim8" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_notoccupiedplanarshuttle2_mim8_2">
+    <Sequence name="When_notoccupiedplanarshuttle2_mim8">
+      <Condition ID="FluentCheck" name="not(occupied(planarshuttle2, mim8))" fluent="not(occupied(planarshuttle2, mim8))" />
+      <SubTree ID="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8_with_notstep_doneorder_product_step_3_stoppering_with_notoccupiedsyntegonstopperingsystem_mim8_with_notstep_doneorder_product_step_2_dispensing_with_notoccupiedimadispensingsystem_mim8_with_freeplanarshuttle3_else_step_readyorder_product_step_2_dispensing_with_step_readyorder_product_step_1_loading_with_resourceatplanarshuttle2_loadinglocation_with_notstep_doneorder_product_step_1_loading_with_notoccupiedplanarshuttle2_mim8" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_notoccupiedsyntegonstopperingsystem_mim8">
+    <Sequence name="When_notoccupiedsyntegonstopperingsystem_mim8">
+      <Condition ID="FluentCheck" name="not(occupied(syntegonstopperingsystem, mim8))" fluent="not(occupied(syntegonstopperingsystem, mim8))" />
+      <SubTree ID="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8_with_notstep_doneorder_product_step_3_stoppering_with_notoccupiedsyntegonstopperingsystem_mim8" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_notstep_doneorder_product_step_1_loading">
+    <Sequence name="When_notstep_doneorder_product_step_1_loading">
+      <Condition ID="FluentCheck" name="not(step_done(order_product, step_1_loading))" fluent="not(step_done(order_product, step_1_loading))" />
+      <SubTree ID="When_notoccupiedplanarshuttle2_mim8" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_notstep_doneorder_product_step_1_loading_2">
+    <Sequence name="When_notstep_doneorder_product_step_1_loading">
+      <Condition ID="FluentCheck" name="not(step_done(order_product, step_1_loading))" fluent="not(step_done(order_product, step_1_loading))" />
+      <SubTree ID="When_notoccupiedplanarshuttle2_mim8_2" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_notstep_doneorder_product_step_2_dispensing">
+    <Sequence name="When_notstep_doneorder_product_step_2_dispensing">
+      <Condition ID="FluentCheck" name="not(step_done(order_product, step_2_dispensing))" fluent="not(step_done(order_product, step_2_dispensing))" />
+      <SubTree ID="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8_with_notstep_doneorder_product_step_3_stoppering_with_notoccupiedsyntegonstopperingsystem_mim8_with_notstep_doneorder_product_step_2_dispensing" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_notstep_doneorder_product_step_3_stoppering">
+    <Sequence name="When_notstep_doneorder_product_step_3_stoppering">
+      <Condition ID="FluentCheck" name="not(step_done(order_product, step_3_stoppering))" fluent="not(step_done(order_product, step_3_stoppering))" />
+      <SubTree ID="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8_with_notstep_doneorder_product_step_3_stoppering" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_notstep_doneorder_product_step_4_inspection">
+    <Sequence name="When_notstep_doneorder_product_step_4_inspection">
+      <Condition ID="FluentCheck" name="not(step_done(order_product, step_4_inspection))" fluent="not(step_done(order_product, step_4_inspection))" />
+      <SubTree ID="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_notstep_doneorder_product_step_5_unloading">
+    <Sequence name="When_notstep_doneorder_product_step_5_unloading">
+      <Condition ID="FluentCheck" name="not(step_done(order_product, step_5_unloading))" fluent="not(step_done(order_product, step_5_unloading))" />
+      <SubTree ID="Progression_with_notstep_doneorder_product_step_5_unloading" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_onmim8_planarshuttle2">
+    <Sequence name="When_onmim8_planarshuttle2">
+      <Condition ID="FluentCheck" name="on(mim8, planarshuttle2)" fluent="on(mim8, planarshuttle2)" />
+      <SubTree ID="When_freesyntegonstopperingsystem" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_onmim8_planarshuttle2_2">
+    <Sequence name="When_onmim8_planarshuttle2">
+      <Condition ID="FluentCheck" name="on(mim8, planarshuttle2)" fluent="on(mim8, planarshuttle2)" />
+      <SubTree ID="When_freeplanarshuttle3_2" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_onmim8_planarshuttle2_3">
+    <Sequence name="When_onmim8_planarshuttle2">
+      <Condition ID="FluentCheck" name="on(mim8, planarshuttle2)" fluent="on(mim8, planarshuttle2)" />
+      <SubTree ID="When_freeplanarshuttle3_3" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_onmim8_planarshuttle2_4">
+    <Sequence name="When_onmim8_planarshuttle2">
+      <Condition ID="FluentCheck" name="on(mim8, planarshuttle2)" fluent="on(mim8, planarshuttle2)" />
+      <SubTree ID="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8_with_notstep_doneorder_product_step_3_stoppering_with_notoccupiedsyntegonstopperingsystem_mim8_with_notstep_doneorder_product_step_2_dispensing_with_notoccupiedimadispensingsystem_mim8_with_freeplanarshuttle3_with_step_readyorder_product_step_2_dispensing_with_onmim8_planarshuttle2" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_productatmim8_capturelocation">
+    <Sequence name="When_productatmim8_capturelocation">
+      <Condition ID="FluentCheck" name="productat(mim8, capturelocation)" fluent="productat(mim8, capturelocation)" />
+      <SubTree ID="When_onmim8_planarshuttle2_2" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_productatmim8_capturelocation_2">
+    <Sequence name="When_productatmim8_capturelocation">
+      <Condition ID="FluentCheck" name="productat(mim8, capturelocation)" fluent="productat(mim8, capturelocation)" />
+      <SubTree ID="When_onmim8_planarshuttle2_3" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_productatmim8_capturelocation_3">
+    <Sequence name="When_productatmim8_capturelocation">
+      <Condition ID="FluentCheck" name="productat(mim8, capturelocation)" fluent="productat(mim8, capturelocation)" />
+      <SubTree ID="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8_with_notstep_doneorder_product_step_3_stoppering_with_notoccupiedsyntegonstopperingsystem_mim8_with_notstep_doneorder_product_step_2_dispensing_with_notoccupiedimadispensingsystem_mim8_with_freeplanarshuttle3_with_step_readyorder_product_step_2_dispensing_with_onmim8_planarshuttle2_with_freeimaloadingsystem_with_productatmim8_unloadinglocation_with_productatmim8_capturelocation" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_productatmim8_dispensinglocation">
+    <Sequence name="When_productatmim8_dispensinglocation">
+      <Condition ID="FluentCheck" name="productat(mim8, dispensinglocation)" fluent="productat(mim8, dispensinglocation)" />
+      <SubTree ID="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8_with_notstep_doneorder_product_step_3_stoppering_with_notoccupiedsyntegonstopperingsystem_mim8_with_notstep_doneorder_product_step_2_dispensing_with_notoccupiedimadispensingsystem_mim8_with_freeplanarshuttle3_with_step_readyorder_product_step_2_dispensing_with_onmim8_planarshuttle2_with_freeimaloadingsystem_with_productatmim8_unloadinglocation_with_productatmim8_capturelocation_with_productatmim8_stopperinglocation_with_productatmim8_dispensinglocation" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_productatmim8_loadinglocation">
+    <Sequence name="When_productatmim8_loadinglocation">
+      <Condition ID="FluentCheck" name="productat(mim8, loadinglocation)" fluent="productat(mim8, loadinglocation)" />
+      <SubTree ID="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8_with_notstep_doneorder_product_step_3_stoppering_with_notoccupiedsyntegonstopperingsystem_mim8_with_notstep_doneorder_product_step_2_dispensing_with_notoccupiedimadispensingsystem_mim8_with_freeplanarshuttle3_with_step_readyorder_product_step_2_dispensing_with_onmim8_planarshuttle2_with_freeimaloadingsystem_else_productatmim8_unloadinglocation_with_resourceatplanarshuttle2_loadinglocation_with_productatmim8_loadinglocation" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_productatmim8_stopperinglocation">
+    <Sequence name="When_productatmim8_stopperinglocation">
+      <Condition ID="FluentCheck" name="productat(mim8, stopperinglocation)" fluent="productat(mim8, stopperinglocation)" />
+      <SubTree ID="When_productatmim8_capturelocation_2" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_productatmim8_stopperinglocation_2">
+    <Sequence name="When_productatmim8_stopperinglocation">
+      <Condition ID="FluentCheck" name="productat(mim8, stopperinglocation)" fluent="productat(mim8, stopperinglocation)" />
+      <SubTree ID="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8_with_notstep_doneorder_product_step_3_stoppering_with_notoccupiedsyntegonstopperingsystem_mim8_with_notstep_doneorder_product_step_2_dispensing_with_notoccupiedimadispensingsystem_mim8_with_freeplanarshuttle3_with_step_readyorder_product_step_2_dispensing_with_onmim8_planarshuttle2_with_freeimaloadingsystem_with_productatmim8_unloadinglocation_with_productatmim8_capturelocation_with_productatmim8_stopperinglocation" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_productatmim8_unloadinglocation">
+    <Sequence name="When_productatmim8_unloadinglocation">
+      <Condition ID="FluentCheck" name="productat(mim8, unloadinglocation)" fluent="productat(mim8, unloadinglocation)" />
+      <SubTree ID="When_onmim8_planarshuttle2" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_productatmim8_unloadinglocation_2">
+    <Sequence name="When_productatmim8_unloadinglocation">
+      <Condition ID="FluentCheck" name="productat(mim8, unloadinglocation)" fluent="productat(mim8, unloadinglocation)" />
+      <SubTree ID="When_productatmim8_capturelocation" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_productatmim8_unloadinglocation_3">
+    <Sequence name="When_productatmim8_unloadinglocation">
+      <Condition ID="FluentCheck" name="productat(mim8, unloadinglocation)" fluent="productat(mim8, unloadinglocation)" />
+      <SubTree ID="When_productatmim8_stopperinglocation" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_productatmim8_unloadinglocation_4">
+    <Sequence name="When_productatmim8_unloadinglocation">
+      <Condition ID="FluentCheck" name="productat(mim8, unloadinglocation)" fluent="productat(mim8, unloadinglocation)" />
+      <SubTree ID="Progression_with_notstep_doneorder_product_step_5_unloading_with_notoccupiedoptimaunloadingsystem_mim8_with_notstep_doneorder_product_step_4_inspection_with_notoccupiedomroncamerasystem_mim8_with_notstep_doneorder_product_step_3_stoppering_with_notoccupiedsyntegonstopperingsystem_mim8_with_notstep_doneorder_product_step_2_dispensing_with_notoccupiedimadispensingsystem_mim8_with_freeplanarshuttle3_with_step_readyorder_product_step_2_dispensing_with_onmim8_planarshuttle2_with_freeimaloadingsystem_with_productatmim8_unloadinglocation" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_resourceatplanarshuttle2_initiallocation2">
+    <Sequence name="When_resourceatplanarshuttle2_initiallocation2">
+      <Condition ID="FluentCheck" name="resourceat(planarshuttle2, initiallocation2)" fluent="resourceat(planarshuttle2, initiallocation2)" />
+      <SubTree ID="When_freeplanarshuttle2_4" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_resourceatplanarshuttle2_loadinglocation">
+    <Sequence name="When_resourceatplanarshuttle2_loadinglocation">
+      <Condition ID="FluentCheck" name="resourceat(planarshuttle2, loadinglocation)" fluent="resourceat(planarshuttle2, loadinglocation)" />
+      <SubTree ID="When_notstep_doneorder_product_step_1_loading_2" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_resourceatplanarshuttle2_loadinglocation_2">
+    <Sequence name="When_resourceatplanarshuttle2_loadinglocation">
+      <Condition ID="FluentCheck" name="resourceat(planarshuttle2, loadinglocation)" fluent="resourceat(planarshuttle2, loadinglocation)" />
+      <SubTree ID="When_productatmim8_loadinglocation" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_step_readyorder_product_step_1_loading">
+    <Sequence name="When_step_readyorder_product_step_1_loading">
+      <Condition ID="FluentCheck" name="step_ready(order_product, step_1_loading)" fluent="step_ready(order_product, step_1_loading)" />
+      <SubTree ID="When_notstep_doneorder_product_step_1_loading" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_step_readyorder_product_step_1_loading_2">
+    <Sequence name="When_step_readyorder_product_step_1_loading">
+      <Condition ID="FluentCheck" name="step_ready(order_product, step_1_loading)" fluent="step_ready(order_product, step_1_loading)" />
+      <SubTree ID="When_resourceatplanarshuttle2_loadinglocation" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_step_readyorder_product_step_2_dispensing">
+    <Sequence name="When_step_readyorder_product_step_2_dispensing">
+      <Condition ID="FluentCheck" name="step_ready(order_product, step_2_dispensing)" fluent="step_ready(order_product, step_2_dispensing)" />
+      <SubTree ID="When_onmim8_planarshuttle2_4" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_step_readyorder_product_step_3_stoppering">
+    <Sequence name="When_step_readyorder_product_step_3_stoppering">
+      <Condition ID="FluentCheck" name="step_ready(order_product, step_3_stoppering)" fluent="step_ready(order_product, step_3_stoppering)" />
+      <SubTree ID="When_productatmim8_unloadinglocation_3" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_step_readyorder_product_step_4_inspection">
+    <Sequence name="When_step_readyorder_product_step_4_inspection">
+      <Condition ID="FluentCheck" name="step_ready(order_product, step_4_inspection)" fluent="step_ready(order_product, step_4_inspection)" />
+      <SubTree ID="When_productatmim8_unloadinglocation_2" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_step_readyorder_product_step_5_unloading">
+    <Sequence name="When_step_readyorder_product_step_5_unloading">
+      <Condition ID="FluentCheck" name="step_ready(order_product, step_5_unloading)" fluent="step_ready(order_product, step_5_unloading)" />
+      <SubTree ID="When_productatmim8_unloadinglocation" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Movetoposition2">
+    <Sequence name="Movetoposition2_{arg0}_{arg1}_{arg2}_{arg3}">
+      <Condition ID="FluentCheck" name="occupied({arg0}, {arg1})" fluent="occupied({arg0}, {arg1})" />
+      <Condition ID="FluentCheck" name="resourceat({arg0}, {arg2})" fluent="resourceat({arg0}, {arg2})" />
+      <Action ID="ExecuteAction" name="movetoposition_2 {arg0} {arg1} {arg2} {arg3}" action_name="movetoposition_2" action_args="{arg0} {arg1} {arg2} {arg3}" />
+    </Sequence>
   </BehaviorTree>
   <TreeNodesModel>
-    <Control ID="BC_Fallback"/>
-    <Control ID="BC_Fallback_Async"/>
-    <Action ID="Command_Execution">
-      <input_port name="Parameters" type="nlohmann::json_abi_v3_11_3::basic_json&lt;std::map, std::vector, std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, bool, long, unsigned long, double, std::allocator, nlohmann::json_abi_v3_11_3::adl_serializer, std::vector&lt;unsigned char, std::allocator&lt;unsigned char&gt; &gt;, void&gt;" default="'{}'">The parameters for the operation</input_port>
-      <input_port name="Uuid" type="std::string" default="{Uuid}">UUID for the operation to execute</input_port>
-      <input_port name="Operation" type="std::string" default="Operation">The operation to execute on the asset</input_port>
-      <input_port name="Asset" type="std::string" default="{Asset}">The asset used for execution</input_port>
-    </Action>
-    <Action ID="Configure">
-      <input_port name="Product" type="std::string" default="{product}">Product AAS ID to fetch batch information from</input_port>
-      <output_port name="ProductIDs" type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;" default="{ProductIDs}">List of product IDs to produce</output_port>
-      <output_port name="BatchSize" type="int" default="{BatchSize}">Initial size of the product queue</output_port>
-      <output_port name="IPCInspection" type="int" default="{IPCInspection}">In-process control inspection sampling rate (0-100)</output_port>
-    </Action>
-    <Condition ID="Data_Condition">
-      <input_port name="comparison_type" type="std::string">Type of comparison: equal, not_equal, greater, less, contains</input_port>
-      <input_port name="Field" type="std::string">Name of the field to monitor in the MQTT message</input_port>
-      <input_port name="expected_value" type="std::string">Value to compare against</input_port>
-      <input_port name="Property" type="std::string">The property interface from the Asset</input_port>
-      <input_port name="Asset" type="std::string" default="{Asset}">The Asset from which to receive a message</input_port>
+    <Condition ID="FluentCheck">
+      <input_port name="fluent" default="" />
     </Condition>
-    <Decorator ID="GetProductFromQueue">
-      <output_port name="ProductID" type="std::string" default="{ProductID}">The product ID of the current product</output_port>
-      <input_port name="if_empty" type="BT::NodeStatus" default="SUCCESS">Status to return if queue is empty: SUCCESS, FAILURE, SKIPPED</input_port>
-      <input_port name="Queue" type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;" default="{ProductIDs}">The queue of all product IDs of the batch</input_port>
-    </Decorator>
-    <Decorator ID="KeepRunningUntilEmpty">
-      <input_port name="if_empty" type="BT::NodeStatus" default="SUCCESS">Status to return if queue is empty: SUCCESS, FAILURE, SKIPPED</input_port>
-      <input_port name="Queue" type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;" default="{ProductIDs}">The queue to monitor. Node runs child while this queue is not empty.</input_port>
-    </Decorator>
-    <Decorator ID="Occupy">
-      <inout_port name="Uuid" type="std::string" default="{Uuid}">UUID of the selected asset's occupation request</inout_port>
-      <output_port name="SelectedAsset" type="std::string" default="{SelectedAsset}">The Asset that has accepted our request</output_port>
-      <input_port name="Assets" type="std::vector&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt;">List of asset IDs to attempt occupation on</input_port>
-    </Decorator>
-    <Decorator ID="SamplingGate">
-      <input_port name="SamplingRate" type="int" default="100">Percentage of products that should be processed (0-100)</input_port>
-      <input_port name="BatchSize" type="int" default="{BatchSize}">The initial size of the product queue (set by Configure node)</input_port>
-      <input_port name="Queue" type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;" default="{ProductIDs}">The queue of product IDs to determine current product index</input_port>
-    </Decorator>
-    <Action ID="PopElement">
-      <output_port name="ProductID" type="std::string" default="{ProductID}">The product ID popped from the queue.</output_port>
-      <input_port name="if_empty" type="BT::NodeStatus" default="SUCCESS">Status to return if the queue is empty or invalid (SUCCESS, FAILURE, SKIPPED).</input_port>
-      <input_port name="Queue" type="std::shared_ptr&lt;std::deque&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, std::allocator&lt;std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; &gt; &gt; &gt;" default="{ProductIDs}">The shared queue of product IDs. An element will be popped from it.</input_port>
+    <Action ID="ExecuteAction">
+      <input_port name="action_name" default="" />
+      <input_port name="action_args" default="" />
     </Action>
-    <Action ID="Refill_Node">
-      <input_port name="Uuid" type="std::string" default="{ID}">UUID for the command to execute</input_port>
-      <input_port name="Asset" type="std::string" default="{Asset}">The asset used for refilling</input_port>
-    </Action>
-    <Action ID="Retrieve_AAS_Property">
-      <inout_port name="output_key" type="std::string">Name of the blackboard entry where the value should be written</inout_port>
-      <input_port name="Property" type="std::string">The property idShort or path (use | as delimiter, e.g., 'Filling|Location|x')</input_port>
-      <input_port name="Submodel" type="std::string">The submodel idShort containing the property</input_port>
-      <input_port name="Asset" type="std::string">The asset name to retrieve the property from</input_port>
-    </Action>
-    <Action ID="moveToPosition">
-      <input_port name="Uuid" type="std::string" default="{XbotUuid}">UUID for the command to execute (should be the Xbot's reservation UUID)</input_port>
-      <input_port name="TargetPosition" type="std::string" default="{Station}">The name of the station to move to</input_port>
-      <input_port name="Asset" type="std::string" default="{Xbot}">The Asset to execute the movement</input_port>
-    </Action>
-    <SubTree ID="Loading">
-      <input_port name="Assets"/>
-      <input_port name="Xbot"/>
-      <input_port name="XbotUuid"/>
-      <input_port name="ProductID"/>
-      <input_port name="ProductIDs"/>
-      <input_port name="Station"/>
-    </SubTree>
-    <SubTree ID="Unloading">
-      <input_port name="Assets"/>
-      <input_port name="Xbot"/>
-      <input_port name="XbotUuid"/>
-      <input_port name="ProductID"/>
-      <input_port name="ProductIDs"/>
-      <input_port name="Station"/>
-    </SubTree>
-    <SubTree ID="Dispensing">
-      <input_port name="Assets"/>
-      <input_port name="Xbot"/>
-      <input_port name="XbotUuid"/>
-      <input_port name="ProductID"/>
-      <input_port name="ProductIDs"/>
-      <input_port name="Station"/>
-    </SubTree>
-    <SubTree ID="Inspection">
-      <input_port name="Assets"/>
-      <input_port name="Xbot"/>
-      <input_port name="XbotUuid"/>
-      <input_port name="ProductID"/>
-      <input_port name="ProductIDs"/>
-      <input_port name="Station"/>
-      <input_port name="IPCInspection"/>
-      <input_port name="BatchSize"/>
-    </SubTree>
-    <SubTree ID="AsepticFilling">
-      <input_port name="Xbot"/>
-      <output_port name="ProductID"/>
-    </SubTree>
-    <SubTree ID="Stoppering">
-      <input_port name="Assets"/>
-      <input_port name="Xbot"/>
-      <input_port name="XbotUuid"/>
-      <input_port name="ProductID"/>
-      <input_port name="ProductIDs"/>
-      <input_port name="Station"/>
+    <Action ID="GoalReached" />
+    <SubTree ID="Movetoposition2" editable="true">
+      <input_port name="arg0" />
+      <input_port name="arg1" />
+      <input_port name="arg2" />
+      <input_port name="arg3" />
     </SubTree>
   </TreeNodesModel>
 </root>

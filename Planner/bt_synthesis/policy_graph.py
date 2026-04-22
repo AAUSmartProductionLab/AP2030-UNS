@@ -48,7 +48,7 @@ def build_policy_state_graph(
             state_signatures.append(signature)
             state_actions[signature] = set()
             state_parts[signature] = _split_state_literals(signature)
-        state_actions[signature].add(str(rule.action))
+        state_actions[signature].add(_rule_action_name(rule))
 
     goal_node_id = len(state_signatures)
     unmapped_node_id = goal_node_id + 1
@@ -159,17 +159,35 @@ def build_policy_state_graph(
 
     initial_state_id: Optional[int] = None
     if state_signatures and init_fluents:
-        best_state = None
-        best_score = float("-inf")
         init_positive = frozenset(x.lower() for x in init_fluents)
+
+        # Prefer signatures that are actually applicable in the initial state,
+        # i.e., all required positives hold and required negatives are absent.
+        applicable_best_state = None
+        applicable_best_specificity = -1
         for signature in state_signatures:
             cand_positive, cand_negative = state_parts[signature]
-            score = _state_init_similarity_score(cand_positive, cand_negative, init_positive)
-            if score > best_score:
-                best_score = score
-                best_state = signature
-        if best_state is not None:
-            initial_state_id = state_index[best_state]
+            if cand_positive.issubset(init_positive) and cand_negative.isdisjoint(init_positive):
+                specificity = len(cand_positive) + len(cand_negative)
+                if specificity > applicable_best_specificity:
+                    applicable_best_specificity = specificity
+                    applicable_best_state = signature
+
+        if applicable_best_state is not None:
+            initial_state_id = state_index[applicable_best_state]
+        else:
+            # Fallback: choose the closest partial state if no signature is
+            # fully applicable in the initial fluent set.
+            best_state = None
+            best_score = float("-inf")
+            for signature in state_signatures:
+                cand_positive, cand_negative = state_parts[signature]
+                score = _state_init_similarity_score(cand_positive, cand_negative, init_positive)
+                if score > best_score:
+                    best_score = score
+                    best_state = signature
+            if best_state is not None:
+                initial_state_id = state_index[best_state]
     elif state_signatures:
         initial_state_id = 0
 
@@ -202,8 +220,38 @@ def compute_rule_distances(rules: List, graph: PolicyStateGraph) -> Dict[int, in
 
 
 def _rule_signature(rule) -> FrozenSet[str]:
-    return frozenset(str(lit).strip().lower() for lit in rule.condition)
+    return frozenset(_rule_condition_literals(rule))
 
+
+def _rule_action_name(rule) -> str:
+    """Return action name from a PolicyRule (handles both old raw-str and new object API)."""
+    if hasattr(rule, "action_name"):
+        args = getattr(rule, "action_args", ())
+        if args:
+            return f"{rule.action_name}({', '.join(str(a) for a in args)})"
+        return rule.action_name
+    return str(rule.action)
+
+
+def _rule_condition_literals(rule) -> list:
+    """Return condition as a list of normalised literal strings.
+
+    Supports both the legacy API (iterable of string literals) and the new
+    UP PolicyRule API where ``rule.condition`` is a ``{FNode: FNode}`` dict
+    mapping fluent expressions to Boolean FNodes (true/false).
+    """
+    if hasattr(rule, "raw_condition_literals"):
+        return [s.strip().lower() for s in rule.raw_condition_literals]
+    cond = rule.condition
+    if isinstance(cond, dict):
+        result = []
+        for fluent, value in cond.items():
+            lit = str(fluent).strip().lower()
+            if str(value) == "false":
+                lit = f"not({lit})"
+            result.append(lit)
+        return result
+    return [str(lit).strip().lower() for lit in cond]
 
 def _split_state_literals(signature: FrozenSet[str]) -> Tuple[FrozenSet[str], FrozenSet[str]]:
     positive: Set[str] = set()

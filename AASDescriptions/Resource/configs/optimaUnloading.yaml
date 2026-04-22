@@ -141,6 +141,7 @@ optimaUnloadingSystemAAS:
 
         Actions:
             -   key: "Unloading"
+                semantic_id: "cssx:UnloadingCapability"
                 SkillReference: "Unloading"
                 parameters:
                     -   name: "UnloadingSystem"
@@ -150,6 +151,11 @@ optimaUnloadingSystemAAS:
                         externalRef: "css:Product"
                     -   name: "TransportSystem"
                         externalRef: "cssx:Transport"
+                    -   name: "UnloadingLocation"
+                        modelRef:
+                            - AAS: "self"
+                              Submodel: "Parameters"
+                              Element: "Location"
                         
                 conditions:
                     at_start:
@@ -163,8 +169,8 @@ optimaUnloadingSystemAAS:
                             external: "cssx:On"
                             parameters: [1, 2]
                         - predicate:
-                            external: "cssx:At"
-                            parameters: [1, 0]
+                            external: "cssx:ProductAt"
+                            parameters: [1, 3]
                 effects:
                     at_end:
                         - not:
@@ -173,6 +179,7 @@ optimaUnloadingSystemAAS:
                                 parameters: [1, 2]
 
             -   key: "Occupy"
+                semantic_id: "cssx:OccupyCapability"
                 SkillReference: "Occupy"
                 parameters:
                     -   name: "UnloadingSystem"
@@ -201,6 +208,7 @@ optimaUnloadingSystemAAS:
 
 
             -   key: "Release"
+                semantic_id: "cssx:ReleaseCapability"
                 SkillReference: "Release"
                 parameters:
                     -   name: "UnloadingSystem"
@@ -231,7 +239,7 @@ optimaUnloadingSystemAAS:
             -   name: "optimaUnloadingSystem"
                 modelRef:
                     - AAS: "self"
-            -   name: "optimaUnloadingStation"
+            -   name: "unloadingLocation"
                 modelRef:
                     - AAS: "self"
                       Submodel: "Parameters"

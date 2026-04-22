@@ -68,7 +68,47 @@ css:Product rdf:type owl:Class .
   rdfs:subClassOf [ rdf:type owl:Restriction ;
     owl:onProperty :predicateParam2 ;
     owl:allValuesFrom :LocationParameter ] ;
-  rdfs:comment "At(Product|Transport|Resource, Location) — an entity is at a named location or station." .
+  rdfs:comment "Legacy compatibility predicate. Prefer ProductAt, ResourceAt, or TransportAt." .
+
+###  http://www.w3id.org/aau-ra/cssx#ProductAt
+###  ProductAt(Product, Location) — product is at a named location/station.
+:ProductAt rdf:type owl:Class ;
+  rdfs:subClassOf :SkillPredicate ;
+  rdfs:subClassOf :At ;
+  rdfs:subClassOf [ rdf:type owl:Restriction ;
+    owl:onProperty :predicateParam1 ;
+    owl:allValuesFrom css:Product ] ;
+  rdfs:subClassOf [ rdf:type owl:Restriction ;
+    owl:onProperty :predicateParam2 ;
+    owl:allValuesFrom :LocationParameter ] ;
+  rdfs:comment "ProductAt(Product, Location) — product is at a named location or station." .
+
+###  http://www.w3id.org/aau-ra/cssx#ResourceAt
+###  ResourceAt(Resource, Location) — resource is at a named location.
+:ResourceAt rdf:type owl:Class ;
+  rdfs:subClassOf :SkillPredicate ;
+  rdfs:subClassOf :At ;
+  rdfs:subClassOf [ rdf:type owl:Restriction ;
+    owl:onProperty :predicateParam1 ;
+    owl:allValuesFrom css:Resource ] ;
+  rdfs:subClassOf [ rdf:type owl:Restriction ;
+    owl:onProperty :predicateParam2 ;
+    owl:allValuesFrom :LocationParameter ] ;
+  rdfs:comment "ResourceAt(Resource, Location) — resource is at a named location." .
+
+###  http://www.w3id.org/aau-ra/cssx#TransportAt
+###  TransportAt(Transport, Location) — transport is at a named location.
+:TransportAt rdf:type owl:Class ;
+  rdfs:subClassOf :SkillPredicate ;
+  rdfs:subClassOf :At ;
+  rdfs:subClassOf :ResourceAt ;
+  rdfs:subClassOf [ rdf:type owl:Restriction ;
+    owl:onProperty :predicateParam1 ;
+    owl:allValuesFrom :Transport ] ;
+  rdfs:subClassOf [ rdf:type owl:Restriction ;
+    owl:onProperty :predicateParam2 ;
+    owl:allValuesFrom :LocationParameter ] ;
+  rdfs:comment "TransportAt(Transport, Location) — transport is at a named location." .
 
 ###  Resource state predicates -----------------------------------
 

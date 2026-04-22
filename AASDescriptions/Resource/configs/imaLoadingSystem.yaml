@@ -144,6 +144,7 @@ imaLoadingSystemAAS:
 
             Actions:
                 -   key: "Loading"
+                    semantic_id: "cssx:LoadingCapability"
                     SkillReference: "Loading"
                     parameters:
                         -   name: "LoadingSystem"
@@ -153,6 +154,11 @@ imaLoadingSystemAAS:
                             externalRef: "css:Product"
                         -   name: "TransportSystem"
                             externalRef: "cssx:Transport"
+                        -   name: "LoadingLocation"
+                            modelRef:
+                                - AAS: "self"
+                                  Submodel: "Parameters"
+                                  Element: "Location"
                             
                     conditions:
                         at_start:
@@ -162,6 +168,9 @@ imaLoadingSystemAAS:
                             - predicate:
                                 ref: "Occupied"
                                 parameters: [0, 1]
+                            - predicate:
+                                external: "cssx:ResourceAt"
+                                parameters: [2, 3]
                     effects:
                         at_end:
                             oneOf:
@@ -170,13 +179,14 @@ imaLoadingSystemAAS:
                                         external: "cssx:On"
                                         parameters: [1, 2]
                                     - predicate:
-                                        external: "cssx:At"
-                                        parameters: [1, 0]
+                                        external: "cssx:ProductAt"
+                                        parameters: [1, 3]
                                 - not:
                                     - predicate:
                                         external: "cssx:On"
                                         parameters: [1, 2]
                 -   key: "Occupy"
+                    semantic_id: "cssx:OccupyCapability"
                     SkillReference: "Occupy"
                     parameters:
                         -   name: "LoadingSystem"
@@ -205,6 +215,7 @@ imaLoadingSystemAAS:
 
 
                 -   key: "Release"
+                    semantic_id: "cssx:ReleaseCapability"
                     SkillReference: "Release"
                     parameters:
                         -   name: "LoadingSystem"
@@ -235,7 +246,7 @@ imaLoadingSystemAAS:
                 -   name: "imaLoadingSystem"
                     modelRef:
                         - AAS: "self"
-                -   name: "imaLoadingStation"
+                -   name: "loadingLocation"
                     modelRef:
                         - AAS: "self"
                           Submodel: "Parameters"

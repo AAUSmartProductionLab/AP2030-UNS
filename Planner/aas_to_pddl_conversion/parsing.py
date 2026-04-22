@@ -19,16 +19,18 @@ def parse_source(source: AIPlanningSource) -> _ParsedSource:
         parsed.warnings.append(f"{parsed.aas_name}: AIPlanning.Problem section missing.")
 
     source_objects = [obj["name"] for obj in parsed.objects]
+    source_objects_full = list(parsed.objects)
     if domain:
-        parse_domain(domain, parsed, source_objects)
+        parse_domain(domain, parsed, source_objects, source_objects_full)
     else:
         parsed.warnings.append(f"{parsed.aas_name}: AIPlanning.Domain section missing.")
 
     return parsed
 
 
-def parse_domain(domain: Dict[str, Any], parsed: _ParsedSource, source_objects: List[str]) -> None:
+def parse_domain(domain: Dict[str, Any], parsed: _ParsedSource, source_objects: List[str], source_objects_full: Optional[List[Dict[str, Any]]] = None) -> None:
     domain_sections = domain.get("value", [])
+    _sof = source_objects_full or []
 
     fluent_section = find_collection(domain_sections, "Fluents")
     if fluent_section:
@@ -39,21 +41,21 @@ def parse_domain(domain: Dict[str, Any], parsed: _ParsedSource, source_objects: 
     if action_section:
         for action in action_section.get("value", []):
             parsed.actions.append(
-                parse_action(action, parsed.aas_name, parsed.warnings, source_objects, action_kind="Action")
+                parse_action(action, parsed.aas_name, parsed.warnings, source_objects, action_kind="Action", source_objects_full=_sof)
             )
 
     process_section = find_collection(domain_sections, "Processes")
     if process_section:
         for process in process_section.get("value", []):
             parsed.actions.append(
-                parse_action(process, parsed.aas_name, parsed.warnings, source_objects, action_kind="Process")
+                parse_action(process, parsed.aas_name, parsed.warnings, source_objects, action_kind="Process", source_objects_full=_sof)
             )
 
     event_section = find_collection(domain_sections, "Events")
     if event_section:
         for event in event_section.get("value", []):
             parsed.actions.append(
-                parse_action(event, parsed.aas_name, parsed.warnings, source_objects, action_kind="Event")
+                parse_action(event, parsed.aas_name, parsed.warnings, source_objects, action_kind="Event", source_objects_full=_sof)
             )
 
     constraint_section = find_collection(domain_sections, "Constraints")
@@ -137,6 +139,7 @@ def parse_action(
     warnings: List[str],
     source_objects: List[str],
     action_kind: str,
+    source_objects_full: Optional[List[Dict[str, Any]]] = None,
 ) -> Dict[str, Any]:
     values = action.get("value", [])
 
@@ -151,12 +154,34 @@ def parse_action(
     params_list = find_list(values, "Parameters")
     if params_list:
         for idx, param in enumerate(params_list.get("value", [])):
-            parameters.append(
-                {
-                    "name": display_name(param) or f"p{idx}",
-                    "type": parameter_type_from_reference(param.get("value")),
-                }
-            )
+            param_name = display_name(param) or f"p{idx}"
+            param_ref = param.get("value")
+            param_type = parameter_type_from_reference(param_ref)
+            # Fallback: if a ModelReference resolved to a resource AAS type but the
+            # parameter name clearly indicates a location, override to LocationParameter.
+            if (
+                param_type not in ("Entity", "LocationParameter")
+                and param_name.lower().endswith("location")
+            ):
+                param_type = "LocationParameter"
+            entry: Dict[str, Any] = {"name": param_name, "type": param_type}
+            # Detect modelRef parameters whose value is already known from Problem.Objects
+            # (i.e. the object is self or a property of self). These become constants in PDDL.
+            if isinstance(param_ref, dict) and param_ref.get("type") == "ModelReference" and source_objects_full:
+                ref_tail = reference_key_tail(param_ref)
+                matched = next(
+                    (obj for obj in source_objects_full if obj.get("reference") == ref_tail),
+                    None,
+                )
+                if matched is not None:
+                    entry["is_constant"] = True
+                    entry["bound_object"] = matched["name"]
+                else:
+                    warnings.append(
+                        f"{source_name}: ModelReference parameter '{param_name}' in action '{action_key}' "
+                        f"has no matching Problem.Object (ref tail '{ref_tail}'); treated as free variable."
+                    )
+            parameters.append(entry)
 
     preconditions: List[Dict[str, Any]] = []
     effects: List[Dict[str, Any]] = []
@@ -182,9 +207,12 @@ def parse_action(
     if not effects:
         warnings.append(f"{source_name}: {action_kind} '{action_key}' has no parsed effects.")
 
+    action_semantic_ids = semantic_ids_from_item(action)
+
     return {
         "key": action_key,
-        "semantic_id": first_semantic_id(action),
+        "semantic_id": action_semantic_ids[0] if action_semantic_ids else "",
+        "semantic_ids": action_semantic_ids,
         "skill_target": skill_target,
         "parameters": parameters,
         "preconditions": preconditions,
@@ -384,6 +412,21 @@ def first_semantic_id(item: Dict[str, Any]) -> str:
     return semantic_from_ref(sem)
 
 
+def semantic_ids_from_item(item: Dict[str, Any]) -> List[str]:
+    semantic_ids: List[str] = []
+
+    primary = first_semantic_id(item)
+    if primary:
+        semantic_ids.append(primary)
+
+    for sid in item.get("supplementalSemanticIds", []):
+        semantic_id = semantic_from_ref(sid)
+        if semantic_id and semantic_id not in semantic_ids:
+            semantic_ids.append(semantic_id)
+
+    return semantic_ids
+
+
 def semantic_from_ref(ref: Optional[Dict[str, Any]]) -> str:
     if not isinstance(ref, dict):
         return ""
@@ -415,6 +458,14 @@ def parameter_type_from_reference(reference: Optional[Dict[str, Any]]) -> str:
         return semantic_tail(tail) or "Entity"
 
     if kind == "ModelReference":
+        # Location model refs (e.g. self/Parameters/Location) should type as LocationParameter,
+        # not as the owning AAS resource type.
+        location_like = {"location", "locationparameter"}
+        for key in keys:
+            value_tail = semantic_tail(str(key.get("value") or "")).lower()
+            if value_tail in location_like:
+                return "LocationParameter"
+
         aas_key = next((k for k in keys if str(k.get("type")) == "AssetAdministrationShell"), None)
         if aas_key is not None:
             aas_value = str(aas_key.get("value") or "")

@@ -140,6 +140,7 @@ cytivaCappingSystemAAS:
 
           Actions:
               -   key: "Capping"
+                  semantic_id: "cssx:CappingCapability"
                   SkillReference: "Capping"
                   parameters:
                       -   name: "CappingSystem"
@@ -147,6 +148,11 @@ cytivaCappingSystemAAS:
                               - AAS: "self"
                       -   name: "Product"
                           externalRef: "css:Product"
+                      -   name: "CappingLocation"
+                          modelRef:
+                              - AAS: "self"
+                                Submodel: "Parameters"
+                                Element: "Location"
                           
                   conditions:
                       at_start:
@@ -157,8 +163,8 @@ cytivaCappingSystemAAS:
                               ref: "Occupied"
                               parameters: [0, 1]
                           - predicate:
-                              external: "cssx:At"
-                              parameters: [1, 0]
+                              external: "cssx:ProductAt"
+                              parameters: [1, 2]
                   effects:
                       at_end:
                           - predicate:
@@ -166,6 +172,7 @@ cytivaCappingSystemAAS:
                             parameters: [1]
 
               -   key: "Occupy"
+                  semantic_id: "cssx:OccupyCapability"
                   SkillReference: "Occupy"
                   parameters:
                       -   name: "CappingSystem"
@@ -194,6 +201,7 @@ cytivaCappingSystemAAS:
 
 
               -   key: "Release"
+                  semantic_id: "cssx:ReleaseCapability"
                   SkillReference: "Release"
                   parameters:
                       -   name: "CappingSystem"
@@ -224,7 +232,7 @@ cytivaCappingSystemAAS:
               -   name: "cytivaCappingSystem"
                   modelRef:
                       - AAS: "self"
-              -   name: "cytivaCappingStation"
+              -   name: "cappingLocation"
                   modelRef:
                       - AAS: "self"
                         Submodel: "Parameters"

@@ -155,6 +155,7 @@ imaDispensingSystemAAS:
 
           Actions:
               -   key: "Dispensing"
+                  semantic_id: "cssx:DispensingCapability"
                   SkillReference: "Dispensing"
                   parameters:
                       -   name: "DispensingSystem"
@@ -162,6 +163,13 @@ imaDispensingSystemAAS:
                               - AAS: "self"
                       -   name: "Product"
                           externalRef: "css:Product"
+                      -   name: "TransportSystem"
+                          externalRef: "cssx:Transport"
+                      -   name: "DispensingLocation"
+                          modelRef:
+                              - AAS: "self"
+                                Submodel: "Parameters"
+                                Element: "Location"
                           
                   conditions:
                       at_start:
@@ -172,15 +180,19 @@ imaDispensingSystemAAS:
                               ref: "Occupied"
                               parameters: [0, 1]
                           - predicate:
-                              external: "cssx:At"
-                              parameters: [1, 0]
+                              external: "cssx:On"
+                              parameters: [1, 2]
+                          - predicate:
+                              external: "cssx:ProductAt"
+                              parameters: [1, 3]
                   effects:
                       at_end:
                           - predicate:
-                            external: "cssx:Dispensed"
-                            parameters: [1]
+                              external: "cssx:Dispensed"
+                              parameters: [1]
                             
               -   key: "Occupy"
+                  semantic_id: "cssx:OccupyCapability"
                   SkillReference: "Occupy"
                   parameters:
                       -   name: "DispensingSystem"
@@ -209,6 +221,7 @@ imaDispensingSystemAAS:
 
 
               -   key: "Release"
+                  semantic_id: "cssx:ReleaseCapability"
                   SkillReference: "Release"
                   parameters:
                       -   name: "DispensingSystem"
@@ -239,7 +252,7 @@ imaDispensingSystemAAS:
               -   name: "imaDispensingSystem"
                   modelRef:
                       - AAS: "self"
-              -   name: "imaDispensingStation"
+              -   name: "dispensingLocation"
                   modelRef:
                       - AAS: "self"
                         Submodel: "Parameters"

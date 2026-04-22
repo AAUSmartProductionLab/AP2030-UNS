@@ -123,7 +123,7 @@ omronCameraSystemAAS:
       aauFillingLineAAS:
         globalAssetId: 'https://smartproductionlab.aau.dk/assets/MWQ2ODY5ZDEtZTQ3Yy00NWU4LTlmYTAtNTI3YjVlMDk4MWFi'
   Capabilities:
-  - key: QualityControl
+  - key: Inspection
     realizedBy: "Capture"
     semantic_id: cssx:QualityControlCapability
   - key: Capture
@@ -157,7 +157,8 @@ omronCameraSystemAAS:
                 transformation: 'parameter1.Variables.OccupationState.ProcessQueue == []'
 
         Actions:
-            -   key: "Capture"
+            -   key: "QualityControl"
+                semantic_id: "cssx:QualityControlCapability"
                 SkillReference: "Capture"
                 parameters:
                     -   name: "CameraSystem"
@@ -167,7 +168,11 @@ omronCameraSystemAAS:
                         externalRef: "css:Product"
                     -   name: "TransportSystem"
                         externalRef: "cssx:Transport"
-                        
+                    -   name: "CameraLocation"
+                        modelRef:
+                            - AAS: "self"
+                              Submodel: "Parameters"
+                              Element: "Location"
                 conditions:
                     at_start:
                         - predicate:
@@ -177,8 +182,11 @@ omronCameraSystemAAS:
                             ref: "Occupied"
                             parameters: [0, 1]
                         - predicate:
-                            external: "cssx:At"
-                            parameters: [1, 0]
+                            external: "cssx:On"
+                            parameters: [1, 2]
+                        - predicate:
+                            external: "cssx:ProductAt"
+                            parameters: [1, 3]
                 effects:
                     at_end:
                         - predicate:
@@ -186,6 +194,7 @@ omronCameraSystemAAS:
                             parameters: [1]
 
             -   key: "Occupy"
+                semantic_id: "cssx:OccupyCapability"
                 SkillReference: "Occupy"
                 parameters:
                     -   name: "CameraSystem"
@@ -214,6 +223,7 @@ omronCameraSystemAAS:
 
 
             -   key: "Release"
+                semantic_id: "cssx:ReleaseCapability"
                 SkillReference: "Release"
                 parameters:
                     -   name: "CameraSystem"
@@ -244,7 +254,7 @@ omronCameraSystemAAS:
             -   name: "omronCameraSystem"
                 modelRef:
                     - AAS: "self"
-            -   name: "omronCameraStation"
+            -   name: "captureLocation"
                 modelRef:
                     - AAS: "self"
                       Submodel: "Parameters"

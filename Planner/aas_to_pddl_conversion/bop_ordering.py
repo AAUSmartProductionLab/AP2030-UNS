@@ -261,15 +261,14 @@ def append_step_init_and_goal_terms(
 
 
 def action_matches_step(action: Dict[str, Any], step: Dict[str, Any]) -> bool:
-    required = step.get("semantic_id") or step.get("name")
+    required = parse_semantic_id(step.get("semantic_id"))
     if not required:
         return False
 
-    candidates = [
-        action.get("skill_target"),
-        action.get("semantic_id"),
-        action.get("key"),
-    ]
+    raw_candidates = action.get("semantic_ids")
+    candidates: List[str] = [candidate for candidate in (raw_candidates or []) if candidate]
+    if not candidates and action.get("semantic_id"):
+        candidates = [str(action.get("semantic_id"))]
 
     for candidate in candidates:
         if match_capability(required, candidate):

@@ -112,10 +112,10 @@ planarTableShuttle2AAS:
     # InterfaceReference:
     #   Name: 'StationState'
     #   Field: 'State'
-  Parameters:
-    ProductID:
-      semanticId: 'cssx:ProductIdentifier'
-      InterfaceReference: 'ProductID'
+    Parameters:
+        ProductID:
+            semanticId: 'cssx:ProductIdentifier'
+            InterfaceReference: 'ProductID'
 
   HierarchicalStructures:
     Name: 'BillOfMaterials'
@@ -155,8 +155,8 @@ planarTableShuttle2AAS:
                           externalRef: "css:Resource"
                   transformation: 'parameter1.Variables.OccupationState.ProcessQueue == []'
 
-              -   key: "At"
-                  semantic_id: "cssx:At"
+              -   key: "ResourceAt"
+                  semantic_id: "cssx:ResourceAt"
                   parameters:
                       -   name: "Resource"
                           externalRef: "css:Resource"
@@ -165,12 +165,34 @@ planarTableShuttle2AAS:
                   transformation: 'parameter1.Variables.Location == parameter2'
 
           Actions:
-              -   key: "MoveToPosition"
+              -   key: "Move"
+                  semantic_id: "cssx:MoveToPositionCapability"
                   SkillReference: "MoveToPosition"
                   parameters:
                       -   name: "TransportSystem"
-                          modelRef:
-                              - AAS: "self"
+                          externalRef: "cssx:Transport"
+                      -   name: "To"
+                          externalRef: "cssx:LocationParameter"
+                  conditions:
+                      at_start:
+                          - predicate:
+                              ref: "Operational"
+                              parameters: [0]
+                          - predicate:
+                              ref: "Free"
+                              parameters: [0]
+                  effects:
+                      at_end:
+                          - predicate:
+                              external: "cssx:ResourceAt"
+                              parameters: [0, 1]
+
+              -   key: "Transport"
+                  semantic_id: "cssx:MoveToPositionCapability"
+                  SkillReference: "MoveToPosition"
+                  parameters:
+                      -   name: "TransportSystem"
+                          externalRef: "cssx:Transport"
                       -   name: "Product"
                           externalRef: "css:Product"
 
@@ -192,26 +214,32 @@ planarTableShuttle2AAS:
 
                           - predicate:
                               external: "cssx:On"
-                              parameters: [1, 2]
-
-                          - predicate:
-                              external: "cssx:At"
                               parameters: [1, 0]
 
                           - predicate:
-                              external: "cssx:At"
+                              external: "cssx:ProductAt"
+                              parameters: [1, 2]
+
+                          - predicate:
+                              external: "cssx:ResourceAt"
                               parameters: [0 ,2]
                   effects:
                       at_end:
+                          - not:
+                            - predicate:
+                                external: "cssx:ResourceAt"
+                                parameters: [0 ,2]
+
                           - predicate:
-                              external: "cssx:At"
+                              external: "cssx:ResourceAt"
                               parameters: [0 ,3]
 
                           - predicate:
-                              external: "cssx:At"
+                              external: "cssx:ProductAt"
                               parameters: [1 ,3]
                                   
               -   key: "Occupy"
+                  semantic_id: "cssx:OccupyCapability"
                   SkillReference: "Occupy"
                   parameters:
                       -   name: "TransportSystem"
@@ -240,6 +268,7 @@ planarTableShuttle2AAS:
 
 
               -   key: "Release"
+                  semantic_id: "cssx:ReleaseCapability"
                   SkillReference: "Release"
                   parameters:
                       -   name: "TransportSystem"
@@ -270,6 +299,11 @@ planarTableShuttle2AAS:
               -   name: "planarShuttle2"
                   modelRef:
                       - AAS: "self"
+              -   name: "initialLocation2"
+                  modelRef:
+                      - AAS: "self"
+                        Submodel: "Variables"
+                        Element: "Location"
 
           Init:
               -   predicate:
@@ -278,6 +312,9 @@ planarTableShuttle2AAS:
               -   predicate:
                   ref: "Free"
                   parameters: [0]
+              -   predicate:
+                  ref: "ResourceAt"
+                  parameters: [0, 1]
 
           Goal:
               - predicate:

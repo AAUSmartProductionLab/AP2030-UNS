@@ -28,6 +28,7 @@ from .nodes import (
     FailureLeaf,
     ForbiddenActionNode,
     Inverter,
+    Sequence,
     ReactiveSelector,
     ReactiveSequence,
     SubTreeRef,
@@ -43,10 +44,21 @@ from .nodes import (
 
 def _iter_children(node: BTNode):
     """Yield immediate children of a composite or decorator node."""
-    if isinstance(node, (ReactiveSelector, ReactiveSequence)):
+    if isinstance(node, (ReactiveSelector, ReactiveSequence, Sequence)):
         yield from node.children
     elif isinstance(node, Inverter):
         yield node.child
+
+
+def _tree_uses_forbidden_action(root: BTNode) -> bool:
+    """Return True when the subtree contains any ForbiddenActionNode."""
+    stack: List[BTNode] = [root]
+    while stack:
+        node = stack.pop()
+        if isinstance(node, ForbiddenActionNode):
+            return True
+        stack.extend(_iter_children(node))
+    return False
 
 
 def _collect_factorable_subtrees(root: BTNode) -> Dict[int, str]:
@@ -80,7 +92,7 @@ def _collect_factorable_subtrees(root: BTNode) -> Dict[int, str]:
         for child in _iter_children(node):
             stack.append(child)
 
-        if not isinstance(node, (ReactiveSequence, ReactiveSelector)):
+        if not isinstance(node, (ReactiveSequence, ReactiveSelector, Sequence)):
             continue
 
         node_name = node.name or ""
@@ -108,7 +120,7 @@ def _collect_factorable_subtrees(root: BTNode) -> Dict[int, str]:
 
 def count_bt_nodes(node: BTNode) -> int:
     """Count all nodes in a subtree (useful for statistics)."""
-    if isinstance(node, (ReactiveSelector, ReactiveSequence)):
+    if isinstance(node, (ReactiveSelector, ReactiveSequence, Sequence)):
         return 1 + sum(count_bt_nodes(c) for c in node.children)
     if isinstance(node, Inverter):
         return 1 + count_bt_nodes(node.child)
@@ -137,6 +149,11 @@ def _bt_node_to_xml(
 
     if isinstance(node, ReactiveSelector):
         el = ET.SubElement(parent_el, "ReactiveFallback", attrib={"name": node.name})
+        for child in node.children:
+            _bt_node_to_xml(child, el, extracted_ids, inside_definition_of)
+
+    elif isinstance(node, Sequence):
+        el = ET.SubElement(parent_el, "Sequence", attrib={"name": node.name})
         for child in node.children:
             _bt_node_to_xml(child, el, extracted_ids, inside_definition_of)
 
@@ -246,9 +263,10 @@ def bt_to_xml(bt: BehaviorTree, tree_id: str = "MainTree") -> str:
 
     ET.SubElement(model, "Action", attrib={"ID": "GoalReached"})
 
-    fa = ET.SubElement(model, "Action", attrib={"ID": "ForbiddenAction"})
-    ET.SubElement(fa, "input_port", attrib={"name": "forbidden_action", "default": ""})
-    ET.SubElement(fa, "input_port", attrib={"name": "forbidden_args", "default": ""})
+    if _tree_uses_forbidden_action(bt.root):
+        fa = ET.SubElement(model, "Action", attrib={"ID": "ForbiddenAction"})
+        ET.SubElement(fa, "input_port", attrib={"name": "forbidden_action", "default": ""})
+        ET.SubElement(fa, "input_port", attrib={"name": "forbidden_args", "default": ""})
 
     # Parameterized SubTree port declarations.
     if templates:

@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import datetime
+from itertools import chain
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Set
 
 from .bop_ordering import compile_bop_ordering
 from .merge import merge_sources
@@ -66,10 +67,13 @@ def run_ai_planning_pipeline(
     if bt_xml:
         write_text_artifact(artifacts, "behavior_tree_xml", "behavior_tree.xml", bt_xml, warnings)
 
-    if solve_result.is_plan:
+    if getattr(solve_result, "is_plan", False):
         plan_text = extract_plan_text(solve_result)
         if plan_text:
             write_text_artifact(artifacts, "deterministic_plan", "deterministic_plan.txt", plan_text, warnings)
+
+    if getattr(solve_result, "is_policy", False):
+        export_policy_visualization(solve_result, artifacts, warnings)
 
     capabilities = build_capabilities(merged)
     return AIPlanningPipelineResult(
@@ -142,3 +146,82 @@ def write_text_artifact(
     except Exception as exc:
         warnings.append(f"Failed to write artifact '{filename}': {exc}")
         return ""
+
+
+def export_causal_graph(problem: Any, artifacts: dict[str, str], warnings: list[str]) -> None:
+    """Export a lifted causal graph as DOT, handling both deterministic and oneof effects."""
+    out_dir_raw = artifacts.get("artifacts_dir")
+    if not out_dir_raw:
+        return
+
+    try:
+        fve = problem.environment.free_vars_extractor
+
+        fluents_read: Dict[str, Set[str]] = {}
+        fluents_written: Dict[str, Set[str]] = {}
+
+        def _record_read(fluent_node: Any, action_name: str) -> None:
+            fluents_read.setdefault(fluent_node.fluent().name, set()).add(action_name)
+
+        def _record_written(fluent_node: Any, action_name: str) -> None:
+            fluents_written.setdefault(fluent_node.fluent().name, set()).add(action_name)
+
+        def _process_effect(e: Any, action_name: str) -> None:
+            _record_written(e.fluent, action_name)
+            for fn in chain(fve.get(e.value), fve.get(e.condition)):
+                _record_read(fn, action_name)
+
+        for action in problem.actions:
+            aname = action.name
+            for p in action.preconditions:
+                for fn in fve.get(p):
+                    _record_read(fn, aname)
+            for e in action.effects:
+                _process_effect(e, aname)
+            for oneof in getattr(action, "oneof_effects", []):
+                for outcome in oneof.outcomes:
+                    for e in outcome:
+                        _process_effect(e, aname)
+
+        all_fluents = sorted(set(fluents_read) | set(fluents_written))
+
+        lines = ["digraph causal_graph {"]
+        for f in all_fluents:
+            lines.append(f'  "{f}";')
+        for left in all_fluents:
+            left_actions = fluents_read.get(left, set()) | fluents_written.get(left, set())
+            for right in sorted(fluents_written):
+                if left != right:
+                    shared = left_actions & fluents_written[right]
+                    if shared:
+                        label = ",".join(sorted(shared))
+                        lines.append(f'  "{left}" -> "{right}" [label="{label}"];')
+        lines.append("}")
+
+        dot_path = Path(out_dir_raw) / "causal_graph.dot"
+        dot_path.write_text("\n".join(lines))
+        artifacts["causal_graph"] = str(dot_path)
+    except Exception as exc:
+        warnings.append(f"Failed to export causal graph: {exc}")
+
+
+def export_policy_visualization(solve_result: Any, artifacts: dict[str, str], warnings: list[str]) -> None:
+    """Export an interactive HTML policy state-transition graph."""
+    out_dir_raw = artifacts.get("artifacts_dir")
+    if not out_dir_raw:
+        return
+
+    try:
+        try:
+            from ..pddl_planning.visualization import create_force_graph_html
+        except ImportError:
+            from pddl_planning.visualization import create_force_graph_html
+
+        domain_name = str(getattr(solve_result, "domain_name", "domain") or "domain")
+        problem_name = str(getattr(solve_result, "problem_name", "problem") or "problem")
+
+        html_path = Path(out_dir_raw) / "policy_graph.html"
+        create_force_graph_html(solve_result, html_path, domain_name=domain_name, problem_name=problem_name)
+        artifacts["policy_graph"] = str(html_path)
+    except Exception as exc:
+        warnings.append(f"Failed to export policy visualization: {exc}")

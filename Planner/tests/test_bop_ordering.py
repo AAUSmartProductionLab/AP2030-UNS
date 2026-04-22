@@ -148,6 +148,65 @@ class BoPOrderingTests(unittest.TestCase):
         self.assertTrue(any(term.get("kind") == "atom" and term.get("fluent") == "step_done" for term in merged["goal_terms"]))
         self.assertGreaterEqual(len(merged["init_terms"]), 4)
 
+    def test_compile_bop_ordering_matches_semantic_ids_only(self):
+        merged = {
+            "fluents": [],
+            "actions": [
+                {
+                    "key": "Inspection",
+                    "semantic_id": "http://www.w3id.org/aau-ra/cssx#DispensingSkill",
+                    "semantic_ids": ["http://www.w3id.org/aau-ra/cssx#DispensingSkill"],
+                    "skill_target": "Capture",
+                    "parameters": [],
+                    "preconditions": [],
+                    "effects": [],
+                    "action_kind": "Action",
+                    "sources": ["dummy"],
+                },
+                {
+                    "key": "Anything",
+                    "semantic_id": "http://www.w3id.org/aau-ra/cssx#QualityControlCapability",
+                    "semantic_ids": ["http://www.w3id.org/aau-ra/cssx#QualityControlCapability"],
+                    "skill_target": "Capture",
+                    "parameters": [],
+                    "preconditions": [],
+                    "effects": [],
+                    "action_kind": "Action",
+                    "sources": ["dummy"],
+                },
+            ],
+            "objects": [
+                {
+                    "name": "product_1",
+                    "reference": "",
+                    "declared_type": "Product",
+                    "source_aas_id": "order",
+                    "source_aas_name": "order",
+                }
+            ],
+            "init_terms": [],
+            "goal_terms": [],
+            "constraints_terms": [],
+            "source_lookup": {},
+        }
+        bop_config = {
+            "Processes": [
+                {
+                    "Inspection": {
+                        "step": 1,
+                        "semantic_id": "http://www.w3id.org/aau-ra/cssx#QualityControl",
+                    }
+                }
+            ]
+        }
+        warnings = []
+
+        compile_bop_ordering(merged, bop_config, warnings)
+
+        action_keys = [action["key"] for action in merged["actions"]]
+        self.assertIn("Inspection", action_keys)
+        self.assertTrue(any(key.startswith("Anything__") for key in action_keys))
+
 
 if __name__ == "__main__":
     unittest.main()

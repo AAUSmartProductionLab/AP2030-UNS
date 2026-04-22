@@ -24,6 +24,39 @@ from .skills_spec_parser import (
 )
 
 
+def _variable_element_from_model_ref(model_ref: Any) -> Optional[str]:
+    """Return the Element key if modelRef targets the Variables submodel, else None."""
+    if not isinstance(model_ref, list):
+        return None
+    for part in model_ref:
+        if not isinstance(part, dict):
+            continue
+        if part.get("Submodel") == "Variables" or part.get("SM") == "Variables":
+            return part.get("Element") or None
+    return None
+
+
+def _resolve_variable_static_value(var_key: str, variables: List[Dict[str, Any]]) -> Optional[str]:
+    """Find a Variable by key and return its static string value, or None."""
+    for var in variables:
+        if not isinstance(var, dict) or var.get("key") != var_key:
+            continue
+        # Prefer Parameters.<var_key>.value (the nested Parameters pattern)
+        params = var.get("Parameters")
+        if isinstance(params, dict):
+            nested = params.get(var_key)
+            if isinstance(nested, dict) and nested.get("value") is not None:
+                return str(nested["value"])
+            # Also accept any first dict entry with a value
+            for sub in params.values():
+                if isinstance(sub, dict) and sub.get("value") is not None:
+                    return str(sub["value"])
+        # Fall back to a direct value on the variable
+        if var.get("value") is not None:
+            return str(var["value"])
+    return None
+
+
 class AIPlanningSubmodelBuilder:
     """Build AIPlanning submodel from `AI-Planning` config section."""
 
@@ -63,6 +96,9 @@ class AIPlanningSubmodelBuilder:
             return None
 
         self._context.reset()
+        variables_cfg = config.get("Variables") or []
+        if isinstance(variables_cfg, list):
+            self._context.variables = list(variables_cfg)
         elements: List[model.SubmodelElement] = []
 
         domain_cfg = planning_cfg.get("Domain")
@@ -249,7 +285,7 @@ class AIPlanningSubmodelBuilder:
                     f"Invalid AI-Planning Problem.Objects entry at index {idx}: expected object"
                 )
 
-            obj_name = str(obj.get("name") or f"Object_{idx}")
+            obj_name = obj.get("name")
             model_ref = obj.get("ModelReference") or obj.get("modelRef")
             external_ref = obj.get("ExternalReference") or obj.get("externalRef")
 
@@ -257,6 +293,23 @@ class AIPlanningSubmodelBuilder:
                 raise ValueError(
                     f"Invalid AI-Planning Problem.Objects entry '{obj_name}': external references are not allowed; use modelRef"
                 )
+
+            # If name is omitted and modelRef points to the Variables submodel, derive the
+            # object name from that variable's static value so configs don't hardcode names.
+            if not obj_name and model_ref:
+                var_key = _variable_element_from_model_ref(model_ref)
+                if var_key is not None:
+                    obj_name = _resolve_variable_static_value(var_key, self._context.variables)
+                    if obj_name is None:
+                        raise ValueError(
+                            f"AI-Planning Problem.Objects entry at index {idx}: modelRef points to "
+                            f"Variable '{var_key}' but it has no static value. "
+                            "Add a 'value:' or 'Parameters.<key>.value:' to the Variable, "
+                            "or provide an explicit 'name:' field."
+                        )
+
+            if not obj_name:
+                obj_name = f"Object_{idx}"
 
             if not model_ref:
                 raise ValueError(

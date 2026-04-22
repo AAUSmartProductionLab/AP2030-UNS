@@ -59,12 +59,14 @@ class _PlanningBuildContext:
     section_parameter_names: Dict[Tuple[str, str], List[str]] = field(default_factory=dict)
     problem_object_names: List[str] = field(default_factory=list)
     problem_preference_locations: Dict[str, Tuple[str, str]] = field(default_factory=dict)
+    variables: List[Dict[str, Any]] = field(default_factory=list)
 
     def reset(self) -> None:
         self.domain_fluents.clear()
         self.section_parameter_names.clear()
         self.problem_object_names.clear()
         self.problem_preference_locations.clear()
+        self.variables.clear()
 
 
 class _PlanningReferenceBuilder:
@@ -95,28 +97,46 @@ class _PlanningReferenceBuilder:
 
         keys: List[model.Key] = []
         last_type = model.KeyTypes.REFERENCE_ELEMENT
+        aas_key: Optional[model.Key] = None
+        # Process keys in a fixed priority order so that yaml.dump() re-ordering
+        # dict keys alphabetically does not break AASd-123 (first key must be
+        # an AasIdentifiable type like Submodel).
+        _KEY_ORDER = ["AAS", "SM", "Submodel", "SMC", "Element", "SML", "ReferenceElement", "Property"]
+
         for part in model_ref:
             if not isinstance(part, dict) or not part:
                 continue
 
-            k, v = next(iter(part.items()))
-            if k == "AAS":
-                last_type = model.KeyTypes.ASSET_ADMINISTRATION_SHELL
-                if v == "self":
-                    v = f"{self._base_url}/aas/{system_id}"
-            elif k == "SM":
-                last_type = model.KeyTypes.SUBMODEL
-                v = f"{self._base_url}/submodels/instances/{system_id}/{v}"
-            elif k == "SMC":
-                last_type = model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION
-            elif k == "SML":
-                last_type = model.KeyTypes.SUBMODEL_ELEMENT_LIST
-            elif k == "ReferenceElement":
-                last_type = model.KeyTypes.REFERENCE_ELEMENT
-            elif k == "Property":
-                last_type = model.KeyTypes.PROPERTY
+            for k in _KEY_ORDER:
+                if k not in part:
+                    continue
+                v = part[k]
 
-            keys.append(model.Key(last_type, str(v)))
+                if k == "AAS":
+                    last_type = model.KeyTypes.ASSET_ADMINISTRATION_SHELL
+                    if v == "self":
+                        v = f"{self._base_url}/aas/{system_id}"
+                    # Defer AAS key — only include it if no deeper keys follow (AASd-125)
+                    aas_key = model.Key(last_type, str(v))
+                    continue
+                elif k in ("SM", "Submodel"):
+                    last_type = model.KeyTypes.SUBMODEL
+                    v = f"{self._base_url}/submodels/instances/{system_id}/{v}"
+                elif k in ("SMC", "Element"):
+                    last_type = model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION
+                elif k == "SML":
+                    last_type = model.KeyTypes.SUBMODEL_ELEMENT_LIST
+                elif k == "ReferenceElement":
+                    last_type = model.KeyTypes.REFERENCE_ELEMENT
+                elif k == "Property":
+                    last_type = model.KeyTypes.PROPERTY
+
+                keys.append(model.Key(last_type, str(v)))
+
+        # Only use the AAS key if it's the sole key (no deeper navigation followed)
+        if not keys and aas_key is not None:
+            keys.append(aas_key)
+            last_type = model.KeyTypes.ASSET_ADMINISTRATION_SHELL
 
         if not keys:
             raise ValueError("Invalid modelRef: no valid key segments found")
@@ -830,6 +850,7 @@ class _PlanningTransitionBuilder:
                     conditions=conditions,
                     effects=effects,
                     item_semantic_id=SemanticIdCatalog.ai_planning_domain_section(semantic_element),
+                    custom_semantic_id=item.get("semantic_id") or item.get("semanticId"),
                     duration=duration,
                     skill_reference=item.get("SkillReference") if include_skill_reference else None,
                 )
@@ -924,6 +945,7 @@ class _PlanningTransitionBuilder:
         conditions: Dict[str, Any],
         effects: Dict[str, Any],
         item_semantic_id: str,
+        custom_semantic_id: Optional[str] = None,
         duration: Optional[Dict[str, Any]] = None,
         skill_reference: Optional[str] = None,
     ) -> model.SubmodelElementCollection:
@@ -992,11 +1014,17 @@ class _PlanningTransitionBuilder:
                 )
             )
 
+        supplemental_ids = []
+        custom_sem_ref = _make_semantic_id(custom_semantic_id)
+        if custom_sem_ref is not None:
+            supplemental_ids.append(custom_sem_ref)
+
         return model.SubmodelElementCollection(
             id_short=key,
             display_name=model.MultiLanguageNameType({"en": key}),
             value=item_elements,
             semantic_id=_make_semantic_id(item_semantic_id),
+            supplemental_semantic_id=supplemental_ids,
         )
 
     def build_duration_section(

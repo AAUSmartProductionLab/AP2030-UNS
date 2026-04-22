@@ -22,6 +22,7 @@ from .nodes import (
     FailureLeaf,
     ForbiddenActionNode,
     Inverter,
+    Sequence,
     ReactiveSelector,
     ReactiveSequence,
     SubTreeRef,
@@ -39,7 +40,7 @@ def _find_action_node(node: BTNode) -> Optional[ActionNode]:
     """Find the ActionNode in a subtree (DFS)."""
     if isinstance(node, ActionNode):
         return node
-    if isinstance(node, (ReactiveSequence, ReactiveSelector)):
+    if isinstance(node, (ReactiveSequence, ReactiveSelector, Sequence)):
         for child in node.children:
             found = _find_action_node(child)
             if found is not None:
@@ -76,6 +77,9 @@ def _compute_template_sig(node: BTNode, arg_values: List[str]) -> str:
     if isinstance(node, ReactiveSequence):
         inner = ",".join(_compute_template_sig(c, arg_values) for c in node.children)
         return f"Seq({inner})"
+    if isinstance(node, Sequence):
+        inner = ",".join(_compute_template_sig(c, arg_values) for c in node.children)
+        return f"NSeq({inner})"
     if isinstance(node, ReactiveSelector):
         inner = ",".join(_compute_template_sig(c, arg_values) for c in node.children)
         return f"Sel({inner})"
@@ -108,6 +112,10 @@ def _replace_in_tree(
         node.forbidden_action = _r(node.forbidden_action)
         node.name = _r(node.name)
     elif isinstance(node, ReactiveSequence):
+        node.name = _r(node.name)
+        for child in node.children:
+            _replace_in_tree(child, arg_values, param_names)
+    elif isinstance(node, Sequence):
         node.name = _r(node.name)
         for child in node.children:
             _replace_in_tree(child, arg_values, param_names)
@@ -148,7 +156,7 @@ def parameterize_subtrees(bt: BehaviorTree) -> None:
     ):
         if node.is_rule_leaf:
             leaf_entries.append((node, parent, child_idx))
-        if isinstance(node, (ReactiveSequence, ReactiveSelector)):
+        if isinstance(node, (ReactiveSequence, ReactiveSelector, Sequence)):
             for i, child in enumerate(node.children):
                 _collect(child, node, i)
         elif isinstance(node, Inverter):
@@ -202,7 +210,7 @@ def parameterize_subtrees(bt: BehaviorTree) -> None:
                 params = dict(zip(param_names, args))
                 ref = SubTreeRef(tid, params)
                 if parent is not None:
-                    if isinstance(parent, (ReactiveSequence, ReactiveSelector)):
+                    if isinstance(parent, (ReactiveSequence, ReactiveSelector, Sequence)):
                         parent.children[cidx] = ref
                     elif isinstance(parent, Inverter):
                         parent.child = ref
@@ -236,6 +244,9 @@ def structural_signature(node: BTNode) -> str:
     if isinstance(node, ReactiveSequence):
         inner = ",".join(structural_signature(c) for c in node.children)
         return f"Seq({inner})"
+    if isinstance(node, Sequence):
+        inner = ",".join(structural_signature(c) for c in node.children)
+        return f"NSeq({inner})"
     if isinstance(node, ReactiveSelector):
         inner = ",".join(structural_signature(c) for c in node.children)
         return f"Sel({inner})"
@@ -252,6 +263,8 @@ def deduplicate_subtrees(root: BTNode) -> BTNode:
 
     def _dedup(node: BTNode) -> BTNode:
         if isinstance(node, ReactiveSequence):
+            node.children = [_dedup(c) for c in node.children]
+        elif isinstance(node, Sequence):
             node.children = [_dedup(c) for c in node.children]
         elif isinstance(node, ReactiveSelector):
             node.children = [_dedup(c) for c in node.children]

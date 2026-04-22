@@ -85,6 +85,19 @@
             opacity: 0.8; marker-end: url(#end-arrow);
         }
         .pslabel { font-size: 10px; fill: #333; pointer-events: none; }
+        .runtime-note {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            z-index: 10;
+            background: #fff3cd;
+            border: 1px solid #ffeeba;
+            color: #856404;
+            border-radius: 4px;
+            padding: 8px 10px;
+            font-size: 12px;
+        }
     </style>
 </head>
 <body>
@@ -121,7 +134,7 @@
 
         <div class="main">
             <div id="graph-wrap">
-                <svg id="graph"></svg>
+                <svg id="graph" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid meet">$static_svg_markup</svg>
             </div>
             <div id="sidebar">
                 <div class="legend">
@@ -159,6 +172,142 @@
         const width  = svgEl.clientWidth  || 900;
         const height = svgEl.clientHeight || 700;
         const nodeRadius = 8;
+
+        // Remove server-rendered fallback layer once interactive rendering starts.
+        while (svgEl.firstChild) {
+            svgEl.removeChild(svgEl.firstChild);
+        }
+
+        function colorForNode(d) {
+            if (d.type === "goal" || d.distance === 0) return COLOR_GOAL;
+            if (d.is_initial) return COLOR_INIT;
+            if (d.is_sc) return COLOR_SC;
+            if (d.type === "unmapped") return COLOR_UNDEF;
+            return COLOR_DEF;
+        }
+
+        function showRuntimeNote(msg) {
+            const wrap = document.getElementById("graph-wrap");
+            const note = document.createElement("div");
+            note.className = "runtime-note";
+            note.textContent = msg;
+            wrap.appendChild(note);
+        }
+
+        function renderStaticFallback() {
+            const NS = "http://www.w3.org/2000/svg";
+            while (svgEl.firstChild) {
+                svgEl.removeChild(svgEl.firstChild);
+            }
+            svgEl.setAttribute("width", width);
+            svgEl.setAttribute("height", height);
+
+            const statePanel = document.getElementById("state");
+            const labelsCheckbox = document.getElementById("show-labels");
+            const nodes = graphData.nodes || [];
+            const links = graphData.links || [];
+            const byId = {};
+
+            const maxDist = Math.max(1, ...nodes.map(function(n) { return n.distance >= 0 ? n.distance : 0; }));
+            const levels = {};
+
+            nodes.forEach(function(n) {
+                const level = n.distance >= 0 ? n.distance : (maxDist + 1);
+                if (!levels[level]) {
+                    levels[level] = [];
+                }
+                levels[level].push(n);
+            });
+
+            Object.keys(levels).forEach(function(levelKey) {
+                const level = Number(levelKey);
+                const arr = levels[level];
+                const y = 60 + ((maxDist + 1 - level) / (maxDist + 1)) * (height - 120);
+                arr.forEach(function(n, idx) {
+                    const x = 80 + ((idx + 1) / (arr.length + 1)) * (width - 160);
+                    n.x = x;
+                    n.y = y;
+                    byId[n.id] = n;
+                });
+            });
+
+            links.forEach(function(l) {
+                const s = byId[l.source];
+                const t = byId[l.target];
+                if (!s || !t) return;
+                const line = document.createElementNS(NS, "line");
+                line.setAttribute("x1", s.x);
+                line.setAttribute("y1", s.y);
+                line.setAttribute("x2", t.x);
+                line.setAttribute("y2", t.y);
+                line.setAttribute("stroke", "#000");
+                line.setAttribute("stroke-width", "1.5");
+                line.setAttribute("opacity", "0.6");
+                svgEl.appendChild(line);
+            });
+
+            nodes.forEach(function(n) {
+                const g = document.createElementNS(NS, "g");
+
+                const c = document.createElementNS(NS, "circle");
+                c.setAttribute("cx", n.x);
+                c.setAttribute("cy", n.y);
+                c.setAttribute("r", String(nodeRadius));
+                c.setAttribute("fill", colorForNode(n));
+                c.setAttribute("stroke", "#000");
+                c.setAttribute("stroke-width", "1.2");
+                c.style.cursor = "pointer";
+
+                const t = document.createElementNS(NS, "text");
+                t.setAttribute("x", n.x + 12);
+                t.setAttribute("y", n.y + 4);
+                t.setAttribute("class", "pslabel");
+                t.textContent = n.name || ("node-" + n.id);
+
+                c.addEventListener("mouseover", function() {
+                    let html = "<h4>Partial State for Node " + n.id + "</h4>";
+                    if (n.type === "goal") {
+                        html += "<pre>Goal node (distance 0)</pre>";
+                    } else if (n.type === "unmapped") {
+                        html += "<pre>Undefined / unmapped successor</pre>";
+                    } else {
+                        html += "<p><strong>Actions:</strong> " + (n.actions || []).join(", ") + "</p>";
+                        html += "<p><strong>Distance to goal:</strong> " + (n.distance >= 0 ? n.distance : "unreachable") + "</p>";
+                        if (n.conditions && n.conditions.length) {
+                            html += "<pre>" + n.conditions.join("\n") + "</pre>";
+                        }
+                    }
+                    statePanel.innerHTML = html;
+                    c.setAttribute("r", String(nodeRadius * 1.8));
+                });
+                c.addEventListener("mouseout", function() {
+                    c.setAttribute("r", String(nodeRadius));
+                });
+
+                g.appendChild(c);
+                g.appendChild(t);
+                svgEl.appendChild(g);
+            });
+
+            window.resetLayout = function() {
+                renderStaticFallback();
+            };
+            window.zoomToFit = function() {};
+            window.updateCharge = function() {};
+            window.toggleLabels = function() {
+                const show = labelsCheckbox.checked;
+                const display = show ? "block" : "none";
+                Array.prototype.forEach.call(document.querySelectorAll(".pslabel"), function(el) {
+                    el.style.display = display;
+                });
+            };
+        }
+
+        if (typeof window.d3 === "undefined") {
+            showRuntimeNote("D3 could not be loaded (offline/CSP). Showing static fallback view.");
+            renderStaticFallback();
+            return;
+        }
 
         const svg = d3.select("#graph")
                       .attr("width", width)
@@ -240,11 +389,7 @@
             .attr("id", function(d) { return "psnode" + d.id; })
             .attr("r", nodeRadius)
             .style("fill", function(d) {
-                if (d.type === "goal" || d.distance === 0) return COLOR_GOAL;
-                if (d.is_initial) return COLOR_INIT;
-                if (d.is_sc)      return COLOR_SC;
-                if (d.type === "unmapped") return COLOR_UNDEF;
-                return COLOR_DEF;
+                return colorForNode(d);
             })
             .call(d3.drag()
                 .on("start", dragstarted)

@@ -41,6 +41,9 @@ def semantic_tail(value: str) -> str:
     text = text.rstrip("/")
     if "/" in text:
         text = text.rsplit("/", 1)[-1]
+    # Handle compact CURIE prefixes like "cssx:DispensingCapability"
+    if ":" in text and not text.startswith(("http:", "https:", "urn:")):
+        text = text.split(":", 1)[-1]
     return text
 
 
