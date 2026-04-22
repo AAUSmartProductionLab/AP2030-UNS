@@ -173,6 +173,8 @@ planarTableShuttle3AAS:
                   parameters:
                       -   name: "TransportSystem"
                           externalRef: "cssx:Transport"
+                      -   name: "From"
+                          externalRef: "cssx:LocationParameter"
                       -   name: "To"
                           externalRef: "cssx:LocationParameter"
                   conditions:
@@ -183,11 +185,18 @@ planarTableShuttle3AAS:
                           - predicate:
                               ref: "Free"
                               parameters: [0]
-                  effects:
-                      at_end:
                           - predicate:
                               external: "cssx:ResourceAt"
-                              parameters: [0, 1]
+                              parameters: [0 ,1]
+                  effects:
+                      at_end:
+                          - not:
+                            - predicate:
+                                external: "cssx:ResourceAt"
+                                parameters: [0 ,1]
+                          - predicate:
+                              external: "cssx:ResourceAt"
+                              parameters: [0, 2]
 
               -   key: "Transport"
                   semantic_id: "cssx:MoveToPositionCapability"
@@ -231,7 +240,10 @@ planarTableShuttle3AAS:
                             - predicate:
                                 external: "cssx:ResourceAt"
                                 parameters: [0 ,2]
-
+                          - not:
+                            - predicate:
+                                external: "cssx:ProductAt"
+                                parameters: [1 ,2]
                           - predicate:
                               external: "cssx:ResourceAt"
                               parameters: [0 ,3]
