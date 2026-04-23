@@ -1,11 +1,15 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Mapping, Optional
+
+from .execution_refs import resolve_action_execution_ref, resolve_predicate_execution_ref
 
 from .nodes import (
     ActionNode,
+    BTNode,
     BehaviorTree,
     ConditionNode,
+    Inverter,
     ReactiveSelector,
     ReactiveSequence,
     SuccessLeaf,
@@ -15,6 +19,8 @@ from .xml_writer import bt_to_xml
 
 def solve_result_to_bt_xml(solve_result: Any) -> tuple[str, list[str]]:
     warnings: list[str] = []
+    metadata = getattr(solve_result, "metadata", {})
+    planner_metadata = metadata.get("planner_metadata", {}) if isinstance(metadata, dict) else {}
 
     if not getattr(solve_result, "is_solved", False):
         warnings.append("Solve result is unsolved; BT generation skipped.")
@@ -26,11 +32,12 @@ def solve_result_to_bt_xml(solve_result: Any) -> tuple[str, list[str]]:
         bt = policy_to_bt(
             solve_result.require_policy_result(),
             problem=getattr(solve_result, "metadata", {}).get("problem"),
+            planner_metadata=planner_metadata,
         )
         return bt_to_xml(bt), warnings
 
     if getattr(solve_result, "is_plan", False):
-        bt_xml = deterministic_plan_to_bt_xml(solve_result)
+        bt_xml = deterministic_plan_to_bt_xml(solve_result, planner_metadata=planner_metadata)
         if bt_xml:
             warnings.append("Generated reactive BT from deterministic UP plan.")
             return bt_xml, warnings
@@ -42,7 +49,10 @@ def solve_result_to_bt_xml(solve_result: Any) -> tuple[str, list[str]]:
     return "", warnings
 
 
-def deterministic_plan_to_bt_xml(solve_result: Any) -> str:
+def deterministic_plan_to_bt_xml(
+    solve_result: Any,
+    planner_metadata: Optional[Mapping[str, Any]] = None,
+) -> str:
     up_result = solve_result.require_plan_result()
     plan = getattr(up_result, "plan", None)
     if plan is None:
@@ -54,12 +64,13 @@ def deterministic_plan_to_bt_xml(solve_result: Any) -> str:
     progression_children: list[Any] = []
     for ai in action_instances:
         preconditions = _extract_precondition_literals(ai)
-        action_node = action_instance_to_bt_action(ai)
+        action_node = action_instance_to_bt_action(ai, planner_metadata=planner_metadata)
         if preconditions:
             progression_children.append(
                 ReactiveSequence(
                     f"Step_{action_node.action_name.replace(' ', '_')}",
-                    [ConditionNode(p) for p in preconditions] + [action_node],
+                    [_condition_node(p, planner_metadata=planner_metadata) for p in preconditions]
+                    + [action_node],
                 )
             )
         else:
@@ -67,7 +78,7 @@ def deterministic_plan_to_bt_xml(solve_result: Any) -> str:
     progression_children.append(SuccessLeaf())
 
     progression = BehaviorTree(ReactiveSequence("DeterministicPlan", progression_children))
-    goal_branch = _build_problem_goal_branch(problem)
+    goal_branch = _build_problem_goal_branch(problem, planner_metadata=planner_metadata)
     if goal_branch is not None:
         progression.root = ReactiveSelector("PlanRoot", [goal_branch, progression.root])
 
@@ -115,7 +126,10 @@ def _extract_precondition_literals(action_instance: Any) -> list[str]:
     return literals
 
 
-def _build_problem_goal_branch(problem: Any) -> Any:
+def _build_problem_goal_branch(
+    problem: Any,
+    planner_metadata: Optional[Mapping[str, Any]] = None,
+) -> Any:
     if problem is None:
         return None
 
@@ -126,10 +140,39 @@ def _build_problem_goal_branch(problem: Any) -> Any:
     if not goal_literals:
         return None
 
-    return ReactiveSequence("GoalBranch", [ConditionNode(g) for g in goal_literals] + [SuccessLeaf()])
+    return ReactiveSequence(
+        "GoalBranch",
+        [_condition_node(g, planner_metadata=planner_metadata) for g in goal_literals]
+        + [SuccessLeaf()],
+    )
 
 
-def action_instance_to_bt_action(action_instance: Any) -> ActionNode:
+def _split_negated_literal(literal: str) -> tuple[str, bool]:
+    text = str(literal or "").strip()
+    lowered = text.lower()
+    if lowered.startswith("not(") and text.endswith(")"):
+        return text[4:-1].strip(), True
+    return text, False
+
+
+def _condition_node(
+    literal: str,
+    planner_metadata: Optional[Mapping[str, Any]] = None,
+) -> BTNode:
+    base_literal, negated = _split_negated_literal(literal)
+    leaf = ConditionNode(
+        base_literal,
+        execution_ref=resolve_predicate_execution_ref(planner_metadata, base_literal),
+    )
+    if negated:
+        return Inverter(leaf)
+    return leaf
+
+
+def action_instance_to_bt_action(
+    action_instance: Any,
+    planner_metadata: Optional[Mapping[str, Any]] = None,
+) -> ActionNode:
     try:
         from ..aas_to_pddl_conversion.utils import safe_id
     except ImportError:
@@ -145,9 +188,11 @@ def action_instance_to_bt_action(action_instance: Any) -> ActionNode:
         param_name = str(getattr(parameter, "name", "") or str(parameter))
         params.append(safe_id(param_name))
 
+    execution_ref = resolve_action_execution_ref(planner_metadata, action_name, params)
+
     if params:
-        return ActionNode(f"{action_name} {' '.join(params)}")
-    return ActionNode(action_name)
+        return ActionNode(f"{action_name} {' '.join(params)}", execution_ref=execution_ref)
+    return ActionNode(action_name, execution_ref=execution_ref)
 
 
 def extract_plan_text(solve_result: Any) -> str:

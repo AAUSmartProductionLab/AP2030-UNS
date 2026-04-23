@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import json
 from html import escape
-from collections import deque
 from pathlib import Path
 from string import Template
 from typing import Any, Dict, List, Optional, Set, Tuple
@@ -21,6 +20,70 @@ _COLOR_INIT = "#067c00"
 _COLOR_SC = "#025ef2"
 _COLOR_UNDEFINED = "#930000"
 _COLOR_DEFAULT = "#828282"
+
+
+def _tarjan_sccs(
+    adjacency: Dict[int, List[int]],
+    *,
+    skip: Optional[Set[int]] = None,
+) -> List[List[int]]:
+    """Compute strongly-connected components iteratively (Tarjan's algorithm).
+
+    ``skip`` nodes are removed from consideration entirely; edges to/from
+    them are ignored. Returns a list of components (each a list of node ids).
+    """
+    skip = skip or set()
+    index_of: Dict[int, int] = {}
+    lowlink: Dict[int, int] = {}
+    on_stack: Set[int] = set()
+    stack: List[int] = []
+    result: List[List[int]] = []
+    next_index = 0
+
+    def neighbours(v: int) -> List[int]:
+        return [w for w in adjacency.get(v, []) if w not in skip]
+
+    for start in adjacency:
+        if start in skip or start in index_of:
+            continue
+        # Iterative DFS with an explicit work stack of (node, neighbour_iter).
+        work: List[Tuple[int, List[int], int]] = []
+        index_of[start] = next_index
+        lowlink[start] = next_index
+        next_index += 1
+        stack.append(start)
+        on_stack.add(start)
+        work.append((start, neighbours(start), 0))
+
+        while work:
+            v, succs, i = work[-1]
+            if i < len(succs):
+                w = succs[i]
+                work[-1] = (v, succs, i + 1)
+                if w not in index_of:
+                    index_of[w] = next_index
+                    lowlink[w] = next_index
+                    next_index += 1
+                    stack.append(w)
+                    on_stack.add(w)
+                    work.append((w, neighbours(w), 0))
+                elif w in on_stack:
+                    lowlink[v] = min(lowlink[v], index_of[w])
+            else:
+                if lowlink[v] == index_of[v]:
+                    component: List[int] = []
+                    while True:
+                        w = stack.pop()
+                        on_stack.discard(w)
+                        component.append(w)
+                        if w == v:
+                            break
+                    result.append(component)
+                work.pop()
+                if work:
+                    parent = work[-1][0]
+                    lowlink[parent] = min(lowlink[parent], lowlink[v])
+    return result
 
 
 def _node_color(node: Dict) -> str:
@@ -450,32 +513,28 @@ def policy_to_state_graph_data(
         if source in forward_adj:
             forward_adj[source].append(target)
 
+    # graph.distances is rank-based (with optional BFS refinement applied
+    # inside build_policy_state_graph), and always contains every state plus
+    # goal_node_id. No further BFS pass is required here.
     distances: Dict[int, int] = dict(graph.distances)
-    if goal_node_id not in distances and goal_node_id in reverse_adj:
-        distances[goal_node_id] = 0
-        bfs_queue: deque[int] = deque([goal_node_id])
-        while bfs_queue:
-            current = bfs_queue.popleft()
-            for predecessor in reverse_adj.get(current, []):
-                if predecessor not in distances:
-                    distances[predecessor] = distances[current] + 1
-                    bfs_queue.append(predecessor)
 
+    # Strongly-connected components (Tarjan): a node is "on a cycle" iff it
+    # belongs to an SCC of size > 1, or to a singleton SCC with a self-loop.
+    # This is order-independent and bias-free, unlike the prior
+    # any-path-back-to-self traversal. We exclude the goal/unmapped sinks
+    # since cycles through them are not meaningful recovery loops.
     sc_nodes: Set[int] = set()
-    for node_id in forward_adj:
-        if node_id == goal_node_id or node_id == unmapped_node_id:
-            continue
-        visited: Set[int] = set()
-        stack = list(forward_adj.get(node_id, []))
-        while stack:
-            current = stack.pop()
-            if current == node_id:
-                sc_nodes.add(node_id)
-                break
-            if current in visited:
-                continue
-            visited.add(current)
-            stack.extend(forward_adj.get(current, []))
+    sccs = _tarjan_sccs(
+        forward_adj,
+        skip={goal_node_id, unmapped_node_id},
+    )
+    for component in sccs:
+        if len(component) > 1:
+            sc_nodes.update(component)
+        else:
+            (only,) = component
+            if only in forward_adj.get(only, []):
+                sc_nodes.add(only)
 
     for node in nodes:
         node_id = node["id"]

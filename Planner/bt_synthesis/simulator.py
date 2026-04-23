@@ -42,7 +42,7 @@ import os
 import random
 import sys
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, FrozenSet, List, Optional, Set, Tuple
+from typing import Any, Callable, Dict, FrozenSet, List, Optional, Sequence as TypingSequence, Set, Tuple
 
 import py_trees
 
@@ -58,14 +58,17 @@ from .causal import (
 )
 from .nodes import (
     BTNode,
+    Sequence as BTSequence,
     ReactiveSelector,
     ReactiveSequence,
     Inverter,
+    KeepRunningUntilFailure,
     ConditionNode,
     ActionNode,
     SuccessLeaf,
     FailureLeaf,
     ForbiddenActionNode,
+    SubTreeRef,
     BehaviorTree,
 )
 
@@ -77,6 +80,141 @@ from .nodes import (
 
 # GroundedAction from bt_synthesis.causal is used as the action info container.
 # (Replaces the former GroundedActionInfo duplicate class.)
+
+
+OutcomeProbabilityProvider = Callable[[str, GroundedAction], Optional[TypingSequence[float]]]
+
+
+def _normalize_outcome_weights(
+    weights: Optional[TypingSequence[float]],
+    n_outcomes: int,
+) -> Optional[List[float]]:
+    """Return normalized weights or ``None`` when input is unusable."""
+    if not weights or len(weights) != n_outcomes:
+        return None
+
+    normalized: List[float] = []
+    for raw in weights:
+        try:
+            value = float(raw)
+        except (TypeError, ValueError):
+            return None
+        if value < 0.0:
+            return None
+        normalized.append(value)
+
+    total = sum(normalized)
+    if total <= 0.0:
+        return None
+    return [w / total for w in normalized]
+
+
+def build_global_outcome_probability_provider(
+    profile: str,
+    epsilon: float = 1e-3,
+) -> OutcomeProbabilityProvider:
+    """Create a global outcome-probability profile.
+
+    Parameters
+    ----------
+    profile : str
+        One of ``uniform``, ``mild_skew``, ``strong_skew``.
+    epsilon : float
+        Minimum smoothing probability mass for each branch.
+    """
+    profile_key = (profile or "uniform").strip().lower()
+    if profile_key not in {"uniform", "mild_skew", "strong_skew"}:
+        raise ValueError(
+            f"Unsupported probability profile: {profile}. "
+            "Use one of: uniform, mild_skew, strong_skew."
+        )
+
+    skew_power = {
+        "uniform": 0.0,
+        "mild_skew": 1.0,
+        "strong_skew": 3.0,
+    }[profile_key]
+    epsilon = max(0.0, float(epsilon))
+
+    def _provider(_action_name: str, action: GroundedAction) -> Optional[TypingSequence[float]]:
+        n_outcomes = len(action.outcomes)
+        if n_outcomes <= 1:
+            return None
+        if skew_power <= 0.0:
+            base = [1.0] * n_outcomes
+        else:
+            # Prefer earlier listed outcomes under skewed profiles.
+            base = [float((n_outcomes - i) ** skew_power) for i in range(n_outcomes)]
+        if epsilon > 0.0:
+            base = [b + epsilon for b in base]
+        return base
+
+    return _provider
+
+
+def _replace_template_tokens(text: str, params: Dict[str, str]) -> str:
+    result = str(text)
+    for key, value in params.items():
+        result = result.replace(f"{{{key}}}", value)
+    return result
+
+
+def _clone_bt_with_params(node: BTNode, params: Dict[str, str]) -> BTNode:
+    """Clone a BT subtree while materializing ``{param}`` placeholders."""
+    if isinstance(node, ConditionNode):
+        return ConditionNode(_replace_template_tokens(node.fluent, params))
+
+    if isinstance(node, ActionNode):
+        return ActionNode(_replace_template_tokens(node.action_name, params))
+
+    if isinstance(node, SuccessLeaf):
+        return SuccessLeaf()
+
+    if isinstance(node, FailureLeaf):
+        return FailureLeaf(name=node.name)
+
+    if isinstance(node, ForbiddenActionNode):
+        return ForbiddenActionNode(
+            forbidden_action=_replace_template_tokens(node.forbidden_action, params)
+        )
+
+    if isinstance(node, Inverter):
+        return Inverter(_clone_bt_with_params(node.child, params))
+
+    if isinstance(node, KeepRunningUntilFailure):
+        return KeepRunningUntilFailure(
+            child=_clone_bt_with_params(node.child, params),
+            name=node.name,
+        )
+
+    if isinstance(node, ReactiveSelector):
+        return ReactiveSelector(
+            name=node.name,
+            children=[_clone_bt_with_params(c, params) for c in node.children],
+        )
+
+    if isinstance(node, ReactiveSequence):
+        return ReactiveSequence(
+            name=node.name,
+            children=[_clone_bt_with_params(c, params) for c in node.children],
+        )
+
+    if isinstance(node, BTSequence):
+        return BTSequence(
+            name=node.name,
+            children=[_clone_bt_with_params(c, params) for c in node.children],
+        )
+
+    if isinstance(node, SubTreeRef):
+        return SubTreeRef(
+            template_id=node.template_id,
+            params={
+                k: _replace_template_tokens(v, params)
+                for k, v in node.params.items()
+            },
+        )
+
+    raise ValueError(f"Unknown BT node type while cloning template: {type(node).__name__}")
 
 
 class SimulatedWorld:
@@ -102,12 +240,18 @@ class SimulatedWorld:
         action_table: Dict[str, GroundedAction],
         goal_pos: FrozenSet[str],
         goal_neg: FrozenSet[str],
+        *,
+        rng: Optional[random.Random] = None,
+        outcome_probability_provider: Optional[OutcomeProbabilityProvider] = None,
     ):
         self.fluents: Set[str] = set(initial_fluents)
         self.action_table = action_table
         self.goal_pos = goal_pos
         self.goal_neg = goal_neg
         self.goal_reached: bool = False
+        self.last_outcome_index: Optional[int] = None
+        self._rng = rng or random.Random()
+        self._outcome_probability_provider = outcome_probability_provider
 
     # -- query ---------------------------------------------------------
 
@@ -143,14 +287,32 @@ class SimulatedWorld:
             if neg_pre in self.fluents:
                 return False
 
-        # Random outcome
-        outcome_idx = random.randint(0, len(info.outcomes) - 1)
+        if not info.outcomes:
+            return False
+
+        # Outcome selection (default uniform unless a profile/provider is supplied)
+        outcome_idx = self._sample_outcome_index(action_str, info)
+        self.last_outcome_index = outcome_idx
         add_set, del_set = info.outcomes[outcome_idx]
 
         # Apply: delete first, then add
         self.fluents -= del_set
         self.fluents |= add_set
         return True
+
+    def _sample_outcome_index(self, action_str: str, action: GroundedAction) -> int:
+        n_outcomes = len(action.outcomes)
+        if n_outcomes == 1:
+            return 0
+
+        raw_weights: Optional[TypingSequence[float]] = None
+        if self._outcome_probability_provider is not None:
+            raw_weights = self._outcome_probability_provider(action_str, action)
+        weights = _normalize_outcome_weights(raw_weights, n_outcomes)
+
+        if weights is None:
+            return self._rng.randint(0, n_outcomes - 1)
+        return int(self._rng.choices(range(n_outcomes), weights=weights, k=1)[0])
 
 
 # ===================================================================
@@ -229,12 +391,30 @@ class AlwaysFailure(py_trees.behaviour.Behaviour):
         return py_trees.common.Status.FAILURE
 
 
+class NodeTickCountVisitor(py_trees.visitors.VisitorBase):
+    """Counts behaviour visits during a single root tick traversal."""
+
+    def __init__(self):
+        super().__init__(full=False)
+        self.visited_count = 0
+
+    def initialise(self) -> None:
+        self.visited_count = 0
+
+    def run(self, _behaviour: py_trees.behaviour.Behaviour) -> None:
+        self.visited_count += 1
+
+
 # ===================================================================
 #  Converter: pr2_to_bt.BTNode → py_trees
 # ===================================================================
 
 
-def convert_to_pytrees(node: BTNode) -> py_trees.behaviour.Behaviour:
+def convert_to_pytrees(
+    node: BTNode,
+    *,
+    templates: Optional[Dict[str, Tuple[BTNode, List[str]]]] = None,
+) -> py_trees.behaviour.Behaviour:
     """Recursively convert a ``pr2_to_bt`` BT into a ``py_trees`` tree.
 
     Node mapping
@@ -243,8 +423,10 @@ def convert_to_pytrees(node: BTNode) -> py_trees.behaviour.Behaviour:
     pr2_to_bt            py_trees
     ==================== ==========================================
     ReactiveSelector     ``Selector(memory=False)``
+    Sequence             ``Sequence(memory=True)``
     ReactiveSequence     ``Sequence(memory=False)``
     Inverter             ``decorators.Inverter``
+    KeepRunningUntilFailure ``decorators.SuccessIsRunning``
     ConditionNode        ``FluentCondition``
     ActionNode           ``ExecuteAction``
     SuccessLeaf          ``GoalReached``
@@ -262,7 +444,15 @@ def convert_to_pytrees(node: BTNode) -> py_trees.behaviour.Behaviour:
             name=node.name, memory=False
         )
         for child in node.children:
-            composite.add_child(convert_to_pytrees(child))
+            composite.add_child(convert_to_pytrees(child, templates=templates))
+        return composite
+
+    if isinstance(node, BTSequence):
+        composite = py_trees.composites.Sequence(
+            name=node.name, memory=True
+        )
+        for child in node.children:
+            composite.add_child(convert_to_pytrees(child, templates=templates))
         return composite
 
     if isinstance(node, ReactiveSequence):
@@ -270,14 +460,29 @@ def convert_to_pytrees(node: BTNode) -> py_trees.behaviour.Behaviour:
             name=node.name, memory=False
         )
         for child in node.children:
-            composite.add_child(convert_to_pytrees(child))
+            composite.add_child(convert_to_pytrees(child, templates=templates))
         return composite
 
     if isinstance(node, Inverter):
         return py_trees.decorators.Inverter(
             name="Inverter",
-            child=convert_to_pytrees(node.child),
+            child=convert_to_pytrees(node.child, templates=templates),
         )
+
+    if isinstance(node, KeepRunningUntilFailure):
+        return py_trees.decorators.SuccessIsRunning(
+            name=node.name or "KeepRunningUntilFailure",
+            child=convert_to_pytrees(node.child, templates=templates),
+        )
+
+    if isinstance(node, SubTreeRef):
+        template_table = templates or {}
+        template_entry = template_table.get(node.template_id)
+        if template_entry is None:
+            raise ValueError(f"Unknown SubTree template id: {node.template_id}")
+        template_root, _param_names = template_entry
+        expanded = _clone_bt_with_params(template_root, dict(node.params))
+        return convert_to_pytrees(expanded, templates=templates)
 
     if isinstance(node, ConditionNode):
         return FluentCondition(node.fluent)
@@ -355,12 +560,18 @@ def build_simulator(domain_pddl: str, problem_pddl: str):
             outcomes=[(_lower_set(a), _lower_set(d)) for a, d in outcomes],
         )
 
-    def make_world() -> SimulatedWorld:
+    def make_world(
+        *,
+        rng: Optional[random.Random] = None,
+        outcome_probability_provider: Optional[OutcomeProbabilityProvider] = None,
+    ) -> SimulatedWorld:
         return SimulatedWorld(
             initial_fluents=set(init_fluents),
             action_table=action_table,
             goal_pos=goal_pos,
             goal_neg=goal_neg,
+            rng=rng,
+            outcome_probability_provider=outcome_probability_provider,
         )
 
     return make_world, action_table, goal_pos, goal_neg, init_fluents
@@ -380,6 +591,7 @@ class SimulationResult:
     timeouts: int
     n_trials: int
     tick_counts: List[int]
+    node_tick_counts: List[int]
 
     @property
     def success_rate(self) -> float:
@@ -393,11 +605,20 @@ class SimulationResult:
             else 0.0
         )
 
+    @property
+    def avg_node_ticks(self) -> float:
+        return (
+            sum(self.node_tick_counts) / len(self.node_tick_counts)
+            if self.node_tick_counts
+            else 0.0
+        )
+
     def summary(self) -> str:
         pct = self.success_rate * 100
         return (
             f"Success: {self.successes}/{self.n_trials} ({pct:.1f}%)  "
             f"Avg ticks: {self.avg_ticks:.1f}  "
+            f"Avg node-ticks: {self.avg_node_ticks:.1f}  "
             f"Failures: {self.failures}  Timeouts: {self.timeouts}"
         )
 
@@ -409,7 +630,8 @@ def run_simulation(
     n_trials: int = 500,
     max_ticks: int = 5000,
     seed: Optional[int] = None,
-    on_episode: Optional[Callable[[int, bool, int], None]] = None,
+    on_episode: Optional[Callable[[int, bool, int, int], None]] = None,
+    outcome_probability_provider: Optional[OutcomeProbabilityProvider] = None,
 ) -> SimulationResult:
     """Run Monte-Carlo BT simulation using py_trees.
 
@@ -432,21 +654,24 @@ def run_simulation(
     seed : int, optional
         Random seed for reproducibility.
     on_episode : callable, optional
-        ``(episode_idx, success, ticks)`` callback after each episode.
+        ``(episode_idx, success, ticks, node_ticks)`` callback after each
+        episode. ``node_ticks`` is the total count of visited BT nodes over
+        all root ticks in the episode.
 
     Returns
     -------
     SimulationResult
         Aggregated statistics over all episodes.
     """
-    if seed is not None:
-        random.seed(seed)
+    rng = random.Random(seed)
 
     make_world, _, _, _, _ = build_simulator(domain_pddl, problem_pddl)
 
     # Convert pr2_to_bt tree → py_trees (once)
-    pytree_root = convert_to_pytrees(bt.root)
+    pytree_root = convert_to_pytrees(bt.root, templates=bt.templates)
     tree = py_trees.trees.BehaviourTree(root=pytree_root)
+    node_tick_visitor = NodeTickCountVisitor()
+    tree.add_visitor(node_tick_visitor)
     tree.setup()
 
     # Blackboard writer for injecting world state
@@ -459,21 +684,28 @@ def run_simulation(
     failures = 0
     timeouts = 0
     tick_counts: List[int] = []
+    node_tick_counts: List[int] = []
 
     for trial in range(n_trials):
-        world = make_world()
+        world = make_world(
+            rng=rng,
+            outcome_probability_provider=outcome_probability_provider,
+        )
         writer.set(_WORLD_KEY, world)
 
         episode_success = False
         episode_ticks = 0
+        episode_node_ticks = 0
 
         for tick in range(1, max_ticks + 1):
             tree.tick()
             episode_ticks = tick
+            episode_node_ticks += node_tick_visitor.visited_count
 
             if world.goal_reached or world.check_goal():
                 successes += 1
                 tick_counts.append(tick)
+                node_tick_counts.append(episode_node_ticks)
                 episode_success = True
                 break
 
@@ -484,7 +716,7 @@ def run_simulation(
             timeouts += 1
 
         if on_episode is not None:
-            on_episode(trial, episode_success, episode_ticks)
+            on_episode(trial, episode_success, episode_ticks, episode_node_ticks)
 
     return SimulationResult(
         successes=successes,
@@ -492,6 +724,7 @@ def run_simulation(
         timeouts=timeouts,
         n_trials=n_trials,
         tick_counts=tick_counts,
+        node_tick_counts=node_tick_counts,
     )
 
 
@@ -506,7 +739,7 @@ def display_pytree(bt: BehaviorTree) -> str:
     Uses ``py_trees.display.unicode_tree`` for a compact rendering
     of the tree structure.
     """
-    pytree_root = convert_to_pytrees(bt.root)
+    pytree_root = convert_to_pytrees(bt.root, templates=bt.templates)
     return py_trees.display.unicode_tree(root=pytree_root)
 
 
@@ -519,7 +752,7 @@ def render_pytree_dot(
 
     Requires ``graphviz`` to be installed on the system.
     """
-    pytree_root = convert_to_pytrees(bt.root)
+    pytree_root = convert_to_pytrees(bt.root, templates=bt.templates)
     py_trees.display.render_dot_tree(
         pytree_root,
         target_directory=os.path.dirname(output_path) or ".",

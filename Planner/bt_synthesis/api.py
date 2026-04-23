@@ -28,6 +28,7 @@ from .nodes import (  # noqa: F401
     ReactiveSelector,
     ReactiveSequence,
     Inverter,
+    KeepRunningUntilFailure,
     SubTreeRef,
     SuccessLeaf,
     FailureLeaf,
@@ -39,7 +40,7 @@ from .nodes import (  # noqa: F401
 )
 
 # ── Core conversion pipeline ─────────────────────────────────────────
-from .builder import policy_to_bt  # noqa: F401
+from .builder import policy_to_bt, policy_to_bt_trivial  # noqa: F401
 
 # ── XML serialization ────────────────────────────────────────────────
 from .xml_writer import bt_to_xml, count_bt_nodes  # noqa: F401

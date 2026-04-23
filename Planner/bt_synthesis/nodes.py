@@ -18,7 +18,8 @@ Node hierarchy
     ├── Sequence             — non-reactive sequence (resume on RUNNING)
     ├── ReactiveSelector     — reactive fallback (tries children L→R)
     ├── ReactiveSequence     — reactive sequence (re-checks from first)
-    └── Inverter             — decorator: SUCCESS ↔ FAILURE
+    ├── Inverter             — decorator: SUCCESS ↔ FAILURE
+    └── KeepRunningUntilFailure — decorator: SUCCESS/RUNNING -> RUNNING
 
 Extras
 ------
@@ -31,7 +32,7 @@ from __future__ import annotations
 
 import re
 from enum import Enum, auto
-from typing import Callable, Dict, List, Optional, Set, Tuple
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 
 
 # ===================================================================
@@ -83,9 +84,10 @@ class BTNode:
 class ConditionNode(BTNode):
     """Succeeds iff a literal currently holds in the world state."""
 
-    def __init__(self, fluent: str):
+    def __init__(self, fluent: str, execution_ref: Optional[Dict[str, Any]] = None):
         super().__init__(fluent)
         self.fluent = fluent
+        self.execution_ref: Dict[str, Any] = dict(execution_ref or {})
 
     def tick(self, world: "WorldState") -> Status:
         return Status.SUCCESS if world.holds(self.fluent) else Status.FAILURE
@@ -97,9 +99,10 @@ class ConditionNode(BTNode):
 class ActionNode(BTNode):
     """Executes an action via ``world.execute_action(...)``."""
 
-    def __init__(self, action_name: str):
+    def __init__(self, action_name: str, execution_ref: Optional[Dict[str, Any]] = None):
         super().__init__(action_name)
         self.action_name = action_name
+        self.execution_ref: Dict[str, Any] = dict(execution_ref or {})
 
     def tick(self, world: "WorldState") -> Status:
         return world.execute_action(self.action_name)
@@ -283,6 +286,30 @@ class Inverter(BTNode):
 
     def pretty(self, indent: int = 0) -> str:
         lines = [" " * indent + "[¬] Inverter"]
+        lines.append(self.child.pretty(indent + 4))
+        return "\n".join(lines)
+
+
+class KeepRunningUntilFailure(BTNode):
+    """Decorator that runs until child failure.
+
+    - child FAILURE -> FAILURE
+    - child SUCCESS -> RUNNING
+    - child RUNNING -> RUNNING
+    """
+
+    def __init__(self, child: BTNode, name: str = "KeepRunningUntilFailure"):
+        super().__init__(name)
+        self.child = child
+
+    def tick(self, world: "WorldState") -> Status:
+        s = self.child.tick(world)
+        if s == Status.FAILURE:
+            return Status.FAILURE
+        return Status.RUNNING
+
+    def pretty(self, indent: int = 0) -> str:
+        lines = [" " * indent + "[↻] KeepRunningUntilFailure"]
         lines.append(self.child.pretty(indent + 4))
         return "\n".join(lines)
 

@@ -25,6 +25,13 @@ class PolicyStateGraph:
     goal_node_id: int
     unmapped_node_id: int
     initial_state_id: Optional[int]
+    # Rank of the first PR2 rule that produced each state signature. PR2 emits
+    # rules sorted by ascending goal distance (see SolutionStep::operator< in
+    # pr2/src/search/prp/solution.cc), so a smaller rank means "closer to the
+    # goal". Two rules at the same true goal distance still get distinct
+    # adjacent ranks (PR2 tie-breaks by step_id), so rank is a monotone proxy
+    # but not a faithful equivalence class.
+    state_rank: Dict[FrozenSet[str], int]
 
 
 def build_policy_state_graph(
@@ -40,14 +47,16 @@ def build_policy_state_graph(
     state_signatures: List[FrozenSet[str]] = []
     state_actions: Dict[FrozenSet[str], Set[str]] = {}
     state_parts: Dict[FrozenSet[str], Tuple[FrozenSet[str], FrozenSet[str]]] = {}
+    state_rank: Dict[FrozenSet[str], int] = {}
 
-    for rule in rules:
+    for rule_idx, rule in enumerate(rules):
         signature = _rule_signature(rule)
         if signature not in state_index:
             state_index[signature] = len(state_signatures)
             state_signatures.append(signature)
             state_actions[signature] = set()
             state_parts[signature] = _split_state_literals(signature)
+            state_rank[signature] = rule_idx  # first rule with this signature
         state_actions[signature].add(_rule_action_name(rule))
 
     goal_node_id = len(state_signatures)
@@ -61,6 +70,7 @@ def build_policy_state_graph(
     for signature in state_signatures:
         source_id = state_index[signature]
         source_positive, source_negative = state_parts[signature]
+        source_rank = state_rank[signature]
 
         for action in sorted(state_actions[signature]):
             action_key = action.strip().lower()
@@ -98,20 +108,38 @@ def build_policy_state_graph(
                 )
 
                 best_target = None
-                best_score = -1
+                best_score: Tuple[int, int, int] = (-1, 0, 0)
                 for candidate_signature in state_signatures:
                     cand_positive, cand_negative = state_parts[candidate_signature]
-                    score = _state_match_score(
+                    overlap = _state_match_score(
                         cand_positive,
                         cand_negative,
                         sim_positive,
                         sim_negative,
                     )
+                    if overlap < 0:
+                        continue
+                    cand_rank = state_rank[candidate_signature]
+                    # Forward-progress preference: prefer candidates with a
+                    # strictly smaller rank (closer to the goal in PR2's own
+                    # ordering). Equal rank is neutral; backward edges are
+                    # only chosen when no forward candidate matches at all.
+                    if cand_rank < source_rank:
+                        progress = 1
+                    elif cand_rank == source_rank:
+                        progress = 0
+                    else:
+                        progress = -1
+                    # Tertiary key: prefer the candidate closest to "exactly
+                    # one step closer to the goal" so we do not skip past
+                    # equivalent intermediate states.
+                    rank_proximity = -abs(cand_rank - max(source_rank - 1, 0))
+                    score = (overlap, progress, rank_proximity)
                     if score > best_score:
                         best_score = score
                         best_target = candidate_signature
 
-                if best_target is not None and best_score >= 0:
+                if best_target is not None and best_score[0] >= 0:
                     transitions.append(
                         PolicyTransition(
                             source=source_id,
@@ -144,18 +172,32 @@ def build_policy_state_graph(
                         )
                     )
 
+    # Distances are derived from PR2 rule rank (the planner emits rules
+    # sorted by ascending true goal-distance). The goal sink is 0 and a
+    # state's distance is its rule rank + 1, so equal-distance states keep
+    # adjacent integers and the ordering is monotone with PR2's own. We
+    # then refine this by reverse BFS from the goal sink: if a state has a
+    # verifiable shorter path through resolved transitions, the BFS value
+    # wins. Unmapped states keep their rank-based proxy.
+    distances: Dict[int, int] = {goal_node_id: 0}
+    for signature, rank in state_rank.items():
+        distances[state_index[signature]] = rank + 1
+
     reverse: Dict[int, List[int]] = defaultdict(list)
     for edge in transitions:
         reverse[edge.target].append(edge.source)
 
-    distances: Dict[int, int] = {goal_node_id: 0}
     queue: deque[int] = deque([goal_node_id])
+    bfs_distance: Dict[int, int] = {goal_node_id: 0}
     while queue:
         current = queue.popleft()
         for predecessor in reverse.get(current, []):
-            if predecessor not in distances:
-                distances[predecessor] = distances[current] + 1
+            if predecessor not in bfs_distance:
+                bfs_distance[predecessor] = bfs_distance[current] + 1
                 queue.append(predecessor)
+    for nid, d in bfs_distance.items():
+        if d < distances.get(nid, 10**9):
+            distances[nid] = d
 
     initial_state_id: Optional[int] = None
     if state_signatures and init_fluents:
@@ -163,14 +205,18 @@ def build_policy_state_graph(
 
         # Prefer signatures that are actually applicable in the initial state,
         # i.e., all required positives hold and required negatives are absent.
+        # Among ties, pick the one with the highest rank (farthest from the
+        # goal in PR2's ordering = closest to the initial state) so the entry
+        # point is deterministic across runs.
         applicable_best_state = None
-        applicable_best_specificity = -1
+        applicable_best_key: Tuple[int, int] = (-1, -1)
         for signature in state_signatures:
             cand_positive, cand_negative = state_parts[signature]
             if cand_positive.issubset(init_positive) and cand_negative.isdisjoint(init_positive):
                 specificity = len(cand_positive) + len(cand_negative)
-                if specificity > applicable_best_specificity:
-                    applicable_best_specificity = specificity
+                key = (specificity, state_rank[signature])
+                if key > applicable_best_key:
+                    applicable_best_key = key
                     applicable_best_state = signature
 
         if applicable_best_state is not None:
@@ -201,20 +247,33 @@ def build_policy_state_graph(
         goal_node_id=goal_node_id,
         unmapped_node_id=unmapped_node_id,
         initial_state_id=initial_state_id,
+        state_rank=state_rank,
     )
 
 
 def compute_rule_distances(rules: List, graph: PolicyStateGraph) -> Dict[int, int]:
-    max_dist = max(graph.distances.values()) if graph.distances else 0
+    """Per-rule distance proxy.
+
+    Uses ``state_rank`` (PR2 file order, ascending = closer to goal) as the
+    primary distance, plus 1 so that rank 0 maps to distance 1 and the goal
+    sink stays at 0. Falls back to BFS distance only when a rule's signature
+    is missing from the rank map (which should not happen but keeps the
+    function defensive).
+    """
+    max_rank = max(graph.state_rank.values()) if graph.state_rank else 0
+    fallback = max_rank + 2
     result: Dict[int, int] = {}
 
     for ridx, rule in enumerate(rules):
         signature = _rule_signature(rule)
-        state_id = graph.state_index.get(signature)
-        if state_id is not None and state_id in graph.distances:
-            result[ridx] = graph.distances[state_id]
+        if signature in graph.state_rank:
+            result[ridx] = graph.state_rank[signature] + 1
         else:
-            result[ridx] = max_dist + 1
+            state_id = graph.state_index.get(signature)
+            if state_id is not None and state_id in graph.distances:
+                result[ridx] = graph.distances[state_id]
+            else:
+                result[ridx] = fallback
 
     return result
 

@@ -22,6 +22,7 @@ from .nodes import (
     FailureLeaf,
     ForbiddenActionNode,
     Inverter,
+    KeepRunningUntilFailure,
     Sequence,
     ReactiveSelector,
     ReactiveSequence,
@@ -45,7 +46,7 @@ def _find_action_node(node: BTNode) -> Optional[ActionNode]:
             found = _find_action_node(child)
             if found is not None:
                 return found
-    if isinstance(node, Inverter):
+    if isinstance(node, (Inverter, KeepRunningUntilFailure)):
         return _find_action_node(node.child)
     return None
 
@@ -74,6 +75,8 @@ def _compute_template_sig(node: BTNode, arg_values: List[str]) -> str:
         return f"F:{node.name}"
     if isinstance(node, Inverter):
         return f"I({_compute_template_sig(node.child, arg_values)})"
+    if isinstance(node, KeepRunningUntilFailure):
+        return f"K({_compute_template_sig(node.child, arg_values)})"
     if isinstance(node, ReactiveSequence):
         inner = ",".join(_compute_template_sig(c, arg_values) for c in node.children)
         return f"Seq({inner})"
@@ -102,12 +105,25 @@ def _replace_in_tree(
             s = s.replace(val, f"{{{name}}}")
         return s
 
+    def _r_ref(value):
+        if isinstance(value, str):
+            return _r(value)
+        if isinstance(value, list):
+            return [_r_ref(item) for item in value]
+        if isinstance(value, dict):
+            return {k: _r_ref(v) for k, v in value.items()}
+        return value
+
     if isinstance(node, ConditionNode):
         node.fluent = _r(node.fluent)
         node.name = _r(node.name)
+        if getattr(node, "execution_ref", None):
+            node.execution_ref = _r_ref(node.execution_ref)
     elif isinstance(node, ActionNode):
         node.action_name = _r(node.action_name)
         node.name = _r(node.name)
+        if getattr(node, "execution_ref", None):
+            node.execution_ref = _r_ref(node.execution_ref)
     elif isinstance(node, ForbiddenActionNode):
         node.forbidden_action = _r(node.forbidden_action)
         node.name = _r(node.name)
@@ -123,7 +139,7 @@ def _replace_in_tree(
         node.name = _r(node.name)
         for child in node.children:
             _replace_in_tree(child, arg_values, param_names)
-    elif isinstance(node, Inverter):
+    elif isinstance(node, (Inverter, KeepRunningUntilFailure)):
         _replace_in_tree(node.child, arg_values, param_names)
 
 
@@ -159,7 +175,7 @@ def parameterize_subtrees(bt: BehaviorTree) -> None:
         if isinstance(node, (ReactiveSequence, ReactiveSelector, Sequence)):
             for i, child in enumerate(node.children):
                 _collect(child, node, i)
-        elif isinstance(node, Inverter):
+        elif isinstance(node, (Inverter, KeepRunningUntilFailure)):
             _collect(node.child, node, 0)
 
     _collect(bt.root)
@@ -212,7 +228,7 @@ def parameterize_subtrees(bt: BehaviorTree) -> None:
                 if parent is not None:
                     if isinstance(parent, (ReactiveSequence, ReactiveSelector, Sequence)):
                         parent.children[cidx] = ref
-                    elif isinstance(parent, Inverter):
+                    elif isinstance(parent, (Inverter, KeepRunningUntilFailure)):
                         parent.child = ref
 
 
@@ -241,6 +257,8 @@ def structural_signature(node: BTNode) -> str:
         return f"SubRef:{node.template_id}({params_str})"
     if isinstance(node, Inverter):
         return f"I({structural_signature(node.child)})"
+    if isinstance(node, KeepRunningUntilFailure):
+        return f"K({structural_signature(node.child)})"
     if isinstance(node, ReactiveSequence):
         inner = ",".join(structural_signature(c) for c in node.children)
         return f"Seq({inner})"
@@ -268,7 +286,7 @@ def deduplicate_subtrees(root: BTNode) -> BTNode:
             node.children = [_dedup(c) for c in node.children]
         elif isinstance(node, ReactiveSelector):
             node.children = [_dedup(c) for c in node.children]
-        elif isinstance(node, Inverter):
+        elif isinstance(node, (Inverter, KeepRunningUntilFailure)):
             node.child = _dedup(node.child)
 
         sig = structural_signature(node)
