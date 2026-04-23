@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional, Tuple
 
-from .models import PlanningCapability
+from .models import ActionRef, PlanningCapability, PredicateRef
 from .ontology_resolver import load_type_parent_map
 from .utils import coerce_numeric_literal, safe_id
 
@@ -63,6 +63,8 @@ def build_up_problem(
     )
 
     problem = Problem("merged_ai_planning")
+    planner_action_refs: Dict[str, Dict[str, Any]] = {}
+    planner_predicate_refs: Dict[str, Dict[str, Any]] = {}
     all_type_names = collect_type_names(merged)
     loaded_type_parents = load_type_parent_map(warnings=warnings)
     inferred_type_parents = normalize_type_parent_map(
@@ -119,6 +121,21 @@ def build_up_problem(
         fluent_map[fluent["key"]] = fluent_obj
         fluent_param_types[fluent["key"]] = [canonical_type_name(t) for t in fluent["param_types"]]
 
+        source_bindings = list(fluent.get("source_bindings") or [])
+        primary_binding = source_bindings[0] if source_bindings else {}
+        predicate_ref = PredicateRef(
+            fluent_name=key,
+            fluent_key=str(fluent.get("key") or key),
+            source_aas_id=str(primary_binding.get("aas_id") or fluent.get("source_aas_id") or ""),
+            source_aas_name=str(primary_binding.get("aas_name") or fluent.get("source_aas_name") or fluent.get("source") or ""),
+            fluent_aas_path=str(primary_binding.get("fluent_aas_path") or fluent.get("fluent_aas_path") or ""),
+            transformation_aas_path=str(primary_binding.get("transformation_aas_path") or fluent.get("transformation_aas_path") or ""),
+            transformation=str(fluent.get("transformation") or ""),
+            param_types=[canonical_type_name(t) for t in fluent.get("param_types", [])],
+            source_bindings=source_bindings,
+        )
+        planner_predicate_refs[key] = dict(predicate_ref.__dict__)
+
     for missing_name, arity in collect_missing_fluents(merged, fluent_map).items():
         safe_name = safe_id(missing_name)
         param_names = [f"p{i}" for i in range(arity)]
@@ -126,18 +143,37 @@ def build_up_problem(
         fluent_obj = problem.add_fluent(safe_name, BoolType(), default_initial_value=False, **params)
         fluent_map[missing_name] = fluent_obj
         fluent_param_types[missing_name] = [ROOT_TYPE_NAME] * arity
+        planner_predicate_refs[safe_name] = dict(
+            PredicateRef(
+                fluent_name=safe_name,
+                fluent_key=missing_name,
+                source_aas_id="",
+                source_aas_name="",
+                param_types=[ROOT_TYPE_NAME] * arity,
+            ).__dict__
+        )
         warnings.append(
             f"Fluent '{missing_name}' was referenced but not declared in Domain.Fluents; auto-declared with arity {arity}."
         )
 
     object_map: Dict[str, Any] = {}
     object_types: Dict[str, str] = {}
+    planner_object_refs: Dict[str, Dict[str, str]] = {}
     for obj in merged["objects"]:
         safe_name = safe_id(obj["name"])
         if not safe_name:
             continue
         if obj["name"] in object_map:
             continue
+
+        object_ref = {
+            "source_aas_id": str(obj.get("source_aas_id") or ""),
+            "source_aas_name": str(obj.get("source_aas_name") or ""),
+            "reference": str(obj.get("reference") or ""),
+            "object_aas_path": str(obj.get("object_aas_path") or obj.get("reference") or ""),
+        }
+        planner_object_refs[str(obj["name"])] = object_ref
+        planner_object_refs[safe_name] = object_ref
 
         declared_type = canonical_type_name(obj.get("declared_type"))
         up_type = type_map.get(declared_type, root_type)
@@ -212,6 +248,32 @@ def build_up_problem(
                 )
 
             problem.add_action(up_action)
+            planner_action_refs[desired_name] = dict(
+                ActionRef(
+                    pddl_action_name=desired_name,
+                    source_aas_id=str(action.get("source_aas_id") or ""),
+                    source_aas_name=str(action.get("source_name") or ""),
+                    action_key=str(action.get("key") or ""),
+                    skill_target=str(action.get("skill_target") or action.get("key") or ""),
+                    action_kind=action_kind,
+                    action_aas_path=str(action.get("action_aas_path") or ""),
+                    transformation_aas_path=str(action.get("transformation_aas_path") or ""),
+                    transformation=str(action.get("transformation") or ""),
+                    parameter_bindings=[
+                        {
+                            "name": str(param.get("name") or f"p{idx}"),
+                            "type": canonical_type_name(param.get("type")),
+                            "is_constant": bool(param.get("is_constant")),
+                            "bound_object": str(param.get("bound_object") or ""),
+                            "resolved_kind": str(param_remap.get(idx, {}).get("kind") or ""),
+                            "resolved_up_param": str(param_remap.get(idx, {}).get("up_param") or ""),
+                            "resolved_object": str(param_remap.get(idx, {}).get("object_name") or ""),
+                        }
+                        for idx, param in enumerate(action.get("parameters", []))
+                    ],
+                    source_bindings=list(action.get("source_bindings") or []),
+                ).__dict__
+            )
             continue
 
         if drop_natural_transitions and action_kind in {"Event", "Process"}:
@@ -252,6 +314,32 @@ def build_up_problem(
                 )
 
             problem.add_action(up_action)
+            planner_action_refs[desired_name] = dict(
+                ActionRef(
+                    pddl_action_name=desired_name,
+                    source_aas_id=str(action.get("source_aas_id") or ""),
+                    source_aas_name=str(action.get("source_name") or ""),
+                    action_key=str(action.get("key") or ""),
+                    skill_target=str(action.get("skill_target") or action.get("key") or ""),
+                    action_kind=action_kind,
+                    action_aas_path=str(action.get("action_aas_path") or ""),
+                    transformation_aas_path=str(action.get("transformation_aas_path") or ""),
+                    transformation=str(action.get("transformation") or ""),
+                    parameter_bindings=[
+                        {
+                            "name": str(param.get("name") or f"p{idx}"),
+                            "type": canonical_type_name(param.get("type")),
+                            "is_constant": bool(param.get("is_constant")),
+                            "bound_object": str(param.get("bound_object") or ""),
+                            "resolved_kind": str(param_remap.get(idx, {}).get("kind") or ""),
+                            "resolved_up_param": str(param_remap.get(idx, {}).get("up_param") or ""),
+                            "resolved_object": str(param_remap.get(idx, {}).get("object_name") or ""),
+                        }
+                        for idx, param in enumerate(action.get("parameters", []))
+                    ],
+                    source_bindings=list(action.get("source_bindings") or []),
+                ).__dict__
+            )
             warnings.append(
                 f"{action_kind} '{action.get('key')}' lowered to action in solver-compatible approximation mode."
             )
@@ -292,6 +380,32 @@ def build_up_problem(
                 )
 
             problem.add_event(up_event)
+            planner_action_refs[desired_name] = dict(
+                ActionRef(
+                    pddl_action_name=desired_name,
+                    source_aas_id=str(action.get("source_aas_id") or ""),
+                    source_aas_name=str(action.get("source_name") or ""),
+                    action_key=str(action.get("key") or ""),
+                    skill_target=str(action.get("skill_target") or action.get("key") or ""),
+                    action_kind=action_kind,
+                    action_aas_path=str(action.get("action_aas_path") or ""),
+                    transformation_aas_path=str(action.get("transformation_aas_path") or ""),
+                    transformation=str(action.get("transformation") or ""),
+                    parameter_bindings=[
+                        {
+                            "name": str(param.get("name") or f"p{idx}"),
+                            "type": canonical_type_name(param.get("type")),
+                            "is_constant": bool(param.get("is_constant")),
+                            "bound_object": str(param.get("bound_object") or ""),
+                            "resolved_kind": str(param_remap.get(idx, {}).get("kind") or ""),
+                            "resolved_up_param": str(param_remap.get(idx, {}).get("up_param") or ""),
+                            "resolved_object": str(param_remap.get(idx, {}).get("object_name") or ""),
+                        }
+                        for idx, param in enumerate(action.get("parameters", []))
+                    ],
+                    source_bindings=list(action.get("source_bindings") or []),
+                ).__dict__
+            )
             continue
 
         if action_kind == "Process":
@@ -333,6 +447,32 @@ def build_up_problem(
 
             if process_supported and len(up_process.effects) > 0:
                 problem.add_process(up_process)
+                planner_action_refs[desired_name] = dict(
+                    ActionRef(
+                        pddl_action_name=desired_name,
+                        source_aas_id=str(action.get("source_aas_id") or ""),
+                        source_aas_name=str(action.get("source_name") or ""),
+                        action_key=str(action.get("key") or ""),
+                        skill_target=str(action.get("skill_target") or action.get("key") or ""),
+                        action_kind=action_kind,
+                        action_aas_path=str(action.get("action_aas_path") or ""),
+                        transformation_aas_path=str(action.get("transformation_aas_path") or ""),
+                        transformation=str(action.get("transformation") or ""),
+                        parameter_bindings=[
+                            {
+                                "name": str(param.get("name") or f"p{idx}"),
+                                "type": canonical_type_name(param.get("type")),
+                                "is_constant": bool(param.get("is_constant")),
+                                "bound_object": str(param.get("bound_object") or ""),
+                                "resolved_kind": str(param_remap.get(idx, {}).get("kind") or ""),
+                                "resolved_up_param": str(param_remap.get(idx, {}).get("up_param") or ""),
+                                "resolved_object": str(param_remap.get(idx, {}).get("object_name") or ""),
+                            }
+                            for idx, param in enumerate(action.get("parameters", []))
+                        ],
+                        source_bindings=list(action.get("source_bindings") or []),
+                    ).__dict__
+                )
             else:
                 raise ValueError(
                     f"Process '{action.get('key')}' has invalid continuous effects; expected increase/decrease over numeric fluents."
@@ -373,6 +513,32 @@ def build_up_problem(
                 param_remap=param_remap,
             )
         problem.add_action(fallback_action)
+        planner_action_refs[desired_name] = dict(
+            ActionRef(
+                pddl_action_name=desired_name,
+                source_aas_id=str(action.get("source_aas_id") or ""),
+                source_aas_name=str(action.get("source_name") or ""),
+                action_key=str(action.get("key") or ""),
+                skill_target=str(action.get("skill_target") or action.get("key") or ""),
+                action_kind=action_kind,
+                action_aas_path=str(action.get("action_aas_path") or ""),
+                transformation_aas_path=str(action.get("transformation_aas_path") or ""),
+                transformation=str(action.get("transformation") or ""),
+                parameter_bindings=[
+                    {
+                        "name": str(param.get("name") or f"p{idx}"),
+                        "type": canonical_type_name(param.get("type")),
+                        "is_constant": bool(param.get("is_constant")),
+                        "bound_object": str(param.get("bound_object") or ""),
+                        "resolved_kind": str(param_remap.get(idx, {}).get("kind") or ""),
+                        "resolved_up_param": str(param_remap.get(idx, {}).get("up_param") or ""),
+                        "resolved_object": str(param_remap.get(idx, {}).get("object_name") or ""),
+                    }
+                    for idx, param in enumerate(action.get("parameters", []))
+                ],
+                source_bindings=list(action.get("source_bindings") or []),
+            ).__dict__
+        )
 
     for term in merged["init_terms"]:
         apply_init_term(problem, term, fluent_map, fluent_param_types, object_map, object_types, warnings)
@@ -411,6 +577,33 @@ def build_up_problem(
                 SometimeAfter,
                 warnings,
             )
+
+    # Planner metadata drives PR1 XML emission (AAS paths + parameter bindings).
+    # Keep both original and case-insensitive lookup keys for robust downstream matching.
+    predicate_refs_ci = {
+        key.lower(): value for key, value in planner_predicate_refs.items()
+    }
+    action_refs_ci = {
+        key.lower(): value for key, value in planner_action_refs.items()
+    }
+    object_refs_ci = {
+        key.lower(): value for key, value in planner_object_refs.items()
+    }
+    try:
+        setattr(
+            problem,
+            "_planner_metadata",
+            {
+                "action_refs": planner_action_refs,
+                "action_refs_ci": action_refs_ci,
+                "predicate_refs": planner_predicate_refs,
+                "predicate_refs_ci": predicate_refs_ci,
+                "object_refs": planner_object_refs,
+                "object_refs_ci": object_refs_ci,
+            },
+        )
+    except Exception:
+        warnings.append("Could not attach planner metadata to UP problem; execution refs may be incomplete.")
 
     return problem
 

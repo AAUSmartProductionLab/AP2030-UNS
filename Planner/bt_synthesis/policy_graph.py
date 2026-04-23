@@ -107,6 +107,25 @@ def build_policy_state_graph(
                     dels,
                 )
 
+                # If this outcome already satisfies the goal, route the edge
+                # to the goal sink rather than searching for a state-signature
+                # match. Many policy rules sit right next to the goal and have
+                # preconditions that happen to be a subset of any
+                # goal-satisfying state, so without this short-circuit the
+                # successor would always be matched to one of those rules and
+                # the goal sink would never receive an edge.
+                if goal_pos and goal_pos.issubset(sim_positive) and goal_neg.issubset(sim_negative):
+                    transitions.append(
+                        PolicyTransition(
+                            source=source_id,
+                            target=goal_node_id,
+                            action=action,
+                            transition_type="goal",
+                            outcome=outcome_idx,
+                        )
+                    )
+                    continue
+
                 best_target = None
                 best_score: Tuple[int, int, int] = (-1, 0, 0)
                 for candidate_signature in state_signatures:
@@ -151,26 +170,15 @@ def build_policy_state_graph(
                     )
                     continue
 
-                if goal_pos and goal_pos.issubset(sim_positive) and goal_neg.issubset(sim_negative):
-                    transitions.append(
-                        PolicyTransition(
-                            source=source_id,
-                            target=goal_node_id,
-                            action=action,
-                            transition_type="goal",
-                            outcome=outcome_idx,
-                        )
+                transitions.append(
+                    PolicyTransition(
+                        source=source_id,
+                        target=unmapped_node_id,
+                        action=action,
+                        transition_type="unmapped",
+                        outcome=outcome_idx,
                     )
-                else:
-                    transitions.append(
-                        PolicyTransition(
-                            source=source_id,
-                            target=unmapped_node_id,
-                            action=action,
-                            transition_type="unmapped",
-                            outcome=outcome_idx,
-                        )
-                    )
+                )
 
     # Distances are derived from PR2 rule rank (the planner emits rules
     # sorted by ascending true goal-distance). The goal sink is 0 and a

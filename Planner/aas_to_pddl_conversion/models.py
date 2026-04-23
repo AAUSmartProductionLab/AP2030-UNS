@@ -19,6 +19,38 @@ class PlanningCapability:
 
 
 @dataclass
+class ActionRef:
+    """Planner-side execution reference for a grounded PDDL action schema."""
+
+    pddl_action_name: str
+    source_aas_id: str
+    source_aas_name: str
+    action_key: str
+    skill_target: str
+    action_kind: str
+    action_aas_path: str = ""
+    transformation_aas_path: str = ""
+    transformation: str = ""
+    parameter_bindings: List[Dict[str, Any]] = field(default_factory=list)
+    source_bindings: List[Dict[str, str]] = field(default_factory=list)
+
+
+@dataclass
+class PredicateRef:
+    """Planner-side execution reference for a fluent/predicate schema."""
+
+    fluent_name: str
+    fluent_key: str
+    source_aas_id: str
+    source_aas_name: str
+    fluent_aas_path: str = ""
+    transformation_aas_path: str = ""
+    transformation: str = ""
+    param_types: List[str] = field(default_factory=list)
+    source_bindings: List[Dict[str, str]] = field(default_factory=list)
+
+
+@dataclass
 class AIPlanningPipelineResult:
     bt_xml: str
     solve_result: Any
@@ -26,6 +58,7 @@ class AIPlanningPipelineResult:
     warnings: List[str] = field(default_factory=list)
     capabilities: List[PlanningCapability] = field(default_factory=list)
     artifacts: Dict[str, str] = field(default_factory=dict)
+    planner_metadata: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass

@@ -35,27 +35,51 @@ def parse_domain(domain: Dict[str, Any], parsed: _ParsedSource, source_objects: 
     fluent_section = find_collection(domain_sections, "Fluents")
     if fluent_section:
         for fluent in fluent_section.get("value", []):
-            parsed.fluents.append(parse_fluent(fluent, parsed.aas_name))
+            parsed.fluents.append(parse_fluent(fluent, parsed.aas_name, parsed.aas_id))
 
     action_section = find_collection(domain_sections, "Actions")
     if action_section:
         for action in action_section.get("value", []):
             parsed.actions.append(
-                parse_action(action, parsed.aas_name, parsed.warnings, source_objects, action_kind="Action", source_objects_full=_sof)
+                parse_action(
+                    action,
+                    parsed.aas_name,
+                    parsed.aas_id,
+                    parsed.warnings,
+                    source_objects,
+                    action_kind="Action",
+                    source_objects_full=_sof,
+                )
             )
 
     process_section = find_collection(domain_sections, "Processes")
     if process_section:
         for process in process_section.get("value", []):
             parsed.actions.append(
-                parse_action(process, parsed.aas_name, parsed.warnings, source_objects, action_kind="Process", source_objects_full=_sof)
+                parse_action(
+                    process,
+                    parsed.aas_name,
+                    parsed.aas_id,
+                    parsed.warnings,
+                    source_objects,
+                    action_kind="Process",
+                    source_objects_full=_sof,
+                )
             )
 
     event_section = find_collection(domain_sections, "Events")
     if event_section:
         for event in event_section.get("value", []):
             parsed.actions.append(
-                parse_action(event, parsed.aas_name, parsed.warnings, source_objects, action_kind="Event", source_objects_full=_sof)
+                parse_action(
+                    event,
+                    parsed.aas_name,
+                    parsed.aas_id,
+                    parsed.warnings,
+                    source_objects,
+                    action_kind="Event",
+                    source_objects_full=_sof,
+                )
             )
 
     constraint_section = find_collection(domain_sections, "Constraints")
@@ -76,6 +100,7 @@ def parse_problem(problem: Dict[str, Any], parsed: _ParsedSource) -> None:
                 {
                     "name": name,
                     "reference": reference_key_tail(obj.get("value")),
+                    "object_aas_path": f"AI-Planning/Problem/Objects/{name}",
                     "declared_type": parameter_type_from_reference(obj.get("value")),
                     "source_aas_id": parsed.aas_id,
                     "source_aas_name": parsed.aas_name,
@@ -106,7 +131,7 @@ def parse_problem(problem: Dict[str, Any], parsed: _ParsedSource) -> None:
         )
 
 
-def parse_fluent(fluent: Dict[str, Any], source_name: str) -> Dict[str, Any]:
+def parse_fluent(fluent: Dict[str, Any], source_name: str, source_aas_id: str) -> Dict[str, Any]:
     param_types: List[str] = []
     params_list = find_list(fluent.get("value", []), "Parameters")
     if params_list:
@@ -123,19 +148,28 @@ def parse_fluent(fluent: Dict[str, Any], source_name: str) -> Dict[str, Any]:
             if coerce_numeric_literal(numeric_value) is not None:
                 value_type = "numeric"
 
+    fluent_key = fluent.get("idShort") or display_name(fluent) or "Fluent"
+    fluent_aas_path = f"AI-Planning/Domain/Fluents/{fluent_key}"
+    transformation_aas_path = f"{fluent_aas_path}/Transformation" if transformation else ""
+
     return {
-        "key": fluent.get("idShort") or display_name(fluent) or "Fluent",
+        "key": fluent_key,
         "semantic_id": first_semantic_id(fluent),
         "param_types": param_types,
         "transformation": transformation,
+        "fluent_aas_path": fluent_aas_path,
+        "transformation_aas_path": transformation_aas_path,
         "value_type": value_type,
         "source": source_name,
+        "source_aas_id": source_aas_id,
+        "source_aas_name": source_name,
     }
 
 
 def parse_action(
     action: Dict[str, Any],
     source_name: str,
+    source_aas_id: str,
     warnings: List[str],
     source_objects: List[str],
     action_kind: str,
@@ -145,10 +179,19 @@ def parse_action(
 
     action_key = action.get("idShort") or display_name(action) or "Action"
     skill_target = action_key
+    action_path_kind = f"{action_kind}s"
+    action_aas_path = f"AI-Planning/Domain/{action_path_kind}/{action_key}"
 
     skill_ref = find_reference(values, "SkillReference")
     if skill_ref is not None:
         skill_target = reference_key_tail(skill_ref.get("value")) or action_key
+
+    transformation = ""
+    for child in values:
+        if child.get("modelType") == "Property" and child.get("idShort") == "Transformation":
+            transformation = str(child.get("value") or "")
+            break
+    transformation_aas_path = f"{action_aas_path}/Transformation" if transformation else ""
 
     parameters: List[Dict[str, Any]] = []
     params_list = find_list(values, "Parameters")
@@ -214,12 +257,15 @@ def parse_action(
         "semantic_id": action_semantic_ids[0] if action_semantic_ids else "",
         "semantic_ids": action_semantic_ids,
         "skill_target": skill_target,
+        "action_aas_path": action_aas_path,
+        "transformation_aas_path": transformation_aas_path,
+        "transformation": transformation,
         "parameters": parameters,
         "preconditions": preconditions,
         "effects": effects,
         "action_kind": action_kind,
         "source_name": source_name,
-        "source_aas_id": "",
+        "source_aas_id": source_aas_id,
     }
 
 

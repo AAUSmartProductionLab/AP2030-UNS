@@ -26,7 +26,18 @@ class PipelineFacadeTests(unittest.TestCase):
         )
         parsed = _ParsedSource(aas_id=source.aas_id, aas_name=source.aas_name, warnings=["parse-warning"])
         merged = {"actions": [], "constraints_terms": []}
-        solve_result = SimpleNamespace(is_plan=True, is_solved=True)
+        semantic_problem = SimpleNamespace(
+            _planner_metadata={
+                "action_refs": {"act": {"source_aas_id": "aas://example/action"}},
+                "predicate_refs": {},
+            }
+        )
+        reduced_problem = SimpleNamespace(_planner_metadata={})
+        solve_result = SimpleNamespace(
+            is_plan=True,
+            is_solved=True,
+            metadata={"problem": semantic_problem},
+        )
         capabilities = [SimpleNamespace(name="Dispensing", semantic_id="sid", resources={"res": "id"})]
 
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -35,7 +46,8 @@ class PipelineFacadeTests(unittest.TestCase):
             ), patch(
                 "Planner.aas_to_pddl_conversion.pipeline.compile_bop_ordering"
             ) as compile_bop_mock, patch(
-                "Planner.aas_to_pddl_conversion.pipeline.build_up_problem", side_effect=["semantic-problem", "reduced"]
+                "Planner.aas_to_pddl_conversion.pipeline.build_up_problem",
+                side_effect=[semantic_problem, reduced_problem],
             ), patch(
                 "Planner.aas_to_pddl_conversion.pipeline.solve_with_reduced_fallback", return_value=solve_result
             ) as solve_mock, patch(
@@ -64,6 +76,11 @@ class PipelineFacadeTests(unittest.TestCase):
         self.assertIn("deterministic_plan", result.artifacts)
         self.assertTrue(result.artifacts["behavior_tree_xml"].endswith("behavior_tree.xml"))
         self.assertTrue(result.artifacts["deterministic_plan"].endswith("deterministic_plan.txt"))
+        self.assertEqual(result.planner_metadata.get("action_refs", {}).get("act", {}).get("source_aas_id"), "aas://example/action")
+        self.assertEqual(
+            solve_result.metadata.get("planner_metadata", {}).get("action_refs", {}).get("act", {}).get("source_aas_id"),
+            "aas://example/action",
+        )
 
         solve_call = solve_mock.call_args.kwargs
         self.assertEqual(solve_call["timeout"], 12.0)

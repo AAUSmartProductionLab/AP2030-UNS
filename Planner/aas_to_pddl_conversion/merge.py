@@ -56,6 +56,18 @@ def merge_sources(parsed_sources: List[_ParsedSource], warnings: List[str]) -> D
             if key not in fluent_by_key:
                 entry = dict(fluent)
                 entry["signature"] = signature
+                entry.setdefault(
+                    "source_bindings",
+                    [
+                        {
+                            "aas_id": source.aas_id,
+                            "aas_name": source.aas_name,
+                            "fluent_aas_path": str(fluent.get("fluent_aas_path") or ""),
+                            "transformation_aas_path": str(fluent.get("transformation_aas_path") or ""),
+                            "fluent_key": str(fluent.get("key") or ""),
+                        }
+                    ],
+                )
                 fluent_by_key[key] = entry
                 merged["fluents"].append(entry)
                 fluent_name_map[key] = key
@@ -63,6 +75,15 @@ def merge_sources(parsed_sources: List[_ParsedSource], warnings: List[str]) -> D
 
             existing = fluent_by_key[key]
             if existing["signature"] == signature:
+                existing.setdefault("source_bindings", []).append(
+                    {
+                        "aas_id": source.aas_id,
+                        "aas_name": source.aas_name,
+                        "fluent_aas_path": str(fluent.get("fluent_aas_path") or ""),
+                        "transformation_aas_path": str(fluent.get("transformation_aas_path") or ""),
+                        "fluent_key": str(fluent.get("key") or ""),
+                    }
+                )
                 fluent_name_map[key] = key
                 continue
 
@@ -74,6 +95,15 @@ def merge_sources(parsed_sources: List[_ParsedSource], warnings: List[str]) -> D
             entry = dict(fluent)
             entry["key"] = namespaced
             entry["signature"] = (namespaced.lower(), tuple(fluent["param_types"]))
+            entry["source_bindings"] = [
+                {
+                    "aas_id": source.aas_id,
+                    "aas_name": source.aas_name,
+                    "fluent_aas_path": str(fluent.get("fluent_aas_path") or ""),
+                    "transformation_aas_path": str(fluent.get("transformation_aas_path") or ""),
+                    "fluent_key": str(fluent.get("key") or ""),
+                }
+            ]
             fluent_by_key[namespaced] = entry
             merged["fluents"].append(entry)
 
@@ -85,6 +115,15 @@ def merge_sources(parsed_sources: List[_ParsedSource], warnings: List[str]) -> D
 
             if key not in action_by_key:
                 remapped_action["sources"] = [(source.aas_id, source.aas_name)]
+                remapped_action["source_bindings"] = [
+                    {
+                        "aas_id": source.aas_id,
+                        "aas_name": source.aas_name,
+                        "action_aas_path": str(remapped_action.get("action_aas_path") or ""),
+                        "transformation_aas_path": str(remapped_action.get("transformation_aas_path") or ""),
+                        "action_key": str(remapped_action.get("key") or ""),
+                    }
+                ]
                 remapped_action["fingerprint"] = action_fingerprint(remapped_action)
                 action_by_key[key] = remapped_action
                 merged["actions"].append(remapped_action)
@@ -94,6 +133,15 @@ def merge_sources(parsed_sources: List[_ParsedSource], warnings: List[str]) -> D
             new_fp = action_fingerprint(remapped_action)
             if existing["fingerprint"] == new_fp:
                 existing["sources"].append((source.aas_id, source.aas_name))
+                existing.setdefault("source_bindings", []).append(
+                    {
+                        "aas_id": source.aas_id,
+                        "aas_name": source.aas_name,
+                        "action_aas_path": str(remapped_action.get("action_aas_path") or ""),
+                        "transformation_aas_path": str(remapped_action.get("transformation_aas_path") or ""),
+                        "action_key": str(remapped_action.get("key") or ""),
+                    }
+                )
                 continue
 
             namespaced = namespace_name(source.aas_name, key)
@@ -102,6 +150,15 @@ def merge_sources(parsed_sources: List[_ParsedSource], warnings: List[str]) -> D
             )
             remapped_action["key"] = namespaced
             remapped_action["sources"] = [(source.aas_id, source.aas_name)]
+            remapped_action["source_bindings"] = [
+                {
+                    "aas_id": source.aas_id,
+                    "aas_name": source.aas_name,
+                    "action_aas_path": str(remapped_action.get("action_aas_path") or ""),
+                    "transformation_aas_path": str(remapped_action.get("transformation_aas_path") or ""),
+                    "action_key": str(remapped_action.get("key") or ""),
+                }
+            ]
             remapped_action["fingerprint"] = action_fingerprint(remapped_action)
             action_by_key[namespaced] = remapped_action
             merged["actions"].append(remapped_action)

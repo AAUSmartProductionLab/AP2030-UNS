@@ -207,6 +207,108 @@ class BoPOrderingTests(unittest.TestCase):
         self.assertIn("Inspection", action_keys)
         self.assertTrue(any(key.startswith("Anything__") for key in action_keys))
 
+    def test_compile_bop_ordering_step_gates_station_occupy_actions(self):
+        merged = {
+            "fluents": [],
+            "actions": [
+                {
+                    "key": "RunLoading",
+                    "semantic_id": "http://www.w3id.org/aau-ra/cssx#LoadingCapability",
+                    "semantic_ids": ["http://www.w3id.org/aau-ra/cssx#LoadingCapability"],
+                    "skill_target": "Loading",
+                    "parameters": [],
+                    "preconditions": [],
+                    "effects": [],
+                    "action_kind": "Action",
+                    "source_name": "imaLoadingSystemAAS",
+                    "sources": [("loading", "imaLoadingSystemAAS")],
+                },
+                {
+                    "key": "RunUnloading",
+                    "semantic_id": "http://www.w3id.org/aau-ra/cssx#UnloadingCapability",
+                    "semantic_ids": ["http://www.w3id.org/aau-ra/cssx#UnloadingCapability"],
+                    "skill_target": "Unloading",
+                    "parameters": [],
+                    "preconditions": [],
+                    "effects": [],
+                    "action_kind": "Action",
+                    "source_name": "optimaUnloadingSystemAAS",
+                    "sources": [("unloading", "optimaUnloadingSystemAAS")],
+                },
+                {
+                    "key": "OccupyLoading",
+                    "semantic_id": "http://www.w3id.org/aau-ra/cssx#OccupyCapability",
+                    "semantic_ids": ["http://www.w3id.org/aau-ra/cssx#OccupyCapability"],
+                    "skill_target": "Occupy",
+                    "parameters": [],
+                    "preconditions": [],
+                    "effects": [],
+                    "action_kind": "Action",
+                    "source_name": "imaLoadingSystemAAS",
+                    "sources": [("loading", "imaLoadingSystemAAS")],
+                },
+                {
+                    "key": "OccupyUnloading",
+                    "semantic_id": "http://www.w3id.org/aau-ra/cssx#OccupyCapability",
+                    "semantic_ids": ["http://www.w3id.org/aau-ra/cssx#OccupyCapability"],
+                    "skill_target": "Occupy",
+                    "parameters": [],
+                    "preconditions": [],
+                    "effects": [],
+                    "action_kind": "Action",
+                    "source_name": "optimaUnloadingSystemAAS",
+                    "sources": [("unloading", "optimaUnloadingSystemAAS")],
+                },
+            ],
+            "objects": [
+                {
+                    "name": "product_1",
+                    "reference": "",
+                    "declared_type": "Product",
+                    "source_aas_id": "order",
+                    "source_aas_name": "order",
+                }
+            ],
+            "init_terms": [],
+            "goal_terms": [],
+            "constraints_terms": [],
+            "source_lookup": {},
+        }
+        bop_config = {
+            "Processes": [
+                {
+                    "Loading": {
+                        "step": 1,
+                        "semantic_id": "http://www.w3id.org/aau-ra/cssx#LoadingCapability",
+                    }
+                },
+                {
+                    "Unloading": {
+                        "step": 2,
+                        "semantic_id": "http://www.w3id.org/aau-ra/cssx#UnloadingCapability",
+                    }
+                },
+            ]
+        }
+        warnings = []
+
+        compile_bop_ordering(merged, bop_config, warnings)
+
+        action_keys = [action["key"] for action in merged["actions"]]
+        self.assertNotIn("OccupyLoading", action_keys)
+        self.assertNotIn("OccupyUnloading", action_keys)
+
+        occupy_loading = [a for a in merged["actions"] if a["key"].startswith("OccupyLoading__")]
+        occupy_unloading = [a for a in merged["actions"] if a["key"].startswith("OccupyUnloading__")]
+        self.assertEqual(len(occupy_loading), 1)
+        self.assertEqual(len(occupy_unloading), 1)
+
+        loading_preconds = occupy_loading[0].get("preconditions", [])
+        unloading_preconds = occupy_unloading[0].get("preconditions", [])
+
+        self.assertTrue(any(term.get("kind") == "atom" and term.get("fluent") == "step_ready" for term in loading_preconds))
+        self.assertTrue(any(term.get("kind") == "atom" and term.get("fluent") == "step_ready" for term in unloading_preconds))
+
 
 if __name__ == "__main__":
     unittest.main()

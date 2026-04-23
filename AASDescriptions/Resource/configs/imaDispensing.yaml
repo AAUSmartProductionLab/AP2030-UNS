@@ -153,6 +153,14 @@ imaDispensingSystemAAS:
                           externalRef: "css:Resource"
                   transformation: 'parameter1.Variables.OccupationState.ProcessQueue == []'
 
+              -   key: "StationAt"
+                  semantic_id: "cssx:StationAt"
+                  parameters:
+                      -   name: "Resource"
+                          externalRef: "css:Resource"
+                      -   name: "Location"
+                          externalRef: "cssx:LocationParameter"
+
           Actions:
               -   key: "Dispensing"
                   semantic_id: "cssx:DispensingCapability"
@@ -265,6 +273,9 @@ imaDispensingSystemAAS:
               -   predicate:
                   ref: "Free"
                   parameters: [0]
+              -   predicate:
+                  ref: "StationAt"
+                  parameters: [0, 1]
 
           Goal:
               - predicate:

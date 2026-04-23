@@ -27,11 +27,19 @@ def compile_bop_ordering(
     append_step_init_and_goal_terms(merged, product_binding, steps, step_names)
 
     original_actions = list(merged.get("actions", []))
+    step_sources = build_step_sources(steps, original_actions)
     reordered_actions: List[Dict[str, Any]] = []
 
     for action in original_actions:
         matched_steps = [step for step in steps if action_matches_step(action, step)]
         if not matched_steps:
+            if should_step_gate_occupy(action):
+                occupied_steps = [step for step in steps if action_targets_step_source(action, step_sources.get(step["id"], []))]
+                if occupied_steps:
+                    for step in occupied_steps:
+                        step_name = step_names[step["id"]]
+                        reordered_actions.append(make_step_gated_occupy_action(action, product_binding, step_name, step))
+                    continue
             reordered_actions.append(action)
             continue
 
@@ -62,6 +70,69 @@ def compile_bop_ordering(
             )
 
     return merged
+
+
+def build_step_sources(steps: List[Dict[str, Any]], actions: List[Dict[str, Any]]) -> Dict[str, List[str]]:
+    step_sources: Dict[str, List[str]] = {step["id"]: [] for step in steps}
+
+    for step in steps:
+        collected: List[str] = []
+        for action in actions:
+            if str(action.get("action_kind") or "Action") != "Action":
+                continue
+            if not action_matches_step(action, step):
+                continue
+
+            source_name = extract_action_source_name(action)
+            if source_name and source_name not in collected:
+                collected.append(source_name)
+
+        step_sources[step["id"]] = collected
+
+    return step_sources
+
+
+def extract_action_source_name(action: Dict[str, Any]) -> str:
+    direct = str(action.get("source_name") or "").strip()
+    if direct:
+        return direct
+
+    sources = action.get("sources") or []
+    if isinstance(sources, list) and sources:
+        first = sources[0]
+        if isinstance(first, (list, tuple)) and len(first) >= 2:
+            return str(first[1] or "").strip()
+        if isinstance(first, str):
+            return first.strip()
+
+    return ""
+
+
+def should_step_gate_occupy(action: Dict[str, Any]) -> bool:
+    if str(action.get("action_kind") or "Action") != "Action":
+        return False
+
+    raw_candidates = action.get("semantic_ids")
+    candidates: List[str] = [candidate for candidate in (raw_candidates or []) if candidate]
+    if not candidates and action.get("semantic_id"):
+        candidates = [str(action.get("semantic_id"))]
+
+    for candidate in candidates:
+        if match_capability("http://www.w3id.org/aau-ra/cssx#OccupyCapability", candidate):
+            return True
+
+    return False
+
+
+def action_targets_step_source(action: Dict[str, Any], step_sources: List[str]) -> bool:
+    if not step_sources:
+        return False
+
+    source_name = extract_action_source_name(action)
+    if not source_name:
+        return False
+
+    return source_name in step_sources
 
 
 def extract_bop_steps(bop_config: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -322,6 +393,30 @@ def make_step_scoped_action(
         "name": step.get("name"),
         "order": step.get("step"),
         "semantic_id": step.get("semantic_id"),
+    }
+
+    return cloned
+
+
+def make_step_gated_occupy_action(
+    action: Dict[str, Any],
+    product_binding: Dict[str, Any],
+    step_name: str,
+    step: Dict[str, Any],
+) -> Dict[str, Any]:
+    cloned = copy.deepcopy(action)
+    suffix = safe_id(step_name)
+    cloned["key"] = f"{action['key']}__{suffix}" if suffix else f"{action['key']}__step"
+
+    step_binding = {"kind": "object", "name": step_name}
+    ready_atom = make_step_atom("step_ready", product_binding, step_binding)
+    cloned.setdefault("preconditions", []).append(ready_atom)
+
+    cloned["bop_step"] = {
+        "name": step.get("name"),
+        "order": step.get("step"),
+        "semantic_id": step.get("semantic_id"),
+        "gated_auxiliary": "occupy",
     }
 
     return cloned

@@ -61,6 +61,15 @@ def run_ai_planning_pipeline(
     )
     bt_solve_result = solve_result
 
+    planner_metadata = {}
+    solve_problem = getattr(solve_result, "metadata", {}).get("problem")
+    if solve_problem is not None:
+        planner_metadata = dict(getattr(solve_problem, "_planner_metadata", {}) or {})
+    if not planner_metadata:
+        planner_metadata = dict(getattr(up_problem, "_planner_metadata", {}) or {})
+    if hasattr(solve_result, "metadata") and isinstance(getattr(solve_result, "metadata", None), dict):
+        solve_result.metadata["planner_metadata"] = planner_metadata
+
     bt_xml, conversion_warnings = solve_result_to_bt_xml(solve_result)
     warnings.extend(conversion_warnings)
 
@@ -83,6 +92,7 @@ def run_ai_planning_pipeline(
         warnings=warnings,
         capabilities=capabilities,
         artifacts=artifacts,
+        planner_metadata=planner_metadata,
     )
 
 

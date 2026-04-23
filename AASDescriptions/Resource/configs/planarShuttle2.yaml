@@ -210,6 +210,8 @@ planarTableShuttle2AAS:
 
                       -   name: "To"
                           externalRef: "cssx:LocationParameter"
+                      -   name: "DestinationStation"
+                          externalRef: "css:Resource"
                           
                   conditions:
                       at_start:
@@ -232,6 +234,12 @@ planarTableShuttle2AAS:
                           - predicate:
                               external: "cssx:ResourceAt"
                               parameters: [0 ,2]
+                          - predicate:
+                              ref: "Occupied"
+                              parameters: [4, 1]
+                          - predicate:
+                              external: "cssx:StationAt"
+                              parameters: [4, 3]
                   effects:
                       at_end:
                           - not:

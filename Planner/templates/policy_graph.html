@@ -140,7 +140,7 @@
                 <div class="legend">
                     <div class="legend-item"><span class="legend-color" style="background:$color_goal;"></span>Goal (distance 0)</div>
                     <div class="legend-item"><span class="legend-color" style="background:$color_init;"></span>Initial state</div>
-                    <div class="legend-item"><span class="legend-color" style="background:$color_sc;"></span>Strong-cyclic</div>
+                    <div class="legend-item"><span class="legend-color" style="background:$color_sc;"></span>On a cycle (recovery loop)</div>
                     <div class="legend-item"><span class="legend-color" style="background:$color_undefined;"></span>Undefined / unmapped</div>
                     <div class="legend-item"><span class="legend-color" style="background:$color_default;"></span>Default</div>
                 </div>
@@ -436,6 +436,22 @@
         /* Tick (PRP-style edge routing) */
         simulation.on("tick", function() {
             path.attr("d", function(d) {
+                /* Self-loop: draw a small arc looping above the node so the
+                 * transition is visible (otherwise the path collapses to a
+                 * zero-length segment and the edge disappears). */
+                if (d.source === d.target || d.source.id === d.target.id) {
+                    var cx = d.source.x,
+                        cy = d.source.y,
+                        r  = nodeRadius,
+                        loopR = nodeRadius * 1.6,
+                        x1 = cx - r * 0.5,
+                        y1 = cy - r * 0.87,
+                        x2 = cx + r * 0.5,
+                        y2 = cy - r * 0.87;
+                    return "M" + x1 + "," + y1 +
+                           "A" + loopR + "," + loopR + " 0 1,1 " +
+                           x2 + "," + y2;
+                }
                 var dx = d.target.x - d.source.x,
                     dy = d.target.y - d.source.y,
                     dist = Math.sqrt(dx * dx + dy * dy) || 1,
