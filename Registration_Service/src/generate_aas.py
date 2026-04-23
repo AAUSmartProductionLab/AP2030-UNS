@@ -25,6 +25,7 @@ from .aas_generation.submodels import (
     ParametersSubmodelBuilder,
     HierarchicalStructuresSubmodelBuilder,
     CapabilitiesSubmodelBuilder,
+    SimulationModelBuilder, #Added
     # Process AAS specific builders
     ProcessInformationSubmodelBuilder,
     RequiredCapabilitiesSubmodelBuilder,
@@ -117,6 +118,10 @@ class AASGenerator:
         self.capabilities_builder = CapabilitiesSubmodelBuilder(
             self.base_url, self.semantic_factory, self.element_factory
         )
+
+        self.simulation_model_builder = SimulationModelBuilder(
+            self.base_url, self.semantic_factory, self.element_factory
+        ) #Added
 
         # Process AAS specific builders
         self.process_info_builder = ProcessInformationSubmodelBuilder(
@@ -289,11 +294,13 @@ class AASGenerator:
                 self.system_id, self.system_config),
             self.capabilities_builder.build(
                 self.system_id, self.system_config),
-            self.skills_builder.build(self.system_id, self.system_config)
+            self.skills_builder.build(self.system_id, self.system_config),
+            self.simulation_model_builder.build(self.system_id, self.system_config) #Added
         ]
 
         for submodel in submodels:
-            obj_store.add(submodel)
+            if submodel is not None:
+                obj_store.add(submodel)
 
         # Generate Process AAS specific submodels (if config contains them)
         process_submodels = self._build_process_submodels()

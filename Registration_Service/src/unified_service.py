@@ -375,6 +375,16 @@ class UnifiedRegistrationService:
                 logger.info(
                     f"Debug: CapabilitySet has {len(submodel_data.get('submodelElements', [])[0].get('value', []))} capability containers")
 
+            # Debug logging for SimulationModel submodel
+            if submodel_data.get('idShort') == 'SimulationModel':
+                logger.info(f"Debug: SimulationModel JSON structure:")
+                logger.info(f"  idShort: {submodel_data.get('idShort')}")
+                logger.info(f"  id: {submodel_data.get('id')}")
+                logger.info(f"  modelType: {submodel_data.get('modelType')}")
+                logger.info(f"  submodelElements count: {len(submodel_data.get('submodelElements', []))}")
+                for elem in submodel_data.get('submodelElements', []):
+                    logger.info(f"    - {elem.get('idShort')}: modelType={elem.get('modelType')}, valueType={elem.get('valueType')}")
+
             encoded_id = encode_aas_id(submodel_data['id'])
 
             # POST to submodel repository
@@ -512,6 +522,7 @@ class UnifiedRegistrationService:
                         logger.warning(f"Skipping invalid submodel: {sm}")
 
                 logger.info(f"Built {len(submodel_descriptors)} submodel descriptors")
+                logger.info(f"Submodel descriptors being registered: {[sm['idShort'] for sm in submodel_descriptors]}")
                 if submodel_descriptors:
                     shell_descriptor['submodelDescriptors'] = submodel_descriptors
 

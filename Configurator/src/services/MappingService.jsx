@@ -146,29 +146,29 @@ class MappingService {
       // Origin at bottom-left corner (Module Area 14), Y limit 960mm (long side), X limit 720mm (short side)
       // Format: [x, y, rotation_degrees]
       static positionMap = {
-        0: [600, 840, 180],    // Top row - facing south
-        1: [600, 600, 180],
-        2: [600, 360, 180],
-        3: [600, 120, 180],
+        0: [960, 960, 180],    // Top row - facing south
+        1: [960, 720, 180],
+        2: [960, 480, 180],
+        3: [960, 240, 180],
         
         // Left edge - orientation 270 (west facing)
-        4: [600, 840, 270],
-        6: [360, 840, 270],
-        9: [120, 840, 270],
+        4: [720, 1200, 270],
+        6: [480, 1200, 270],
+        9: [240, 1200, 270],
         
         // Right edge - orientation 90 (east facing)
-        5: [600, 120, 90],
-        8: [360, 120, 90],
-        10: [120, 120, 90],
+        5: [720, 0, 90],
+        8: [480, 0, 90],
+        10: [240, 0, 90],
         
         // Middle EM square
-        7: [360, 600, 90],
+        7: [480, 480, 90],
         
         // Bottom row - orientation 0 (north facing)
-        11: [120, 840, 0],
-        12: [120, 600, 0],
-        13: [120, 360, 0],
-        14: [120, 120, 0],
+        11: [0, 960, 0],
+        12: [0, 720, 0],
+        13: [0, 480, 0],
+        14: [0, 240, 0],
         };
     }
   

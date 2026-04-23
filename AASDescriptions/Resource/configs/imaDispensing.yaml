@@ -146,3 +146,10 @@ imaDispensingSystemAAS:
             description: "Release the system from exclusive use"
             semantic_id: "https://smartproductionlab.aau.dk/skills/Release"
             interface: "Release"
+
+    SimulationModel:
+        ModelPath: "https://github.com/AAU-RoboticsAutomationGroup/AAU-Visual-Component-w-AAS-UNS/blob/main/Layouts/DispensingSystem.vcmx"
+        ModelPathRawFile: "https://raw.githubusercontent.com/AAU-RoboticsAutomationGroup/AAU-Visual-Component-w-AAS-UNS/main/Layouts/DispensingSystem.vcmx"
+        Description: "A Visual Components simulation model of the dispenser"
+        ModelType: "vcmx"
+        Version: "1.0.0"

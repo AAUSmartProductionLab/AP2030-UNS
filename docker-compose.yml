@@ -157,30 +157,30 @@ services:
         condition: service_healthy
 
 ################################## PACKML STATIONS AND MODULES ###############################
-  planar_controller:
-    build:
-      context: ./Planar_Controller
-      dockerfile: Dockerfile
-    container_name: planar_controller
-    environment:
-      - MQTT_BROKER=hivemq-broker
-      - MQTT_PORT=1883
-      - PMC_IP=${PMC_IP:-192.168.0.199}
-    volumes:
-      - ./MQTTSchemas:/app/MQTTSchemas
-      - ./AASDescriptions:/app/AASDescriptions
-    networks:
-      - hivemq-network
-    depends_on:
-      hivemq-broker:
-        condition: service_started
-      aas-env:
-        condition: service_started
-      databridge:
-        condition: service_started
-      registration-service:
-        condition: service_healthy
-    restart: unless-stopped
+  # planar_controller:
+  #   build:
+  #     context: ./Planar_Controller
+  #     dockerfile: Dockerfile
+  #   container_name: planar_controller
+  #   environment:
+  #     - MQTT_BROKER=hivemq-broker
+  #     - MQTT_PORT=1883
+  #     - PMC_IP=${PMC_IP:-192.168.0.199}
+  #   volumes:
+  #     - ./MQTTSchemas:/app/MQTTSchemas
+  #     - ./AASDescriptions:/app/AASDescriptions
+  #   networks:
+  #     - hivemq-network
+  #   depends_on:
+  #     hivemq-broker:
+  #       condition: service_started
+  #     aas-env:
+  #       condition: service_started
+  #     databridge:
+  #       condition: service_started
+  #     registration-service:
+  #       condition: service_healthy
+  #   restart: unless-stopped
 
   production_planner:
     extends:

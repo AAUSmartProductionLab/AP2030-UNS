@@ -7,6 +7,7 @@ from .parameters_builder import ParametersSubmodelBuilder
 from .hierarchical_structures_builder import HierarchicalStructuresSubmodelBuilder
 from .capabilities_builder import CapabilitiesSubmodelBuilder
 from .bill_of_processes_builder import BillOfProcessesSubmodelBuilder
+from .simulation_model_builder import SimulationModelBuilder #Added
 from .process_submodels_builder import (
     ProcessInformationSubmodelBuilder,
     RequiredCapabilitiesSubmodelBuilder,
@@ -21,6 +22,7 @@ __all__ = [
     'HierarchicalStructuresSubmodelBuilder',
     'CapabilitiesSubmodelBuilder',
     'BillOfProcessesSubmodelBuilder',
+    'SimulationModelBuilder', #Added
     # Process AAS specific builders
     'ProcessInformationSubmodelBuilder',
     'RequiredCapabilitiesSubmodelBuilder',
