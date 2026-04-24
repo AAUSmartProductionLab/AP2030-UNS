@@ -20,7 +20,7 @@ from __future__ import annotations
 import hashlib
 import json
 import xml.etree.ElementTree as ET
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Set, Tuple
 
 from .nodes import (
     ActionNode,
@@ -500,7 +500,11 @@ def _bt_node_to_xml(
 # ===================================================================
 
 
-def bt_to_xml(bt: BehaviorTree, tree_id: str = "MainTree") -> str:
+def bt_to_xml(
+    bt: BehaviorTree,
+    tree_id: str = "MainTree",
+    planner_metadata: Optional[Mapping[str, Any]] = None,
+) -> str:
     """Serialize a ``BehaviorTree`` to BehaviorTree.CPP v4 XML."""
     root_el = ET.Element("root", attrib={"BTCPP_format": "4"})
     extracted_ids = _collect_factorable_subtrees(bt.root)
@@ -575,10 +579,25 @@ def bt_to_xml(bt: BehaviorTree, tree_id: str = "MainTree") -> str:
         ET.SubElement(fa, "input_port", attrib={"name": "forbidden_args", "default": ""})
 
     # Parameterized SubTree port declarations.
-    if blackboard_declarations:
+    initial_state_payload: Optional[str] = None
+    if planner_metadata is not None:
+        atoms = planner_metadata.get("initial_state") if isinstance(planner_metadata, Mapping) else None
+        if atoms:
+            try:
+                initial_state_payload = json.dumps(list(atoms), separators=(",", ":"))
+            except Exception:
+                initial_state_payload = None
+
+    if blackboard_declarations or initial_state_payload:
         main_st = ET.SubElement(model, "SubTree", attrib={"ID": tree_id, "editable": "true"})
-        for output_key, value in blackboard_declarations:
+        for output_key, value in blackboard_declarations or []:
             ET.SubElement(main_st, "input_port", attrib={"name": output_key, "default": value})
+        if initial_state_payload is not None:
+            ET.SubElement(
+                main_st,
+                "input_port",
+                attrib={"name": "_planner_initial_state", "default": initial_state_payload},
+            )
 
     if templates:
         for templ_id in sorted(templates):

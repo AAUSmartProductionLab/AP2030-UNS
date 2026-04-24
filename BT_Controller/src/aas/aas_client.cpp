@@ -1334,3 +1334,406 @@ std::optional<std::string> AASClient::resolveInterfaceReference(
         return std::nullopt;
     }
 }
+// ---------------------------------------------------------------------------
+// PR2/PR3 additions
+// ---------------------------------------------------------------------------
+
+nlohmann::json AASClient::makePostRequest(const std::string &endpoint,
+                                          const nlohmann::json &body,
+                                          bool use_registry)
+{
+    if (!curl_)
+    {
+        throw std::runtime_error("CURL not initialized");
+    }
+
+    std::string readBuffer;
+    std::string base_url = use_registry ? registry_url_ : aas_server_url_;
+    std::string full_url = base_url + endpoint;
+    std::string body_str = body.dump();
+
+    // Reset CURL handle state from any prior GET configuration that would
+    // otherwise leak into this POST.
+    curl_easy_setopt(curl_, CURLOPT_URL, full_url.c_str());
+    curl_easy_setopt(curl_, CURLOPT_POST, 1L);
+    curl_easy_setopt(curl_, CURLOPT_POSTFIELDS, body_str.c_str());
+    curl_easy_setopt(curl_, CURLOPT_POSTFIELDSIZE, static_cast<long>(body_str.size()));
+    curl_easy_setopt(curl_, CURLOPT_WRITEFUNCTION, WriteCallback);
+    curl_easy_setopt(curl_, CURLOPT_WRITEDATA, &readBuffer);
+    curl_easy_setopt(curl_, CURLOPT_TIMEOUT, 30L);
+
+    struct curl_slist *headers = nullptr;
+    headers = curl_slist_append(headers, "Accept: application/json");
+    headers = curl_slist_append(headers, "Content-Type: application/json");
+    curl_easy_setopt(curl_, CURLOPT_HTTPHEADER, headers);
+
+    CURLcode res = curl_easy_perform(curl_);
+    long response_code = 0;
+    curl_easy_getinfo(curl_, CURLINFO_RESPONSE_CODE, &response_code);
+
+    curl_slist_free_all(headers);
+
+    // Reset POST flag so subsequent makeGetRequest calls behave correctly.
+    curl_easy_setopt(curl_, CURLOPT_POST, 0L);
+    curl_easy_setopt(curl_, CURLOPT_POSTFIELDS, nullptr);
+
+    if (res != CURLE_OK)
+    {
+        throw std::runtime_error(std::string("CURL error: ") + curl_easy_strerror(res));
+    }
+
+    if (response_code < 200 || response_code >= 300)
+    {
+        std::string error_msg = "HTTP error code: " + std::to_string(response_code) +
+                                " for POST URL: " + full_url;
+        if (!readBuffer.empty())
+        {
+            error_msg += ", Response: " + readBuffer;
+        }
+        throw std::runtime_error(error_msg);
+    }
+
+    if (readBuffer.empty())
+    {
+        return nlohmann::json::object();
+    }
+    return nlohmann::json::parse(readBuffer);
+}
+
+namespace
+{
+    // Convert a slash-delimited idShort path ("Capabilities/Dispense/Transformation")
+    // to the dot-delimited form expected by the AAS submodel-elements endpoint.
+    std::string slashToDotPath(const std::string &slash_path)
+    {
+        std::string dot_path = slash_path;
+        // Strip leading slashes
+        while (!dot_path.empty() && dot_path.front() == '/')
+        {
+            dot_path.erase(dot_path.begin());
+        }
+        // Strip trailing slashes
+        while (!dot_path.empty() && dot_path.back() == '/')
+        {
+            dot_path.pop_back();
+        }
+        std::replace(dot_path.begin(), dot_path.end(), '/', '.');
+        return dot_path;
+    }
+}
+
+std::optional<nlohmann::json> AASClient::fetchSubmodelElementByPath(
+    const std::string &asset_id,
+    const std::string &submodel_id_short,
+    const std::string &slash_path)
+{
+    try
+    {
+        auto submodel_data = fetchSubmodelData(asset_id, submodel_id_short);
+        if (!submodel_data.has_value())
+        {
+            std::cerr << "fetchSubmodelElementByPath: could not load submodel '"
+                      << submodel_id_short << "' for asset '" << asset_id << "'" << std::endl;
+            return std::nullopt;
+        }
+
+        // Walk the slash path through the in-memory submodel structure.
+        // This avoids an extra round trip and works against any AAS server
+        // that returns a fully-expanded submodel from /submodels/<id>.
+        std::string normalized = slash_path;
+        while (!normalized.empty() && normalized.front() == '/')
+        {
+            normalized.erase(normalized.begin());
+        }
+        while (!normalized.empty() && normalized.back() == '/')
+        {
+            normalized.pop_back();
+        }
+        if (normalized.empty())
+        {
+            return submodel_data;
+        }
+
+        std::vector<std::string> segments;
+        std::string current;
+        for (char c : normalized)
+        {
+            if (c == '/')
+            {
+                if (!current.empty())
+                {
+                    segments.push_back(current);
+                    current.clear();
+                }
+            }
+            else
+            {
+                current.push_back(c);
+            }
+        }
+        if (!current.empty())
+        {
+            segments.push_back(current);
+        }
+
+        const nlohmann::json *cursor = &(*submodel_data);
+        if (!cursor->contains("submodelElements") || !(*cursor)["submodelElements"].is_array())
+        {
+            std::cerr << "fetchSubmodelElementByPath: submodel has no submodelElements" << std::endl;
+            return std::nullopt;
+        }
+        const nlohmann::json *elements = &(*cursor)["submodelElements"];
+        const nlohmann::json *match = nullptr;
+
+        for (size_t i = 0; i < segments.size(); ++i)
+        {
+            const std::string &segment = segments[i];
+            match = nullptr;
+            if (!elements->is_array())
+            {
+                std::cerr << "fetchSubmodelElementByPath: expected array at segment '"
+                          << segment << "'" << std::endl;
+                return std::nullopt;
+            }
+            for (const auto &elem : *elements)
+            {
+                if (elem.contains("idShort") && elem["idShort"] == segment)
+                {
+                    match = &elem;
+                    break;
+                }
+            }
+            if (match == nullptr)
+            {
+                std::cerr << "fetchSubmodelElementByPath: segment '" << segment
+                          << "' not found in path '" << slash_path << "'" << std::endl;
+                return std::nullopt;
+            }
+            if (i + 1 < segments.size())
+            {
+                if (!match->contains("value") || !(*match)["value"].is_array())
+                {
+                    std::cerr << "fetchSubmodelElementByPath: cannot descend past '"
+                              << segment << "'" << std::endl;
+                    return std::nullopt;
+                }
+                elements = &(*match)["value"];
+            }
+        }
+
+        if (match == nullptr)
+        {
+            return std::nullopt;
+        }
+        return *match;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Exception in fetchSubmodelElementByPath: " << e.what() << std::endl;
+        return std::nullopt;
+    }
+}
+
+std::optional<nlohmann::json> AASClient::invokeOperation(
+    const std::string &asset_id,
+    const std::string &submodel_id_short,
+    const std::string &operation_aas_path,
+    const nlohmann::json &input_json)
+{
+    try
+    {
+        // Resolve the submodel id for this asset by reusing the existing
+        // shell-descriptor lookup logic (which already handles the registry).
+        // We re-walk the registry just to obtain the full submodel id.
+        std::string registry_url = "/shell-descriptors";
+        nlohmann::json registry_response = makeGetRequest(registry_url, true);
+        if (!registry_response.contains("result") || !registry_response["result"].is_array())
+        {
+            std::cerr << "invokeOperation: invalid registry response" << std::endl;
+            return std::nullopt;
+        }
+
+        std::string shell_path;
+        for (const auto &shell : registry_response["result"])
+        {
+            bool matches = false;
+            if (shell.contains("id") && shell["id"].get<std::string>() == asset_id)
+            {
+                matches = true;
+            }
+            else if (shell.contains("idShort"))
+            {
+                std::string id_short = shell["idShort"].get<std::string>();
+                if (id_short == asset_id || asset_id.find(id_short) != std::string::npos)
+                {
+                    matches = true;
+                }
+            }
+            if (matches && shell.contains("endpoints") && shell["endpoints"].is_array() &&
+                !shell["endpoints"].empty())
+            {
+                std::string ep = shell["endpoints"][0]["protocolInformation"]["href"];
+                size_t pos = ep.find("/shells/");
+                if (pos != std::string::npos)
+                {
+                    shell_path = ep.substr(pos);
+                }
+                break;
+            }
+        }
+        if (shell_path.empty())
+        {
+            std::cerr << "invokeOperation: shell endpoint not found for asset '" << asset_id << "'" << std::endl;
+            return std::nullopt;
+        }
+
+        nlohmann::json shell_data = makeGetRequest(shell_path);
+        std::string submodel_id;
+        if (shell_data.contains("submodels") && shell_data["submodels"].is_array())
+        {
+            for (const auto &submodel_ref : shell_data["submodels"])
+            {
+                if (submodel_ref.contains("keys") && submodel_ref["keys"].is_array())
+                {
+                    std::string ref_value = submodel_ref["keys"][0]["value"];
+                    if (ref_value.find(submodel_id_short) != std::string::npos)
+                    {
+                        submodel_id = ref_value;
+                        break;
+                    }
+                }
+            }
+        }
+        if (submodel_id.empty())
+        {
+            std::cerr << "invokeOperation: submodel '" << submodel_id_short
+                      << "' not found on asset '" << asset_id << "'" << std::endl;
+            return std::nullopt;
+        }
+
+        std::string submodel_id_b64 = base64url_encode(submodel_id);
+        std::string dot_path = slashToDotPath(operation_aas_path);
+        std::string endpoint =
+            "/submodels/" + submodel_id_b64 +
+            "/submodel-elements/" + dot_path + "/invoke";
+
+        // BaSyx expects an InvocationRequest envelope. We send a minimal
+        // envelope that exposes the caller-supplied JSON as the operation
+        // input arguments. Concrete servers may ignore additional fields.
+        nlohmann::json envelope = {
+            {"requestId", ""},
+            {"timeout", 30000},
+            {"inoutputArguments", nlohmann::json::array()},
+            {"inputArguments", nlohmann::json::array({
+                {{"value", input_json}}
+            })}
+        };
+
+        std::cout << "invokeOperation POST " << endpoint << std::endl;
+        return makePostRequest(endpoint, envelope);
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Exception in invokeOperation: " << e.what() << std::endl;
+        return std::nullopt;
+    }
+}
+
+std::optional<std::pair<std::string, std::string>> AASClient::resolveSkillReference(
+    const std::string &asset_id,
+    const std::string &action_aas_path)
+{
+    try
+    {
+        // Walk the AIPlanning submodel to the requested Action SMC.
+        auto action_smc = fetchSubmodelElementByPath(asset_id, "AIPlanning", action_aas_path);
+        if (!action_smc.has_value())
+        {
+            std::cerr << "resolveSkillReference: action SMC not found at "
+                      << action_aas_path << std::endl;
+            return std::nullopt;
+        }
+        if (!action_smc->is_object() || !action_smc->contains("value") ||
+            !(*action_smc)["value"].is_array())
+        {
+            std::cerr << "resolveSkillReference: action SMC has no nested value array" << std::endl;
+            return std::nullopt;
+        }
+
+        // Locate the SkillReference child element.
+        const nlohmann::json *skill_ref_elem = nullptr;
+        for (const auto &child : (*action_smc)["value"])
+        {
+            if (child.is_object() && child.value("idShort", "") == "SkillReference")
+            {
+                skill_ref_elem = &child;
+                break;
+            }
+        }
+        if (!skill_ref_elem)
+        {
+            std::cerr << "resolveSkillReference: no SkillReference inside "
+                      << action_aas_path << std::endl;
+            return std::nullopt;
+        }
+
+        // The SkillReference value is a ModelReference whose keys[] points
+        // into the Skills submodel. We need the trailing
+        // SubmodelElementCollection key (the skill SMC id_short).
+        if (!skill_ref_elem->contains("value"))
+        {
+            std::cerr << "resolveSkillReference: SkillReference has no value" << std::endl;
+            return std::nullopt;
+        }
+        const auto &value = (*skill_ref_elem)["value"];
+
+        // BaSyx serializations differ slightly; accept either {keys: [...]}
+        // directly or wrapped in a Reference object.
+        const nlohmann::json *keys_array = nullptr;
+        if (value.is_object() && value.contains("keys") && value["keys"].is_array())
+        {
+            keys_array = &value["keys"];
+        }
+        else if (value.is_array())
+        {
+            keys_array = &value;
+        }
+        if (!keys_array || keys_array->empty())
+        {
+            std::cerr << "resolveSkillReference: SkillReference keys missing or empty" << std::endl;
+            return std::nullopt;
+        }
+
+        std::string skill_smc_name;
+        for (const auto &key_obj : *keys_array)
+        {
+            if (!key_obj.is_object())
+            {
+                continue;
+            }
+            const std::string type_str = key_obj.value("type", "");
+            if (type_str == "SubmodelElementCollection" || type_str == "SubmodelElement")
+            {
+                skill_smc_name = key_obj.value("value", "");
+                // We want the last SMC key, so keep iterating.
+            }
+        }
+        if (skill_smc_name.empty())
+        {
+            std::cerr << "resolveSkillReference: no SubmodelElementCollection key in SkillReference" << std::endl;
+            return std::nullopt;
+        }
+
+        // The Operation inside a Skill SMC shares the SMC's id_short
+        // (see Registration_Service skills_builder.py _create_operation).
+        // Return the slash path "<skill>/<skill>" so invokeOperation can
+        // convert to dot-path form.
+        return std::make_pair(std::string("Skills"),
+                              skill_smc_name + "/" + skill_smc_name);
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Exception in resolveSkillReference: " << e.what() << std::endl;
+        return std::nullopt;
+    }
+}

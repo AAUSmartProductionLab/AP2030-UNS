@@ -8,6 +8,8 @@
 #include "mqtt/mqtt_sub_base.h"
 #include "aas/aas_interface_cache.h"
 #include "bt/register_all_nodes.h"
+#include "bt/execution_refs.h"
+#include "bt/symbolic_state.h"
 #include "utils.h"
 
 #include <csignal>
@@ -1018,6 +1020,53 @@ void BehaviorTreeController::processStartingState()
         // createTreeFromText parses XML, registers the tree, and creates it in one call
         // It automatically uses the main_tree_to_execute attribute from the XML
         bt_tree_ = bt_factory_->createTreeFromText(bt_xml_content, root_blackboard);
+
+        // PR4: seed the per-tree symbolic planning state from the
+        // ``_planner_initial_state`` blackboard input declared by the
+        // planner XML (TreeNodesModel SubTree default). Always clear
+        // first so a previous tree's atoms don't bleed into this one.
+        SymbolicState::instance().clear();
+        try
+        {
+            std::string seed_payload;
+            // Try the root tree's blackboard (populated from MainTree
+            // SubTree input_port defaults) first, then fall back to the
+            // root_blackboard we passed in.
+            auto root_bb = bt_tree_.rootBlackboard();
+            if (root_bb)
+            {
+                (void)root_bb->get<std::string>("_planner_initial_state", seed_payload);
+            }
+            if (seed_payload.empty())
+            {
+                (void)root_blackboard->get<std::string>("_planner_initial_state", seed_payload);
+            }
+            if (!seed_payload.empty())
+            {
+                auto atoms = bt_exec_refs::parseGroundedAtomList(seed_payload);
+                if (atoms.has_value())
+                {
+                    SymbolicState::instance().seed(*atoms);
+                    std::cout << "SymbolicState seeded with " << atoms->size()
+                              << " atom(s) from _planner_initial_state" << std::endl;
+                }
+                else
+                {
+                    std::cerr << "Failed to parse _planner_initial_state; "
+                                 "SymbolicState left empty" << std::endl;
+                }
+            }
+            else
+            {
+                std::cout << "No _planner_initial_state on blackboard; "
+                             "SymbolicState left empty (back-compat with PR3 trees)"
+                          << std::endl;
+            }
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "SymbolicState seeding skipped: " << e.what() << std::endl;
+        }
     }
     catch (const BT::RuntimeError &e)
     {

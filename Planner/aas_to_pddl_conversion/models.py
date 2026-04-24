@@ -33,6 +33,11 @@ class ActionRef:
     transformation: str = ""
     parameter_bindings: List[Dict[str, Any]] = field(default_factory=list)
     source_bindings: List[Dict[str, str]] = field(default_factory=list)
+    # PR4: per-action symbolic effects for purely planner-internal predicates
+    # (those whose fluent has no AAS transformation). Each entry has the
+    # shape ``{"predicate": str, "args": [str, ...], "value": bool}`` with
+    # arguments pre-grounded to object names.
+    effects: List[Dict[str, Any]] = field(default_factory=list)
 
 
 @dataclass
@@ -48,6 +53,10 @@ class PredicateRef:
     transformation: str = ""
     param_types: List[str] = field(default_factory=list)
     source_bindings: List[Dict[str, str]] = field(default_factory=list)
+    # PR4: tag predicates that have no AAS transformation. The BT runtime
+    # routes FluentCheck nodes for these predicates through SymbolicState
+    # instead of the JSONata/AAS path.
+    is_symbolic: bool = False
 
 
 @dataclass

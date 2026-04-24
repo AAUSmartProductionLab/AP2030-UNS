@@ -38,6 +38,150 @@ def normalize_type_parent_map(type_parents: Dict[str, str]) -> Dict[str, str]:
     return normalized
 
 
+# ---------------------------------------------------------------------------
+# PR4: helpers for serializing purely symbolic predicate atoms / effects.
+# ---------------------------------------------------------------------------
+
+def _is_symbolic_fluent(fluent: Dict[str, Any]) -> bool:
+    """Return True iff ``fluent`` has no AAS-side transformation.
+
+    Symbolic predicates are those introduced by the planner itself (e.g.
+    ``step_ready`` / ``step_done`` from BoP ordering) that have no
+    sensor-backed JSONata transformation. They are stored in the BT
+    runtime's ``SymbolicState`` and never reach the AAS bus.
+    """
+
+    if str(fluent.get("transformation_aas_path") or "").strip():
+        return False
+    bindings = fluent.get("source_bindings") or []
+    if bindings:
+        primary = bindings[0]
+        if str(primary.get("transformation_aas_path") or "").strip():
+            return False
+    return True
+
+
+def _arg_to_object_name(
+    param: Dict[str, Any],
+    param_remap: Optional[Dict[int, Dict[str, Any]]] = None,
+) -> Optional[str]:
+    """Resolve a parsed atom param to a stable object-name string.
+
+    Returns ``None`` when the parameter cannot be statically grounded
+    (e.g. action-free parameter); the caller should skip the enclosing
+    atom and emit a warning.
+    """
+
+    kind = param.get("kind")
+    if kind == "object":
+        name = str(param.get("name") or "")
+        return name or None
+    if kind == "action_param":
+        idx = param.get("index")
+        if isinstance(idx, int) and param_remap is not None:
+            mapping = param_remap.get(idx)
+            if mapping and mapping.get("kind") == "constant":
+                obj = str(mapping.get("object_name") or "")
+                if obj:
+                    return obj
+        return None
+    return None
+
+
+def _atom_to_grounded_atom(
+    atom: Dict[str, Any],
+    fluent_lookup: Dict[str, Dict[str, Any]],
+    *,
+    value: bool,
+    param_remap: Optional[Dict[int, Dict[str, Any]]] = None,
+    warnings: Optional[List[str]] = None,
+    context: str = "",
+) -> Optional[Dict[str, Any]]:
+    """Convert a parsed atom into a serialized GroundedAtom dict.
+
+    Returns ``None`` when the atom is not symbolic or cannot be grounded.
+    """
+
+    if not isinstance(atom, dict) or atom.get("kind") != "atom":
+        return None
+    fluent_key = str(atom.get("fluent") or "")
+    fluent = fluent_lookup.get(fluent_key)
+    if not fluent or not _is_symbolic_fluent(fluent):
+        return None
+
+    args: List[str] = []
+    for param in atom.get("params", []) or []:
+        resolved = _arg_to_object_name(param, param_remap=param_remap)
+        if resolved is None:
+            if warnings is not None:
+                warnings.append(
+                    "Symbolic predicate '"
+                    f"{fluent_key}' atom in {context or 'unknown context'} "
+                    "could not be grounded (free or unresolved parameter); skipping."
+                )
+            return None
+        args.append(resolved)
+    return {"predicate": fluent_key, "args": args, "value": bool(value)}
+
+
+def _walk_effect_term(
+    term: Dict[str, Any],
+    fluent_lookup: Dict[str, Dict[str, Any]],
+    out: List[Dict[str, Any]],
+    *,
+    param_remap: Optional[Dict[int, Dict[str, Any]]] = None,
+    polarity: bool = True,
+    warnings: Optional[List[str]] = None,
+    context: str = "",
+) -> None:
+    """Recursively walk a parsed action-effect term, collecting symbolic atoms."""
+
+    if not isinstance(term, dict):
+        return
+    kind = term.get("kind")
+    if kind == "atom":
+        atom = _atom_to_grounded_atom(
+            term,
+            fluent_lookup,
+            value=polarity,
+            param_remap=param_remap,
+            warnings=warnings,
+            context=context,
+        )
+        if atom is not None:
+            out.append(atom)
+        return
+    if kind == "op":
+        op = term.get("op")
+        if op == "not":
+            for child in term.get("children", []) or []:
+                _walk_effect_term(
+                    child,
+                    fluent_lookup,
+                    out,
+                    param_remap=param_remap,
+                    polarity=not polarity,
+                    warnings=warnings,
+                    context=context,
+                )
+            return
+        if op == "and":
+            for child in term.get("children", []) or []:
+                _walk_effect_term(
+                    child,
+                    fluent_lookup,
+                    out,
+                    param_remap=param_remap,
+                    polarity=polarity,
+                    warnings=warnings,
+                    context=context,
+                )
+            return
+        # Numeric / temporal / disjunctive operators are skipped — they
+        # cannot be modelled as boolean SymbolicState atoms.
+    return
+
+
 def build_up_problem(
     merged: Dict[str, Any],
     warnings: List[str],
@@ -133,6 +277,7 @@ def build_up_problem(
             transformation=str(fluent.get("transformation") or ""),
             param_types=[canonical_type_name(t) for t in fluent.get("param_types", [])],
             source_bindings=source_bindings,
+            is_symbolic=_is_symbolic_fluent(fluent),
         )
         planner_predicate_refs[key] = dict(predicate_ref.__dict__)
 
@@ -155,6 +300,30 @@ def build_up_problem(
         warnings.append(
             f"Fluent '{missing_name}' was referenced but not declared in Domain.Fluents; auto-declared with arity {arity}."
         )
+
+    # PR4: lookup table used to detect symbolic vs sensor-backed fluents
+    # when serializing action effects and the planner-side initial state.
+    fluent_lookup: Dict[str, Dict[str, Any]] = {
+        str(f.get("key") or ""): f for f in merged.get("fluents", []) if f.get("key")
+    }
+
+    def _symbolic_effects_for(
+        action: Dict[str, Any],
+        param_remap: Dict[int, Dict[str, Any]],
+    ) -> List[Dict[str, Any]]:
+        out: List[Dict[str, Any]] = []
+        ctx = f"action '{action.get('key') or action.get('skill_target') or '?'}'"
+        for term in action.get("effects", []) or []:
+            _walk_effect_term(
+                term,
+                fluent_lookup,
+                out,
+                param_remap=param_remap,
+                polarity=True,
+                warnings=warnings,
+                context=ctx,
+            )
+        return out
 
     object_map: Dict[str, Any] = {}
     object_types: Dict[str, str] = {}
@@ -272,6 +441,7 @@ def build_up_problem(
                         for idx, param in enumerate(action.get("parameters", []))
                     ],
                     source_bindings=list(action.get("source_bindings") or []),
+                    effects=_symbolic_effects_for(action, param_remap),
                 ).__dict__
             )
             continue
@@ -338,6 +508,7 @@ def build_up_problem(
                         for idx, param in enumerate(action.get("parameters", []))
                     ],
                     source_bindings=list(action.get("source_bindings") or []),
+                    effects=_symbolic_effects_for(action, param_remap),
                 ).__dict__
             )
             warnings.append(
@@ -404,6 +575,7 @@ def build_up_problem(
                         for idx, param in enumerate(action.get("parameters", []))
                     ],
                     source_bindings=list(action.get("source_bindings") or []),
+                    effects=_symbolic_effects_for(action, param_remap),
                 ).__dict__
             )
             continue
@@ -471,6 +643,7 @@ def build_up_problem(
                             for idx, param in enumerate(action.get("parameters", []))
                         ],
                         source_bindings=list(action.get("source_bindings") or []),
+                        effects=_symbolic_effects_for(action, param_remap),
                     ).__dict__
                 )
             else:
@@ -537,6 +710,7 @@ def build_up_problem(
                     for idx, param in enumerate(action.get("parameters", []))
                 ],
                 source_bindings=list(action.get("source_bindings") or []),
+                effects=_symbolic_effects_for(action, param_remap),
             ).__dict__
         )
 
@@ -589,6 +763,42 @@ def build_up_problem(
     object_refs_ci = {
         key.lower(): value for key, value in planner_object_refs.items()
     }
+
+    # PR4: collect the symbolic-only subset of the initial state so the
+    # BT runtime can seed SymbolicState. ``init_terms`` are already fully
+    # grounded (params come as {kind:"object", name:X}).
+    symbolic_initial_state: List[Dict[str, Any]] = []
+
+    def _walk_init_term(term: Dict[str, Any], polarity: bool) -> None:
+        if not isinstance(term, dict):
+            return
+        kind = term.get("kind")
+        if kind == "atom":
+            atom = _atom_to_grounded_atom(
+                term,
+                fluent_lookup,
+                value=polarity,
+                param_remap=None,
+                warnings=warnings,
+                context="initial state",
+            )
+            if atom is not None:
+                symbolic_initial_state.append(atom)
+            return
+        if kind == "op":
+            op = term.get("op")
+            if op == "not":
+                for child in term.get("children", []) or []:
+                    _walk_init_term(child, not polarity)
+                return
+            if op == "and":
+                for child in term.get("children", []) or []:
+                    _walk_init_term(child, polarity)
+                return
+
+    for term in merged.get("init_terms", []) or []:
+        _walk_init_term(term, True)
+
     try:
         setattr(
             problem,
@@ -600,6 +810,7 @@ def build_up_problem(
                 "predicate_refs_ci": predicate_refs_ci,
                 "object_refs": planner_object_refs,
                 "object_refs_ci": object_refs_ci,
+                "initial_state": symbolic_initial_state,
             },
         )
     except Exception:

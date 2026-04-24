@@ -65,6 +65,44 @@ public:
     // Lookup AAS shell ID from asset ID using the registry
     std::optional<std::string> lookupAasIdFromAssetId(const std::string &asset_id);
 
+    // ------------------------------------------------------------------
+    // PR2/PR3 additions: generic submodel-element access and invocation.
+    // ------------------------------------------------------------------
+
+    /// Fetch an arbitrary submodel-element by its slash-delimited idShort
+    /// path within a given submodel of an asset.
+    ///
+    /// Example slash_path: "Capabilities/Dispense/Transformation"
+    /// Returns the parsed JSON element on success, std::nullopt on failure.
+    std::optional<nlohmann::json> fetchSubmodelElementByPath(
+        const std::string &asset_id,
+        const std::string &submodel_id_short,
+        const std::string &slash_path);
+
+    /// Invoke an AAS Operation submodel-element via its dot-delimited path.
+    ///
+    /// Used as the AAS-direct fallback when no Asset Interface Description
+    /// is available for an action. Issues a POST to
+    ///   /submodels/<base64url(submodel_id)>/submodel-elements/<dot.path>/invoke
+    /// with the supplied JSON body. Returns the parsed JSON response on
+    /// success, std::nullopt on failure.
+    std::optional<nlohmann::json> invokeOperation(
+        const std::string &asset_id,
+        const std::string &submodel_id_short,
+        const std::string &operation_aas_path,
+        const nlohmann::json &input_json);
+
+    /// Resolve the SkillReference embedded in an AIPlanning Action SMC into
+    /// the (skills_submodel_id_short, operation_aas_path) pair that can be
+    /// passed to invokeOperation. The action_aas_path is expected to be the
+    /// in-AIPlanning-submodel slash path (no leading "AIPlanning/" segment).
+    /// Returns std::nullopt when the SkillReference cannot be located or
+    /// does not point at a SubmodelElementCollection inside the Skills
+    /// submodel.
+    std::optional<std::pair<std::string, std::string>> resolveSkillReference(
+        const std::string &asset_id,
+        const std::string &action_aas_path);
+
     // Allow AASInterfaceCache to access private helpers for bulk fetching
     friend class AASInterfaceCache;
 
@@ -75,6 +113,11 @@ private:
 
     // Helper to make HTTP GET requests
     nlohmann::json makeGetRequest(const std::string &endpoint, bool use_registry = false);
+
+    // Helper to make HTTP POST requests with a JSON body
+    nlohmann::json makePostRequest(const std::string &endpoint,
+                                   const nlohmann::json &body,
+                                   bool use_registry = false);
 
     // Helper to substitute parameters in topic patterns
     std::string substituteParams(const std::string &pattern, const nlohmann::json &params);

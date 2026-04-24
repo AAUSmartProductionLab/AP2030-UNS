@@ -16,7 +16,9 @@
 #include "bt/actions/pop_element_node.h"
 #include "bt/actions/refill_node.h"
 #include "bt/actions/retrieve_aas_properties_node.h"
+#include "bt/actions/execute_action_node.h"
 #include "bt/conditions/generic_condition_node.h"
+#include "bt/conditions/fluent_check_node.h"
 #include "bt/decorators/get_product_from_queue_node.h"
 #include "bt/decorators/keep_running_until_empty.h"
 #include "bt/decorators/occupy.h"
@@ -99,4 +101,19 @@ void registerAllNodes(
 
     factory.registerNodeType<BT::BC_FallbackNode>("BC_Fallback");
     factory.registerNodeType<BT::BC_FallbackNode>("BC_Fallback_Async", true);
+
+    // Planner-driven generic execution nodes (PR2 contract).
+    MqttActionNode::registerNodeType<ExecuteAction>(
+        factory,
+        node_message_distributor,
+        mqtt_client,
+        aas_client,
+        "ExecuteAction");
+
+    MqttSyncConditionNode::registerNodeType<FluentCheck>(
+        factory,
+        node_message_distributor,
+        mqtt_client,
+        aas_client,
+        "FluentCheck");
 }

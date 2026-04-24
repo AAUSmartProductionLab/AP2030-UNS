@@ -135,6 +135,9 @@ def resolve_action_execution_ref(
         "action_aas_path": str(ref.get("action_aas_path") or ""),
         "transformation_aas_path": str(ref.get("transformation_aas_path") or ""),
         "parameter_refs": parameter_refs,
+        # PR4: pass through pre-grounded symbolic effects so the BT
+        # runtime can update SymbolicState on action SUCCESS.
+        "effects": list(ref.get("effects") or []),
     }
 
 

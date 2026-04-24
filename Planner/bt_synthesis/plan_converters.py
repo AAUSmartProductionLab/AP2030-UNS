@@ -34,7 +34,7 @@ def solve_result_to_bt_xml(solve_result: Any) -> tuple[str, list[str]]:
             problem=getattr(solve_result, "metadata", {}).get("problem"),
             planner_metadata=planner_metadata,
         )
-        return bt_to_xml(bt), warnings
+        return bt_to_xml(bt, planner_metadata=planner_metadata), warnings
 
     if getattr(solve_result, "is_plan", False):
         bt_xml = deterministic_plan_to_bt_xml(solve_result, planner_metadata=planner_metadata)
@@ -82,7 +82,7 @@ def deterministic_plan_to_bt_xml(
     if goal_branch is not None:
         progression.root = ReactiveSelector("PlanRoot", [goal_branch, progression.root])
 
-    return bt_to_xml(progression)
+    return bt_to_xml(progression, planner_metadata=planner_metadata)
 
 
 def _flatten_bool_expr_literals(expr: Any) -> list[str]:
