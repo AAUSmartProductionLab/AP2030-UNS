@@ -399,7 +399,8 @@ BT::NodeStatus FluentCheck::tickSymbolic()
     {
         std::cerr << "FluentCheck '" << this->name()
                   << "' symbolic predicate could not parse predicate(args) "
-                     "from node name; returning FAILURE" << std::endl;
+                     "from node name; returning FAILURE"
+                  << std::endl;
         return BT::NodeStatus::FAILURE;
     }
     const auto &predicate = parsed->first;

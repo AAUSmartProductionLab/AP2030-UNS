@@ -126,19 +126,17 @@ TEST(SymbolicState, ConcurrentSetGetIsSafe)
     SymbolicState s;
     constexpr int N = 200;
     std::thread writer([&]()
-    {
+                       {
         for (int i = 0; i < N; ++i)
         {
             s.set("counter", {"x"}, i);
-        }
-    });
+        } });
     std::thread reader([&]()
-    {
+                       {
         for (int i = 0; i < N; ++i)
         {
             (void)s.get("counter", {"x"});
-        }
-    });
+        } });
     writer.join();
     reader.join();
     auto v = s.get("counter", {"x"});

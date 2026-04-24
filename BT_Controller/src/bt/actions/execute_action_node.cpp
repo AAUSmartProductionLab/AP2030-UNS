@@ -191,7 +191,7 @@ void ExecuteAction::initializeTopicsFromAAS()
             aas_direct_fallback_ = true;
             topics_initialized_ = true;
             BT_LOG_INFO("ExecuteAction '" << this->name()
-                << "' BT_CONTROLLER_AAS_DIRECT=force; using AAS-direct path");
+                                          << "' BT_CONTROLLER_AAS_DIRECT=force; using AAS-direct path");
             return;
         }
 
@@ -244,7 +244,7 @@ void ExecuteAction::initializeTopicsFromAAS()
         if (fallback_mode == "disable")
         {
             BT_LOG_ERROR("ExecuteAction '" << this->name()
-                << "' missing interface and AAS-direct disabled by env");
+                                           << "' missing interface and AAS-direct disabled by env");
             return;
         }
 
@@ -253,8 +253,8 @@ void ExecuteAction::initializeTopicsFromAAS()
         aas_direct_fallback_ = true;
         topics_initialized_ = true;
         BT_LOG_INFO("ExecuteAction '" << this->name()
-            << "' no Asset Interface Description; will use AAS-direct invoke for "
-            << action_ref_->action_aas_path);
+                                      << "' no Asset Interface Description; will use AAS-direct invoke for "
+                                      << action_ref_->action_aas_path);
     }
     catch (const std::exception &e)
     {
@@ -367,9 +367,9 @@ BT::NodeStatus ExecuteAction::onStart()
     // response to BT success/failure. We still emit a Uuid for traceability.
     nlohmann::json input_message = createMessage();
     BT_LOG_DEBUG("ExecuteAction '" << this->name()
-        << "' bound_args=" << nlohmann::json(args_tokens_).dump()
-        << " action_aas_path=" << action_ref_->action_aas_path
-        << " transformation=" << truncateForLog(transformation_expression_));
+                                   << "' bound_args=" << nlohmann::json(args_tokens_).dump()
+                                   << " action_aas_path=" << action_ref_->action_aas_path
+                                   << " transformation=" << truncateForLog(transformation_expression_));
 
     try
     {
@@ -466,8 +466,8 @@ void ExecuteAction::applySymbolicEffects()
             state.set(atom.predicate, atom.args, atom.value);
         }
         BT_LOG_DEBUG("ExecuteAction '" << this->name()
-            << "' applied symbolic effect "
-            << SymbolicState::canonicalKey(atom.predicate, atom.args)
-            << " = " << atom.value.dump());
+                                       << "' applied symbolic effect "
+                                       << SymbolicState::canonicalKey(atom.predicate, atom.args)
+                                       << " = " << atom.value.dump());
     }
 }

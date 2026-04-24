@@ -38,13 +38,13 @@ namespace bt_log
     }
 } // namespace bt_log
 
-#define BT_LOG(LVL, MSG)                                                                    \
-    do                                                                                       \
-    {                                                                                        \
-        if (bt_log::enabled(bt_log::Level::LVL))                                             \
-        {                                                                                    \
-            bt_log::stream(bt_log::Level::LVL) << "[" #LVL "] " << MSG << std::endl;         \
-        }                                                                                    \
+#define BT_LOG(LVL, MSG)                                                             \
+    do                                                                               \
+    {                                                                                \
+        if (bt_log::enabled(bt_log::Level::LVL))                                     \
+        {                                                                            \
+            bt_log::stream(bt_log::Level::LVL) << "[" #LVL "] " << MSG << std::endl; \
+        }                                                                            \
     } while (0)
 
 #define BT_LOG_DEBUG(MSG) BT_LOG(Debug, MSG)
