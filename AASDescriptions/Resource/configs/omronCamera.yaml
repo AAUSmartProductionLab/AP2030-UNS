@@ -95,6 +95,15 @@ omronCameraSystemAAS:
             mqv_retain: 'false'
             mqv_controlPacket: publish
             mqv_qos: '0'
+        - key: 'QualityResult'
+          title: 'QualityResult'
+          output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/qualityResult.schema.json'
+          forms:
+            contentType: 'application/json'
+            href: '/DATA/Quality'
+            mqv_retain: 'true'
+            mqv_controlPacket: publish
+            mqv_qos: '2'
 
   Variables:
   - key: PackMLState
@@ -112,6 +121,10 @@ omronCameraSystemAAS:
     InterfaceReference:
       Name: 'Image'
       Field: 'Image'
+  - key: QualityResult
+    semanticId: 'cssx:QualityResult'
+    InterfaceReference:
+      Name: 'QualityResult'
   Parameters:
     Location:
       semanticId: 'cssx:LocationParameter'
@@ -195,11 +208,24 @@ omronCameraSystemAAS:
                         - predicate:
                             external: "cssx:ProductAt"
                             parameters: [1, 3]
+                # FOND: the inspection captures the product (always) and
+                # then non-deterministically reports Ok / NotOk for it.
+                # QualityOk is owned by the Product AAS (cssx:QualityOk)
+                # and parameterised as QualityOk(Product, Camera); the
+                # camera writes it via this effect using parameters [1, 0].
                 effects:
                     at_end:
                         - predicate:
                             external: "cssx:Captured"
                             parameters: [1]
+                        - oneOf:
+                            - predicate:
+                                external: "cssx:QualityOk"
+                                parameters: [1, 0]
+                            - not:
+                                predicate:
+                                    external: "cssx:QualityOk"
+                                    parameters: [1, 0]
 
             -   key: "Occupy"
                 semantic_id: "cssx:OccupyCapability"

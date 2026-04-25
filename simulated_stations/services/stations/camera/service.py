@@ -1,5 +1,6 @@
 from packml_runtime.mqtt import Proxy, ResponseAsync, Publisher, Subscriber
 import time
+import random
 from packml_runtime.simulator import PackMLStateMachine
 import datetime
 import cv2
@@ -9,12 +10,43 @@ import os
 BROKER_ADDRESS = os.getenv("MQTT_BROKER", "hivemq-broker")
 BROKER_PORT = int(os.getenv("MQTT_PORT", "1883"))
 BASE_TOPIC = "NN/Nybrovej/InnoLab/QualityControl"
+QC_OK_RATE = float(os.getenv("QC_OK_RATE", "0.8"))
 uuid = ""
 
 image_publisher = Publisher(
     BASE_TOPIC + "/DATA/Image",
     "./MQTTSchemas/image.schema.json",
     2)
+
+quality_publisher = Publisher(
+    BASE_TOPIC + "/DATA/Quality",
+    "./MQTTSchemas/qualityResult.schema.json",
+    2)
+
+
+def _now_iso():
+    return datetime.datetime.now(datetime.timezone.utc).isoformat(
+        timespec='milliseconds').replace('+00:00', 'Z')
+
+
+def publish_quality_result():
+    """Sample Ok/NotOk for the currently inspected product and publish it.
+
+    The result is retained so a late-subscribing FluentCheck (PR4 sensor
+    predicate) can still see the latest classification per product UUID.
+    """
+    if not uuid:
+        return
+    result = "Ok" if random.random() < QC_OK_RATE else "NotOk"
+    confidence = round(random.uniform(0.7, 0.99), 3)
+    payload = {
+        "TimeStamp": _now_iso(),
+        "Uuid": uuid,
+        "Result": result,
+        "Confidence": confidence,
+    }
+    print(f"[QualityControl] {uuid} -> {result} (confidence={confidence})")
+    quality_publisher.publish(payload, cameraProxy, True)
 
 
 def capture_process(duration=0.5):
@@ -26,6 +58,8 @@ def capture_process(duration=0.5):
 
         if not ret:
             print("Failed to capture image from webcam")
+            # Still publish a QC result so the FOND policy can branch
+            publish_quality_result()
             return
 
         # Rotate image 90 degrees counter-clockwise
@@ -37,8 +71,7 @@ def capture_process(duration=0.5):
         img_bytes = base64.b64encode(img_encoded).decode('utf-8')
 
         # Generate ISO 8601 timestamp with Z suffix for UTC
-        timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat(
-            timespec='milliseconds').replace('+00:00', 'Z')
+        timestamp = _now_iso()
 
         response = {
             "Image": img_bytes,
@@ -52,6 +85,10 @@ def capture_process(duration=0.5):
     finally:
         if webcam is not None:
             webcam.release()
+        # The FOND outcome is published regardless of imaging success so
+        # the BT executor always has a sensor reading to evaluate
+        # QualityOk(Product) against.
+        publish_quality_result()
 
 
 def capture_callback(topic, client, message, properties):
@@ -77,7 +114,7 @@ cameraProxy = Proxy(
     BROKER_ADDRESS,
     BROKER_PORT,
     "CameraProxy",
-    [capture, image_publisher]
+    [capture, image_publisher, quality_publisher]
 )
 
 state_machine = PackMLStateMachine(

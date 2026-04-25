@@ -31,6 +31,23 @@ optimaUnloadingSystemAAS:
               href: '/DATA/Unloading'
               mqv_controlPacket: 'publish'
               mqv_retain: 'false'
+        - key: 'Scrap'
+          title: 'Scrap'
+          synchronous: 'true'
+          input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
+          output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
+          forms:
+            contentType: 'application/json'
+            href: '/CMD/Scrap'
+            op: 'invokeAction'
+            mqv_retain: 'false'
+            mqv_controlPacket: subscribe
+            mqv_qos: '2'
+            response:
+              contentType: 'application/json'
+              href: '/DATA/Scrap'
+              mqv_controlPacket: 'publish'
+              mqv_retain: 'false'
         - key: 'Halt'
           title: 'Halt'
           synchronous: 'true'
@@ -112,6 +129,9 @@ optimaUnloadingSystemAAS:
   - key: Unloading
     realizedBy: "Unload"
     semantic_id: cssx:UnloadingCapability
+  - key: Scrap
+    realizedBy: "Scrap"
+    semantic_id: cssx:ScrapCapability
 
   AI-Planning:
     Domain:
@@ -164,6 +184,8 @@ optimaUnloadingSystemAAS:
                             - AAS: "self"
                               Submodel: "Parameters"
                               Element: "Location"
+                    -   name: "QualityInspector"
+                        externalRef: "css:Resource"
                         
                 conditions:
                     at_start:
@@ -179,12 +201,69 @@ optimaUnloadingSystemAAS:
                         - predicate:
                             external: "cssx:ProductAt"
                             parameters: [1, 3]
+                        - predicate:
+                            external: "cssx:QualityOk"
+                            parameters: [1, 4]
                 effects:
                     at_end:
                         - not:
                             - predicate:
                                 external: "cssx:On"
                                 parameters: [1, 2]
+                        - predicate:
+                            external: "cssx:Finished"
+                            parameters: [1]
+
+            # Symmetric to Unloading but guarded by the negated quality
+            # outcome; used by the FOND branch where the camera reported
+            # NotOk for the inspected product. Removes the product from
+            # the transport without forwarding it downstream.
+            -   key: "Scrap"
+                semantic_id: "cssx:ScrapCapability"
+                SkillReference: "Scrap"
+                parameters:
+                    -   name: "UnloadingSystem"
+                        modelRef:
+                            - AAS: "self"
+                    -   name: "Product"
+                        externalRef: "css:Product"
+                    -   name: "TransportSystem"
+                        externalRef: "cssx:Transport"
+                    -   name: "UnloadingLocation"
+                        modelRef:
+                            - AAS: "self"
+                              Submodel: "Parameters"
+                              Element: "Location"
+                    -   name: "QualityInspector"
+                        externalRef: "css:Resource"
+
+                conditions:
+                    at_start:
+                        - predicate:
+                            ref: "Operational"
+                            parameters: [0]
+                        - predicate:
+                            ref: "Occupied"
+                            parameters: [0, 1]
+                        - predicate:
+                            external: "cssx:On"
+                            parameters: [1, 2]
+                        - predicate:
+                            external: "cssx:ProductAt"
+                            parameters: [1, 3]
+                        - not:
+                            predicate:
+                                external: "cssx:QualityOk"
+                                parameters: [1, 4]
+                effects:
+                    at_end:
+                        - not:
+                            - predicate:
+                                external: "cssx:On"
+                                parameters: [1, 2]
+                        - predicate:
+                            external: "cssx:Finished"
+                            parameters: [1]
 
             -   key: "Occupy"
                 semantic_id: "cssx:OccupyCapability"
@@ -277,6 +356,10 @@ optimaUnloadingSystemAAS:
     description: "Unloading function for pharmaceutical primary packaging"
     semantic_id: "cssx:UnloadingSkill"
     InterfaceReference: Unloading
+  - key: Scrap
+    description: "Scrap a product whose quality outcome was NotOk"
+    semantic_id: "cssx:ScrapSkill"
+    InterfaceReference: Scrap
   - key: Halt
     description: "Halt the current operation"
     semantic_id: "cssx:HaltSkill"

@@ -72,6 +72,7 @@ services:
       - MQTT_BROKER=${MQTT_BROKER:-hivemq-broker}
       - MQTT_PORT=${MQTT_PORT:-1883}
       - PYTHONPATH=/app
+      - LOADING_FAILURE_RATE=${LOADING_FAILURE_RATE:-0.3}
     volumes:
       - ../../:/app  # Mount simulated_stations root
       - ../../../packml_runtime:/app/packml_runtime  # Mount shared PackML runtime
@@ -105,6 +106,7 @@ services:
       - MQTT_BROKER=${MQTT_BROKER:-hivemq-broker}
       - MQTT_PORT=${MQTT_PORT:-1883}
       - PYTHONPATH=/app
+      - QC_OK_RATE=${QC_OK_RATE:-0.8}
     volumes:
       - ../../:/app  # Mount simulated_stations root
       - ../../../packml_runtime:/app/packml_runtime  # Mount shared PackML runtime
@@ -113,3 +115,95 @@ services:
     devices:
       - /dev/video0:/dev/video0
     command: ["-m", "services.stations.camera.service"]
+
+  capping_station:
+    build:
+      context: ../..
+      dockerfile: deployment/docker/stations.dockerfile
+    container_name: capping_station
+    environment:
+      - MQTT_BROKER=${MQTT_BROKER:-hivemq-broker}
+      - MQTT_PORT=${MQTT_PORT:-1883}
+      - PYTHONPATH=/app
+    volumes:
+      - ../../:/app
+      - ../../../packml_runtime:/app/packml_runtime
+      - ../../../MQTTSchemas:/app/MQTTSchemas
+      - ../../../AASDescriptions:/app/AASDescriptions
+    command: ["-m", "services.stations.capping.service"]
+
+  planar_table:
+    build:
+      context: ../..
+      dockerfile: deployment/docker/stations.dockerfile
+    container_name: planar_table
+    environment:
+      - MQTT_BROKER=${MQTT_BROKER:-hivemq-broker}
+      - MQTT_PORT=${MQTT_PORT:-1883}
+      - PYTHONPATH=/app
+    volumes:
+      - ../../:/app
+      - ../../../packml_runtime:/app/packml_runtime
+      - ../../../MQTTSchemas:/app/MQTTSchemas
+      - ../../../AASDescriptions:/app/AASDescriptions
+    command: ["-m", "services.stations.planar_table.service"]
+
+  planar_shuttle1:
+    build:
+      context: ../..
+      dockerfile: deployment/docker/stations.dockerfile
+    container_name: planar_shuttle1
+    environment:
+      - MQTT_BROKER=${MQTT_BROKER:-hivemq-broker}
+      - MQTT_PORT=${MQTT_PORT:-1883}
+      - PYTHONPATH=/app
+      - PLANAR_SHUTTLE_BASE_TOPIC=NN/Nybrovej/InnoLab/Planar/Xbot1
+      - PLANAR_SHUTTLE_NAME=planarShuttle1
+      - PLANAR_SHUTTLE_AAS_CONFIG=planarShuttle1.yaml
+      - PLANAR_SHUTTLE_INITIAL=imaLoadingStation
+    volumes:
+      - ../../:/app
+      - ../../../packml_runtime:/app/packml_runtime
+      - ../../../MQTTSchemas:/app/MQTTSchemas
+      - ../../../AASDescriptions:/app/AASDescriptions
+    command: ["-m", "services.stations.planar_shuttle.service"]
+
+  planar_shuttle2:
+    build:
+      context: ../..
+      dockerfile: deployment/docker/stations.dockerfile
+    container_name: planar_shuttle2
+    environment:
+      - MQTT_BROKER=${MQTT_BROKER:-hivemq-broker}
+      - MQTT_PORT=${MQTT_PORT:-1883}
+      - PYTHONPATH=/app
+      - PLANAR_SHUTTLE_BASE_TOPIC=NN/Nybrovej/InnoLab/Planar/Xbot2
+      - PLANAR_SHUTTLE_NAME=planarShuttle2
+      - PLANAR_SHUTTLE_AAS_CONFIG=planarShuttle2.yaml
+      - PLANAR_SHUTTLE_INITIAL=imaDispensingStation
+    volumes:
+      - ../../:/app
+      - ../../../packml_runtime:/app/packml_runtime
+      - ../../../MQTTSchemas:/app/MQTTSchemas
+      - ../../../AASDescriptions:/app/AASDescriptions
+    command: ["-m", "services.stations.planar_shuttle.service"]
+
+  planar_shuttle3:
+    build:
+      context: ../..
+      dockerfile: deployment/docker/stations.dockerfile
+    container_name: planar_shuttle3
+    environment:
+      - MQTT_BROKER=${MQTT_BROKER:-hivemq-broker}
+      - MQTT_PORT=${MQTT_PORT:-1883}
+      - PYTHONPATH=/app
+      - PLANAR_SHUTTLE_BASE_TOPIC=NN/Nybrovej/InnoLab/Planar/Xbot3
+      - PLANAR_SHUTTLE_NAME=planarShuttle3
+      - PLANAR_SHUTTLE_AAS_CONFIG=planarShuttle3.yaml
+      - PLANAR_SHUTTLE_INITIAL=syntegonStopperingStation
+    volumes:
+      - ../../:/app
+      - ../../../packml_runtime:/app/packml_runtime
+      - ../../../MQTTSchemas:/app/MQTTSchemas
+      - ../../../AASDescriptions:/app/AASDescriptions
+    command: ["-m", "services.stations.planar_shuttle.service"]
