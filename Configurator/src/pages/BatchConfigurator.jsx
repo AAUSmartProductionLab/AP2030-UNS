@@ -46,7 +46,7 @@ export default function BatchConfigurator() {
         id: 'batch-1',
         name: 'MIM8 Standard (15L)',
         product: 'MIM8',
-        volume: '5000 units',
+        volume: '1 units',
         packaging: 'Cartridge (3mL)',
         status: 'Pending'
       },
@@ -54,7 +54,7 @@ export default function BatchConfigurator() {
         id: 'batch-2',
         name: 'Concizumb (15L)',
         product: 'Concizumb',
-        volume: '5000 units',
+        volume: '1 units',
         packaging: 'Prefilled Syringe (3mL)',
         status: 'Pending'
       }
@@ -156,10 +156,12 @@ export default function BatchConfigurator() {
       // If the top batch changed (different UUID)
       if (currentTopBatch.Uuid && currentTopBatch.Uuid !== previousTopUuid) {
         previousTopBatchUuidRef.current = currentTopBatch.Uuid;
-        
-        // Post the active product AAS for the new top batch
-        aasService.postActiveProductAas(currentTopBatch).catch(error => {
-          console.error('Failed to post active Product AAS:', error);
+
+        // Post the new top batch as an Order AAS plus one Product Instance
+        // AAS per unit (volume clamped to [1,5]) so the planner can ground
+        // the batch goal over each instance.
+        aasService.postActiveOrder(currentTopBatch).catch(error => {
+          console.error('Failed to post active Order:', error);
         });
       }
     } else {
@@ -183,7 +185,7 @@ export default function BatchConfigurator() {
       config: {
         product: 'MIM8',
         productFamily: 'Monoclonal Antibodies',
-        volume: '5000', // 15L/3mL = 5000 units
+        volume: '1', // 15L/3mL = 5000 units
         primaryPackaging: '1', // Cartridge (3mL)
         qcCount: '50',
         ipcWeighing: 75,
@@ -198,7 +200,7 @@ export default function BatchConfigurator() {
       config: {
         product: 'MIM8',
         productFamily: 'Monoclonal Antibodies',
-        volume: '8000', // 20L/2.5mL = 8000 units
+        volume: '2', // 20L/2.5mL = 8000 units
         primaryPackaging: '4', // Prefilled Syringe (2.5mL)
         qcCount: '65',
         ipcWeighing: 85,
@@ -213,7 +215,7 @@ export default function BatchConfigurator() {
       config: {
         product: 'MIM8',
         productFamily: 'Monoclonal Antibodies',
-        volume: '40000', // 40L/1mL = 40000 units
+        volume: '5', // 40L/1mL = 40000 units
         primaryPackaging: '2', // Cartridge (1mL)
         qcCount: '100',
         ipcWeighing: 90,
@@ -228,7 +230,7 @@ export default function BatchConfigurator() {
       config: {
         product: 'Concizumb',
         productFamily: 'Biosimilars',
-        volume: '5000', // 15L/3mL = 5000 units
+        volume: '1', // 15L/3mL = 5000 units
         primaryPackaging: '3', // Prefilled Syringe (3mL)
         qcCount: '75',
         ipcWeighing: 95,
@@ -243,7 +245,7 @@ export default function BatchConfigurator() {
       config: {
         product: 'HgH',
         productFamily: 'Growth Hormones',
-        volume: '40000', // 100L/2.5mL = 40000 units
+        volume: '2', // 100L/2.5mL = 40000 units
         primaryPackaging: '4', // Prefilled Syringe (2.5mL)
         qcCount: '150',
         ipcWeighing: 100,
@@ -258,7 +260,7 @@ export default function BatchConfigurator() {
       config: {
         product: 'Sogroya',
         productFamily: 'Growth Hormones',
-        volume: '16665', // 50L/3mL ≈ 16667 units
+        volume: '1', // 50L/3mL ≈ 16667 units
         primaryPackaging: '3', // Prefilled Syringe (3mL)
         qcCount: '90',
         ipcWeighing: 85,
@@ -273,7 +275,7 @@ export default function BatchConfigurator() {
       config: {
         product: 'Sogroya',
         productFamily: 'Growth Hormones',
-        volume: '30000', // 100L/1mL = 100000 units
+        volume: '1', // 100L/1mL = 100000 units
         primaryPackaging: '1', // Cartridge (3mL)
         qcCount: '120',
         ipcWeighing: 80,

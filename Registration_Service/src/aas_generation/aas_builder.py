@@ -41,10 +41,18 @@ class AASBuilder:
         asset_type = config.get('assetType', '')
         serial_number = config.get('serialNumber', 'UNKNOWN')
         location = config.get('location', 'UNKNOWN')
-        
+
+        # Resolve asset kind from config (default Instance for backwards compatibility)
+        asset_kind_raw = (
+            config.get('assetKind')
+            or config.get('assetInformation', {}).get('assetKind')
+            or 'Instance'
+        )
+        asset_kind = self._resolve_asset_kind(asset_kind_raw)
+
         # Create asset information
         asset_information = self._create_asset_information(
-            global_asset_id, asset_type, serial_number, location
+            global_asset_id, asset_type, serial_number, location, asset_kind
         )
         
         # Determine which submodels to reference
@@ -74,27 +82,42 @@ class AASBuilder:
         
         return model.AssetAdministrationShell(**aas_kwargs)
     
+    def _resolve_asset_kind(self, raw: str) -> model.AssetKind:
+        """Map a YAML asset-kind string to the BaSyx ``AssetKind`` enum.
+
+        Accepts (case-insensitive): ``Type``, ``Instance``, ``NotApplicable``.
+        Falls back to ``INSTANCE`` for unknown / missing values.
+        """
+        mapping = {
+            'type': model.AssetKind.TYPE,
+            'instance': model.AssetKind.INSTANCE,
+            'notapplicable': model.AssetKind.NOT_APPLICABLE,
+        }
+        return mapping.get(str(raw).strip().lower(), model.AssetKind.INSTANCE)
+
     def _create_asset_information(
-        self, 
+        self,
         global_asset_id: str,
         asset_type: str,
         serial_number: str,
-        location: str
+        location: str,
+        asset_kind: model.AssetKind = model.AssetKind.INSTANCE,
     ) -> model.AssetInformation:
         """
         Create asset information with specific asset IDs.
-        
+
         Args:
             global_asset_id: Global unique identifier for the asset
             asset_type: Type/category of the asset
             serial_number: Serial number of the asset
             location: Physical location of the asset
-            
+            asset_kind: BaSyx ``AssetKind`` enum value (Type / Instance / NotApplicable)
+
         Returns:
             AssetInformation instance with specific asset IDs
         """
         asset_information = model.AssetInformation(
-            asset_kind=model.AssetKind.INSTANCE,
+            asset_kind=asset_kind,
             global_asset_id=global_asset_id,
             asset_type=asset_type if asset_type else None
         )

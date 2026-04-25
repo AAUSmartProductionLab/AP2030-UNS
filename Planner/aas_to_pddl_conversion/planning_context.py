@@ -29,7 +29,12 @@ def collect_planning_context(
         return None
 
     requirements = order_config.get("Requirements", {})
-    resolved_asset_ids = resolve_asset_hierarchies(aas_client, asset_ids)
+    # Walk hierarchies of both the explicitly-supplied resource asset_ids
+    # AND the order itself. Multi-instance Orders carry their Product
+    # Instance AASs as SelfManagedEntity children in HierarchicalStructures;
+    # including the order in the resolution queue lets the planner pick up
+    # each Instance's AIPlanning submodel automatically.
+    resolved_asset_ids = resolve_asset_hierarchies(aas_client, list(asset_ids) + [order_aas_id])
     planning_sources = collect_ai_planning_sources(aas_client, order_aas_id, resolved_asset_ids)
     planar_table_id = find_planar_table_from_assets(aas_client, resolved_asset_ids)
 

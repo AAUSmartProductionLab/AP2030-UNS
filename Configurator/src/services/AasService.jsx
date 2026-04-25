@@ -2482,27 +2482,32 @@ class AasService {
   }
 
   /**
-   * Generate product AAS IDs based on product name (for active production)
-   * Creates IDs like "MIM8AAS" for the actively produced product
+   * Generate Order AAS IDs based on product name.
+   *
+   * Order AAS is a TYPE-kind shell representing the batch as a whole. It
+   * carries BoP/BoM/Requirements templates and the batch-level goal. The
+   * concrete product units belonging to the order are emitted as separate
+   * Instance AASs (see {@link getInstanceAasIds}) which are linked back via
+   * `derivedFrom` and listed under the order's HierarchicalStructures.
+   *
+   * idShort = `${productName}AAS` (e.g. "HgHAAS").
    * @param {string} productName - The product name
-   * @param {string} productFamily - The product family (e.g., 'Monoclonal Antibodies', 'Growth Hormones')
+   * @param {string} productFamily - The product family (e.g. 'Monoclonal Antibodies')
    * @param {string} batchUuid - The batch UUID for unique asset identification
    */
-  getActiveProductAasIds(productName, productFamily = null, batchUuid = null) {
+  getOrderAasIds(productName, productFamily = null, batchUuid = null) {
     const baseUrl = 'https://smartproductionlab.aau.dk';
     const sanitizedName = productName.replace(/\s+/g, '');
     const sanitizedFamily = productFamily ? productFamily.toLowerCase().replace(/\s+/g, '-') : 'unknown';
-    // Use batch UUID for unique asset ID, or generate a new UUID if not provided
-    const assetId = batchUuid 
-      ? this.generateGlobalAssetId(batchUuid) 
+    const assetId = batchUuid
+      ? this.generateGlobalAssetId(batchUuid)
       : this.generateGlobalAssetId(crypto.randomUUID());
-    // idShort includes AAS suffix, used in submodel paths
     const idShort = `${sanitizedName}AAS`;
     return {
       aasId: `${baseUrl}/aas/${idShort}`,
       idShort,
       assetId,
-      // AssetType uses ontology URL structure: role/category/specific-type/product
+      productName: sanitizedName,
       assetType: `${baseUrl}/product/productFamily/${sanitizedFamily}/${sanitizedName}`,
       batchInfoSubmodelId: `${baseUrl}/submodels/instances/${idShort}/BatchInformation`,
       requirementsSubmodelId: `${baseUrl}/submodels/instances/${idShort}/Requirements`,
@@ -2512,20 +2517,55 @@ class AasService {
   }
 
   /**
-   * Build a Product YAML config string from batch data.
-   * The YAML follows the same schema as AASDescriptions/Product/configs/*.yaml
-   * and is consumed by the Registration Service to generate a proper AAS.
-   * @param {Object} batchData - The batch queue item
-   * @returns {{ yaml: string, ids: Object }} YAML string and generated IDs
+   * Generate Product Instance AAS IDs.
+   *
+   * Each instance is a 1-based index from the order. idShort follows the
+   * pattern `${productName}_NNNNAAS` with 4-digit zero padding so up to
+   * 9999 units share a stable lexicographic order. Each instance gets its
+   * own UUID-derived globalAssetId.
+   *
+   * @param {Object} orderIds - Result of {@link getOrderAasIds}
+   * @param {number} index - 1-based instance index within the order
+   * @returns {Object} Instance ID bundle (aasId, idShort, assetId, uuid)
    */
-  buildProductConfigYaml(batchData) {
+  getInstanceAasIds(orderIds, index) {
+    const baseUrl = 'https://smartproductionlab.aau.dk';
+    const padded = String(index).padStart(4, '0');
+    const idShort = `${orderIds.productName}_${padded}AAS`;
+    const uuid = crypto.randomUUID();
+    return {
+      aasId: `${baseUrl}/aas/${idShort}`,
+      idShort,
+      assetId: this.generateGlobalAssetId(uuid),
+      uuid,
+      productName: orderIds.productName,
+      index,
+    };
+  }
+
+  /**
+   * Build the Order YAML config string from batch data.
+   *
+   * The Order is the type-kind AAS owning the BoP/BoM/Requirements
+   * templates and the batch-level planning goal. The goal is the
+   * grounded conjunction of `Finished(<instance>)` over each Product
+   * Instance. We ground the universal here (rather than emitting a PDDL
+   * `forall`) because the instance set is closed and known at submission
+   * time; PR2 sees the equivalent conjunction without requiring forall
+   * plumbing through the AAS-to-PDDL pipeline.
+   *
+   * @param {Object} batchData - The batch queue item
+   * @param {Array<Object>} instanceIdsList - One ID bundle per Product Instance
+   * @returns {{ yaml: string, ids: Object }} YAML and Order IDs
+   */
+  buildOrderConfigYaml(batchData, instanceIdsList) {
     const productName = batchData.product;
     const productFamily = batchData.productFamily || productName;
     const batchUuid = batchData.Uuid;
-    const ids = this.getActiveProductAasIds(productName, productFamily, batchUuid);
+    const ids = this.getOrderAasIds(productName, productFamily, batchUuid);
 
     const fillVolume = this.extractFillVolume(batchData);
-    const quantity = parseInt(batchData.volume) || 0;
+    const quantity = instanceIdsList.length;
     const packaging = batchData.packaging || 'Cartridge (3mL)';
     const containerType = packaging.includes('Cartridge') ? 'Cartridge' : 'Prefilled Syringe';
     const containerVolume = packaging.match(/(\d+(?:\.\d+)?)\s*mL/i)?.[1] || '3';
@@ -2538,24 +2578,22 @@ class AasService {
     const orderTimestamp = batchData.orderTimestamp || new Date().toISOString();
 
     const lines = [];
-    const I = '    ';  // 4-space indent
+    const I = '    ';
 
-    // Root key
     lines.push(`${ids.idShort}:`);
     lines.push(`${I}idShort: ${ids.idShort}`);
     lines.push(`${I}id: '${ids.aasId}'`);
     lines.push(`${I}globalAssetId: '${ids.assetId}'`);
+    lines.push(`${I}assetKind: 'Type'`);
     lines.push(`${I}derivedFrom: 'https://smartproductionlab.aau.dk/aas/templates/product'`);
     lines.push(`${I}assetType: '${ids.assetType}'`);
     lines.push(``);
 
-    // ProductInformation
     lines.push(`${I}ProductInformation:`);
     lines.push(`${I}${I}ProductName: '${productName}'`);
     lines.push(`${I}${I}ProductFamily: '${productFamily}'`);
     lines.push(``);
 
-    // BatchInformation
     lines.push(`${I}BatchInformation:`);
     lines.push(`${I}${I}OrderNumber: '${batchUuid}'`);
     lines.push(`${I}${I}OrderTimestamp: '${orderTimestamp}'`);
@@ -2565,7 +2603,6 @@ class AasService {
     lines.push(`${I}${I}Status: 'planned'`);
     lines.push(``);
 
-    // BillOfProcesses
     lines.push(`${I}BillOfProcesses:`);
     lines.push(`${I}${I}semanticId: 'https://admin-shell.io/idta/BillOfProcess/1/0'`);
     lines.push(`${I}${I}idShort: 'BillOfProcesses'`);
@@ -2621,7 +2658,6 @@ class AasService {
     lines.push(`${I}${I}${I}    unit: 's'`);
     lines.push(``);
 
-    // Requirements
     lines.push(`${I}Requirements:`);
     lines.push(`${I}${I}Environmental:`);
     lines.push(`${I}${I}${I}- idShort: 'AmbientTemperature'`);
@@ -2647,35 +2683,119 @@ class AasService {
     lines.push(`${I}${I}${I}  unit: 'units'`);
     lines.push(``);
 
-    // HierarchicalStructures (Bill of Materials)
+    // HierarchicalStructures (BoM). OneDown with each Product Instance
+    // listed as a SelfManagedEntity child via HasPart. Format matches the
+    // dict-style used by Resource AASs (e.g. planarTable.yaml) so the
+    // hierarchical_structures_builder produces the same SameAs reference
+    // wiring that lets BaSyx (and the planner) navigate from the Order to
+    // each Instance AAS's own HierarchicalStructures submodel.
     lines.push(`${I}HierarchicalStructures:`);
-    lines.push(`${I}${I}archetype: 'OneDown'`);
-    lines.push(`${I}${I}entryNode: '${productName}Product'`);
-    lines.push(`${I}${I}Nodes:`);
-    lines.push(`${I}${I}${I}- idShort: '${productName}Product'`);
-    lines.push(`${I}${I}${I}  entityType: 'SelfManagedEntity'`);
-    lines.push(`${I}${I}${I}  globalAssetId: '${ids.assetId}'`);
-    lines.push(`${I}${I}${I}- idShort: 'PrimaryContainer'`);
-    lines.push(`${I}${I}${I}  entityType: 'CoManagedEntity'`);
-    lines.push(`${I}${I}${I}  description: '${containerType} (${containerVolume}mL)'`);
-    lines.push(`${I}${I}${I}- idShort: 'ElastomericStopper'`);
-    lines.push(`${I}${I}${I}  entityType: 'CoManagedEntity'`);
-    lines.push(`${I}${I}${I}- idShort: 'BulkProduct'`);
-    lines.push(`${I}${I}${I}  entityType: 'CoManagedEntity'`);
-    lines.push(`${I}${I}${I}  description: 'Bulk ${productName} pharmaceutical solution'`);
-    lines.push(`${I}${I}Relationships:`);
-    lines.push(`${I}${I}${I}- idShort: 'ProductHasContainer'`);
-    lines.push(`${I}${I}${I}  first: '${productName}Product'`);
-    lines.push(`${I}${I}${I}  second: 'PrimaryContainer'`);
-    lines.push(`${I}${I}${I}- idShort: 'ProductHasStopper'`);
-    lines.push(`${I}${I}${I}  first: '${productName}Product'`);
-    lines.push(`${I}${I}${I}  second: 'ElastomericStopper'`);
-    lines.push(`${I}${I}${I}- idShort: 'ProductHasBulk'`);
-    lines.push(`${I}${I}${I}  first: '${productName}Product'`);
-    lines.push(`${I}${I}${I}  second: 'BulkProduct'`);
+    lines.push(`${I}${I}Name: 'BillOfMaterials'`);
+    lines.push(`${I}${I}Archetype: 'OneDown'`);
+    lines.push(`${I}${I}HasPart:`);
+    for (const inst of instanceIdsList) {
+      lines.push(`${I}${I}${I}${inst.idShort}:`);
+      lines.push(`${I}${I}${I}${I}globalAssetId: '${inst.assetId}'`);
+    }
     lines.push(``);
 
-    // AI-Planning
+    // AI-Planning. Order declares only the batch-level Finished fluent
+    // and the grounded forall goal over all Product Instances. Per-product
+    // operational fluents (On, ProductAt, Dispensed, ...) live on each
+    // Instance AAS; the planner deduplicates fluent declarations across
+    // sources by key + signature.
+    lines.push(`${I}AI-Planning:`);
+    lines.push(`${I}${I}Domain:`);
+    lines.push(`${I}${I}${I}Fluents:`);
+    lines.push(`${I}${I}${I}${I}-   key: "Finished"`);
+    lines.push(`${I}${I}${I}${I}    semantic_id: "cssx:Finished"`);
+    lines.push(`${I}${I}${I}${I}    parameters:`);
+    lines.push(`${I}${I}${I}${I}        -   name: "Product"`);
+    lines.push(`${I}${I}${I}${I}            externalRef: "css:Product"`);
+    lines.push(`${I}${I}Problem:`);
+    lines.push(`${I}${I}${I}Objects:`);
+    // Each Instance object cross-references its own AAS so the planner
+    // resolves the object name to the concrete instance ID.
+    instanceIdsList.forEach((inst) => {
+      lines.push(`${I}${I}${I}${I}-   name: "${inst.idShort}"`);
+      lines.push(`${I}${I}${I}${I}    modelRef:`);
+      lines.push(`${I}${I}${I}${I}        - AAS: "${inst.aasId}"`);
+    });
+    lines.push(`${I}${I}${I}Goal:`);
+    instanceIdsList.forEach((_inst, idx) => {
+      lines.push(`${I}${I}${I}${I}- predicate:`);
+      lines.push(`${I}${I}${I}${I}    external: "cssx:Finished"`);
+      lines.push(`${I}${I}${I}${I}    parameters: [${idx}]`);
+    });
+
+    return { yaml: lines.join('\n'), ids };
+  }
+
+  /**
+   * Build a Product Instance YAML config string.
+   *
+   * Each Instance is a thin AAS that:
+   *   - declares assetKind: Instance and derivedFrom the Order
+   *   - carries its own UUID via Parameters.Uuid
+   *   - declares the per-product operational fluents (On, ProductAt,
+   *     Dispensed, Stoppered, Captured, QualityOk) on AI-Planning so they
+   *     enter the merged planning domain. The planner deduplicates these
+   *     by key + signature across instances.
+   *   - exposes a single Problem.Object: itself, used by the planner to
+   *     ground per-instance predicates referenced from resource actions
+   *     and from the Order's batch goal.
+   *
+   * @param {Object} orderIds - Order ID bundle
+   * @param {Object} instanceIds - Instance ID bundle from {@link getInstanceAasIds}
+   * @returns {string} YAML string
+   */
+  buildInstanceConfigYaml(orderIds, instanceIds) {
+    const productName = orderIds.productName;
+    const lines = [];
+    const I = '    ';
+
+    lines.push(`${instanceIds.idShort}:`);
+    lines.push(`${I}idShort: ${instanceIds.idShort}`);
+    lines.push(`${I}id: '${instanceIds.aasId}'`);
+    lines.push(`${I}globalAssetId: '${instanceIds.assetId}'`);
+    lines.push(`${I}assetKind: 'Instance'`);
+    lines.push(`${I}derivedFrom: '${orderIds.aasId}'`);
+    lines.push(`${I}assetType: '${orderIds.assetType}'`);
+    lines.push(``);
+
+    // Per-instance identity. The Uuid is referenced by the camera's
+    // QualityOk transformation (parameter1.Parameters.Uuid) so each
+    // Product Instance must surface its own Uuid here. Each parameter
+    // is rendered as a {semanticId, value} dict to match parameters_builder.py.
+    lines.push(`${I}Parameters:`);
+    lines.push(`${I}${I}Uuid:`);
+    lines.push(`${I}${I}${I}semanticId: 'cssx:UuidParameter'`);
+    lines.push(`${I}${I}${I}value: '${instanceIds.uuid}'`);
+    lines.push(`${I}${I}OrderNumber:`);
+    lines.push(`${I}${I}${I}semanticId: 'cssx:OrderNumberParameter'`);
+    lines.push(`${I}${I}${I}value: '${productName}'`);
+    lines.push(`${I}${I}InstanceIndex:`);
+    lines.push(`${I}${I}${I}semanticId: 'cssx:InstanceIndexParameter'`);
+    lines.push(`${I}${I}${I}value: ${instanceIds.index}`);
+    lines.push(``);
+
+    // OneUp BoM tying this instance to its parent Order. Dict format
+    // matches Resource AAS conventions (e.g. optimaUnloading.yaml) so the
+    // builder emits a SameAs reference under the parent Node, allowing
+    // BaSyx and the planner to navigate from the Instance to the Order's
+    // HierarchicalStructures submodel.
+    lines.push(`${I}HierarchicalStructures:`);
+    lines.push(`${I}${I}Name: 'BillOfMaterials'`);
+    lines.push(`${I}${I}Archetype: 'OneUp'`);
+    lines.push(`${I}${I}IsPartOf:`);
+    lines.push(`${I}${I}${I}${orderIds.idShort}:`);
+    lines.push(`${I}${I}${I}${I}globalAssetId: '${orderIds.assetId}'`);
+    lines.push(``);
+
+    // AI-Planning. Per-product fluents are declared here so each Instance
+    // contributes them to the merged planning domain. Predicate signatures
+    // match those expected by resource actions (e.g. Loading writes On,
+    // Dispensing writes Dispensed, the camera writes QualityOk).
     lines.push(`${I}AI-Planning:`);
     lines.push(`${I}${I}Domain:`);
     lines.push(`${I}${I}${I}Fluents:`);
@@ -2708,47 +2828,89 @@ class AasService {
     lines.push(`${I}${I}${I}${I}    parameters:`);
     lines.push(`${I}${I}${I}${I}        -   name: "Product"`);
     lines.push(`${I}${I}${I}${I}            externalRef: "css:Product"`);
+    lines.push(`${I}${I}${I}${I}-   key: "QualityOk"`);
+    lines.push(`${I}${I}${I}${I}    semantic_id: "cssx:QualityOk"`);
+    lines.push(`${I}${I}${I}${I}    parameters:`);
+    lines.push(`${I}${I}${I}${I}        -   name: "Product"`);
+    lines.push(`${I}${I}${I}${I}            externalRef: "css:Product"`);
+    lines.push(`${I}${I}${I}${I}        -   name: "Resource"`);
+    lines.push(`${I}${I}${I}${I}            externalRef: "css:Resource"`);
+    lines.push(`${I}${I}${I}${I}    transformation: 'parameter2.Variables.QualityResult.Uuid = parameter1.Parameters.Uuid and parameter2.Variables.QualityResult.Result = "Ok"'`);
+    lines.push(`${I}${I}${I}${I}-   key: "Finished"`);
+    lines.push(`${I}${I}${I}${I}    semantic_id: "cssx:Finished"`);
+    lines.push(`${I}${I}${I}${I}    parameters:`);
+    lines.push(`${I}${I}${I}${I}        -   name: "Product"`);
+    lines.push(`${I}${I}${I}${I}            externalRef: "css:Product"`);
     lines.push(`${I}${I}Problem:`);
     lines.push(`${I}${I}${I}Objects:`);
-    lines.push(`${I}${I}${I}${I}-   name: "${productName}"`);
+    lines.push(`${I}${I}${I}${I}-   name: "${instanceIds.idShort}"`);
     lines.push(`${I}${I}${I}${I}    modelRef:`);
     lines.push(`${I}${I}${I}${I}        - AAS: "self"`);
 
-    return { yaml: lines.join('\n'), ids };
+    return lines.join('\n');
   }
 
   /**
-   * Post the active product AAS when batch moves to top of queue.
-   * Builds a YAML config and publishes it via MQTT to the Registration Service,
-   * which generates the full AAS with all submodels.
+   * Publish a complete order (1 Order AAS + N Product Instance AASs) to
+   * the Registration Service when a batch moves to the top of the queue.
+   *
+   * The instance count N is derived from `batchData.volume`, clamped to
+   * the inclusive range [1, 5] to match the lab's current physical
+   * throughput envelope. Every AAS is published as an independent YAML
+   * message on the same MQTT topic; the Registration Service ingests one
+   * AAS per message.
+   *
    * @param {Object} batchData - The batch at the top of the queue
-   * @returns {Promise<Object>} The created AAS information
+   * @returns {Promise<Object>} Order + Instance ID bundles + status
    */
-  async postActiveProductAas(batchData) {
+  async postActiveOrder(batchData) {
     try {
       const productName = batchData.product;
       if (!productName) {
         throw new Error('Product name is required');
       }
 
-      const { yaml, ids } = this.buildProductConfigYaml(batchData);
+      const requested = parseInt(batchData.volume, 10);
+      const N = Math.min(5, Math.max(1, Number.isFinite(requested) ? requested : 1));
 
-      const published = await mqttService.publishProductConfig(yaml);
-      if (!published) {
-        throw new Error('Failed to publish product config via MQTT');
+      const orderIds = this.getOrderAasIds(
+        productName,
+        batchData.productFamily || productName,
+        batchData.Uuid,
+      );
+
+      const instanceIdsList = [];
+      for (let i = 1; i <= N; i += 1) {
+        instanceIdsList.push(this.getInstanceAasIds(orderIds, i));
       }
 
-      toast.success(`Product config published: ${ids.idShort}`);
+      const { yaml: orderYaml } = this.buildOrderConfigYaml(batchData, instanceIdsList);
+
+      const orderPublished = await mqttService.publishProductConfig(orderYaml);
+      if (!orderPublished) {
+        throw new Error('Failed to publish Order config via MQTT');
+      }
+
+      for (const instanceIds of instanceIdsList) {
+        const instanceYaml = this.buildInstanceConfigYaml(orderIds, instanceIds);
+        const ok = await mqttService.publishProductConfig(instanceYaml);
+        if (!ok) {
+          throw new Error(`Failed to publish Instance config ${instanceIds.idShort}`);
+        }
+      }
+
+      toast.success(`Order published: ${orderIds.idShort} (${N} instance${N === 1 ? '' : 's'})`);
 
       return {
         success: true,
-        ids,
-        aasName: ids.idShort,
-        message: `Product config published to Registration Service: ${ids.aasId}`
+        orderIds,
+        instanceIds: instanceIdsList,
+        aasName: orderIds.idShort,
+        message: `Published Order ${orderIds.aasId} with ${N} Product Instance AAS(s)`,
       };
     } catch (error) {
-      console.error('Failed to post active Product AAS:', error);
-      toast.error(`Failed to post active Product AAS: ${error.message}`);
+      console.error('Failed to post active Order:', error);
+      toast.error(`Failed to post active Order: ${error.message}`);
       throw error;
     }
   }
