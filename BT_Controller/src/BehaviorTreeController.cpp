@@ -10,6 +10,8 @@
 #include "bt/register_all_nodes.h"
 #include "bt/execution_refs.h"
 #include "bt/symbolic_state.h"
+#include "bt/bt_runtime_validator.h"
+#include "aas/aas_client.h"
 #include "utils.h"
 
 #include <csignal>
@@ -19,6 +21,89 @@
 #include <algorithm>
 #include <fstream>
 #include <sstream>
+#include <regex>
+
+namespace
+{
+    /// Extract ``<input_port name="X" default="..."/>`` entries declared on the
+    /// planner's ``<TreeNodesModel><SubTree ID="MainTree" editable="true">``
+    /// block and write each ``(name, decoded_default)`` pair onto *blackboard*.
+    ///
+    /// Rationale: BT.CPP v4 does not reliably propagate TreeNodesModel SubTree
+    /// input_port defaults onto the runtime blackboard (defaults only land on
+    /// ports that are also explicitly remapped at the call site, which would
+    /// defeat the purpose). The planner uses these declarations as a
+    /// data-only payload table — keys like ``Param_MIM8_0001``,
+    /// ``Finished_MIM8_0001``, ``Predicate_Object``, and
+    /// ``_planner_initial_state`` — referenced via ``{Key}`` from FluentCheck
+    /// / ExecuteAction nodes throughout every nested subtree. We pre-populate
+    /// the root blackboard once; ``_autoremap="true"`` on every nested SubTree
+    /// invocation then propagates the values down the tree.
+    std::size_t preloadPlannerDefaults(const std::string &xml,
+                                       const std::string &subtree_id,
+                                       BT::Blackboard::Ptr blackboard)
+    {
+        if (!blackboard || xml.empty())
+            return 0;
+
+        // Locate the SubTree block within TreeNodesModel.
+        const std::string open_pat = "<SubTree ID=\"" + subtree_id + "\"";
+        auto block_start = xml.find(open_pat);
+        if (block_start == std::string::npos)
+            return 0;
+        auto block_end = xml.find("</SubTree>", block_start);
+        if (block_end == std::string::npos)
+            return 0;
+        const std::string block = xml.substr(block_start, block_end - block_start);
+
+        // ``input_port`` lines may have arbitrary attribute order and contain
+        // XML-escaped JSON in the default. We capture name + default attrs
+        // independently to avoid order assumptions.
+        static const std::regex port_re(
+            R"rx(<input_port\b[^>]*?/>)rx",
+            std::regex::ECMAScript);
+        static const std::regex name_re(R"rx(\bname="([^"]+)")rx");
+        static const std::regex default_re(R"rx(\bdefault="([^"]*)")rx");
+
+        auto unescape = [](std::string s)
+        {
+            // Order matters: &amp; must come last so we don't double-decode.
+            auto replace_all = [&](const std::string &from, const std::string &to)
+            {
+                std::size_t pos = 0;
+                while ((pos = s.find(from, pos)) != std::string::npos)
+                {
+                    s.replace(pos, from.size(), to);
+                    pos += to.size();
+                }
+            };
+            replace_all("&quot;", "\"");
+            replace_all("&apos;", "'");
+            replace_all("&lt;", "<");
+            replace_all("&gt;", ">");
+            replace_all("&amp;", "&");
+            return s;
+        };
+
+        std::size_t count = 0;
+        auto begin = std::sregex_iterator(block.begin(), block.end(), port_re);
+        auto end = std::sregex_iterator();
+        for (auto it = begin; it != end; ++it)
+        {
+            const std::string tag = it->str();
+            std::smatch nm, dm;
+            if (!std::regex_search(tag, nm, name_re))
+                continue;
+            std::string key = nm[1].str();
+            std::string value;
+            if (std::regex_search(tag, dm, default_re))
+                value = unescape(dm[1].str());
+            blackboard->set(key, value);
+            ++count;
+        }
+        return count;
+    }
+} // namespace
 
 BehaviorTreeController *g_controller_instance = nullptr;
 
@@ -277,15 +362,15 @@ bool BehaviorTreeController::fetchAndBuildEquipmentMapping(BT::Blackboard::Ptr b
         if (process_info_opt.has_value())
         {
             const auto &process_info = process_info_opt.value();
-            
+
             // Look for ProductReference in submodelElements
             if (process_info.contains("submodelElements") && process_info["submodelElements"].is_array())
             {
                 for (const auto &element : process_info["submodelElements"])
                 {
-                    if (element.contains("modelType") && 
+                    if (element.contains("modelType") &&
                         element["modelType"].get<std::string>() == "ReferenceElement" &&
-                        element.contains("idShort") && 
+                        element.contains("idShort") &&
                         element["idShort"].get<std::string>() == "ProductReference")
                     {
                         // Extract the product AAS ID from the reference
@@ -295,7 +380,7 @@ bool BehaviorTreeController::fetchAndBuildEquipmentMapping(BT::Blackboard::Ptr b
                             !element["value"]["keys"].empty())
                         {
                             std::string product_aas_id = element["value"]["keys"][0]["value"].get<std::string>();
-                            
+
                             std::lock_guard<std::mutex> lock(equipment_mapping_mutex_);
                             equipment_aas_mapping_["product"] = product_aas_id;
                             std::cout << "  Found product AAS: product -> " << product_aas_id << std::endl;
@@ -372,7 +457,8 @@ bool BehaviorTreeController::prefetchAssetInterfaces()
         return false;
     }
 
-    std::cout << "Pre-fetch returning true" << std::endl << std::flush;
+    std::cout << "Pre-fetch returning true" << std::endl
+              << std::flush;
     return true;
 }
 
@@ -387,18 +473,22 @@ bool BehaviorTreeController::subscribeToTopics()
 
 bool BehaviorTreeController::registerNodesWithAASConfig()
 {
-    std::cout << "Entering registerNodesWithAASConfig..." << std::endl << std::flush;
+    std::cout << "Entering registerNodesWithAASConfig..." << std::endl
+              << std::flush;
     try
     {
         // Register all nodes (they will read equipment mapping from blackboard)
-        std::cout << "  Calling registerAllNodes..." << std::endl << std::flush;
+        std::cout << "  Calling registerAllNodes..." << std::endl
+                  << std::flush;
         registerAllNodes(*bt_factory_, *node_message_distributor_, *mqtt_client_, *aas_client_);
-        std::cout << "  registerAllNodes complete" << std::endl << std::flush;
+        std::cout << "  registerAllNodes complete" << std::endl
+                  << std::flush;
 
         // Set the node message distributor and interface cache for base classes
         MqttSubBase::setNodeMessageDistributor(node_message_distributor_.get());
         MqttSubBase::setAASInterfaceCache(aas_interface_cache_.get());
-        std::cout << "  Node registration complete" << std::endl << std::flush;
+        std::cout << "  Node registration complete" << std::endl
+                  << std::flush;
         return true;
     }
     catch (const std::exception &e)
@@ -987,8 +1077,42 @@ void BehaviorTreeController::processStartingState()
         std::string bt_url = bt_url_opt.value();
         std::cout << "Fetching BT description from: " << bt_url << std::endl;
 
-        // Fetch the BT XML content from the URL
-        std::string bt_xml_content = schema_utils::fetchContentFromUrl(bt_url);
+        // DEBUG OVERRIDE: if the URL points at the GH Pages BTDescriptions
+        // location, prefer a locally-mounted copy so that planner regenerations
+        // do not require a commit + GH Pages roundtrip. Disable by setting
+        // BT_LOCAL_DESCRIPTIONS_DIR=- (or any non-existent dir).
+        std::string bt_xml_content;
+        {
+            const char *override_env = std::getenv("BT_LOCAL_DESCRIPTIONS_DIR");
+            std::string local_dir = override_env ? std::string(override_env)
+                                                 : std::string("/AP2030-UNS/MQTTSchemas");
+            const std::string gh_prefix =
+                "https://aausmartproductionlab.github.io/AP2030-UNS/BTDescriptions/";
+            if (!local_dir.empty() && bt_url.rfind(gh_prefix, 0) == 0)
+            {
+                std::string filename = bt_url.substr(gh_prefix.size());
+                std::string local_path = local_dir + "/" + filename;
+                std::ifstream local_stream(local_path);
+                if (local_stream.is_open())
+                {
+                    std::stringstream ss;
+                    ss << local_stream.rdbuf();
+                    bt_xml_content = ss.str();
+                    std::cout << "  [local override] Loaded BT from " << local_path
+                              << " (" << bt_xml_content.size() << " bytes)" << std::endl;
+                }
+                else
+                {
+                    std::cout << "  [local override] Not found at " << local_path
+                              << ", falling back to URL" << std::endl;
+                }
+            }
+        }
+        if (bt_xml_content.empty())
+        {
+            // Fetch the BT XML content from the URL
+            bt_xml_content = schema_utils::fetchContentFromUrl(bt_url);
+        }
         if (bt_xml_content.empty())
         {
             std::cerr << "Failed to fetch BT description XML from URL: " << bt_url << std::endl;
@@ -1017,6 +1141,20 @@ void BehaviorTreeController::processStartingState()
         // Store the process ID in blackboard for nodes to access
         root_blackboard->set("ProcessAASId", process_id);
 
+        // Pre-populate the root blackboard with all
+        // ``<TreeNodesModel><SubTree ID="MainTree">`` ``input_port`` defaults
+        // declared by the planner. BT.CPP v4 does not propagate these to the
+        // runtime blackboard on its own, so we do it explicitly. The wrapper
+        // tree's nested ``<SubTree>`` invocations all carry
+        // ``_autoremap="true"``, so values land everywhere they're referenced
+        // via ``{Key}``.
+        {
+            const std::size_t loaded =
+                preloadPlannerDefaults(bt_xml_content, "MainTree", root_blackboard);
+            std::cout << "Pre-loaded " << loaded
+                      << " planner default(s) onto root blackboard" << std::endl;
+        }
+
         // createTreeFromText parses XML, registers the tree, and creates it in one call
         // It automatically uses the main_tree_to_execute attribute from the XML
         bt_tree_ = bt_factory_->createTreeFromText(bt_xml_content, root_blackboard);
@@ -1029,9 +1167,14 @@ void BehaviorTreeController::processStartingState()
         try
         {
             std::string seed_payload;
-            // Try the root tree's blackboard (populated from MainTree
-            // SubTree input_port defaults) first, then fall back to the
-            // root_blackboard we passed in.
+            // The planner emits a ``PlannerRoot`` BehaviorTree whose only
+            // child is ``<SubTree ID="MainTree"/>``; the ``_planner_initial_state``
+            // input_port default is declared on MainTree's TreeNodesModel
+            // SubTree entry, so BT.CPP writes it onto the *MainTree* subtree
+            // blackboard rather than the root (PlannerRoot) one. Search the
+            // root blackboard first (PR3 back-compat / explicit caller seed),
+            // then the input ``root_blackboard``, then every subtree
+            // blackboard until we find a non-empty value.
             auto root_bb = bt_tree_.rootBlackboard();
             if (root_bb)
             {
@@ -1040,6 +1183,18 @@ void BehaviorTreeController::processStartingState()
             if (seed_payload.empty())
             {
                 (void)root_blackboard->get<std::string>("_planner_initial_state", seed_payload);
+            }
+            if (seed_payload.empty())
+            {
+                for (const auto &sub : bt_tree_.subtrees)
+                {
+                    if (!sub || !sub->blackboard)
+                        continue;
+                    (void)sub->blackboard->get<std::string>(
+                        "_planner_initial_state", seed_payload);
+                    if (!seed_payload.empty())
+                        break;
+                }
             }
             if (!seed_payload.empty())
             {
@@ -1053,7 +1208,8 @@ void BehaviorTreeController::processStartingState()
                 else
                 {
                     std::cerr << "Failed to parse _planner_initial_state; "
-                                 "SymbolicState left empty" << std::endl;
+                                 "SymbolicState left empty"
+                              << std::endl;
                 }
             }
             else
@@ -1118,6 +1274,44 @@ void BehaviorTreeController::processStartingState()
     }
 
     std::cout << "Topic subscriptions established - retained messages delivered." << std::endl;
+
+    // Walk the live tree to (a) verify every planner-emitted ExecuteAction
+    // and FluentCheck node has the MQTT bindings it requires, (b) seed
+    // each data-backed FluentCheck with a synchronous AAS GET so the
+    // first tick has a value to evaluate, and (c) verify every {Key}
+    // blackboard reference resolves on the root blackboard. Any failure
+    // here is fatal: it would manifest at runtime as silent UNCHANGED /
+    // FAILURE results.
+    if (aas_interface_cache_ && aas_client_)
+    {
+        auto validation = bt_runtime_validator::validateAndSeed(
+            bt_tree_, *aas_interface_cache_, *aas_client_);
+        std::cout << "[bt_runtime_validator] ExecuteActions=" << validation.execute_actions_validated
+                  << " FluentChecks(data)=" << validation.fluent_checks_validated
+                  << " seeded=" << validation.fluent_checks_seeded
+                  << " FluentChecks(symbolic)=" << validation.fluent_checks_symbolic
+                  << " bb_keys_resolved=" << validation.blackboard_refs_resolved
+                  << std::endl;
+        if (!validation.ok())
+        {
+            std::cerr << bt_runtime_validator::formatReport(validation) << std::endl;
+            if (bt_tree_.rootNode())
+            {
+                bt_tree_.haltTree();
+            }
+            bt_publisher_.reset();
+            setStateAndPublish(PackML::State::ABORTED);
+
+            std::string uuid;
+            {
+                std::lock_guard<std::mutex> lock(pending_command_mutex_);
+                uuid = pending_start_uuid_;
+                pending_start_uuid_.clear();
+            }
+            publishCommandResponse(app_params_.start_response_topic, uuid, false);
+            return;
+        }
+    }
 
     // Create Groot2 publisher
     bt_publisher_ = std::make_unique<BT::Groot2Publisher>(bt_tree_, app_params_.groot2_port);

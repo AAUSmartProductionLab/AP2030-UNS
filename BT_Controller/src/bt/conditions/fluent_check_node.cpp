@@ -172,13 +172,14 @@ void FluentCheck::initializeTopicsFromAAS()
             return;
         }
 
-        // No interface description found - fall back to polling the AAS
-        // Property value on each tick.
-        aas_direct_fallback_ = true;
-        topics_initialized_ = true;
-        std::cout << "FluentCheck '" << this->name()
-                  << "' no interface for " << interaction_name_
-                  << "; will poll AAS property" << std::endl;
+        // No interface description found - the controller's startup
+        // validator will detect this and abort the run. Leave
+        // topics_initialized_ = false so the validator can identify the
+        // offending node.
+        std::cerr << "FluentCheck '" << this->name()
+                  << "' missing MQTT interface for asset='" << asset_id
+                  << "' interaction='" << interaction_name_
+                  << "'; startup validator will abort the run." << std::endl;
     }
     catch (const std::exception &e)
     {
@@ -277,48 +278,16 @@ BT::NodeStatus FluentCheck::tick()
 
     nlohmann::json payload = nlohmann::json::object();
 
-    if (aas_direct_fallback_)
-    {
-        try
-        {
-            // The fluent_aas_path is emitted by the planner with a
-            // submodel-name prefix (typically "AI-Planning/..." which the
-            // splitSubmodelPath helper canonicalizes to "AIPlanning/...").
-            // Fall back to the Variables submodel when the prefix is unknown.
-            auto [submodel, remainder] = bt_exec_refs::splitSubmodelPath(
-                predicate_ref_->fluent_aas_path);
-            if (submodel.empty())
-            {
-                submodel = "Variables";
-                remainder = predicate_ref_->fluent_aas_path;
-            }
-            auto value_opt = aas_client_.fetchSubmodelElementByPath(
-                predicate_ref_->source_aas_id, submodel, remainder);
-            if (value_opt.has_value())
-            {
-                payload = *value_opt;
-            }
-            else
-            {
-                std::cerr << "FluentCheck '" << this->name()
-                          << "' AAS-direct fetch returned no value" << std::endl;
-                return BT::NodeStatus::FAILURE;
-            }
-        }
-        catch (const std::exception &e)
-        {
-            std::cerr << "FluentCheck '" << this->name()
-                      << "' AAS-direct fetch exception: " << e.what() << std::endl;
-            return BT::NodeStatus::FAILURE;
-        }
-    }
-    else
     {
         std::lock_guard<std::mutex> lock(mutex_);
         if (latest_msg_.is_null())
         {
-            // No message yet: treat as not-yet-true rather than failure to
-            // allow reactive control nodes to retry on the next tick.
+            // No retained/initial message yet. BT.CPP ConditionNode does
+            // not allow returning RUNNING, so we return FAILURE; the
+            // surrounding ReactiveFallback re-ticks until a message
+            // arrives. The controller seeds latest_msg_ at startup via a
+            // synchronous AAS GET (see prefetchPredicateInitialValues) to
+            // eliminate the race window in steady-state operation.
             return BT::NodeStatus::FAILURE;
         }
         payload = latest_msg_;

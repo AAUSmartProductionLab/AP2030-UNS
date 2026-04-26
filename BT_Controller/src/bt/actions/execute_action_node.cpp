@@ -1,7 +1,6 @@
 #include "bt/actions/execute_action_node.h"
 
 #include <chrono>
-#include <cstdlib>
 #include <ctime>
 #include <iostream>
 #include <iomanip>
@@ -88,23 +87,6 @@ std::shared_ptr<TransformationResolver> ExecuteAction::getResolver(AASClient &aa
     return instance;
 }
 
-std::string ExecuteAction::envFallbackMode()
-{
-    const char *raw = std::getenv("BT_CONTROLLER_AAS_DIRECT");
-    if (!raw)
-    {
-        return "auto";
-    }
-    std::string s(raw);
-    for (auto &c : s)
-        c = static_cast<char>(::tolower(c));
-    if (s == "force" || s == "disable" || s == "auto")
-    {
-        return s;
-    }
-    return "auto";
-}
-
 ExecuteAction::ExecuteAction(const std::string &name,
                              const BT::NodeConfig &config,
                              MqttClient &mqtt_client,
@@ -184,17 +166,9 @@ void ExecuteAction::initializeTopicsFromAAS()
             }
         }
 
-        // Try cached interface first, then live AAS query, then mark fallback.
-        std::string fallback_mode = envFallbackMode();
-        if (fallback_mode == "force")
-        {
-            aas_direct_fallback_ = true;
-            topics_initialized_ = true;
-            BT_LOG_INFO("ExecuteAction '" << this->name()
-                                          << "' BT_CONTROLLER_AAS_DIRECT=force; using AAS-direct path");
-            return;
-        }
-
+        // Try cached interface first, then live AAS query. MQTT bindings
+        // are required: the controller's startup validator aborts if any
+        // ExecuteAction node lacks both input and output topics.
         const std::string &asset_id = action_ref_->source_aas_id;
         bool publisher_topic_set = false;
         bool subscriber_topic_set = false;
@@ -241,20 +215,13 @@ void ExecuteAction::initializeTopicsFromAAS()
             return;
         }
 
-        if (fallback_mode == "disable")
-        {
-            BT_LOG_ERROR("ExecuteAction '" << this->name()
-                                           << "' missing interface and AAS-direct disabled by env");
-            return;
-        }
-
-        // Mark for AAS-direct fallback. We do not require MQTT topics to be
-        // set in this case; onStart will dispatch via AASClient::invokeOperation.
-        aas_direct_fallback_ = true;
-        topics_initialized_ = true;
-        BT_LOG_INFO("ExecuteAction '" << this->name()
-                                      << "' no Asset Interface Description; will use AAS-direct invoke for "
-                                      << action_ref_->action_aas_path);
+        BT_LOG_ERROR("ExecuteAction '" << this->name()
+                                       << "' missing MQTT interface for asset='" << asset_id
+                                       << "' interaction='" << interaction_name_
+                                       << "' (input_set=" << publisher_topic_set
+                                       << ", output_set=" << subscriber_topic_set
+                                       << "); startup validator will abort the run.");
+        // Leave topics_initialized_ = false so the validator detects this node.
     }
     catch (const std::exception &e)
     {
@@ -350,85 +317,22 @@ BT::NodeStatus ExecuteAction::onStart()
     {
         return BT::NodeStatus::FAILURE;
     }
+    if (!topics_initialized_)
+    {
+        // Startup validator should have caught this; treat as hard failure.
+        BT_LOG_ERROR("ExecuteAction '" << this->name()
+                                       << "' onStart called without MQTT bindings; failing.");
+        return BT::NodeStatus::FAILURE;
+    }
 
     // Reset the per-tick effect-application latch so a re-entry of the
     // node (sequence retry, reactive replan) re-applies effects on its
     // next SUCCESS.
     effects_applied_ = false;
 
-    if (!aas_direct_fallback_)
-    {
-        // Fast path: delegate to MqttActionNode lifecycle (publish input,
-        // wait for output via callback).
-        return MqttActionNode::onStart();
-    }
-
-    // AAS-direct fallback: synchronously invoke the operation and map the
-    // response to BT success/failure. We still emit a Uuid for traceability.
-    nlohmann::json input_message = createMessage();
-    BT_LOG_DEBUG("ExecuteAction '" << this->name()
-                                   << "' bound_args=" << nlohmann::json(args_tokens_).dump()
-                                   << " action_aas_path=" << action_ref_->action_aas_path
-                                   << " transformation=" << truncateForLog(transformation_expression_));
-
-    try
-    {
-        // The planner emits action_aas_path with a leading submodel
-        // segment ("AI-Planning/..."). Canonicalize it, then look up the
-        // AIPlanning Action's SkillReference to find the actual Skills
-        // operation to invoke. If resolution fails (e.g. older AAS without
-        // SkillReference), fall back to invoking the path verbatim under
-        // the Skills submodel.
-        auto [planning_submodel, planning_remainder] =
-            bt_exec_refs::splitSubmodelPath(action_ref_->action_aas_path);
-
-        std::string invoke_submodel = "Skills";
-        std::string invoke_path = action_ref_->action_aas_path;
-
-        if (planning_submodel == "AIPlanning" && !planning_remainder.empty())
-        {
-            auto skill_ref = aas_client_.resolveSkillReference(
-                action_ref_->source_aas_id, planning_remainder);
-            if (skill_ref.has_value())
-            {
-                invoke_submodel = skill_ref->first;
-                invoke_path = skill_ref->second;
-            }
-            else
-            {
-                std::cerr << "ExecuteAction '" << this->name()
-                          << "' SkillReference unresolved; trying Skills/"
-                          << planning_remainder << " verbatim" << std::endl;
-                invoke_path = planning_remainder;
-            }
-        }
-
-        auto response = aas_client_.invokeOperation(
-            action_ref_->source_aas_id,
-            invoke_submodel,
-            invoke_path,
-            input_message);
-        if (!response.has_value())
-        {
-            std::cerr << "ExecuteAction '" << this->name()
-                      << "' AAS invoke returned no response" << std::endl;
-            return BT::NodeStatus::FAILURE;
-        }
-        if (response->is_object() && response->contains("error"))
-        {
-            std::cerr << "ExecuteAction '" << this->name()
-                      << "' AAS invoke error: " << (*response)["error"].dump() << std::endl;
-            return BT::NodeStatus::FAILURE;
-        }
-        applySymbolicEffects();
-        return BT::NodeStatus::SUCCESS;
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << "ExecuteAction '" << this->name()
-                  << "' AAS invoke exception: " << e.what() << std::endl;
-        return BT::NodeStatus::FAILURE;
-    }
+    // Delegate to MqttActionNode lifecycle (publish input, wait for
+    // output via callback). MQTT is the only execution path.
+    return MqttActionNode::onStart();
 }
 
 BT::NodeStatus ExecuteAction::onRunning()

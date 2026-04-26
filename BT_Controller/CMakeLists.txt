@@ -48,6 +48,7 @@ add_library(bt_controller_common STATIC
     src/bt/execution_refs.cpp
     src/bt/bt_log.cpp
     src/bt/symbolic_state.cpp
+    src/bt/bt_runtime_validator.cpp
     src/bt/mqtt_action_node.cpp
     src/bt/mqtt_sync_action_node.cpp
     src/bt/mqtt_sync_condition_node.cpp

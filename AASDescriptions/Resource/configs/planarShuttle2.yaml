@@ -95,6 +95,15 @@ planarTableShuttle2AAS:
             mqv_retain: 'false'
             mqv_controlPacket: publish
             mqv_qos: '0'
+        - key: 'Location'
+          title: 'Location'
+          output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/planarLocation.schema.json'
+          forms:
+            contentType: 'application/json'
+            href: '/DATA/Location'
+            mqv_retain: 'true'
+            mqv_controlPacket: publish
+            mqv_qos: '0'
 
   Variables:
   - key: PackMLState
@@ -109,9 +118,9 @@ planarTableShuttle2AAS:
       Field: 'ProcessQueue'
   - key: Location
     semanticId: 'cssx:LocationParameter'
-    # InterfaceReference:
-    #   Name: 'StationState'
-    #   Field: 'State'
+    InterfaceReference:
+      Name: 'Location'
+      Field: 'Location'
     Parameters:
         ProductID:
             semanticId: 'cssx:ProductIdentifier'

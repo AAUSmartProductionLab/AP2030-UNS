@@ -19,10 +19,11 @@ namespace jsonata
 
 /// Generic planner-driven action node. Reads `action_ref` and `action_args`
 /// ports populated from the planner XML contract, fetches the JSONata
-/// transformation referenced by the action_ref, and either publishes the
-/// generated message via the asset's MQTT input interface (preferred path)
-/// or invokes the AAS Operation directly when no Asset Interface
-/// Description is available (fallback path).
+/// transformation referenced by the action_ref, and publishes the generated
+/// message via the asset's MQTT input interface, listening on the asset's
+/// output interface for the response. The asset MUST expose an MQTT
+/// AssetInterfacesDescription; missing bindings are reported by the
+/// controller's startup validator and abort startup.
 class ExecuteAction : public MqttActionNode
 {
 public:
@@ -46,22 +47,16 @@ private:
     std::vector<std::string> args_tokens_;
     std::unique_ptr<jsonata::Jsonata> jsonata_expr_;
     std::string transformation_expression_;
-    /// True when no Asset Interface Description was found at construction
-    /// time. In that case onStart bypasses MQTT publish and uses
-    /// AASClient::invokeOperation instead.
-    bool aas_direct_fallback_ = false;
 
-    /// Cached interaction name (last segment of action_aas_path) used both
-    /// for AAS interface lookup and for AAS-direct invoke endpoint paths.
+    /// Cached interaction name (last segment of action_aas_path) used
+    /// for AAS interface lookup.
     std::string interaction_name_;
 
     static std::shared_ptr<TransformationResolver> getResolver(AASClient &aas_client);
-    static std::string envFallbackMode();
 
     /// Apply ``action_ref_->effects`` to the process-wide
-    /// ``SymbolicState``. Called once per SUCCESS transition; idempotent
-    /// to safe to call from both the MQTT-driven onRunning() path and
-    /// the AAS-direct onStart() path.
+    /// ``SymbolicState``. Called once per SUCCESS transition from the
+    /// MQTT-driven onRunning() path; idempotent.
     void applySymbolicEffects();
     bool effects_applied_ = false;
 };

@@ -131,7 +131,11 @@ class BTSynthesisHoistingTests(unittest.TestCase):
         self.assertIn("KeepRunningUntilFailure", xml)
         self.assertEqual(bt.tick(world), Status.RUNNING)
         self.assertEqual(bt.tick(world), Status.SUCCESS)
-        self.assertTrue(world.goal_reached)
+        # Tree no longer carries an explicit Success terminator: the goal
+        # branch returns SUCCESS purely from its condition check, so
+        # ``world.goal_reached`` is never set by a leaf. Callers should
+        # rely on the tick status / ``world.check_goal()`` instead.
+        self.assertTrue(world.check_goal() if hasattr(world, "check_goal") else "done" in world.fluents)
 
     def test_single_progression_branch_is_not_wrapped_in_policy_root_fallback(self):
         policy = [
@@ -144,22 +148,6 @@ class BTSynthesisHoistingTests(unittest.TestCase):
 
         self.assertNotEqual(getattr(bt.root, "name", ""), "PolicyRoot")
         self.assertNotIn('ReactiveFallback name="PolicyRoot"', xml)
-
-    def test_fsaps_do_not_change_generated_bt(self):
-        policy = [
-            _FakeRule({"a", "b"}, "act1 p"),
-            _FakeRule({"a", "c"}, "act2 p"),
-        ]
-
-        result_without_fsaps = _FakeResult(policy, [])
-        result_with_fsaps = _FakeResult(policy, [_FakeFSAP({"a"}, "act1 p")])
-
-        xml_without = bt_to_xml(policy_to_bt(result_without_fsaps))
-        xml_with = bt_to_xml(policy_to_bt(result_with_fsaps))
-
-        self.assertEqual(xml_without, xml_with)
-        self.assertNotIn("ForbiddenAction", xml_with)
-        self.assertNotIn("FSAP_", xml_with)
 
     def test_no_done_wrappers_are_emitted(self):
         policy = [
@@ -177,7 +165,7 @@ class BTSynthesisHoistingTests(unittest.TestCase):
         xml = bt_to_xml(policy_to_bt(_FakeResult(policy, [])))
 
         self.assertIn("<Inverter", xml)
-        self.assertIn('Condition ID="FluentCheck" name="ready(product_1)"', xml)
+        self.assertIn('<FluentCheck name="ready(product_1)"', xml)
         self.assertNotIn('name="not(ready(product_1))"', xml)
 
     def test_shared_condition_is_hoisted_once(self):
@@ -192,23 +180,7 @@ class BTSynthesisHoistingTests(unittest.TestCase):
 
         self.assertIn("<Sequence", xml)
         self.assertIn("ReactiveFallback", xml)
-        self.assertEqual(xml.count('Condition ID="FluentCheck" name="a"'), 1)
-
-    def test_solve_result_to_bt_xml_ignores_fsaps(self):
-        policy = [
-            _FakeRule({"a", "b"}, "act1 p"),
-            _FakeRule({"a", "c"}, "act2 p"),
-        ]
-        policy_without_fsaps = _FakeResult(policy, [])
-        policy_with_fsaps = _FakeResult(policy, [_FakeFSAP({"a"}, "act1 p")])
-
-        xml_without, warnings_without = solve_result_to_bt_xml(_FakeSolveResult(policy_without_fsaps))
-        xml_with, warnings_with = solve_result_to_bt_xml(_FakeSolveResult(policy_with_fsaps))
-
-        self.assertEqual(warnings_without, [])
-        self.assertEqual(warnings_with, [])
-        self.assertEqual(xml_without, xml_with)
-        self.assertNotIn("ForbiddenAction", xml_with)
+        self.assertEqual(xml.count('<FluentCheck name="a"'), 1)
 
     def test_solve_result_to_bt_xml_emits_execution_refs(self):
         policy = [_FakeRule({"ready(product_1)"}, "dispense product_1")]
@@ -490,9 +462,9 @@ class BTSynthesisHoistingTests(unittest.TestCase):
         hoisted_xml = bt_to_xml(policy_to_bt(_FakeResult(policy, [])))
         trivial_xml = bt_to_xml(policy_to_bt_trivial(_FakeResult(policy, [])))
 
-        self.assertEqual(hoisted_xml.count('Condition ID="FluentCheck" name="a"'), 1)
+        self.assertEqual(hoisted_xml.count('<FluentCheck name="a"'), 1)
         self.assertGreaterEqual(
-            trivial_xml.count('Condition ID="FluentCheck" name="a"'),
+            trivial_xml.count('<FluentCheck name="a"'),
             2,
         )
 

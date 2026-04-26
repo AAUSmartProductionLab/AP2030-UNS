@@ -3,19 +3,24 @@
 #include <iostream>
 #include <sstream>
 #include <algorithm>
+#include <regex>
 #include <openssl/evp.h>
 #include "utils.h"
 
-namespace {
+namespace
+{
     // Case-insensitive string comparison helper
-    std::string toLower(const std::string& s) {
+    std::string toLower(const std::string &s)
+    {
         std::string result = s;
         std::transform(result.begin(), result.end(), result.begin(),
-                       [](unsigned char c) { return std::tolower(c); });
+                       [](unsigned char c)
+                       { return std::tolower(c); });
         return result;
     }
-    
-    bool equalsIgnoreCase(const std::string& a, const std::string& b) {
+
+    bool equalsIgnoreCase(const std::string &a, const std::string &b)
+    {
         return toLower(a) == toLower(b);
     }
 }
@@ -321,7 +326,29 @@ std::optional<mqtt_utils::Topic> AASClient::fetchInterface(const std::string &as
             // Interaction not found directly - try to resolve via Variables submodel InterfaceReference
             std::cout << "Interaction '" << interaction << "' not found directly, checking Variables submodel..." << std::endl;
 
-            auto resolved_interface = resolveInterfaceReference(asset_id, interaction);
+            std::optional<std::string> resolved_interface =
+                resolveInterfaceReference(asset_id, interaction);
+
+            // Variables-based resolution covers raw data variables aliased
+            // by the planner. Higher-level planner-emitted names (PDDL
+            // fluents like ``Free``/``Operational``/``ResourceAt`` and
+            // actions like ``Move``/``Transport``) are declared in the
+            // ``AIPlanning`` submodel instead and route through ``Skills``
+            // (for actions) or ``Variables`` (for fluents, via the
+            // transformation expression). Fall back to those paths if the
+            // direct Variables lookup did not resolve.
+            if (!resolved_interface || *resolved_interface == interaction)
+            {
+                if (auto via_skill = resolveActionViaAIPlanning(asset_id, interaction))
+                {
+                    resolved_interface = via_skill;
+                }
+                else if (auto via_fluent = resolveFluentViaAIPlanning(asset_id, interaction))
+                {
+                    resolved_interface = via_fluent;
+                }
+            }
+
             if (resolved_interface && *resolved_interface != interaction)
             {
                 // Found an InterfaceReference - search again with the resolved name
@@ -621,7 +648,7 @@ std::optional<nlohmann::json> AASClient::fetchSubmodelData(
                     matches = true;
                 }
             }
-            
+
             if (matches)
             {
                 if (shell.contains("endpoints") && shell["endpoints"].is_array() && !shell["endpoints"].empty())
@@ -835,7 +862,7 @@ std::optional<nlohmann::json> AASClient::fetchStationPosition(
 {
     try
     {
-        std::cout << "Fetching position for station: " << station_asset_id 
+        std::cout << "Fetching position for station: " << station_asset_id
                   << " from line: " << filling_line_asset_id << std::endl;
 
         // Step 1: Fetch the filling line's HierarchicalStructures submodel
@@ -887,7 +914,7 @@ std::optional<nlohmann::json> AASClient::fetchStationPosition(
             {
                 for (const auto &inner_stmt : statement["statements"])
                 {
-                    if (inner_stmt.value("idShort", "") == "SameAs" && 
+                    if (inner_stmt.value("idShort", "") == "SameAs" &&
                         inner_stmt["modelType"] == "ReferenceElement")
                     {
                         // Check if the reference points to our station's submodel
@@ -930,7 +957,7 @@ std::optional<nlohmann::json> AASClient::fetchStationPosition(
             {
                 for (const auto &inner_stmt : statement["statements"])
                 {
-                    if (inner_stmt.value("idShort", "") == "Location" && 
+                    if (inner_stmt.value("idShort", "") == "Location" &&
                         inner_stmt["modelType"] == "SubmodelElementCollection")
                     {
                         nlohmann::json position;
@@ -947,7 +974,7 @@ std::optional<nlohmann::json> AASClient::fetchStationPosition(
                                 {
                                     position["y"] = std::stof(prop.value("value", "0"));
                                 }
-                                else if (prop_name == "yaw" || prop_name == "Yaw" || 
+                                else if (prop_name == "yaw" || prop_name == "Yaw" ||
                                          prop_name == "theta" || prop_name == "Theta")
                                 {
                                     position["theta"] = std::stof(prop.value("value", "0"));
@@ -957,7 +984,7 @@ std::optional<nlohmann::json> AASClient::fetchStationPosition(
 
                         if (position.contains("x") && position.contains("y"))
                         {
-                            std::cout << "Found position for " << entity_name << ": x=" 
+                            std::cout << "Found position for " << entity_name << ": x="
                                       << position["x"] << ", y=" << position["y"];
                             if (position.contains("theta"))
                                 std::cout << ", theta=" << position["theta"];
@@ -1163,7 +1190,7 @@ std::optional<std::string> AASClient::fetchPolicyBTUrl(const std::string &aas_sh
             }
 
             // Also check for SubmodelElementCollection containing a File element
-            if (model_type == "SubmodelElementCollection" && 
+            if (model_type == "SubmodelElementCollection" &&
                 element.contains("value") && element["value"].is_array())
             {
                 for (const auto &nested_elem : element["value"])
@@ -1334,6 +1361,178 @@ std::optional<std::string> AASClient::resolveInterfaceReference(
         return std::nullopt;
     }
 }
+
+// ---------------------------------------------------------------------------
+// AI-Planning resolution helpers
+// ---------------------------------------------------------------------------
+namespace
+{
+    // Locate ``submodelElements[idShort==a].value[idShort==b]...`` style
+    // children. Returns nullptr when the chain breaks. Operates on raw
+    // SMC ``value`` arrays / submodel ``submodelElements`` arrays
+    // transparently.
+    const nlohmann::json *findChildByIdShort(const nlohmann::json &collection,
+                                             const std::string &id_short)
+    {
+        const nlohmann::json *children = nullptr;
+        if (collection.contains("submodelElements") && collection["submodelElements"].is_array())
+            children = &collection["submodelElements"];
+        else if (collection.contains("value") && collection["value"].is_array())
+            children = &collection["value"];
+        if (!children)
+            return nullptr;
+        for (const auto &c : *children)
+        {
+            if (c.contains("idShort") && c["idShort"].is_string() &&
+                c["idShort"].get<std::string>() == id_short)
+            {
+                return &c;
+            }
+        }
+        return nullptr;
+    }
+
+    // Extract the *last* key value of a ReferenceElement's keys array.
+    // Returns std::nullopt for malformed references.
+    std::optional<std::string> lastKeyValue(const nlohmann::json &reference_element)
+    {
+        if (!reference_element.contains("value") ||
+            !reference_element["value"].is_object())
+            return std::nullopt;
+        const auto &val = reference_element["value"];
+        if (!val.contains("keys") || !val["keys"].is_array() || val["keys"].empty())
+            return std::nullopt;
+        const auto &last = val["keys"].back();
+        if (!last.contains("value") || !last["value"].is_string())
+            return std::nullopt;
+        return last["value"].get<std::string>();
+    }
+} // namespace
+
+std::optional<std::string> AASClient::resolveActionViaAIPlanning(
+    const std::string &asset_id,
+    const std::string &action_name)
+{
+    try
+    {
+        auto ai_planning = fetchSubmodelData(asset_id, "AIPlanning");
+        if (!ai_planning)
+            return std::nullopt;
+
+        // AIPlanning > Domain > Actions > <action_name> > SkillReference
+        const auto *domain = findChildByIdShort(*ai_planning, "Domain");
+        if (!domain)
+            return std::nullopt;
+        const auto *actions = findChildByIdShort(*domain, "Actions");
+        if (!actions)
+            return std::nullopt;
+        const auto *action = findChildByIdShort(*actions, action_name);
+        if (!action)
+            return std::nullopt;
+        const auto *skill_ref = findChildByIdShort(*action, "SkillReference");
+        if (!skill_ref)
+            return std::nullopt;
+
+        auto skill_name = lastKeyValue(*skill_ref);
+        if (!skill_name)
+            return std::nullopt;
+
+        // Skills > <skill_name> > InterfaceReference -> last key is the
+        // ``InteractionMetadata.actions.<X>`` key we need.
+        auto skills_sm = fetchSubmodelData(asset_id, "Skills");
+        if (!skills_sm)
+            return std::nullopt;
+        const auto *skill = findChildByIdShort(*skills_sm, *skill_name);
+        if (!skill)
+            return std::nullopt;
+        const auto *iref = findChildByIdShort(*skill, "InterfaceReference");
+        if (!iref)
+            return std::nullopt;
+
+        auto resolved = lastKeyValue(*iref);
+        if (resolved)
+        {
+            std::cout << "AIPlanning action '" << action_name
+                      << "' resolved via Skills." << *skill_name
+                      << " -> InteractionMetadata.actions." << *resolved << std::endl;
+        }
+        return resolved;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "resolveActionViaAIPlanning error: " << e.what() << std::endl;
+        return std::nullopt;
+    }
+}
+
+std::optional<std::string> AASClient::resolveFluentViaAIPlanning(
+    const std::string &asset_id,
+    const std::string &fluent_name)
+{
+    try
+    {
+        auto ai_planning = fetchSubmodelData(asset_id, "AIPlanning");
+        if (!ai_planning)
+            return std::nullopt;
+
+        // AIPlanning > Domain > Fluents > <fluent_name> > Transformation
+        const auto *domain = findChildByIdShort(*ai_planning, "Domain");
+        if (!domain)
+            return std::nullopt;
+        const auto *fluents = findChildByIdShort(*domain, "Fluents");
+        if (!fluents)
+            return std::nullopt;
+        const auto *fluent = findChildByIdShort(*fluents, fluent_name);
+        if (!fluent)
+            return std::nullopt;
+        const auto *trans = findChildByIdShort(*fluent, "Transformation");
+        if (!trans || !trans->contains("value") || !(*trans)["value"].is_string())
+            return std::nullopt;
+
+        const std::string expr = (*trans)["value"].get<std::string>();
+
+        // Extract the first ``parameter1.Variables.<VarName>`` reference.
+        // ``parameter1`` always refers to the resource on whose AAS we are
+        // operating (PDDL convention: first parameter of a resource fluent
+        // is the resource itself), so the Variables lookup happens on the
+        // current ``asset_id``.
+        static const std::regex var_re(R"(parameter1\.Variables\.([A-Za-z_][A-Za-z0-9_]*))");
+        std::smatch m;
+        if (!std::regex_search(expr, m, var_re))
+        {
+            std::cout << "AIPlanning fluent '" << fluent_name
+                      << "' transformation has no parameter1.Variables.* reference: "
+                      << expr << std::endl;
+            return std::nullopt;
+        }
+        const std::string var_name = m[1].str();
+
+        auto vars_sm = fetchSubmodelData(asset_id, "Variables");
+        if (!vars_sm)
+            return std::nullopt;
+        const auto *var = findChildByIdShort(*vars_sm, var_name);
+        if (!var)
+            return std::nullopt;
+        const auto *iref = findChildByIdShort(*var, "InterfaceReference");
+        if (!iref)
+            return std::nullopt;
+
+        auto resolved = lastKeyValue(*iref);
+        if (resolved)
+        {
+            std::cout << "AIPlanning fluent '" << fluent_name
+                      << "' resolved via Variables." << var_name
+                      << " -> InteractionMetadata.properties." << *resolved << std::endl;
+        }
+        return resolved;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "resolveFluentViaAIPlanning error: " << e.what() << std::endl;
+        return std::nullopt;
+    }
+}
+
 // ---------------------------------------------------------------------------
 // PR2/PR3 additions
 // ---------------------------------------------------------------------------
@@ -1624,10 +1823,7 @@ std::optional<nlohmann::json> AASClient::invokeOperation(
             {"requestId", ""},
             {"timeout", 30000},
             {"inoutputArguments", nlohmann::json::array()},
-            {"inputArguments", nlohmann::json::array({
-                {{"value", input_json}}
-            })}
-        };
+            {"inputArguments", nlohmann::json::array({{{"value", input_json}}})}};
 
         std::cout << "invokeOperation POST " << endpoint << std::endl;
         return makePostRequest(endpoint, envelope);

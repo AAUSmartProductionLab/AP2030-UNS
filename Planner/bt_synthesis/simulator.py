@@ -12,7 +12,7 @@ Architecture
   with random outcomes, checks goal satisfaction.  Stored on the
   py_trees blackboard so all behaviours can access it.
 - **py_trees behaviours** — ``FluentCondition``, ``ExecuteAction``,
-  ``GoalReached``, ``AlwaysFailure`` mirror the pr2_to_bt leaf nodes.
+  ``SuccessNode``, ``AlwaysFailure`` mirror the pr2_to_bt leaf nodes.
 - **convert_to_pytrees()** — 1:1 structural conversion from
   ``pr2_to_bt.BTNode`` trees into py_trees composites/decorators.
 - **run_simulation()** — Monte-Carlo validation: tick the py_trees BT
@@ -366,11 +366,11 @@ class ExecuteAction(py_trees.behaviour.Behaviour):
         return py_trees.common.Status.FAILURE
 
 
-class GoalReached(py_trees.behaviour.Behaviour):
+class SuccessNode(py_trees.behaviour.Behaviour):
     """Marks the goal as reached and succeeds."""
 
     def __init__(self):
-        super().__init__(name="GoalReached")
+        super().__init__(name="Success")
         self.bb = self.attach_blackboard_client()
         self.bb.register_key(
             key=_WORLD_KEY, access=py_trees.common.Access.WRITE
@@ -429,7 +429,7 @@ def convert_to_pytrees(
     KeepRunningUntilFailure ``decorators.SuccessIsRunning``
     ConditionNode        ``FluentCondition``
     ActionNode           ``ExecuteAction``
-    SuccessLeaf          ``GoalReached``
+    SuccessLeaf          ``SuccessNode``
     FailureLeaf          ``AlwaysFailure``
     ForbiddenActionNode  ``AlwaysFailure`` (with marker name)
     ==================== ==========================================
@@ -491,7 +491,7 @@ def convert_to_pytrees(
         return ExecuteAction(node.action_name)
 
     if isinstance(node, SuccessLeaf):
-        return GoalReached()
+        return SuccessNode()
 
     if isinstance(node, ForbiddenActionNode):
         return AlwaysFailure(name=f"Forbid:{node.forbidden_action}")

@@ -154,6 +154,15 @@ void MqttSyncConditionNode::callback(const std::string &topic_key, const json &m
     std::cout << "Sync subscription node received message" << std::endl;
 }
 
+void MqttSyncConditionNode::seedInitialValue(const nlohmann::json &msg)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (latest_msg_.is_null())
+    {
+        latest_msg_ = msg;
+    }
+}
+
 BT::NodeStatus MqttSyncConditionNode::tick()
 {
     // Ensure lazy initialization is done

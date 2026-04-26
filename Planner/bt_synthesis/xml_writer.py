@@ -7,7 +7,7 @@ format consumed by BehaviorTree.CPP v4, including:
 - Factored subtree definitions (shared and ``is_rule_leaf`` nodes).
 - Parameterized template definitions with ``{argN}`` ports.
 - ``TreeNodesModel`` declarations for FluentCheck, ExecuteAction,
-  GoalReached, ForbiddenAction, and template SubTrees.
+  ForbiddenAction, and template SubTrees.
 
 Public API
 ----------
@@ -370,7 +370,11 @@ def _bt_node_to_xml(
 
     node_id = id(node)
     if node_id in extracted_ids and node_id != inside_definition_of:
-        ET.SubElement(parent_el, "SubTree", attrib={"ID": extracted_ids[node_id]})
+        ET.SubElement(
+            parent_el,
+            "SubTree",
+            attrib={"ID": extracted_ids[node_id], "_autoremap": "true"},
+        )
         return
 
     if isinstance(node, ReactiveSelector):
@@ -434,6 +438,7 @@ def _bt_node_to_xml(
     elif isinstance(node, SubTreeRef):
         attribs = {"ID": node.template_id}
         attribs.update(node.params)
+        attribs.setdefault("_autoremap", "true")
         ET.SubElement(parent_el, "SubTree", attrib=attribs)
 
     elif isinstance(node, ConditionNode):
@@ -472,7 +477,7 @@ def _bt_node_to_xml(
 
     elif isinstance(node, SuccessLeaf):
         ET.SubElement(parent_el, "AlwaysSuccess", attrib={
-            "name": "GoalReached",
+            "name": "Success",
         })
 
     elif isinstance(node, ForbiddenActionNode):
@@ -512,7 +517,24 @@ def bt_to_xml(
         for templ_tree, _param_names in templates.values():
             alias_roots.append(templ_tree)
     execution_ref_aliases, blackboard_declarations, execution_arg_aliases = _collect_execution_ref_aliases(alias_roots)
-    root_el.set("main_tree_to_execute", tree_id)
+
+    # BT.CPP v4 only applies ``<TreeNodesModel><SubTree>`` ``input_port`` ``default``
+    # values when the subtree is *invoked* via a ``<SubTree>`` element. When ``tree_id``
+    # is the entry point, wrap it in a ``PlannerRoot`` BehaviorTree that contains a
+    # single ``<SubTree ID="<tree_id>"/>`` invocation, so the alias-port and
+    # ``_planner_initial_state`` defaults declared further below land on the runtime
+    # blackboard. Without this wrapper the root tree skips those defaults entirely.
+    wrapper_id = "PlannerRoot"
+    root_el.set("main_tree_to_execute", wrapper_id)
+    wrapper_el = ET.SubElement(root_el, "BehaviorTree", attrib={"ID": wrapper_id})
+    # NOTE: do NOT set ``_autoremap="true"`` on this outer invocation. Autoremap
+    # synthesizes a parent-side remap for every declared input_port, which
+    # *suppresses* the TreeNodesModel ``default`` values (defaults only apply
+    # when the port is unremapped). We need the defaults to populate MainTree's
+    # own blackboard. Inner SubTree invocations (emitted elsewhere) keep
+    # ``_autoremap="true"`` so they inherit those values from MainTree.
+    ET.SubElement(wrapper_el, "SubTree", attrib={"ID": tree_id})
+
     # Main tree.
     bt_el = ET.SubElement(root_el, "BehaviorTree", attrib={"ID": tree_id})
     _bt_node_to_xml(

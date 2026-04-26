@@ -35,6 +35,14 @@ public:
 
     virtual BT::NodeStatus tick() override;
     virtual void initializeTopicsFromAAS();
+
+    /// Externally seed ``latest_msg_`` if it is currently null. Used by
+    /// the controller's startup pre-fetch to prime data-backed condition
+    /// nodes (e.g. FluentCheck) with an initial value fetched
+    /// synchronously from the AAS, so the very first tick has a value to
+    /// evaluate even before any MQTT publication arrives. No-op when a
+    /// callback has already populated ``latest_msg_``.
+    void seedInitialValue(const nlohmann::json &msg);
     template <typename DerivedNode>
     static void registerNodeType(
         BT::BehaviorTreeFactory &factory,

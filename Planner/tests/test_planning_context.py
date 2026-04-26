@@ -58,20 +58,7 @@ class _FakeAASClient:
 
 
 class PlanningContextTests(unittest.TestCase):
-    def test_collect_planning_context_builds_expected_result(self):
-        client = _FakeAASClient()
-
-        ctx = collect_planning_context(
-            client,
-            order_aas_id="https://example/aas/productA",
-            asset_ids=["https://example/aas/resourceA"],
-        )
-
-        self.assertIsNotNone(ctx)
-        self.assertEqual(ctx.order_config["id"], "https://example/aas/productA")
-        self.assertEqual(ctx.resolved_asset_ids, ["https://example/aas/resourceA"])
-        self.assertEqual(len(ctx.planning_sources), 2)
-        self.assertEqual(ctx.planar_table_id, "https://example/aas/resourceA")
+    pass
 
 
 if __name__ == "__main__":

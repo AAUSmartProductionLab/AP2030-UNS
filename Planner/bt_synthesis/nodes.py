@@ -12,7 +12,7 @@ Node hierarchy
     ├── ConditionNode        — succeeds iff a fluent holds
     ├── ActionNode           — executes a grounded action
     ├── ForbiddenActionNode  — marker for FSAP-forbidden actions
-    ├── SuccessLeaf          — always succeeds (goal reached)
+    ├── SuccessLeaf          — always succeeds (terminal Success leaf)
     ├── FailureLeaf          — always fails
     ├── SubTreeRef           — reference to a parameterized template
     ├── Sequence             — non-reactive sequence (resume on RUNNING)
@@ -132,14 +132,14 @@ class SuccessLeaf(BTNode):
     """Always succeeds and marks the goal as reached."""
 
     def __init__(self):
-        super().__init__("GoalReached")
+        super().__init__("Success")
 
     def tick(self, world: "WorldState") -> Status:
         world.goal_reached = True
         return Status.SUCCESS
 
     def pretty(self, indent: int = 0) -> str:
-        return " " * indent + "[Success] GoalReached"
+        return " " * indent + "[Success]"
 
 
 class FailureLeaf(BTNode):

@@ -19,9 +19,12 @@ namespace jsonata
 
 /// Generic planner-driven condition node. Reads `predicate_ref` and
 /// `predicate_args` ports populated by the planner XML contract and
-/// evaluates the JSONata transformation referenced by predicate_ref against
-/// the latest received subscription message (or against a polled AAS
-/// property value when no subscription interface is available).
+/// evaluates the JSONata transformation referenced by predicate_ref
+/// against the latest received subscription message. When the predicate
+/// has no transformation_aas_path the node falls back to a symbolic
+/// lookup against the process-wide ``SymbolicState``. Data-backed
+/// predicates without an MQTT binding are rejected by the controller's
+/// startup validator.
 class FluentCheck : public MqttSyncConditionNode
 {
 public:
@@ -42,9 +45,6 @@ private:
     std::vector<std::string> args_tokens_;
     std::unique_ptr<jsonata::Jsonata> jsonata_expr_;
     std::string transformation_expression_;
-    /// True when no Asset Interface Description was found at construction
-    /// time. In that case tick() polls fetchPropertyValue per evaluation.
-    bool aas_direct_fallback_ = false;
 
     std::string interaction_name_;
 

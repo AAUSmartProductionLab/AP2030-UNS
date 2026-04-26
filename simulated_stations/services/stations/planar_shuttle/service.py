@@ -86,19 +86,25 @@ def main():
     state = {
         "location": initial_location,
         "uuid": "",
+        "yaw": 0.0,
     }
 
     location_publisher = Publisher(
         base_topic + "/DATA/Location",
-        # data.schema.json only requires TimeStamp; we keep extra fields free-form.
-        "./MQTTSchemas/data.schema.json",
+        "./MQTTSchemas/planarLocation.schema.json",
         2,
     )
 
     def publish_location():
+        anchor = locations.get(state["location"], [0.0, 0.0])
+        x = float(anchor[0])
+        z = float(anchor[1])
         location_publisher.publish(
             {
                 "TimeStamp": _now_iso(),
+                "X": x,
+                "Z": z,
+                "Yaw": state["yaw"],
                 "Location": state["location"],
                 "Uuid": state["uuid"],
             },

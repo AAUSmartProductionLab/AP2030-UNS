@@ -28,7 +28,6 @@ from .nodes import (
     Sequence,
     ReactiveSelector,
     ReactiveSequence,
-    SuccessLeaf,
     readable_action_id,
     sanitize_bt_id,
 )
@@ -211,8 +210,12 @@ def _build_goal_branch(
     if not all_conds:
         return None
 
-    goal_ok = all_conds[0] if len(all_conds) == 1 else ReactiveSelector("GoalCheck", all_conds)
-    return goal_ok
+    # Return the goal-condition node directly. When the conditions are
+    # satisfied it returns SUCCESS, which causes the enclosing
+    # ``ReactiveFallback`` ("PolicyRoot") to also return SUCCESS and
+    # terminate the tree. No explicit success terminator is required
+    # (and BT.CPP v4's ``AlwaysSuccess`` is not used here).
+    return all_conds[0] if len(all_conds) == 1 else ReactiveSelector("GoalCheck", all_conds)
 
 
 def _flatten_goal_expr_literals(expr: object) -> List[str]:
@@ -248,6 +251,8 @@ def _build_problem_goal_branch(
         return None
 
     goal_conditions = frozenset(g for g in goal_literals if g)
+    # Return the goal-condition node directly (see ``_build_goal_branch``
+    # for the reasoning).
     return _build_postcond_check(
         goal_conditions,
         "GoalCond",

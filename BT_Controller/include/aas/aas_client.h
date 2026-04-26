@@ -148,4 +148,24 @@ private:
     std::optional<std::string> resolveInterfaceReference(
         const std::string &asset_id,
         const std::string &interaction);
+
+    // Resolve a planner-emitted action name (e.g. ``Move``, ``Transport``) to
+    // the underlying ``InteractionMetadata.actions`` key by walking
+    // ``AIPlanning.Domain.Actions.<name>.SkillReference`` -->
+    // ``Skills.<skill>.InterfaceReference``. Returns the last key of the
+    // skill's InterfaceReference (e.g. ``MoveToPosition``) on success.
+    std::optional<std::string> resolveActionViaAIPlanning(
+        const std::string &asset_id,
+        const std::string &action_name);
+
+    // Resolve a planner-emitted fluent name (e.g. ``Free``, ``Operational``,
+    // ``ResourceAt``) to the underlying ``InteractionMetadata.properties``
+    // key by parsing
+    // ``AIPlanning.Domain.Fluents.<name>.Transformation`` for the first
+    // ``parameter1.Variables.<X>`` reference and following
+    // ``Variables.<X>.InterfaceReference``. Returns the last key of that
+    // InterfaceReference (e.g. ``StationState``) on success.
+    std::optional<std::string> resolveFluentViaAIPlanning(
+        const std::string &asset_id,
+        const std::string &fluent_name);
 };
