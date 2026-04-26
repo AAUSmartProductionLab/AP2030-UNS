@@ -97,7 +97,7 @@ planarTableShuttle3AAS:
             mqv_qos: '0'
         - key: 'Location'
           title: 'Location'
-          output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/planarLocation.schema.json'
+          output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/positionStamped.schema.json'
           forms:
             contentType: 'application/json'
             href: '/DATA/Location'
@@ -120,7 +120,7 @@ planarTableShuttle3AAS:
     semanticId: 'cssx:LocationParameter'
     InterfaceReference:
       Name: 'Location'
-      Field: 'Location'
+      Field: 'Position'
     Parameters:
         Location:
             semanticId: 'cssx:LocationParameter'
