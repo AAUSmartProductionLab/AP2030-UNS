@@ -1,108 +1,848 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<root BTCPP_format="4" main_tree_to_execute="Production">
-  <BehaviorTree ID="Production">
-    <Sequence>
-      <Configure Product="{product}" ProductIDs="{ProductIDs}"/>
-      <Parallel failure_count="-1" success_count="1">
-        <SubTree ID="AsepticFilling" Xbot="{Xbot1}" ProductID="" _autoremap="true"/>
-        <SubTree ID="AsepticFilling" Xbot="{Xbot2}" ProductID="" _autoremap="true"/>
-        <SubTree ID="AsepticFilling" Xbot="{Xbot3}" ProductID="" _autoremap="true"/>
-      </Parallel>
+<?xml version='1.0' encoding='utf-8'?>
+<root BTCPP_format="4" main_tree_to_execute="MainTree">
+  <BehaviorTree ID="MainTree">
+    <ReactiveFallback name="PolicyRoot">
+      <ReactiveSequence name="GoalBranch">
+        <ReactiveSequence name="GoalCond">
+          <Condition ID="FluentCheck" name="finished(mim8_0001)" predicate_ref="{Finished_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001}&quot;" />
+          <Condition ID="FluentCheck" name="free(imadispensingsystem)" predicate_ref="{Free_imaDispensingSystem}" predicate_args="&quot;{Param_imaDispensingSystem}&quot;" />
+          <Condition ID="FluentCheck" name="free(imaloadingsystem)" predicate_ref="{Free_imaLoadingSystem}" predicate_args="&quot;{Param_imaLoadingSystem}&quot;" />
+          <Condition ID="FluentCheck" name="free(omroncamerasystem)" predicate_ref="{Free_omronCameraSystem}" predicate_args="&quot;{Param_omronCameraSystem}&quot;" />
+          <Condition ID="FluentCheck" name="free(optimaunloadingsystem)" predicate_ref="{Free_optimaUnloadingSystem}" predicate_args="&quot;{Param_optimaUnloadingSystem}&quot;" />
+          <Condition ID="FluentCheck" name="free(planarshuttle1)" predicate_ref="{Free_planarShuttle1}" predicate_args="&quot;{Param_planarShuttle1}&quot;" />
+          <Condition ID="FluentCheck" name="free(planarshuttle2)" predicate_ref="{Free_planarShuttle2}" predicate_args="&quot;{Param_planarShuttle2}&quot;" />
+          <Condition ID="FluentCheck" name="free(planarshuttle3)" predicate_ref="{Free_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3}&quot;" />
+          <Condition ID="FluentCheck" name="free(syntegonstopperingsystem)" predicate_ref="{Free_syntegonStopperingSystem}" predicate_args="&quot;{Param_syntegonStopperingSystem}&quot;" />
+          <Condition ID="FluentCheck" name="operational(imadispensingsystem)" predicate_ref="{Operational_imaDispensingSystem}" predicate_args="&quot;{Param_imaDispensingSystem}&quot;" />
+          <Condition ID="FluentCheck" name="operational(imaloadingsystem)" predicate_ref="{Operational_imaLoadingSystem}" predicate_args="&quot;{Param_imaLoadingSystem}&quot;" />
+          <Condition ID="FluentCheck" name="operational(omroncamerasystem)" predicate_ref="{Operational_omronCameraSystem}" predicate_args="&quot;{Param_omronCameraSystem}&quot;" />
+          <Condition ID="FluentCheck" name="operational(optimaunloadingsystem)" predicate_ref="{Operational_optimaUnloadingSystem}" predicate_args="&quot;{Param_optimaUnloadingSystem}&quot;" />
+          <Condition ID="FluentCheck" name="operational(planarshuttle1)" predicate_ref="{Operational_planarShuttle1}" predicate_args="&quot;{Param_planarShuttle1}&quot;" />
+          <Condition ID="FluentCheck" name="operational(planarshuttle2)" predicate_ref="{Operational_planarShuttle2}" predicate_args="&quot;{Param_planarShuttle2}&quot;" />
+          <Condition ID="FluentCheck" name="operational(planarshuttle3)" predicate_ref="{Operational_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3}&quot;" />
+          <Condition ID="FluentCheck" name="operational(syntegonstopperingsystem)" predicate_ref="{Operational_syntegonStopperingSystem}" predicate_args="&quot;{Param_syntegonStopperingSystem}&quot;" />
+          <Condition ID="FluentCheck" name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+        </ReactiveSequence>
+        <Action ID="GoalReached" name="GoalReached" />
+      </ReactiveSequence>
+      <KeepRunningUntilFailure name="PolicyLoop">
+        <SubTree ID="PolicyRules" />
+      </KeepRunningUntilFailure>
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Capture_mim8_0001_planarshuttle3">
+    <Sequence name="Capture_mim8_0001_planarshuttle3">
+      <Inverter name="Inverter">
+        <Condition ID="FluentCheck" name="step_done(order_product, step_4_inspection)" predicate_ref="{Predicate_Object}" />
+      </Inverter>
+      <Condition ID="FluentCheck" name="step_ready(order_product, step_4_inspection)" predicate_ref="{Predicate_Object}" />
+      <Inverter name="Inverter">
+        <ReactiveSequence name="FSAPCond_capture">
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="step_done(order_product, step_4_inspection)" predicate_ref="{Predicate_Object}" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+          </Inverter>
+          <Condition ID="FluentCheck" name="occupied(omroncamerasystem, mim8_0001)" predicate_ref="{Occupied_omronCameraSystem}" predicate_args="&quot;{Param_omronCameraSystem};{Param_MIM8_0001}&quot;" />
+          <Condition ID="FluentCheck" name="on(mim8_0001, planarshuttle3)" predicate_ref="{On_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_planarShuttle3}&quot;" />
+          <Condition ID="FluentCheck" name="productat(mim8_0001, capturelocation)" predicate_ref="{ProductAt_MIM8_0001_3}" predicate_args="&quot;{Param_MIM8_0001};{Param_captureLocation}&quot;" />
+          <Condition ID="FluentCheck" name="step_ready(order_product, step_4_inspection)" predicate_ref="{Predicate_Object}" />
+        </ReactiveSequence>
+      </Inverter>
+      <Action ID="ExecuteAction" name="capture mim8_0001 planarshuttle3" action_args="&quot;{Param_omronCameraSystem};{Param_MIM8_0001};{Param_planarShuttle3};{Param_captureLocation}&quot;" action_ref="{QualityControl_omronCameraSystem}" />
     </Sequence>
   </BehaviorTree>
-  <BehaviorTree ID="AsepticFilling">
-    <Occupy Uuid="{Uuid}" Assets="https://smartproductionlab.aau.dk/aas/planarTableShuttle1AAS;https://smartproductionlab.aau.dk/aas/planarTableShuttle2AAS;https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS" SelectedAsset="{Xbot}">
-      <KeepRunningUntilEmpty if_empty="SUCCESS" Queue="{ProductIDs}">
-        <ReactiveSequence>
-          <ReactiveFallback>
-            <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="PackMLState" Asset="{Xbot}"/>
-            <Sleep msec="10000"/>
-          </ReactiveFallback>
-          <SequenceWithMemory>
-            <SubTree ID="Loading" Assets="https://smartproductionlab.aau.dk/aas/imaLoadingSystemAAS" Xbot="{Xbot}" XbotUuid="{Uuid}" ProductID="{ProductID}" ProductIDs="{ProductIDs}" Station="{Station}" _autoremap="false"/>
-            <SubTree ID="Dispensing" Assets="https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS" Xbot="{Xbot}" XbotUuid="{Uuid}" ProductID="{ProductID}" ProductIDs="{ProductIDs}" Station="{Station}" _autoremap="false"/>
-            <SubTree ID="Stoppering" Assets="https://smartproductionlab.aau.dk/aas/syntegonStopperingSystemAAS" Xbot="{Xbot}" XbotUuid="{Uuid}" ProductID="{ProductID}" ProductIDs="{ProductIDs}" Station="{Station}" _autoremap="false"/>
-            <SubTree ID="Inspection" Assets="https://smartproductionlab.aau.dk/aas/omronCameraSystemAAS" Xbot="{Xbot}" XbotUuid="{Uuid}" ProductID="{ProductID}" ProductIDs="{ProductIDs}" Station="{Station}" IPCInspection="{IPCInspection}" BatchSize="{BatchSize}" _autoremap="false"/>
-            <SubTree ID="Unloading" Assets="https://smartproductionlab.aau.dk/aas/optimaUnloadingSystemAAS" Xbot="{Xbot}" XbotUuid="{Uuid}" ProductID="{ProductID}" ProductIDs="{ProductIDs}" Station="{Station}" _autoremap="false"/>
-          </SequenceWithMemory>
+  <BehaviorTree ID="Dispensing_mim8_planarshuttle3">
+    <Sequence name="Dispensing_mim8_planarshuttle3">
+      <Inverter name="Inverter">
+        <Condition ID="FluentCheck" name="step_done(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
+      </Inverter>
+      <Condition ID="FluentCheck" name="step_ready(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
+      <Action ID="ExecuteAction" name="dispensing mim8 planarshuttle3" action_args="&quot;{Param_imaDispensingSystem};{Param_MIM8};{Param_planarShuttle3};{Param_dispensingLocation}&quot;" action_ref="{Dispensing_imaDispensingSystem}" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Loading_mim8_planarshuttle3">
+    <Sequence name="Loading_mim8_planarshuttle3">
+      <Inverter name="Inverter">
+        <Condition ID="FluentCheck" name="step_done(order_product, step_1_loading)" predicate_ref="{Predicate_Object}" />
+      </Inverter>
+      <Condition ID="FluentCheck" name="step_ready(order_product, step_1_loading)" predicate_ref="{Predicate_Object}" />
+      <Inverter name="Inverter">
+        <ReactiveSequence name="FSAPCond_loading">
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="productat(mim8, capturelocation)" predicate_ref="{ProductAt_MIM8_3}" predicate_args="&quot;{Param_MIM8};{Param_captureLocation}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="productat(mim8, dispensinglocation)" predicate_ref="{ProductAt_MIM8}" predicate_args="&quot;{Param_MIM8};{Param_dispensingLocation}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="productat(mim8, loadinglocation)" predicate_ref="{ProductAt_MIM8_2}" predicate_args="&quot;{Param_MIM8};{Param_loadingLocation}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="productat(mim8, stopperinglocation)" predicate_ref="{ProductAt_MIM8_5}" predicate_args="&quot;{Param_MIM8};{Param_stopperingLocation}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="productat(mim8, unloadinglocation)" predicate_ref="{ProductAt_MIM8_4}" predicate_args="&quot;{Param_MIM8};{Param_unloadingLocation}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="step_done(order_product, step_1_loading)" predicate_ref="{Predicate_Object}" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+          </Inverter>
+          <Condition ID="FluentCheck" name="occupied(imaloadingsystem, mim8)" predicate_ref="{Occupied_imaLoadingSystem}" predicate_args="&quot;{Param_imaLoadingSystem};{Param_MIM8}&quot;" />
+          <Condition ID="FluentCheck" name="resourceat(planarshuttle3, loadinglocation)" predicate_ref="{ResourceAt_planarShuttle3_2}" predicate_args="&quot;{Param_planarShuttle3};{Param_loadingLocation}&quot;" />
+          <Condition ID="FluentCheck" name="step_ready(order_product, step_1_loading)" predicate_ref="{Predicate_Object}" />
         </ReactiveSequence>
-      </KeepRunningUntilEmpty>
-    </Occupy>
+      </Inverter>
+      <Action ID="ExecuteAction" name="loading mim8 planarshuttle3" action_args="&quot;{Param_imaLoadingSystem};{Param_MIM8};{Param_planarShuttle3};{Param_loadingLocation}&quot;" action_ref="{Loading_imaLoadingSystem}" />
+    </Sequence>
   </BehaviorTree>
-  <BehaviorTree ID="Loading">
-    <SequenceWithMemory>
-      <PopElement ProductID="{ProductID}" if_empty="SUCCESS" Queue="{ProductIDs}"/>
-      <Occupy Uuid="{ProductID}" Assets="{Assets}">
-        <ReactiveSequence>
-          <ReactiveFallback>
-            <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="PackMLState" Asset="{SelectedAsset}"/>
-            <Sleep msec="10000"/>
-          </ReactiveFallback>
-          <Sequence>
-            <moveToPosition Uuid="{XbotUuid}" TargetPosition="{SelectedAsset}" Asset="{Xbot}"/>
-            <Command_Execution Parameters="'{}'" Uuid="{ProductID}" Operation="Loading" Asset="{SelectedAsset}"/>
-          </Sequence>
+  <BehaviorTree ID="Movetopositi_on2_planarshuttl_h27197e">
+    <Sequence name="Movetoposition2_planarshuttle3_mim8_loadinglocation_dispensinglocation_imadispensingsystem">
+      <Inverter name="Inverter">
+        <Condition ID="FluentCheck" name="step_done(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
+      </Inverter>
+      <Condition ID="FluentCheck" name="productat(mim8, loadinglocation)" predicate_ref="{ProductAt_MIM8_2}" predicate_args="&quot;{Param_MIM8};{Param_loadingLocation}&quot;" />
+      <Condition ID="FluentCheck" name="resourceat(planarshuttle3, loadinglocation)" predicate_ref="{ResourceAt_planarShuttle3_2}" predicate_args="&quot;{Param_planarShuttle3};{Param_loadingLocation}&quot;" />
+      <Condition ID="FluentCheck" name="step_ready(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
+      <Action ID="ExecuteAction" name="movetoposition_2 planarshuttle3 mim8 loadinglocation dispensinglocation imadispensingsystem" action_args="&quot;{Param_planarShuttle3};{Param_MIM8};{Param_loadingLocation};{Param_dispensingLocation};{Param_imaDispensingSystem}&quot;" action_ref="{Transport_planarTableShuttle1_2}" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Movetopositi_on2_planarshuttl_hbe6dbc">
+    <Sequence name="Movetoposition2_planarshuttle3_mim8_stopperinglocation_capturelocation_omroncamerasystem">
+      <Inverter name="Inverter">
+        <Condition ID="FluentCheck" name="step_done(order_product, step_4_inspection)" predicate_ref="{Predicate_Object}" />
+      </Inverter>
+      <Condition ID="FluentCheck" name="productat(mim8, stopperinglocation)" predicate_ref="{ProductAt_MIM8_5}" predicate_args="&quot;{Param_MIM8};{Param_stopperingLocation}&quot;" />
+      <Condition ID="FluentCheck" name="resourceat(planarshuttle3, stopperinglocation)" predicate_ref="{ResourceAt_planarShuttle3_5}" predicate_args="&quot;{Param_planarShuttle3};{Param_stopperingLocation}&quot;" />
+      <Condition ID="FluentCheck" name="step_ready(order_product, step_4_inspection)" predicate_ref="{Predicate_Object}" />
+      <Action ID="ExecuteAction" name="movetoposition_2 planarshuttle3 mim8 stopperinglocation capturelocation omroncamerasystem" action_args="&quot;{Param_planarShuttle3};{Param_MIM8};{Param_stopperingLocation};{Param_captureLocation};{Param_omronCameraSystem}&quot;" action_ref="{Transport_planarTableShuttle1_4}" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Movetopositi_on2_planarshuttl_he293f5">
+    <Sequence name="Movetoposition2_planarshuttle3_mim8_dispensinglocation_stopperinglocation_syntegonstopperingsystem">
+      <Inverter name="Inverter">
+        <Condition ID="FluentCheck" name="step_done(order_product, step_3_stoppering)" predicate_ref="{Predicate_Object}" />
+      </Inverter>
+      <Condition ID="FluentCheck" name="productat(mim8, dispensinglocation)" predicate_ref="{ProductAt_MIM8}" predicate_args="&quot;{Param_MIM8};{Param_dispensingLocation}&quot;" />
+      <Condition ID="FluentCheck" name="resourceat(planarshuttle3, dispensinglocation)" predicate_ref="{ResourceAt_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_dispensingLocation}&quot;" />
+      <Condition ID="FluentCheck" name="step_ready(order_product, step_3_stoppering)" predicate_ref="{Predicate_Object}" />
+      <Action ID="ExecuteAction" name="movetoposition_2 planarshuttle3 mim8 dispensinglocation stopperinglocation syntegonstopperingsystem" action_args="&quot;{Param_planarShuttle3};{Param_MIM8};{Param_dispensingLocation};{Param_stopperingLocation};{Param_syntegonStopperingSystem}&quot;" action_ref="{Transport_planarTableShuttle1}" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Movetopositi_on2_planarshuttl_hed6246">
+    <Sequence name="Movetoposition2_planarshuttle3_mim8_capturelocation_unloadinglocation_optimaunloadingsystem">
+      <Condition ID="FluentCheck" name="productat(mim8, capturelocation)" predicate_ref="{ProductAt_MIM8_3}" predicate_args="&quot;{Param_MIM8};{Param_captureLocation}&quot;" />
+      <Condition ID="FluentCheck" name="resourceat(planarshuttle3, capturelocation)" predicate_ref="{ResourceAt_planarShuttle3_3}" predicate_args="&quot;{Param_planarShuttle3};{Param_captureLocation}&quot;" />
+      <Action ID="ExecuteAction" name="movetoposition_2 planarshuttle3 mim8 capturelocation unloadinglocation optimaunloadingsystem" action_args="&quot;{Param_planarShuttle3};{Param_MIM8};{Param_captureLocation};{Param_unloadingLocation};{Param_optimaUnloadingSystem}&quot;" action_ref="{Transport_planarTableShuttle1_3}" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Movetopositi_on_planarshuttle_h50a83f">
+    <Sequence name="Movetoposition_planarshuttle3_initiallocation3_loadinglocation">
+      <Condition ID="FluentCheck" name="free(planarshuttle3)" predicate_ref="{Free_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3}&quot;" />
+      <Inverter name="Inverter">
+        <Condition ID="FluentCheck" name="occupied(imaloadingsystem, mim8)" predicate_ref="{Occupied_imaLoadingSystem}" predicate_args="&quot;{Param_imaLoadingSystem};{Param_MIM8}&quot;" />
+      </Inverter>
+      <Inverter name="Inverter">
+        <Condition ID="FluentCheck" name="step_done(order_product, step_1_loading)" predicate_ref="{Predicate_Object}" />
+      </Inverter>
+      <Condition ID="FluentCheck" name="resourceat(planarshuttle3, initiallocation3)" predicate_ref="{ResourceAt_planarShuttle3_4}" predicate_args="&quot;{Param_planarShuttle3};{Param_initialLocation3}&quot;" />
+      <Condition ID="FluentCheck" name="step_ready(order_product, step_1_loading)" predicate_ref="{Predicate_Object}" />
+      <Inverter name="Inverter">
+        <ReactiveSequence name="FSAPCond_movetoposition">
+          <Condition ID="FluentCheck" name="free(planarshuttle3)" predicate_ref="{Free_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3}&quot;" />
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="productat(mim8, capturelocation)" predicate_ref="{ProductAt_MIM8_3}" predicate_args="&quot;{Param_MIM8};{Param_captureLocation}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="productat(mim8, dispensinglocation)" predicate_ref="{ProductAt_MIM8}" predicate_args="&quot;{Param_MIM8};{Param_dispensingLocation}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="productat(mim8, loadinglocation)" predicate_ref="{ProductAt_MIM8_2}" predicate_args="&quot;{Param_MIM8};{Param_loadingLocation}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="productat(mim8, stopperinglocation)" predicate_ref="{ProductAt_MIM8_5}" predicate_args="&quot;{Param_MIM8};{Param_stopperingLocation}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="productat(mim8, unloadinglocation)" predicate_ref="{ProductAt_MIM8_4}" predicate_args="&quot;{Param_MIM8};{Param_unloadingLocation}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+          </Inverter>
+          <Condition ID="FluentCheck" name="resourceat(planarshuttle3, initiallocation3)" predicate_ref="{ResourceAt_planarShuttle3_4}" predicate_args="&quot;{Param_planarShuttle3};{Param_initialLocation3}&quot;" />
+          <Condition ID="FluentCheck" name="step_ready(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
         </ReactiveSequence>
-      </Occupy>
-    </SequenceWithMemory>
+      </Inverter>
+      <Action ID="ExecuteAction" name="movetoposition planarshuttle3 initiallocation3 loadinglocation" action_args="&quot;{Param_planarShuttle3};{Param_initialLocation3};{Param_loadingLocation}&quot;" action_ref="{Move_planarTableShuttle1}" />
+    </Sequence>
   </BehaviorTree>
-  <BehaviorTree ID="Unloading">
-    <Occupy Uuid="{ProductID}" Assets="{Assets}">
-      <ReactiveSequence>
-        <ReactiveFallback>
-          <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="PackMLState" Asset="{SelectedAsset}"/>
-          <Sleep msec="10000"/>
-        </ReactiveFallback>
-        <Sequence>
-          <moveToPosition Uuid="{XbotUuid}" TargetPosition="{SelectedAsset}" Asset="{Xbot}"/>
-          <Command_Execution Parameters="'{}'" Uuid="{ProductID}" Operation="Unloading" Asset="{SelectedAsset}"/>
-        </Sequence>
-      </ReactiveSequence>
-    </Occupy>
-  </BehaviorTree>
-  <BehaviorTree ID="Dispensing">
-    <Occupy Uuid="{ProductID}" Assets="{Assets}">
-      <ReactiveSequence>
-        <ReactiveFallback>
-          <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="PackMLState" Asset="{SelectedAsset}"/>
-          <Sleep msec="10000"/>
-        </ReactiveFallback>
-        <Sequence>
-          <moveToPosition Uuid="{XbotUuid}" TargetPosition="{SelectedAsset}" Asset="{Xbot}"/>
-          <Command_Execution Parameters="'{}'" Uuid="{ProductID}" Operation="Dispensing" Asset="{SelectedAsset}"/>
-        </Sequence>
-      </ReactiveSequence>
-    </Occupy>
-  </BehaviorTree>
-  <BehaviorTree ID="Inspection">
-    <SamplingGate SamplingRate="{IPCInspection}" BatchSize="{BatchSize}" Queue="{ProductIDs}">
-      <Occupy Uuid="{ProductID}" Assets="{Assets}">
-        <ReactiveSequence>
-          <ReactiveFallback>
-            <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="PackMLState" Asset="{SelectedAsset}"/>
-            <Sleep msec="10000"/>
-          </ReactiveFallback>
-          <Sequence>
-            <moveToPosition Uuid="{XbotUuid}" TargetPosition="{SelectedAsset}" Asset="{Xbot}"/>
-            <Command_Execution Parameters="'{}'" Uuid="{ProductID}" Operation="Capture" Asset="{SelectedAsset}"/>
-          </Sequence>
+  <BehaviorTree ID="Occupy3_mim8">
+    <Sequence name="Occupy3_mim8">
+      <Inverter name="Inverter">
+        <Condition ID="FluentCheck" name="occupied(planarshuttle3, mim8)" predicate_ref="{Occupied_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_MIM8}&quot;" />
+      </Inverter>
+      <Inverter name="Inverter">
+        <Condition ID="FluentCheck" name="step_done(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
+      </Inverter>
+      <Condition ID="FluentCheck" name="productat(mim8, loadinglocation)" predicate_ref="{ProductAt_MIM8_2}" predicate_args="&quot;{Param_MIM8};{Param_loadingLocation}&quot;" />
+      <Condition ID="FluentCheck" name="resourceat(planarshuttle3, loadinglocation)" predicate_ref="{ResourceAt_planarShuttle3_2}" predicate_args="&quot;{Param_planarShuttle3};{Param_loadingLocation}&quot;" />
+      <Condition ID="FluentCheck" name="step_ready(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
+      <Inverter name="Inverter">
+        <ReactiveSequence name="FSAPCond_occupy_3">
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="occupied(planarshuttle3, mim8)" predicate_ref="{Occupied_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_MIM8}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="productat(mim8, capturelocation)" predicate_ref="{ProductAt_MIM8_3}" predicate_args="&quot;{Param_MIM8};{Param_captureLocation}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="productat(mim8, dispensinglocation)" predicate_ref="{ProductAt_MIM8}" predicate_args="&quot;{Param_MIM8};{Param_dispensingLocation}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="productat(mim8, loadinglocation)" predicate_ref="{ProductAt_MIM8_2}" predicate_args="&quot;{Param_MIM8};{Param_loadingLocation}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="productat(mim8, stopperinglocation)" predicate_ref="{ProductAt_MIM8_5}" predicate_args="&quot;{Param_MIM8};{Param_stopperingLocation}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="productat(mim8, unloadinglocation)" predicate_ref="{ProductAt_MIM8_4}" predicate_args="&quot;{Param_MIM8};{Param_unloadingLocation}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+          </Inverter>
+          <Condition ID="FluentCheck" name="step_ready(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
         </ReactiveSequence>
-      </Occupy>
-    </SamplingGate>
+      </Inverter>
+      <Action ID="ExecuteAction" name="occupy_3 mim8" action_args="&quot;{Param_planarShuttle3};{Param_MIM8}&quot;" action_ref="{Occupy_planarTableShuttle3}" />
+    </Sequence>
   </BehaviorTree>
-  <BehaviorTree ID="Stoppering">
-    <Occupy Uuid="{ProductID}" Assets="{Assets}">
-      <ReactiveSequence>
-        <ReactiveFallback>
-          <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="PackMLState" Asset="{SelectedAsset}"/>
-          <Sleep msec="10000"/>
-        </ReactiveFallback>
-        <Sequence>
-          <moveToPosition Uuid="{XbotUuid}" TargetPosition="{SelectedAsset}" Asset="{Xbot}"/>
-          <Command_Execution Parameters="'{}'" Uuid="{ProductID}" Operation="Stoppering" Asset="{SelectedAsset}"/>
-        </Sequence>
-      </ReactiveSequence>
-    </Occupy>
+  <BehaviorTree ID="Occupy4_mim8">
+    <Sequence name="Occupy4_mim8">
+      <Inverter name="Inverter">
+        <Condition ID="FluentCheck" name="occupied(imadispensingsystem, mim8)" predicate_ref="{Occupied_imaDispensingSystem}" predicate_args="&quot;{Param_imaDispensingSystem};{Param_MIM8}&quot;" />
+      </Inverter>
+      <Inverter name="Inverter">
+        <Condition ID="FluentCheck" name="occupied(planarshuttle3, mim8)" predicate_ref="{Occupied_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_MIM8}&quot;" />
+      </Inverter>
+      <Inverter name="Inverter">
+        <Condition ID="FluentCheck" name="step_done(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
+      </Inverter>
+      <Condition ID="FluentCheck" name="productat(mim8, loadinglocation)" predicate_ref="{ProductAt_MIM8_2}" predicate_args="&quot;{Param_MIM8};{Param_loadingLocation}&quot;" />
+      <Condition ID="FluentCheck" name="resourceat(planarshuttle3, loadinglocation)" predicate_ref="{ResourceAt_planarShuttle3_2}" predicate_args="&quot;{Param_planarShuttle3};{Param_loadingLocation}&quot;" />
+      <Condition ID="FluentCheck" name="step_ready(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
+      <Inverter name="Inverter">
+        <ReactiveSequence name="FSAPCond_occupy_4">
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="occupied(imadispensingsystem, mim8)" predicate_ref="{Occupied_imaDispensingSystem}" predicate_args="&quot;{Param_imaDispensingSystem};{Param_MIM8}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="productat(mim8, capturelocation)" predicate_ref="{ProductAt_MIM8_3}" predicate_args="&quot;{Param_MIM8};{Param_captureLocation}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="productat(mim8, dispensinglocation)" predicate_ref="{ProductAt_MIM8}" predicate_args="&quot;{Param_MIM8};{Param_dispensingLocation}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="productat(mim8, loadinglocation)" predicate_ref="{ProductAt_MIM8_2}" predicate_args="&quot;{Param_MIM8};{Param_loadingLocation}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="productat(mim8, stopperinglocation)" predicate_ref="{ProductAt_MIM8_5}" predicate_args="&quot;{Param_MIM8};{Param_stopperingLocation}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="productat(mim8, unloadinglocation)" predicate_ref="{ProductAt_MIM8_4}" predicate_args="&quot;{Param_MIM8};{Param_unloadingLocation}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+          </Inverter>
+          <Condition ID="FluentCheck" name="step_ready(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
+        </ReactiveSequence>
+      </Inverter>
+      <Action ID="ExecuteAction" name="occupy_4 mim8" action_args="&quot;{Param_imaDispensingSystem};{Param_MIM8}&quot;" action_ref="{Occupy_imaDispensingSystem}" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Occupy5_mim8">
+    <Sequence name="Occupy5_mim8">
+      <Inverter name="Inverter">
+        <Condition ID="FluentCheck" name="occupied(syntegonstopperingsystem, mim8)" predicate_ref="{Occupied_syntegonStopperingSystem}" predicate_args="&quot;{Param_syntegonStopperingSystem};{Param_MIM8}&quot;" />
+      </Inverter>
+      <Inverter name="Inverter">
+        <Condition ID="FluentCheck" name="step_done(order_product, step_3_stoppering)" predicate_ref="{Predicate_Object}" />
+      </Inverter>
+      <Condition ID="FluentCheck" name="productat(mim8, dispensinglocation)" predicate_ref="{ProductAt_MIM8}" predicate_args="&quot;{Param_MIM8};{Param_dispensingLocation}&quot;" />
+      <Condition ID="FluentCheck" name="resourceat(planarshuttle3, dispensinglocation)" predicate_ref="{ResourceAt_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_dispensingLocation}&quot;" />
+      <Condition ID="FluentCheck" name="step_ready(order_product, step_3_stoppering)" predicate_ref="{Predicate_Object}" />
+      <Action ID="ExecuteAction" name="occupy_5 mim8" action_args="&quot;{Param_syntegonStopperingSystem};{Param_MIM8}&quot;" action_ref="{Occupy_syntegonStopperingSystem}" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Occupy6_mim8">
+    <Sequence name="Occupy6_mim8">
+      <Inverter name="Inverter">
+        <Condition ID="FluentCheck" name="occupied(imaloadingsystem, mim8)" predicate_ref="{Occupied_imaLoadingSystem}" predicate_args="&quot;{Param_imaLoadingSystem};{Param_MIM8}&quot;" />
+      </Inverter>
+      <Inverter name="Inverter">
+        <Condition ID="FluentCheck" name="step_done(order_product, step_1_loading)" predicate_ref="{Predicate_Object}" />
+      </Inverter>
+      <Condition ID="FluentCheck" name="step_ready(order_product, step_1_loading)" predicate_ref="{Predicate_Object}" />
+      <Action ID="ExecuteAction" name="occupy_6 mim8" action_args="&quot;{Param_imaLoadingSystem};{Param_MIM8}&quot;" action_ref="{Occupy_imaLoadingSystem}" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Occupy7_mim8">
+    <Sequence name="Occupy7_mim8">
+      <Inverter name="Inverter">
+        <Condition ID="FluentCheck" name="occupied(optimaunloadingsystem, mim8)" predicate_ref="{Occupied_optimaUnloadingSystem}" predicate_args="&quot;{Param_optimaUnloadingSystem};{Param_MIM8}&quot;" />
+      </Inverter>
+      <Inverter name="Inverter">
+        <Condition ID="FluentCheck" name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+      </Inverter>
+      <Condition ID="FluentCheck" name="occupied(planarshuttle3, mim8)" predicate_ref="{Occupied_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_MIM8}&quot;" />
+      <Condition ID="FluentCheck" name="on(mim8, planarshuttle3)" predicate_ref="{On_MIM8}" predicate_args="&quot;{Param_MIM8};{Param_planarShuttle3}&quot;" />
+      <Condition ID="FluentCheck" name="productat(mim8, capturelocation)" predicate_ref="{ProductAt_MIM8_3}" predicate_args="&quot;{Param_MIM8};{Param_captureLocation}&quot;" />
+      <Condition ID="FluentCheck" name="resourceat(planarshuttle3, capturelocation)" predicate_ref="{ResourceAt_planarShuttle3_3}" predicate_args="&quot;{Param_planarShuttle3};{Param_captureLocation}&quot;" />
+      <Condition ID="FluentCheck" name="step_ready(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+      <Action ID="ExecuteAction" name="occupy_7 mim8" action_args="&quot;{Param_optimaUnloadingSystem};{Param_MIM8}&quot;" action_ref="{Occupy_optimaUnloadingSystem}" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Occupy8_mim8">
+    <Sequence name="Occupy8_mim8">
+      <Inverter name="Inverter">
+        <Condition ID="FluentCheck" name="occupied(omroncamerasystem, mim8)" predicate_ref="{Occupied_omronCameraSystem}" predicate_args="&quot;{Param_omronCameraSystem};{Param_MIM8}&quot;" />
+      </Inverter>
+      <Inverter name="Inverter">
+        <Condition ID="FluentCheck" name="step_done(order_product, step_4_inspection)" predicate_ref="{Predicate_Object}" />
+      </Inverter>
+      <Condition ID="FluentCheck" name="productat(mim8, stopperinglocation)" predicate_ref="{ProductAt_MIM8_5}" predicate_args="&quot;{Param_MIM8};{Param_stopperingLocation}&quot;" />
+      <Condition ID="FluentCheck" name="resourceat(planarshuttle3, stopperinglocation)" predicate_ref="{ResourceAt_planarShuttle3_5}" predicate_args="&quot;{Param_planarShuttle3};{Param_stopperingLocation}&quot;" />
+      <Condition ID="FluentCheck" name="step_ready(order_product, step_4_inspection)" predicate_ref="{Predicate_Object}" />
+      <Action ID="ExecuteAction" name="occupy_8 mim8" action_args="&quot;{Param_omronCameraSystem};{Param_MIM8}&quot;" action_ref="{Occupy_omronCameraSystem}" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="PolicyRules">
+    <Sequence name="PolicyRules">
+      <Condition ID="FluentCheck" name="free(planarshuttle1)" predicate_ref="{Free_planarShuttle1}" predicate_args="&quot;{Param_planarShuttle1}&quot;" />
+      <Condition ID="FluentCheck" name="free(planarshuttle2)" predicate_ref="{Free_planarShuttle2}" predicate_args="&quot;{Param_planarShuttle2}&quot;" />
+      <SubTree ID="Progression" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Prog_with_freeimaload_h024854">
+    <ReactiveFallback name="Prog_with_freeimaloadings_h024854">
+      <SubTree ID="When_freesyntegonstopperingsystem" />
+      <SubTree ID="When_notoccupiedomroncamerasystem_mim8_2" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Prog_with_freeimaload_h085507">
+    <ReactiveFallback name="Prog_with_freeimaloadings_h085507">
+      <SubTree ID="Release4_mim8" />
+      <SubTree ID="Dispensing_mim8_planarshuttle3" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Prog_with_freeimaload_h1eb94c">
+    <ReactiveFallback name="Prog_with_freeimaloadings_h1eb94c">
+      <SubTree ID="When_occupiedsyntegonstopperingsystem_mim8" />
+      <SubTree ID="Occupy5_mim8" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Prog_with_freeimaload_h402832">
+    <ReactiveFallback name="Prog_with_freeimaloadings_h402832">
+      <SubTree ID="When_productatmim8_dispensinglocation" />
+      <SubTree ID="Movetopositi_on2_planarshuttl_h27197e" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Prog_with_freeimaload_h44f4a1">
+    <ReactiveFallback name="Prog_with_freeimaloadings_h44f4a1">
+      <SubTree ID="When_productatmim8_stopperinglocation" />
+      <SubTree ID="Movetopositi_on2_planarshuttl_he293f5" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Prog_with_freeimaload_h462083">
+    <ReactiveFallback name="Prog_with_freeimaloadings_h462083">
+      <SubTree ID="When_occupiedimadispensingsystem_mim8" />
+      <SubTree ID="Occupy4_mim8" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Prog_with_freeimaload_h4db49f">
+    <ReactiveFallback name="Prog_with_freeimaloadings_h4db49f">
+      <SubTree ID="Release7_mim8" />
+      <SubTree ID="Unloading_mim8_planarshuttle3" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Prog_with_freeimaload_h7985b4">
+    <ReactiveFallback name="Prog_with_freeimaloadings_h7985b4">
+      <SubTree ID="Release3_mim8" />
+      <SubTree ID="Movetopositi_on2_planarshuttl_hed6246" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Prog_with_freeimaload_h8956a9">
+    <ReactiveFallback name="Prog_with_freeimaloadings_h8956a9">
+      <SubTree ID="When_occupiedoptimaunloadingsystem_mim8" />
+      <SubTree ID="Occupy7_mim8" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Prog_with_freeimaload_h97db3d">
+    <ReactiveFallback name="Prog_with_freeimaloadings_h97db3d">
+      <SubTree ID="Release5_mim8" />
+      <SubTree ID="Stoppering_mim8_planarshuttle3" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Prog_with_freeimaload_h99c822">
+    <ReactiveFallback name="Prog_with_freeimaloadings_h99c822">
+      <SubTree ID="When_occupiedplanarshuttle3_mim8" />
+      <SubTree ID="Occupy3_mim8" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Prog_with_freeimaload_ha52e26">
+    <ReactiveFallback name="Prog_with_freeimaloadings_ha52e26">
+      <SubTree ID="When_occupiedomroncamerasystem_mim8" />
+      <SubTree ID="Occupy8_mim8" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Prog_with_freeimaload_ha8f2c2">
+    <ReactiveFallback name="Prog_with_freeimaloadings_ha8f2c2">
+      <SubTree ID="Release8_mim8" />
+      <SubTree ID="Capture_mim8_planarshuttle3" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Prog_with_freeimaload_hc49832">
+    <ReactiveFallback name="Prog_with_freeimaloadings_hc49832">
+      <SubTree ID="When_freeplanarshuttle3" />
+      <SubTree ID="When_notstep_doneorder_product_step_5_unloading" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Prog_with_freeimaload_hc62629">
+    <ReactiveFallback name="Prog_with_freeimaloadings_hc62629">
+      <SubTree ID="When_productatmim8_capturelocation" />
+      <SubTree ID="Movetopositi_on2_planarshuttl_hbe6dbc" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Prog_with_freeimaload_hd4531c">
+    <ReactiveFallback name="Prog_with_freeimaloadings_hd4531c">
+      <SubTree ID="When_freeomroncamerasystem" />
+      <SubTree ID="When_notoccupiedoptimaunloadingsystem_mim8" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Prog_with_notoccupied_h66d40c">
+    <ReactiveFallback name="Prog_with_notoccupiedimad_h66d40c">
+      <SubTree ID="Release6_mim8" />
+      <SubTree ID="Loading_mim8_planarshuttle3" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Prog_with_notoccupied_hc777ca">
+    <ReactiveFallback name="Prog_with_notoccupiedimad_hc777ca">
+      <SubTree ID="When_occupiedimaloadingsystem_mim8" />
+      <SubTree ID="Occupy6_mim8" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Prog_with_notoccupied_hf6d778">
+    <ReactiveFallback name="Prog_with_notoccupiedimad_hf6d778">
+      <SubTree ID="When_resourceatplanarshuttle3_loadinglocation" />
+      <SubTree ID="Movetopositi_on_planarshuttle_h50a83f" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Progression">
+    <ReactiveFallback name="Progression">
+      <SubTree ID="When_freeimaloadingsystem" />
+      <SubTree ID="When_notoccupiedimadispensingsystem_mim8" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Progression_with_freeimaloadingsystem">
+    <ReactiveFallback name="Progression_with_freeimaloadingsystem">
+      <SubTree ID="When_freeimadispensingsystem" />
+      <SubTree ID="When_notoccupiedomroncamerasystem_mim8" />
+    </ReactiveFallback>
+  </BehaviorTree>
+  <BehaviorTree ID="Release3_mim8">
+    <Sequence name="Release3_mim8">
+      <Condition ID="FluentCheck" name="productat(mim8, unloadinglocation)" predicate_ref="{ProductAt_MIM8_4}" predicate_args="&quot;{Param_MIM8};{Param_unloadingLocation}&quot;" />
+      <Inverter name="Inverter">
+        <ReactiveSequence name="FSAPCond_release_3">
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="productat(mim8, capturelocation)" predicate_ref="{ProductAt_MIM8_3}" predicate_args="&quot;{Param_MIM8};{Param_captureLocation}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="productat(mim8, dispensinglocation)" predicate_ref="{ProductAt_MIM8}" predicate_args="&quot;{Param_MIM8};{Param_dispensingLocation}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="productat(mim8, loadinglocation)" predicate_ref="{ProductAt_MIM8_2}" predicate_args="&quot;{Param_MIM8};{Param_loadingLocation}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="productat(mim8, stopperinglocation)" predicate_ref="{ProductAt_MIM8_5}" predicate_args="&quot;{Param_MIM8};{Param_stopperingLocation}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="productat(mim8, unloadinglocation)" predicate_ref="{ProductAt_MIM8_4}" predicate_args="&quot;{Param_MIM8};{Param_unloadingLocation}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+          </Inverter>
+          <Condition ID="FluentCheck" name="occupied(planarshuttle3, mim8)" predicate_ref="{Occupied_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_MIM8}&quot;" />
+          <Condition ID="FluentCheck" name="step_ready(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
+        </ReactiveSequence>
+      </Inverter>
+      <Action ID="ExecuteAction" name="release_3 mim8" action_args="&quot;{Param_planarShuttle3};{Param_MIM8}&quot;" action_ref="{Release_planarTableShuttle3}" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Release4_mim8">
+    <Sequence name="Release4_mim8">
+      <Condition ID="FluentCheck" name="step_ready(order_product, step_3_stoppering)" predicate_ref="{Predicate_Object}" />
+      <Inverter name="Inverter">
+        <ReactiveSequence name="FSAPCond_release_4">
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="productat(mim8, capturelocation)" predicate_ref="{ProductAt_MIM8_3}" predicate_args="&quot;{Param_MIM8};{Param_captureLocation}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="productat(mim8, dispensinglocation)" predicate_ref="{ProductAt_MIM8}" predicate_args="&quot;{Param_MIM8};{Param_dispensingLocation}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="productat(mim8, loadinglocation)" predicate_ref="{ProductAt_MIM8_2}" predicate_args="&quot;{Param_MIM8};{Param_loadingLocation}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="productat(mim8, stopperinglocation)" predicate_ref="{ProductAt_MIM8_5}" predicate_args="&quot;{Param_MIM8};{Param_stopperingLocation}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="productat(mim8, unloadinglocation)" predicate_ref="{ProductAt_MIM8_4}" predicate_args="&quot;{Param_MIM8};{Param_unloadingLocation}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+          </Inverter>
+          <Condition ID="FluentCheck" name="occupied(imadispensingsystem, mim8)" predicate_ref="{Occupied_imaDispensingSystem}" predicate_args="&quot;{Param_imaDispensingSystem};{Param_MIM8}&quot;" />
+          <Condition ID="FluentCheck" name="step_ready(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
+        </ReactiveSequence>
+      </Inverter>
+      <Action ID="ExecuteAction" name="release_4 mim8" action_args="&quot;{Param_imaDispensingSystem};{Param_MIM8}&quot;" action_ref="{Release_imaDispensingSystem}" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Release5_mim8">
+    <Sequence name="Release5_mim8">
+      <Condition ID="FluentCheck" name="step_ready(order_product, step_4_inspection)" predicate_ref="{Predicate_Object}" />
+      <Inverter name="Inverter">
+        <ReactiveSequence name="FSAPCond_release_5">
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="productat(mim8, capturelocation)" predicate_ref="{ProductAt_MIM8_3}" predicate_args="&quot;{Param_MIM8};{Param_captureLocation}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="productat(mim8, dispensinglocation)" predicate_ref="{ProductAt_MIM8}" predicate_args="&quot;{Param_MIM8};{Param_dispensingLocation}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="productat(mim8, loadinglocation)" predicate_ref="{ProductAt_MIM8_2}" predicate_args="&quot;{Param_MIM8};{Param_loadingLocation}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="productat(mim8, stopperinglocation)" predicate_ref="{ProductAt_MIM8_5}" predicate_args="&quot;{Param_MIM8};{Param_stopperingLocation}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="productat(mim8, unloadinglocation)" predicate_ref="{ProductAt_MIM8_4}" predicate_args="&quot;{Param_MIM8};{Param_unloadingLocation}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+          </Inverter>
+          <Condition ID="FluentCheck" name="occupied(syntegonstopperingsystem, mim8)" predicate_ref="{Occupied_syntegonStopperingSystem}" predicate_args="&quot;{Param_syntegonStopperingSystem};{Param_MIM8}&quot;" />
+          <Condition ID="FluentCheck" name="step_ready(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
+        </ReactiveSequence>
+      </Inverter>
+      <Action ID="ExecuteAction" name="release_5 mim8" action_args="&quot;{Param_syntegonStopperingSystem};{Param_MIM8}&quot;" action_ref="{Release_syntegonStopperingSystem}" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Release6_mim8">
+    <Sequence name="Release6_mim8">
+      <Condition ID="FluentCheck" name="on(mim8, planarshuttle3)" predicate_ref="{On_MIM8}" predicate_args="&quot;{Param_MIM8};{Param_planarShuttle3}&quot;" />
+      <Condition ID="FluentCheck" name="productat(mim8, loadinglocation)" predicate_ref="{ProductAt_MIM8_2}" predicate_args="&quot;{Param_MIM8};{Param_loadingLocation}&quot;" />
+      <Condition ID="FluentCheck" name="step_ready(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
+      <Inverter name="Inverter">
+        <ReactiveSequence name="FSAPCond_release_6">
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="productat(mim8, capturelocation)" predicate_ref="{ProductAt_MIM8_3}" predicate_args="&quot;{Param_MIM8};{Param_captureLocation}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="productat(mim8, dispensinglocation)" predicate_ref="{ProductAt_MIM8}" predicate_args="&quot;{Param_MIM8};{Param_dispensingLocation}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="productat(mim8, loadinglocation)" predicate_ref="{ProductAt_MIM8_2}" predicate_args="&quot;{Param_MIM8};{Param_loadingLocation}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="productat(mim8, stopperinglocation)" predicate_ref="{ProductAt_MIM8_5}" predicate_args="&quot;{Param_MIM8};{Param_stopperingLocation}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="productat(mim8, unloadinglocation)" predicate_ref="{ProductAt_MIM8_4}" predicate_args="&quot;{Param_MIM8};{Param_unloadingLocation}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+          </Inverter>
+          <Condition ID="FluentCheck" name="occupied(imaloadingsystem, mim8)" predicate_ref="{Occupied_imaLoadingSystem}" predicate_args="&quot;{Param_imaLoadingSystem};{Param_MIM8}&quot;" />
+          <Condition ID="FluentCheck" name="step_ready(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
+        </ReactiveSequence>
+      </Inverter>
+      <Action ID="ExecuteAction" name="release_6 mim8" action_args="&quot;{Param_imaLoadingSystem};{Param_MIM8}&quot;" action_ref="{Release_imaLoadingSystem}" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Release7_mim8">
+    <Sequence name="Release7_mim8">
+      <Condition ID="FluentCheck" name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+      <Inverter name="Inverter">
+        <ReactiveSequence name="FSAPCond_release_7">
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="productat(mim8, capturelocation)" predicate_ref="{ProductAt_MIM8_3}" predicate_args="&quot;{Param_MIM8};{Param_captureLocation}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="productat(mim8, dispensinglocation)" predicate_ref="{ProductAt_MIM8}" predicate_args="&quot;{Param_MIM8};{Param_dispensingLocation}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="productat(mim8, loadinglocation)" predicate_ref="{ProductAt_MIM8_2}" predicate_args="&quot;{Param_MIM8};{Param_loadingLocation}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="productat(mim8, stopperinglocation)" predicate_ref="{ProductAt_MIM8_5}" predicate_args="&quot;{Param_MIM8};{Param_stopperingLocation}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="productat(mim8, unloadinglocation)" predicate_ref="{ProductAt_MIM8_4}" predicate_args="&quot;{Param_MIM8};{Param_unloadingLocation}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+          </Inverter>
+          <Condition ID="FluentCheck" name="occupied(optimaunloadingsystem, mim8)" predicate_ref="{Occupied_optimaUnloadingSystem}" predicate_args="&quot;{Param_optimaUnloadingSystem};{Param_MIM8}&quot;" />
+          <Condition ID="FluentCheck" name="step_ready(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
+        </ReactiveSequence>
+      </Inverter>
+      <Action ID="ExecuteAction" name="release_7 mim8" action_args="&quot;{Param_optimaUnloadingSystem};{Param_MIM8}&quot;" action_ref="{Release_optimaUnloadingSystem}" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Release8_mim8">
+    <Sequence name="Release8_mim8">
+      <Condition ID="FluentCheck" name="step_ready(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+      <Inverter name="Inverter">
+        <ReactiveSequence name="FSAPCond_release_8">
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="productat(mim8, capturelocation)" predicate_ref="{ProductAt_MIM8_3}" predicate_args="&quot;{Param_MIM8};{Param_captureLocation}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="productat(mim8, dispensinglocation)" predicate_ref="{ProductAt_MIM8}" predicate_args="&quot;{Param_MIM8};{Param_dispensingLocation}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="productat(mim8, loadinglocation)" predicate_ref="{ProductAt_MIM8_2}" predicate_args="&quot;{Param_MIM8};{Param_loadingLocation}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="productat(mim8, stopperinglocation)" predicate_ref="{ProductAt_MIM8_5}" predicate_args="&quot;{Param_MIM8};{Param_stopperingLocation}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="productat(mim8, unloadinglocation)" predicate_ref="{ProductAt_MIM8_4}" predicate_args="&quot;{Param_MIM8};{Param_unloadingLocation}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <Condition ID="FluentCheck" name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+          </Inverter>
+          <Condition ID="FluentCheck" name="occupied(omroncamerasystem, mim8)" predicate_ref="{Occupied_omronCameraSystem}" predicate_args="&quot;{Param_omronCameraSystem};{Param_MIM8}&quot;" />
+          <Condition ID="FluentCheck" name="step_ready(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
+        </ReactiveSequence>
+      </Inverter>
+      <Action ID="ExecuteAction" name="release_8 mim8" action_args="&quot;{Param_omronCameraSystem};{Param_MIM8}&quot;" action_ref="{Release_omronCameraSystem}" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Stoppering_mim8_planarshuttle3">
+    <Sequence name="Stoppering_mim8_planarshuttle3">
+      <Inverter name="Inverter">
+        <Condition ID="FluentCheck" name="step_done(order_product, step_3_stoppering)" predicate_ref="{Predicate_Object}" />
+      </Inverter>
+      <Condition ID="FluentCheck" name="step_ready(order_product, step_3_stoppering)" predicate_ref="{Predicate_Object}" />
+      <Action ID="ExecuteAction" name="stoppering mim8 planarshuttle3" action_args="&quot;{Param_syntegonStopperingSystem};{Param_MIM8};{Param_planarShuttle3};{Param_stopperingLocation}&quot;" action_ref="{Stoppering_syntegonStopperingSystem}" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Unloading_mim8_planarshuttle3">
+    <Sequence name="Unloading_mim8_planarshuttle3">
+      <Inverter name="Inverter">
+        <Condition ID="FluentCheck" name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+      </Inverter>
+      <Condition ID="FluentCheck" name="on(mim8, planarshuttle3)" predicate_ref="{On_MIM8}" predicate_args="&quot;{Param_MIM8};{Param_planarShuttle3}&quot;" />
+      <Condition ID="FluentCheck" name="productat(mim8, unloadinglocation)" predicate_ref="{ProductAt_MIM8_4}" predicate_args="&quot;{Param_MIM8};{Param_unloadingLocation}&quot;" />
+      <Condition ID="FluentCheck" name="step_ready(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+      <Action ID="ExecuteAction" name="unloading mim8 planarshuttle3" action_args="&quot;{Param_optimaUnloadingSystem};{Param_MIM8};{Param_planarShuttle3};{Param_unloadingLocation}&quot;" action_ref="{Unloading_optimaUnloadingSystem}" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_freeimadispensingsystem">
+    <Sequence name="When_freeimadispensingsystem">
+      <Condition ID="FluentCheck" name="free(imadispensingsystem)" predicate_ref="{Free_imaDispensingSystem}" predicate_args="&quot;{Param_imaDispensingSystem}&quot;" />
+      <SubTree ID="Prog_with_freeimaload_h024854" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_freeimaloadingsystem">
+    <Sequence name="When_freeimaloadingsystem">
+      <Condition ID="FluentCheck" name="free(imaloadingsystem)" predicate_ref="{Free_imaLoadingSystem}" predicate_args="&quot;{Param_imaLoadingSystem}&quot;" />
+      <SubTree ID="Progression_with_freeimaloadingsystem" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_freeomroncamerasystem">
+    <Sequence name="When_freeomroncamerasystem">
+      <Condition ID="FluentCheck" name="free(omroncamerasystem)" predicate_ref="{Free_omronCameraSystem}" predicate_args="&quot;{Param_omronCameraSystem}&quot;" />
+      <SubTree ID="Prog_with_freeimaload_h8956a9" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_freeplanarshuttle3">
+    <Sequence name="When_freeplanarshuttle3">
+      <Condition ID="FluentCheck" name="free(planarshuttle3)" predicate_ref="{Free_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3}&quot;" />
+      <SubTree ID="Prog_with_freeimaload_h4db49f" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_freesyntegonstopperingsystem">
+    <Sequence name="When_freesyntegonstopperingsystem">
+      <Condition ID="FluentCheck" name="free(syntegonstopperingsystem)" predicate_ref="{Free_syntegonStopperingSystem}" predicate_args="&quot;{Param_syntegonStopperingSystem}&quot;" />
+      <SubTree ID="Prog_with_freeimaload_hd4531c" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_notoccupiedimadispensingsystem_mim8">
+    <Sequence name="When_notoccupiedimadispensingsystem_mim8">
+      <Inverter name="Inverter">
+        <Condition ID="FluentCheck" name="occupied(imadispensingsystem, mim8)" predicate_ref="{Occupied_imaDispensingSystem}" predicate_args="&quot;{Param_imaDispensingSystem};{Param_MIM8}&quot;" />
+      </Inverter>
+      <Inverter name="Inverter">
+        <Condition ID="FluentCheck" name="occupied(omroncamerasystem, mim8)" predicate_ref="{Occupied_omronCameraSystem}" predicate_args="&quot;{Param_omronCameraSystem};{Param_MIM8}&quot;" />
+      </Inverter>
+      <Inverter name="Inverter">
+        <Condition ID="FluentCheck" name="occupied(optimaunloadingsystem, mim8)" predicate_ref="{Occupied_optimaUnloadingSystem}" predicate_args="&quot;{Param_optimaUnloadingSystem};{Param_MIM8}&quot;" />
+      </Inverter>
+      <Inverter name="Inverter">
+        <Condition ID="FluentCheck" name="occupied(planarshuttle3, mim8)" predicate_ref="{Occupied_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_MIM8}&quot;" />
+      </Inverter>
+      <Inverter name="Inverter">
+        <Condition ID="FluentCheck" name="occupied(syntegonstopperingsystem, mim8)" predicate_ref="{Occupied_syntegonStopperingSystem}" predicate_args="&quot;{Param_syntegonStopperingSystem};{Param_MIM8}&quot;" />
+      </Inverter>
+      <Inverter name="Inverter">
+        <Condition ID="FluentCheck" name="step_done(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
+      </Inverter>
+      <Inverter name="Inverter">
+        <Condition ID="FluentCheck" name="step_done(order_product, step_3_stoppering)" predicate_ref="{Predicate_Object}" />
+      </Inverter>
+      <Inverter name="Inverter">
+        <Condition ID="FluentCheck" name="step_done(order_product, step_4_inspection)" predicate_ref="{Predicate_Object}" />
+      </Inverter>
+      <Inverter name="Inverter">
+        <Condition ID="FluentCheck" name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+      </Inverter>
+      <SubTree ID="Prog_with_notoccupied_hf6d778" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_notoccupiedomroncamerasystem_mim8">
+    <Sequence name="When_notoccupiedomroncamerasystem_mim8">
+      <Inverter name="Inverter">
+        <Condition ID="FluentCheck" name="occupied(omroncamerasystem, mim8)" predicate_ref="{Occupied_omronCameraSystem}" predicate_args="&quot;{Param_omronCameraSystem};{Param_MIM8}&quot;" />
+      </Inverter>
+      <Inverter name="Inverter">
+        <Condition ID="FluentCheck" name="occupied(optimaunloadingsystem, mim8)" predicate_ref="{Occupied_optimaUnloadingSystem}" predicate_args="&quot;{Param_optimaUnloadingSystem};{Param_MIM8}&quot;" />
+      </Inverter>
+      <Inverter name="Inverter">
+        <Condition ID="FluentCheck" name="occupied(syntegonstopperingsystem, mim8)" predicate_ref="{Occupied_syntegonStopperingSystem}" predicate_args="&quot;{Param_syntegonStopperingSystem};{Param_MIM8}&quot;" />
+      </Inverter>
+      <Inverter name="Inverter">
+        <Condition ID="FluentCheck" name="step_done(order_product, step_3_stoppering)" predicate_ref="{Predicate_Object}" />
+      </Inverter>
+      <Inverter name="Inverter">
+        <Condition ID="FluentCheck" name="step_done(order_product, step_4_inspection)" predicate_ref="{Predicate_Object}" />
+      </Inverter>
+      <Inverter name="Inverter">
+        <Condition ID="FluentCheck" name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+      </Inverter>
+      <Condition ID="FluentCheck" name="on(mim8, planarshuttle3)" predicate_ref="{On_MIM8}" predicate_args="&quot;{Param_MIM8};{Param_planarShuttle3}&quot;" />
+      <SubTree ID="Prog_with_freeimaload_h462083" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_notoccupiedomroncamerasystem_mim8_2">
+    <Sequence name="When_notoccupiedomroncamerasystem_mim8">
+      <Inverter name="Inverter">
+        <Condition ID="FluentCheck" name="occupied(omroncamerasystem, mim8)" predicate_ref="{Occupied_omronCameraSystem}" predicate_args="&quot;{Param_omronCameraSystem};{Param_MIM8}&quot;" />
+      </Inverter>
+      <Inverter name="Inverter">
+        <Condition ID="FluentCheck" name="occupied(optimaunloadingsystem, mim8)" predicate_ref="{Occupied_optimaUnloadingSystem}" predicate_args="&quot;{Param_optimaUnloadingSystem};{Param_MIM8}&quot;" />
+      </Inverter>
+      <Inverter name="Inverter">
+        <Condition ID="FluentCheck" name="step_done(order_product, step_4_inspection)" predicate_ref="{Predicate_Object}" />
+      </Inverter>
+      <Inverter name="Inverter">
+        <Condition ID="FluentCheck" name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+      </Inverter>
+      <Condition ID="FluentCheck" name="occupied(planarshuttle3, mim8)" predicate_ref="{Occupied_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_MIM8}&quot;" />
+      <Condition ID="FluentCheck" name="on(mim8, planarshuttle3)" predicate_ref="{On_MIM8}" predicate_args="&quot;{Param_MIM8};{Param_planarShuttle3}&quot;" />
+      <SubTree ID="Prog_with_freeimaload_h1eb94c" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_notoccupiedoptimaunloadingsystem_mim8">
+    <Sequence name="When_notoccupiedoptimaunloadingsystem_mim8">
+      <Inverter name="Inverter">
+        <Condition ID="FluentCheck" name="occupied(optimaunloadingsystem, mim8)" predicate_ref="{Occupied_optimaUnloadingSystem}" predicate_args="&quot;{Param_optimaUnloadingSystem};{Param_MIM8}&quot;" />
+      </Inverter>
+      <Inverter name="Inverter">
+        <Condition ID="FluentCheck" name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+      </Inverter>
+      <Condition ID="FluentCheck" name="occupied(planarshuttle3, mim8)" predicate_ref="{Occupied_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_MIM8}&quot;" />
+      <Condition ID="FluentCheck" name="on(mim8, planarshuttle3)" predicate_ref="{On_MIM8}" predicate_args="&quot;{Param_MIM8};{Param_planarShuttle3}&quot;" />
+      <SubTree ID="Prog_with_freeimaload_ha52e26" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_notstep_doneorder_product_step_5_unloading">
+    <Sequence name="When_notstep_doneorder_product_step_5_unloading">
+      <Inverter name="Inverter">
+        <Condition ID="FluentCheck" name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+      </Inverter>
+      <Condition ID="FluentCheck" name="occupied(planarshuttle3, mim8)" predicate_ref="{Occupied_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_MIM8}&quot;" />
+      <Condition ID="FluentCheck" name="on(mim8, planarshuttle3)" predicate_ref="{On_MIM8}" predicate_args="&quot;{Param_MIM8};{Param_planarShuttle3}&quot;" />
+      <Condition ID="FluentCheck" name="step_ready(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+      <SubTree ID="Prog_with_freeimaload_h7985b4" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_occupiedimadispensingsystem_mim8">
+    <Sequence name="When_occupiedimadispensingsystem_mim8">
+      <Condition ID="FluentCheck" name="occupied(imadispensingsystem, mim8)" predicate_ref="{Occupied_imaDispensingSystem}" predicate_args="&quot;{Param_imaDispensingSystem};{Param_MIM8}&quot;" />
+      <SubTree ID="Prog_with_freeimaload_h99c822" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_occupiedimaloadingsystem_mim8">
+    <Sequence name="When_occupiedimaloadingsystem_mim8">
+      <Condition ID="FluentCheck" name="occupied(imaloadingsystem, mim8)" predicate_ref="{Occupied_imaLoadingSystem}" predicate_args="&quot;{Param_imaLoadingSystem};{Param_MIM8}&quot;" />
+      <SubTree ID="Prog_with_notoccupied_h66d40c" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_occupiedomroncamerasystem_mim8">
+    <Sequence name="When_occupiedomroncamerasystem_mim8">
+      <Condition ID="FluentCheck" name="occupied(omroncamerasystem, mim8)" predicate_ref="{Occupied_omronCameraSystem}" predicate_args="&quot;{Param_omronCameraSystem};{Param_MIM8}&quot;" />
+      <SubTree ID="Prog_with_freeimaload_hc62629" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_occupiedoptimaunloadingsystem_mim8">
+    <Sequence name="When_occupiedoptimaunloadingsystem_mim8">
+      <Condition ID="FluentCheck" name="occupied(optimaunloadingsystem, mim8)" predicate_ref="{Occupied_optimaUnloadingSystem}" predicate_args="&quot;{Param_optimaUnloadingSystem};{Param_MIM8}&quot;" />
+      <SubTree ID="Prog_with_freeimaload_hc49832" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_occupiedplanarshuttle3_mim8">
+    <Sequence name="When_occupiedplanarshuttle3_mim8">
+      <Condition ID="FluentCheck" name="occupied(planarshuttle3, mim8)" predicate_ref="{Occupied_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_MIM8}&quot;" />
+      <SubTree ID="Prog_with_freeimaload_h402832" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_occupiedsyntegonstopperingsystem_mim8">
+    <Sequence name="When_occupiedsyntegonstopperingsystem_mim8">
+      <Condition ID="FluentCheck" name="occupied(syntegonstopperingsystem, mim8)" predicate_ref="{Occupied_syntegonStopperingSystem}" predicate_args="&quot;{Param_syntegonStopperingSystem};{Param_MIM8}&quot;" />
+      <SubTree ID="Prog_with_freeimaload_h44f4a1" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_productatmim8_capturelocation">
+    <Sequence name="When_productatmim8_capturelocation">
+      <Condition ID="FluentCheck" name="productat(mim8, capturelocation)" predicate_ref="{ProductAt_MIM8_3}" predicate_args="&quot;{Param_MIM8};{Param_captureLocation}&quot;" />
+      <Condition ID="FluentCheck" name="resourceat(planarshuttle3, capturelocation)" predicate_ref="{ResourceAt_planarShuttle3_3}" predicate_args="&quot;{Param_planarShuttle3};{Param_captureLocation}&quot;" />
+      <SubTree ID="Prog_with_freeimaload_ha8f2c2" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_productatmim8_dispensinglocation">
+    <Sequence name="When_productatmim8_dispensinglocation">
+      <Condition ID="FluentCheck" name="productat(mim8, dispensinglocation)" predicate_ref="{ProductAt_MIM8}" predicate_args="&quot;{Param_MIM8};{Param_dispensingLocation}&quot;" />
+      <Condition ID="FluentCheck" name="resourceat(planarshuttle3, dispensinglocation)" predicate_ref="{ResourceAt_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_dispensingLocation}&quot;" />
+      <SubTree ID="Prog_with_freeimaload_h085507" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_productatmim8_stopperinglocation">
+    <Sequence name="When_productatmim8_stopperinglocation">
+      <Condition ID="FluentCheck" name="productat(mim8, stopperinglocation)" predicate_ref="{ProductAt_MIM8_5}" predicate_args="&quot;{Param_MIM8};{Param_stopperingLocation}&quot;" />
+      <Condition ID="FluentCheck" name="resourceat(planarshuttle3, stopperinglocation)" predicate_ref="{ResourceAt_planarShuttle3_5}" predicate_args="&quot;{Param_planarShuttle3};{Param_stopperingLocation}&quot;" />
+      <SubTree ID="Prog_with_freeimaload_h97db3d" />
+    </Sequence>
+  </BehaviorTree>
+  <BehaviorTree ID="When_resourceatplanarshuttle3_loadinglocation">
+    <Sequence name="When_resourceatplanarshuttle3_loadinglocation">
+      <Condition ID="FluentCheck" name="resourceat(planarshuttle3, loadinglocation)" predicate_ref="{ResourceAt_planarShuttle3_2}" predicate_args="&quot;{Param_planarShuttle3};{Param_loadingLocation}&quot;" />
+      <SubTree ID="Prog_with_notoccupied_hc777ca" />
+    </Sequence>
   </BehaviorTree>
   <TreeNodesModel>
     <Control ID="BC_Fallback"/>
@@ -165,51 +905,135 @@
       <input_port name="TargetPosition" type="std::string" default="{Station}">The name of the station to move to</input_port>
       <input_port name="Asset" type="std::string" default="{Xbot}">The Asset to execute the movement</input_port>
     </Action>
-    <SubTree ID="Loading">
-      <input_port name="Assets"/>
-      <input_port name="Xbot"/>
-      <input_port name="XbotUuid"/>
-      <input_port name="ProductID"/>
-      <input_port name="ProductIDs"/>
-      <input_port name="Station"/>
-    </SubTree>
-    <SubTree ID="Unloading">
-      <input_port name="Assets"/>
-      <input_port name="Xbot"/>
-      <input_port name="XbotUuid"/>
-      <input_port name="ProductID"/>
-      <input_port name="ProductIDs"/>
-      <input_port name="Station"/>
-    </SubTree>
-    <SubTree ID="Dispensing">
-      <input_port name="Assets"/>
-      <input_port name="Xbot"/>
-      <input_port name="XbotUuid"/>
-      <input_port name="ProductID"/>
-      <input_port name="ProductIDs"/>
-      <input_port name="Station"/>
-    </SubTree>
-    <SubTree ID="Inspection">
-      <input_port name="Assets"/>
-      <input_port name="Xbot"/>
-      <input_port name="XbotUuid"/>
-      <input_port name="ProductID"/>
-      <input_port name="ProductIDs"/>
-      <input_port name="Station"/>
-      <input_port name="IPCInspection"/>
-      <input_port name="BatchSize"/>
-    </SubTree>
-    <SubTree ID="AsepticFilling">
-      <input_port name="Xbot"/>
-      <output_port name="ProductID"/>
-    </SubTree>
-    <SubTree ID="Stoppering">
-      <input_port name="Assets"/>
-      <input_port name="Xbot"/>
-      <input_port name="XbotUuid"/>
-      <input_port name="ProductID"/>
-      <input_port name="ProductIDs"/>
-      <input_port name="Station"/>
+    <Action ID="GoalReached" />
+    <SubTree ID="MainTree" editable="true">
+      <input_port name="Param_MIM8" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/MIM8AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/MIM8&quot;}" />
+      <input_port name="Param_dispensingLocation" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/dispensingLocation&quot;}" />
+      <input_port name="Param_imaDispensingSystem" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/imaDispensingSystem&quot;}" />
+      <input_port name="Param_imaLoadingSystem" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/imaLoadingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/imaLoadingSystem&quot;}" />
+      <input_port name="Param_loadingLocation" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/imaLoadingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/loadingLocation&quot;}" />
+      <input_port name="Param_captureLocation" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/omronCameraSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/captureLocation&quot;}" />
+      <input_port name="Param_omronCameraSystem" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/omronCameraSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/omronCameraSystem&quot;}" />
+      <input_port name="Param_optimaUnloadingSystem" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/optimaUnloadingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/optimaUnloadingSystem&quot;}" />
+      <input_port name="Param_unloadingLocation" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/optimaUnloadingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/unloadingLocation&quot;}" />
+      <input_port name="Param_planarShuttle1" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle1AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/planarShuttle1&quot;}" />
+      <input_port name="Param_planarShuttle2" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle2AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/planarShuttle2&quot;}" />
+      <input_port name="Param_initialLocation3" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/initialLocation3&quot;}" />
+      <input_port name="Param_planarShuttle3" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/planarShuttle3&quot;}" />
+      <input_port name="Param_stopperingLocation" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/syntegonStopperingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/stopperingLocation&quot;}" />
+      <input_port name="Param_syntegonStopperingSystem" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/syntegonStopperingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/syntegonStopperingSystem&quot;}" />
+      <input_port name="ActionLink_Move_planarTableShuttle1" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle1AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Actions/Move&quot;}" />
+      <input_port name="FluentLink_Predicate_Object" default="{&quot;aas_id&quot;:&quot;&quot;,&quot;aas_path&quot;:&quot;&quot;}" />
+      <input_port name="FluentLink_ResourceAt_planarShuttle3" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Fluents/ResourceAt&quot;}" />
+      <input_port name="FluentLink_ProductAt_MIM8" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/MIM8AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Fluents/ProductAt&quot;}" />
+      <input_port name="FluentLink_ProductAt_MIM8_2" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/MIM8AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Fluents/ProductAt&quot;}" />
+      <input_port name="FluentLink_ProductAt_MIM8_3" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/MIM8AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Fluents/ProductAt&quot;}" />
+      <input_port name="FluentLink_ProductAt_MIM8_4" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/MIM8AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Fluents/ProductAt&quot;}" />
+      <input_port name="FluentLink_ProductAt_MIM8_5" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/MIM8AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Fluents/ProductAt&quot;}" />
+      <input_port name="FluentLink_Free_planarShuttle3" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Free&quot;}" />
+      <input_port name="FluentLink_Occupied_imaLoadingSystem" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/imaLoadingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Occupied&quot;}" />
+      <input_port name="ActionLink_Occupy_imaLoadingSystem" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/imaLoadingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Actions/Occupy&quot;}" />
+      <input_port name="ActionLink_Loading_imaLoadingSystem" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/imaLoadingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Actions/Loading&quot;}" />
+      <input_port name="FluentLink_ResourceAt_planarShuttle3_2" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Fluents/ResourceAt&quot;}" />
+      <input_port name="ActionLink_Release_imaLoadingSystem" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/imaLoadingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Actions/Release&quot;}" />
+      <input_port name="FluentLink_On_MIM8" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/MIM8AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Fluents/On&quot;}" />
+      <input_port name="FluentLink_Occupied_syntegonStopperingSystem" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/syntegonStopperingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Occupied&quot;}" />
+      <input_port name="FluentLink_Occupied_planarShuttle3" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Occupied&quot;}" />
+      <input_port name="FluentLink_Occupied_optimaUnloadingSystem" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/optimaUnloadingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Occupied&quot;}" />
+      <input_port name="FluentLink_Occupied_omronCameraSystem" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/omronCameraSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Occupied&quot;}" />
+      <input_port name="FluentLink_Occupied_imaDispensingSystem" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Occupied&quot;}" />
+      <input_port name="ActionLink_Occupy_imaDispensingSystem" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Actions/Occupy&quot;}" />
+      <input_port name="ActionLink_Occupy_planarTableShuttle3" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Actions/Occupy&quot;}" />
+      <input_port name="ActionLink_Transport_planarTableShuttle1" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle1AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Actions/Transport&quot;}" />
+      <input_port name="ActionLink_Dispensing_imaDispensingSystem" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Actions/Dispensing&quot;}" />
+      <input_port name="ActionLink_Release_imaDispensingSystem" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Actions/Release&quot;}" />
+      <input_port name="FluentLink_ResourceAt_planarShuttle3_3" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Fluents/ResourceAt&quot;}" />
+      <input_port name="ActionLink_Occupy_syntegonStopperingSystem" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/syntegonStopperingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Actions/Occupy&quot;}" />
+      <input_port name="ActionLink_Transport_planarTableShuttle1_2" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle1AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Actions/Transport&quot;}" />
+      <input_port name="ActionLink_Stoppering_syntegonStopperingSystem" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/syntegonStopperingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Actions/Stoppering&quot;}" />
+      <input_port name="ActionLink_Release_syntegonStopperingSystem" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/syntegonStopperingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Actions/Release&quot;}" />
+      <input_port name="FluentLink_ResourceAt_planarShuttle3_4" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Fluents/ResourceAt&quot;}" />
+      <input_port name="ActionLink_Occupy_omronCameraSystem" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/omronCameraSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Actions/Occupy&quot;}" />
+      <input_port name="ActionLink_Transport_planarTableShuttle1_3" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle1AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Actions/Transport&quot;}" />
+      <input_port name="ActionLink_QualityControl_omronCameraSystem" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/omronCameraSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Actions/QualityControl&quot;}" />
+      <input_port name="ActionLink_Release_omronCameraSystem" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/omronCameraSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Actions/Release&quot;}" />
+      <input_port name="FluentLink_ResourceAt_planarShuttle3_5" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Fluents/ResourceAt&quot;}" />
+      <input_port name="ActionLink_Occupy_optimaUnloadingSystem" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/optimaUnloadingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Actions/Occupy&quot;}" />
+      <input_port name="ActionLink_Transport_planarTableShuttle1_4" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle1AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Actions/Transport&quot;}" />
+      <input_port name="ActionLink_Release_planarTableShuttle3" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Actions/Release&quot;}" />
+      <input_port name="ActionLink_Unloading_optimaUnloadingSystem" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/optimaUnloadingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Actions/Unloading&quot;}" />
+      <input_port name="ActionLink_Release_optimaUnloadingSystem" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/optimaUnloadingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Actions/Release&quot;}" />
+      <input_port name="FluentLink_Free_omronCameraSystem" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/omronCameraSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Free&quot;}" />
+      <input_port name="FluentLink_Free_syntegonStopperingSystem" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/syntegonStopperingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Free&quot;}" />
+      <input_port name="FluentLink_Free_imaDispensingSystem" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Free&quot;}" />
+      <input_port name="FluentLink_Free_imaLoadingSystem" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/imaLoadingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Free&quot;}" />
+      <input_port name="FluentLink_Free_planarShuttle2" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle2AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Free&quot;}" />
+      <input_port name="FluentLink_Free_planarShuttle1" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle1AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Free&quot;}" />
+      <input_port name="FluentLink_Operational_syntegonStopperingSystem" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/syntegonStopperingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Operational&quot;}" />
+      <input_port name="FluentLink_Operational_planarShuttle3" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Operational&quot;}" />
+      <input_port name="FluentLink_Operational_planarShuttle2" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle2AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Operational&quot;}" />
+      <input_port name="FluentLink_Operational_planarShuttle1" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle1AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Operational&quot;}" />
+      <input_port name="FluentLink_Operational_optimaUnloadingSystem" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/optimaUnloadingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Operational&quot;}" />
+      <input_port name="FluentLink_Operational_omronCameraSystem" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/omronCameraSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Operational&quot;}" />
+      <input_port name="FluentLink_Operational_imaLoadingSystem" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/imaLoadingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Operational&quot;}" />
+      <input_port name="FluentLink_Operational_imaDispensingSystem" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Operational&quot;}" />
+      <input_port name="FluentLink_Free_optimaUnloadingSystem" default="{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/optimaUnloadingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Free&quot;}" />
+      <input_port name="Dispensing_imaDispensingSystem" default="{&quot;aas_link_key&quot;:&quot;ActionLink_Dispensing_imaDispensingSystem&quot;,&quot;action_aas_path&quot;:&quot;AI-Planning/Domain/Actions/Dispensing&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_imaDispensingSystem&quot;,&quot;Param_MIM8&quot;,&quot;Param_planarShuttle3&quot;,&quot;Param_dispensingLocation&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/imaDispensingSystem&quot;,&quot;name&quot;:&quot;DispensingSystem&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/MIM8AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/MIM8&quot;,&quot;name&quot;:&quot;Product&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/planarShuttle3&quot;,&quot;name&quot;:&quot;TransportSystem&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/dispensingLocation&quot;,&quot;name&quot;:&quot;DispensingLocation&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS&quot;,&quot;transformation_aas_path&quot;:&quot;&quot;}" />
+      <input_port name="Loading_imaLoadingSystem" default="{&quot;aas_link_key&quot;:&quot;ActionLink_Loading_imaLoadingSystem&quot;,&quot;action_aas_path&quot;:&quot;AI-Planning/Domain/Actions/Loading&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_imaLoadingSystem&quot;,&quot;Param_MIM8&quot;,&quot;Param_planarShuttle3&quot;,&quot;Param_loadingLocation&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/imaLoadingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/imaLoadingSystem&quot;,&quot;name&quot;:&quot;LoadingSystem&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/MIM8AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/MIM8&quot;,&quot;name&quot;:&quot;Product&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/planarShuttle3&quot;,&quot;name&quot;:&quot;TransportSystem&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/imaLoadingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/loadingLocation&quot;,&quot;name&quot;:&quot;LoadingLocation&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/imaLoadingSystemAAS&quot;,&quot;transformation_aas_path&quot;:&quot;&quot;}" />
+      <input_port name="Move_planarTableShuttle1" default="{&quot;aas_link_key&quot;:&quot;ActionLink_Move_planarTableShuttle1&quot;,&quot;action_aas_path&quot;:&quot;AI-Planning/Domain/Actions/Move&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_planarShuttle3&quot;,&quot;Param_initialLocation3&quot;,&quot;Param_loadingLocation&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/planarShuttle3&quot;,&quot;name&quot;:&quot;TransportSystem&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/initialLocation3&quot;,&quot;name&quot;:&quot;From&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/imaLoadingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/loadingLocation&quot;,&quot;name&quot;:&quot;To&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle1AAS&quot;,&quot;transformation_aas_path&quot;:&quot;&quot;}" />
+      <input_port name="Occupy_imaDispensingSystem" default="{&quot;aas_link_key&quot;:&quot;ActionLink_Occupy_imaDispensingSystem&quot;,&quot;action_aas_path&quot;:&quot;AI-Planning/Domain/Actions/Occupy&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_imaDispensingSystem&quot;,&quot;Param_MIM8&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/imaDispensingSystem&quot;,&quot;name&quot;:&quot;DispensingSystem&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/MIM8AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/MIM8&quot;,&quot;name&quot;:&quot;Product&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS&quot;,&quot;transformation_aas_path&quot;:&quot;&quot;}" />
+      <input_port name="Occupy_imaLoadingSystem" default="{&quot;aas_link_key&quot;:&quot;ActionLink_Occupy_imaLoadingSystem&quot;,&quot;action_aas_path&quot;:&quot;AI-Planning/Domain/Actions/Occupy&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_imaLoadingSystem&quot;,&quot;Param_MIM8&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/imaLoadingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/imaLoadingSystem&quot;,&quot;name&quot;:&quot;LoadingSystem&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/MIM8AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/MIM8&quot;,&quot;name&quot;:&quot;Product&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/imaLoadingSystemAAS&quot;,&quot;transformation_aas_path&quot;:&quot;&quot;}" />
+      <input_port name="Occupy_omronCameraSystem" default="{&quot;aas_link_key&quot;:&quot;ActionLink_Occupy_omronCameraSystem&quot;,&quot;action_aas_path&quot;:&quot;AI-Planning/Domain/Actions/Occupy&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_omronCameraSystem&quot;,&quot;Param_MIM8&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/omronCameraSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/omronCameraSystem&quot;,&quot;name&quot;:&quot;CameraSystem&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/MIM8AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/MIM8&quot;,&quot;name&quot;:&quot;Product&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/omronCameraSystemAAS&quot;,&quot;transformation_aas_path&quot;:&quot;&quot;}" />
+      <input_port name="Occupy_optimaUnloadingSystem" default="{&quot;aas_link_key&quot;:&quot;ActionLink_Occupy_optimaUnloadingSystem&quot;,&quot;action_aas_path&quot;:&quot;AI-Planning/Domain/Actions/Occupy&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_optimaUnloadingSystem&quot;,&quot;Param_MIM8&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/optimaUnloadingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/optimaUnloadingSystem&quot;,&quot;name&quot;:&quot;UnloadingSystem&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/MIM8AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/MIM8&quot;,&quot;name&quot;:&quot;Product&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/optimaUnloadingSystemAAS&quot;,&quot;transformation_aas_path&quot;:&quot;&quot;}" />
+      <input_port name="Occupy_planarTableShuttle3" default="{&quot;aas_link_key&quot;:&quot;ActionLink_Occupy_planarTableShuttle3&quot;,&quot;action_aas_path&quot;:&quot;AI-Planning/Domain/Actions/Occupy&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_planarShuttle3&quot;,&quot;Param_MIM8&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/planarShuttle3&quot;,&quot;name&quot;:&quot;TransportSystem&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/MIM8AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/MIM8&quot;,&quot;name&quot;:&quot;Product&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS&quot;,&quot;transformation_aas_path&quot;:&quot;&quot;}" />
+      <input_port name="Occupy_syntegonStopperingSystem" default="{&quot;aas_link_key&quot;:&quot;ActionLink_Occupy_syntegonStopperingSystem&quot;,&quot;action_aas_path&quot;:&quot;AI-Planning/Domain/Actions/Occupy&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_syntegonStopperingSystem&quot;,&quot;Param_MIM8&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/syntegonStopperingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/syntegonStopperingSystem&quot;,&quot;name&quot;:&quot;StopperingSystem&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/MIM8AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/MIM8&quot;,&quot;name&quot;:&quot;Product&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/syntegonStopperingSystemAAS&quot;,&quot;transformation_aas_path&quot;:&quot;&quot;}" />
+      <input_port name="QualityControl_omronCameraSystem" default="{&quot;aas_link_key&quot;:&quot;ActionLink_QualityControl_omronCameraSystem&quot;,&quot;action_aas_path&quot;:&quot;AI-Planning/Domain/Actions/QualityControl&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_omronCameraSystem&quot;,&quot;Param_MIM8&quot;,&quot;Param_planarShuttle3&quot;,&quot;Param_captureLocation&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/omronCameraSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/omronCameraSystem&quot;,&quot;name&quot;:&quot;CameraSystem&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/MIM8AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/MIM8&quot;,&quot;name&quot;:&quot;Product&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/planarShuttle3&quot;,&quot;name&quot;:&quot;TransportSystem&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/omronCameraSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/captureLocation&quot;,&quot;name&quot;:&quot;CameraLocation&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/omronCameraSystemAAS&quot;,&quot;transformation_aas_path&quot;:&quot;&quot;}" />
+      <input_port name="Release_imaDispensingSystem" default="{&quot;aas_link_key&quot;:&quot;ActionLink_Release_imaDispensingSystem&quot;,&quot;action_aas_path&quot;:&quot;AI-Planning/Domain/Actions/Release&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_imaDispensingSystem&quot;,&quot;Param_MIM8&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/imaDispensingSystem&quot;,&quot;name&quot;:&quot;DispensingSystem&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/MIM8AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/MIM8&quot;,&quot;name&quot;:&quot;Product&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS&quot;,&quot;transformation_aas_path&quot;:&quot;&quot;}" />
+      <input_port name="Release_imaLoadingSystem" default="{&quot;aas_link_key&quot;:&quot;ActionLink_Release_imaLoadingSystem&quot;,&quot;action_aas_path&quot;:&quot;AI-Planning/Domain/Actions/Release&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_imaLoadingSystem&quot;,&quot;Param_MIM8&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/imaLoadingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/imaLoadingSystem&quot;,&quot;name&quot;:&quot;LoadingSystem&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/MIM8AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/MIM8&quot;,&quot;name&quot;:&quot;Product&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/imaLoadingSystemAAS&quot;,&quot;transformation_aas_path&quot;:&quot;&quot;}" />
+      <input_port name="Release_omronCameraSystem" default="{&quot;aas_link_key&quot;:&quot;ActionLink_Release_omronCameraSystem&quot;,&quot;action_aas_path&quot;:&quot;AI-Planning/Domain/Actions/Release&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_omronCameraSystem&quot;,&quot;Param_MIM8&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/omronCameraSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/omronCameraSystem&quot;,&quot;name&quot;:&quot;CameraSystem&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/MIM8AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/MIM8&quot;,&quot;name&quot;:&quot;Product&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/omronCameraSystemAAS&quot;,&quot;transformation_aas_path&quot;:&quot;&quot;}" />
+      <input_port name="Release_optimaUnloadingSystem" default="{&quot;aas_link_key&quot;:&quot;ActionLink_Release_optimaUnloadingSystem&quot;,&quot;action_aas_path&quot;:&quot;AI-Planning/Domain/Actions/Release&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_optimaUnloadingSystem&quot;,&quot;Param_MIM8&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/optimaUnloadingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/optimaUnloadingSystem&quot;,&quot;name&quot;:&quot;UnloadingSystem&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/MIM8AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/MIM8&quot;,&quot;name&quot;:&quot;Product&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/optimaUnloadingSystemAAS&quot;,&quot;transformation_aas_path&quot;:&quot;&quot;}" />
+      <input_port name="Release_planarTableShuttle3" default="{&quot;aas_link_key&quot;:&quot;ActionLink_Release_planarTableShuttle3&quot;,&quot;action_aas_path&quot;:&quot;AI-Planning/Domain/Actions/Release&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_planarShuttle3&quot;,&quot;Param_MIM8&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/planarShuttle3&quot;,&quot;name&quot;:&quot;TransportSystem&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/MIM8AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/MIM8&quot;,&quot;name&quot;:&quot;Product&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS&quot;,&quot;transformation_aas_path&quot;:&quot;&quot;}" />
+      <input_port name="Release_syntegonStopperingSystem" default="{&quot;aas_link_key&quot;:&quot;ActionLink_Release_syntegonStopperingSystem&quot;,&quot;action_aas_path&quot;:&quot;AI-Planning/Domain/Actions/Release&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_syntegonStopperingSystem&quot;,&quot;Param_MIM8&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/syntegonStopperingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/syntegonStopperingSystem&quot;,&quot;name&quot;:&quot;StopperingSystem&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/MIM8AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/MIM8&quot;,&quot;name&quot;:&quot;Product&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/syntegonStopperingSystemAAS&quot;,&quot;transformation_aas_path&quot;:&quot;&quot;}" />
+      <input_port name="Stoppering_syntegonStopperingSystem" default="{&quot;aas_link_key&quot;:&quot;ActionLink_Stoppering_syntegonStopperingSystem&quot;,&quot;action_aas_path&quot;:&quot;AI-Planning/Domain/Actions/Stoppering&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_syntegonStopperingSystem&quot;,&quot;Param_MIM8&quot;,&quot;Param_planarShuttle3&quot;,&quot;Param_stopperingLocation&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/syntegonStopperingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/syntegonStopperingSystem&quot;,&quot;name&quot;:&quot;StopperingSystem&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/MIM8AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/MIM8&quot;,&quot;name&quot;:&quot;Product&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/planarShuttle3&quot;,&quot;name&quot;:&quot;TransportSystem&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/syntegonStopperingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/stopperingLocation&quot;,&quot;name&quot;:&quot;StopperingLocation&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/syntegonStopperingSystemAAS&quot;,&quot;transformation_aas_path&quot;:&quot;&quot;}" />
+      <input_port name="Transport_planarTableShuttle1" default="{&quot;aas_link_key&quot;:&quot;ActionLink_Transport_planarTableShuttle1_2&quot;,&quot;action_aas_path&quot;:&quot;AI-Planning/Domain/Actions/Transport&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_planarShuttle3&quot;,&quot;Param_MIM8&quot;,&quot;Param_dispensingLocation&quot;,&quot;Param_stopperingLocation&quot;,&quot;Param_syntegonStopperingSystem&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/planarShuttle3&quot;,&quot;name&quot;:&quot;TransportSystem&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/MIM8AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/MIM8&quot;,&quot;name&quot;:&quot;Product&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/dispensingLocation&quot;,&quot;name&quot;:&quot;From&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/syntegonStopperingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/stopperingLocation&quot;,&quot;name&quot;:&quot;To&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/syntegonStopperingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/syntegonStopperingSystem&quot;,&quot;name&quot;:&quot;DestinationStation&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle1AAS&quot;,&quot;transformation_aas_path&quot;:&quot;&quot;}" />
+      <input_port name="Transport_planarTableShuttle1_2" default="{&quot;aas_link_key&quot;:&quot;ActionLink_Transport_planarTableShuttle1&quot;,&quot;action_aas_path&quot;:&quot;AI-Planning/Domain/Actions/Transport&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_planarShuttle3&quot;,&quot;Param_MIM8&quot;,&quot;Param_loadingLocation&quot;,&quot;Param_dispensingLocation&quot;,&quot;Param_imaDispensingSystem&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/planarShuttle3&quot;,&quot;name&quot;:&quot;TransportSystem&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/MIM8AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/MIM8&quot;,&quot;name&quot;:&quot;Product&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/imaLoadingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/loadingLocation&quot;,&quot;name&quot;:&quot;From&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/dispensingLocation&quot;,&quot;name&quot;:&quot;To&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/imaDispensingSystem&quot;,&quot;name&quot;:&quot;DestinationStation&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle1AAS&quot;,&quot;transformation_aas_path&quot;:&quot;&quot;}" />
+      <input_port name="Transport_planarTableShuttle1_3" default="{&quot;aas_link_key&quot;:&quot;ActionLink_Transport_planarTableShuttle1_4&quot;,&quot;action_aas_path&quot;:&quot;AI-Planning/Domain/Actions/Transport&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_planarShuttle3&quot;,&quot;Param_MIM8&quot;,&quot;Param_captureLocation&quot;,&quot;Param_unloadingLocation&quot;,&quot;Param_optimaUnloadingSystem&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/planarShuttle3&quot;,&quot;name&quot;:&quot;TransportSystem&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/MIM8AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/MIM8&quot;,&quot;name&quot;:&quot;Product&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/omronCameraSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/captureLocation&quot;,&quot;name&quot;:&quot;From&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/optimaUnloadingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/unloadingLocation&quot;,&quot;name&quot;:&quot;To&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/optimaUnloadingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/optimaUnloadingSystem&quot;,&quot;name&quot;:&quot;DestinationStation&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle1AAS&quot;,&quot;transformation_aas_path&quot;:&quot;&quot;}" />
+      <input_port name="Transport_planarTableShuttle1_4" default="{&quot;aas_link_key&quot;:&quot;ActionLink_Transport_planarTableShuttle1_3&quot;,&quot;action_aas_path&quot;:&quot;AI-Planning/Domain/Actions/Transport&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_planarShuttle3&quot;,&quot;Param_MIM8&quot;,&quot;Param_stopperingLocation&quot;,&quot;Param_captureLocation&quot;,&quot;Param_omronCameraSystem&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/planarShuttle3&quot;,&quot;name&quot;:&quot;TransportSystem&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/MIM8AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/MIM8&quot;,&quot;name&quot;:&quot;Product&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/syntegonStopperingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/stopperingLocation&quot;,&quot;name&quot;:&quot;From&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/omronCameraSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/captureLocation&quot;,&quot;name&quot;:&quot;To&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/omronCameraSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/omronCameraSystem&quot;,&quot;name&quot;:&quot;DestinationStation&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle1AAS&quot;,&quot;transformation_aas_path&quot;:&quot;&quot;}" />
+      <input_port name="Unloading_optimaUnloadingSystem" default="{&quot;aas_link_key&quot;:&quot;ActionLink_Unloading_optimaUnloadingSystem&quot;,&quot;action_aas_path&quot;:&quot;AI-Planning/Domain/Actions/Unloading&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_optimaUnloadingSystem&quot;,&quot;Param_MIM8&quot;,&quot;Param_planarShuttle3&quot;,&quot;Param_unloadingLocation&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/optimaUnloadingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/optimaUnloadingSystem&quot;,&quot;name&quot;:&quot;UnloadingSystem&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/MIM8AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/MIM8&quot;,&quot;name&quot;:&quot;Product&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/planarShuttle3&quot;,&quot;name&quot;:&quot;TransportSystem&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/optimaUnloadingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/unloadingLocation&quot;,&quot;name&quot;:&quot;UnloadingLocation&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/optimaUnloadingSystemAAS&quot;,&quot;transformation_aas_path&quot;:&quot;&quot;}" />
+      <input_port name="Free_imaDispensingSystem" default="{&quot;aas_link_key&quot;:&quot;FluentLink_Free_imaDispensingSystem&quot;,&quot;fluent_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Free&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_imaDispensingSystem&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/imaDispensingSystem&quot;,&quot;name&quot;:&quot;p0&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS&quot;,&quot;transformation_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Free/Transformation&quot;}" />
+      <input_port name="Free_imaLoadingSystem" default="{&quot;aas_link_key&quot;:&quot;FluentLink_Free_imaLoadingSystem&quot;,&quot;fluent_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Free&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_imaLoadingSystem&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/imaLoadingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/imaLoadingSystem&quot;,&quot;name&quot;:&quot;p0&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/imaLoadingSystemAAS&quot;,&quot;transformation_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Free/Transformation&quot;}" />
+      <input_port name="Free_omronCameraSystem" default="{&quot;aas_link_key&quot;:&quot;FluentLink_Free_omronCameraSystem&quot;,&quot;fluent_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Free&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_omronCameraSystem&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/omronCameraSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/omronCameraSystem&quot;,&quot;name&quot;:&quot;p0&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/omronCameraSystemAAS&quot;,&quot;transformation_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Free/Transformation&quot;}" />
+      <input_port name="Free_optimaUnloadingSystem" default="{&quot;aas_link_key&quot;:&quot;FluentLink_Free_optimaUnloadingSystem&quot;,&quot;fluent_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Free&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_optimaUnloadingSystem&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/optimaUnloadingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/optimaUnloadingSystem&quot;,&quot;name&quot;:&quot;p0&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/optimaUnloadingSystemAAS&quot;,&quot;transformation_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Free/Transformation&quot;}" />
+      <input_port name="Free_planarShuttle1" default="{&quot;aas_link_key&quot;:&quot;FluentLink_Free_planarShuttle1&quot;,&quot;fluent_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Free&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_planarShuttle1&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle1AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/planarShuttle1&quot;,&quot;name&quot;:&quot;p0&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle1AAS&quot;,&quot;transformation_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Free/Transformation&quot;}" />
+      <input_port name="Free_planarShuttle2" default="{&quot;aas_link_key&quot;:&quot;FluentLink_Free_planarShuttle2&quot;,&quot;fluent_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Free&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_planarShuttle2&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle2AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/planarShuttle2&quot;,&quot;name&quot;:&quot;p0&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle2AAS&quot;,&quot;transformation_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Free/Transformation&quot;}" />
+      <input_port name="Free_planarShuttle3" default="{&quot;aas_link_key&quot;:&quot;FluentLink_Free_planarShuttle3&quot;,&quot;fluent_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Free&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_planarShuttle3&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/planarShuttle3&quot;,&quot;name&quot;:&quot;p0&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS&quot;,&quot;transformation_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Free/Transformation&quot;}" />
+      <input_port name="Free_syntegonStopperingSystem" default="{&quot;aas_link_key&quot;:&quot;FluentLink_Free_syntegonStopperingSystem&quot;,&quot;fluent_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Free&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_syntegonStopperingSystem&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/syntegonStopperingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/syntegonStopperingSystem&quot;,&quot;name&quot;:&quot;p0&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/syntegonStopperingSystemAAS&quot;,&quot;transformation_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Free/Transformation&quot;}" />
+      <input_port name="Occupied_imaDispensingSystem" default="{&quot;aas_link_key&quot;:&quot;FluentLink_Occupied_imaDispensingSystem&quot;,&quot;fluent_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Occupied&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_imaDispensingSystem&quot;,&quot;Param_MIM8&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/imaDispensingSystem&quot;,&quot;name&quot;:&quot;p0&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/MIM8AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/MIM8&quot;,&quot;name&quot;:&quot;p1&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS&quot;,&quot;transformation_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Occupied/Transformation&quot;}" />
+      <input_port name="Occupied_imaLoadingSystem" default="{&quot;aas_link_key&quot;:&quot;FluentLink_Occupied_imaLoadingSystem&quot;,&quot;fluent_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Occupied&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_imaLoadingSystem&quot;,&quot;Param_MIM8&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/imaLoadingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/imaLoadingSystem&quot;,&quot;name&quot;:&quot;p0&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/MIM8AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/MIM8&quot;,&quot;name&quot;:&quot;p1&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/imaLoadingSystemAAS&quot;,&quot;transformation_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Occupied/Transformation&quot;}" />
+      <input_port name="Occupied_omronCameraSystem" default="{&quot;aas_link_key&quot;:&quot;FluentLink_Occupied_omronCameraSystem&quot;,&quot;fluent_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Occupied&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_omronCameraSystem&quot;,&quot;Param_MIM8&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/omronCameraSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/omronCameraSystem&quot;,&quot;name&quot;:&quot;p0&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/MIM8AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/MIM8&quot;,&quot;name&quot;:&quot;p1&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/omronCameraSystemAAS&quot;,&quot;transformation_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Occupied/Transformation&quot;}" />
+      <input_port name="Occupied_optimaUnloadingSystem" default="{&quot;aas_link_key&quot;:&quot;FluentLink_Occupied_optimaUnloadingSystem&quot;,&quot;fluent_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Occupied&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_optimaUnloadingSystem&quot;,&quot;Param_MIM8&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/optimaUnloadingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/optimaUnloadingSystem&quot;,&quot;name&quot;:&quot;p0&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/MIM8AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/MIM8&quot;,&quot;name&quot;:&quot;p1&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/optimaUnloadingSystemAAS&quot;,&quot;transformation_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Occupied/Transformation&quot;}" />
+      <input_port name="Occupied_planarShuttle3" default="{&quot;aas_link_key&quot;:&quot;FluentLink_Occupied_planarShuttle3&quot;,&quot;fluent_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Occupied&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_planarShuttle3&quot;,&quot;Param_MIM8&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/planarShuttle3&quot;,&quot;name&quot;:&quot;p0&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/MIM8AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/MIM8&quot;,&quot;name&quot;:&quot;p1&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS&quot;,&quot;transformation_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Occupied/Transformation&quot;}" />
+      <input_port name="Occupied_syntegonStopperingSystem" default="{&quot;aas_link_key&quot;:&quot;FluentLink_Occupied_syntegonStopperingSystem&quot;,&quot;fluent_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Occupied&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_syntegonStopperingSystem&quot;,&quot;Param_MIM8&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/syntegonStopperingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/syntegonStopperingSystem&quot;,&quot;name&quot;:&quot;p0&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/MIM8AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/MIM8&quot;,&quot;name&quot;:&quot;p1&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/syntegonStopperingSystemAAS&quot;,&quot;transformation_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Occupied/Transformation&quot;}" />
+      <input_port name="On_MIM8" default="{&quot;aas_link_key&quot;:&quot;FluentLink_On_MIM8&quot;,&quot;fluent_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/On&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_MIM8&quot;,&quot;Param_planarShuttle3&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/MIM8AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/MIM8&quot;,&quot;name&quot;:&quot;p0&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/planarShuttle3&quot;,&quot;name&quot;:&quot;p1&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/MIM8AAS&quot;,&quot;transformation_aas_path&quot;:&quot;&quot;}" />
+      <input_port name="Operational_imaDispensingSystem" default="{&quot;aas_link_key&quot;:&quot;FluentLink_Operational_imaDispensingSystem&quot;,&quot;fluent_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Operational&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_imaDispensingSystem&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/imaDispensingSystem&quot;,&quot;name&quot;:&quot;p0&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS&quot;,&quot;transformation_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Operational/Transformation&quot;}" />
+      <input_port name="Operational_imaLoadingSystem" default="{&quot;aas_link_key&quot;:&quot;FluentLink_Operational_imaLoadingSystem&quot;,&quot;fluent_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Operational&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_imaLoadingSystem&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/imaLoadingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/imaLoadingSystem&quot;,&quot;name&quot;:&quot;p0&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/imaLoadingSystemAAS&quot;,&quot;transformation_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Operational/Transformation&quot;}" />
+      <input_port name="Operational_omronCameraSystem" default="{&quot;aas_link_key&quot;:&quot;FluentLink_Operational_omronCameraSystem&quot;,&quot;fluent_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Operational&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_omronCameraSystem&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/omronCameraSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/omronCameraSystem&quot;,&quot;name&quot;:&quot;p0&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/omronCameraSystemAAS&quot;,&quot;transformation_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Operational/Transformation&quot;}" />
+      <input_port name="Operational_optimaUnloadingSystem" default="{&quot;aas_link_key&quot;:&quot;FluentLink_Operational_optimaUnloadingSystem&quot;,&quot;fluent_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Operational&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_optimaUnloadingSystem&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/optimaUnloadingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/optimaUnloadingSystem&quot;,&quot;name&quot;:&quot;p0&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/optimaUnloadingSystemAAS&quot;,&quot;transformation_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Operational/Transformation&quot;}" />
+      <input_port name="Operational_planarShuttle1" default="{&quot;aas_link_key&quot;:&quot;FluentLink_Operational_planarShuttle1&quot;,&quot;fluent_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Operational&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_planarShuttle1&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle1AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/planarShuttle1&quot;,&quot;name&quot;:&quot;p0&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle1AAS&quot;,&quot;transformation_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Operational/Transformation&quot;}" />
+      <input_port name="Operational_planarShuttle2" default="{&quot;aas_link_key&quot;:&quot;FluentLink_Operational_planarShuttle2&quot;,&quot;fluent_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Operational&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_planarShuttle2&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle2AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/planarShuttle2&quot;,&quot;name&quot;:&quot;p0&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle2AAS&quot;,&quot;transformation_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Operational/Transformation&quot;}" />
+      <input_port name="Operational_planarShuttle3" default="{&quot;aas_link_key&quot;:&quot;FluentLink_Operational_planarShuttle3&quot;,&quot;fluent_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Operational&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_planarShuttle3&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/planarShuttle3&quot;,&quot;name&quot;:&quot;p0&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS&quot;,&quot;transformation_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Operational/Transformation&quot;}" />
+      <input_port name="Operational_syntegonStopperingSystem" default="{&quot;aas_link_key&quot;:&quot;FluentLink_Operational_syntegonStopperingSystem&quot;,&quot;fluent_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Operational&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_syntegonStopperingSystem&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/syntegonStopperingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/syntegonStopperingSystem&quot;,&quot;name&quot;:&quot;p0&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/syntegonStopperingSystemAAS&quot;,&quot;transformation_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Operational/Transformation&quot;}" />
+      <input_port name="Predicate_Object" default="{&quot;aas_link_key&quot;:&quot;FluentLink_Predicate_Object&quot;,&quot;fluent_aas_path&quot;:&quot;&quot;,&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;&quot;,&quot;aas_path&quot;:&quot;&quot;,&quot;name&quot;:&quot;p0&quot;},{&quot;aas_id&quot;:&quot;&quot;,&quot;aas_path&quot;:&quot;&quot;,&quot;name&quot;:&quot;p1&quot;}],&quot;source_aas_id&quot;:&quot;&quot;,&quot;transformation_aas_path&quot;:&quot;&quot;}" />
+      <input_port name="ProductAt_MIM8" default="{&quot;aas_link_key&quot;:&quot;FluentLink_ProductAt_MIM8_4&quot;,&quot;fluent_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/ProductAt&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_MIM8&quot;,&quot;Param_dispensingLocation&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/MIM8AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/MIM8&quot;,&quot;name&quot;:&quot;p0&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/dispensingLocation&quot;,&quot;name&quot;:&quot;p1&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/MIM8AAS&quot;,&quot;transformation_aas_path&quot;:&quot;&quot;}" />
+      <input_port name="ProductAt_MIM8_2" default="{&quot;aas_link_key&quot;:&quot;FluentLink_ProductAt_MIM8_3&quot;,&quot;fluent_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/ProductAt&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_MIM8&quot;,&quot;Param_loadingLocation&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/MIM8AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/MIM8&quot;,&quot;name&quot;:&quot;p0&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/imaLoadingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/loadingLocation&quot;,&quot;name&quot;:&quot;p1&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/MIM8AAS&quot;,&quot;transformation_aas_path&quot;:&quot;&quot;}" />
+      <input_port name="ProductAt_MIM8_3" default="{&quot;aas_link_key&quot;:&quot;FluentLink_ProductAt_MIM8_5&quot;,&quot;fluent_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/ProductAt&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_MIM8&quot;,&quot;Param_captureLocation&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/MIM8AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/MIM8&quot;,&quot;name&quot;:&quot;p0&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/omronCameraSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/captureLocation&quot;,&quot;name&quot;:&quot;p1&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/MIM8AAS&quot;,&quot;transformation_aas_path&quot;:&quot;&quot;}" />
+      <input_port name="ProductAt_MIM8_4" default="{&quot;aas_link_key&quot;:&quot;FluentLink_ProductAt_MIM8&quot;,&quot;fluent_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/ProductAt&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_MIM8&quot;,&quot;Param_unloadingLocation&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/MIM8AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/MIM8&quot;,&quot;name&quot;:&quot;p0&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/optimaUnloadingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/unloadingLocation&quot;,&quot;name&quot;:&quot;p1&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/MIM8AAS&quot;,&quot;transformation_aas_path&quot;:&quot;&quot;}" />
+      <input_port name="ProductAt_MIM8_5" default="{&quot;aas_link_key&quot;:&quot;FluentLink_ProductAt_MIM8_2&quot;,&quot;fluent_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/ProductAt&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_MIM8&quot;,&quot;Param_stopperingLocation&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/MIM8AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/MIM8&quot;,&quot;name&quot;:&quot;p0&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/syntegonStopperingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/stopperingLocation&quot;,&quot;name&quot;:&quot;p1&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/MIM8AAS&quot;,&quot;transformation_aas_path&quot;:&quot;&quot;}" />
+      <input_port name="ResourceAt_planarShuttle3" default="{&quot;aas_link_key&quot;:&quot;FluentLink_ResourceAt_planarShuttle3_3&quot;,&quot;fluent_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/ResourceAt&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_planarShuttle3&quot;,&quot;Param_dispensingLocation&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/planarShuttle3&quot;,&quot;name&quot;:&quot;p0&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/dispensingLocation&quot;,&quot;name&quot;:&quot;p1&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS&quot;,&quot;transformation_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/ResourceAt/Transformation&quot;}" />
+      <input_port name="ResourceAt_planarShuttle3_2" default="{&quot;aas_link_key&quot;:&quot;FluentLink_ResourceAt_planarShuttle3_2&quot;,&quot;fluent_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/ResourceAt&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_planarShuttle3&quot;,&quot;Param_loadingLocation&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/planarShuttle3&quot;,&quot;name&quot;:&quot;p0&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/imaLoadingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/loadingLocation&quot;,&quot;name&quot;:&quot;p1&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS&quot;,&quot;transformation_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/ResourceAt/Transformation&quot;}" />
+      <input_port name="ResourceAt_planarShuttle3_3" default="{&quot;aas_link_key&quot;:&quot;FluentLink_ResourceAt_planarShuttle3_5&quot;,&quot;fluent_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/ResourceAt&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_planarShuttle3&quot;,&quot;Param_captureLocation&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/planarShuttle3&quot;,&quot;name&quot;:&quot;p0&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/omronCameraSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/captureLocation&quot;,&quot;name&quot;:&quot;p1&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS&quot;,&quot;transformation_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/ResourceAt/Transformation&quot;}" />
+      <input_port name="ResourceAt_planarShuttle3_4" default="{&quot;aas_link_key&quot;:&quot;FluentLink_ResourceAt_planarShuttle3&quot;,&quot;fluent_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/ResourceAt&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_planarShuttle3&quot;,&quot;Param_initialLocation3&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/planarShuttle3&quot;,&quot;name&quot;:&quot;p0&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/initialLocation3&quot;,&quot;name&quot;:&quot;p1&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS&quot;,&quot;transformation_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/ResourceAt/Transformation&quot;}" />
+      <input_port name="ResourceAt_planarShuttle3_5" default="{&quot;aas_link_key&quot;:&quot;FluentLink_ResourceAt_planarShuttle3_4&quot;,&quot;fluent_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/ResourceAt&quot;,&quot;parameter_link_keys&quot;:[&quot;Param_planarShuttle3&quot;,&quot;Param_stopperingLocation&quot;],&quot;parameter_refs&quot;:[{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/planarShuttle3&quot;,&quot;name&quot;:&quot;p0&quot;},{&quot;aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/syntegonStopperingSystemAAS&quot;,&quot;aas_path&quot;:&quot;AI-Planning/Problem/Objects/stopperingLocation&quot;,&quot;name&quot;:&quot;p1&quot;}],&quot;source_aas_id&quot;:&quot;https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS&quot;,&quot;transformation_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/ResourceAt/Transformation&quot;}" />
     </SubTree>
   </TreeNodesModel>
 </root>
