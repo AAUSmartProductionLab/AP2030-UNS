@@ -140,11 +140,10 @@ def _build_problem_goal_branch(
     if not goal_literals:
         return None
 
-    return ReactiveSequence(
-        "GoalBranch",
-        [_condition_node(g, planner_metadata=planner_metadata) for g in goal_literals]
-        + [SuccessLeaf()],
-    )
+    cond_nodes = [_condition_node(g, planner_metadata=planner_metadata) for g in goal_literals]
+    if len(cond_nodes) == 1:
+        return cond_nodes[0]
+    return ReactiveSequence("GoalCond", cond_nodes)
 
 
 def _split_negated_literal(literal: str) -> tuple[str, bool]:

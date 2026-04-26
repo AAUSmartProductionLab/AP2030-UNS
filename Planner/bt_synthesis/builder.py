@@ -212,7 +212,7 @@ def _build_goal_branch(
         return None
 
     goal_ok = all_conds[0] if len(all_conds) == 1 else ReactiveSelector("GoalCheck", all_conds)
-    return ReactiveSequence("GoalBranch", [goal_ok, SuccessLeaf()])
+    return goal_ok
 
 
 def _flatten_goal_expr_literals(expr: object) -> List[str]:
@@ -529,7 +529,7 @@ def policy_to_bt(
     if goal_branch is None:
         problem_goal_check = _build_problem_goal_branch(problem, planner_metadata=planner_metadata)
         if problem_goal_check is not None:
-            goal_branch = ReactiveSequence("GoalBranch", [problem_goal_check, SuccessLeaf()])
+            goal_branch = problem_goal_check
     if goal_branch is not None:
         branches.append(goal_branch)
 

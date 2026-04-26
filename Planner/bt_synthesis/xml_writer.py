@@ -472,8 +472,7 @@ def _bt_node_to_xml(
         ET.SubElement(parent_el, "Action", attrib=attrib)
 
     elif isinstance(node, SuccessLeaf):
-        ET.SubElement(parent_el, "Action", attrib={
-            "ID": "GoalReached",
+        ET.SubElement(parent_el, "AlwaysSuccess", attrib={
             "name": "GoalReached",
         })
 
@@ -570,8 +569,6 @@ def bt_to_xml(
     ea = ET.SubElement(model, "Action", attrib={"ID": "ExecuteAction"})
     ET.SubElement(ea, "input_port", attrib={"name": "action_args", "default": ""})
     ET.SubElement(ea, "input_port", attrib={"name": "action_ref", "default": ""})
-
-    ET.SubElement(model, "Action", attrib={"ID": "GoalReached"})
 
     if _tree_uses_forbidden_action(bt.root):
         fa = ET.SubElement(model, "Action", attrib={"ID": "ForbiddenAction"})
