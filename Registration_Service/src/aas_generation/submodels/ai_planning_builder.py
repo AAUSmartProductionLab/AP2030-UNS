@@ -75,6 +75,8 @@ class AIPlanningSubmodelBuilder:
             context=self._context,
             terms=self._terms,
             build_action_parameters=self._build_action_parameters,
+            string_property_factory=self._string_property,
+            constants_factory=self._build_fluent_constants,
         )
         self._domain_builder = _DomainSectionBuilder(
             build_fluents_section=self._build_fluents_section,

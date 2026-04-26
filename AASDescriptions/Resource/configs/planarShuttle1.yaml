@@ -179,6 +179,14 @@ planarTableShuttle1AAS:
               -   key: "Move"
                   semantic_id: "cssx:MoveToPositionCapability"
                   SkillReference: "MoveToPosition"
+                  # JSONata: build a moveToPosition request body. Schema
+                  # requires Uuid + TimeStamp + Position[X, Y]. There is no
+                  # Product in this action so the runtime auto-generates
+                  # Uuid (exposed in the JSONata context as `uuid`) and
+                  # tracks the response by it. ``params[2]`` is the
+                  # destination LocationParameter whose Position carries
+                  # the planar X/Y in millimetres.
+                  transformation: '{"Uuid": uuid, "TimeStamp": now, "Position": [params[2].Parameters.Position.X, params[2].Parameters.Position.Y]}'
                   parameters:
                       -   name: "TransportSystem"
                           externalRef: "cssx:Transport"
@@ -210,6 +218,10 @@ planarTableShuttle1AAS:
               -   key: "Transport"
                   semantic_id: "cssx:MoveToPositionCapability"
                   SkillReference: "MoveToPosition"
+                  # JSONata: ``params[1]`` is the Product (its Uuid drives
+                  # response correlation), ``params[3]`` is the
+                  # destination LocationParameter (X/Y in mm).
+                  transformation: '{"Uuid": params[1].Parameters.Uuid, "TimeStamp": now, "Position": [params[3].Parameters.Position.X, params[3].Parameters.Position.Y]}'
                   parameters:
                       -   name: "TransportSystem"
                           externalRef: "cssx:Transport"
@@ -272,6 +284,7 @@ planarTableShuttle1AAS:
               -   key: "Occupy"
                   semantic_id: "cssx:OccupyCapability"
                   SkillReference: "Occupy"
+                  transformation: '{"Uuid": params[1].Parameters.Uuid}'
                   parameters:
                       -   name: "TransportSystem"
                           modelRef:
@@ -301,6 +314,7 @@ planarTableShuttle1AAS:
               -   key: "Release"
                   semantic_id: "cssx:ReleaseCapability"
                   SkillReference: "Release"
+                  transformation: '{"Uuid": params[1].Parameters.Uuid}'
                   parameters:
                       -   name: "TransportSystem"
                           modelRef:

@@ -10,6 +10,7 @@
 #include <jsonata/Jsonata.h>
 
 #include "aas/aas_interface_cache.h"
+#include "aas/aas_snapshot.h"
 #include "bt/bt_log.h"
 #include "bt/symbolic_state.h"
 #include "mqtt/node_message_distributor.h"
@@ -211,6 +212,26 @@ void ExecuteAction::initializeTopicsFromAAS()
 
         if (publisher_topic_set && subscriber_topic_set)
         {
+            // Pre-fetch the Constants SMC sibling of this action's
+            // Transformation (registration emits it from the YAML
+            // ``constants:`` block). Optional: an empty object is fine.
+            constants_ = aas_snapshot::fetchSiblingConstants(
+                aas_client_,
+                action_ref_->source_aas_id,
+                action_ref_->transformation_aas_path);
+
+            // Pre-fetch each parameter's AAS as a flattened JSON snapshot
+            // so the JSONata transformation can reference
+            // ``params[i].Parameters.*`` / ``params[i].Variables.*``
+            // without per-tick HTTP round-trips. Actions are one-shot
+            // command builders, so we do NOT register live MQTT
+            // subscriptions on Variables — the snapshot is captured at
+            // initialization and reused for every onStart.
+            params_ = aas_snapshot::fetchParamSnapshots(
+                aas_client_,
+                action_ref_->parameter_refs,
+                /*include_variables=*/true);
+
             topics_initialized_ = true;
             return;
         }
@@ -232,12 +253,17 @@ void ExecuteAction::initializeTopicsFromAAS()
 
 nlohmann::json ExecuteAction::createMessage()
 {
-    current_uuid_ = mqtt_utils::generate_uuid();
+    // Generate a fallback UUID up-front and expose it in the JSONata
+    // context. The transformation may override the published ``Uuid``
+    // field with a value pulled from a parameter (e.g. the Product's
+    // Uuid for request/response correlation).
+    const std::string fallback_uuid = mqtt_utils::generate_uuid();
+    current_uuid_ = fallback_uuid;
     nlohmann::json message;
-    message["Uuid"] = current_uuid_;
 
     if (!action_ref_.has_value())
     {
+        message["Uuid"] = current_uuid_;
         return message;
     }
 
@@ -261,16 +287,26 @@ nlohmann::json ExecuteAction::createMessage()
         };
     }
 
+    nlohmann::json params_array = nlohmann::json::array();
+    for (const auto &p : params_)
+    {
+        params_array.push_back(p);
+    }
+
     nlohmann::json context = {
         {"args", args_array},
+        {"params", params_array},
+        {"constants", constants_.is_null() ? nlohmann::json::object() : constants_},
         {"object_refs", object_refs_obj},
         {"now", nowIso8601()},
+        {"uuid", fallback_uuid},
     };
 
     if (!jsonata_expr_)
     {
-        std::cerr << "ExecuteAction '" << this->name()
-                  << "' no JSONata expression compiled; sending bare uuid message" << std::endl;
+        BT_LOG_DEBUG("ExecuteAction '" << this->name()
+                                       << "' no JSONata expression compiled; sending bare uuid message");
+        message["Uuid"] = current_uuid_;
         return message;
     }
 
@@ -282,11 +318,9 @@ nlohmann::json ExecuteAction::createMessage()
             nlohmann::json(result).dump());
         if (result_json.is_object())
         {
-            // Merge while preserving the Uuid we generated.
-            for (auto it = result_json.begin(); it != result_json.end(); ++it)
-            {
-                message[it.key()] = it.value();
-            }
+            // Adopt the transformation's full output verbatim. The
+            // transformation owns the message shape, including ``Uuid``.
+            message = std::move(result_json);
         }
         else
         {
@@ -301,6 +335,20 @@ nlohmann::json ExecuteAction::createMessage()
                   << action_ref_->action_aas_path << ", expr="
                   << truncateForLog(transformation_expression_)
                   << "): " << e.what() << std::endl;
+    }
+
+    // Ensure the message carries a Uuid even if the transformation
+    // omitted one. Actions correlate request/response by Uuid in
+    // MqttActionNode::onMqttMessageReceived; current_uuid_ MUST match
+    // whatever ends up published.
+    if (!message.contains("Uuid") || !message["Uuid"].is_string() ||
+        message["Uuid"].get<std::string>().empty())
+    {
+        message["Uuid"] = current_uuid_;
+    }
+    else
+    {
+        current_uuid_ = message["Uuid"].get<std::string>();
     }
 
     return message;
@@ -330,9 +378,38 @@ BT::NodeStatus ExecuteAction::onStart()
     // next SUCCESS.
     effects_applied_ = false;
 
-    // Delegate to MqttActionNode lifecycle (publish input, wait for
-    // output via callback). MQTT is the only execution path.
-    return MqttActionNode::onStart();
+    // Build the outgoing message via the JSONata transformation,
+    // validate it against the action's MQTT input schema, then publish.
+    // We do NOT defer to MqttActionNode::onStart because we need to
+    // intercept the message between createMessage() and publish() to
+    // run the schema validator.
+    nlohmann::json message = createMessage();
+
+    auto it = MqttPubBase::topics_.find("input");
+    if (it != MqttPubBase::topics_.end())
+    {
+        const auto &topic = it->second;
+        // validateMessage returns false both for "failed validation" and
+        // "no validator available". Distinguish by checking whether a
+        // schema was provided.
+        if (!topic.getSchema().is_null() && !topic.getSchema().empty())
+        {
+            if (!topic.validateMessage(message))
+            {
+                BT_LOG_ERROR("ExecuteAction '" << this->name()
+                                               << "' produced a message that failed schema validation "
+                                                  "against the action's input schema. Refusing to "
+                                                  "publish. Message="
+                                               << truncateForLog(message.dump())
+                                               << " expr="
+                                               << truncateForLog(transformation_expression_));
+                return BT::NodeStatus::FAILURE;
+            }
+        }
+    }
+
+    publish("input", message);
+    return BT::NodeStatus::RUNNING;
 }
 
 BT::NodeStatus ExecuteAction::onRunning()

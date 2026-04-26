@@ -52,6 +52,19 @@ private:
     /// for AAS interface lookup.
     std::string interaction_name_;
 
+    /// Per-parameter AAS snapshots (flattened {idShort: value} JSON),
+    /// populated once at initialization. Indexed by the position of the
+    /// corresponding entry in ``action_ref_->parameter_refs``. Actions
+    /// take a one-shot snapshot (no live MQTT subscriptions) — they are
+    /// command builders, not predicates.
+    std::vector<nlohmann::json> params_;
+
+    /// Constants declared on the Action SMC alongside its Transformation
+    /// (registration emits these from each action's YAML ``constants:``
+    /// block). Flattened to ``{name: typed_value}``; empty object when the
+    /// action has no constants.
+    nlohmann::json constants_;
+
     static std::shared_ptr<TransformationResolver> getResolver(AASClient &aas_client);
 
     /// Apply ``action_ref_->effects`` to the process-wide

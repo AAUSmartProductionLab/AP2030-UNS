@@ -153,6 +153,9 @@ syntegonStopperingSystemAAS:
             -   key: "Stoppering"
                 semantic_id: "cssx:StopperingCapability"
                 SkillReference: "Stoppering"
+                # JSONata: forward Product Uuid (params[1]) for response
+                # correlation against the issuing BT node.
+                transformation: '{"Uuid": params[1].Parameters.Uuid}'
                 parameters:
                     -   name: "StopperingSystem"
                         modelRef:
@@ -190,6 +193,7 @@ syntegonStopperingSystemAAS:
             -   key: "Occupy"
                 semantic_id: "cssx:OccupyCapability"
                 SkillReference: "Occupy"
+                transformation: '{"Uuid": params[1].Parameters.Uuid}'
                 parameters:
                     -   name: "StopperingSystem"
                         modelRef:
@@ -219,6 +223,7 @@ syntegonStopperingSystemAAS:
             -   key: "Release"
                 semantic_id: "cssx:ReleaseCapability"
                 SkillReference: "Release"
+                transformation: '{"Uuid": params[1].Parameters.Uuid}'
                 parameters:
                     -   name: "StopperingSystem"
                         modelRef:

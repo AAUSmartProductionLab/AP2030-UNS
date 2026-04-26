@@ -779,11 +779,15 @@ class _PlanningTransitionBuilder:
         context: _PlanningBuildContext,
         terms: _PlanningTermBuilder,
         build_action_parameters: Callable[[str, str, List[Dict[str, Any]]], Optional[model.SubmodelElementList]],
+        string_property_factory: Optional[Callable[[str, str], model.Property]] = None,
+        constants_factory: Optional[Callable[[Any], Optional[model.SubmodelElementCollection]]] = None,
     ):
         self._base_url = base_url
         self._context = context
         self._terms = terms
         self._build_action_parameters = build_action_parameters
+        self._string_property_factory = string_property_factory
+        self._constants_factory = constants_factory
 
     def build_processes_section(self, system_id: str, processes_cfg: Any) -> model.SubmodelElementCollection:
         return self.build_transition_section(
@@ -853,6 +857,8 @@ class _PlanningTransitionBuilder:
                     custom_semantic_id=item.get("semantic_id") or item.get("semanticId"),
                     duration=duration,
                     skill_reference=item.get("SkillReference") if include_skill_reference else None,
+                    transformation=item.get("transformation"),
+                    constants=item.get("constants"),
                 )
             )
 
@@ -948,6 +954,8 @@ class _PlanningTransitionBuilder:
         custom_semantic_id: Optional[str] = None,
         duration: Optional[Dict[str, Any]] = None,
         skill_reference: Optional[str] = None,
+        transformation: Optional[str] = None,
+        constants: Any = None,
     ) -> model.SubmodelElementCollection:
         item_elements: List[model.SubmodelElement] = []
 
@@ -976,6 +984,16 @@ class _PlanningTransitionBuilder:
                     ),
                 )
             )
+
+        if transformation and self._string_property_factory is not None:
+            item_elements.append(
+                self._string_property_factory("Transformation", str(transformation))
+            )
+
+        if constants and self._constants_factory is not None:
+            constants_element = self._constants_factory(constants)
+            if constants_element is not None:
+                item_elements.append(constants_element)
 
         if parameters:
             parameter_element = self._build_action_parameters(system_id, key, parameters)

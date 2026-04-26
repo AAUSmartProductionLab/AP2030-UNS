@@ -145,6 +145,10 @@ cytivaCappingSystemAAS:
               -   key: "Capping"
                   semantic_id: "cssx:CappingCapability"
                   SkillReference: "Capping"
+                  # JSONata: forward the Product Uuid (params[1]) so the
+                  # capping system can correlate the response message back
+                  # to the BT node that issued the request.
+                  transformation: '{"Uuid": params[1].Parameters.Uuid}'
                   parameters:
                       -   name: "CappingSystem"
                           modelRef:
@@ -177,6 +181,7 @@ cytivaCappingSystemAAS:
               -   key: "Occupy"
                   semantic_id: "cssx:OccupyCapability"
                   SkillReference: "Occupy"
+                  transformation: '{"Uuid": params[1].Parameters.Uuid}'
                   parameters:
                       -   name: "CappingSystem"
                           modelRef:
@@ -206,6 +211,7 @@ cytivaCappingSystemAAS:
               -   key: "Release"
                   semantic_id: "cssx:ReleaseCapability"
                   SkillReference: "Release"
+                  transformation: '{"Uuid": params[1].Parameters.Uuid}'
                   parameters:
                       -   name: "CappingSystem"
                           modelRef:

@@ -6,6 +6,7 @@
 #include <jsonata/Jsonata.h>
 
 #include "aas/aas_interface_cache.h"
+#include "aas/aas_snapshot.h"
 #include "bt/symbolic_state.h"
 #include "mqtt/node_message_distributor.h"
 
@@ -51,148 +52,6 @@ namespace
             return text;
         }
         return text.substr(0, max_len) + "...";
-    }
-
-    /// Coerce an AAS Property's stringified ``value`` into the JSONata-friendly
-    /// type implied by ``valueType``. AAS REST always serializes property
-    /// values as strings; the planner transformations expect proper numbers
-    /// and booleans (e.g. ``data.Position[0] - params[1].Parameters.Location.Position.X``
-    /// needs both sides to be numbers).
-    nlohmann::json coerceProperty(const nlohmann::json &elem)
-    {
-        if (!elem.contains("value"))
-        {
-            return nlohmann::json(nullptr);
-        }
-        const auto &raw = elem["value"];
-        if (!raw.is_string())
-        {
-            return raw; // already typed
-        }
-        const std::string s = raw.get<std::string>();
-        std::string vt = elem.value("valueType", "");
-        try
-        {
-            if (vt == "xs:boolean")
-            {
-                return s == "true" || s == "1";
-            }
-            if (vt == "xs:integer" || vt == "xs:int" || vt == "xs:long" ||
-                vt == "xs:short" || vt == "xs:byte" ||
-                vt == "xs:nonNegativeInteger" || vt == "xs:positiveInteger" ||
-                vt == "xs:unsignedInt" || vt == "xs:unsignedLong")
-            {
-                return std::stoll(s);
-            }
-            if (vt == "xs:double" || vt == "xs:float" || vt == "xs:decimal")
-            {
-                return std::stod(s);
-            }
-        }
-        catch (const std::exception &)
-        {
-            // fall through to string
-        }
-        return s;
-    }
-
-    /// Recursively flatten an AAS submodel/SMC/Property/SubmodelElementList
-    /// into idiomatic JSON: SMCs and Submodels become objects keyed by child
-    /// idShort; SubmodelElementLists become arrays; Properties collapse to
-    /// their typed value.
-    nlohmann::json flattenAasElement(const nlohmann::json &elem)
-    {
-        if (!elem.is_object())
-        {
-            return elem;
-        }
-        const std::string mt = elem.value("modelType", "");
-        if (mt == "Property")
-        {
-            return coerceProperty(elem);
-        }
-        if (mt == "SubmodelElementList")
-        {
-            nlohmann::json out = nlohmann::json::array();
-            if (elem.contains("value") && elem["value"].is_array())
-            {
-                for (const auto &child : elem["value"])
-                {
-                    out.push_back(flattenAasElement(child));
-                }
-            }
-            return out;
-        }
-        // Submodel root: children live under "submodelElements".
-        if (elem.contains("submodelElements") && elem["submodelElements"].is_array())
-        {
-            nlohmann::json out = nlohmann::json::object();
-            for (const auto &child : elem["submodelElements"])
-            {
-                if (child.is_object() && child.contains("idShort"))
-                {
-                    out[child["idShort"].get<std::string>()] = flattenAasElement(child);
-                }
-            }
-            return out;
-        }
-        // SMC and other collection-shaped elements with a "value" array of
-        // named children.
-        if (elem.contains("value") && elem["value"].is_array())
-        {
-            nlohmann::json out = nlohmann::json::object();
-            for (const auto &child : elem["value"])
-            {
-                if (child.is_object() && child.contains("idShort"))
-                {
-                    out[child["idShort"].get<std::string>()] = flattenAasElement(child);
-                }
-            }
-            return out;
-        }
-        // Reference / unknown: return the raw value if any, else null.
-        if (elem.contains("value"))
-        {
-            return elem["value"];
-        }
-        return nlohmann::json(nullptr);
-    }
-
-    /// Strip the trailing ``/Transformation`` (or any last segment) so the
-    /// caller can address a sibling SMC like ``Constants``.
-    std::string parentSlashPath(const std::string &slash_path)
-    {
-        if (slash_path.empty())
-        {
-            return slash_path;
-        }
-        auto pos = slash_path.find_last_of('/');
-        if (pos == std::string::npos)
-        {
-            return std::string();
-        }
-        return slash_path.substr(0, pos);
-    }
-
-    /// Extract the value of the *last* Key in a ReferenceElement's
-    /// ``value.keys`` array. Used to read a Variable's
-    /// ``InterfaceReference`` and recover the interaction name (e.g.
-    /// ``StationState`` / ``Location``) that lives under
-    /// ``AssetInterfacesDescription``.
-    std::optional<std::string> lastKeyValue(const nlohmann::json &reference_element)
-    {
-        if (!reference_element.is_object())
-            return std::nullopt;
-        if (!reference_element.contains("value") ||
-            !reference_element["value"].is_object())
-            return std::nullopt;
-        const auto &val = reference_element["value"];
-        if (!val.contains("keys") || !val["keys"].is_array() || val["keys"].empty())
-            return std::nullopt;
-        const auto &last = val["keys"].back();
-        if (!last.contains("value") || !last["value"].is_string())
-            return std::nullopt;
-        return last["value"].get<std::string>();
     }
 }
 
@@ -287,17 +146,10 @@ void FluentCheck::initializeTopicsFromAAS()
             // Pre-fetch the Constants SMC sibling of this fluent's
             // Transformation (registration emits it from the YAML
             // ``constants:`` block). Optional: an empty object is fine.
-            constants_ = nlohmann::json::object();
-            const std::string parent_path = parentSlashPath(predicate_ref_->transformation_aas_path);
-            if (!parent_path.empty())
-            {
-                auto constants_smc = aas_client_.fetchSubmodelElementByPath(
-                    predicate_ref_->source_aas_id, "AIPlanning", parent_path + "/Constants");
-                if (constants_smc.has_value())
-                {
-                    constants_ = flattenAasElement(*constants_smc);
-                }
-            }
+            constants_ = aas_snapshot::fetchSiblingConstants(
+                aas_client_,
+                predicate_ref_->source_aas_id,
+                predicate_ref_->transformation_aas_path);
         }
 
         // Pre-fetch each predicate parameter's AAS as a flattened JSON
@@ -312,96 +164,84 @@ void FluentCheck::initializeTopicsFromAAS()
         // submodel are tolerated -- the corresponding params[i] entry
         // stays an empty object so the transformation can still surface
         // a useful error.
-        params_.clear();
         var_subscriptions_.clear();
+        std::vector<std::optional<nlohmann::json>> raw_variables;
+        params_ = aas_snapshot::fetchParamSnapshots(
+            aas_client_,
+            predicate_ref_->parameter_refs,
+            /*include_variables=*/true,
+            &raw_variables);
+
         for (std::size_t i = 0; i < predicate_ref_->parameter_refs.size(); ++i)
         {
             const auto &p = predicate_ref_->parameter_refs[i];
-            nlohmann::json snapshot = nlohmann::json::object();
-            if (p.aas_id.empty())
+            if (i >= raw_variables.size() || !raw_variables[i].has_value())
             {
-                params_.push_back(std::move(snapshot));
                 continue;
             }
+            const auto &vars_raw = *raw_variables[i];
 
-            // Static Parameters submodel.
-            auto params_sm = aas_client_.fetchSubmodelElementByPath(
-                p.aas_id, "Parameters", std::string());
-            if (params_sm.has_value())
+            // Walk each Variable SMC, find its InterfaceReference, and
+            // register an MQTT subscription whose callback will keep
+            // params_[i]["Variables"][var_key] live.
+            if (!vars_raw.contains("submodelElements") ||
+                !vars_raw["submodelElements"].is_array())
             {
-                snapshot["Parameters"] = flattenAasElement(*params_sm);
+                continue;
             }
-
-            // Variables submodel: keep the raw payload for InterfaceReference
-            // discovery, then store the flattened version on the snapshot.
-            auto vars_raw = aas_client_.fetchSubmodelElementByPath(
-                p.aas_id, "Variables", std::string());
-            if (vars_raw.has_value())
+            for (const auto &var_smc : vars_raw["submodelElements"])
             {
-                snapshot["Variables"] = flattenAasElement(*vars_raw);
+                if (!var_smc.is_object() || !var_smc.contains("idShort"))
+                    continue;
+                const std::string var_key =
+                    var_smc["idShort"].get<std::string>();
 
-                // Walk each Variable SMC, find its InterfaceReference, and
-                // register an MQTT subscription whose callback will keep
-                // params_[i]["Variables"][var_key] live.
-                if (vars_raw->contains("submodelElements") &&
-                    (*vars_raw)["submodelElements"].is_array())
+                // Locate the InterfaceReference child.
+                std::optional<std::string> interface_name;
+                if (var_smc.contains("value") && var_smc["value"].is_array())
                 {
-                    for (const auto &var_smc : (*vars_raw)["submodelElements"])
+                    for (const auto &child : var_smc["value"])
                     {
-                        if (!var_smc.is_object() || !var_smc.contains("idShort"))
-                            continue;
-                        const std::string var_key =
-                            var_smc["idShort"].get<std::string>();
-
-                        // Locate the InterfaceReference child.
-                        std::optional<std::string> interface_name;
-                        if (var_smc.contains("value") && var_smc["value"].is_array())
+                        if (child.is_object() &&
+                            child.value("idShort", "") == "InterfaceReference")
                         {
-                            for (const auto &child : var_smc["value"])
-                            {
-                                if (child.is_object() &&
-                                    child.value("idShort", "") == "InterfaceReference")
-                                {
-                                    interface_name = lastKeyValue(child);
-                                    break;
-                                }
-                            }
+                            interface_name = aas_snapshot::lastKeyValue(child);
+                            break;
                         }
-                        if (!interface_name.has_value() || interface_name->empty())
-                            continue;
-
-                        // Resolve the MQTT topic for this interface (output side).
-                        std::optional<mqtt_utils::Topic> topic_opt;
-                        auto cache = MqttSubBase::getAASInterfaceCache();
-                        if (cache)
-                        {
-                            topic_opt = cache->getInterface(
-                                p.aas_id, *interface_name, "output");
-                        }
-                        if (!topic_opt.has_value())
-                        {
-                            topic_opt = aas_client_.fetchInterface(
-                                p.aas_id, *interface_name, "output");
-                        }
-                        if (!topic_opt.has_value())
-                        {
-                            std::cerr << "FluentCheck '" << this->name()
-                                      << "' could not resolve MQTT output topic for "
-                                      << "param[" << i << "].Variables." << var_key
-                                      << " (interface=" << *interface_name
-                                      << ", aas_id=" << p.aas_id << ")" << std::endl;
-                            continue;
-                        }
-
-                        const std::string topic_key =
-                            "p" + std::to_string(i) + ":" + var_key;
-                        MqttSubBase::setTopic(topic_key, *topic_opt);
-                        var_subscriptions_[topic_key] =
-                            VarBinding{i, var_key};
                     }
                 }
+                if (!interface_name.has_value() || interface_name->empty())
+                    continue;
+
+                // Resolve the MQTT topic for this interface (output side).
+                std::optional<mqtt_utils::Topic> topic_opt;
+                auto cache = MqttSubBase::getAASInterfaceCache();
+                if (cache)
+                {
+                    topic_opt = cache->getInterface(
+                        p.aas_id, *interface_name, "output");
+                }
+                if (!topic_opt.has_value())
+                {
+                    topic_opt = aas_client_.fetchInterface(
+                        p.aas_id, *interface_name, "output");
+                }
+                if (!topic_opt.has_value())
+                {
+                    std::cerr << "FluentCheck '" << this->name()
+                              << "' could not resolve MQTT output topic for "
+                              << "param[" << i << "].Variables." << var_key
+                              << " (interface=" << *interface_name
+                              << ", aas_id=" << p.aas_id << ")" << std::endl;
+                    continue;
+                }
+
+                const std::string topic_key =
+                    "p" + std::to_string(i) + ":" + var_key;
+                MqttSubBase::setTopic(topic_key, *topic_opt);
+                var_subscriptions_[topic_key] =
+                    VarBinding{i, var_key};
             }
-            params_.push_back(std::move(snapshot));
         }
 
         // We are done. Even if no subscriptions were registered (e.g. a

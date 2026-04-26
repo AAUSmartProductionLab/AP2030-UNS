@@ -168,6 +168,11 @@ imaDispensingSystemAAS:
               -   key: "Dispensing"
                   semantic_id: "cssx:DispensingCapability"
                   SkillReference: "Dispensing"
+                  # JSONata transformation building the MQTT command body. The
+                  # Product (params[1]) carries a runtime Uuid in its Parameters
+                  # submodel; we promote it to the command's Uuid so request and
+                  # response correlate against the same identity.
+                  transformation: '{"Uuid": params[1].Parameters.Uuid}'
                   parameters:
                       -   name: "DispensingSystem"
                           modelRef:
@@ -205,6 +210,7 @@ imaDispensingSystemAAS:
               -   key: "Occupy"
                   semantic_id: "cssx:OccupyCapability"
                   SkillReference: "Occupy"
+                  transformation: '{"Uuid": params[1].Parameters.Uuid}'
                   parameters:
                       -   name: "DispensingSystem"
                           modelRef:
@@ -234,6 +240,7 @@ imaDispensingSystemAAS:
               -   key: "Release"
                   semantic_id: "cssx:ReleaseCapability"
                   SkillReference: "Release"
+                  transformation: '{"Uuid": params[1].Parameters.Uuid}'
                   parameters:
                       -   name: "DispensingSystem"
                           modelRef:

@@ -157,6 +157,9 @@ imaLoadingSystemAAS:
                 -   key: "Loading"
                     semantic_id: "cssx:LoadingCapability"
                     SkillReference: "Loading"
+                    # JSONata: forward Product Uuid (params[1]) so the
+                    # loading station response correlates with the BT node.
+                    transformation: '{"Uuid": params[1].Parameters.Uuid}'
                     parameters:
                         -   name: "LoadingSystem"
                             modelRef:
@@ -199,6 +202,7 @@ imaLoadingSystemAAS:
                 -   key: "Occupy"
                     semantic_id: "cssx:OccupyCapability"
                     SkillReference: "Occupy"
+                    transformation: '{"Uuid": params[1].Parameters.Uuid}'
                     parameters:
                         -   name: "LoadingSystem"
                             modelRef:
@@ -228,6 +232,7 @@ imaLoadingSystemAAS:
                 -   key: "Release"
                     semantic_id: "cssx:ReleaseCapability"
                     SkillReference: "Release"
+                    transformation: '{"Uuid": params[1].Parameters.Uuid}'
                     parameters:
                         -   name: "LoadingSystem"
                             modelRef:

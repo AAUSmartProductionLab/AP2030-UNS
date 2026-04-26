@@ -184,6 +184,10 @@ omronCameraSystemAAS:
             -   key: "QualityControl"
                 semantic_id: "cssx:QualityControlCapability"
                 SkillReference: "Capture"
+                # JSONata: forward Product Uuid (params[1]) so the camera
+                # capture response can be matched against the issuing BT
+                # node, and the FOND quality outcome can be attributed.
+                transformation: '{"Uuid": params[1].Parameters.Uuid}'
                 parameters:
                     -   name: "CameraSystem"
                         modelRef:
@@ -233,6 +237,7 @@ omronCameraSystemAAS:
             -   key: "Occupy"
                 semantic_id: "cssx:OccupyCapability"
                 SkillReference: "Occupy"
+                transformation: '{"Uuid": params[1].Parameters.Uuid}'
                 parameters:
                     -   name: "CameraSystem"
                         modelRef:
@@ -262,6 +267,7 @@ omronCameraSystemAAS:
             -   key: "Release"
                 semantic_id: "cssx:ReleaseCapability"
                 SkillReference: "Release"
+                transformation: '{"Uuid": params[1].Parameters.Uuid}'
                 parameters:
                     -   name: "CameraSystem"
                         modelRef:

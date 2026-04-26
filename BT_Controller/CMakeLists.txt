@@ -42,6 +42,7 @@ add_library(bt_controller_common STATIC
     src/mqtt/mqtt_client.cpp
     src/aas/aas_client.cpp
     src/aas/aas_interface_cache.cpp
+    src/aas/aas_snapshot.cpp
     src/aas/transformation_resolver.cpp
     src/mqtt/mqtt_sub_base.cpp
     src/mqtt/mqtt_pub_base.cpp
@@ -134,4 +135,15 @@ if(BT_CONTROLLER_BUILD_TESTS)
             GTest::gtest_main
     )
     add_test(NAME test_symbolic_state COMMAND test_symbolic_state)
+
+    add_executable(test_action_transformation
+        tests/test_action_transformation.cpp
+    )
+    target_link_libraries(test_action_transformation
+        PRIVATE
+            bt_controller_common
+            GTest::gtest
+            GTest::gtest_main
+    )
+    add_test(NAME test_action_transformation COMMAND test_action_transformation)
 endif()
