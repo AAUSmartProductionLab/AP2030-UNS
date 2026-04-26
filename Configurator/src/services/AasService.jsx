@@ -2715,9 +2715,13 @@ class AasService {
     lines.push(`${I}${I}Problem:`);
     lines.push(`${I}${I}${I}Objects:`);
     // Each Instance object cross-references its own AAS so the planner
-    // resolves the object name to the concrete instance ID.
+    // resolves the object name to the concrete instance ID. Object name
+    // strips the trailing "AAS" suffix to avoid colliding with the type
+    // name UP infers from the AAS modelRef tail (matches the Resource
+    // convention: object "planarTable" with type "planarTableAAS").
     instanceIdsList.forEach((inst) => {
-      lines.push(`${I}${I}${I}${I}-   name: "${inst.idShort}"`);
+      const objName = inst.idShort.replace(/AAS$/, '');
+      lines.push(`${I}${I}${I}${I}-   name: "${objName}"`);
       lines.push(`${I}${I}${I}${I}    modelRef:`);
       lines.push(`${I}${I}${I}${I}        - AAS: "${inst.aasId}"`);
     });
@@ -2843,7 +2847,9 @@ class AasService {
     lines.push(`${I}${I}${I}${I}            externalRef: "css:Product"`);
     lines.push(`${I}${I}Problem:`);
     lines.push(`${I}${I}${I}Objects:`);
-    lines.push(`${I}${I}${I}${I}-   name: "${instanceIds.idShort}"`);
+    // Strip "AAS" suffix so the object name (e.g. "HgH_0001") differs from
+    // the type name UP infers from the AAS modelRef tail ("HgH_0001AAS").
+    lines.push(`${I}${I}${I}${I}-   name: "${instanceIds.idShort.replace(/AAS$/, '')}"`);
     lines.push(`${I}${I}${I}${I}    modelRef:`);
     lines.push(`${I}${I}${I}${I}        - AAS: "self"`);
 
