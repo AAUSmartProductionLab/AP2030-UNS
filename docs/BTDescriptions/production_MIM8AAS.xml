@@ -1,26 +1,32 @@
 <?xml version='1.0' encoding='utf-8'?>
-<root BTCPP_format="4" main_tree_to_execute="MainTree">
+<root BTCPP_format="4" main_tree_to_execute="PlannerRoot">
+  <BehaviorTree ID="PlannerRoot">
+    <SubTree ID="MainTree" />
+  </BehaviorTree>
   <BehaviorTree ID="MainTree">
     <ReactiveFallback name="PolicyRoot">
-      <ReactiveSequence name="GoalCond">
-        <FluentCheck name="finished(mim8_0001)" predicate_ref="{Finished_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001}&quot;" />
-        <FluentCheck name="free(imadispensingsystem)" predicate_ref="{Free_imaDispensingSystem}" predicate_args="&quot;{Param_imaDispensingSystem}&quot;" />
-        <FluentCheck name="free(imaloadingsystem)" predicate_ref="{Free_imaLoadingSystem}" predicate_args="&quot;{Param_imaLoadingSystem}&quot;" />
-        <FluentCheck name="free(omroncamerasystem)" predicate_ref="{Free_omronCameraSystem}" predicate_args="&quot;{Param_omronCameraSystem}&quot;" />
-        <FluentCheck name="free(optimaunloadingsystem)" predicate_ref="{Free_optimaUnloadingSystem}" predicate_args="&quot;{Param_optimaUnloadingSystem}&quot;" />
-        <FluentCheck name="free(planarshuttle1)" predicate_ref="{Free_planarShuttle1}" predicate_args="&quot;{Param_planarShuttle1}&quot;" />
-        <FluentCheck name="free(planarshuttle2)" predicate_ref="{Free_planarShuttle2}" predicate_args="&quot;{Param_planarShuttle2}&quot;" />
-        <FluentCheck name="free(planarshuttle3)" predicate_ref="{Free_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3}&quot;" />
-        <FluentCheck name="free(syntegonstopperingsystem)" predicate_ref="{Free_syntegonStopperingSystem}" predicate_args="&quot;{Param_syntegonStopperingSystem}&quot;" />
-        <FluentCheck name="operational(imadispensingsystem)" predicate_ref="{Operational_imaDispensingSystem}" predicate_args="&quot;{Param_imaDispensingSystem}&quot;" />
-        <FluentCheck name="operational(imaloadingsystem)" predicate_ref="{Operational_imaLoadingSystem}" predicate_args="&quot;{Param_imaLoadingSystem}&quot;" />
-        <FluentCheck name="operational(omroncamerasystem)" predicate_ref="{Operational_omronCameraSystem}" predicate_args="&quot;{Param_omronCameraSystem}&quot;" />
-        <FluentCheck name="operational(optimaunloadingsystem)" predicate_ref="{Operational_optimaUnloadingSystem}" predicate_args="&quot;{Param_optimaUnloadingSystem}&quot;" />
-        <FluentCheck name="operational(planarshuttle1)" predicate_ref="{Operational_planarShuttle1}" predicate_args="&quot;{Param_planarShuttle1}&quot;" />
-        <FluentCheck name="operational(planarshuttle2)" predicate_ref="{Operational_planarShuttle2}" predicate_args="&quot;{Param_planarShuttle2}&quot;" />
-        <FluentCheck name="operational(planarshuttle3)" predicate_ref="{Operational_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3}&quot;" />
-        <FluentCheck name="operational(syntegonstopperingsystem)" predicate_ref="{Operational_syntegonStopperingSystem}" predicate_args="&quot;{Param_syntegonStopperingSystem}&quot;" />
-        <FluentCheck name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+      <ReactiveSequence name="GoalBranch">
+        <ReactiveSequence name="GoalCond">
+          <FluentCheck name="finished(mim8_0001)" predicate_ref="{Finished_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001}&quot;" />
+          <FluentCheck name="free(imadispensingsystem)" predicate_ref="{Free_imaDispensingSystem}" predicate_args="&quot;{Param_imaDispensingSystem}&quot;" />
+          <FluentCheck name="free(imaloadingsystem)" predicate_ref="{Free_imaLoadingSystem}" predicate_args="&quot;{Param_imaLoadingSystem}&quot;" />
+          <FluentCheck name="free(omroncamerasystem)" predicate_ref="{Free_omronCameraSystem}" predicate_args="&quot;{Param_omronCameraSystem}&quot;" />
+          <FluentCheck name="free(optimaunloadingsystem)" predicate_ref="{Free_optimaUnloadingSystem}" predicate_args="&quot;{Param_optimaUnloadingSystem}&quot;" />
+          <FluentCheck name="free(planarshuttle1)" predicate_ref="{Free_planarShuttle1}" predicate_args="&quot;{Param_planarShuttle1}&quot;" />
+          <FluentCheck name="free(planarshuttle2)" predicate_ref="{Free_planarShuttle2}" predicate_args="&quot;{Param_planarShuttle2}&quot;" />
+          <FluentCheck name="free(planarshuttle3)" predicate_ref="{Free_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3}&quot;" />
+          <FluentCheck name="free(syntegonstopperingsystem)" predicate_ref="{Free_syntegonStopperingSystem}" predicate_args="&quot;{Param_syntegonStopperingSystem}&quot;" />
+          <FluentCheck name="operational(imadispensingsystem)" predicate_ref="{Operational_imaDispensingSystem}" predicate_args="&quot;{Param_imaDispensingSystem}&quot;" />
+          <FluentCheck name="operational(imaloadingsystem)" predicate_ref="{Operational_imaLoadingSystem}" predicate_args="&quot;{Param_imaLoadingSystem}&quot;" />
+          <FluentCheck name="operational(omroncamerasystem)" predicate_ref="{Operational_omronCameraSystem}" predicate_args="&quot;{Param_omronCameraSystem}&quot;" />
+          <FluentCheck name="operational(optimaunloadingsystem)" predicate_ref="{Operational_optimaUnloadingSystem}" predicate_args="&quot;{Param_optimaUnloadingSystem}&quot;" />
+          <FluentCheck name="operational(planarshuttle1)" predicate_ref="{Operational_planarShuttle1}" predicate_args="&quot;{Param_planarShuttle1}&quot;" />
+          <FluentCheck name="operational(planarshuttle2)" predicate_ref="{Operational_planarShuttle2}" predicate_args="&quot;{Param_planarShuttle2}&quot;" />
+          <FluentCheck name="operational(planarshuttle3)" predicate_ref="{Operational_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3}&quot;" />
+          <FluentCheck name="operational(syntegonstopperingsystem)" predicate_ref="{Operational_syntegonStopperingSystem}" predicate_args="&quot;{Param_syntegonStopperingSystem}&quot;" />
+          <FluentCheck name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+        </ReactiveSequence>
+        <AlwaysSuccess name="Success" />
       </ReactiveSequence>
       <KeepRunningUntilFailure name="PolicyLoop">
         <SubTree ID="PolicyRules" />
