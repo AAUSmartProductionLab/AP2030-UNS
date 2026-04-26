@@ -1,0 +1,30 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "QualityResult",
+    "description": "Per-product quality classification produced by an inspection station (e.g. Camera). The Uuid identifies the product that was inspected.",
+    "type": "object",
+    "allOf": [
+        {
+            "$ref": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/data.schema.json"
+        },
+        {
+            "type": "object",
+            "properties": {
+                "Uuid": {
+                    "type": "string",
+                    "description": "Uuid of the inspected product (matches Product.Parameters.Uuid)."
+                },
+                "Result": {
+                    "type": "string",
+                    "enum": ["Ok", "NotOk"],
+                    "description": "Classification outcome."
+                },
+                "Confidence": {
+                    "type": "number",
+                    "description": "Optional classifier confidence in [0,1]."
+                }
+            },
+            "required": ["Uuid", "Result"]
+        }
+    ]
+}
