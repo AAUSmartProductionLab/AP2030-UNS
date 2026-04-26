@@ -438,7 +438,6 @@ def _bt_node_to_xml(
 
     elif isinstance(node, ConditionNode):
         attrib = {
-            "ID": "FluentCheck",
             "name": node.fluent,
         }
         if node.execution_ref:
@@ -452,7 +451,7 @@ def _bt_node_to_xml(
             if arg_aliases:
                 args_value = ";".join(f"{{{arg_key}}}" for arg_key in arg_aliases)
                 attrib["predicate_args"] = f'"{args_value}"'
-        ET.SubElement(parent_el, "Condition", attrib=attrib)
+        ET.SubElement(parent_el, "FluentCheck", attrib=attrib)
 
     elif isinstance(node, ActionNode):
         attrib = {
