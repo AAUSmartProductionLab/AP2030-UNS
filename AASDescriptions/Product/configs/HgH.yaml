@@ -343,22 +343,6 @@ HgHAAS:
                             modelRef:
                                 - AAS: "self"
 
-                # Sensor-backed quality outcome. Set by the QualityControl
-                # action of the inspecting Resource (camera). The
-                # transformation reads the camera's QualityResult variable
-                # and matches the product's own Uuid; this provides the
-                # observation that drives the FOND oneOf branch chosen by
-                # the QualityControl effect.
-                -   key: "QualityOk"
-                    semantic_id: "cssx:QualityOk"
-                    parameters:
-                        -   name: "Product"
-                            modelRef:
-                                - AAS: "self"
-                        -   name: "Resource"
-                            externalRef: "css:Resource"
-                    transformation: 'parameter2.Variables.QualityResult.Uuid = parameter1.Parameters.Uuid and parameter2.Variables.QualityResult.Result = "Ok"'
-
                 # Per-product completion flag. Set by the at_end effect of
                 # both Unloading (good unit) and Scrap (rejected unit) on
                 # the unloading station. The batch-level goal is the

@@ -102,10 +102,9 @@ imaLoadingSystemAAS:
     Parameters:
         Location:
             semanticId: 'cssx:LocationParameter'
-            value: 'imaLoadingStation'
             Position:
                 X: 0.0
-                Z: 0.0
+                Y: 0.0
                 Yaw: 0.0
 
     HierarchicalStructures:
@@ -128,7 +127,7 @@ imaLoadingSystemAAS:
                     parameters:
                         -   name: "Resource"
                             externalRef: "css:Resource"
-                    transformation: 'parameter1.Variables.PackMLState.State == "Execute"'
+                    transformation: 'params[0].Variables.PackMLState.State = "Execute"'
 
                 -   key: "Occupied"
                     semantic_id: "cssx:Occupied"
@@ -137,14 +136,14 @@ imaLoadingSystemAAS:
                             externalRef: "css:Resource"
                         -   name: "Product"
                             externalRef: "css:Product"
-                    transformation: 'parameter1.Variables.OccupationState.ProcessQueue[0] == parameter2.Parameters.Uuid'
+                    transformation: 'params[0].Variables.OccupationState.ProcessQueue[0] = params[1].Parameters.Uuid'
 
                 -   key: "Free"
                     semantic_id: "cssx:Free"
                     parameters:
                         -   name: "Resource"
                             externalRef: "css:Resource"
-                    transformation: 'parameter1.Variables.OccupationState.ProcessQueue == []'
+                    transformation: '$count(params[0].Variables.OccupationState.ProcessQueue) = 0'
 
                 -   key: "StationAt"
                     semantic_id: "cssx:StationAt"

@@ -3,6 +3,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include <behaviortree_cpp/bt_factory.h>
@@ -40,16 +41,48 @@ public:
     void initializeTopicsFromAAS() override;
     BT::NodeStatus tick() override;
 
+    /// Override the base callback to route per-Variable MQTT messages
+    /// into the corresponding ``params_[i].Variables.<key>`` slot.
+    void callback(const std::string &topic_key,
+                  const nlohmann::json &msg,
+                  mqtt::properties props) override;
+
 private:
     std::optional<bt_exec_refs::PredicateRef> predicate_ref_;
     std::vector<std::string> args_tokens_;
     std::unique_ptr<jsonata::Jsonata> jsonata_expr_;
     std::string transformation_expression_;
 
+    /// Per-parameter AAS snapshots (flattened {idShort: value} JSON), indexed by
+    /// the position of the corresponding entry in
+    /// ``predicate_ref_->parameter_refs``. ``Parameters`` is fetched once
+    /// at init; ``Variables.<key>`` slots are kept live by MQTT callbacks
+    /// driven by each Variable's ``InterfaceReference``.
+    std::vector<nlohmann::json> params_;
+
+    /// Routing table for per-Variable MQTT subscriptions. Keyed by the
+    /// topic_key string passed to ``MqttSubBase::setTopic`` (we use
+    /// ``"p<i>:<var_key>"``). Each entry tells ``callback`` which
+    /// ``params_[i].Variables.<var_key>`` slot to update; the slot's
+    /// existing field set (populated by the static AAS flatten) drives
+    /// which keys of the incoming JSON message are consumed.
+    struct VarBinding
+    {
+        std::size_t param_index = 0;
+        std::string var_key;
+    };
+    std::unordered_map<std::string, VarBinding> var_subscriptions_;
+
+    /// Constants declared on the Fluent SMC alongside its Transformation
+    /// (registration emits these from each fluent's YAML ``constants:``
+    /// block). Flattened to ``{name: typed_value}``; empty object when the
+    /// fluent has no constants.
+    nlohmann::json constants_;
+
     std::string interaction_name_;
 
     static std::shared_ptr<TransformationResolver> getResolver(AASClient &aas_client);
-    bool evaluateAgainst(const nlohmann::json &payload);
+    bool evaluateAgainst();
 
     /// Look up the predicate against the process-wide ``SymbolicState``.
     /// Used when ``transformation_aas_path`` is empty (symbolic-only

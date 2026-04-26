@@ -7,6 +7,7 @@
 
 import { toast } from 'react-toastify';
 import mqttService from './MqttService';
+import MappingService from './MappingService';
 import { 
   AasRegistryClient, 
   AasRepositoryClient,
@@ -795,6 +796,60 @@ class AasService {
       return await response.json();
     } catch {
       return submodelData;
+    }
+  }
+
+  /**
+   * PATCH a station's `Parameters/Location/Position` SMC with new
+   * X/Z/Yaw values. This is the live-location parameter consumed by the
+   * planner's ``ResourceAt`` Euclidean fluent. The submodel ID is
+   * derived from the station's AAS id by substituting the ``/aas/``
+   * path segment with ``/submodels/instances/`` and appending
+   * ``/Parameters`` -- the convention enforced by the registration
+   * service.
+   *
+   * @param {string} stationAasId - Full AAS URI, e.g.
+   *     ``https://smartproductionlab.aau.dk/aas/imaLoadingSystemAAS``.
+   * @param {number} x - X coordinate in millimetres.
+   * @param {number} Y - Y coordinate in millimetres (planar Y axis in
+   *     the configurator UI).
+   * @param {number} yaw - Yaw in degrees.
+   */
+  async patchStationLocationPosition(stationAasId, x, y, yaw) {
+    if (!stationAasId || typeof stationAasId !== 'string') {
+      throw new Error('patchStationLocationPosition: stationAasId is required');
+    }
+    if (!stationAasId.includes('/aas/')) {
+      throw new Error(
+        `patchStationLocationPosition: cannot derive Parameters submodel id from "${stationAasId}"`
+      );
+    }
+    const parametersSubmodelId =
+      stationAasId.replace('/aas/', '/submodels/instances/') + '/Parameters';
+    const encodedSm = this.base64UrlEncode(parametersSubmodelId);
+
+    const positionElement = {
+      idShort: 'Position',
+      modelType: 'SubmodelElementCollection',
+      value: [
+        { idShort: 'X', modelType: 'Property', valueType: 'xs:double', value: String(x) },
+        { idShort: 'Y', modelType: 'Property', valueType: 'xs:double', value: String(y) },
+        { idShort: 'Yaw', modelType: 'Property', valueType: 'xs:double', value: String(yaw) },
+      ],
+    };
+
+    const url = `${this.repositoryUrl}/submodels/${encodedSm}/submodel-elements/Location.Position`;
+    const response = await fetch(url, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(positionElement),
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(
+        `PATCH station Location.Position failed (${stationAasId}): ${response.status} ${text}`
+      );
     }
   }
 
@@ -2839,7 +2894,7 @@ class AasService {
     lines.push(`${I}${I}${I}${I}            externalRef: "css:Product"`);
     lines.push(`${I}${I}${I}${I}        -   name: "Resource"`);
     lines.push(`${I}${I}${I}${I}            externalRef: "css:Resource"`);
-    lines.push(`${I}${I}${I}${I}    transformation: 'parameter2.Variables.QualityResult.Uuid = parameter1.Parameters.Uuid and parameter2.Variables.QualityResult.Result = "Ok"'`);
+    lines.push(`${I}${I}${I}${I}    transformation: 'params[1].Variables.QualityResult.Uuid = params[0].Parameters.Uuid and params[1].Variables.QualityResult.Result = "Ok"'`);
     lines.push(`${I}${I}${I}${I}-   key: "Finished"`);
     lines.push(`${I}${I}${I}${I}    semantic_id: "cssx:Finished"`);
     lines.push(`${I}${I}${I}${I}    parameters:`);
@@ -3276,24 +3331,19 @@ class AasService {
   }
 
   /**
-   * Create an Entity node for a station
+   * Create an Entity node for a station.
+   *
+   * The station's location parameters live in its own
+   * ``Parameters/Location/Position`` submodel and are managed by the
+   * drag-to-PATCH pipeline (see ``patchStationLocationPosition``). The
+   * BoM entity therefore carries only structural information (SameAs
+   * reference, semantic id) -- no embedded Location SMC. The legacy
+   * ``x``/``y``/``yaw`` arguments are kept in the signature for caller
+   * compatibility but are intentionally unused.
    */
+  // eslint-disable-next-line no-unused-vars
   createEntityNode(idShort, globalAssetId, x, y, yaw = 0, instanceSubmodelId = null, instanceAasId = null) {
-    // Create Location collection with x, y, yaw properties
-    const locationSemanticId = this.createReference(
-      ReferenceTypes.ExternalReference,
-      [this.createKey(KeyTypes.GlobalReference, 'https://smartproductionlab.aau.dk/semantics/Location')]
-    );
-    
-    const locationProperties = [
-      this.createProperty('x', x, DataTypeDefXsd.Float),
-      this.createProperty('y', y, DataTypeDefXsd.Float),
-      this.createProperty('yaw', yaw, DataTypeDefXsd.Float)
-    ];
-    
-    const locationCollection = this.createSubmodelElementCollection('Location', locationProperties, locationSemanticId);
-    
-    const statements = [locationCollection];
+    const statements = [];
     
     // Add SameAs reference if instanceSubmodelId is provided (IDTA 02011-1-1)
     if (instanceSubmodelId) {
@@ -3498,24 +3548,8 @@ class AasService {
           statement.entityType
         )
         .map((entity, index) => {
-          // Find Location collection
           const entityStatements = entity.statements || [];
-          const locationCollection = entityStatements.find(
-            s => s.idShort === 'Location' && 
-                (s.modelType === 'SubmodelElementCollection' || s.value)
-          );
-          
-          const locationValues = locationCollection?.value || [];
-          const xProp = locationValues.find(p => p.idShort === 'x');
-          const yProp = locationValues.find(p => p.idShort === 'y');
-          const yawProp = locationValues.find(p => p.idShort === 'yaw');
-          
-          const xMM = parseFloat(xProp?.value || 0);
-          const yMM = parseFloat(yProp?.value || 0);
-          const yaw = parseFloat(yawProp?.value || 0);
-          
-          const approachPosition = [xMM, yMM, yaw];
-          
+
           // Find SameAs reference
           const sameAsRef = entityStatements.find(
             s => s.idShort === 'SameAs' && 
@@ -3538,16 +3572,23 @@ class AasService {
           
           // Match with module catalog
           const module = moduleCatalog.find(m => m.aasId === assetId);
+
+          // Position is no longer stored in the BoM. Derive it from the
+          // canonical container layout via MappingService so the loader
+          // returns the same coordinates the drag pipeline writes into
+          // each station's Parameters/Location/Position SMC.
+          const assetType = module?.assetType || entity.idShort;
+          const processPosition = MappingService.getPositions(index, assetType);
           
           return {
             Name: entity.idShort,
             'Instance Name': module?.name || entity.idShort,
             StationId: index,
             AasId: aasId || assetId,
-            AssetType: module?.assetType || entity.idShort,
+            AssetType: assetType,
             SubmodelId: submodelId,
-            'Approach Position': approachPosition,
-            'Process Position': approachPosition
+            'Approach Position': processPosition,
+            'Process Position': processPosition
           };
         });
       

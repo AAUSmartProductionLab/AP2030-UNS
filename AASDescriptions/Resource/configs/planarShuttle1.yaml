@@ -146,7 +146,7 @@ planarTableShuttle1AAS:
                   parameters:
                       -   name: "Resource"
                           externalRef: "css:Resource"
-                  transformation: 'parameter1.Variables.PackMLState.State == "Execute"'
+                  transformation: 'params[0].Variables.PackMLState.State = "Execute"'
 
               -   key: "Occupied"
                   semantic_id: "cssx:Occupied"
@@ -155,14 +155,14 @@ planarTableShuttle1AAS:
                           externalRef: "css:Resource"
                       -   name: "Product"
                           externalRef: "css:Product"
-                  transformation: 'parameter1.Variables.OccupationState.ProcessQueue[0] == parameter2.Parameters.Uuid'
+                  transformation: 'params[0].Variables.OccupationState.ProcessQueue[0] = params[1].Parameters.Uuid'
 
               -   key: "Free"
                   semantic_id: "cssx:Free"
                   parameters:
                       -   name: "Resource"
                           externalRef: "css:Resource"
-                  transformation: 'parameter1.Variables.OccupationState.ProcessQueue == []'
+                  transformation: '$count(params[0].Variables.OccupationState.ProcessQueue) = 0'
 
               -   key: "ResourceAt"
                   semantic_id: "cssx:ResourceAt"
@@ -171,7 +171,9 @@ planarTableShuttle1AAS:
                           externalRef: "css:Resource"
                       -   name: "Location"
                           externalRef: "cssx:LocationParameter"
-                  transformation: 'parameter1.Variables.Location == parameter2'
+                  constants:
+                      threshold: 50.0
+                  transformation: '$sqrt($power(params[0].Variables.Location.Position[0] - params[1].Parameters.Location.Position.X, 2) + $power(params[0].Variables.Location.Position[1] - params[1].Parameters.Location.Position.Z, 2)) < constants.threshold'
 
           Actions:
               -   key: "Move"

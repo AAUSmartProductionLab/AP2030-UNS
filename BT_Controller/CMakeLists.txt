@@ -53,7 +53,6 @@ add_library(bt_controller_common STATIC
     src/bt/mqtt_sync_action_node.cpp
     src/bt/mqtt_sync_condition_node.cpp
     src/bt/mqtt_decorator.cpp
-    src/bt/actions/move_to_position.cpp
     src/bt/actions/generic_action_node.cpp
     src/bt/actions/command_execute_node.cpp
     src/bt/actions/configuration_node.cpp

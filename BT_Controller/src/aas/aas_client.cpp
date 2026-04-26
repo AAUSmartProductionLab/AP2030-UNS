@@ -800,212 +800,6 @@ std::optional<nlohmann::json> AASClient::searchPropertyInElements(
     return std::nullopt;
 }
 
-std::optional<nlohmann::json> AASClient::fetchHierarchicalStructure(const std::string &aas_shell_id)
-{
-    try
-    {
-        std::cout << "Fetching HierarchicalStructures submodel for AAS: " << aas_shell_id << std::endl;
-
-        // Step 1: Fetch the full shell to get submodel references
-        std::string encoded_id = base64url_encode(aas_shell_id);
-        std::string shell_endpoint = "/shells/" + encoded_id;
-        nlohmann::json shell_data = makeGetRequest(shell_endpoint);
-
-        if (!shell_data.contains("submodels") || !shell_data["submodels"].is_array())
-        {
-            std::cerr << "Shell missing submodels array" << std::endl;
-            return std::nullopt;
-        }
-
-        // Step 2: Find the HierarchicalStructures submodel reference
-        std::string submodel_id;
-        for (const auto &submodel_ref : shell_data["submodels"])
-        {
-            if (submodel_ref.contains("keys") && submodel_ref["keys"].is_array())
-            {
-                std::string ref_value = submodel_ref["keys"][0]["value"];
-                if (ref_value.find("HierarchicalStructures") != std::string::npos)
-                {
-                    submodel_id = ref_value;
-                    break;
-                }
-            }
-        }
-
-        if (submodel_id.empty())
-        {
-            std::cerr << "HierarchicalStructures submodel reference not found for AAS: " << aas_shell_id << std::endl;
-            return std::nullopt;
-        }
-
-        std::cout << "Found HierarchicalStructures submodel reference: " << submodel_id << std::endl;
-
-        // Step 3: Fetch the submodel using base64url-encoded ID
-        std::string submodel_id_b64 = base64url_encode(submodel_id);
-        std::string submodel_url = "/submodels/" + submodel_id_b64;
-
-        nlohmann::json submodel_data = makeGetRequest(submodel_url);
-        std::cout << "Successfully fetched HierarchicalStructures submodel" << std::endl;
-
-        return submodel_data;
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << "Error fetching HierarchicalStructures: " << e.what() << std::endl;
-        return std::nullopt;
-    }
-}
-
-std::optional<nlohmann::json> AASClient::fetchStationPosition(
-    const std::string &station_asset_id,
-    const std::string &filling_line_asset_id)
-{
-    try
-    {
-        std::cout << "Fetching position for station: " << station_asset_id
-                  << " from line: " << filling_line_asset_id << std::endl;
-
-        // Step 1: Fetch the filling line's HierarchicalStructures submodel
-        auto hs_data = fetchHierarchicalStructure(filling_line_asset_id);
-        if (!hs_data.has_value())
-        {
-            std::cerr << "Failed to fetch HierarchicalStructures for filling line" << std::endl;
-            return std::nullopt;
-        }
-
-        // Step 2: Find the EntryNode
-        const auto &submodel_elements = hs_data.value()["submodelElements"];
-        nlohmann::json entry_node;
-        for (const auto &elem : submodel_elements)
-        {
-            if (elem["idShort"] == "EntryNode")
-            {
-                entry_node = elem;
-                break;
-            }
-        }
-
-        if (entry_node.empty())
-        {
-            std::cerr << "EntryNode not found in HierarchicalStructures" << std::endl;
-            return std::nullopt;
-        }
-
-        // Step 3: Search through statements to find the station entity
-        // The station_asset_id is the full AAS ID, we need to find the entity with matching globalAssetId
-        // or find by looking at the SameAs reference that points to the station's HierarchicalStructures
-        if (!entry_node.contains("statements") || !entry_node["statements"].is_array())
-        {
-            std::cerr << "EntryNode has no statements" << std::endl;
-            return std::nullopt;
-        }
-
-        for (const auto &statement : entry_node["statements"])
-        {
-            if (statement["modelType"] != "Entity")
-                continue;
-
-            // Check if this entity references our station
-            // Method 1: Check SameAs reference for the station's submodel ID
-            bool is_matching_station = false;
-            std::string entity_name = statement.value("idShort", "");
-
-            if (statement.contains("statements") && statement["statements"].is_array())
-            {
-                for (const auto &inner_stmt : statement["statements"])
-                {
-                    if (inner_stmt.value("idShort", "") == "SameAs" &&
-                        inner_stmt["modelType"] == "ReferenceElement")
-                    {
-                        // Check if the reference points to our station's submodel
-                        if (inner_stmt.contains("value") && inner_stmt["value"].contains("keys"))
-                        {
-                            for (const auto &key : inner_stmt["value"]["keys"])
-                            {
-                                std::string key_value = key.value("value", "");
-                                // Check if this references the station's AAS (extracting AAS ID from submodel ID)
-                                // Submodel ID format: .../submodels/instances/{systemIdAAS}/HierarchicalStructures
-                                if (key_value.find(station_asset_id) != std::string::npos)
-                                {
-                                    is_matching_station = true;
-                                    break;
-                                }
-                                // Also check by extracting system name from station_asset_id
-                                // station_asset_id: https://...aas/imaDispensingSystemAAS
-                                // key_value: https://...submodels/instances/imaDispensingSystemAAS/HierarchicalStructures
-                                size_t aas_pos = station_asset_id.rfind("/aas/");
-                                if (aas_pos != std::string::npos)
-                                {
-                                    std::string system_id = station_asset_id.substr(aas_pos + 5);
-                                    if (key_value.find(system_id) != std::string::npos)
-                                    {
-                                        is_matching_station = true;
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (!is_matching_station)
-                continue;
-
-            // Found the matching station entity, now extract Location
-            if (statement.contains("statements") && statement["statements"].is_array())
-            {
-                for (const auto &inner_stmt : statement["statements"])
-                {
-                    if (inner_stmt.value("idShort", "") == "Location" &&
-                        inner_stmt["modelType"] == "SubmodelElementCollection")
-                    {
-                        nlohmann::json position;
-                        if (inner_stmt.contains("value") && inner_stmt["value"].is_array())
-                        {
-                            for (const auto &prop : inner_stmt["value"])
-                            {
-                                std::string prop_name = prop.value("idShort", "");
-                                if (prop_name == "x" || prop_name == "X")
-                                {
-                                    position["x"] = std::stof(prop.value("value", "0"));
-                                }
-                                else if (prop_name == "y" || prop_name == "Y")
-                                {
-                                    position["y"] = std::stof(prop.value("value", "0"));
-                                }
-                                else if (prop_name == "yaw" || prop_name == "Yaw" ||
-                                         prop_name == "theta" || prop_name == "Theta")
-                                {
-                                    position["theta"] = std::stof(prop.value("value", "0"));
-                                }
-                            }
-                        }
-
-                        if (position.contains("x") && position.contains("y"))
-                        {
-                            std::cout << "Found position for " << entity_name << ": x="
-                                      << position["x"] << ", y=" << position["y"];
-                            if (position.contains("theta"))
-                                std::cout << ", theta=" << position["theta"];
-                            std::cout << std::endl;
-                            return position;
-                        }
-                    }
-                }
-            }
-        }
-
-        std::cerr << "Could not find station " << station_asset_id << " in HierarchicalStructures" << std::endl;
-        return std::nullopt;
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << "Error fetching station position: " << e.what() << std::endl;
-        return std::nullopt;
-    }
-}
-
 std::optional<nlohmann::json> AASClient::fetchRequiredCapabilities(const std::string &aas_shell_id)
 {
     try
@@ -1491,21 +1285,37 @@ std::optional<std::string> AASClient::resolveFluentViaAIPlanning(
 
         const std::string expr = (*trans)["value"].get<std::string>();
 
-        // Extract the first ``parameter1.Variables.<VarName>`` reference.
-        // ``parameter1`` always refers to the resource on whose AAS we are
-        // operating (PDDL convention: first parameter of a resource fluent
-        // is the resource itself), so the Variables lookup happens on the
-        // current ``asset_id``.
-        static const std::regex var_re(R"(parameter1\.Variables\.([A-Za-z_][A-Za-z0-9_]*))");
-        std::smatch m;
-        if (!std::regex_search(expr, m, var_re))
+        // Preferred path: an explicit ``Binding`` Property sibling of
+        // ``Transformation`` names the Variable whose InterfaceReference
+        // identifies the MQTT interaction this fluent subscribes to. New
+        // transformations (``data.Position[0] - params[1].*``) declare
+        // this explicitly because they no longer reference
+        // ``parameter1.Variables.<X>`` for the resolver to grep.
+        std::string var_name;
+        const auto *binding = findChildByIdShort(*fluent, "Binding");
+        if (binding && binding->contains("value") && (*binding)["value"].is_string())
         {
-            std::cout << "AIPlanning fluent '" << fluent_name
-                      << "' transformation has no parameter1.Variables.* reference: "
-                      << expr << std::endl;
-            return std::nullopt;
+            var_name = (*binding)["value"].get<std::string>();
         }
-        const std::string var_name = m[1].str();
+        else
+        {
+            // Legacy fallback: scan the transformation text for the first
+            // ``parameter1.Variables.<VarName>`` reference. ``parameter1``
+            // always refers to the resource on whose AAS we are operating
+            // (PDDL convention: first parameter of a resource fluent is
+            // the resource itself), so the Variables lookup happens on
+            // the current ``asset_id``.
+            static const std::regex var_re(R"(parameter1\.Variables\.([A-Za-z_][A-Za-z0-9_]*))");
+            std::smatch m;
+            if (!std::regex_search(expr, m, var_re))
+            {
+                std::cout << "AIPlanning fluent '" << fluent_name
+                          << "' transformation has no Binding child and no "
+                          << "parameter1.Variables.* reference: " << expr << std::endl;
+                return std::nullopt;
+            }
+            var_name = m[1].str();
+        }
 
         auto vars_sm = fetchSubmodelData(asset_id, "Variables");
         if (!vars_sm)

@@ -9,7 +9,6 @@
 #include "bt/mqtt_sync_action_node.h"
 #include "bt/mqtt_sync_condition_node.h"
 #include "bt/mqtt_decorator.h"
-#include "bt/actions/move_to_position.h"
 #include "bt/actions/generic_action_node.h"
 #include "bt/actions/command_execute_node.h"
 #include "bt/actions/configuration_node.h"
@@ -31,13 +30,6 @@ void registerAllNodes(
     AASClient &aas_client)
 {
     // Register the nodes with the behavior tree and the mqtt client
-    MqttActionNode::registerNodeType<MoveToPosition>(
-        factory,
-        node_message_distributor,
-        mqtt_client,
-        aas_client,
-        "moveToPosition");
-
     RetrieveAASPropertyNode::registerNodeType<RetrieveAASPropertyNode>(
         factory,
         aas_client,

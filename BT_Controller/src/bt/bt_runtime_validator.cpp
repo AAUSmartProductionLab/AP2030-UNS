@@ -289,34 +289,14 @@ namespace bt_runtime_validator
                         ++result.fluent_checks_symbolic;
                         return;
                     }
-                    const std::string interaction = lastSegmentLocal(parsed->fluent_aas_path);
-                    bool has_out = hasOutputBinding(parsed->source_aas_id, interaction, cache, aas_client);
-                    if (!has_out)
-                    {
-                        NodeFailure f;
-                        f.node_name = node->name();
-                        f.registration_name = reg;
-                        f.source_aas_id = parsed->source_aas_id;
-                        f.interaction = interaction;
-                        f.reason = "missing MQTT output binding";
-                        result.failures.push_back(f);
-                        // Do not attempt to seed a node we cannot subscribe to.
-                        return;
-                    }
+                    // Data-backed predicate: subscriptions are resolved
+                    // per-Variable across each parameter's AAS at node
+                    // init time. The static Parameters/Variables flatten
+                    // performed by ``FluentCheck::initializeTopicsFromAAS``
+                    // already seeds the evaluation snapshot, so we no
+                    // longer need to issue a separate seedInitialValue
+                    // here. We simply record that the node validated.
                     ++result.fluent_checks_validated;
-
-                    // Seed initial value via synchronous AAS GET so the
-                    // first tick has something to evaluate even before
-                    // any MQTT publication arrives.
-                    auto value_opt = seedPredicateValue(*parsed, aas_client);
-                    if (value_opt.has_value())
-                    {
-                        if (auto *fc = dynamic_cast<FluentCheck *>(node))
-                        {
-                            fc->seedInitialValue(*value_opt);
-                            ++result.fluent_checks_seeded;
-                        }
-                    }
                 }
             });
 

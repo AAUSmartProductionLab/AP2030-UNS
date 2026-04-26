@@ -100,10 +100,9 @@ cytivaCappingSystemAAS:
   Parameters:
     Location:
       semanticId: 'cssx:LocationParameter'
-      value: 'cytivaCappingStation'
       Position:
         X: 240.0
-        Z: 240.0
+        Y: 240.0
         Yaw: 0.0
   HierarchicalStructures:
     Name: 'BillOfMaterials'
@@ -124,7 +123,7 @@ cytivaCappingSystemAAS:
                   parameters:
                       -   name: "Resource"
                           externalRef: "css:Resource"
-                  transformation: 'parameter1.Variables.PackMLState.State == "Execute"'
+                  transformation: 'params[0].Variables.PackMLState.State = "Execute"'
 
               -   key: "Occupied"
                   semantic_id: "cssx:Occupied"
@@ -133,14 +132,14 @@ cytivaCappingSystemAAS:
                           externalRef: "css:Resource"
                       -   name: "Product"
                           externalRef: "css:Product"
-                  transformation: 'parameter1.Variables.OccupationState.ProcessQueue[0] == parameter2.Parameters.Uuid'
+                  transformation: 'params[0].Variables.OccupationState.ProcessQueue[0] = params[1].Parameters.Uuid'
 
               -   key: "Free"
                   semantic_id: "cssx:Free"
                   parameters:
                       -   name: "Resource"
                           externalRef: "css:Resource"
-                  transformation: 'parameter1.Variables.OccupationState.ProcessQueue == []'
+                  transformation: '$count(params[0].Variables.OccupationState.ProcessQueue) = 0'
 
           Actions:
               -   key: "Capping"

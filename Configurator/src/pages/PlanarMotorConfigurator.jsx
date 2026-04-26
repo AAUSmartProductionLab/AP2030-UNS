@@ -409,6 +409,13 @@ export default function PlanarMotorConfigurator() {
     // Continue with normal drop processing
     if (!over) return;
     
+    // Compute the live Process Position for the drop target so we can
+    // PATCH the station's ``Parameters/Location/Position`` submodel
+    // element. The planner's ``ResourceAt`` Euclidean fluent reads this
+    // value at runtime, so we keep the AAS in sync with every drop.
+    const targetContainerName = getContainerName(over.id);
+    const targetStationId = MappingService.nameToId(targetContainerName);
+    
     // Rest of the existing handleDragEnd code...
     const draggedNode = allNodes.find(node => node.id === active.id);
     
@@ -456,6 +463,18 @@ export default function PlanarMotorConfigurator() {
           )
         );
       }, 10000); // Longer than animation duration
+
+      // Mirror the new placement into the station's Resource AAS so the
+      // BT controller's ResourceAt fluent uses the live coordinates.
+      if (draggedNode.aasId) {
+        const pos = MappingService.getPositions(targetStationId, draggedNode.assetType);
+        aasService
+          .patchStationLocationPosition(draggedNode.aasId, pos[0], pos[1], pos[2])
+          .catch(err => {
+            console.error('Failed to PATCH station Location.Position:', err);
+            toast.error(`Failed to update ${draggedNode.title} location in AAS: ${err.message}`);
+          });
+      }
     } else {
       // This is moving an existing placed node
       const movedNode = placedNodes.find(node => node.id === active.id);
@@ -490,6 +509,18 @@ export default function PlanarMotorConfigurator() {
             )
           );
         }, 10000); // Longer than animation duration
+
+        // Mirror the moved placement into the station's Resource AAS so
+        // the BT controller's ResourceAt fluent uses the live coordinates.
+        if (movedNode.aasId) {
+          const pos = MappingService.getPositions(targetStationId, movedNode.assetType);
+          aasService
+            .patchStationLocationPosition(movedNode.aasId, pos[0], pos[1], pos[2])
+            .catch(err => {
+              console.error('Failed to PATCH station Location.Position:', err);
+              toast.error(`Failed to update ${movedNode.title} location in AAS: ${err.message}`);
+            });
+        }
       }
     }
   };
@@ -517,6 +548,26 @@ export default function PlanarMotorConfigurator() {
       
       // Save motor config to planarTable Parameters submodel
       await aasService.putPlanarTableMotorConfig(motorConfig);
+
+      // PATCH every placed station's Resource-AAS Parameters/Location/Position
+      // so the BT controller's ResourceAt Euclidean fluent has the live
+      // coordinates. Best-effort: a single station failure should not
+      // block the rest.
+      const patchResults = await Promise.allSettled(
+        layoutData.Stations
+          .filter(s => s.AasId)
+          .map(s => aasService.patchStationLocationPosition(
+            s.AasId,
+            s['Process Position'][0],
+            s['Process Position'][1],
+            s['Process Position'][2]
+          ))
+      );
+      const failed = patchResults.filter(r => r.status === 'rejected');
+      if (failed.length > 0) {
+        console.warn('Some station Location PATCHes failed:', failed.map(f => f.reason));
+        toast.warn(`Saved configuration but ${failed.length} station location update(s) failed`);
+      }
       
       toast.success('Configuration published to AAS successfully!');
     } catch (error) {

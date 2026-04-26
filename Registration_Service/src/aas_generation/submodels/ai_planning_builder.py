@@ -359,6 +359,11 @@ class AIPlanningSubmodelBuilder:
             if transformation:
                 elements.append(self._string_property("Transformation", transformation))
 
+            constants_cfg = fluent_cfg.get("constants")
+            constants_element = self._build_fluent_constants(constants_cfg)
+            if constants_element is not None:
+                elements.append(constants_element)
+
             fluent_value = fluent_cfg.get("value")
             if fluent_value is not None and not isinstance(fluent_value, bool):
                 elements.append(self._typed_property("Value", fluent_value))
@@ -380,6 +385,48 @@ class AIPlanningSubmodelBuilder:
             id_short="Fluents",
             value=fluent_elements,
             semantic_id=_make_semantic_id(SemanticIdCatalog.AI_PLANNING_DOMAIN_FLUENTS),
+        )
+
+    def _build_fluent_constants(
+        self, constants_cfg: Any
+    ) -> Optional[model.SubmodelElementCollection]:
+        """Emit a ``Constants`` SMC inside a Fluent.
+
+        Accepts either a mapping ``{name: value}`` or a list of
+        ``{name, value, [semanticId]}`` dicts. Each entry becomes a typed
+        Property child whose value type is inferred from the YAML literal.
+        Returns ``None`` if there is nothing to emit.
+        """
+        if not constants_cfg:
+            return None
+
+        children: List[model.SubmodelElement] = []
+
+        if isinstance(constants_cfg, dict):
+            for name, value in constants_cfg.items():
+                if value is None:
+                    continue
+                children.append(self._typed_property(str(name), value))
+        elif isinstance(constants_cfg, list):
+            for entry in constants_cfg:
+                if not isinstance(entry, dict):
+                    continue
+                name = entry.get("name") or entry.get("key")
+                if not name:
+                    continue
+                value = entry.get("value")
+                if value is None:
+                    continue
+                children.append(self._typed_property(str(name), value))
+        else:
+            return None
+
+        if not children:
+            return None
+
+        return model.SubmodelElementCollection(
+            id_short="Constants",
+            value=children,
         )
 
     def _build_actions_section(self, system_id: str, actions_cfg: List[Dict[str, Any]]) -> model.SubmodelElementCollection:

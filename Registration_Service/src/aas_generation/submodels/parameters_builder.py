@@ -138,29 +138,18 @@ class ParametersSubmodelBuilder:
                     )
                 )
         elif self.element_factory:
-            # Fallback: use fields defined directly in config
+            # Fallback: use fields defined directly in config. Nested
+            # dicts are turned into nested SubmodelElementCollections so
+            # that e.g. ``Location.Position: {X, Z, Yaw}`` becomes a
+            # proper SMC with three Property children, matching the
+            # structure the Configurator PATCHes at runtime.
             for key, value in param_config.items():
                 if key in ['semanticId', 'InterfaceReference', 'Field']:
                     continue
 
-                # Determine value type
-                if isinstance(value, bool):
-                    value_type = model.datatypes.Boolean
-                elif isinstance(value, int):
-                    value_type = model.datatypes.Int
-                elif isinstance(value, float):
-                    value_type = model.datatypes.Double
-                else:
-                    value_type = model.datatypes.String
-                    value = str(value)
-
-                elements.append(
-                    self.element_factory.create_property(
-                        id_short=key,
-                        value_type=value_type,
-                        value=value
-                    )
-                )
+                child = self._build_value_element(key, value)
+                if child is not None:
+                    elements.append(child)
 
         # Add InterfaceReference as ReferenceElement if present
         if interface_ref:
@@ -181,6 +170,47 @@ class ParametersSubmodelBuilder:
             id_short=param_name,
             elements=elements,
             semantic_id=collection_semantic_id
+        )
+
+    def _build_value_element(self, key: str, value) -> Optional[model.SubmodelElement]:
+        """
+        Build a SubmodelElement for a config value.
+
+        Primitive values become Properties with the appropriate datatype.
+        Dict values become SubmodelElementCollections with each entry
+        recursively converted, so nested config such as
+        ``Position: {X: 240.0, Z: 0.0, Yaw: 0.0}`` is materialised as a
+        proper SMC with three Property children rather than a stringified
+        dict.
+        """
+        if not self.element_factory:
+            return None
+
+        if isinstance(value, dict):
+            children = []
+            for child_key, child_value in value.items():
+                child = self._build_value_element(child_key, child_value)
+                if child is not None:
+                    children.append(child)
+            return self.element_factory.create_collection(
+                id_short=key,
+                elements=children,
+            )
+
+        if isinstance(value, bool):
+            value_type = model.datatypes.Boolean
+        elif isinstance(value, int):
+            value_type = model.datatypes.Int
+        elif isinstance(value, float):
+            value_type = model.datatypes.Double
+        else:
+            value_type = model.datatypes.String
+            value = str(value)
+
+        return self.element_factory.create_property(
+            id_short=key,
+            value_type=value_type,
+            value=value,
         )
 
     def _create_interface_reference(self, interface_ref_name: str) -> Optional[model.ReferenceElement]:
