@@ -87,6 +87,10 @@ All schemas are automatically synchronized from the `schemas/` directory. Click 
   - JSON Schema for the status the Id of a product. Usefull to associate stations with a product when they process it
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/productId.schema.json)
   - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/MQTTSchemas/productId.schema.json)
+- **[qualityResult.schema.json](MQTTSchemas/qualityResult.schema.json)**
+  - Per-product quality classification produced by an inspection station (e.g. Camera). The Uuid identifies the product that was inspected.
+  - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/qualityResult.schema.json)
+  - [Raw](https://raw.githubusercontent.com/AAUSmartProductionLab/AP2030-UNS/main/MQTTSchemas/qualityResult.schema.json)
 - **[state.schema.json](MQTTSchemas/state.schema.json)**
   - JSON Schema for the status of a module. The current Uuid is expected when the module is not in a IDLE or RESETTING state
   - [View on GitHub Pages](https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/state.schema.json)
