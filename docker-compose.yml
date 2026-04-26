@@ -269,6 +269,102 @@ services:
       registration-service:
         condition: service_healthy
 
+  camera_station:
+    extends:
+      file: ./simulated_stations/deployment/compose/stations-compose.yml
+      service: camera_station
+    networks:
+      - hivemq-network
+    depends_on:
+      hivemq-broker:
+        condition: service_started
+      aas-env:
+        condition: service_started
+      databridge:
+        condition: service_started
+      registration-service:
+        condition: service_healthy
+
+  capping_station:
+    extends:
+      file: ./simulated_stations/deployment/compose/stations-compose.yml
+      service: capping_station
+    networks:
+      - hivemq-network
+    depends_on:
+      hivemq-broker:
+        condition: service_started
+      aas-env:
+        condition: service_started
+      databridge:
+        condition: service_started
+      registration-service:
+        condition: service_healthy
+
+  planar_table:
+    extends:
+      file: ./simulated_stations/deployment/compose/stations-compose.yml
+      service: planar_table
+    networks:
+      - hivemq-network
+    depends_on:
+      hivemq-broker:
+        condition: service_started
+      aas-env:
+        condition: service_started
+      databridge:
+        condition: service_started
+      registration-service:
+        condition: service_healthy
+
+  planar_shuttle1:
+    extends:
+      file: ./simulated_stations/deployment/compose/stations-compose.yml
+      service: planar_shuttle1
+    networks:
+      - hivemq-network
+    depends_on:
+      hivemq-broker:
+        condition: service_started
+      aas-env:
+        condition: service_started
+      databridge:
+        condition: service_started
+      registration-service:
+        condition: service_healthy
+
+  planar_shuttle2:
+    extends:
+      file: ./simulated_stations/deployment/compose/stations-compose.yml
+      service: planar_shuttle2
+    networks:
+      - hivemq-network
+    depends_on:
+      hivemq-broker:
+        condition: service_started
+      aas-env:
+        condition: service_started
+      databridge:
+        condition: service_started
+      registration-service:
+        condition: service_healthy
+
+  planar_shuttle3:
+    extends:
+      file: ./simulated_stations/deployment/compose/stations-compose.yml
+      service: planar_shuttle3
+    networks:
+      - hivemq-network
+    depends_on:
+      hivemq-broker:
+        condition: service_started
+      aas-env:
+        condition: service_started
+      databridge:
+        condition: service_started
+      registration-service:
+        condition: service_healthy
+
 ################################### BASYX CONTAINERS ####################################
 
   aas-env:
