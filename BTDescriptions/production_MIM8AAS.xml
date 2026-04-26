@@ -3,24 +3,24 @@
   <BehaviorTree ID="MainTree">
     <ReactiveFallback name="PolicyRoot">
       <ReactiveSequence name="GoalCond">
-        <Condition ID="FluentCheck" name="finished(mim8_0001)" predicate_ref="{Finished_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001}&quot;" />
-        <Condition ID="FluentCheck" name="free(imadispensingsystem)" predicate_ref="{Free_imaDispensingSystem}" predicate_args="&quot;{Param_imaDispensingSystem}&quot;" />
-        <Condition ID="FluentCheck" name="free(imaloadingsystem)" predicate_ref="{Free_imaLoadingSystem}" predicate_args="&quot;{Param_imaLoadingSystem}&quot;" />
-        <Condition ID="FluentCheck" name="free(omroncamerasystem)" predicate_ref="{Free_omronCameraSystem}" predicate_args="&quot;{Param_omronCameraSystem}&quot;" />
-        <Condition ID="FluentCheck" name="free(optimaunloadingsystem)" predicate_ref="{Free_optimaUnloadingSystem}" predicate_args="&quot;{Param_optimaUnloadingSystem}&quot;" />
-        <Condition ID="FluentCheck" name="free(planarshuttle1)" predicate_ref="{Free_planarShuttle1}" predicate_args="&quot;{Param_planarShuttle1}&quot;" />
-        <Condition ID="FluentCheck" name="free(planarshuttle2)" predicate_ref="{Free_planarShuttle2}" predicate_args="&quot;{Param_planarShuttle2}&quot;" />
-        <Condition ID="FluentCheck" name="free(planarshuttle3)" predicate_ref="{Free_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3}&quot;" />
-        <Condition ID="FluentCheck" name="free(syntegonstopperingsystem)" predicate_ref="{Free_syntegonStopperingSystem}" predicate_args="&quot;{Param_syntegonStopperingSystem}&quot;" />
-        <Condition ID="FluentCheck" name="operational(imadispensingsystem)" predicate_ref="{Operational_imaDispensingSystem}" predicate_args="&quot;{Param_imaDispensingSystem}&quot;" />
-        <Condition ID="FluentCheck" name="operational(imaloadingsystem)" predicate_ref="{Operational_imaLoadingSystem}" predicate_args="&quot;{Param_imaLoadingSystem}&quot;" />
-        <Condition ID="FluentCheck" name="operational(omroncamerasystem)" predicate_ref="{Operational_omronCameraSystem}" predicate_args="&quot;{Param_omronCameraSystem}&quot;" />
-        <Condition ID="FluentCheck" name="operational(optimaunloadingsystem)" predicate_ref="{Operational_optimaUnloadingSystem}" predicate_args="&quot;{Param_optimaUnloadingSystem}&quot;" />
-        <Condition ID="FluentCheck" name="operational(planarshuttle1)" predicate_ref="{Operational_planarShuttle1}" predicate_args="&quot;{Param_planarShuttle1}&quot;" />
-        <Condition ID="FluentCheck" name="operational(planarshuttle2)" predicate_ref="{Operational_planarShuttle2}" predicate_args="&quot;{Param_planarShuttle2}&quot;" />
-        <Condition ID="FluentCheck" name="operational(planarshuttle3)" predicate_ref="{Operational_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3}&quot;" />
-        <Condition ID="FluentCheck" name="operational(syntegonstopperingsystem)" predicate_ref="{Operational_syntegonStopperingSystem}" predicate_args="&quot;{Param_syntegonStopperingSystem}&quot;" />
-        <Condition ID="FluentCheck" name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+        <FluentCheck name="finished(mim8_0001)" predicate_ref="{Finished_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001}&quot;" />
+        <FluentCheck name="free(imadispensingsystem)" predicate_ref="{Free_imaDispensingSystem}" predicate_args="&quot;{Param_imaDispensingSystem}&quot;" />
+        <FluentCheck name="free(imaloadingsystem)" predicate_ref="{Free_imaLoadingSystem}" predicate_args="&quot;{Param_imaLoadingSystem}&quot;" />
+        <FluentCheck name="free(omroncamerasystem)" predicate_ref="{Free_omronCameraSystem}" predicate_args="&quot;{Param_omronCameraSystem}&quot;" />
+        <FluentCheck name="free(optimaunloadingsystem)" predicate_ref="{Free_optimaUnloadingSystem}" predicate_args="&quot;{Param_optimaUnloadingSystem}&quot;" />
+        <FluentCheck name="free(planarshuttle1)" predicate_ref="{Free_planarShuttle1}" predicate_args="&quot;{Param_planarShuttle1}&quot;" />
+        <FluentCheck name="free(planarshuttle2)" predicate_ref="{Free_planarShuttle2}" predicate_args="&quot;{Param_planarShuttle2}&quot;" />
+        <FluentCheck name="free(planarshuttle3)" predicate_ref="{Free_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3}&quot;" />
+        <FluentCheck name="free(syntegonstopperingsystem)" predicate_ref="{Free_syntegonStopperingSystem}" predicate_args="&quot;{Param_syntegonStopperingSystem}&quot;" />
+        <FluentCheck name="operational(imadispensingsystem)" predicate_ref="{Operational_imaDispensingSystem}" predicate_args="&quot;{Param_imaDispensingSystem}&quot;" />
+        <FluentCheck name="operational(imaloadingsystem)" predicate_ref="{Operational_imaLoadingSystem}" predicate_args="&quot;{Param_imaLoadingSystem}&quot;" />
+        <FluentCheck name="operational(omroncamerasystem)" predicate_ref="{Operational_omronCameraSystem}" predicate_args="&quot;{Param_omronCameraSystem}&quot;" />
+        <FluentCheck name="operational(optimaunloadingsystem)" predicate_ref="{Operational_optimaUnloadingSystem}" predicate_args="&quot;{Param_optimaUnloadingSystem}&quot;" />
+        <FluentCheck name="operational(planarshuttle1)" predicate_ref="{Operational_planarShuttle1}" predicate_args="&quot;{Param_planarShuttle1}&quot;" />
+        <FluentCheck name="operational(planarshuttle2)" predicate_ref="{Operational_planarShuttle2}" predicate_args="&quot;{Param_planarShuttle2}&quot;" />
+        <FluentCheck name="operational(planarshuttle3)" predicate_ref="{Operational_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3}&quot;" />
+        <FluentCheck name="operational(syntegonstopperingsystem)" predicate_ref="{Operational_syntegonStopperingSystem}" predicate_args="&quot;{Param_syntegonStopperingSystem}&quot;" />
+        <FluentCheck name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
       </ReactiveSequence>
       <KeepRunningUntilFailure name="PolicyLoop">
         <SubTree ID="PolicyRules" />
@@ -30,21 +30,21 @@
   <BehaviorTree ID="Capture_mim8_0001_planarshuttle3">
     <Sequence name="Capture_mim8_0001_planarshuttle3">
       <Inverter name="Inverter">
-        <Condition ID="FluentCheck" name="step_done(order_product, step_4_inspection)" predicate_ref="{Predicate_Object}" />
+        <FluentCheck name="step_done(order_product, step_4_inspection)" predicate_ref="{Predicate_Object}" />
       </Inverter>
-      <Condition ID="FluentCheck" name="step_ready(order_product, step_4_inspection)" predicate_ref="{Predicate_Object}" />
+      <FluentCheck name="step_ready(order_product, step_4_inspection)" predicate_ref="{Predicate_Object}" />
       <Inverter name="Inverter">
         <ReactiveSequence name="FSAPCond_capture">
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="step_done(order_product, step_4_inspection)" predicate_ref="{Predicate_Object}" />
+            <FluentCheck name="step_done(order_product, step_4_inspection)" predicate_ref="{Predicate_Object}" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+            <FluentCheck name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
           </Inverter>
-          <Condition ID="FluentCheck" name="occupied(omroncamerasystem, mim8_0001)" predicate_ref="{Occupied_omronCameraSystem}" predicate_args="&quot;{Param_omronCameraSystem};{Param_MIM8_0001}&quot;" />
-          <Condition ID="FluentCheck" name="on(mim8_0001, planarshuttle3)" predicate_ref="{On_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_planarShuttle3}&quot;" />
-          <Condition ID="FluentCheck" name="productat(mim8_0001, capturelocation)" predicate_ref="{ProductAt_MIM8_0001_3}" predicate_args="&quot;{Param_MIM8_0001};{Param_captureLocation}&quot;" />
-          <Condition ID="FluentCheck" name="step_ready(order_product, step_4_inspection)" predicate_ref="{Predicate_Object}" />
+          <FluentCheck name="occupied(omroncamerasystem, mim8_0001)" predicate_ref="{Occupied_omronCameraSystem}" predicate_args="&quot;{Param_omronCameraSystem};{Param_MIM8_0001}&quot;" />
+          <FluentCheck name="on(mim8_0001, planarshuttle3)" predicate_ref="{On_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_planarShuttle3}&quot;" />
+          <FluentCheck name="productat(mim8_0001, capturelocation)" predicate_ref="{ProductAt_MIM8_0001_3}" predicate_args="&quot;{Param_MIM8_0001};{Param_captureLocation}&quot;" />
+          <FluentCheck name="step_ready(order_product, step_4_inspection)" predicate_ref="{Predicate_Object}" />
         </ReactiveSequence>
       </Inverter>
       <Action ID="ExecuteAction" name="capture mim8_0001 planarshuttle3" action_args="&quot;{Param_omronCameraSystem};{Param_MIM8_0001};{Param_planarShuttle3};{Param_captureLocation}&quot;" action_ref="{QualityControl_omronCameraSystem}" />
@@ -53,44 +53,44 @@
   <BehaviorTree ID="Dispensing_mim8_0001_planarshuttle3">
     <Sequence name="Dispensing_mim8_0001_planarshuttle3">
       <Inverter name="Inverter">
-        <Condition ID="FluentCheck" name="step_done(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
+        <FluentCheck name="step_done(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
       </Inverter>
-      <Condition ID="FluentCheck" name="step_ready(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
+      <FluentCheck name="step_ready(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
       <Action ID="ExecuteAction" name="dispensing mim8_0001 planarshuttle3" action_args="&quot;{Param_imaDispensingSystem};{Param_MIM8_0001};{Param_planarShuttle3};{Param_dispensingLocation}&quot;" action_ref="{Dispensing_imaDispensingSystem}" />
     </Sequence>
   </BehaviorTree>
   <BehaviorTree ID="Loading_mim8_0001_planarshuttle3">
     <Sequence name="Loading_mim8_0001_planarshuttle3">
       <Inverter name="Inverter">
-        <Condition ID="FluentCheck" name="step_done(order_product, step_1_loading)" predicate_ref="{Predicate_Object}" />
+        <FluentCheck name="step_done(order_product, step_1_loading)" predicate_ref="{Predicate_Object}" />
       </Inverter>
-      <Condition ID="FluentCheck" name="step_ready(order_product, step_1_loading)" predicate_ref="{Predicate_Object}" />
+      <FluentCheck name="step_ready(order_product, step_1_loading)" predicate_ref="{Predicate_Object}" />
       <Inverter name="Inverter">
         <ReactiveSequence name="FSAPCond_loading">
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="finished(mim8_0001)" predicate_ref="{Finished_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001}&quot;" />
+            <FluentCheck name="finished(mim8_0001)" predicate_ref="{Finished_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="productat(mim8_0001, capturelocation)" predicate_ref="{ProductAt_MIM8_0001_3}" predicate_args="&quot;{Param_MIM8_0001};{Param_captureLocation}&quot;" />
+            <FluentCheck name="productat(mim8_0001, capturelocation)" predicate_ref="{ProductAt_MIM8_0001_3}" predicate_args="&quot;{Param_MIM8_0001};{Param_captureLocation}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="productat(mim8_0001, dispensinglocation)" predicate_ref="{ProductAt_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_dispensingLocation}&quot;" />
+            <FluentCheck name="productat(mim8_0001, dispensinglocation)" predicate_ref="{ProductAt_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_dispensingLocation}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="productat(mim8_0001, loadinglocation)" predicate_ref="{ProductAt_MIM8_0001_2}" predicate_args="&quot;{Param_MIM8_0001};{Param_loadingLocation}&quot;" />
+            <FluentCheck name="productat(mim8_0001, loadinglocation)" predicate_ref="{ProductAt_MIM8_0001_2}" predicate_args="&quot;{Param_MIM8_0001};{Param_loadingLocation}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="productat(mim8_0001, stopperinglocation)" predicate_ref="{ProductAt_MIM8_0001_5}" predicate_args="&quot;{Param_MIM8_0001};{Param_stopperingLocation}&quot;" />
+            <FluentCheck name="productat(mim8_0001, stopperinglocation)" predicate_ref="{ProductAt_MIM8_0001_5}" predicate_args="&quot;{Param_MIM8_0001};{Param_stopperingLocation}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="productat(mim8_0001, unloadinglocation)" predicate_ref="{ProductAt_MIM8_0001_4}" predicate_args="&quot;{Param_MIM8_0001};{Param_unloadingLocation}&quot;" />
+            <FluentCheck name="productat(mim8_0001, unloadinglocation)" predicate_ref="{ProductAt_MIM8_0001_4}" predicate_args="&quot;{Param_MIM8_0001};{Param_unloadingLocation}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="step_done(order_product, step_1_loading)" predicate_ref="{Predicate_Object}" />
+            <FluentCheck name="step_done(order_product, step_1_loading)" predicate_ref="{Predicate_Object}" />
           </Inverter>
-          <Condition ID="FluentCheck" name="occupied(imaloadingsystem, mim8_0001)" predicate_ref="{Occupied_imaLoadingSystem}" predicate_args="&quot;{Param_imaLoadingSystem};{Param_MIM8_0001}&quot;" />
-          <Condition ID="FluentCheck" name="resourceat(planarshuttle3, loadinglocation)" predicate_ref="{ResourceAt_planarShuttle3_2}" predicate_args="&quot;{Param_planarShuttle3};{Param_loadingLocation}&quot;" />
-          <Condition ID="FluentCheck" name="step_ready(order_product, step_1_loading)" predicate_ref="{Predicate_Object}" />
+          <FluentCheck name="occupied(imaloadingsystem, mim8_0001)" predicate_ref="{Occupied_imaLoadingSystem}" predicate_args="&quot;{Param_imaLoadingSystem};{Param_MIM8_0001}&quot;" />
+          <FluentCheck name="resourceat(planarshuttle3, loadinglocation)" predicate_ref="{ResourceAt_planarShuttle3_2}" predicate_args="&quot;{Param_planarShuttle3};{Param_loadingLocation}&quot;" />
+          <FluentCheck name="step_ready(order_product, step_1_loading)" predicate_ref="{Predicate_Object}" />
         </ReactiveSequence>
       </Inverter>
       <Action ID="ExecuteAction" name="loading mim8_0001 planarshuttle3" action_args="&quot;{Param_imaLoadingSystem};{Param_MIM8_0001};{Param_planarShuttle3};{Param_loadingLocation}&quot;" action_ref="{Loading_imaLoadingSystem}" />
@@ -99,25 +99,25 @@
   <BehaviorTree ID="Movetopositi_on2_planarshuttl_h0e025a">
     <Sequence name="Movetoposition2_planarshuttle3_mim8_0001_loadinglocation_dispensinglocation_imadispensingsystem">
       <Inverter name="Inverter">
-        <Condition ID="FluentCheck" name="step_done(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
+        <FluentCheck name="step_done(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
       </Inverter>
-      <Condition ID="FluentCheck" name="productat(mim8_0001, loadinglocation)" predicate_ref="{ProductAt_MIM8_0001_2}" predicate_args="&quot;{Param_MIM8_0001};{Param_loadingLocation}&quot;" />
-      <Condition ID="FluentCheck" name="resourceat(planarshuttle3, loadinglocation)" predicate_ref="{ResourceAt_planarShuttle3_2}" predicate_args="&quot;{Param_planarShuttle3};{Param_loadingLocation}&quot;" />
-      <Condition ID="FluentCheck" name="step_ready(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
+      <FluentCheck name="productat(mim8_0001, loadinglocation)" predicate_ref="{ProductAt_MIM8_0001_2}" predicate_args="&quot;{Param_MIM8_0001};{Param_loadingLocation}&quot;" />
+      <FluentCheck name="resourceat(planarshuttle3, loadinglocation)" predicate_ref="{ResourceAt_planarShuttle3_2}" predicate_args="&quot;{Param_planarShuttle3};{Param_loadingLocation}&quot;" />
+      <FluentCheck name="step_ready(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
       <Inverter name="Inverter">
         <ReactiveSequence name="FSAPCond_movetoposition_2">
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="qualityok(mim8_0001, omroncamerasystem)" predicate_ref="{QualityOk_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_omronCameraSystem}&quot;" />
+            <FluentCheck name="qualityok(mim8_0001, omroncamerasystem)" predicate_ref="{QualityOk_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_omronCameraSystem}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+            <FluentCheck name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
           </Inverter>
-          <Condition ID="FluentCheck" name="occupied(imadispensingsystem, mim8_0001)" predicate_ref="{Occupied_imaDispensingSystem}" predicate_args="&quot;{Param_imaDispensingSystem};{Param_MIM8_0001}&quot;" />
-          <Condition ID="FluentCheck" name="occupied(planarshuttle3, mim8_0001)" predicate_ref="{Occupied_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_MIM8_0001}&quot;" />
-          <Condition ID="FluentCheck" name="on(mim8_0001, planarshuttle3)" predicate_ref="{On_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_planarShuttle3}&quot;" />
-          <Condition ID="FluentCheck" name="productat(mim8_0001, loadinglocation)" predicate_ref="{ProductAt_MIM8_0001_2}" predicate_args="&quot;{Param_MIM8_0001};{Param_loadingLocation}&quot;" />
-          <Condition ID="FluentCheck" name="resourceat(planarshuttle3, loadinglocation)" predicate_ref="{ResourceAt_planarShuttle3_2}" predicate_args="&quot;{Param_planarShuttle3};{Param_loadingLocation}&quot;" />
-          <Condition ID="FluentCheck" name="step_ready(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+          <FluentCheck name="occupied(imadispensingsystem, mim8_0001)" predicate_ref="{Occupied_imaDispensingSystem}" predicate_args="&quot;{Param_imaDispensingSystem};{Param_MIM8_0001}&quot;" />
+          <FluentCheck name="occupied(planarshuttle3, mim8_0001)" predicate_ref="{Occupied_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_MIM8_0001}&quot;" />
+          <FluentCheck name="on(mim8_0001, planarshuttle3)" predicate_ref="{On_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_planarShuttle3}&quot;" />
+          <FluentCheck name="productat(mim8_0001, loadinglocation)" predicate_ref="{ProductAt_MIM8_0001_2}" predicate_args="&quot;{Param_MIM8_0001};{Param_loadingLocation}&quot;" />
+          <FluentCheck name="resourceat(planarshuttle3, loadinglocation)" predicate_ref="{ResourceAt_planarShuttle3_2}" predicate_args="&quot;{Param_planarShuttle3};{Param_loadingLocation}&quot;" />
+          <FluentCheck name="step_ready(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
         </ReactiveSequence>
       </Inverter>
       <Action ID="ExecuteAction" name="movetoposition_2 planarshuttle3 mim8_0001 loadinglocation dispensinglocation imadispensingsystem" action_args="&quot;{Param_planarShuttle3};{Param_MIM8_0001};{Param_loadingLocation};{Param_dispensingLocation};{Param_imaDispensingSystem}&quot;" action_ref="{Transport_planarTableShuttle1_2}" />
@@ -126,25 +126,25 @@
   <BehaviorTree ID="Movetopositi_on2_planarshuttl_h1de103">
     <Sequence name="Movetoposition2_planarshuttle3_mim8_0001_dispensinglocation_stopperinglocation_syntegonstopperingsystem">
       <Inverter name="Inverter">
-        <Condition ID="FluentCheck" name="step_done(order_product, step_3_stoppering)" predicate_ref="{Predicate_Object}" />
+        <FluentCheck name="step_done(order_product, step_3_stoppering)" predicate_ref="{Predicate_Object}" />
       </Inverter>
-      <Condition ID="FluentCheck" name="productat(mim8_0001, dispensinglocation)" predicate_ref="{ProductAt_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_dispensingLocation}&quot;" />
-      <Condition ID="FluentCheck" name="resourceat(planarshuttle3, dispensinglocation)" predicate_ref="{ResourceAt_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_dispensingLocation}&quot;" />
-      <Condition ID="FluentCheck" name="step_ready(order_product, step_3_stoppering)" predicate_ref="{Predicate_Object}" />
+      <FluentCheck name="productat(mim8_0001, dispensinglocation)" predicate_ref="{ProductAt_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_dispensingLocation}&quot;" />
+      <FluentCheck name="resourceat(planarshuttle3, dispensinglocation)" predicate_ref="{ResourceAt_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_dispensingLocation}&quot;" />
+      <FluentCheck name="step_ready(order_product, step_3_stoppering)" predicate_ref="{Predicate_Object}" />
       <Inverter name="Inverter">
         <ReactiveSequence name="FSAPCond_movetoposition_2">
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="qualityok(mim8_0001, omroncamerasystem)" predicate_ref="{QualityOk_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_omronCameraSystem}&quot;" />
+            <FluentCheck name="qualityok(mim8_0001, omroncamerasystem)" predicate_ref="{QualityOk_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_omronCameraSystem}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+            <FluentCheck name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
           </Inverter>
-          <Condition ID="FluentCheck" name="occupied(planarshuttle3, mim8_0001)" predicate_ref="{Occupied_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_MIM8_0001}&quot;" />
-          <Condition ID="FluentCheck" name="occupied(syntegonstopperingsystem, mim8_0001)" predicate_ref="{Occupied_syntegonStopperingSystem}" predicate_args="&quot;{Param_syntegonStopperingSystem};{Param_MIM8_0001}&quot;" />
-          <Condition ID="FluentCheck" name="on(mim8_0001, planarshuttle3)" predicate_ref="{On_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_planarShuttle3}&quot;" />
-          <Condition ID="FluentCheck" name="productat(mim8_0001, dispensinglocation)" predicate_ref="{ProductAt_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_dispensingLocation}&quot;" />
-          <Condition ID="FluentCheck" name="resourceat(planarshuttle3, dispensinglocation)" predicate_ref="{ResourceAt_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_dispensingLocation}&quot;" />
-          <Condition ID="FluentCheck" name="step_ready(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+          <FluentCheck name="occupied(planarshuttle3, mim8_0001)" predicate_ref="{Occupied_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_MIM8_0001}&quot;" />
+          <FluentCheck name="occupied(syntegonstopperingsystem, mim8_0001)" predicate_ref="{Occupied_syntegonStopperingSystem}" predicate_args="&quot;{Param_syntegonStopperingSystem};{Param_MIM8_0001}&quot;" />
+          <FluentCheck name="on(mim8_0001, planarshuttle3)" predicate_ref="{On_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_planarShuttle3}&quot;" />
+          <FluentCheck name="productat(mim8_0001, dispensinglocation)" predicate_ref="{ProductAt_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_dispensingLocation}&quot;" />
+          <FluentCheck name="resourceat(planarshuttle3, dispensinglocation)" predicate_ref="{ResourceAt_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_dispensingLocation}&quot;" />
+          <FluentCheck name="step_ready(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
         </ReactiveSequence>
       </Inverter>
       <Action ID="ExecuteAction" name="movetoposition_2 planarshuttle3 mim8_0001 dispensinglocation stopperinglocation syntegonstopperingsystem" action_args="&quot;{Param_planarShuttle3};{Param_MIM8_0001};{Param_dispensingLocation};{Param_stopperingLocation};{Param_syntegonStopperingSystem}&quot;" action_ref="{Transport_planarTableShuttle1}" />
@@ -152,22 +152,22 @@
   </BehaviorTree>
   <BehaviorTree ID="Movetopositi_on2_planarshuttl_h3b2549">
     <Sequence name="Movetoposition2_planarshuttle3_mim8_0001_capturelocation_unloadinglocation_optimaunloadingsystem">
-      <Condition ID="FluentCheck" name="productat(mim8_0001, capturelocation)" predicate_ref="{ProductAt_MIM8_0001_3}" predicate_args="&quot;{Param_MIM8_0001};{Param_captureLocation}&quot;" />
-      <Condition ID="FluentCheck" name="resourceat(planarshuttle3, capturelocation)" predicate_ref="{ResourceAt_planarShuttle3_3}" predicate_args="&quot;{Param_planarShuttle3};{Param_captureLocation}&quot;" />
+      <FluentCheck name="productat(mim8_0001, capturelocation)" predicate_ref="{ProductAt_MIM8_0001_3}" predicate_args="&quot;{Param_MIM8_0001};{Param_captureLocation}&quot;" />
+      <FluentCheck name="resourceat(planarshuttle3, capturelocation)" predicate_ref="{ResourceAt_planarShuttle3_3}" predicate_args="&quot;{Param_planarShuttle3};{Param_captureLocation}&quot;" />
       <Inverter name="Inverter">
         <ReactiveSequence name="FSAPCond_movetoposition_2">
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="qualityok(mim8_0001, omroncamerasystem)" predicate_ref="{QualityOk_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_omronCameraSystem}&quot;" />
+            <FluentCheck name="qualityok(mim8_0001, omroncamerasystem)" predicate_ref="{QualityOk_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_omronCameraSystem}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+            <FluentCheck name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
           </Inverter>
-          <Condition ID="FluentCheck" name="occupied(optimaunloadingsystem, mim8_0001)" predicate_ref="{Occupied_optimaUnloadingSystem}" predicate_args="&quot;{Param_optimaUnloadingSystem};{Param_MIM8_0001}&quot;" />
-          <Condition ID="FluentCheck" name="occupied(planarshuttle3, mim8_0001)" predicate_ref="{Occupied_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_MIM8_0001}&quot;" />
-          <Condition ID="FluentCheck" name="on(mim8_0001, planarshuttle3)" predicate_ref="{On_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_planarShuttle3}&quot;" />
-          <Condition ID="FluentCheck" name="productat(mim8_0001, capturelocation)" predicate_ref="{ProductAt_MIM8_0001_3}" predicate_args="&quot;{Param_MIM8_0001};{Param_captureLocation}&quot;" />
-          <Condition ID="FluentCheck" name="resourceat(planarshuttle3, capturelocation)" predicate_ref="{ResourceAt_planarShuttle3_3}" predicate_args="&quot;{Param_planarShuttle3};{Param_captureLocation}&quot;" />
-          <Condition ID="FluentCheck" name="step_ready(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+          <FluentCheck name="occupied(optimaunloadingsystem, mim8_0001)" predicate_ref="{Occupied_optimaUnloadingSystem}" predicate_args="&quot;{Param_optimaUnloadingSystem};{Param_MIM8_0001}&quot;" />
+          <FluentCheck name="occupied(planarshuttle3, mim8_0001)" predicate_ref="{Occupied_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_MIM8_0001}&quot;" />
+          <FluentCheck name="on(mim8_0001, planarshuttle3)" predicate_ref="{On_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_planarShuttle3}&quot;" />
+          <FluentCheck name="productat(mim8_0001, capturelocation)" predicate_ref="{ProductAt_MIM8_0001_3}" predicate_args="&quot;{Param_MIM8_0001};{Param_captureLocation}&quot;" />
+          <FluentCheck name="resourceat(planarshuttle3, capturelocation)" predicate_ref="{ResourceAt_planarShuttle3_3}" predicate_args="&quot;{Param_planarShuttle3};{Param_captureLocation}&quot;" />
+          <FluentCheck name="step_ready(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
         </ReactiveSequence>
       </Inverter>
       <Action ID="ExecuteAction" name="movetoposition_2 planarshuttle3 mim8_0001 capturelocation unloadinglocation optimaunloadingsystem" action_args="&quot;{Param_planarShuttle3};{Param_MIM8_0001};{Param_captureLocation};{Param_unloadingLocation};{Param_optimaUnloadingSystem}&quot;" action_ref="{Transport_planarTableShuttle1_3}" />
@@ -176,25 +176,25 @@
   <BehaviorTree ID="Movetopositi_on2_planarshuttl_hd74c8b">
     <Sequence name="Movetoposition2_planarshuttle3_mim8_0001_stopperinglocation_capturelocation_omroncamerasystem">
       <Inverter name="Inverter">
-        <Condition ID="FluentCheck" name="step_done(order_product, step_4_inspection)" predicate_ref="{Predicate_Object}" />
+        <FluentCheck name="step_done(order_product, step_4_inspection)" predicate_ref="{Predicate_Object}" />
       </Inverter>
-      <Condition ID="FluentCheck" name="productat(mim8_0001, stopperinglocation)" predicate_ref="{ProductAt_MIM8_0001_5}" predicate_args="&quot;{Param_MIM8_0001};{Param_stopperingLocation}&quot;" />
-      <Condition ID="FluentCheck" name="resourceat(planarshuttle3, stopperinglocation)" predicate_ref="{ResourceAt_planarShuttle3_5}" predicate_args="&quot;{Param_planarShuttle3};{Param_stopperingLocation}&quot;" />
-      <Condition ID="FluentCheck" name="step_ready(order_product, step_4_inspection)" predicate_ref="{Predicate_Object}" />
+      <FluentCheck name="productat(mim8_0001, stopperinglocation)" predicate_ref="{ProductAt_MIM8_0001_5}" predicate_args="&quot;{Param_MIM8_0001};{Param_stopperingLocation}&quot;" />
+      <FluentCheck name="resourceat(planarshuttle3, stopperinglocation)" predicate_ref="{ResourceAt_planarShuttle3_5}" predicate_args="&quot;{Param_planarShuttle3};{Param_stopperingLocation}&quot;" />
+      <FluentCheck name="step_ready(order_product, step_4_inspection)" predicate_ref="{Predicate_Object}" />
       <Inverter name="Inverter">
         <ReactiveSequence name="FSAPCond_movetoposition_2">
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="qualityok(mim8_0001, omroncamerasystem)" predicate_ref="{QualityOk_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_omronCameraSystem}&quot;" />
+            <FluentCheck name="qualityok(mim8_0001, omroncamerasystem)" predicate_ref="{QualityOk_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_omronCameraSystem}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+            <FluentCheck name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
           </Inverter>
-          <Condition ID="FluentCheck" name="occupied(omroncamerasystem, mim8_0001)" predicate_ref="{Occupied_omronCameraSystem}" predicate_args="&quot;{Param_omronCameraSystem};{Param_MIM8_0001}&quot;" />
-          <Condition ID="FluentCheck" name="occupied(planarshuttle3, mim8_0001)" predicate_ref="{Occupied_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_MIM8_0001}&quot;" />
-          <Condition ID="FluentCheck" name="on(mim8_0001, planarshuttle3)" predicate_ref="{On_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_planarShuttle3}&quot;" />
-          <Condition ID="FluentCheck" name="productat(mim8_0001, stopperinglocation)" predicate_ref="{ProductAt_MIM8_0001_5}" predicate_args="&quot;{Param_MIM8_0001};{Param_stopperingLocation}&quot;" />
-          <Condition ID="FluentCheck" name="resourceat(planarshuttle3, stopperinglocation)" predicate_ref="{ResourceAt_planarShuttle3_5}" predicate_args="&quot;{Param_planarShuttle3};{Param_stopperingLocation}&quot;" />
-          <Condition ID="FluentCheck" name="step_ready(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+          <FluentCheck name="occupied(omroncamerasystem, mim8_0001)" predicate_ref="{Occupied_omronCameraSystem}" predicate_args="&quot;{Param_omronCameraSystem};{Param_MIM8_0001}&quot;" />
+          <FluentCheck name="occupied(planarshuttle3, mim8_0001)" predicate_ref="{Occupied_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_MIM8_0001}&quot;" />
+          <FluentCheck name="on(mim8_0001, planarshuttle3)" predicate_ref="{On_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_planarShuttle3}&quot;" />
+          <FluentCheck name="productat(mim8_0001, stopperinglocation)" predicate_ref="{ProductAt_MIM8_0001_5}" predicate_args="&quot;{Param_MIM8_0001};{Param_stopperingLocation}&quot;" />
+          <FluentCheck name="resourceat(planarshuttle3, stopperinglocation)" predicate_ref="{ResourceAt_planarShuttle3_5}" predicate_args="&quot;{Param_planarShuttle3};{Param_stopperingLocation}&quot;" />
+          <FluentCheck name="step_ready(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
         </ReactiveSequence>
       </Inverter>
       <Action ID="ExecuteAction" name="movetoposition_2 planarshuttle3 mim8_0001 stopperinglocation capturelocation omroncamerasystem" action_args="&quot;{Param_planarShuttle3};{Param_MIM8_0001};{Param_stopperingLocation};{Param_captureLocation};{Param_omronCameraSystem}&quot;" action_ref="{Transport_planarTableShuttle1_4}" />
@@ -202,38 +202,51 @@
   </BehaviorTree>
   <BehaviorTree ID="Movetopositi_on_planarshuttle_h50a83f">
     <Sequence name="Movetoposition_planarshuttle3_initiallocation3_loadinglocation">
-      <Condition ID="FluentCheck" name="free(planarshuttle3)" predicate_ref="{Free_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3}&quot;" />
+      <FluentCheck name="free(planarshuttle3)" predicate_ref="{Free_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3}&quot;" />
       <Inverter name="Inverter">
-        <Condition ID="FluentCheck" name="occupied(imaloadingsystem, mim8_0001)" predicate_ref="{Occupied_imaLoadingSystem}" predicate_args="&quot;{Param_imaLoadingSystem};{Param_MIM8_0001}&quot;" />
+        <FluentCheck name="occupied(imaloadingsystem, mim8_0001)" predicate_ref="{Occupied_imaLoadingSystem}" predicate_args="&quot;{Param_imaLoadingSystem};{Param_MIM8_0001}&quot;" />
       </Inverter>
       <Inverter name="Inverter">
-        <Condition ID="FluentCheck" name="step_done(order_product, step_1_loading)" predicate_ref="{Predicate_Object}" />
+        <FluentCheck name="step_done(order_product, step_1_loading)" predicate_ref="{Predicate_Object}" />
       </Inverter>
-      <Condition ID="FluentCheck" name="resourceat(planarshuttle3, initiallocation3)" predicate_ref="{ResourceAt_planarShuttle3_4}" predicate_args="&quot;{Param_planarShuttle3};{Param_initialLocation3}&quot;" />
-      <Condition ID="FluentCheck" name="step_ready(order_product, step_1_loading)" predicate_ref="{Predicate_Object}" />
+      <FluentCheck name="resourceat(planarshuttle3, initiallocation3)" predicate_ref="{ResourceAt_planarShuttle3_4}" predicate_args="&quot;{Param_planarShuttle3};{Param_initialLocation3}&quot;" />
+      <FluentCheck name="step_ready(order_product, step_1_loading)" predicate_ref="{Predicate_Object}" />
       <Inverter name="Inverter">
         <ReactiveSequence name="FSAPCond_movetoposition">
-          <Condition ID="FluentCheck" name="free(planarshuttle3)" predicate_ref="{Free_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3}&quot;" />
+          <FluentCheck name="free(planarshuttle3)" predicate_ref="{Free_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3}&quot;" />
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="finished(mim8_0001)" predicate_ref="{Finished_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001}&quot;" />
+            <FluentCheck name="finished(mim8_0001)" predicate_ref="{Finished_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="productat(mim8_0001, capturelocation)" predicate_ref="{ProductAt_MIM8_0001_3}" predicate_args="&quot;{Param_MIM8_0001};{Param_captureLocation}&quot;" />
+            <FluentCheck name="productat(mim8_0001, capturelocation)" predicate_ref="{ProductAt_MIM8_0001_3}" predicate_args="&quot;{Param_MIM8_0001};{Param_captureLocation}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="productat(mim8_0001, dispensinglocation)" predicate_ref="{ProductAt_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_dispensingLocation}&quot;" />
+            <FluentCheck name="productat(mim8_0001, dispensinglocation)" predicate_ref="{ProductAt_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_dispensingLocation}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="productat(mim8_0001, loadinglocation)" predicate_ref="{ProductAt_MIM8_0001_2}" predicate_args="&quot;{Param_MIM8_0001};{Param_loadingLocation}&quot;" />
+            <FluentCheck name="productat(mim8_0001, loadinglocation)" predicate_ref="{ProductAt_MIM8_0001_2}" predicate_args="&quot;{Param_MIM8_0001};{Param_loadingLocation}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="productat(mim8_0001, stopperinglocation)" predicate_ref="{ProductAt_MIM8_0001_5}" predicate_args="&quot;{Param_MIM8_0001};{Param_stopperingLocation}&quot;" />
+            <FluentCheck name="productat(mim8_0001, stopperinglocation)" predicate_ref="{ProductAt_MIM8_0001_5}" predicate_args="&quot;{Param_MIM8_0001};{Param_stopperingLocation}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="productat(mim8_0001, unloadinglocation)" predicate_ref="{ProductAt_MIM8_0001_4}" predicate_args="&quot;{Param_MIM8_0001};{Param_unloadingLocation}&quot;" />
+            <FluentCheck name="productat(mim8_0001, unloadinglocation)" predicate_ref="{ProductAt_MIM8_0001_4}" predicate_args="&quot;{Param_MIM8_0001};{Param_unloadingLocation}&quot;" />
           </Inverter>
-          <Condition ID="FluentCheck" name="resourceat(planarshuttle3, initiallocation3)" predicate_ref="{ResourceAt_planarShuttle3_4}" predicate_args="&quot;{Param_planarShuttle3};{Param_initialLocation3}&quot;" />
-          <Condition ID="FluentCheck" name="step_ready(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
+          <FluentCheck name="resourceat(planarshuttle3, initiallocation3)" predicate_ref="{ResourceAt_planarShuttle3_4}" predicate_args="&quot;{Param_planarShuttle3};{Param_initialLocation3}&quot;" />
+          <FluentCheck name="step_ready(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
+        </ReactiveSequence>
+      </Inverter>
+      <Inverter name="Inverter">
+        <ReactiveSequence name="FSAPCond_movetoposition">
+          <FluentCheck name="free(planarshuttle3)" predicate_ref="{Free_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3}&quot;" />
+          <Inverter name="Inverter">
+            <FluentCheck name="qualityok(mim8_0001, omroncamerasystem)" predicate_ref="{QualityOk_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_omronCameraSystem}&quot;" />
+          </Inverter>
+          <Inverter name="Inverter">
+            <FluentCheck name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+          </Inverter>
+          <FluentCheck name="resourceat(planarshuttle3, initiallocation3)" predicate_ref="{ResourceAt_planarShuttle3_4}" predicate_args="&quot;{Param_planarShuttle3};{Param_initialLocation3}&quot;" />
+          <FluentCheck name="step_ready(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
         </ReactiveSequence>
       </Inverter>
       <Inverter name="Inverter">
@@ -255,52 +268,52 @@
   <BehaviorTree ID="Occupy3_mim8_0001">
     <Sequence name="Occupy3_mim8_0001">
       <Inverter name="Inverter">
-        <Condition ID="FluentCheck" name="occupied(planarshuttle3, mim8_0001)" predicate_ref="{Occupied_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_MIM8_0001}&quot;" />
+        <FluentCheck name="occupied(planarshuttle3, mim8_0001)" predicate_ref="{Occupied_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_MIM8_0001}&quot;" />
       </Inverter>
       <Inverter name="Inverter">
-        <Condition ID="FluentCheck" name="step_done(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
+        <FluentCheck name="step_done(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
       </Inverter>
-      <Condition ID="FluentCheck" name="productat(mim8_0001, loadinglocation)" predicate_ref="{ProductAt_MIM8_0001_2}" predicate_args="&quot;{Param_MIM8_0001};{Param_loadingLocation}&quot;" />
-      <Condition ID="FluentCheck" name="resourceat(planarshuttle3, loadinglocation)" predicate_ref="{ResourceAt_planarShuttle3_2}" predicate_args="&quot;{Param_planarShuttle3};{Param_loadingLocation}&quot;" />
-      <Condition ID="FluentCheck" name="step_ready(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
+      <FluentCheck name="productat(mim8_0001, loadinglocation)" predicate_ref="{ProductAt_MIM8_0001_2}" predicate_args="&quot;{Param_MIM8_0001};{Param_loadingLocation}&quot;" />
+      <FluentCheck name="resourceat(planarshuttle3, loadinglocation)" predicate_ref="{ResourceAt_planarShuttle3_2}" predicate_args="&quot;{Param_planarShuttle3};{Param_loadingLocation}&quot;" />
+      <FluentCheck name="step_ready(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
       <Inverter name="Inverter">
         <ReactiveSequence name="FSAPCond_occupy_3">
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="finished(mim8_0001)" predicate_ref="{Finished_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001}&quot;" />
+            <FluentCheck name="finished(mim8_0001)" predicate_ref="{Finished_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="occupied(planarshuttle3, mim8_0001)" predicate_ref="{Occupied_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_MIM8_0001}&quot;" />
+            <FluentCheck name="occupied(planarshuttle3, mim8_0001)" predicate_ref="{Occupied_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_MIM8_0001}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="productat(mim8_0001, capturelocation)" predicate_ref="{ProductAt_MIM8_0001_3}" predicate_args="&quot;{Param_MIM8_0001};{Param_captureLocation}&quot;" />
+            <FluentCheck name="productat(mim8_0001, capturelocation)" predicate_ref="{ProductAt_MIM8_0001_3}" predicate_args="&quot;{Param_MIM8_0001};{Param_captureLocation}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="productat(mim8_0001, dispensinglocation)" predicate_ref="{ProductAt_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_dispensingLocation}&quot;" />
+            <FluentCheck name="productat(mim8_0001, dispensinglocation)" predicate_ref="{ProductAt_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_dispensingLocation}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="productat(mim8_0001, loadinglocation)" predicate_ref="{ProductAt_MIM8_0001_2}" predicate_args="&quot;{Param_MIM8_0001};{Param_loadingLocation}&quot;" />
+            <FluentCheck name="productat(mim8_0001, loadinglocation)" predicate_ref="{ProductAt_MIM8_0001_2}" predicate_args="&quot;{Param_MIM8_0001};{Param_loadingLocation}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="productat(mim8_0001, stopperinglocation)" predicate_ref="{ProductAt_MIM8_0001_5}" predicate_args="&quot;{Param_MIM8_0001};{Param_stopperingLocation}&quot;" />
+            <FluentCheck name="productat(mim8_0001, stopperinglocation)" predicate_ref="{ProductAt_MIM8_0001_5}" predicate_args="&quot;{Param_MIM8_0001};{Param_stopperingLocation}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="productat(mim8_0001, unloadinglocation)" predicate_ref="{ProductAt_MIM8_0001_4}" predicate_args="&quot;{Param_MIM8_0001};{Param_unloadingLocation}&quot;" />
+            <FluentCheck name="productat(mim8_0001, unloadinglocation)" predicate_ref="{ProductAt_MIM8_0001_4}" predicate_args="&quot;{Param_MIM8_0001};{Param_unloadingLocation}&quot;" />
           </Inverter>
-          <Condition ID="FluentCheck" name="step_ready(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
+          <FluentCheck name="step_ready(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
         </ReactiveSequence>
       </Inverter>
       <Inverter name="Inverter">
         <ReactiveSequence name="FSAPCond_occupy_3">
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="occupied(planarshuttle3, mim8_0001)" predicate_ref="{Occupied_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_MIM8_0001}&quot;" />
+            <FluentCheck name="occupied(planarshuttle3, mim8_0001)" predicate_ref="{Occupied_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_MIM8_0001}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="qualityok(mim8_0001, omroncamerasystem)" predicate_ref="{QualityOk_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_omronCameraSystem}&quot;" />
+            <FluentCheck name="qualityok(mim8_0001, omroncamerasystem)" predicate_ref="{QualityOk_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_omronCameraSystem}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+            <FluentCheck name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
           </Inverter>
-          <Condition ID="FluentCheck" name="step_ready(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+          <FluentCheck name="step_ready(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
         </ReactiveSequence>
       </Inverter>
       <Action ID="ExecuteAction" name="occupy_3 mim8_0001" action_args="&quot;{Param_planarShuttle3};{Param_MIM8_0001}&quot;" action_ref="{Occupy_planarTableShuttle3}" />
@@ -309,41 +322,41 @@
   <BehaviorTree ID="Occupy4_mim8_0001">
     <Sequence name="Occupy4_mim8_0001">
       <Inverter name="Inverter">
-        <Condition ID="FluentCheck" name="occupied(imadispensingsystem, mim8_0001)" predicate_ref="{Occupied_imaDispensingSystem}" predicate_args="&quot;{Param_imaDispensingSystem};{Param_MIM8_0001}&quot;" />
+        <FluentCheck name="occupied(imadispensingsystem, mim8_0001)" predicate_ref="{Occupied_imaDispensingSystem}" predicate_args="&quot;{Param_imaDispensingSystem};{Param_MIM8_0001}&quot;" />
       </Inverter>
       <Inverter name="Inverter">
-        <Condition ID="FluentCheck" name="occupied(planarshuttle3, mim8_0001)" predicate_ref="{Occupied_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_MIM8_0001}&quot;" />
+        <FluentCheck name="occupied(planarshuttle3, mim8_0001)" predicate_ref="{Occupied_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_MIM8_0001}&quot;" />
       </Inverter>
       <Inverter name="Inverter">
-        <Condition ID="FluentCheck" name="step_done(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
+        <FluentCheck name="step_done(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
       </Inverter>
-      <Condition ID="FluentCheck" name="productat(mim8_0001, loadinglocation)" predicate_ref="{ProductAt_MIM8_0001_2}" predicate_args="&quot;{Param_MIM8_0001};{Param_loadingLocation}&quot;" />
-      <Condition ID="FluentCheck" name="resourceat(planarshuttle3, loadinglocation)" predicate_ref="{ResourceAt_planarShuttle3_2}" predicate_args="&quot;{Param_planarShuttle3};{Param_loadingLocation}&quot;" />
-      <Condition ID="FluentCheck" name="step_ready(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
+      <FluentCheck name="productat(mim8_0001, loadinglocation)" predicate_ref="{ProductAt_MIM8_0001_2}" predicate_args="&quot;{Param_MIM8_0001};{Param_loadingLocation}&quot;" />
+      <FluentCheck name="resourceat(planarshuttle3, loadinglocation)" predicate_ref="{ResourceAt_planarShuttle3_2}" predicate_args="&quot;{Param_planarShuttle3};{Param_loadingLocation}&quot;" />
+      <FluentCheck name="step_ready(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
       <Inverter name="Inverter">
         <ReactiveSequence name="FSAPCond_occupy_4">
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="finished(mim8_0001)" predicate_ref="{Finished_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001}&quot;" />
+            <FluentCheck name="finished(mim8_0001)" predicate_ref="{Finished_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="occupied(imadispensingsystem, mim8_0001)" predicate_ref="{Occupied_imaDispensingSystem}" predicate_args="&quot;{Param_imaDispensingSystem};{Param_MIM8_0001}&quot;" />
+            <FluentCheck name="occupied(imadispensingsystem, mim8_0001)" predicate_ref="{Occupied_imaDispensingSystem}" predicate_args="&quot;{Param_imaDispensingSystem};{Param_MIM8_0001}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="productat(mim8_0001, capturelocation)" predicate_ref="{ProductAt_MIM8_0001_3}" predicate_args="&quot;{Param_MIM8_0001};{Param_captureLocation}&quot;" />
+            <FluentCheck name="productat(mim8_0001, capturelocation)" predicate_ref="{ProductAt_MIM8_0001_3}" predicate_args="&quot;{Param_MIM8_0001};{Param_captureLocation}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="productat(mim8_0001, dispensinglocation)" predicate_ref="{ProductAt_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_dispensingLocation}&quot;" />
+            <FluentCheck name="productat(mim8_0001, dispensinglocation)" predicate_ref="{ProductAt_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_dispensingLocation}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="productat(mim8_0001, loadinglocation)" predicate_ref="{ProductAt_MIM8_0001_2}" predicate_args="&quot;{Param_MIM8_0001};{Param_loadingLocation}&quot;" />
+            <FluentCheck name="productat(mim8_0001, loadinglocation)" predicate_ref="{ProductAt_MIM8_0001_2}" predicate_args="&quot;{Param_MIM8_0001};{Param_loadingLocation}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="productat(mim8_0001, stopperinglocation)" predicate_ref="{ProductAt_MIM8_0001_5}" predicate_args="&quot;{Param_MIM8_0001};{Param_stopperingLocation}&quot;" />
+            <FluentCheck name="productat(mim8_0001, stopperinglocation)" predicate_ref="{ProductAt_MIM8_0001_5}" predicate_args="&quot;{Param_MIM8_0001};{Param_stopperingLocation}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="productat(mim8_0001, unloadinglocation)" predicate_ref="{ProductAt_MIM8_0001_4}" predicate_args="&quot;{Param_MIM8_0001};{Param_unloadingLocation}&quot;" />
+            <FluentCheck name="productat(mim8_0001, unloadinglocation)" predicate_ref="{ProductAt_MIM8_0001_4}" predicate_args="&quot;{Param_MIM8_0001};{Param_unloadingLocation}&quot;" />
           </Inverter>
-          <Condition ID="FluentCheck" name="step_ready(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
+          <FluentCheck name="step_ready(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
         </ReactiveSequence>
       </Inverter>
       <Action ID="ExecuteAction" name="occupy_4 mim8_0001" action_args="&quot;{Param_imaDispensingSystem};{Param_MIM8_0001}&quot;" action_ref="{Occupy_imaDispensingSystem}" />
@@ -352,55 +365,55 @@
   <BehaviorTree ID="Occupy5_mim8_0001">
     <Sequence name="Occupy5_mim8_0001">
       <Inverter name="Inverter">
-        <Condition ID="FluentCheck" name="occupied(syntegonstopperingsystem, mim8_0001)" predicate_ref="{Occupied_syntegonStopperingSystem}" predicate_args="&quot;{Param_syntegonStopperingSystem};{Param_MIM8_0001}&quot;" />
+        <FluentCheck name="occupied(syntegonstopperingsystem, mim8_0001)" predicate_ref="{Occupied_syntegonStopperingSystem}" predicate_args="&quot;{Param_syntegonStopperingSystem};{Param_MIM8_0001}&quot;" />
       </Inverter>
       <Inverter name="Inverter">
-        <Condition ID="FluentCheck" name="step_done(order_product, step_3_stoppering)" predicate_ref="{Predicate_Object}" />
+        <FluentCheck name="step_done(order_product, step_3_stoppering)" predicate_ref="{Predicate_Object}" />
       </Inverter>
-      <Condition ID="FluentCheck" name="productat(mim8_0001, dispensinglocation)" predicate_ref="{ProductAt_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_dispensingLocation}&quot;" />
-      <Condition ID="FluentCheck" name="resourceat(planarshuttle3, dispensinglocation)" predicate_ref="{ResourceAt_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_dispensingLocation}&quot;" />
-      <Condition ID="FluentCheck" name="step_ready(order_product, step_3_stoppering)" predicate_ref="{Predicate_Object}" />
+      <FluentCheck name="productat(mim8_0001, dispensinglocation)" predicate_ref="{ProductAt_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_dispensingLocation}&quot;" />
+      <FluentCheck name="resourceat(planarshuttle3, dispensinglocation)" predicate_ref="{ResourceAt_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_dispensingLocation}&quot;" />
+      <FluentCheck name="step_ready(order_product, step_3_stoppering)" predicate_ref="{Predicate_Object}" />
       <Action ID="ExecuteAction" name="occupy_5 mim8_0001" action_args="&quot;{Param_syntegonStopperingSystem};{Param_MIM8_0001}&quot;" action_ref="{Occupy_syntegonStopperingSystem}" />
     </Sequence>
   </BehaviorTree>
   <BehaviorTree ID="Occupy6_mim8_0001">
     <Sequence name="Occupy6_mim8_0001">
       <Inverter name="Inverter">
-        <Condition ID="FluentCheck" name="occupied(imaloadingsystem, mim8_0001)" predicate_ref="{Occupied_imaLoadingSystem}" predicate_args="&quot;{Param_imaLoadingSystem};{Param_MIM8_0001}&quot;" />
+        <FluentCheck name="occupied(imaloadingsystem, mim8_0001)" predicate_ref="{Occupied_imaLoadingSystem}" predicate_args="&quot;{Param_imaLoadingSystem};{Param_MIM8_0001}&quot;" />
       </Inverter>
       <Inverter name="Inverter">
-        <Condition ID="FluentCheck" name="step_done(order_product, step_1_loading)" predicate_ref="{Predicate_Object}" />
+        <FluentCheck name="step_done(order_product, step_1_loading)" predicate_ref="{Predicate_Object}" />
       </Inverter>
-      <Condition ID="FluentCheck" name="step_ready(order_product, step_1_loading)" predicate_ref="{Predicate_Object}" />
+      <FluentCheck name="step_ready(order_product, step_1_loading)" predicate_ref="{Predicate_Object}" />
       <Action ID="ExecuteAction" name="occupy_6 mim8_0001" action_args="&quot;{Param_imaLoadingSystem};{Param_MIM8_0001}&quot;" action_ref="{Occupy_imaLoadingSystem}" />
     </Sequence>
   </BehaviorTree>
   <BehaviorTree ID="Occupy7_mim8_0001">
     <Sequence name="Occupy7_mim8_0001">
       <Inverter name="Inverter">
-        <Condition ID="FluentCheck" name="occupied(optimaunloadingsystem, mim8_0001)" predicate_ref="{Occupied_optimaUnloadingSystem}" predicate_args="&quot;{Param_optimaUnloadingSystem};{Param_MIM8_0001}&quot;" />
+        <FluentCheck name="occupied(optimaunloadingsystem, mim8_0001)" predicate_ref="{Occupied_optimaUnloadingSystem}" predicate_args="&quot;{Param_optimaUnloadingSystem};{Param_MIM8_0001}&quot;" />
       </Inverter>
       <Inverter name="Inverter">
-        <Condition ID="FluentCheck" name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+        <FluentCheck name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
       </Inverter>
-      <Condition ID="FluentCheck" name="occupied(planarshuttle3, mim8_0001)" predicate_ref="{Occupied_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_MIM8_0001}&quot;" />
-      <Condition ID="FluentCheck" name="on(mim8_0001, planarshuttle3)" predicate_ref="{On_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_planarShuttle3}&quot;" />
-      <Condition ID="FluentCheck" name="productat(mim8_0001, capturelocation)" predicate_ref="{ProductAt_MIM8_0001_3}" predicate_args="&quot;{Param_MIM8_0001};{Param_captureLocation}&quot;" />
-      <Condition ID="FluentCheck" name="qualityok(mim8_0001, omroncamerasystem)" predicate_ref="{QualityOk_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_omronCameraSystem}&quot;" />
-      <Condition ID="FluentCheck" name="resourceat(planarshuttle3, capturelocation)" predicate_ref="{ResourceAt_planarShuttle3_3}" predicate_args="&quot;{Param_planarShuttle3};{Param_captureLocation}&quot;" />
-      <Condition ID="FluentCheck" name="step_ready(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+      <FluentCheck name="occupied(planarshuttle3, mim8_0001)" predicate_ref="{Occupied_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_MIM8_0001}&quot;" />
+      <FluentCheck name="on(mim8_0001, planarshuttle3)" predicate_ref="{On_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_planarShuttle3}&quot;" />
+      <FluentCheck name="productat(mim8_0001, capturelocation)" predicate_ref="{ProductAt_MIM8_0001_3}" predicate_args="&quot;{Param_MIM8_0001};{Param_captureLocation}&quot;" />
+      <FluentCheck name="qualityok(mim8_0001, omroncamerasystem)" predicate_ref="{QualityOk_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_omronCameraSystem}&quot;" />
+      <FluentCheck name="resourceat(planarshuttle3, capturelocation)" predicate_ref="{ResourceAt_planarShuttle3_3}" predicate_args="&quot;{Param_planarShuttle3};{Param_captureLocation}&quot;" />
+      <FluentCheck name="step_ready(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
       <Inverter name="Inverter">
         <ReactiveSequence name="FSAPCond_occupy_7">
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="occupied(optimaunloadingsystem, mim8_0001)" predicate_ref="{Occupied_optimaUnloadingSystem}" predicate_args="&quot;{Param_optimaUnloadingSystem};{Param_MIM8_0001}&quot;" />
+            <FluentCheck name="occupied(optimaunloadingsystem, mim8_0001)" predicate_ref="{Occupied_optimaUnloadingSystem}" predicate_args="&quot;{Param_optimaUnloadingSystem};{Param_MIM8_0001}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="qualityok(mim8_0001, omroncamerasystem)" predicate_ref="{QualityOk_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_omronCameraSystem}&quot;" />
+            <FluentCheck name="qualityok(mim8_0001, omroncamerasystem)" predicate_ref="{QualityOk_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_omronCameraSystem}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+            <FluentCheck name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
           </Inverter>
-          <Condition ID="FluentCheck" name="step_ready(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+          <FluentCheck name="step_ready(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
         </ReactiveSequence>
       </Inverter>
       <Action ID="ExecuteAction" name="occupy_7 mim8_0001" action_args="&quot;{Param_optimaUnloadingSystem};{Param_MIM8_0001}&quot;" action_ref="{Occupy_optimaUnloadingSystem}" />
@@ -409,21 +422,21 @@
   <BehaviorTree ID="Occupy8_mim8_0001">
     <Sequence name="Occupy8_mim8_0001">
       <Inverter name="Inverter">
-        <Condition ID="FluentCheck" name="occupied(omroncamerasystem, mim8_0001)" predicate_ref="{Occupied_omronCameraSystem}" predicate_args="&quot;{Param_omronCameraSystem};{Param_MIM8_0001}&quot;" />
+        <FluentCheck name="occupied(omroncamerasystem, mim8_0001)" predicate_ref="{Occupied_omronCameraSystem}" predicate_args="&quot;{Param_omronCameraSystem};{Param_MIM8_0001}&quot;" />
       </Inverter>
       <Inverter name="Inverter">
-        <Condition ID="FluentCheck" name="step_done(order_product, step_4_inspection)" predicate_ref="{Predicate_Object}" />
+        <FluentCheck name="step_done(order_product, step_4_inspection)" predicate_ref="{Predicate_Object}" />
       </Inverter>
-      <Condition ID="FluentCheck" name="productat(mim8_0001, stopperinglocation)" predicate_ref="{ProductAt_MIM8_0001_5}" predicate_args="&quot;{Param_MIM8_0001};{Param_stopperingLocation}&quot;" />
-      <Condition ID="FluentCheck" name="resourceat(planarshuttle3, stopperinglocation)" predicate_ref="{ResourceAt_planarShuttle3_5}" predicate_args="&quot;{Param_planarShuttle3};{Param_stopperingLocation}&quot;" />
-      <Condition ID="FluentCheck" name="step_ready(order_product, step_4_inspection)" predicate_ref="{Predicate_Object}" />
+      <FluentCheck name="productat(mim8_0001, stopperinglocation)" predicate_ref="{ProductAt_MIM8_0001_5}" predicate_args="&quot;{Param_MIM8_0001};{Param_stopperingLocation}&quot;" />
+      <FluentCheck name="resourceat(planarshuttle3, stopperinglocation)" predicate_ref="{ResourceAt_planarShuttle3_5}" predicate_args="&quot;{Param_planarShuttle3};{Param_stopperingLocation}&quot;" />
+      <FluentCheck name="step_ready(order_product, step_4_inspection)" predicate_ref="{Predicate_Object}" />
       <Action ID="ExecuteAction" name="occupy_8 mim8_0001" action_args="&quot;{Param_omronCameraSystem};{Param_MIM8_0001}&quot;" action_ref="{Occupy_omronCameraSystem}" />
     </Sequence>
   </BehaviorTree>
   <BehaviorTree ID="PolicyRules">
     <Sequence name="PolicyRules">
-      <Condition ID="FluentCheck" name="free(planarshuttle1)" predicate_ref="{Free_planarShuttle1}" predicate_args="&quot;{Param_planarShuttle1}&quot;" />
-      <Condition ID="FluentCheck" name="free(planarshuttle2)" predicate_ref="{Free_planarShuttle2}" predicate_args="&quot;{Param_planarShuttle2}&quot;" />
+      <FluentCheck name="free(planarshuttle1)" predicate_ref="{Free_planarShuttle1}" predicate_args="&quot;{Param_planarShuttle1}&quot;" />
+      <FluentCheck name="free(planarshuttle2)" predicate_ref="{Free_planarShuttle2}" predicate_args="&quot;{Param_planarShuttle2}&quot;" />
       <SubTree ID="Progression" />
     </Sequence>
   </BehaviorTree>
@@ -555,41 +568,41 @@
   </BehaviorTree>
   <BehaviorTree ID="Release3_mim8_0001">
     <Sequence name="Release3_mim8_0001">
-      <Condition ID="FluentCheck" name="productat(mim8_0001, unloadinglocation)" predicate_ref="{ProductAt_MIM8_0001_4}" predicate_args="&quot;{Param_MIM8_0001};{Param_unloadingLocation}&quot;" />
+      <FluentCheck name="productat(mim8_0001, unloadinglocation)" predicate_ref="{ProductAt_MIM8_0001_4}" predicate_args="&quot;{Param_MIM8_0001};{Param_unloadingLocation}&quot;" />
       <Inverter name="Inverter">
         <ReactiveSequence name="FSAPCond_release_3">
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="finished(mim8_0001)" predicate_ref="{Finished_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001}&quot;" />
+            <FluentCheck name="finished(mim8_0001)" predicate_ref="{Finished_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="productat(mim8_0001, capturelocation)" predicate_ref="{ProductAt_MIM8_0001_3}" predicate_args="&quot;{Param_MIM8_0001};{Param_captureLocation}&quot;" />
+            <FluentCheck name="productat(mim8_0001, capturelocation)" predicate_ref="{ProductAt_MIM8_0001_3}" predicate_args="&quot;{Param_MIM8_0001};{Param_captureLocation}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="productat(mim8_0001, dispensinglocation)" predicate_ref="{ProductAt_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_dispensingLocation}&quot;" />
+            <FluentCheck name="productat(mim8_0001, dispensinglocation)" predicate_ref="{ProductAt_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_dispensingLocation}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="productat(mim8_0001, loadinglocation)" predicate_ref="{ProductAt_MIM8_0001_2}" predicate_args="&quot;{Param_MIM8_0001};{Param_loadingLocation}&quot;" />
+            <FluentCheck name="productat(mim8_0001, loadinglocation)" predicate_ref="{ProductAt_MIM8_0001_2}" predicate_args="&quot;{Param_MIM8_0001};{Param_loadingLocation}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="productat(mim8_0001, stopperinglocation)" predicate_ref="{ProductAt_MIM8_0001_5}" predicate_args="&quot;{Param_MIM8_0001};{Param_stopperingLocation}&quot;" />
+            <FluentCheck name="productat(mim8_0001, stopperinglocation)" predicate_ref="{ProductAt_MIM8_0001_5}" predicate_args="&quot;{Param_MIM8_0001};{Param_stopperingLocation}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="productat(mim8_0001, unloadinglocation)" predicate_ref="{ProductAt_MIM8_0001_4}" predicate_args="&quot;{Param_MIM8_0001};{Param_unloadingLocation}&quot;" />
+            <FluentCheck name="productat(mim8_0001, unloadinglocation)" predicate_ref="{ProductAt_MIM8_0001_4}" predicate_args="&quot;{Param_MIM8_0001};{Param_unloadingLocation}&quot;" />
           </Inverter>
-          <Condition ID="FluentCheck" name="occupied(planarshuttle3, mim8_0001)" predicate_ref="{Occupied_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_MIM8_0001}&quot;" />
-          <Condition ID="FluentCheck" name="step_ready(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
+          <FluentCheck name="occupied(planarshuttle3, mim8_0001)" predicate_ref="{Occupied_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_MIM8_0001}&quot;" />
+          <FluentCheck name="step_ready(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
         </ReactiveSequence>
       </Inverter>
       <Inverter name="Inverter">
         <ReactiveSequence name="FSAPCond_release_3">
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="qualityok(mim8_0001, omroncamerasystem)" predicate_ref="{QualityOk_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_omronCameraSystem}&quot;" />
+            <FluentCheck name="qualityok(mim8_0001, omroncamerasystem)" predicate_ref="{QualityOk_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_omronCameraSystem}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+            <FluentCheck name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
           </Inverter>
-          <Condition ID="FluentCheck" name="occupied(planarshuttle3, mim8_0001)" predicate_ref="{Occupied_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_MIM8_0001}&quot;" />
-          <Condition ID="FluentCheck" name="step_ready(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+          <FluentCheck name="occupied(planarshuttle3, mim8_0001)" predicate_ref="{Occupied_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_MIM8_0001}&quot;" />
+          <FluentCheck name="step_ready(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
         </ReactiveSequence>
       </Inverter>
       <Action ID="ExecuteAction" name="release_3 mim8_0001" action_args="&quot;{Param_planarShuttle3};{Param_MIM8_0001}&quot;" action_ref="{Release_planarTableShuttle3}" />
@@ -597,41 +610,41 @@
   </BehaviorTree>
   <BehaviorTree ID="Release4_mim8_0001">
     <Sequence name="Release4_mim8_0001">
-      <Condition ID="FluentCheck" name="step_ready(order_product, step_3_stoppering)" predicate_ref="{Predicate_Object}" />
+      <FluentCheck name="step_ready(order_product, step_3_stoppering)" predicate_ref="{Predicate_Object}" />
       <Inverter name="Inverter">
         <ReactiveSequence name="FSAPCond_release_4">
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="finished(mim8_0001)" predicate_ref="{Finished_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001}&quot;" />
+            <FluentCheck name="finished(mim8_0001)" predicate_ref="{Finished_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="productat(mim8_0001, capturelocation)" predicate_ref="{ProductAt_MIM8_0001_3}" predicate_args="&quot;{Param_MIM8_0001};{Param_captureLocation}&quot;" />
+            <FluentCheck name="productat(mim8_0001, capturelocation)" predicate_ref="{ProductAt_MIM8_0001_3}" predicate_args="&quot;{Param_MIM8_0001};{Param_captureLocation}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="productat(mim8_0001, dispensinglocation)" predicate_ref="{ProductAt_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_dispensingLocation}&quot;" />
+            <FluentCheck name="productat(mim8_0001, dispensinglocation)" predicate_ref="{ProductAt_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_dispensingLocation}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="productat(mim8_0001, loadinglocation)" predicate_ref="{ProductAt_MIM8_0001_2}" predicate_args="&quot;{Param_MIM8_0001};{Param_loadingLocation}&quot;" />
+            <FluentCheck name="productat(mim8_0001, loadinglocation)" predicate_ref="{ProductAt_MIM8_0001_2}" predicate_args="&quot;{Param_MIM8_0001};{Param_loadingLocation}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="productat(mim8_0001, stopperinglocation)" predicate_ref="{ProductAt_MIM8_0001_5}" predicate_args="&quot;{Param_MIM8_0001};{Param_stopperingLocation}&quot;" />
+            <FluentCheck name="productat(mim8_0001, stopperinglocation)" predicate_ref="{ProductAt_MIM8_0001_5}" predicate_args="&quot;{Param_MIM8_0001};{Param_stopperingLocation}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="productat(mim8_0001, unloadinglocation)" predicate_ref="{ProductAt_MIM8_0001_4}" predicate_args="&quot;{Param_MIM8_0001};{Param_unloadingLocation}&quot;" />
+            <FluentCheck name="productat(mim8_0001, unloadinglocation)" predicate_ref="{ProductAt_MIM8_0001_4}" predicate_args="&quot;{Param_MIM8_0001};{Param_unloadingLocation}&quot;" />
           </Inverter>
-          <Condition ID="FluentCheck" name="occupied(imadispensingsystem, mim8_0001)" predicate_ref="{Occupied_imaDispensingSystem}" predicate_args="&quot;{Param_imaDispensingSystem};{Param_MIM8_0001}&quot;" />
-          <Condition ID="FluentCheck" name="step_ready(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
+          <FluentCheck name="occupied(imadispensingsystem, mim8_0001)" predicate_ref="{Occupied_imaDispensingSystem}" predicate_args="&quot;{Param_imaDispensingSystem};{Param_MIM8_0001}&quot;" />
+          <FluentCheck name="step_ready(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
         </ReactiveSequence>
       </Inverter>
       <Inverter name="Inverter">
         <ReactiveSequence name="FSAPCond_release_4">
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="qualityok(mim8_0001, omroncamerasystem)" predicate_ref="{QualityOk_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_omronCameraSystem}&quot;" />
+            <FluentCheck name="qualityok(mim8_0001, omroncamerasystem)" predicate_ref="{QualityOk_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_omronCameraSystem}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+            <FluentCheck name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
           </Inverter>
-          <Condition ID="FluentCheck" name="occupied(imadispensingsystem, mim8_0001)" predicate_ref="{Occupied_imaDispensingSystem}" predicate_args="&quot;{Param_imaDispensingSystem};{Param_MIM8_0001}&quot;" />
-          <Condition ID="FluentCheck" name="step_ready(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+          <FluentCheck name="occupied(imadispensingsystem, mim8_0001)" predicate_ref="{Occupied_imaDispensingSystem}" predicate_args="&quot;{Param_imaDispensingSystem};{Param_MIM8_0001}&quot;" />
+          <FluentCheck name="step_ready(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
         </ReactiveSequence>
       </Inverter>
       <Action ID="ExecuteAction" name="release_4 mim8_0001" action_args="&quot;{Param_imaDispensingSystem};{Param_MIM8_0001}&quot;" action_ref="{Release_imaDispensingSystem}" />
@@ -639,41 +652,41 @@
   </BehaviorTree>
   <BehaviorTree ID="Release5_mim8_0001">
     <Sequence name="Release5_mim8_0001">
-      <Condition ID="FluentCheck" name="step_ready(order_product, step_4_inspection)" predicate_ref="{Predicate_Object}" />
+      <FluentCheck name="step_ready(order_product, step_4_inspection)" predicate_ref="{Predicate_Object}" />
       <Inverter name="Inverter">
         <ReactiveSequence name="FSAPCond_release_5">
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="finished(mim8_0001)" predicate_ref="{Finished_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001}&quot;" />
+            <FluentCheck name="finished(mim8_0001)" predicate_ref="{Finished_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="productat(mim8_0001, capturelocation)" predicate_ref="{ProductAt_MIM8_0001_3}" predicate_args="&quot;{Param_MIM8_0001};{Param_captureLocation}&quot;" />
+            <FluentCheck name="productat(mim8_0001, capturelocation)" predicate_ref="{ProductAt_MIM8_0001_3}" predicate_args="&quot;{Param_MIM8_0001};{Param_captureLocation}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="productat(mim8_0001, dispensinglocation)" predicate_ref="{ProductAt_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_dispensingLocation}&quot;" />
+            <FluentCheck name="productat(mim8_0001, dispensinglocation)" predicate_ref="{ProductAt_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_dispensingLocation}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="productat(mim8_0001, loadinglocation)" predicate_ref="{ProductAt_MIM8_0001_2}" predicate_args="&quot;{Param_MIM8_0001};{Param_loadingLocation}&quot;" />
+            <FluentCheck name="productat(mim8_0001, loadinglocation)" predicate_ref="{ProductAt_MIM8_0001_2}" predicate_args="&quot;{Param_MIM8_0001};{Param_loadingLocation}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="productat(mim8_0001, stopperinglocation)" predicate_ref="{ProductAt_MIM8_0001_5}" predicate_args="&quot;{Param_MIM8_0001};{Param_stopperingLocation}&quot;" />
+            <FluentCheck name="productat(mim8_0001, stopperinglocation)" predicate_ref="{ProductAt_MIM8_0001_5}" predicate_args="&quot;{Param_MIM8_0001};{Param_stopperingLocation}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="productat(mim8_0001, unloadinglocation)" predicate_ref="{ProductAt_MIM8_0001_4}" predicate_args="&quot;{Param_MIM8_0001};{Param_unloadingLocation}&quot;" />
+            <FluentCheck name="productat(mim8_0001, unloadinglocation)" predicate_ref="{ProductAt_MIM8_0001_4}" predicate_args="&quot;{Param_MIM8_0001};{Param_unloadingLocation}&quot;" />
           </Inverter>
-          <Condition ID="FluentCheck" name="occupied(syntegonstopperingsystem, mim8_0001)" predicate_ref="{Occupied_syntegonStopperingSystem}" predicate_args="&quot;{Param_syntegonStopperingSystem};{Param_MIM8_0001}&quot;" />
-          <Condition ID="FluentCheck" name="step_ready(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
+          <FluentCheck name="occupied(syntegonstopperingsystem, mim8_0001)" predicate_ref="{Occupied_syntegonStopperingSystem}" predicate_args="&quot;{Param_syntegonStopperingSystem};{Param_MIM8_0001}&quot;" />
+          <FluentCheck name="step_ready(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
         </ReactiveSequence>
       </Inverter>
       <Inverter name="Inverter">
         <ReactiveSequence name="FSAPCond_release_5">
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="qualityok(mim8_0001, omroncamerasystem)" predicate_ref="{QualityOk_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_omronCameraSystem}&quot;" />
+            <FluentCheck name="qualityok(mim8_0001, omroncamerasystem)" predicate_ref="{QualityOk_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_omronCameraSystem}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+            <FluentCheck name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
           </Inverter>
-          <Condition ID="FluentCheck" name="occupied(syntegonstopperingsystem, mim8_0001)" predicate_ref="{Occupied_syntegonStopperingSystem}" predicate_args="&quot;{Param_syntegonStopperingSystem};{Param_MIM8_0001}&quot;" />
-          <Condition ID="FluentCheck" name="step_ready(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+          <FluentCheck name="occupied(syntegonstopperingsystem, mim8_0001)" predicate_ref="{Occupied_syntegonStopperingSystem}" predicate_args="&quot;{Param_syntegonStopperingSystem};{Param_MIM8_0001}&quot;" />
+          <FluentCheck name="step_ready(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
         </ReactiveSequence>
       </Inverter>
       <Action ID="ExecuteAction" name="release_5 mim8_0001" action_args="&quot;{Param_syntegonStopperingSystem};{Param_MIM8_0001}&quot;" action_ref="{Release_syntegonStopperingSystem}" />
@@ -681,43 +694,43 @@
   </BehaviorTree>
   <BehaviorTree ID="Release6_mim8_0001">
     <Sequence name="Release6_mim8_0001">
-      <Condition ID="FluentCheck" name="on(mim8_0001, planarshuttle3)" predicate_ref="{On_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_planarShuttle3}&quot;" />
-      <Condition ID="FluentCheck" name="productat(mim8_0001, loadinglocation)" predicate_ref="{ProductAt_MIM8_0001_2}" predicate_args="&quot;{Param_MIM8_0001};{Param_loadingLocation}&quot;" />
-      <Condition ID="FluentCheck" name="step_ready(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
+      <FluentCheck name="on(mim8_0001, planarshuttle3)" predicate_ref="{On_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_planarShuttle3}&quot;" />
+      <FluentCheck name="productat(mim8_0001, loadinglocation)" predicate_ref="{ProductAt_MIM8_0001_2}" predicate_args="&quot;{Param_MIM8_0001};{Param_loadingLocation}&quot;" />
+      <FluentCheck name="step_ready(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
       <Inverter name="Inverter">
         <ReactiveSequence name="FSAPCond_release_6">
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="finished(mim8_0001)" predicate_ref="{Finished_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001}&quot;" />
+            <FluentCheck name="finished(mim8_0001)" predicate_ref="{Finished_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="productat(mim8_0001, capturelocation)" predicate_ref="{ProductAt_MIM8_0001_3}" predicate_args="&quot;{Param_MIM8_0001};{Param_captureLocation}&quot;" />
+            <FluentCheck name="productat(mim8_0001, capturelocation)" predicate_ref="{ProductAt_MIM8_0001_3}" predicate_args="&quot;{Param_MIM8_0001};{Param_captureLocation}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="productat(mim8_0001, dispensinglocation)" predicate_ref="{ProductAt_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_dispensingLocation}&quot;" />
+            <FluentCheck name="productat(mim8_0001, dispensinglocation)" predicate_ref="{ProductAt_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_dispensingLocation}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="productat(mim8_0001, loadinglocation)" predicate_ref="{ProductAt_MIM8_0001_2}" predicate_args="&quot;{Param_MIM8_0001};{Param_loadingLocation}&quot;" />
+            <FluentCheck name="productat(mim8_0001, loadinglocation)" predicate_ref="{ProductAt_MIM8_0001_2}" predicate_args="&quot;{Param_MIM8_0001};{Param_loadingLocation}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="productat(mim8_0001, stopperinglocation)" predicate_ref="{ProductAt_MIM8_0001_5}" predicate_args="&quot;{Param_MIM8_0001};{Param_stopperingLocation}&quot;" />
+            <FluentCheck name="productat(mim8_0001, stopperinglocation)" predicate_ref="{ProductAt_MIM8_0001_5}" predicate_args="&quot;{Param_MIM8_0001};{Param_stopperingLocation}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="productat(mim8_0001, unloadinglocation)" predicate_ref="{ProductAt_MIM8_0001_4}" predicate_args="&quot;{Param_MIM8_0001};{Param_unloadingLocation}&quot;" />
+            <FluentCheck name="productat(mim8_0001, unloadinglocation)" predicate_ref="{ProductAt_MIM8_0001_4}" predicate_args="&quot;{Param_MIM8_0001};{Param_unloadingLocation}&quot;" />
           </Inverter>
-          <Condition ID="FluentCheck" name="occupied(imaloadingsystem, mim8_0001)" predicate_ref="{Occupied_imaLoadingSystem}" predicate_args="&quot;{Param_imaLoadingSystem};{Param_MIM8_0001}&quot;" />
-          <Condition ID="FluentCheck" name="step_ready(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
+          <FluentCheck name="occupied(imaloadingsystem, mim8_0001)" predicate_ref="{Occupied_imaLoadingSystem}" predicate_args="&quot;{Param_imaLoadingSystem};{Param_MIM8_0001}&quot;" />
+          <FluentCheck name="step_ready(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
         </ReactiveSequence>
       </Inverter>
       <Inverter name="Inverter">
         <ReactiveSequence name="FSAPCond_release_6">
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="qualityok(mim8_0001, omroncamerasystem)" predicate_ref="{QualityOk_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_omronCameraSystem}&quot;" />
+            <FluentCheck name="qualityok(mim8_0001, omroncamerasystem)" predicate_ref="{QualityOk_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_omronCameraSystem}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+            <FluentCheck name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
           </Inverter>
-          <Condition ID="FluentCheck" name="occupied(imaloadingsystem, mim8_0001)" predicate_ref="{Occupied_imaLoadingSystem}" predicate_args="&quot;{Param_imaLoadingSystem};{Param_MIM8_0001}&quot;" />
-          <Condition ID="FluentCheck" name="step_ready(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+          <FluentCheck name="occupied(imaloadingsystem, mim8_0001)" predicate_ref="{Occupied_imaLoadingSystem}" predicate_args="&quot;{Param_imaLoadingSystem};{Param_MIM8_0001}&quot;" />
+          <FluentCheck name="step_ready(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
         </ReactiveSequence>
       </Inverter>
       <Action ID="ExecuteAction" name="release_6 mim8_0001" action_args="&quot;{Param_imaLoadingSystem};{Param_MIM8_0001}&quot;" action_ref="{Release_imaLoadingSystem}" />
@@ -725,42 +738,42 @@
   </BehaviorTree>
   <BehaviorTree ID="Release7_mim8_0001">
     <Sequence name="Release7_mim8_0001">
-      <Condition ID="FluentCheck" name="finished(mim8_0001)" predicate_ref="{Finished_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001}&quot;" />
-      <Condition ID="FluentCheck" name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+      <FluentCheck name="finished(mim8_0001)" predicate_ref="{Finished_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001}&quot;" />
+      <FluentCheck name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
       <Inverter name="Inverter">
         <ReactiveSequence name="FSAPCond_release_7">
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="finished(mim8_0001)" predicate_ref="{Finished_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001}&quot;" />
+            <FluentCheck name="finished(mim8_0001)" predicate_ref="{Finished_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="productat(mim8_0001, capturelocation)" predicate_ref="{ProductAt_MIM8_0001_3}" predicate_args="&quot;{Param_MIM8_0001};{Param_captureLocation}&quot;" />
+            <FluentCheck name="productat(mim8_0001, capturelocation)" predicate_ref="{ProductAt_MIM8_0001_3}" predicate_args="&quot;{Param_MIM8_0001};{Param_captureLocation}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="productat(mim8_0001, dispensinglocation)" predicate_ref="{ProductAt_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_dispensingLocation}&quot;" />
+            <FluentCheck name="productat(mim8_0001, dispensinglocation)" predicate_ref="{ProductAt_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_dispensingLocation}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="productat(mim8_0001, loadinglocation)" predicate_ref="{ProductAt_MIM8_0001_2}" predicate_args="&quot;{Param_MIM8_0001};{Param_loadingLocation}&quot;" />
+            <FluentCheck name="productat(mim8_0001, loadinglocation)" predicate_ref="{ProductAt_MIM8_0001_2}" predicate_args="&quot;{Param_MIM8_0001};{Param_loadingLocation}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="productat(mim8_0001, stopperinglocation)" predicate_ref="{ProductAt_MIM8_0001_5}" predicate_args="&quot;{Param_MIM8_0001};{Param_stopperingLocation}&quot;" />
+            <FluentCheck name="productat(mim8_0001, stopperinglocation)" predicate_ref="{ProductAt_MIM8_0001_5}" predicate_args="&quot;{Param_MIM8_0001};{Param_stopperingLocation}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="productat(mim8_0001, unloadinglocation)" predicate_ref="{ProductAt_MIM8_0001_4}" predicate_args="&quot;{Param_MIM8_0001};{Param_unloadingLocation}&quot;" />
+            <FluentCheck name="productat(mim8_0001, unloadinglocation)" predicate_ref="{ProductAt_MIM8_0001_4}" predicate_args="&quot;{Param_MIM8_0001};{Param_unloadingLocation}&quot;" />
           </Inverter>
-          <Condition ID="FluentCheck" name="occupied(optimaunloadingsystem, mim8_0001)" predicate_ref="{Occupied_optimaUnloadingSystem}" predicate_args="&quot;{Param_optimaUnloadingSystem};{Param_MIM8_0001}&quot;" />
-          <Condition ID="FluentCheck" name="step_ready(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
+          <FluentCheck name="occupied(optimaunloadingsystem, mim8_0001)" predicate_ref="{Occupied_optimaUnloadingSystem}" predicate_args="&quot;{Param_optimaUnloadingSystem};{Param_MIM8_0001}&quot;" />
+          <FluentCheck name="step_ready(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
         </ReactiveSequence>
       </Inverter>
       <Inverter name="Inverter">
         <ReactiveSequence name="FSAPCond_release_7">
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="qualityok(mim8_0001, omroncamerasystem)" predicate_ref="{QualityOk_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_omronCameraSystem}&quot;" />
+            <FluentCheck name="qualityok(mim8_0001, omroncamerasystem)" predicate_ref="{QualityOk_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_omronCameraSystem}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+            <FluentCheck name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
           </Inverter>
-          <Condition ID="FluentCheck" name="occupied(optimaunloadingsystem, mim8_0001)" predicate_ref="{Occupied_optimaUnloadingSystem}" predicate_args="&quot;{Param_optimaUnloadingSystem};{Param_MIM8_0001}&quot;" />
-          <Condition ID="FluentCheck" name="step_ready(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+          <FluentCheck name="occupied(optimaunloadingsystem, mim8_0001)" predicate_ref="{Occupied_optimaUnloadingSystem}" predicate_args="&quot;{Param_optimaUnloadingSystem};{Param_MIM8_0001}&quot;" />
+          <FluentCheck name="step_ready(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
         </ReactiveSequence>
       </Inverter>
       <Action ID="ExecuteAction" name="release_7 mim8_0001" action_args="&quot;{Param_optimaUnloadingSystem};{Param_MIM8_0001}&quot;" action_ref="{Release_optimaUnloadingSystem}" />
@@ -768,42 +781,42 @@
   </BehaviorTree>
   <BehaviorTree ID="Release8_mim8_0001">
     <Sequence name="Release8_mim8_0001">
-      <Condition ID="FluentCheck" name="qualityok(mim8_0001, omroncamerasystem)" predicate_ref="{QualityOk_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_omronCameraSystem}&quot;" />
-      <Condition ID="FluentCheck" name="step_ready(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+      <FluentCheck name="qualityok(mim8_0001, omroncamerasystem)" predicate_ref="{QualityOk_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_omronCameraSystem}&quot;" />
+      <FluentCheck name="step_ready(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
       <Inverter name="Inverter">
         <ReactiveSequence name="FSAPCond_release_8">
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="finished(mim8_0001)" predicate_ref="{Finished_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001}&quot;" />
+            <FluentCheck name="finished(mim8_0001)" predicate_ref="{Finished_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="productat(mim8_0001, capturelocation)" predicate_ref="{ProductAt_MIM8_0001_3}" predicate_args="&quot;{Param_MIM8_0001};{Param_captureLocation}&quot;" />
+            <FluentCheck name="productat(mim8_0001, capturelocation)" predicate_ref="{ProductAt_MIM8_0001_3}" predicate_args="&quot;{Param_MIM8_0001};{Param_captureLocation}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="productat(mim8_0001, dispensinglocation)" predicate_ref="{ProductAt_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_dispensingLocation}&quot;" />
+            <FluentCheck name="productat(mim8_0001, dispensinglocation)" predicate_ref="{ProductAt_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_dispensingLocation}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="productat(mim8_0001, loadinglocation)" predicate_ref="{ProductAt_MIM8_0001_2}" predicate_args="&quot;{Param_MIM8_0001};{Param_loadingLocation}&quot;" />
+            <FluentCheck name="productat(mim8_0001, loadinglocation)" predicate_ref="{ProductAt_MIM8_0001_2}" predicate_args="&quot;{Param_MIM8_0001};{Param_loadingLocation}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="productat(mim8_0001, stopperinglocation)" predicate_ref="{ProductAt_MIM8_0001_5}" predicate_args="&quot;{Param_MIM8_0001};{Param_stopperingLocation}&quot;" />
+            <FluentCheck name="productat(mim8_0001, stopperinglocation)" predicate_ref="{ProductAt_MIM8_0001_5}" predicate_args="&quot;{Param_MIM8_0001};{Param_stopperingLocation}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="productat(mim8_0001, unloadinglocation)" predicate_ref="{ProductAt_MIM8_0001_4}" predicate_args="&quot;{Param_MIM8_0001};{Param_unloadingLocation}&quot;" />
+            <FluentCheck name="productat(mim8_0001, unloadinglocation)" predicate_ref="{ProductAt_MIM8_0001_4}" predicate_args="&quot;{Param_MIM8_0001};{Param_unloadingLocation}&quot;" />
           </Inverter>
-          <Condition ID="FluentCheck" name="occupied(omroncamerasystem, mim8_0001)" predicate_ref="{Occupied_omronCameraSystem}" predicate_args="&quot;{Param_omronCameraSystem};{Param_MIM8_0001}&quot;" />
-          <Condition ID="FluentCheck" name="step_ready(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
+          <FluentCheck name="occupied(omroncamerasystem, mim8_0001)" predicate_ref="{Occupied_omronCameraSystem}" predicate_args="&quot;{Param_omronCameraSystem};{Param_MIM8_0001}&quot;" />
+          <FluentCheck name="step_ready(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
         </ReactiveSequence>
       </Inverter>
       <Inverter name="Inverter">
         <ReactiveSequence name="FSAPCond_release_8">
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="qualityok(mim8_0001, omroncamerasystem)" predicate_ref="{QualityOk_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_omronCameraSystem}&quot;" />
+            <FluentCheck name="qualityok(mim8_0001, omroncamerasystem)" predicate_ref="{QualityOk_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_omronCameraSystem}&quot;" />
           </Inverter>
           <Inverter name="Inverter">
-            <Condition ID="FluentCheck" name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+            <FluentCheck name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
           </Inverter>
-          <Condition ID="FluentCheck" name="occupied(omroncamerasystem, mim8_0001)" predicate_ref="{Occupied_omronCameraSystem}" predicate_args="&quot;{Param_omronCameraSystem};{Param_MIM8_0001}&quot;" />
-          <Condition ID="FluentCheck" name="step_ready(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+          <FluentCheck name="occupied(omroncamerasystem, mim8_0001)" predicate_ref="{Occupied_omronCameraSystem}" predicate_args="&quot;{Param_omronCameraSystem};{Param_MIM8_0001}&quot;" />
+          <FluentCheck name="step_ready(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
         </ReactiveSequence>
       </Inverter>
       <Action ID="ExecuteAction" name="release_8 mim8_0001" action_args="&quot;{Param_omronCameraSystem};{Param_MIM8_0001}&quot;" action_ref="{Release_omronCameraSystem}" />
@@ -812,82 +825,82 @@
   <BehaviorTree ID="Stoppering_mim8_0001_planarshuttle3">
     <Sequence name="Stoppering_mim8_0001_planarshuttle3">
       <Inverter name="Inverter">
-        <Condition ID="FluentCheck" name="step_done(order_product, step_3_stoppering)" predicate_ref="{Predicate_Object}" />
+        <FluentCheck name="step_done(order_product, step_3_stoppering)" predicate_ref="{Predicate_Object}" />
       </Inverter>
-      <Condition ID="FluentCheck" name="step_ready(order_product, step_3_stoppering)" predicate_ref="{Predicate_Object}" />
+      <FluentCheck name="step_ready(order_product, step_3_stoppering)" predicate_ref="{Predicate_Object}" />
       <Action ID="ExecuteAction" name="stoppering mim8_0001 planarshuttle3" action_args="&quot;{Param_syntegonStopperingSystem};{Param_MIM8_0001};{Param_planarShuttle3};{Param_stopperingLocation}&quot;" action_ref="{Stoppering_syntegonStopperingSystem}" />
     </Sequence>
   </BehaviorTree>
   <BehaviorTree ID="Unloading_mi_m8_0001_planarsh_h32fcc5">
     <Sequence name="Unloading_mim8_0001_planarshuttle3_omroncamerasystem">
       <Inverter name="Inverter">
-        <Condition ID="FluentCheck" name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+        <FluentCheck name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
       </Inverter>
-      <Condition ID="FluentCheck" name="on(mim8_0001, planarshuttle3)" predicate_ref="{On_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_planarShuttle3}&quot;" />
-      <Condition ID="FluentCheck" name="productat(mim8_0001, unloadinglocation)" predicate_ref="{ProductAt_MIM8_0001_4}" predicate_args="&quot;{Param_MIM8_0001};{Param_unloadingLocation}&quot;" />
-      <Condition ID="FluentCheck" name="qualityok(mim8_0001, omroncamerasystem)" predicate_ref="{QualityOk_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_omronCameraSystem}&quot;" />
-      <Condition ID="FluentCheck" name="step_ready(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+      <FluentCheck name="on(mim8_0001, planarshuttle3)" predicate_ref="{On_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_planarShuttle3}&quot;" />
+      <FluentCheck name="productat(mim8_0001, unloadinglocation)" predicate_ref="{ProductAt_MIM8_0001_4}" predicate_args="&quot;{Param_MIM8_0001};{Param_unloadingLocation}&quot;" />
+      <FluentCheck name="qualityok(mim8_0001, omroncamerasystem)" predicate_ref="{QualityOk_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_omronCameraSystem}&quot;" />
+      <FluentCheck name="step_ready(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
       <Action ID="ExecuteAction" name="unloading mim8_0001 planarshuttle3 omroncamerasystem" action_args="&quot;{Param_optimaUnloadingSystem};{Param_MIM8_0001};{Param_planarShuttle3};{Param_unloadingLocation};{Param_omronCameraSystem}&quot;" action_ref="{Unloading_optimaUnloadingSystem}" />
     </Sequence>
   </BehaviorTree>
   <BehaviorTree ID="When_freeimadispensingsystem">
     <Sequence name="When_freeimadispensingsystem">
-      <Condition ID="FluentCheck" name="free(imadispensingsystem)" predicate_ref="{Free_imaDispensingSystem}" predicate_args="&quot;{Param_imaDispensingSystem}&quot;" />
+      <FluentCheck name="free(imadispensingsystem)" predicate_ref="{Free_imaDispensingSystem}" predicate_args="&quot;{Param_imaDispensingSystem}&quot;" />
       <SubTree ID="Prog_with_freeimaload_h024854" />
     </Sequence>
   </BehaviorTree>
   <BehaviorTree ID="When_freeimaloadingsystem">
     <Sequence name="When_freeimaloadingsystem">
-      <Condition ID="FluentCheck" name="free(imaloadingsystem)" predicate_ref="{Free_imaLoadingSystem}" predicate_args="&quot;{Param_imaLoadingSystem}&quot;" />
+      <FluentCheck name="free(imaloadingsystem)" predicate_ref="{Free_imaLoadingSystem}" predicate_args="&quot;{Param_imaLoadingSystem}&quot;" />
       <SubTree ID="Progression_with_freeimaloadingsystem" />
     </Sequence>
   </BehaviorTree>
   <BehaviorTree ID="When_freeomroncamerasystem">
     <Sequence name="When_freeomroncamerasystem">
-      <Condition ID="FluentCheck" name="free(omroncamerasystem)" predicate_ref="{Free_omronCameraSystem}" predicate_args="&quot;{Param_omronCameraSystem}&quot;" />
+      <FluentCheck name="free(omroncamerasystem)" predicate_ref="{Free_omronCameraSystem}" predicate_args="&quot;{Param_omronCameraSystem}&quot;" />
       <SubTree ID="Prog_with_freeimaload_h8956a9" />
     </Sequence>
   </BehaviorTree>
   <BehaviorTree ID="When_freeplanarshuttle3">
     <Sequence name="When_freeplanarshuttle3">
-      <Condition ID="FluentCheck" name="free(planarshuttle3)" predicate_ref="{Free_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3}&quot;" />
+      <FluentCheck name="free(planarshuttle3)" predicate_ref="{Free_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3}&quot;" />
       <SubTree ID="Prog_with_freeimaload_h85d589" />
     </Sequence>
   </BehaviorTree>
   <BehaviorTree ID="When_freesyntegonstopperingsystem">
     <Sequence name="When_freesyntegonstopperingsystem">
-      <Condition ID="FluentCheck" name="free(syntegonstopperingsystem)" predicate_ref="{Free_syntegonStopperingSystem}" predicate_args="&quot;{Param_syntegonStopperingSystem}&quot;" />
+      <FluentCheck name="free(syntegonstopperingsystem)" predicate_ref="{Free_syntegonStopperingSystem}" predicate_args="&quot;{Param_syntegonStopperingSystem}&quot;" />
       <SubTree ID="Prog_with_freeimaload_hd4531c" />
     </Sequence>
   </BehaviorTree>
   <BehaviorTree ID="When_notoccupiedimadispensingsystem_mim8_0001">
     <Sequence name="When_notoccupiedimadispensingsystem_mim8_0001">
       <Inverter name="Inverter">
-        <Condition ID="FluentCheck" name="occupied(imadispensingsystem, mim8_0001)" predicate_ref="{Occupied_imaDispensingSystem}" predicate_args="&quot;{Param_imaDispensingSystem};{Param_MIM8_0001}&quot;" />
+        <FluentCheck name="occupied(imadispensingsystem, mim8_0001)" predicate_ref="{Occupied_imaDispensingSystem}" predicate_args="&quot;{Param_imaDispensingSystem};{Param_MIM8_0001}&quot;" />
       </Inverter>
       <Inverter name="Inverter">
-        <Condition ID="FluentCheck" name="occupied(omroncamerasystem, mim8_0001)" predicate_ref="{Occupied_omronCameraSystem}" predicate_args="&quot;{Param_omronCameraSystem};{Param_MIM8_0001}&quot;" />
+        <FluentCheck name="occupied(omroncamerasystem, mim8_0001)" predicate_ref="{Occupied_omronCameraSystem}" predicate_args="&quot;{Param_omronCameraSystem};{Param_MIM8_0001}&quot;" />
       </Inverter>
       <Inverter name="Inverter">
-        <Condition ID="FluentCheck" name="occupied(optimaunloadingsystem, mim8_0001)" predicate_ref="{Occupied_optimaUnloadingSystem}" predicate_args="&quot;{Param_optimaUnloadingSystem};{Param_MIM8_0001}&quot;" />
+        <FluentCheck name="occupied(optimaunloadingsystem, mim8_0001)" predicate_ref="{Occupied_optimaUnloadingSystem}" predicate_args="&quot;{Param_optimaUnloadingSystem};{Param_MIM8_0001}&quot;" />
       </Inverter>
       <Inverter name="Inverter">
-        <Condition ID="FluentCheck" name="occupied(planarshuttle3, mim8_0001)" predicate_ref="{Occupied_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_MIM8_0001}&quot;" />
+        <FluentCheck name="occupied(planarshuttle3, mim8_0001)" predicate_ref="{Occupied_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_MIM8_0001}&quot;" />
       </Inverter>
       <Inverter name="Inverter">
-        <Condition ID="FluentCheck" name="occupied(syntegonstopperingsystem, mim8_0001)" predicate_ref="{Occupied_syntegonStopperingSystem}" predicate_args="&quot;{Param_syntegonStopperingSystem};{Param_MIM8_0001}&quot;" />
+        <FluentCheck name="occupied(syntegonstopperingsystem, mim8_0001)" predicate_ref="{Occupied_syntegonStopperingSystem}" predicate_args="&quot;{Param_syntegonStopperingSystem};{Param_MIM8_0001}&quot;" />
       </Inverter>
       <Inverter name="Inverter">
-        <Condition ID="FluentCheck" name="step_done(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
+        <FluentCheck name="step_done(order_product, step_2_dispensing)" predicate_ref="{Predicate_Object}" />
       </Inverter>
       <Inverter name="Inverter">
-        <Condition ID="FluentCheck" name="step_done(order_product, step_3_stoppering)" predicate_ref="{Predicate_Object}" />
+        <FluentCheck name="step_done(order_product, step_3_stoppering)" predicate_ref="{Predicate_Object}" />
       </Inverter>
       <Inverter name="Inverter">
-        <Condition ID="FluentCheck" name="step_done(order_product, step_4_inspection)" predicate_ref="{Predicate_Object}" />
+        <FluentCheck name="step_done(order_product, step_4_inspection)" predicate_ref="{Predicate_Object}" />
       </Inverter>
       <Inverter name="Inverter">
-        <Condition ID="FluentCheck" name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+        <FluentCheck name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
       </Inverter>
       <SubTree ID="Prog_with_notoccupied_h07c8e7" />
     </Sequence>
@@ -895,131 +908,131 @@
   <BehaviorTree ID="When_notoccupiedomroncamerasystem_mim8_0001">
     <Sequence name="When_notoccupiedomroncamerasystem_mim8_0001">
       <Inverter name="Inverter">
-        <Condition ID="FluentCheck" name="occupied(omroncamerasystem, mim8_0001)" predicate_ref="{Occupied_omronCameraSystem}" predicate_args="&quot;{Param_omronCameraSystem};{Param_MIM8_0001}&quot;" />
+        <FluentCheck name="occupied(omroncamerasystem, mim8_0001)" predicate_ref="{Occupied_omronCameraSystem}" predicate_args="&quot;{Param_omronCameraSystem};{Param_MIM8_0001}&quot;" />
       </Inverter>
       <Inverter name="Inverter">
-        <Condition ID="FluentCheck" name="occupied(optimaunloadingsystem, mim8_0001)" predicate_ref="{Occupied_optimaUnloadingSystem}" predicate_args="&quot;{Param_optimaUnloadingSystem};{Param_MIM8_0001}&quot;" />
+        <FluentCheck name="occupied(optimaunloadingsystem, mim8_0001)" predicate_ref="{Occupied_optimaUnloadingSystem}" predicate_args="&quot;{Param_optimaUnloadingSystem};{Param_MIM8_0001}&quot;" />
       </Inverter>
       <Inverter name="Inverter">
-        <Condition ID="FluentCheck" name="occupied(syntegonstopperingsystem, mim8_0001)" predicate_ref="{Occupied_syntegonStopperingSystem}" predicate_args="&quot;{Param_syntegonStopperingSystem};{Param_MIM8_0001}&quot;" />
+        <FluentCheck name="occupied(syntegonstopperingsystem, mim8_0001)" predicate_ref="{Occupied_syntegonStopperingSystem}" predicate_args="&quot;{Param_syntegonStopperingSystem};{Param_MIM8_0001}&quot;" />
       </Inverter>
       <Inverter name="Inverter">
-        <Condition ID="FluentCheck" name="step_done(order_product, step_3_stoppering)" predicate_ref="{Predicate_Object}" />
+        <FluentCheck name="step_done(order_product, step_3_stoppering)" predicate_ref="{Predicate_Object}" />
       </Inverter>
       <Inverter name="Inverter">
-        <Condition ID="FluentCheck" name="step_done(order_product, step_4_inspection)" predicate_ref="{Predicate_Object}" />
+        <FluentCheck name="step_done(order_product, step_4_inspection)" predicate_ref="{Predicate_Object}" />
       </Inverter>
       <Inverter name="Inverter">
-        <Condition ID="FluentCheck" name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+        <FluentCheck name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
       </Inverter>
-      <Condition ID="FluentCheck" name="on(mim8_0001, planarshuttle3)" predicate_ref="{On_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_planarShuttle3}&quot;" />
+      <FluentCheck name="on(mim8_0001, planarshuttle3)" predicate_ref="{On_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_planarShuttle3}&quot;" />
       <SubTree ID="Prog_with_freeimaload_h2ec042" />
     </Sequence>
   </BehaviorTree>
   <BehaviorTree ID="When_notoccupiedomroncamerasystem_mim8_0001_2">
     <Sequence name="When_notoccupiedomroncamerasystem_mim8_0001">
       <Inverter name="Inverter">
-        <Condition ID="FluentCheck" name="occupied(omroncamerasystem, mim8_0001)" predicate_ref="{Occupied_omronCameraSystem}" predicate_args="&quot;{Param_omronCameraSystem};{Param_MIM8_0001}&quot;" />
+        <FluentCheck name="occupied(omroncamerasystem, mim8_0001)" predicate_ref="{Occupied_omronCameraSystem}" predicate_args="&quot;{Param_omronCameraSystem};{Param_MIM8_0001}&quot;" />
       </Inverter>
       <Inverter name="Inverter">
-        <Condition ID="FluentCheck" name="occupied(optimaunloadingsystem, mim8_0001)" predicate_ref="{Occupied_optimaUnloadingSystem}" predicate_args="&quot;{Param_optimaUnloadingSystem};{Param_MIM8_0001}&quot;" />
+        <FluentCheck name="occupied(optimaunloadingsystem, mim8_0001)" predicate_ref="{Occupied_optimaUnloadingSystem}" predicate_args="&quot;{Param_optimaUnloadingSystem};{Param_MIM8_0001}&quot;" />
       </Inverter>
       <Inverter name="Inverter">
-        <Condition ID="FluentCheck" name="step_done(order_product, step_4_inspection)" predicate_ref="{Predicate_Object}" />
+        <FluentCheck name="step_done(order_product, step_4_inspection)" predicate_ref="{Predicate_Object}" />
       </Inverter>
       <Inverter name="Inverter">
-        <Condition ID="FluentCheck" name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+        <FluentCheck name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
       </Inverter>
-      <Condition ID="FluentCheck" name="occupied(planarshuttle3, mim8_0001)" predicate_ref="{Occupied_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_MIM8_0001}&quot;" />
-      <Condition ID="FluentCheck" name="on(mim8_0001, planarshuttle3)" predicate_ref="{On_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_planarShuttle3}&quot;" />
+      <FluentCheck name="occupied(planarshuttle3, mim8_0001)" predicate_ref="{Occupied_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_MIM8_0001}&quot;" />
+      <FluentCheck name="on(mim8_0001, planarshuttle3)" predicate_ref="{On_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_planarShuttle3}&quot;" />
       <SubTree ID="Prog_with_freeimaload_h79af86" />
     </Sequence>
   </BehaviorTree>
   <BehaviorTree ID="When_notoccupiedoptimaunloadingsystem_mim8_0001">
     <Sequence name="When_notoccupiedoptimaunloadingsystem_mim8_0001">
       <Inverter name="Inverter">
-        <Condition ID="FluentCheck" name="occupied(optimaunloadingsystem, mim8_0001)" predicate_ref="{Occupied_optimaUnloadingSystem}" predicate_args="&quot;{Param_optimaUnloadingSystem};{Param_MIM8_0001}&quot;" />
+        <FluentCheck name="occupied(optimaunloadingsystem, mim8_0001)" predicate_ref="{Occupied_optimaUnloadingSystem}" predicate_args="&quot;{Param_optimaUnloadingSystem};{Param_MIM8_0001}&quot;" />
       </Inverter>
       <Inverter name="Inverter">
-        <Condition ID="FluentCheck" name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+        <FluentCheck name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
       </Inverter>
-      <Condition ID="FluentCheck" name="occupied(planarshuttle3, mim8_0001)" predicate_ref="{Occupied_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_MIM8_0001}&quot;" />
-      <Condition ID="FluentCheck" name="on(mim8_0001, planarshuttle3)" predicate_ref="{On_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_planarShuttle3}&quot;" />
+      <FluentCheck name="occupied(planarshuttle3, mim8_0001)" predicate_ref="{Occupied_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_MIM8_0001}&quot;" />
+      <FluentCheck name="on(mim8_0001, planarshuttle3)" predicate_ref="{On_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_planarShuttle3}&quot;" />
       <SubTree ID="Prog_with_freeimaload_hd35331" />
     </Sequence>
   </BehaviorTree>
   <BehaviorTree ID="When_notstep_doneorder_product_step_5_unloading">
     <Sequence name="When_notstep_doneorder_product_step_5_unloading">
       <Inverter name="Inverter">
-        <Condition ID="FluentCheck" name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+        <FluentCheck name="step_done(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
       </Inverter>
-      <Condition ID="FluentCheck" name="occupied(planarshuttle3, mim8_0001)" predicate_ref="{Occupied_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_MIM8_0001}&quot;" />
-      <Condition ID="FluentCheck" name="on(mim8_0001, planarshuttle3)" predicate_ref="{On_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_planarShuttle3}&quot;" />
-      <Condition ID="FluentCheck" name="qualityok(mim8_0001, omroncamerasystem)" predicate_ref="{QualityOk_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_omronCameraSystem}&quot;" />
-      <Condition ID="FluentCheck" name="step_ready(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
+      <FluentCheck name="occupied(planarshuttle3, mim8_0001)" predicate_ref="{Occupied_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_MIM8_0001}&quot;" />
+      <FluentCheck name="on(mim8_0001, planarshuttle3)" predicate_ref="{On_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_planarShuttle3}&quot;" />
+      <FluentCheck name="qualityok(mim8_0001, omroncamerasystem)" predicate_ref="{QualityOk_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_omronCameraSystem}&quot;" />
+      <FluentCheck name="step_ready(order_product, step_5_unloading)" predicate_ref="{Predicate_Object}" />
       <SubTree ID="Prog_with_freeimaload_hcb0641" />
     </Sequence>
   </BehaviorTree>
   <BehaviorTree ID="When_occupiedimadispensingsystem_mim8_0001">
     <Sequence name="When_occupiedimadispensingsystem_mim8_0001">
-      <Condition ID="FluentCheck" name="occupied(imadispensingsystem, mim8_0001)" predicate_ref="{Occupied_imaDispensingSystem}" predicate_args="&quot;{Param_imaDispensingSystem};{Param_MIM8_0001}&quot;" />
+      <FluentCheck name="occupied(imadispensingsystem, mim8_0001)" predicate_ref="{Occupied_imaDispensingSystem}" predicate_args="&quot;{Param_imaDispensingSystem};{Param_MIM8_0001}&quot;" />
       <SubTree ID="Prog_with_freeimaload_h06ca45" />
     </Sequence>
   </BehaviorTree>
   <BehaviorTree ID="When_occupiedimaloadingsystem_mim8_0001">
     <Sequence name="When_occupiedimaloadingsystem_mim8_0001">
-      <Condition ID="FluentCheck" name="occupied(imaloadingsystem, mim8_0001)" predicate_ref="{Occupied_imaLoadingSystem}" predicate_args="&quot;{Param_imaLoadingSystem};{Param_MIM8_0001}&quot;" />
+      <FluentCheck name="occupied(imaloadingsystem, mim8_0001)" predicate_ref="{Occupied_imaLoadingSystem}" predicate_args="&quot;{Param_imaLoadingSystem};{Param_MIM8_0001}&quot;" />
       <SubTree ID="Prog_with_notoccupied_hb5f068" />
     </Sequence>
   </BehaviorTree>
   <BehaviorTree ID="When_occupiedomroncamerasystem_mim8_0001">
     <Sequence name="When_occupiedomroncamerasystem_mim8_0001">
-      <Condition ID="FluentCheck" name="occupied(omroncamerasystem, mim8_0001)" predicate_ref="{Occupied_omronCameraSystem}" predicate_args="&quot;{Param_omronCameraSystem};{Param_MIM8_0001}&quot;" />
+      <FluentCheck name="occupied(omroncamerasystem, mim8_0001)" predicate_ref="{Occupied_omronCameraSystem}" predicate_args="&quot;{Param_omronCameraSystem};{Param_MIM8_0001}&quot;" />
       <SubTree ID="Prog_with_freeimaload_h9d9e78" />
     </Sequence>
   </BehaviorTree>
   <BehaviorTree ID="When_occupiedoptimaunloadingsystem_mim8_0001">
     <Sequence name="When_occupiedoptimaunloadingsystem_mim8_0001">
-      <Condition ID="FluentCheck" name="occupied(optimaunloadingsystem, mim8_0001)" predicate_ref="{Occupied_optimaUnloadingSystem}" predicate_args="&quot;{Param_optimaUnloadingSystem};{Param_MIM8_0001}&quot;" />
+      <FluentCheck name="occupied(optimaunloadingsystem, mim8_0001)" predicate_ref="{Occupied_optimaUnloadingSystem}" predicate_args="&quot;{Param_optimaUnloadingSystem};{Param_MIM8_0001}&quot;" />
       <SubTree ID="Prog_with_freeimaload_h2d8a58" />
     </Sequence>
   </BehaviorTree>
   <BehaviorTree ID="When_occupiedplanarshuttle3_mim8_0001">
     <Sequence name="When_occupiedplanarshuttle3_mim8_0001">
-      <Condition ID="FluentCheck" name="occupied(planarshuttle3, mim8_0001)" predicate_ref="{Occupied_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_MIM8_0001}&quot;" />
+      <FluentCheck name="occupied(planarshuttle3, mim8_0001)" predicate_ref="{Occupied_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_MIM8_0001}&quot;" />
       <SubTree ID="Prog_with_freeimaload_h843c7e" />
     </Sequence>
   </BehaviorTree>
   <BehaviorTree ID="When_occupiedsyntegonstopperingsystem_mim8_0001">
     <Sequence name="When_occupiedsyntegonstopperingsystem_mim8_0001">
-      <Condition ID="FluentCheck" name="occupied(syntegonstopperingsystem, mim8_0001)" predicate_ref="{Occupied_syntegonStopperingSystem}" predicate_args="&quot;{Param_syntegonStopperingSystem};{Param_MIM8_0001}&quot;" />
+      <FluentCheck name="occupied(syntegonstopperingsystem, mim8_0001)" predicate_ref="{Occupied_syntegonStopperingSystem}" predicate_args="&quot;{Param_syntegonStopperingSystem};{Param_MIM8_0001}&quot;" />
       <SubTree ID="Prog_with_freeimaload_h1be77e" />
     </Sequence>
   </BehaviorTree>
   <BehaviorTree ID="When_productatmim8_0001_capturelocation">
     <Sequence name="When_productatmim8_0001_capturelocation">
-      <Condition ID="FluentCheck" name="productat(mim8_0001, capturelocation)" predicate_ref="{ProductAt_MIM8_0001_3}" predicate_args="&quot;{Param_MIM8_0001};{Param_captureLocation}&quot;" />
-      <Condition ID="FluentCheck" name="resourceat(planarshuttle3, capturelocation)" predicate_ref="{ResourceAt_planarShuttle3_3}" predicate_args="&quot;{Param_planarShuttle3};{Param_captureLocation}&quot;" />
+      <FluentCheck name="productat(mim8_0001, capturelocation)" predicate_ref="{ProductAt_MIM8_0001_3}" predicate_args="&quot;{Param_MIM8_0001};{Param_captureLocation}&quot;" />
+      <FluentCheck name="resourceat(planarshuttle3, capturelocation)" predicate_ref="{ResourceAt_planarShuttle3_3}" predicate_args="&quot;{Param_planarShuttle3};{Param_captureLocation}&quot;" />
       <SubTree ID="Prog_with_freeimaload_hebbaff" />
     </Sequence>
   </BehaviorTree>
   <BehaviorTree ID="When_productatmim8_0001_dispensinglocation">
     <Sequence name="When_productatmim8_0001_dispensinglocation">
-      <Condition ID="FluentCheck" name="productat(mim8_0001, dispensinglocation)" predicate_ref="{ProductAt_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_dispensingLocation}&quot;" />
-      <Condition ID="FluentCheck" name="resourceat(planarshuttle3, dispensinglocation)" predicate_ref="{ResourceAt_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_dispensingLocation}&quot;" />
+      <FluentCheck name="productat(mim8_0001, dispensinglocation)" predicate_ref="{ProductAt_MIM8_0001}" predicate_args="&quot;{Param_MIM8_0001};{Param_dispensingLocation}&quot;" />
+      <FluentCheck name="resourceat(planarshuttle3, dispensinglocation)" predicate_ref="{ResourceAt_planarShuttle3}" predicate_args="&quot;{Param_planarShuttle3};{Param_dispensingLocation}&quot;" />
       <SubTree ID="Prog_with_freeimaload_h4f7a32" />
     </Sequence>
   </BehaviorTree>
   <BehaviorTree ID="When_productatmim8_0001_stopperinglocation">
     <Sequence name="When_productatmim8_0001_stopperinglocation">
-      <Condition ID="FluentCheck" name="productat(mim8_0001, stopperinglocation)" predicate_ref="{ProductAt_MIM8_0001_5}" predicate_args="&quot;{Param_MIM8_0001};{Param_stopperingLocation}&quot;" />
-      <Condition ID="FluentCheck" name="resourceat(planarshuttle3, stopperinglocation)" predicate_ref="{ResourceAt_planarShuttle3_5}" predicate_args="&quot;{Param_planarShuttle3};{Param_stopperingLocation}&quot;" />
+      <FluentCheck name="productat(mim8_0001, stopperinglocation)" predicate_ref="{ProductAt_MIM8_0001_5}" predicate_args="&quot;{Param_MIM8_0001};{Param_stopperingLocation}&quot;" />
+      <FluentCheck name="resourceat(planarshuttle3, stopperinglocation)" predicate_ref="{ResourceAt_planarShuttle3_5}" predicate_args="&quot;{Param_planarShuttle3};{Param_stopperingLocation}&quot;" />
       <SubTree ID="Prog_with_freeimaload_h81d224" />
     </Sequence>
   </BehaviorTree>
   <BehaviorTree ID="When_resourceatplanarshuttle3_loadinglocation">
     <Sequence name="When_resourceatplanarshuttle3_loadinglocation">
-      <Condition ID="FluentCheck" name="resourceat(planarshuttle3, loadinglocation)" predicate_ref="{ResourceAt_planarShuttle3_2}" predicate_args="&quot;{Param_planarShuttle3};{Param_loadingLocation}&quot;" />
+      <FluentCheck name="resourceat(planarshuttle3, loadinglocation)" predicate_ref="{ResourceAt_planarShuttle3_2}" predicate_args="&quot;{Param_planarShuttle3};{Param_loadingLocation}&quot;" />
       <SubTree ID="Prog_with_notoccupied_had123c" />
     </Sequence>
   </BehaviorTree>
