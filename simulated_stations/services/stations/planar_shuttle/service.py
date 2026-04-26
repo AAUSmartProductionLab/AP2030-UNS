@@ -102,11 +102,7 @@ def main():
         location_publisher.publish(
             {
                 "TimeStamp": _now_iso(),
-                "X": x,
-                "Z": z,
-                "Yaw": state["yaw"],
-                "Location": state["location"],
-                "Uuid": state["uuid"],
+                "Position": [x, z, float(state["yaw"])],
             },
             shuttle_proxy,
             retain=True,

@@ -116,6 +116,10 @@ imaDispensingSystemAAS:
     Location:
       semanticId: 'cssx:LocationParameter'
       value: 'imaDispensingStation'
+      Position:
+        X: 240.0
+        Z: 0.0
+        Yaw: 0.0
   HierarchicalStructures:
     Name: 'BillOfMaterials'
     Archetype: 'OneUp'

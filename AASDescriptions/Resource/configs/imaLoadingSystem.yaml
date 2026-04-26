@@ -103,6 +103,10 @@ imaLoadingSystemAAS:
         Location:
             semanticId: 'cssx:LocationParameter'
             value: 'imaLoadingStation'
+            Position:
+                X: 0.0
+                Z: 0.0
+                Yaw: 0.0
 
     HierarchicalStructures:
         Name: 'BillOfMaterials'

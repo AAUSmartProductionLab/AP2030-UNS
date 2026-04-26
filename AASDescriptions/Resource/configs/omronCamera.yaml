@@ -129,6 +129,11 @@ omronCameraSystemAAS:
     Location:
       semanticId: 'cssx:LocationParameter'
       value: 'omronCameraStation'
+      Position:
+        X: 480.0
+        Z: 240.0
+        Yaw: 0.0
+      value: 'omronCameraStation'
   HierarchicalStructures:
     Name: 'BillOfMaterials'
     Archetype: 'OneUp'

@@ -121,10 +121,11 @@ planarTableShuttle2AAS:
     InterfaceReference:
       Name: 'Location'
       Field: 'Position'
-    Parameters:
-        ProductID:
-            semanticId: 'cssx:ProductIdentifier'
-            InterfaceReference: 'ProductID'
+
+  Parameters:
+    ProductID:
+      semanticId: 'cssx:ProductIdentifier'
+      InterfaceReference: 'ProductID'
 
   HierarchicalStructures:
     Name: 'BillOfMaterials'

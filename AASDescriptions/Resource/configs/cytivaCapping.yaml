@@ -101,6 +101,10 @@ cytivaCappingSystemAAS:
     Location:
       semanticId: 'cssx:LocationParameter'
       value: 'cytivaCappingStation'
+      Position:
+        X: 240.0
+        Z: 240.0
+        Yaw: 0.0
   HierarchicalStructures:
     Name: 'BillOfMaterials'
     Archetype: 'OneUp'
