@@ -37,22 +37,20 @@ HgHAAS:
         description: 'Ordered sequence of production processes for HgH manufacturing'
         
         # Processes is a SubmodelElementList containing Process SMCs
+        # NOTE: Loading and Unloading are intentionally omitted. They are
+        # still executed by the planner because:
+        #   - Loading is forced by downstream preconditions (on, productat).
+        #   - Unload/Scrap are forced by the (finished ?p) goal which only
+        #     their at_end effect satisfies. Listing Unloading as a BoP
+        #     step would require step_done(unloading) to be reachable on
+        #     the FOND failure branch (Scrap), which it is not since Scrap
+        #     declares cssx:ScrapCapability, not cssx:UnloadingCapability.
         Processes:
             # Each process is a SubmodelElementCollection
-            - idShort: 'Loading'
-              semanticId: 'cssx:LoadingCapability'
-              # ECLASS: 0173-1#02-AAO677#002 - Manufacturing process
-              description: 'Load empty primary container onto production shuttle'
-              sequenceNumber: 1
-              estimatedDuration:
-                value: 5.0
-                unit: 's'
-                semanticId: '0173-1#02-AAB381#003'  # ECLASS: Duration
-              
             - idShort: 'Dispensing'
               semanticId: 'cssx:DispensingCapability'
               description: 'Dispense pharmaceutical product into primary container'
-              sequenceNumber: 2
+              sequenceNumber: 1
               estimatedDuration:
                 value: 8.0
                 unit: 's'
@@ -94,7 +92,7 @@ HgHAAS:
             - idShort: 'Stoppering'
               semanticId: 'cssx:StopperingCapability'
               description: 'Insert elastomeric stopper to seal primary container'
-              sequenceNumber: 3
+              sequenceNumber: 2
               estimatedDuration:
                 value: 3.0
                 unit: 's'
@@ -119,7 +117,7 @@ HgHAAS:
             - idShort: 'Inspection'
               semanticId: 'cssx:QualityControlCapability'
               description: 'Automated visual inspection of filled and stoppered container'
-              sequenceNumber: 4
+              sequenceNumber: 3
               estimatedDuration:
                 value: 2.0
                 unit: 's'
@@ -164,15 +162,6 @@ HgHAAS:
                     - 'Particulate Contamination'
                     - 'Container Defects'
                   valueType: 'xs:string[]'
-
-            - idShort: 'Unloading'
-              semanticId: 'cssx:UnloadingCapability'
-              description: 'Transfer finished product from shuttle to output conveyor'
-              sequenceNumber: 5
-              estimatedDuration:
-                value: 4.0
-                unit: 's'
-                semanticId: '0173-1#02-AAB381#003'
 
     # ============================================================================
     # Production Requirements Submodel

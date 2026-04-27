@@ -231,17 +231,50 @@ TEST(ParseActionRef, EffectsFieldDecoded)
         "transformation_aas_path": "",
         "parameter_refs": [],
         "effects": [
-            {"predicate":"step_done","args":["order_product","step_2"],"value":true},
-            {"predicate":"step_ready","args":["order_product","step_2"],"value":false}
+            {"branch": 0, "atoms": [
+                {"predicate":"step_done","args":["order_product","step_2"],"value":true},
+                {"predicate":"step_ready","args":["order_product","step_2"],"value":false}
+            ]}
+        ]
+    })";
+    auto ref = parseActionRef(raw);
+    ASSERT_TRUE(ref.has_value());
+    ASSERT_EQ(ref->effects.size(), 1u);
+    EXPECT_EQ(ref->effects[0].index, 0);
+    ASSERT_EQ(ref->effects[0].atoms.size(), 2u);
+    EXPECT_EQ(ref->effects[0].atoms[0].predicate, "step_done");
+    EXPECT_EQ(ref->effects[0].atoms[0].value, true);
+    EXPECT_EQ(ref->effects[0].atoms[1].predicate, "step_ready");
+    EXPECT_EQ(ref->effects[0].atoms[1].value, false);
+}
+
+TEST(ParseActionRef, FondMultiBranchEffectsDecoded)
+{
+    // FOND oneOf produces multiple branches in declaration order.
+    const std::string raw = R"({
+        "source_aas_id": "asset",
+        "action_aas_path": "Capabilities/Loading",
+        "transformation_aas_path": "",
+        "parameter_refs": [],
+        "effects": [
+            {"branch": 0, "atoms": [
+                {"predicate":"on","args":["p","t"],"value":true},
+                {"predicate":"productat","args":["p","loc"],"value":true}
+            ]},
+            {"branch": 1, "atoms": [
+                {"predicate":"on","args":["p","t"],"value":false}
+            ]}
         ]
     })";
     auto ref = parseActionRef(raw);
     ASSERT_TRUE(ref.has_value());
     ASSERT_EQ(ref->effects.size(), 2u);
-    EXPECT_EQ(ref->effects[0].predicate, "step_done");
-    EXPECT_EQ(ref->effects[0].value, true);
-    EXPECT_EQ(ref->effects[1].predicate, "step_ready");
-    EXPECT_EQ(ref->effects[1].value, false);
+    EXPECT_EQ(ref->effects[0].index, 0);
+    EXPECT_EQ(ref->effects[0].atoms.size(), 2u);
+    EXPECT_EQ(ref->effects[1].index, 1);
+    ASSERT_EQ(ref->effects[1].atoms.size(), 1u);
+    EXPECT_EQ(ref->effects[1].atoms[0].predicate, "on");
+    EXPECT_EQ(ref->effects[1].atoms[0].value, false);
 }
 
 TEST(ParseActionRef, MissingEffectsFieldIsBackCompat)

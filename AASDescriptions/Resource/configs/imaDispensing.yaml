@@ -219,9 +219,6 @@ imaDispensingSystemAAS:
                           externalRef: "css:Product"
                   conditions:
                       at_start:
-                          - predicate:
-                              ref: "Operational"
-                              parameters: [0]
                           - not:
                               predicate:
                                   ref: "Occupied"
@@ -235,7 +232,6 @@ imaDispensingSystemAAS:
                               predicate:
                                   ref: "Free"
                                   parameters: [0]
-
 
               -   key: "Release"
                   semantic_id: "cssx:ReleaseCapability"
@@ -264,7 +260,6 @@ imaDispensingSystemAAS:
                           - predicate:
                               ref: "Free"
                               parameters: [0]
-
       Problem:
           Objects:
               -   name: "imaDispensingSystem"
@@ -288,9 +283,6 @@ imaDispensingSystemAAS:
                   parameters: [0, 1]
 
           Goal:
-              - predicate:
-                  ref: "Operational"
-                  parameters: [0]
               -   predicate:
                   ref: "Free"
                   parameters: [0]

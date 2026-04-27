@@ -72,6 +72,9 @@ services:
       - MQTT_BROKER=${MQTT_BROKER:-hivemq-broker}
       - MQTT_PORT=${MQTT_PORT:-1883}
       - PYTHONPATH=/app
+      # Probability of the FOND drop branch (Outcome=1). Both outcomes
+      # are planned for; the SUCCESS payload always carries an Outcome
+      # field so ExecuteAction can pick which oneOf branch to apply.
       - LOADING_FAILURE_RATE=${LOADING_FAILURE_RATE:-0.3}
     volumes:
       - ../../:/app  # Mount simulated_stations root

@@ -126,6 +126,12 @@ planarTableShuttle3AAS:
     ProductID:
       semanticId: 'cssx:ProductIdentifier'
       InterfaceReference: 'ProductID'
+    Location:
+      semanticId: 'cssx:InitialLocationParameter'
+      Position:
+        X: 480.0
+        Y: 0.0
+        Yaw: 0.0
 
   HierarchicalStructures:
     Name: 'BillOfMaterials'
@@ -173,7 +179,7 @@ planarTableShuttle3AAS:
                           externalRef: "cssx:LocationParameter"
                   constants:
                       threshold: 50.0
-                  transformation: '$sqrt($power(params[0].Variables.Location.Position[0] - params[1].Parameters.Location.Position.X, 2) + $power(params[0].Variables.Location.Position[1] - params[1].Parameters.Location.Position.Z, 2)) < constants.threshold'
+                  transformation: '$sqrt($power(params[0].Variables.Location.Position[0] - params[1].Parameters.Location.Position.X, 2) + $power(params[0].Variables.Location.Position[1] - params[1].Parameters.Location.Position.Y, 2)) < constants.threshold'
 
           Actions:
               -   key: "Move"
@@ -186,7 +192,7 @@ planarTableShuttle3AAS:
                   # tracks the response by it. ``params[2]`` is the
                   # destination LocationParameter whose Position carries
                   # the planar X/Y in millimetres.
-                  transformation: '{"Uuid": uuid, "TimeStamp": now, "Position": [params[2].Parameters.Position.X, params[2].Parameters.Position.Y]}'
+                  transformation: '{"Uuid": uuid, "TimeStamp": now, "Position": [params[2].Parameters.Location.Position.X, params[2].Parameters.Location.Position.Y]}'
                   parameters:
                       -   name: "TransportSystem"
                           externalRef: "cssx:Transport"
@@ -221,7 +227,7 @@ planarTableShuttle3AAS:
                   # JSONata: ``params[1]`` is the Product (its Uuid drives
                   # response correlation), ``params[3]`` is the
                   # destination LocationParameter (X/Y in mm).
-                  transformation: '{"Uuid": params[1].Parameters.Uuid, "TimeStamp": now, "Position": [params[3].Parameters.Position.X, params[3].Parameters.Position.Y]}'
+                  transformation: '{"Uuid": params[1].Parameters.Uuid, "TimeStamp": now, "Position": [params[3].Parameters.Location.Position.X, params[3].Parameters.Location.Position.Y]}'
                   parameters:
                       -   name: "TransportSystem"
                           externalRef: "cssx:Transport"
@@ -293,9 +299,6 @@ planarTableShuttle3AAS:
                           externalRef: "css:Product"
                   conditions:
                       at_start:
-                          - predicate:
-                              ref: "Operational"
-                              parameters: [0]
                           - not:
                               predicate:
                                   ref: "Occupied"
@@ -309,7 +312,6 @@ planarTableShuttle3AAS:
                               predicate:
                                   ref: "Free"
                                   parameters: [0]
-
 
               -   key: "Release"
                   semantic_id: "cssx:ReleaseCapability"
@@ -338,7 +340,6 @@ planarTableShuttle3AAS:
                           - predicate:
                               ref: "Free"
                               parameters: [0]
-
       Problem:
           Objects:
               -   name: "planarShuttle3"
@@ -347,7 +348,7 @@ planarTableShuttle3AAS:
               -   name: "initialLocation3"
                   modelRef:
                       - AAS: "self"
-                        Submodel: "Variables"
+                        Submodel: "Parameters"
                         Element: "Location"
 
           Init:
@@ -362,9 +363,6 @@ planarTableShuttle3AAS:
                   parameters: [0, 1]
 
           Goal:
-              - predicate:
-                  ref: "Operational"
-                  parameters: [0]
               -   predicate:
                   ref: "Free"
                   parameters: [0]

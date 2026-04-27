@@ -18,6 +18,11 @@
                     "type": "string",
                     "description": "The state of the command being executed",
                     "enum": ["RUNNING", "SUCCESS", "FAILURE"]
+                },
+                "Outcome": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Optional FOND outcome discriminator. For actions whose PDDL effects are encoded as a oneOf, the responding station selects which branch occurred by setting Outcome to the 0-based index of the chosen child (in declaration order). Omitting the field — or setting Outcome=0 — is equivalent to selecting the first/only branch and is the correct contract for non-FOND actions."
                 }
             },
             "required": ["Uuid", "State"]

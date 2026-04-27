@@ -78,12 +78,17 @@ def _arg_to_object_name(
         return name or None
     if kind == "action_param":
         idx = param.get("index")
-        if isinstance(idx, int) and param_remap is not None:
-            mapping = param_remap.get(idx)
-            if mapping and mapping.get("kind") == "constant":
-                obj = str(mapping.get("object_name") or "")
-                if obj:
-                    return obj
+        if isinstance(idx, int):
+            if param_remap is not None:
+                mapping = param_remap.get(idx)
+                if mapping and mapping.get("kind") == "constant":
+                    obj = str(mapping.get("object_name") or "")
+                    if obj:
+                        return obj
+            # Free action parameter: defer grounding until the BT-build
+            # step (resolve_action_execution_ref) substitutes the
+            # invocation arg at index ``idx`` for this sentinel.
+            return f"$param:{idx}"
         return None
     return None
 
@@ -121,7 +126,10 @@ def _atom_to_grounded_atom(
                 )
             return None
         args.append(resolved)
-    return {"predicate": fluent_key, "args": args, "value": bool(value)}
+    # Lowercase predicate name to match UP's plan-output convention
+    # (FluentCheck nodes derive their predicate name from the
+    # lowercased plan literal, e.g. ``on(mim8_0001, planarshuttle1)``).
+    return {"predicate": fluent_key.lower(), "args": args, "value": bool(value)}
 
 
 def _walk_effect_term(
@@ -134,7 +142,14 @@ def _walk_effect_term(
     warnings: Optional[List[str]] = None,
     context: str = "",
 ) -> None:
-    """Recursively walk a parsed action-effect term, collecting symbolic atoms."""
+    """Recursively flatten a deterministic effect sub-term into atoms.
+
+    This walker rejects ``oneof`` because FOND outcomes are surfaced at a
+    higher level by ``_symbolic_effects_for`` (each branch of a top-level
+    ``oneof`` becomes an outcome in the emitted ``effects`` list). A
+    nested ``oneof`` inside an ``and``/``not`` is unsupported: there is
+    no FOND-outcome carrier for sub-action branches.
+    """
 
     if not isinstance(term, dict):
         return
@@ -177,9 +192,102 @@ def _walk_effect_term(
                     context=context,
                 )
             return
+        if op == "oneof":
+            if warnings is not None:
+                warnings.append(
+                    f"Nested 'oneof' effect in {context} is not supported; "
+                    "only top-level oneOf effects map to FOND outcome branches."
+                )
+            return
         # Numeric / temporal / disjunctive operators are skipped — they
         # cannot be modelled as boolean SymbolicState atoms.
     return
+
+
+def _build_effect_branches(
+    terms: List[Dict[str, Any]],
+    fluent_lookup: Dict[str, Dict[str, Any]],
+    *,
+    param_remap: Optional[Dict[int, Dict[str, Any]]] = None,
+    warnings: Optional[List[str]] = None,
+    context: str = "",
+) -> List[Dict[str, Any]]:
+    """Group an action's effect terms into FOND outcome branches.
+
+    Layout of the returned value:
+        [
+            {"branch": 0, "atoms": [...]},  # always present
+            {"branch": 1, "atoms": [...]},  # iff a top-level oneOf has
+            ...                              # at least 2 children
+        ]
+
+    Atoms from top-level deterministic terms (``and``, ``not``, ``atom``)
+    apply to *every* branch; they are duplicated into each branch so the
+    runtime contract is "look up the branch by Outcome index and apply
+    every atom in it".
+
+    A top-level ``oneOf`` produces one branch per child. Multiple
+    top-level ``oneOf`` terms in the same action are not supported (no
+    way to carry a multi-dimensional outcome) -- the second and later
+    are flattened into the first branch with a warning.
+    """
+
+    deterministic: List[Dict[str, Any]] = []
+    fond_children: List[Dict[str, Any]] = []
+    fond_seen = False
+    for term in terms or []:
+        if (
+            isinstance(term, dict)
+            and term.get("kind") == "op"
+            and term.get("op") == "oneof"
+        ):
+            if fond_seen:
+                if warnings is not None:
+                    warnings.append(
+                        f"Multiple top-level 'oneof' effects in {context} "
+                        "are not supported; later ones are folded into "
+                        "branch 0."
+                    )
+                _walk_effect_term(
+                    term,
+                    fluent_lookup,
+                    deterministic,
+                    param_remap=param_remap,
+                    polarity=True,
+                    warnings=warnings,
+                    context=context,
+                )
+                continue
+            fond_seen = True
+            fond_children = list(term.get("children") or [])
+        else:
+            _walk_effect_term(
+                term,
+                fluent_lookup,
+                deterministic,
+                param_remap=param_remap,
+                polarity=True,
+                warnings=warnings,
+                context=context,
+            )
+
+    if not fond_children:
+        return [{"branch": 0, "atoms": list(deterministic)}]
+
+    branches: List[Dict[str, Any]] = []
+    for idx, child in enumerate(fond_children):
+        branch_atoms: List[Dict[str, Any]] = list(deterministic)
+        _walk_effect_term(
+            child,
+            fluent_lookup,
+            branch_atoms,
+            param_remap=param_remap,
+            polarity=True,
+            warnings=warnings,
+            context=f"{context} oneOf[{idx}]",
+        )
+        branches.append({"branch": idx, "atoms": branch_atoms})
+    return branches
 
 
 def build_up_problem(
@@ -311,19 +419,14 @@ def build_up_problem(
         action: Dict[str, Any],
         param_remap: Dict[int, Dict[str, Any]],
     ) -> List[Dict[str, Any]]:
-        out: List[Dict[str, Any]] = []
         ctx = f"action '{action.get('key') or action.get('skill_target') or '?'}'"
-        for term in action.get("effects", []) or []:
-            _walk_effect_term(
-                term,
-                fluent_lookup,
-                out,
-                param_remap=param_remap,
-                polarity=True,
-                warnings=warnings,
-                context=ctx,
-            )
-        return out
+        return _build_effect_branches(
+            action.get("effects", []) or [],
+            fluent_lookup,
+            param_remap=param_remap,
+            warnings=warnings,
+            context=ctx,
+        )
 
     object_map: Dict[str, Any] = {}
     object_types: Dict[str, str] = {}

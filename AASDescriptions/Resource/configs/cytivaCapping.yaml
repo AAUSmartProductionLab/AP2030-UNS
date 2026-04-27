@@ -190,9 +190,6 @@ cytivaCappingSystemAAS:
                           externalRef: "css:Product"
                   conditions:
                       at_start:
-                          - predicate:
-                              ref: "Operational"
-                              parameters: [0]
                           - not:
                               predicate:
                                   ref: "Occupied"
@@ -206,7 +203,6 @@ cytivaCappingSystemAAS:
                               predicate:
                                   ref: "Free"
                                   parameters: [0]
-
 
               -   key: "Release"
                   semantic_id: "cssx:ReleaseCapability"
@@ -235,7 +231,6 @@ cytivaCappingSystemAAS:
                           - predicate:
                               ref: "Free"
                               parameters: [0]
-
       Problem:
           Objects:
               -   name: "cytivaCappingSystem"
@@ -256,9 +251,6 @@ cytivaCappingSystemAAS:
                   parameters: [0]
 
           Goal:
-              - predicate:
-                  ref: "Operational"
-                  parameters: [0]
               -   predicate:
                   ref: "Free"
                   parameters: [0]

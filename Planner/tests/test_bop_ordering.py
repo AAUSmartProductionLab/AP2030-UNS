@@ -309,6 +309,112 @@ class BoPOrderingTests(unittest.TestCase):
         self.assertTrue(any(term.get("kind") == "atom" and term.get("fluent") == "step_ready" for term in loading_preconds))
         self.assertTrue(any(term.get("kind") == "atom" and term.get("fluent") == "step_ready" for term in unloading_preconds))
 
+    def _build_merged_with_action(self, action_effects):
+        return {
+            "fluents": [],
+            "actions": [
+                {
+                    "key": "RunStep",
+                    "semantic_id": "http://www.w3id.org/aau-ra/cssx#StepCapability",
+                    "semantic_ids": ["http://www.w3id.org/aau-ra/cssx#StepCapability"],
+                    "skill_target": "Step",
+                    "parameters": [],
+                    "preconditions": [],
+                    "effects": action_effects,
+                    "action_kind": "Action",
+                    "sources": [("step", "stationAAS")],
+                },
+            ],
+            "objects": [
+                {
+                    "name": "product_1",
+                    "reference": "",
+                    "declared_type": "Product",
+                    "source_aas_id": "order",
+                    "source_aas_name": "order",
+                },
+            ],
+            "init_terms": [],
+            "goal_terms": [],
+            "constraints_terms": [],
+            "source_lookup": {},
+        }
+
+    def test_step_done_pushed_into_oneof_success_branch_only(self):
+        """Loading-style action: only oneof at top level; failure branch is pure negation."""
+        on_atom = {"kind": "atom", "fluent": "on", "params": []}
+        productat_atom = {"kind": "atom", "fluent": "productat", "params": []}
+        effects = [
+            {
+                "kind": "op",
+                "op": "oneof",
+                "children": [
+                    {"kind": "op", "op": "and", "children": [on_atom, productat_atom]},
+                    {"kind": "op", "op": "not", "children": [on_atom]},
+                ],
+            }
+        ]
+        merged = self._build_merged_with_action(effects)
+        bop_config = {
+            "Processes": [
+                {"Step": {"step": 1, "semantic_id": "http://www.w3id.org/aau-ra/cssx#StepCapability"}},
+            ]
+        }
+        compile_bop_ordering(merged, bop_config, [])
+
+        scoped = next(a for a in merged["actions"] if a["key"].startswith("RunStep__"))
+        top_level_effects = scoped["effects"]
+        # step_done MUST NOT appear at top level — it must be inside the oneof's success branch.
+        self.assertFalse(
+            any(t.get("kind") == "atom" and t.get("fluent") == "step_done" for t in top_level_effects),
+            "step_done leaked outside the oneof for an action with no deterministic positive effects",
+        )
+
+        oneof = next(t for t in top_level_effects if t.get("op") == "oneof")
+        success, failure = oneof["children"]
+        success_atoms = [c for c in success.get("children", []) if c.get("kind") == "atom"]
+        self.assertTrue(any(a.get("fluent") == "step_done" for a in success_atoms))
+        # Failure branch is pure negation and must remain so (no step_done injected).
+        self.assertEqual(failure.get("op"), "not")
+
+    def test_step_done_unconditional_when_deterministic_positive_present(self):
+        """Capture-style action: oneof sits next to a deterministic positive effect."""
+        captured_atom = {"kind": "atom", "fluent": "captured", "params": []}
+        qok_atom = {"kind": "atom", "fluent": "qualityok", "params": []}
+        effects = [
+            captured_atom,
+            {
+                "kind": "op",
+                "op": "oneof",
+                "children": [
+                    qok_atom,
+                    {"kind": "op", "op": "not", "children": [qok_atom]},
+                ],
+            },
+        ]
+        merged = self._build_merged_with_action(effects)
+        bop_config = {
+            "Processes": [
+                {"Step": {"step": 1, "semantic_id": "http://www.w3id.org/aau-ra/cssx#StepCapability"}},
+            ]
+        }
+        compile_bop_ordering(merged, bop_config, [])
+
+        scoped = next(a for a in merged["actions"] if a["key"].startswith("RunStep__"))
+        top_level_effects = scoped["effects"]
+        self.assertTrue(
+            any(t.get("kind") == "atom" and t.get("fluent") == "step_done" for t in top_level_effects),
+            "step_done should be unconditional when a deterministic positive effect exists alongside oneof",
+        )
+        # oneof children must remain unmodified (no step_done injected per branch).
+        oneof = next(t for t in top_level_effects if t.get("op") == "oneof")
+        for branch in oneof["children"]:
+            self.assertNotEqual(branch.get("kind"), "op") if branch.get("kind") == "atom" else None
+            if branch.get("kind") == "op" and branch.get("op") == "and":
+                self.assertFalse(
+                    any(c.get("fluent") == "step_done" for c in branch.get("children", []) if c.get("kind") == "atom")
+                )
+
 
 if __name__ == "__main__":
     unittest.main()

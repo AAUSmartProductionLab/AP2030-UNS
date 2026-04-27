@@ -8,11 +8,31 @@
 #include "mqtt/node_message_distributor.h"
 #include "aas/aas_client.h"
 #include <map>
+#include <optional>
 
 class MqttActionNode : public BT::StatefulActionNode, public MqttPubBase, public MqttSubBase
 {
 protected:
     std::string current_uuid_;
+
+    /// Last command-response payload observed for ``current_uuid_`` at
+    /// the moment the action transitioned to SUCCESS or FAILURE. Stored
+    /// so subclasses (e.g. ExecuteAction) can read out-of-band fields
+    /// such as the FOND ``Outcome`` discriminator that the planner
+    /// needs to pick which oneOf branch effects to apply. Protected by
+    /// ``MqttSubBase::mutex_``.
+    nlohmann::json last_response_msg_;
+
+    /// Terminal status (SUCCESS/FAILURE) latched by the MQTT callback
+    /// when a response for ``current_uuid_`` arrives. Read out by
+    /// ``onRunning()`` on the next tick so that subclasses' ``onRunning``
+    /// overrides (notably ``ExecuteAction::onRunning``, which must
+    /// invoke ``applySymbolicEffects`` on SUCCESS) are actually called
+    /// before the BT framework propagates the terminal status. If the
+    /// callback set ``status`` directly the framework would skip
+    /// ``onRunning`` next tick and effects would never apply.
+    /// Protected by ``MqttSubBase::mutex_``.
+    std::optional<BT::NodeStatus> pending_terminal_status_;
 
     AASClient &aas_client_;
     bool topics_initialized_ = false;

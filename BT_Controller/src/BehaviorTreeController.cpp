@@ -39,21 +39,25 @@ namespace
     /// / ExecuteAction nodes throughout every nested subtree. We pre-populate
     /// the root blackboard once; ``_autoremap="true"`` on every nested SubTree
     /// invocation then propagates the values down the tree.
-    std::size_t preloadPlannerDefaults(const std::string &xml,
-                                       const std::string &subtree_id,
-                                       BT::Blackboard::Ptr blackboard)
+    /// Parse ``<input_port name="..." default="..."/>`` entries declared
+    /// on the planner's ``<TreeNodesModel><SubTree ID="<subtree_id>" editable="true">``
+    /// block out of *xml* and return them as ``(name, decoded_default)`` pairs.
+    std::vector<std::pair<std::string, std::string>>
+    parsePlannerDefaults(const std::string &xml,
+                         const std::string &subtree_id)
     {
-        if (!blackboard || xml.empty())
-            return 0;
+        std::vector<std::pair<std::string, std::string>> out;
+        if (xml.empty())
+            return out;
 
         // Locate the SubTree block within TreeNodesModel.
         const std::string open_pat = "<SubTree ID=\"" + subtree_id + "\"";
         auto block_start = xml.find(open_pat);
         if (block_start == std::string::npos)
-            return 0;
+            return out;
         auto block_end = xml.find("</SubTree>", block_start);
         if (block_end == std::string::npos)
-            return 0;
+            return out;
         const std::string block = xml.substr(block_start, block_end - block_start);
 
         // ``input_port`` lines may have arbitrary attribute order and contain
@@ -85,7 +89,6 @@ namespace
             return s;
         };
 
-        std::size_t count = 0;
         auto begin = std::sregex_iterator(block.begin(), block.end(), port_re);
         auto end = std::sregex_iterator();
         for (auto it = begin; it != end; ++it)
@@ -98,10 +101,34 @@ namespace
             std::string value;
             if (std::regex_search(tag, dm, default_re))
                 value = unescape(dm[1].str());
-            blackboard->set(key, value);
-            ++count;
+            out.emplace_back(std::move(key), std::move(value));
         }
-        return count;
+        return out;
+    }
+
+    /// Write the parsed defaults onto *blackboard*. Returns the number of
+    /// entries written.
+    std::size_t applyPlannerDefaults(
+        const std::vector<std::pair<std::string, std::string>> &defaults,
+        BT::Blackboard::Ptr blackboard)
+    {
+        if (!blackboard)
+            return 0;
+        for (const auto &[key, value] : defaults)
+        {
+            blackboard->set(key, value);
+        }
+        return defaults.size();
+    }
+
+    /// Convenience wrapper: parse and apply in one call (back-compat with
+    /// the previous single-blackboard signature).
+    std::size_t preloadPlannerDefaults(const std::string &xml,
+                                       const std::string &subtree_id,
+                                       BT::Blackboard::Ptr blackboard)
+    {
+        return applyPlannerDefaults(parsePlannerDefaults(xml, subtree_id),
+                                    blackboard);
     }
 } // namespace
 
@@ -1148,9 +1175,11 @@ void BehaviorTreeController::processStartingState()
         // tree's nested ``<SubTree>`` invocations all carry
         // ``_autoremap="true"``, so values land everywhere they're referenced
         // via ``{Key}``.
+        const auto planner_defaults =
+            parsePlannerDefaults(bt_xml_content, "MainTree");
         {
             const std::size_t loaded =
-                preloadPlannerDefaults(bt_xml_content, "MainTree", root_blackboard);
+                applyPlannerDefaults(planner_defaults, root_blackboard);
             std::cout << "Pre-loaded " << loaded
                       << " planner default(s) onto root blackboard" << std::endl;
         }
@@ -1158,6 +1187,34 @@ void BehaviorTreeController::processStartingState()
         // createTreeFromText parses XML, registers the tree, and creates it in one call
         // It automatically uses the main_tree_to_execute attribute from the XML
         bt_tree_ = bt_factory_->createTreeFromText(bt_xml_content, root_blackboard);
+
+        // Replicate the planner defaults onto every subtree blackboard.
+        // The wrapper ``<SubTree ID="MainTree" />`` does not carry
+        // ``_autoremap="true"`` (autoremap would suppress TreeNodesModel
+        // ``default`` values), so MainTree's subtree blackboard does not
+        // automatically inherit ``Finished_MIM8_0001``, ``Predicate_Object``,
+        // ``{FluentLink_*}``, ``{Param_*}`` and friends from the
+        // ``PlannerRoot`` (root) blackboard. BT.CPP v4's ``getInput<>()``
+        // on a child FluentCheck/ExecuteAction looks up ``{Key}`` against
+        // the node's own blackboard and does not always walk the parent
+        // chain, so without this seed step every data-backed
+        // ``predicate_ref`` / ``action_ref`` would resolve to empty at
+        // tick time. Walking ``bt_tree_.subtrees`` and writing the keys
+        // locally guarantees they are visible regardless of how BT.CPP
+        // chooses to resolve the reference.
+        if (!planner_defaults.empty())
+        {
+            std::size_t subtree_seed_count = 0;
+            for (const auto &sub : bt_tree_.subtrees)
+            {
+                if (!sub || !sub->blackboard)
+                    continue;
+                applyPlannerDefaults(planner_defaults, sub->blackboard);
+                ++subtree_seed_count;
+            }
+            std::cout << "Seeded planner defaults onto " << subtree_seed_count
+                      << " subtree blackboard(s)" << std::endl;
+        }
 
         // PR4: seed the per-tree symbolic planning state from the
         // ``_planner_initial_state`` blackboard input declared by the

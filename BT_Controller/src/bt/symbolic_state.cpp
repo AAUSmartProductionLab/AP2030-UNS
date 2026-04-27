@@ -2,18 +2,41 @@
 
 #include "bt/execution_refs.h"
 
+#include <cctype>
+
 SymbolicState &SymbolicState::instance()
 {
     static SymbolicState s;
     return s;
 }
 
+namespace
+{
+    // Lower-case ASCII fold so writes (planner-emitted effect atoms and
+    // the ``_planner_initial_state`` seed, which carry mixed-case
+    // identifiers like ``StationAt``/``imaLoadingSystem``/``loadingLocation``)
+    // and reads (FluentCheck symbolic node names, which the planner
+    // emits as lowercase ``stationat(imaloadingsystem,loadinglocation)``)
+    // produce the same canonical key. Without this normalization,
+    // every symbolic effect was silently invisible to the FluentChecks
+    // and the BT spun on the same action forever.
+    inline void appendLower(std::string &out, const std::string &s)
+    {
+        out.reserve(out.size() + s.size());
+        for (char c : s)
+        {
+            out.push_back(static_cast<char>(
+                std::tolower(static_cast<unsigned char>(c))));
+        }
+    }
+} // namespace
+
 std::string SymbolicState::canonicalKey(const std::string &predicate,
                                         const std::vector<std::string> &args)
 {
     std::string key;
     key.reserve(predicate.size() + 2 + args.size() * 8);
-    key.append(predicate);
+    appendLower(key, predicate);
     key.push_back('(');
     for (size_t i = 0; i < args.size(); ++i)
     {
@@ -21,7 +44,7 @@ std::string SymbolicState::canonicalKey(const std::string &predicate,
         {
             key.push_back(',');
         }
-        key.append(args[i]);
+        appendLower(key, args[i]);
     }
     key.push_back(')');
     return key;

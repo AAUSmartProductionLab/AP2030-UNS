@@ -243,16 +243,25 @@ class SchemaHandler:
         all_properties = self.extract_properties(
             schema, include_inherited=True)
 
-        # Get required fields from the main schema (not inherited)
-        required_fields = set()
-        if 'required' in schema:
-            required_fields.update(schema['required'])
+        # Get required fields from the main schema and all inherited
+        # schemas (recursively follow allOf $refs). Without recursing
+        # into referenced schemas we'd miss fields like ``Position`` that
+        # are declared required only in the base schema.
+        def _collect_required(s: Dict, acc: set) -> None:
+            if not isinstance(s, dict):
+                return
+            if 'required' in s:
+                acc.update(s['required'])
+            for sub in s.get('allOf', []) or []:
+                if '$ref' in sub:
+                    ref_schema = self.load_schema(sub['$ref'])
+                    if ref_schema:
+                        _collect_required(ref_schema, acc)
+                else:
+                    _collect_required(sub, acc)
 
-        # Also check allOf for required fields (but not from base refs)
-        if 'allOf' in schema:
-            for sub_schema in schema['allOf']:
-                if '$ref' not in sub_schema and 'required' in sub_schema:
-                    required_fields.update(sub_schema['required'])
+        required_fields: set = set()
+        _collect_required(schema, required_fields)
 
         # Base fields to exclude (from data.schema.json)
         base_fields = {'TimeStamp'}

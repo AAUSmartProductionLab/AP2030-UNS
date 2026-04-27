@@ -91,7 +91,7 @@ def main():
 
     location_publisher = Publisher(
         base_topic + "/DATA/Location",
-        "./MQTTSchemas/planarLocation.schema.json",
+        "./MQTTSchemas/positionStamped.schema.json",
         2,
     )
 

@@ -31,6 +31,18 @@ namespace bt_exec_refs
         nlohmann::json value;
     };
 
+    /// One FOND outcome branch of an action's symbolic effects. Branch
+    /// indices are assigned by the planner in declaration order of the
+    /// PDDL ``oneOf`` children; non-FOND actions emit a single branch
+    /// with index 0. The runtime selects which branch to apply based on
+    /// the ``Outcome`` field carried in the SUCCESS response payload
+    /// (defaulting to 0 when absent).
+    struct EffectBranch
+    {
+        int index;
+        std::vector<GroundedAtom> atoms;
+    };
+
     /// Decoded `action_ref` payload as carried on planner-generated
     /// ExecuteAction nodes.
     struct ActionRef
@@ -47,10 +59,12 @@ namespace bt_exec_refs
         /// captures the object name carried at planning time (used only for
         /// diagnostics / future object-ref enrichment).
         nlohmann::json object_refs;
-        /// Symbolic-only effects to apply to ``SymbolicState`` after the
-        /// underlying skill operation reports SUCCESS. Sensor-backed
-        /// effects are intentionally excluded by the planner.
-        std::vector<GroundedAtom> effects;
+        /// FOND outcome branches. On action SUCCESS, the runtime picks the
+        /// branch whose ``index`` matches the response payload's ``Outcome``
+        /// field (or the first branch if ``Outcome`` is absent or unmatched)
+        /// and applies its atoms to ``SymbolicState``. Sensor-backed effects
+        /// are intentionally excluded by the planner.
+        std::vector<EffectBranch> effects;
     };
 
     /// Decoded `predicate_ref` payload as carried on planner-generated

@@ -136,9 +136,81 @@ def resolve_action_execution_ref(
         "transformation_aas_path": str(ref.get("transformation_aas_path") or ""),
         "parameter_refs": parameter_refs,
         # PR4: pass through pre-grounded symbolic effects so the BT
-        # runtime can update SymbolicState on action SUCCESS.
-        "effects": list(ref.get("effects") or []),
+        # runtime can update SymbolicState on action SUCCESS. Free
+        # action-parameter args appear as ``$param:N`` sentinels and
+        # are substituted here against the concrete invocation args.
+        "effects": _ground_effect_args(ref.get("effects"), grounded_arguments),
     }
+
+
+def _ground_effect_args(
+    effects: Any,
+    grounded_arguments: Sequence[Mapping[str, Any]],
+) -> list[Dict[str, Any]]:
+    """Substitute ``$param:N`` sentinels in branched effects.
+
+    Input shape (planner output) is a list of branches:
+        [{"branch": <int>, "atoms": [{predicate, args, value}, ...]}, ...]
+
+    Each branch's atoms are grounded against ``grounded_arguments``.
+    Atoms whose args cannot be fully resolved (sentinel index out of
+    range or empty resolved value) are dropped: applying an atom with a
+    blank argument would corrupt SymbolicState's canonical key. A branch
+    that loses every atom is preserved as an empty-atoms branch so the
+    runtime can still match the response Outcome index.
+    """
+
+    out: list[Dict[str, Any]] = []
+    if not isinstance(effects, list):
+        return out
+    for entry in effects:
+        if not isinstance(entry, Mapping):
+            continue
+        try:
+            branch_idx = int(entry.get("branch", 0))
+        except (TypeError, ValueError):
+            branch_idx = 0
+        atoms_raw = entry.get("atoms")
+        if not isinstance(atoms_raw, list):
+            atoms_raw = []
+        new_atoms: list[Dict[str, Any]] = []
+        for atom in atoms_raw:
+            if not isinstance(atom, Mapping):
+                continue
+            raw_args = atom.get("args")
+            if not isinstance(raw_args, list):
+                raw_args = []
+            new_args: list[str] = []
+            skip = False
+            for arg in raw_args:
+                text = str(arg or "")
+                if text.startswith("$param:"):
+                    try:
+                        idx = int(text.split(":", 1)[1])
+                    except ValueError:
+                        skip = True
+                        break
+                    if 0 <= idx < len(grounded_arguments):
+                        value = str(grounded_arguments[idx].get("value") or "")
+                    else:
+                        value = ""
+                    if not value:
+                        skip = True
+                        break
+                    new_args.append(value)
+                else:
+                    new_args.append(text)
+            if skip:
+                continue
+            new_atoms.append(
+                {
+                    "predicate": str(atom.get("predicate") or ""),
+                    "args": new_args,
+                    "value": bool(atom.get("value", True)),
+                }
+            )
+        out.append({"branch": branch_idx, "atoms": new_atoms})
+    return out
 
 
 def resolve_predicate_execution_ref(

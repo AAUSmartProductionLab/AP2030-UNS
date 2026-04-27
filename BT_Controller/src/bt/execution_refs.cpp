@@ -220,20 +220,37 @@ namespace bt_exec_refs
             return atom;
         }
 
-        std::vector<GroundedAtom> parseEffects(const nlohmann::json &node)
+        std::vector<EffectBranch> parseEffects(const nlohmann::json &node)
         {
-            std::vector<GroundedAtom> out;
+            std::vector<EffectBranch> out;
             if (!node.contains("effects") || !node["effects"].is_array())
             {
                 return out;
             }
             for (const auto &entry : node["effects"])
             {
-                auto atom = parseGroundedAtom(entry);
-                if (atom.has_value())
+                if (!entry.is_object())
                 {
-                    out.push_back(std::move(*atom));
+                    continue;
                 }
+                EffectBranch branch;
+                branch.index = 0;
+                if (entry.contains("branch") && entry["branch"].is_number_integer())
+                {
+                    branch.index = entry["branch"].get<int>();
+                }
+                if (entry.contains("atoms") && entry["atoms"].is_array())
+                {
+                    for (const auto &atom_json : entry["atoms"])
+                    {
+                        auto atom = parseGroundedAtom(atom_json);
+                        if (atom.has_value())
+                        {
+                            branch.atoms.push_back(std::move(*atom));
+                        }
+                    }
+                }
+                out.push_back(std::move(branch));
             }
             return out;
         }

@@ -68,6 +68,13 @@ public:
         const std::string &submodel_id_short,
         const std::string &slash_path);
 
+    /// Fetch a submodel by its full identifier (URL form). Issues a GET to
+    ///   /submodels/<base64url(submodel_id)>
+    /// Returns the parsed JSON submodel on success, std::nullopt on failure.
+    /// Used to dereference planner-emitted Object references whose first
+    /// key is of type "Submodel" (i.e. points directly at a submodel).
+    std::optional<nlohmann::json> fetchSubmodelById(const std::string &submodel_id);
+
     /// Invoke an AAS Operation submodel-element via its dot-delimited path.
     ///
     /// Used as the AAS-direct fallback when no Asset Interface Description

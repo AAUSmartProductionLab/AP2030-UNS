@@ -26,6 +26,25 @@ def _make_semantic_id(semantic_id_str: Optional[str]) -> Optional[model.External
     )
 
 
+def _semantic_ref_value(ref: Optional[model.ExternalReference]) -> Optional[str]:
+    if ref is None:
+        return None
+    keys = getattr(ref, "key", ()) or ()
+    if not keys:
+        return None
+    return getattr(keys[0], "value", None)
+
+
+def _normalize_extra_semantic_ids(value: Any) -> List[str]:
+    if value is None:
+        return []
+    if isinstance(value, str):
+        return [value] if value else []
+    if isinstance(value, (list, tuple)):
+        return [str(v) for v in value if v]
+    return []
+
+
 def _semantic_id_tail(semantic_id_str: Optional[str]) -> Optional[str]:
     if not isinstance(semantic_id_str, str) or not semantic_id_str:
         return None
@@ -855,6 +874,12 @@ class _PlanningTransitionBuilder:
                     effects=effects,
                     item_semantic_id=SemanticIdCatalog.ai_planning_domain_section(semantic_element),
                     custom_semantic_id=item.get("semantic_id") or item.get("semanticId"),
+                    additional_semantic_ids=_normalize_extra_semantic_ids(
+                        item.get("additional_semantic_ids")
+                        or item.get("additionalSemanticIds")
+                        or item.get("supplemental_semantic_ids")
+                        or item.get("supplementalSemanticIds")
+                    ),
                     duration=duration,
                     skill_reference=item.get("SkillReference") if include_skill_reference else None,
                     transformation=item.get("transformation"),
@@ -952,6 +977,7 @@ class _PlanningTransitionBuilder:
         effects: Dict[str, Any],
         item_semantic_id: str,
         custom_semantic_id: Optional[str] = None,
+        additional_semantic_ids: Optional[List[str]] = None,
         duration: Optional[Dict[str, Any]] = None,
         skill_reference: Optional[str] = None,
         transformation: Optional[str] = None,
@@ -1036,6 +1062,16 @@ class _PlanningTransitionBuilder:
         custom_sem_ref = _make_semantic_id(custom_semantic_id)
         if custom_sem_ref is not None:
             supplemental_ids.append(custom_sem_ref)
+        for extra in (additional_semantic_ids or []):
+            ref = _make_semantic_id(extra)
+            if ref is None:
+                continue
+            if any(
+                _semantic_ref_value(existing) == _semantic_ref_value(ref)
+                for existing in supplemental_ids
+            ):
+                continue
+            supplemental_ids.append(ref)
 
         return model.SubmodelElementCollection(
             id_short=key,

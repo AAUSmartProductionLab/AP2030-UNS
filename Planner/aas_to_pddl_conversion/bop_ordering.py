@@ -348,6 +348,94 @@ def action_matches_step(action: Dict[str, Any], step: Dict[str, Any]) -> bool:
     return False
 
 
+def _term_has_positive_atom(term: Any) -> bool:
+    """Return True if the term tree contains at least one positive atom.
+
+    Used to distinguish "success" oneof branches (which set positive
+    fluents and therefore advance the BoP step) from pure-negation
+    "failure/retry" branches (which only assert that something did not
+    happen and should leave the step unchanged so it can be retried).
+    """
+    if not isinstance(term, dict):
+        return False
+    kind = term.get("kind")
+    if kind == "atom":
+        return True
+    if kind == "op":
+        op = term.get("op")
+        if op == "not":
+            return False
+        if op in ("and", "or"):
+            return any(_term_has_positive_atom(c) for c in term.get("children", []))
+        # Don't recurse into nested oneofs when classifying a branch.
+        return False
+    return False
+
+
+def inject_step_advance_into_effects(
+    action: Dict[str, Any],
+    advance_terms: List[Dict[str, Any]],
+) -> None:
+    """Append step-advance terms to the action's effects.
+
+    For deterministic actions (or actions whose oneof effects sit
+    alongside at least one deterministic positive effect), the advance
+    terms are appended at the top level so they always fire. This
+    matches the previous behaviour and is correct for actions like
+    capture/inspection where the step is considered done regardless of
+    the non-deterministic outcome (e.g. QualityOk vs not QualityOk).
+
+    For actions whose only top-level effect is a oneof (e.g. loading,
+    where the success branch sets On/ProductAt and the failure branch
+    only negates On), the advance terms are pushed into each oneof
+    branch that contains at least one positive atom. Pure-negation
+    branches are left untouched so step_ready stays true and step_done
+    stays false, allowing the planner to retry the action.
+    """
+    effects = action.setdefault("effects", [])
+
+    oneof_index = next(
+        (
+            i
+            for i, eff in enumerate(effects)
+            if isinstance(eff, dict)
+            and eff.get("kind") == "op"
+            and eff.get("op") == "oneof"
+        ),
+        None,
+    )
+
+    has_deterministic_positive = any(
+        _term_has_positive_atom(eff)
+        for i, eff in enumerate(effects)
+        if i != oneof_index
+    )
+
+    if oneof_index is None or has_deterministic_positive:
+        effects.extend(copy.deepcopy(advance_terms))
+        return
+
+    oneof = effects[oneof_index]
+    children = oneof.setdefault("children", [])
+    for i, branch in enumerate(children):
+        if not _term_has_positive_atom(branch):
+            # Failure / retry branch — leave step state unchanged.
+            continue
+        advance_copy = copy.deepcopy(advance_terms)
+        if (
+            isinstance(branch, dict)
+            and branch.get("kind") == "op"
+            and branch.get("op") == "and"
+        ):
+            branch.setdefault("children", []).extend(advance_copy)
+        else:
+            children[i] = {
+                "kind": "op",
+                "op": "and",
+                "children": [branch, *advance_copy],
+            }
+
+
 def make_step_scoped_action(
     action: Dict[str, Any],
     product_binding: Dict[str, Any],
@@ -372,22 +460,24 @@ def make_step_scoped_action(
         }
     )
 
-    cloned.setdefault("effects", []).append(done_atom)
-    cloned["effects"].append(
+    advance_terms: List[Dict[str, Any]] = [
+        done_atom,
         {
             "kind": "op",
             "op": "not",
             "children": [ready_atom],
-        }
-    )
+        },
+    ]
     if next_step_name:
-        cloned["effects"].append(
+        advance_terms.append(
             make_step_atom(
                 "step_ready",
                 product_binding,
                 {"kind": "object", "name": next_step_name},
             )
         )
+
+    inject_step_advance_into_effects(cloned, advance_terms)
 
     cloned["bop_step"] = {
         "name": step.get("name"),

@@ -1431,6 +1431,30 @@ namespace
     }
 }
 
+std::optional<nlohmann::json> AASClient::fetchSubmodelById(const std::string &submodel_id)
+{
+    try
+    {
+        if (submodel_id.empty())
+        {
+            return std::nullopt;
+        }
+        std::string sm_b64 = base64url_encode(submodel_id);
+        nlohmann::json result = makeGetRequest("/submodels/" + sm_b64);
+        if (result.is_null())
+        {
+            return std::nullopt;
+        }
+        return result;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Exception fetching submodel by id '" << submodel_id
+                  << "': " << e.what() << std::endl;
+        return std::nullopt;
+    }
+}
+
 std::optional<nlohmann::json> AASClient::fetchSubmodelElementByPath(
     const std::string &asset_id,
     const std::string &submodel_id_short,
@@ -1504,12 +1528,47 @@ std::optional<nlohmann::json> AASClient::fetchSubmodelElementByPath(
                           << segment << "'" << std::endl;
                 return std::nullopt;
             }
+            // First pass: match by idShort (covers SMC children).
             for (const auto &elem : *elements)
             {
                 if (elem.contains("idShort") && elem["idShort"] == segment)
                 {
                     match = &elem;
                     break;
+                }
+            }
+            // Second pass: SubmodelElementList children carry no idShort,
+            // only a displayName[].text (and they live in a list whose
+            // ordering can also be indexed positionally). Match either.
+            if (match == nullptr)
+            {
+                for (const auto &elem : *elements)
+                {
+                    if (elem.contains("displayName") && elem["displayName"].is_array())
+                    {
+                        for (const auto &dn : elem["displayName"])
+                        {
+                            if (dn.contains("text") && dn["text"].is_string() &&
+                                dn["text"].get<std::string>() == segment)
+                            {
+                                match = &elem;
+                                break;
+                            }
+                        }
+                        if (match != nullptr)
+                            break;
+                    }
+                }
+            }
+            if (match == nullptr && !segment.empty() &&
+                std::all_of(segment.begin(), segment.end(),
+                            [](unsigned char c)
+                            { return std::isdigit(c); }))
+            {
+                size_t idx = static_cast<size_t>(std::stoul(segment));
+                if (idx < elements->size())
+                {
+                    match = &(*elements)[idx];
                 }
             }
             if (match == nullptr)

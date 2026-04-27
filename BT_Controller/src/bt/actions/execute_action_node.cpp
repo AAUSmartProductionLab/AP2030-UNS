@@ -170,7 +170,21 @@ void ExecuteAction::initializeTopicsFromAAS()
         // Try cached interface first, then live AAS query. MQTT bindings
         // are required: the controller's startup validator aborts if any
         // ExecuteAction node lacks both input and output topics.
-        const std::string &asset_id = action_ref_->source_aas_id;
+        //
+        // Action merging in the planner deduplicates identical action
+        // definitions across resources, keeping a single ``source_aas_id``.
+        // For multi-instance resources (e.g. three planar shuttles sharing
+        // the same Move action), that means ``source_aas_id`` no longer
+        // identifies the executor. The first parameter (by convention the
+        // TransportSystem / Resource) carries the actual instance AAS, so
+        // we prefer its ``aas_id`` for MQTT topic resolution and fall back
+        // to ``source_aas_id`` when no parameter is available.
+        std::string asset_id = action_ref_->source_aas_id;
+        if (!action_ref_->parameter_refs.empty() &&
+            !action_ref_->parameter_refs.front().aas_id.empty())
+        {
+            asset_id = action_ref_->parameter_refs.front().aas_id;
+        }
         bool publisher_topic_set = false;
         bool subscriber_topic_set = false;
 
@@ -356,10 +370,15 @@ nlohmann::json ExecuteAction::createMessage()
 
 BT::NodeStatus ExecuteAction::onStart()
 {
-    // Lazy initialization mirrors the base class behavior.
+    // Lazy initialization AND late-init MQTT subscription registration.
+    // Calling ensureInitialized() (instead of initializeTopicsFromAAS()
+    // directly) is required so MqttActionNode registers this node with
+    // the message distributor and subscribes to the response topic. Without
+    // it the node publishes the command but never receives the response,
+    // so the action stays RUNNING forever.
     if (!topics_initialized_)
     {
-        initializeTopicsFromAAS();
+        ensureInitialized();
     }
     if (!action_ref_.has_value())
     {
@@ -429,8 +448,52 @@ void ExecuteAction::applySymbolicEffects()
         return;
     }
     effects_applied_ = true;
+    if (action_ref_->effects.empty())
+    {
+        return;
+    }
+
+    // Read the FOND outcome discriminator from the latest response
+    // payload. The simulator/station is expected to publish an integer
+    // ``Outcome`` field on SUCCESS for FOND actions; legacy stations
+    // (and all non-FOND actions) omit it, in which case branch 0 — the
+    // declaration-order first oneOf child, or the lone deterministic
+    // branch for non-FOND actions — is selected.
+    int outcome = 0;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (last_response_msg_.is_object()
+            && last_response_msg_.contains("Outcome")
+            && last_response_msg_["Outcome"].is_number_integer())
+        {
+            outcome = last_response_msg_["Outcome"].get<int>();
+        }
+    }
+
+    const bt_exec_refs::EffectBranch *selected = nullptr;
+    for (const auto &branch : action_ref_->effects)
+    {
+        if (branch.index == outcome)
+        {
+            selected = &branch;
+            break;
+        }
+    }
+    if (selected == nullptr)
+    {
+        BT_LOG_ERROR("ExecuteAction '" << this->name()
+                                       << "' received Outcome=" << outcome
+                                       << " but no matching effect branch was emitted by "
+                                          "the planner; falling back to branch 0.");
+        selected = &action_ref_->effects.front();
+    }
+
+    BT_LOG_DEBUG("ExecuteAction '" << this->name()
+                                   << "' applying FOND outcome branch " << selected->index
+                                   << " (" << selected->atoms.size() << " atoms)");
+
     auto &state = SymbolicState::instance();
-    for (const auto &atom : action_ref_->effects)
+    for (const auto &atom : selected->atoms)
     {
         if (atom.predicate.empty())
         {

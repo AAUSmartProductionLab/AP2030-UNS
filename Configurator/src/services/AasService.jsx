@@ -1699,24 +1699,15 @@ class AasService {
           },
           typeValueListElement: 'SubmodelElementCollection',
           value: [
-            // Process 1: Loading
-            this.createProcessSMC('Loading', SEM.PROC_LOADING, SEM.CAP_LOADING, 5.0, 
-              'Load empty primary container onto production shuttle', {
-              parameters: [
-                { name: 'GripForce', value: '10', unit: UNIT.NEWTON, type: 'xs:double', semanticId: SEM.FORCE }
-              ],
-              requirements: [
-                { 
-                  name: 'PositionAccuracy', 
-                  value: '0.5', 
-                  unit: UNIT.MILLIMETER, 
-                  type: 'xs:double', 
-                  semanticId: SEM.ACCURACY,
-                  assessment: { method: 'sensor', sensor: 'EncoderFeedback', standard: 'ISO 230-2' }
-                }
-              ]
-            }),
-            // Process 2: Dispensing
+            // NOTE: Loading and Unloading are intentionally omitted from the
+            // BoP. They are still executed by the planner because:
+            //   - Loading is forced by downstream preconditions (on, productat).
+            //   - Unload/Scrap are forced by the (finished ?p) goal which only
+            //     their at_end effect satisfies.
+            // Listing them as BoP steps would require step_done(unloading) to
+            // be reachable on the FOND failure branch (Scrap), which it is not
+            // since Scrap declares cssx:ScrapCapability, not cssx:UnloadingCapability.
+            // Process 1: Dispensing
             this.createProcessSMC('Dispensing', SEM.PROC_DISPENSING, SEM.CAP_DISPENSING, 8.0, 
               `Dispense ${fillVolume}mL pharmaceutical product into container`, {
               parameters: [
@@ -1741,7 +1732,7 @@ class AasService {
                 }
               ]
             }),
-            // Process 3: Stoppering
+            // Process 2: Stoppering
             this.createProcessSMC('Stoppering', SEM.PROC_STOPPERING, SEM.CAP_STOPPERING, 3.0, 
               'Insert elastomeric stopper to seal primary container', {
               parameters: [
@@ -1765,7 +1756,7 @@ class AasService {
                 }
               ]
             }),
-            // Process 4: Inspection
+            // Process 3: Inspection
             this.createProcessSMC('Inspection', SEM.PROC_INSPECTION, SEM.CAP_QC, 2.0, 
               'Automated visual inspection of filled and stoppered container', {
               parameters: [
@@ -1794,23 +1785,6 @@ class AasService {
                   value: 'compliant', 
                   type: 'xs:string',
                   assessment: { method: 'guideline', standard: 'USP <788>', verification: 'VisualInspection' }
-                }
-              ]
-            }),
-            // Process 5: Unloading
-            this.createProcessSMC('Unloading', SEM.PROC_UNLOADING, SEM.CAP_UNLOADING, 4.0, 
-              'Transfer finished product from shuttle to output conveyor', {
-              parameters: [
-                { name: 'GripForce', value: '8', unit: UNIT.NEWTON, type: 'xs:double', semanticId: SEM.FORCE }
-              ],
-              requirements: [
-                { 
-                  name: 'PlacementAccuracy', 
-                  value: '1.0', 
-                  unit: UNIT.MILLIMETER, 
-                  type: 'xs:double', 
-                  semanticId: SEM.ACCURACY,
-                  assessment: { method: 'sensor', sensor: 'VisionSystem', standard: 'ISO 9283' }
                 }
               ]
             })
@@ -2663,19 +2637,15 @@ class AasService {
     lines.push(`${I}${I}idShort: 'BillOfProcesses'`);
     lines.push(`${I}${I}Processes:`);
 
-    lines.push(`${I}${I}${I}- idShort: 'Loading'`);
-    lines.push(`${I}${I}${I}  semanticId: 'cssx:Loading'`);
-    lines.push(`${I}${I}${I}  description: 'Load empty primary container onto production shuttle'`);
-    lines.push(`${I}${I}${I}  sequenceNumber: 1`);
-    lines.push(`${I}${I}${I}  estimatedDuration:`);
-    lines.push(`${I}${I}${I}    value: 5.0`);
-    lines.push(`${I}${I}${I}    unit: 's'`);
-    lines.push(``);
-
+    // NOTE: Loading and Unloading are intentionally omitted from the BoP.
+    // Loading is forced by downstream preconditions (on, productat); Unload/
+    // Scrap are forced by the (finished ?p) goal. Listing Unloading would
+    // require step_done(unloading) on the FOND Scrap branch, which is not
+    // reachable since Scrap declares cssx:ScrapCapability.
     lines.push(`${I}${I}${I}- idShort: 'Dispensing'`);
     lines.push(`${I}${I}${I}  semanticId: 'cssx:Dispensing'`);
     lines.push(`${I}${I}${I}  description: 'Dispense ${fillVolume}mL pharmaceutical product into container'`);
-    lines.push(`${I}${I}${I}  sequenceNumber: 2`);
+    lines.push(`${I}${I}${I}  sequenceNumber: 1`);
     lines.push(`${I}${I}${I}  estimatedDuration:`);
     lines.push(`${I}${I}${I}    value: 8.0`);
     lines.push(`${I}${I}${I}    unit: 's'`);
@@ -2689,7 +2659,7 @@ class AasService {
     lines.push(`${I}${I}${I}- idShort: 'Stoppering'`);
     lines.push(`${I}${I}${I}  semanticId: 'cssx:Stoppering'`);
     lines.push(`${I}${I}${I}  description: 'Insert elastomeric stopper to seal primary container'`);
-    lines.push(`${I}${I}${I}  sequenceNumber: 3`);
+    lines.push(`${I}${I}${I}  sequenceNumber: 2`);
     lines.push(`${I}${I}${I}  estimatedDuration:`);
     lines.push(`${I}${I}${I}    value: 3.0`);
     lines.push(`${I}${I}${I}    unit: 's'`);
@@ -2698,18 +2668,9 @@ class AasService {
     lines.push(`${I}${I}${I}- idShort: 'Inspection'`);
     lines.push(`${I}${I}${I}  semanticId: 'cssx:QualityControl'`);
     lines.push(`${I}${I}${I}  description: 'Automated visual inspection of filled and stoppered container'`);
-    lines.push(`${I}${I}${I}  sequenceNumber: 4`);
+    lines.push(`${I}${I}${I}  sequenceNumber: 3`);
     lines.push(`${I}${I}${I}  estimatedDuration:`);
     lines.push(`${I}${I}${I}    value: 2.0`);
-    lines.push(`${I}${I}${I}    unit: 's'`);
-    lines.push(``);
-
-    lines.push(`${I}${I}${I}- idShort: 'Unloading'`);
-    lines.push(`${I}${I}${I}  semanticId: 'cssx:Unloading'`);
-    lines.push(`${I}${I}${I}  description: 'Transfer finished product from shuttle to output conveyor'`);
-    lines.push(`${I}${I}${I}  sequenceNumber: 5`);
-    lines.push(`${I}${I}${I}  estimatedDuration:`);
-    lines.push(`${I}${I}${I}    value: 4.0`);
     lines.push(`${I}${I}${I}    unit: 's'`);
     lines.push(``);
 
@@ -2892,9 +2853,7 @@ class AasService {
     lines.push(`${I}${I}${I}${I}    parameters:`);
     lines.push(`${I}${I}${I}${I}        -   name: "Product"`);
     lines.push(`${I}${I}${I}${I}            externalRef: "css:Product"`);
-    lines.push(`${I}${I}${I}${I}        -   name: "Resource"`);
-    lines.push(`${I}${I}${I}${I}            externalRef: "css:Resource"`);
-    lines.push(`${I}${I}${I}${I}    transformation: 'params[1].Variables.QualityResult.Uuid = params[0].Parameters.Uuid and params[1].Variables.QualityResult.Result = "Ok"'`);
+    lines.push(`${I}${I}${I}${I}    transformation: 'params[0].Variables.QualityResult.Uuid = params[0].Parameters.Uuid and params[0].Variables.QualityResult.Result = "Ok"'`);
     lines.push(`${I}${I}${I}${I}-   key: "Finished"`);
     lines.push(`${I}${I}${I}${I}    semantic_id: "cssx:Finished"`);
     lines.push(`${I}${I}${I}${I}    parameters:`);

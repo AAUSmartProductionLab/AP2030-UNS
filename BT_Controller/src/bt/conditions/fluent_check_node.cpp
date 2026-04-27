@@ -339,7 +339,16 @@ BT::NodeStatus FluentCheck::tick()
 {
     if (!topics_initialized_)
     {
-        initializeTopicsFromAAS();
+        // Use the base ensureInitialized() helper so newly-registered
+        // per-Variable subscriptions are actually subscribed via the
+        // distributor (and retained messages delivered) on the first
+        // tick where predicate_ref / aas_id inputs are available. The
+        // builder-time initializeTopicsFromAAS() runs before the
+        // blackboard is fully seeded and registers no topics; calling
+        // initializeTopicsFromAAS() directly here would register the
+        // topics in MqttSubBase but never call subscribe_topic() on the
+        // MQTT client, leaving the snapshot with only AAS defaults.
+        ensureInitialized();
     }
     if (!predicate_ref_.has_value())
     {

@@ -190,9 +190,7 @@ optimaUnloadingSystemAAS:
                             - AAS: "self"
                               Submodel: "Parameters"
                               Element: "Location"
-                    -   name: "QualityInspector"
-                        externalRef: "css:Resource"
-                        
+
                 conditions:
                     at_start:
                         - predicate:
@@ -209,7 +207,7 @@ optimaUnloadingSystemAAS:
                             parameters: [1, 3]
                         - predicate:
                             external: "cssx:QualityOk"
-                            parameters: [1, 4]
+                            parameters: [1]
                 effects:
                     at_end:
                         - not:
@@ -243,8 +241,6 @@ optimaUnloadingSystemAAS:
                             - AAS: "self"
                               Submodel: "Parameters"
                               Element: "Location"
-                    -   name: "QualityInspector"
-                        externalRef: "css:Resource"
 
                 conditions:
                     at_start:
@@ -263,7 +259,7 @@ optimaUnloadingSystemAAS:
                         - not:
                             predicate:
                                 external: "cssx:QualityOk"
-                                parameters: [1, 4]
+                                parameters: [1]
                 effects:
                     at_end:
                         - not:
@@ -286,9 +282,6 @@ optimaUnloadingSystemAAS:
                         externalRef: "css:Product"
                 conditions:
                     at_start:
-                        - predicate:
-                            ref: "Operational"
-                            parameters: [0]
                         - not:
                             predicate:
                                 ref: "Occupied"
@@ -302,7 +295,6 @@ optimaUnloadingSystemAAS:
                             predicate:
                                 ref: "Free"
                                 parameters: [0]
-
 
             -   key: "Release"
                 semantic_id: "cssx:ReleaseCapability"
@@ -331,7 +323,6 @@ optimaUnloadingSystemAAS:
                         - predicate:
                             ref: "Free"
                             parameters: [0]
-
     Problem:
         Objects:
             -   name: "optimaUnloadingSystem"
@@ -355,9 +346,6 @@ optimaUnloadingSystemAAS:
                 parameters: [0, 1]
 
         Goal:
-            - predicate:
-                ref: "Operational"
-                parameters: [0]
             -   predicate:
                 ref: "Free"
                 parameters: [0]

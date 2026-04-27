@@ -77,7 +77,14 @@ BT::NodeStatus MqttActionNode::onStart()
 
 BT::NodeStatus MqttActionNode::onRunning()
 {
-    return status();
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (pending_terminal_status_.has_value())
+    {
+        BT::NodeStatus s = *pending_terminal_status_;
+        pending_terminal_status_.reset();
+        return s;
+    }
+    return BT::NodeStatus::RUNNING;
 }
 
 nlohmann::json MqttActionNode::createMessage()
@@ -98,6 +105,12 @@ void MqttActionNode::onHalted()
 {
     // Clean up when the node is halted
     std::cout << "MQTT action node halted" << std::endl;
+    // Drop any latched terminal status so a subsequent re-entry of the
+    // node does not see a stale SUCCESS/FAILURE from the prior request.
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        pending_terminal_status_.reset();
+    }
     // Additional cleanup as needed
 }
 
@@ -116,13 +129,21 @@ void MqttActionNode::callback(const std::string &topic_key, const nlohmann::json
 
                 if (msg["State"] == "FAILURE")
                 {
+                    last_response_msg_ = msg;
                     current_uuid_ = "";
-                    setStatus(BT::NodeStatus::FAILURE);
+                    // Latch the terminal status for the next onRunning()
+                    // call rather than calling setStatus() directly.
+                    // Setting status here would make the BT framework
+                    // skip onRunning() on the next tick, which is where
+                    // ExecuteAction applies the planner-emitted symbolic
+                    // effects on SUCCESS.
+                    pending_terminal_status_ = BT::NodeStatus::FAILURE;
                 }
                 else if (msg["State"] == "SUCCESS")
                 {
+                    last_response_msg_ = msg;
                     current_uuid_ = "";
-                    setStatus(BT::NodeStatus::SUCCESS);
+                    pending_terminal_status_ = BT::NodeStatus::SUCCESS;
                 }
                 else if (msg["State"] == "RUNNING")
                 {
