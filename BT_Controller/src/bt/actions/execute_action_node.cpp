@@ -462,9 +462,7 @@ void ExecuteAction::applySymbolicEffects()
     int outcome = 0;
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        if (last_response_msg_.is_object()
-            && last_response_msg_.contains("Outcome")
-            && last_response_msg_["Outcome"].is_number_integer())
+        if (last_response_msg_.is_object() && last_response_msg_.contains("Outcome") && last_response_msg_["Outcome"].is_number_integer())
         {
             outcome = last_response_msg_["Outcome"].get<int>();
         }

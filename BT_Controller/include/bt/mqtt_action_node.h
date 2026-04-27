@@ -46,9 +46,9 @@ public:
                    const BT::NodeConfig &config,
                    MqttClient &mqtt_client,
                    AASClient &aas_client) : BT::StatefulActionNode(name, config),
-                                                           MqttPubBase(mqtt_client),
-                                                           MqttSubBase(mqtt_client),
-                                                           aas_client_(aas_client)
+                                            MqttPubBase(mqtt_client),
+                                            MqttSubBase(mqtt_client),
+                                            aas_client_(aas_client)
     {
     }
 
