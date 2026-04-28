@@ -4,10 +4,11 @@
 from __future__ import annotations
 
 import json
+import re
 from html import escape
 from pathlib import Path
 from string import Template
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, FrozenSet, List, Optional, Set, Tuple
 
 try:
     from ..bt_synthesis.policy_graph import build_policy_state_graph
@@ -155,7 +156,7 @@ def _build_static_svg_markup(graph_data: Dict, width: int = 1200, height: int = 
         )
         parts.append('<title>{}</title>'.format(title))
         parts.append(
-            '<text x="{:.2f}" y="{:.2f}" font-size="10" fill="#333">{}</text>'.format(
+            '<text x="{:.2f}" y="{:.2f}" font-size="16" fill="#333">{}</text>'.format(
                 x + 12,
                 y + 4,
                 title,
@@ -166,13 +167,219 @@ def _build_static_svg_markup(graph_data: Dict, width: int = 1200, height: int = 
     return "\n".join(parts)
 
 
-def _make_state_name(actions: Set[str], distance: int = -1) -> str:
-    action_label = ", ".join(sorted(actions)) if actions else "noop"
-    if distance == 0:
-        return "Goal"
-    if distance < 0:
-        return action_label
-    return f"{action_label} ({distance})"
+def _parse_action_name_and_args(action: str) -> Tuple[str, List[str]]:
+    raw = str(action or "").strip()
+    if not raw:
+        return "", []
+
+    if "(" in raw and raw.endswith(")"):
+        name, args_part = raw.split("(", 1)
+        args_text = args_part[:-1].strip()
+        args = [a.strip() for a in args_text.split(",") if a.strip()] if args_text else []
+        return name.strip(), args
+
+    parts = [p for p in raw.split() if p]
+    if not parts:
+        return "", []
+    return parts[0], parts[1:]
+
+
+def _clean_action_name(name: str) -> str:
+    base = re.sub(r"_\d+$", "", str(name or "").strip().lower())
+    return base.replace("_", " ").strip()
+
+
+def _is_product_like_token(token: str) -> bool:
+    t = str(token or "").strip().lower()
+    return (
+        t.startswith("mim")
+        or t.startswith("product")
+        or t.startswith("order")
+        or t.startswith("step")
+    )
+
+
+def _literal_args(literal: str, predicate: str) -> Optional[List[str]]:
+    prefix = f"{predicate}("
+    lit = str(literal or "").strip().lower()
+    if not lit.startswith(prefix) or not lit.endswith(")"):
+        return None
+    inner = lit[len(prefix) : -1].strip()
+    if not inner:
+        return []
+    return [x.strip() for x in inner.split(",") if x.strip()]
+
+
+def _candidate_action_keys(action: str) -> List[str]:
+    raw = str(action or "").strip().lower()
+    if not raw:
+        return []
+
+    candidates: List[str] = [raw]
+
+    # Policy actions are often rendered as "name(arg1, arg2)" while action
+    # lookup tables may use "name arg1 arg2".
+    if "(" in raw and raw.endswith(")"):
+        name, args_part = raw.split("(", 1)
+        args_text = args_part[:-1].strip()
+        if args_text:
+            args = [a.strip() for a in args_text.split(",") if a.strip()]
+            candidates.append(" ".join([name.strip(), *args]))
+        else:
+            candidates.append(name.strip())
+
+    # Also try converting "name arg1 arg2" -> "name(arg1, arg2)".
+    if " " in raw and "(" not in raw:
+        parts = [p for p in raw.split(" ") if p]
+        if parts:
+            if len(parts) == 1:
+                candidates.append(parts[0] + "()")
+            else:
+                candidates.append(parts[0] + "(" + ", ".join(parts[1:]) + ")")
+
+    # Preserve order but drop duplicates.
+    seen: Set[str] = set()
+    unique: List[str] = []
+    for c in candidates:
+        if c not in seen:
+            unique.append(c)
+            seen.add(c)
+    return unique
+
+
+def _resolve_action_info(action: str, action_table: Dict[str, Any]) -> Optional[Any]:
+    for key in _candidate_action_keys(action):
+        action_info = action_table.get(key)
+        if action_info is not None:
+            return action_info
+    return None
+
+
+def _extract_asset_hint_from_action_model(action_info: Any, action_args: List[str]) -> Optional[str]:
+    if action_info is None:
+        return None
+
+    product_args = {a.lower() for a in action_args if _is_product_like_token(a)}
+    scores: Dict[str, int] = {}
+
+    def _bump(token: Optional[str], weight: int) -> None:
+        t = str(token or "").strip().lower()
+        if not t or _is_product_like_token(t):
+            return
+        scores[t] = scores.get(t, 0) + weight
+
+    def _scan_literal(literal: str, *, from_outcome: bool = False) -> None:
+        operational = _literal_args(literal, "operational")
+        if operational and len(operational) == 1:
+            _bump(operational[0], 7)
+
+        occupied = _literal_args(literal, "occupied")
+        if occupied and len(occupied) == 2 and (not product_args or occupied[1] in product_args):
+            _bump(occupied[0], 5)
+
+        # Outcome literals frequently include transport-side state changes
+        # (e.g. on/productat/resourceat deltas) that should not override the
+        # executing asset. Use them only as weak tie-breakers from
+        # preconditions, not as primary evidence.
+        if from_outcome:
+            return
+
+        on_args = _literal_args(literal, "on")
+        if on_args and len(on_args) == 2 and (not product_args or on_args[0] in product_args):
+            _bump(on_args[1], 4)
+
+        resource_at = _literal_args(literal, "resourceat")
+        if resource_at and len(resource_at) >= 1:
+            _bump(resource_at[0], 4)
+
+        free_args = _literal_args(literal, "free")
+        if free_args and len(free_args) == 1:
+            _bump(free_args[0], 2)
+
+    for lit in getattr(action_info, "preconditions", []) or []:
+        _scan_literal(lit, from_outcome=False)
+
+    for adds, dels in getattr(action_info, "outcomes", []) or []:
+        for lit in adds:
+            _scan_literal(lit, from_outcome=True)
+        for lit in dels:
+            _scan_literal(lit, from_outcome=True)
+
+    if not scores:
+        return None
+
+    best_token, _ = max(sorted(scores.items()), key=lambda item: item[1])
+    return best_token
+
+
+def _infer_resource_hint(
+    positive_literals: FrozenSet[str],
+    action_args: List[str],
+) -> Optional[str]:
+    products = {a.lower() for a in action_args if _is_product_like_token(a)}
+
+    for lit in positive_literals:
+        args = _literal_args(lit, "on")
+        if args and len(args) == 2 and (not products or args[0] in products):
+            return args[1]
+
+    for lit in positive_literals:
+        args = _literal_args(lit, "occupied")
+        if args and len(args) == 2 and (not products or args[1] in products):
+            return args[0]
+
+    for lit in positive_literals:
+        args = _literal_args(lit, "resourceat")
+        if args and len(args) >= 1:
+            return args[0]
+
+    return None
+
+
+def _make_action_display_name(
+    action: str,
+    positive_literals: FrozenSet[str],
+    *,
+    action_model_asset_hint: Optional[str] = None,
+) -> str:
+    raw_name, args = _parse_action_name_and_args(action)
+    clean_name = _clean_action_name(raw_name)
+    if not clean_name:
+        return "noop"
+
+    # If we can infer the executor asset from grounded action semantics,
+    # prefer that over positional parameters (which are often transports).
+    if action_model_asset_hint:
+        return f"{clean_name} {action_model_asset_hint}"
+
+    non_product_args = [a for a in args if not _is_product_like_token(a)]
+    if non_product_args:
+        return f"{clean_name} {non_product_args[0]}"
+
+    resource_hint = _infer_resource_hint(positive_literals, args)
+    if resource_hint:
+        return f"{clean_name} {resource_hint}"
+
+    return clean_name
+
+
+def _make_state_name(
+    actions: Set[str],
+    positive_literals: FrozenSet[str],
+    *,
+    action_asset_hints: Optional[Dict[str, Optional[str]]] = None,
+) -> str:
+    if not actions:
+        return "noop"
+    labels = [
+        _make_action_display_name(
+            a,
+            positive_literals,
+            action_model_asset_hint=(action_asset_hints or {}).get(a),
+        )
+        for a in sorted(actions)
+    ]
+    return ", ".join(labels)
 
 
 def _safe_getattr(obj: Any, name: str, default: Any = None) -> Any:
@@ -349,34 +556,19 @@ def policy_to_state_graph_data(
     }
     effective_goal_negative = {f.lower() for f in goal_negative}
 
+    action_asset_hint_cache: Dict[str, Optional[str]] = {}
+
+    def _action_asset_hint(action: str) -> Optional[str]:
+        if action not in action_asset_hint_cache:
+            _name, args = _parse_action_name_and_args(action)
+            action_info = _resolve_action_info(action, action_table)
+            action_asset_hint_cache[action] = _extract_asset_hint_from_action_model(action_info, args)
+        return action_asset_hint_cache[action]
+
     def get_action_outcomes(action: str):
-        raw = action.strip().lower()
-        candidates = [raw]
-
-        # Policy actions are often rendered as "name(arg1, arg2)" while the
-        # simulator lookup table uses "name arg1 arg2".
-        if "(" in raw and raw.endswith(")"):
-            name, args_part = raw.split("(", 1)
-            args_text = args_part[:-1].strip()
-            if args_text:
-                args = [a.strip() for a in args_text.split(",") if a.strip()]
-                candidates.append(" ".join([name.strip(), *args]))
-            else:
-                candidates.append(name.strip())
-
-        # Also try converting "name arg1 arg2" -> "name(arg1, arg2)".
-        if " " in raw and "(" not in raw:
-            parts = [p for p in raw.split(" ") if p]
-            if parts:
-                if len(parts) == 1:
-                    candidates.append(parts[0] + "()")
-                else:
-                    candidates.append(parts[0] + "(" + ", ".join(parts[1:]) + ")")
-
-        for key in candidates:
-            action_info = action_table.get(key)
-            if action_info is not None:
-                return action_info.outcomes
+        action_info = _resolve_action_info(action, action_table)
+        if action_info is not None:
+            return action_info.outcomes
         return None
 
     graph = build_policy_state_graph(
@@ -396,7 +588,11 @@ def policy_to_state_graph_data(
         nodes.append(
             {
                 "id": node_id,
-                "name": "",
+                "name": _make_state_name(
+                    set(actions),
+                    positive,
+                    action_asset_hints={a: _action_asset_hint(a) for a in actions},
+                ),
                 "type": "state",
                 "distance": -1,
                 "is_sc": False,
@@ -405,6 +601,14 @@ def policy_to_state_graph_data(
                 "num_negative": len(negative),
                 "conditions": sorted(signature)[:25],
                 "actions": actions,
+                "display_actions": [
+                    _make_action_display_name(
+                        a,
+                        positive,
+                        action_model_asset_hint=_action_asset_hint(a),
+                    )
+                    for a in actions
+                ],
                 "num_actions": len(actions),
                 "is_initial": node_id == graph.initial_state_id,
                 "size": 8,
@@ -540,8 +744,6 @@ def policy_to_state_graph_data(
         node_id = node["id"]
         node["distance"] = distances.get(node_id, -1)
         node["is_sc"] = node_id in sc_nodes
-        if node["type"] == "state":
-            node["name"] = _make_state_name(set(node["actions"]), node["distance"])
 
     return {
         "nodes": nodes,

@@ -47,15 +47,16 @@
         }
         #graph { width: 100%; height: 100%; }
         #sidebar {
-            width: 320px; display: flex; flex-direction: column; gap: 13px;
+            width: 360px; display: flex; flex-direction: column; gap: 13px;
         }
         #state {
             background: white; border-radius: 8px; padding: 13px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1); flex: 1;
-            overflow: auto; font-size: 12px;
+            overflow: auto; font-size: 13px; line-height: 1.35;
         }
         #state pre { margin: 0; white-space: pre-wrap; word-break: break-all; }
         #state h4  { margin: 0 0 8px 0; color: #333; }
+        #state p { margin: 0 0 8px 0; }
         .legend {
             background: white; border-radius: 8px; padding: 13px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -84,7 +85,7 @@
             fill: none; stroke: #000; stroke-width: 2.6px;
             opacity: 0.8; marker-end: url(#end-arrow);
         }
-        .pslabel { font-size: 10px; fill: #333; pointer-events: none; }
+        .pslabel { font-size: 16px; fill: #333; pointer-events: none; }
         .runtime-note {
             position: absolute;
             top: 10px;
@@ -173,6 +174,98 @@
         const height = svgEl.clientHeight || 700;
         const nodeRadius = 8;
 
+        function escapeHtml(text) {
+            return String(text || "").replace(/[&<>"']/g, function(ch) {
+                if (ch === "&") return "&amp;";
+                if (ch === "<") return "&lt;";
+                if (ch === ">") return "&gt;";
+                if (ch === '"') return "&quot;";
+                return "&#39;";
+            });
+        }
+
+        function parseAction(action) {
+            const raw = String(action || "").trim();
+            if (!raw) {
+                return { name: "", params: [] };
+            }
+            if (raw.indexOf("(") >= 0 && raw.endsWith(")")) {
+                const i = raw.indexOf("(");
+                const name = raw.slice(0, i).trim();
+                const body = raw.slice(i + 1, -1).trim();
+                const params = body ? body.split(",").map(function(p) { return p.trim(); }).filter(Boolean) : [];
+                return { name: name, params: params };
+            }
+            const parts = raw.split(/\s+/).filter(Boolean);
+            return { name: parts[0] || "", params: parts.slice(1) };
+        }
+
+        function cleanActionName(name) {
+            return String(name || "")
+                .replace(/_\d+$/, "")
+                .replace(/_/g, " ")
+                .trim();
+        }
+
+        function formatActionName(action) {
+            const parsed = parseAction(action);
+            return cleanActionName(parsed.name) || "noop";
+        }
+
+        function formatActionParametersLine(action) {
+            const parsed = parseAction(action);
+            const base = cleanActionName(parsed.name) || "noop";
+            if (!parsed.params.length) {
+                return base + ": (none)";
+            }
+            return base + ": " + parsed.params.join(", ");
+        }
+
+        function nodeActionNames(node) {
+            if (node.display_actions && node.display_actions.length) {
+                return node.display_actions;
+            }
+            return (node.actions || []).map(formatActionName);
+        }
+
+        function buildStatePanelHtml(node) {
+            let html = "<h4>Partial State for Node " + node.id + "</h4>";
+            if (node.type === "goal") {
+                return html + "<pre>Goal node (distance 0)</pre>";
+            }
+            if (node.type === "unmapped") {
+                return html + "<pre>Undefined / unmapped successor</pre>";
+            }
+
+            const actionNames = nodeActionNames(node);
+            html += "<p><strong>Action:</strong> " + escapeHtml(actionNames.join(", ")) + "</p>";
+            html += "<p><strong>Distance to goal:</strong> " +
+                (node.distance >= 0 ? node.distance : "unreachable") + "</p>";
+            if (node.is_sc) html += "<p><strong>Strong-cyclic:</strong> Yes</p>";
+            if (node.is_initial) html += "<p><em>Initial state</em></p>";
+
+            const rawActions = node.actions || [];
+            const parameterLines = rawActions.map(function(action, idx) {
+                const display = actionNames[idx] || formatActionName(action);
+                return display + "  <-  " + formatActionParametersLine(action) +
+                    "  [raw: " + action + "]";
+            });
+            if (parameterLines.length) {
+                html += "<p><strong>Parameters:</strong></p><pre>" +
+                    escapeHtml(parameterLines.join("\n")) + "</pre>";
+            }
+
+            if (node.conditions && node.conditions.length) {
+                html += "<p><strong>Conditions:</strong></p><pre>" +
+                    escapeHtml(node.conditions.join("\n")) + "</pre>";
+                if (node.num_conditions > node.conditions.length) {
+                    html += "<p>... and " + (node.num_conditions - node.conditions.length) + " more</p>";
+                }
+            }
+
+            return html;
+        }
+
         // Remove server-rendered fallback layer once interactive rendering starts.
         while (svgEl.firstChild) {
             svgEl.removeChild(svgEl.firstChild);
@@ -260,24 +353,13 @@
 
                 const t = document.createElementNS(NS, "text");
                 t.setAttribute("x", n.x + 12);
-                t.setAttribute("y", n.y + 4);
+                t.setAttribute("y", n.y + 5);
                 t.setAttribute("class", "pslabel");
                 t.textContent = n.name || ("node-" + n.id);
+                t.setAttribute("font-size", "16");
 
                 c.addEventListener("mouseover", function() {
-                    let html = "<h4>Partial State for Node " + n.id + "</h4>";
-                    if (n.type === "goal") {
-                        html += "<pre>Goal node (distance 0)</pre>";
-                    } else if (n.type === "unmapped") {
-                        html += "<pre>Undefined / unmapped successor</pre>";
-                    } else {
-                        html += "<p><strong>Actions:</strong> " + (n.actions || []).join(", ") + "</p>";
-                        html += "<p><strong>Distance to goal:</strong> " + (n.distance >= 0 ? n.distance : "unreachable") + "</p>";
-                        if (n.conditions && n.conditions.length) {
-                            html += "<pre>" + n.conditions.join("\n") + "</pre>";
-                        }
-                    }
-                    statePanel.innerHTML = html;
+                    statePanel.innerHTML = buildStatePanelHtml(n);
                     c.setAttribute("r", String(nodeRadius * 1.8));
                 });
                 c.addEventListener("mouseout", function() {
@@ -407,23 +489,7 @@
 
         /* Hover: show partial state in side panel (PRP style) */
         node.on("mouseover", function(d) {
-                var html = "<h4>Partial State for Node " + d.id + "</h4>";
-                if (d.type === "goal") {
-                    html += "<pre>Goal node (distance 0)</pre>";
-                } else if (d.type === "unmapped") {
-                    html += "<pre>Undefined / unmapped successor</pre>";
-                } else {
-                    html += "<p><strong>Actions:</strong> " + (d.actions||[]).join(", ") + "</p>";
-                    html += "<p><strong>Distance to goal:</strong> " + (d.distance >= 0 ? d.distance : "unreachable") + "</p>";
-                    if (d.is_sc) html += "<p><strong>Strong-cyclic:</strong> Yes</p>";
-                    if (d.is_initial) html += "<p><em>Initial state</em></p>";
-                    if (d.conditions && d.conditions.length) {
-                        html += "<pre>" + d.conditions.join("\n") + "</pre>";
-                        if (d.num_conditions > d.conditions.length)
-                            html += "<p>... and " + (d.num_conditions - d.conditions.length) + " more</p>";
-                    }
-                }
-                document.getElementById("state").innerHTML = html;
+                document.getElementById("state").innerHTML = buildStatePanelHtml(d);
                 d3.select(this).transition().duration(200).attr("r", nodeRadius * 2);
             })
             .on("mouseout", function(d) {
