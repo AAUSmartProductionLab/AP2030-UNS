@@ -66,6 +66,10 @@ from pddl_planning.planner_core.solver import solve_from_files
 
 CATEGORIES = ("action", "condition", "selector", "sequence", "decorator", "leaf_other")
 WRAPPER_CATEGORIES = ("selector", "sequence", "decorator")
+DEFAULT_DOMAINS = "ex-blocksworld,first-responders,zenotravel"
+DOMAIN_ALIASES = {
+    "ex-blockworld": "ex-blocksworld",
+}
 
 
 def _classify(behaviour: py_trees.behaviour.Behaviour) -> str:
@@ -208,6 +212,19 @@ def _discover_instances(root: Path) -> List[Tuple[str, str, Path, Path]]:
     return out
 
 
+def _parse_domain_filter(raw: str) -> Optional[set[str]]:
+    value = (raw or "").strip().lower()
+    if not value or value == "all":
+        return None
+    domains = set()
+    for token in value.split(","):
+        token = token.strip().lower()
+        if not token:
+            continue
+        domains.add(DOMAIN_ALIASES.get(token, token))
+    return domains or None
+
+
 def plot_static(df: pd.DataFrame, out: Path) -> None:
     pivot = (
         df.assign(instance=df["domain"] + "/" + df["problem"])
@@ -260,7 +277,7 @@ def plot_static(df: pd.DataFrame, out: Path) -> None:
     ax.set_ylabel("Static node count")
     ax.set_title("BT static node count by category (T = trivial, H = hoisted)")
     ax.grid(axis="y", linestyle="--", alpha=0.3)
-    ax.legend(title="category", bbox_to_anchor=(1.02, 1), loc="upper left")
+    ax.legend(title="category", loc="upper left", framealpha=0.9)
     fig.tight_layout()
     fig.savefig(out, dpi=150)
     plt.close(fig)
@@ -317,10 +334,9 @@ def plot_dynamic(df: pd.DataFrame, out: Path) -> None:
         ax.set_title(f"Profile = {profile}")
         ax.grid(axis="y", linestyle="--", alpha=0.3, which="both")
 
-    handles, labels = axes[0].get_legend_handles_labels()
-    fig.legend(handles, labels, title="category", loc="center right", bbox_to_anchor=(1.0, 0.5))
+    axes[0].legend(title="category", loc="upper left", framealpha=0.9)
     fig.suptitle("Per-episode behaviour visits by node category (T = trivial, H = hoisted)", y=0.995)
-    fig.tight_layout(rect=[0, 0, 0.9, 1])
+    fig.tight_layout()
     fig.savefig(out, dpi=150)
     plt.close(fig)
 
@@ -399,7 +415,7 @@ def plot_tradeoff(df: pd.DataFrame, out: Path) -> None:
         "Hoisting trade-off: condition checks saved vs wrapper checks added\n"
         "(below the dashed line: net node-tick win for hoisting)"
     )
-    ax.legend(title="profile")
+    ax.legend(title="profile", loc="upper left", framealpha=0.9)
     ax.grid(linestyle="--", alpha=0.3)
     fig.tight_layout()
     fig.savefig(out, dpi=150)
@@ -415,6 +431,15 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     p.add_argument("--seed", type=int, default=1337)
     p.add_argument("--timeout", type=float, default=120.0)
     p.add_argument("--backend", type=str, default="pr2", choices=["auto", "pr2", "up"])
+    p.add_argument(
+        "--domains",
+        type=str,
+        default=DEFAULT_DOMAINS,
+        help=(
+            "Comma-separated benchmark domain directories to include "
+            f"(default: {DEFAULT_DOMAINS}). Use 'all' to include everything."
+        ),
+    )
     p.add_argument("--output-dir", type=Path, default=None)
     args = p.parse_args(argv)
 
@@ -425,6 +450,15 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     out_dir.mkdir(parents=True, exist_ok=True)
     profiles = [s.strip() for s in args.profiles.split(",") if s.strip()]
     instances = _discover_instances(args.benchmarks_root)
+
+    requested_domains = _parse_domain_filter(args.domains)
+    if requested_domains is not None:
+        available_domains = {domain.lower() for domain, _, _, _ in instances}
+        missing = sorted(requested_domains - available_domains)
+        instances = [inst for inst in instances if inst[0].lower() in requested_domains]
+        if missing:
+            print(f"warning: requested domains not found: {', '.join(missing)}")
+
     if not instances:
         print("No instances")
         return 2

@@ -15,6 +15,9 @@ from Planner.aas_to_pddl_conversion.utils import match_capability
 
 
 class BoPOrderingTests(unittest.TestCase):
+    def _product_parameter(self):
+        return {"name": "product", "type": "Product"}
+
     def test_match_capability_accepts_capability_skill_uri_variants(self):
         self.assertTrue(
             match_capability(
@@ -52,7 +55,7 @@ class BoPOrderingTests(unittest.TestCase):
                     "key": "RunDispensing",
                     "semantic_id": "http://www.w3id.org/aau-ra/cssx#DispensingSkill",
                     "skill_target": "http://www.w3id.org/aau-ra/cssx#DispensingSkill",
-                    "parameters": [],
+                    "parameters": [self._product_parameter()],
                     "preconditions": [],
                     "effects": [{"kind": "atom", "fluent": "station_ready", "params": [{"kind": "object", "name": "stationA"}]}],
                     "action_kind": "Action",
@@ -62,7 +65,7 @@ class BoPOrderingTests(unittest.TestCase):
                     "key": "RunStoppering",
                     "semantic_id": "http://www.w3id.org/aau-ra/cssx#StopperingSkill",
                     "skill_target": "http://www.w3id.org/aau-ra/cssx#StopperingSkill",
-                    "parameters": [],
+                    "parameters": [self._product_parameter()],
                     "preconditions": [],
                     "effects": [],
                     "action_kind": "Action",
@@ -123,6 +126,10 @@ class BoPOrderingTests(unittest.TestCase):
         fluent_keys = {fluent["key"] for fluent in merged["fluents"]}
         self.assertIn("step_ready", fluent_keys)
         self.assertIn("step_done", fluent_keys)
+        step_ready = next(fluent for fluent in merged["fluents"] if fluent["key"] == "step_ready")
+        step_done = next(fluent for fluent in merged["fluents"] if fluent["key"] == "step_done")
+        self.assertEqual(step_ready.get("param_types"), ["Product", "Step"])
+        self.assertEqual(step_done.get("param_types"), ["Product", "Step"])
 
         action_keys = [action["key"] for action in merged["actions"]]
         self.assertNotIn("RunDispensing", action_keys)
@@ -135,6 +142,13 @@ class BoPOrderingTests(unittest.TestCase):
         dispensing_action = step_scoped[0]
         self.assertTrue(any(term.get("kind") == "atom" and term.get("fluent") == "step_ready" for term in dispensing_action["preconditions"]))
         self.assertTrue(any(term.get("kind") == "atom" and term.get("fluent") == "step_done" for term in dispensing_action["effects"]))
+        step_ready_precond = next(
+            term
+            for term in dispensing_action["preconditions"]
+            if term.get("kind") == "atom" and term.get("fluent") == "step_ready"
+        )
+        self.assertEqual(step_ready_precond["params"][0].get("kind"), "action_param")
+        self.assertEqual(step_ready_precond["params"][0].get("index"), 0)
         self.assertTrue(
             any(
                 term.get("kind") == "atom"
@@ -148,6 +162,77 @@ class BoPOrderingTests(unittest.TestCase):
         self.assertTrue(any(term.get("kind") == "atom" and term.get("fluent") == "step_done" for term in merged["goal_terms"]))
         self.assertGreaterEqual(len(merged["init_terms"]), 4)
 
+    def test_compile_bop_ordering_initializes_step_state_per_product_instance(self):
+        merged = {
+            "fluents": [],
+            "actions": [
+                {
+                    "key": "RunLoading",
+                    "semantic_id": "http://www.w3id.org/aau-ra/cssx#LoadingSkill",
+                    "semantic_ids": ["http://www.w3id.org/aau-ra/cssx#LoadingSkill"],
+                    "skill_target": "Loading",
+                    "parameters": [self._product_parameter()],
+                    "preconditions": [],
+                    "effects": [],
+                    "action_kind": "Action",
+                    "sources": [("aas-1", "loading")],
+                }
+            ],
+            "objects": [
+                {
+                    "name": "mim8_0001",
+                    "reference": "",
+                    "declared_type": "mim8_0001aas",
+                    "source_aas_id": "order",
+                    "source_aas_name": "order",
+                },
+                {
+                    "name": "mim8_0002",
+                    "reference": "",
+                    "declared_type": "mim8_0002aas",
+                    "source_aas_id": "order",
+                    "source_aas_name": "order",
+                },
+            ],
+            "init_terms": [],
+            "goal_terms": [
+                {"kind": "atom", "fluent": "finished", "params": [{"kind": "object", "name": "mim8_0001"}]},
+                {"kind": "atom", "fluent": "finished", "params": [{"kind": "object", "name": "mim8_0002"}]},
+            ],
+            "constraints_terms": [],
+            "source_lookup": {},
+        }
+        bop_config = {
+            "Processes": [
+                {
+                    "Loading": {
+                        "step": 1,
+                        "semantic_id": "http://www.w3id.org/aau-ra/cssx#LoadingCapability",
+                    }
+                },
+            ]
+        }
+
+        compile_bop_ordering(merged, bop_config, [])
+
+        step_ready_terms = [
+            term
+            for term in merged["init_terms"]
+            if term.get("kind") == "atom" and term.get("fluent") == "step_ready"
+        ]
+        self.assertEqual(len(step_ready_terms), 2)
+        ready_products = {term["params"][0].get("name") for term in step_ready_terms}
+        self.assertEqual(ready_products, {"mim8_0001", "mim8_0002"})
+
+        step_done_goals = [
+            term
+            for term in merged["goal_terms"]
+            if term.get("kind") == "atom" and term.get("fluent") == "step_done"
+        ]
+        self.assertEqual(len(step_done_goals), 2)
+        done_goal_products = {term["params"][0].get("name") for term in step_done_goals}
+        self.assertEqual(done_goal_products, {"mim8_0001", "mim8_0002"})
+
     def test_compile_bop_ordering_matches_semantic_ids_only(self):
         merged = {
             "fluents": [],
@@ -157,7 +242,7 @@ class BoPOrderingTests(unittest.TestCase):
                     "semantic_id": "http://www.w3id.org/aau-ra/cssx#DispensingSkill",
                     "semantic_ids": ["http://www.w3id.org/aau-ra/cssx#DispensingSkill"],
                     "skill_target": "Capture",
-                    "parameters": [],
+                    "parameters": [self._product_parameter()],
                     "preconditions": [],
                     "effects": [],
                     "action_kind": "Action",
@@ -168,7 +253,7 @@ class BoPOrderingTests(unittest.TestCase):
                     "semantic_id": "http://www.w3id.org/aau-ra/cssx#QualityControlCapability",
                     "semantic_ids": ["http://www.w3id.org/aau-ra/cssx#QualityControlCapability"],
                     "skill_target": "Capture",
-                    "parameters": [],
+                    "parameters": [self._product_parameter()],
                     "preconditions": [],
                     "effects": [],
                     "action_kind": "Action",
@@ -216,7 +301,7 @@ class BoPOrderingTests(unittest.TestCase):
                     "semantic_id": "http://www.w3id.org/aau-ra/cssx#LoadingCapability",
                     "semantic_ids": ["http://www.w3id.org/aau-ra/cssx#LoadingCapability"],
                     "skill_target": "Loading",
-                    "parameters": [],
+                    "parameters": [self._product_parameter()],
                     "preconditions": [],
                     "effects": [],
                     "action_kind": "Action",
@@ -228,7 +313,7 @@ class BoPOrderingTests(unittest.TestCase):
                     "semantic_id": "http://www.w3id.org/aau-ra/cssx#UnloadingCapability",
                     "semantic_ids": ["http://www.w3id.org/aau-ra/cssx#UnloadingCapability"],
                     "skill_target": "Unloading",
-                    "parameters": [],
+                    "parameters": [self._product_parameter()],
                     "preconditions": [],
                     "effects": [],
                     "action_kind": "Action",
@@ -240,7 +325,7 @@ class BoPOrderingTests(unittest.TestCase):
                     "semantic_id": "http://www.w3id.org/aau-ra/cssx#OccupyCapability",
                     "semantic_ids": ["http://www.w3id.org/aau-ra/cssx#OccupyCapability"],
                     "skill_target": "Occupy",
-                    "parameters": [],
+                    "parameters": [self._product_parameter()],
                     "preconditions": [],
                     "effects": [],
                     "action_kind": "Action",
@@ -252,7 +337,7 @@ class BoPOrderingTests(unittest.TestCase):
                     "semantic_id": "http://www.w3id.org/aau-ra/cssx#OccupyCapability",
                     "semantic_ids": ["http://www.w3id.org/aau-ra/cssx#OccupyCapability"],
                     "skill_target": "Occupy",
-                    "parameters": [],
+                    "parameters": [self._product_parameter()],
                     "preconditions": [],
                     "effects": [],
                     "action_kind": "Action",
@@ -318,7 +403,7 @@ class BoPOrderingTests(unittest.TestCase):
                     "semantic_id": "http://www.w3id.org/aau-ra/cssx#StepCapability",
                     "semantic_ids": ["http://www.w3id.org/aau-ra/cssx#StepCapability"],
                     "skill_target": "Step",
-                    "parameters": [],
+                    "parameters": [self._product_parameter()],
                     "preconditions": [],
                     "effects": action_effects,
                     "action_kind": "Action",
