@@ -300,6 +300,16 @@ def _rule_action_name(rule) -> str:
     return str(rule.action)
 
 
+def _is_placeholder_literal(literal: str) -> bool:
+    normalized = str(literal or "").strip().lower()
+    return normalized in {
+        "<none of those>",
+        "none of those",
+        "<none-of-those>",
+        "none-of-those",
+    }
+
+
 def _rule_condition_literals(rule) -> list:
     """Return condition as a list of normalised literal strings.
 
@@ -308,7 +318,11 @@ def _rule_condition_literals(rule) -> list:
     mapping fluent expressions to Boolean FNodes (true/false).
     """
     if hasattr(rule, "raw_condition_literals"):
-        return [s.strip().lower() for s in rule.raw_condition_literals]
+        return [
+            s.strip().lower()
+            for s in rule.raw_condition_literals
+            if not _is_placeholder_literal(s)
+        ]
     cond = rule.condition
     if isinstance(cond, dict):
         result = []
@@ -316,9 +330,15 @@ def _rule_condition_literals(rule) -> list:
             lit = str(fluent).strip().lower()
             if str(value) == "false":
                 lit = f"not({lit})"
+            if _is_placeholder_literal(lit):
+                continue
             result.append(lit)
         return result
-    return [str(lit).strip().lower() for lit in cond]
+    return [
+        str(lit).strip().lower()
+        for lit in cond
+        if not _is_placeholder_literal(str(lit))
+    ]
 
 def _split_state_literals(signature: FrozenSet[str]) -> Tuple[FrozenSet[str], FrozenSet[str]]:
     positive: Set[str] = set()
@@ -376,9 +396,15 @@ def _state_match_score(
 ) -> int:
     if not candidate_positive.issubset(simulated_positive):
         return -1
-    if not candidate_negative.issubset(simulated_negative):
-        return -1
+
+    # PR2 partial states may carry explicit negative literals that are
+    # implicitly true in closed-world simulation states (i.e. the literal is
+    # absent from positives even if it is not explicitly listed in negatives).
+    # Treat such negatives as satisfied unless contradicted by a positive.
+    for fluent in candidate_negative:
+        if fluent in simulated_positive:
+            return -1
 
     pos_hits = len(candidate_positive & simulated_positive)
-    neg_hits = len(candidate_negative & simulated_negative)
+    neg_hits = len(candidate_negative)
     return pos_hits + neg_hits
