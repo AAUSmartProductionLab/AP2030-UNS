@@ -252,6 +252,9 @@ omronCameraSystemAAS:
                             predicate:
                                 ref: "Occupied"
                                 parameters: [0, 1]
+                        - predicate:
+                            ref: "Free"
+                            parameters: [0]
                 effects:
                     at_end:
                         - predicate:

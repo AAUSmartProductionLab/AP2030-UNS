@@ -215,6 +215,9 @@ optimaUnloadingSystemAAS:
                                 external: "cssx:On"
                                 parameters: [1, 2]
                         - predicate:
+                            external: "cssx:Empty"
+                            parameters: [2]
+                        - predicate:
                             external: "cssx:Finished"
                             parameters: [1]
 
@@ -267,6 +270,9 @@ optimaUnloadingSystemAAS:
                                 external: "cssx:On"
                                 parameters: [1, 2]
                         - predicate:
+                            external: "cssx:Empty"
+                            parameters: [2]
+                        - predicate:
                             external: "cssx:Finished"
                             parameters: [1]
 
@@ -286,6 +292,9 @@ optimaUnloadingSystemAAS:
                             predicate:
                                 ref: "Occupied"
                                 parameters: [0, 1]
+                        - predicate:
+                            ref: "Free"
+                            parameters: [0]
                 effects:
                     at_end:
                         - predicate:

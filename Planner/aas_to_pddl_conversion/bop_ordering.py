@@ -20,22 +20,34 @@ def compile_bop_ordering(
         warnings.append("BillOfProcesses was provided but no process steps were parsed for ordering.")
         return merged
 
-    product_binding = resolve_order_product_binding(merged)
+    product_bindings, product_names, product_types = discover_product_bindings(merged)
     step_names = ensure_step_objects(merged, steps)
     next_step_name = build_next_step_lookup(steps, step_names)
     ensure_ordering_fluents(merged)
-    append_step_init_and_goal_terms(merged, product_binding, steps, step_names)
+    if product_bindings:
+        append_step_init_and_goal_terms(merged, product_bindings, steps, step_names)
+    else:
+        warnings.append(
+            "BoP ordering could not identify product objects for per-instance step state."
+        )
 
     original_actions = list(merged.get("actions", []))
     step_sources = build_step_sources(steps, original_actions)
     reordered_actions: List[Dict[str, Any]] = []
 
     for action in original_actions:
+        product_binding = resolve_action_product_binding(action, product_names, product_types)
         matched_steps = [step for step in steps if action_matches_step(action, step)]
         if not matched_steps:
             if should_step_gate_occupy(action):
                 occupied_steps = [step for step in steps if action_targets_step_source(action, step_sources.get(step["id"], []))]
                 if occupied_steps:
+                    if product_binding is None:
+                        warnings.append(
+                            f"Action '{action.get('key')}' requires BoP occupy gating but has no product parameter; kept unchanged."
+                        )
+                        reordered_actions.append(action)
+                        continue
                     for step in occupied_steps:
                         step_name = step_names[step["id"]]
                         reordered_actions.append(make_step_gated_occupy_action(action, product_binding, step_name, step))
@@ -46,6 +58,13 @@ def compile_bop_ordering(
         if str(action.get("action_kind") or "Action") != "Action":
             warnings.append(
                 f"Action '{action.get('key')}' matched BoP capability but is not InstantaneousAction; kept unchanged."
+            )
+            reordered_actions.append(action)
+            continue
+
+        if product_binding is None:
+            warnings.append(
+                f"Action '{action.get('key')}' matched BoP capability but has no product parameter; kept unchanged."
             )
             reordered_actions.append(action)
             continue
@@ -199,34 +218,93 @@ def parse_step_number(value: Any, default_value: int) -> int:
         return default_value
 
 
-def resolve_order_product_binding(merged: Dict[str, Any]) -> Dict[str, Any]:
-    product_object = None
-    for obj in merged.get("objects", []):
-        declared_type = str(obj.get("declared_type") or "")
+def discover_product_bindings(
+    merged: Dict[str, Any],
+) -> tuple[List[Dict[str, Any]], set[str], set[str]]:
+    objects = merged.get("objects", []) or []
+    by_name = {str(obj.get("name") or ""): obj for obj in objects}
+
+    product_names: List[str] = []
+    product_name_set: set[str] = set()
+    product_types: set[str] = set()
+
+    for obj in objects:
         name = str(obj.get("name") or "")
-        if "product" in declared_type.lower() or "product" in name.lower():
-            product_object = obj
-            break
+        if not name:
+            continue
+        declared_type = str(obj.get("declared_type") or "")
+        if _looks_like_product_type(declared_type) or "product" in name.lower():
+            if name not in product_name_set:
+                product_names.append(name)
+                product_name_set.add(name)
+            if declared_type:
+                product_types.add(declared_type)
 
-    if product_object is None:
-        existing_names = {str(obj.get("name") or "") for obj in merged.get("objects", [])}
-        base_name = "order_product"
-        candidate = base_name
-        suffix = 2
-        while candidate in existing_names:
-            candidate = f"{base_name}_{suffix}"
-            suffix += 1
+    for term in merged.get("goal_terms", []) or []:
+        for atom in _iter_atoms(term):
+            if str(atom.get("fluent") or "").lower() != "finished":
+                continue
+            params = atom.get("params") or []
+            if not params:
+                continue
+            first = params[0]
+            if first.get("kind") != "object":
+                continue
+            name = str(first.get("name") or "")
+            if not name:
+                continue
+            if name not in product_name_set:
+                product_names.append(name)
+                product_name_set.add(name)
+            declared_type = str((by_name.get(name) or {}).get("declared_type") or "")
+            if declared_type:
+                product_types.add(declared_type)
 
-        product_object = {
-            "name": candidate,
-            "reference": "",
-            "declared_type": "Entity",
-            "source_aas_id": "",
-            "source_aas_name": "BoPOrdering",
-        }
-        merged.setdefault("objects", []).append(product_object)
+    bindings = [{"kind": "object", "name": name} for name in product_names]
+    return bindings, set(product_names), product_types
 
-    return {"kind": "object", "name": product_object["name"]}
+
+def _looks_like_product_type(type_name: str) -> bool:
+    return "product" in str(type_name or "").lower()
+
+
+def _iter_atoms(term: Any) -> List[Dict[str, Any]]:
+    if not isinstance(term, dict):
+        return []
+    if term.get("kind") == "atom":
+        return [term]
+    if term.get("kind") == "op":
+        atoms: List[Dict[str, Any]] = []
+        for child in term.get("children", []) or []:
+            atoms.extend(_iter_atoms(child))
+        return atoms
+    return []
+
+
+def resolve_action_product_binding(
+    action: Dict[str, Any],
+    product_names: set[str],
+    product_types: set[str],
+) -> Optional[Dict[str, Any]]:
+    parameters = action.get("parameters") or []
+    if not isinstance(parameters, list):
+        return None
+
+    for idx, parameter in enumerate(parameters):
+        param_type = str(parameter.get("type") or "")
+        param_name = str(parameter.get("name") or "")
+        bound_object = str(parameter.get("bound_object") or "")
+
+        if _looks_like_product_type(param_type):
+            return {"kind": "action_param", "index": idx}
+        if param_type and param_type in product_types:
+            return {"kind": "action_param", "index": idx}
+        if bound_object and bound_object in product_names:
+            return {"kind": "action_param", "index": idx}
+        if "product" in param_name.lower():
+            return {"kind": "action_param", "index": idx}
+
+    return None
 
 
 def ensure_step_objects(merged: Dict[str, Any], steps: List[Dict[str, Any]]) -> Dict[str, str]:
@@ -273,7 +351,7 @@ def ensure_ordering_fluents(merged: Dict[str, Any]) -> None:
         {
             "key": "step_ready",
             "semantic_id": "",
-            "param_types": ["Entity", "Step"],
+            "param_types": ["Product", "Step"],
             "transformation": None,
             "value_type": "bool",
             "source": "BoPOrdering",
@@ -284,7 +362,7 @@ def ensure_ordering_fluents(merged: Dict[str, Any]) -> None:
         {
             "key": "step_done",
             "semantic_id": "",
-            "param_types": ["Entity", "Step"],
+            "param_types": ["Product", "Step"],
             "transformation": None,
             "value_type": "bool",
             "source": "BoPOrdering",
@@ -302,33 +380,34 @@ def ensure_fluent(merged: Dict[str, Any], fluent: Dict[str, Any]) -> None:
 
 def append_step_init_and_goal_terms(
     merged: Dict[str, Any],
-    product_binding: Dict[str, Any],
+    product_bindings: List[Dict[str, Any]],
     steps: List[Dict[str, Any]],
     step_names: Dict[str, str],
 ) -> None:
-    for idx, step in enumerate(steps):
-        step_binding = {"kind": "object", "name": step_names[step["id"]]}
+    for product_binding in product_bindings:
+        for idx, step in enumerate(steps):
+            step_binding = {"kind": "object", "name": step_names[step["id"]]}
 
-        done_term = {
-            "kind": "op",
-            "op": "not",
-            "children": [make_step_atom("step_done", product_binding, step_binding)],
-        }
-        merged.setdefault("init_terms", []).append(done_term)
+            done_term = {
+                "kind": "op",
+                "op": "not",
+                "children": [make_step_atom("step_done", product_binding, step_binding)],
+            }
+            merged.setdefault("init_terms", []).append(done_term)
 
-        if idx == 0:
-            merged.setdefault("init_terms", []).append(make_step_atom("step_ready", product_binding, step_binding))
-        else:
-            merged.setdefault("init_terms", []).append(
-                {
-                    "kind": "op",
-                    "op": "not",
-                    "children": [make_step_atom("step_ready", product_binding, step_binding)],
-                }
-            )
+            if idx == 0:
+                merged.setdefault("init_terms", []).append(make_step_atom("step_ready", product_binding, step_binding))
+            else:
+                merged.setdefault("init_terms", []).append(
+                    {
+                        "kind": "op",
+                        "op": "not",
+                        "children": [make_step_atom("step_ready", product_binding, step_binding)],
+                    }
+                )
 
-    last_step_binding = {"kind": "object", "name": step_names[steps[-1]["id"]]}
-    merged.setdefault("goal_terms", []).append(make_step_atom("step_done", product_binding, last_step_binding))
+        last_step_binding = {"kind": "object", "name": step_names[steps[-1]["id"]]}
+        merged.setdefault("goal_terms", []).append(make_step_atom("step_done", product_binding, last_step_binding))
 
 
 def action_matches_step(action: Dict[str, Any], step: Dict[str, Any]) -> bool:

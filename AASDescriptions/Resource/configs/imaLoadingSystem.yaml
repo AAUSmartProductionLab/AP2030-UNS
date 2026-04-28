@@ -185,6 +185,9 @@ imaLoadingSystemAAS:
                             - predicate:
                                 external: "cssx:ResourceAt"
                                 parameters: [2, 3]
+                            - predicate:
+                                external: "cssx:Empty"
+                                parameters: [2]
                     effects:
                         at_end:
                             oneOf:
@@ -195,6 +198,10 @@ imaLoadingSystemAAS:
                                     - predicate:
                                         external: "cssx:ProductAt"
                                         parameters: [1, 3]
+                                    - not:
+                                        predicate:
+                                            external: "cssx:Empty"
+                                            parameters: [2]
                                 - not:
                                     - predicate:
                                         external: "cssx:On"
@@ -215,6 +222,9 @@ imaLoadingSystemAAS:
                                 predicate:
                                     ref: "Occupied"
                                     parameters: [0, 1]
+                            - predicate:
+                                ref: "Free"
+                                parameters: [0]
                     effects:
                         at_end:
                             - predicate:

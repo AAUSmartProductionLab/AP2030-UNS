@@ -171,6 +171,12 @@ planarTableShuttle2AAS:
                           externalRef: "css:Resource"
                   transformation: '$count(params[0].Variables.OccupationState.ProcessQueue) = 0'
 
+              -   key: "Empty"
+                  semantic_id: "cssx:Empty"
+                  parameters:
+                      -   name: "TransportSystem"
+                          externalRef: "cssx:Transport"
+
               -   key: "ResourceAt"
                   semantic_id: "cssx:ResourceAt"
                   parameters:
@@ -304,6 +310,9 @@ planarTableShuttle2AAS:
                               predicate:
                                   ref: "Occupied"
                                   parameters: [0, 1]
+                          - predicate:
+                              ref: "Free"
+                              parameters: [0]
                   effects:
                       at_end:
                           - predicate:
@@ -358,6 +367,9 @@ planarTableShuttle2AAS:
                   parameters: [0]
               -   predicate:
                   ref: "Free"
+                  parameters: [0]
+              -   predicate:
+                  ref: "Empty"
                   parameters: [0]
               -   predicate:
                   ref: "ResourceAt"
