@@ -29,16 +29,14 @@ def _now_iso():
         timespec='milliseconds').replace('+00:00', 'Z')
 
 
-def publish_quality_result():
-    """Sample Ok/NotOk for the currently inspected product and publish it.
+def publish_quality_result(result, confidence):
+    """Publish the already-sampled FOND outcome for the current product.
 
     The result is retained so a late-subscribing FluentCheck (PR4 sensor
     predicate) can still see the latest classification per product UUID.
     """
     if not uuid:
         return
-    result = "Ok" if random.random() < QC_OK_RATE else "NotOk"
-    confidence = round(random.uniform(0.7, 0.99), 3)
     payload = {
         "TimeStamp": _now_iso(),
         "Uuid": uuid,
@@ -51,6 +49,19 @@ def publish_quality_result():
 
 def capture_process(duration=0.5):
     time.sleep(duration)
+
+    # Sample the FOND outcome ONCE and reuse it for both the
+    # /DATA/Quality publication and the /DATA/Capture SUCCESS payload.
+    # ExecuteAction::applyEffects evaluates the omronCamera.yaml
+    # `when: 'data.Result = "Ok"'` / `data.Result != "Ok"` gates against
+    # the Capture response, so this Result field is what selects which
+    # FOND effect branch (QualityOk vs not QualityOk) gets applied to
+    # SymbolicState. Without it, both gates evaluate false and the
+    # controller silently falls back to branch 0 (QualityOk always
+    # asserted), which causes the FOND policy to diverge from reality.
+    result = "Ok" if random.random() < QC_OK_RATE else "NotOk"
+    confidence = round(random.uniform(0.7, 0.99), 3)
+
     webcam = None
     try:
         webcam = cv2.VideoCapture(0)
@@ -58,28 +69,22 @@ def capture_process(duration=0.5):
 
         if not ret:
             print("Failed to capture image from webcam")
-            # Still publish a QC result so the FOND policy can branch
-            publish_quality_result()
-            return
+        else:
+            # Rotate image 90 degrees counter-clockwise
+            image = cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
 
-        # Rotate image 90 degrees counter-clockwise
-        image = cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
+            # Encode image to compressed format (JPEG)
+            _, img_encoded = cv2.imencode(
+                '.jpg', image, [cv2.IMWRITE_JPEG_QUALITY, 80])
+            img_bytes = base64.b64encode(img_encoded).decode('utf-8')
 
-        # Encode image to compressed format (JPEG)
-        _, img_encoded = cv2.imencode(
-            '.jpg', image, [cv2.IMWRITE_JPEG_QUALITY, 80])
-        img_bytes = base64.b64encode(img_encoded).decode('utf-8')
-
-        # Generate ISO 8601 timestamp with Z suffix for UTC
-        timestamp = _now_iso()
-
-        response = {
-            "Image": img_bytes,
-            "TimeStamp": timestamp,
-            "Format": "base64_jpeg",
-            "Uuid": uuid,
-        }
-        image_publisher.publish(response, cameraProxy, True)
+            response = {
+                "Image": img_bytes,
+                "TimeStamp": _now_iso(),
+                "Format": "base64_jpeg",
+                "Uuid": uuid,
+            }
+            image_publisher.publish(response, cameraProxy, True)
     except Exception as e:
         print(f"Error publishing image: {e}")
     finally:
@@ -88,7 +93,16 @@ def capture_process(duration=0.5):
         # The FOND outcome is published regardless of imaging success so
         # the BT executor always has a sensor reading to evaluate
         # QualityOk(Product) against.
-        publish_quality_result()
+        publish_quality_result(result, confidence)
+
+    # Returned dict is merged into the SUCCESS response on /DATA/Capture
+    # by packml_runtime.simulator.execute_command. The Result field is
+    # what BT.CPP's ExecuteAction reads to pick the FOND branch.
+    return {
+        "State": "SUCCESS",
+        "Result": result,
+        "Confidence": confidence,
+    }
 
 
 def capture_callback(topic, client, message, properties):
