@@ -103,9 +103,9 @@ imaLoadingSystemAAS:
         Location:
             semanticId: 'cssx:LocationParameter'
             Position:
-                X: 0.0
-                Y: 0.0
-                Yaw: 0.0
+                X: 360.0
+                Y: 840.0
+                Yaw: 270.0
 
     HierarchicalStructures:
         Name: 'BillOfMaterials'
@@ -134,8 +134,8 @@ imaLoadingSystemAAS:
                     parameters:
                         -   name: "Resource"
                             externalRef: "css:Resource"
-                        -   name: "Product"
-                            externalRef: "css:Product"
+                        -   name: "Identifiable"
+                            externalRef: "cssx:Identifiable"
                     transformation: 'params[0].Variables.OccupationState.ProcessQueue[0] = params[1].Parameters.Uuid'
 
                 -   key: "Free"
@@ -190,8 +190,9 @@ imaLoadingSystemAAS:
                                 parameters: [2]
                     effects:
                         at_end:
-                            oneOf:
-                                - and:
+                            - oneOf:
+                                - when: 'data.Outcome = 0'
+                                  and:
                                     - predicate:
                                         external: "cssx:On"
                                         parameters: [1, 2]
@@ -202,7 +203,8 @@ imaLoadingSystemAAS:
                                         predicate:
                                             external: "cssx:Empty"
                                             parameters: [2]
-                                - not:
+                                - when: 'data.Outcome = 1'
+                                  not:
                                     - predicate:
                                         external: "cssx:On"
                                         parameters: [1, 2]
@@ -214,8 +216,8 @@ imaLoadingSystemAAS:
                         -   name: "LoadingSystem"
                             modelRef:
                                 - AAS: "self"
-                        -   name: "Product"
-                            externalRef: "css:Product"
+                        -   name: "Identifiable"
+                            externalRef: "cssx:Identifiable"
                     conditions:
                         at_start:
                             - not:
@@ -243,8 +245,8 @@ imaLoadingSystemAAS:
                         -   name: "LoadingSystem"
                             modelRef:
                                 - AAS: "self"
-                        -   name: "Product"
-                            externalRef: "css:Product"
+                        -   name: "Identifiable"
+                            externalRef: "cssx:Identifiable"
                     conditions:
                         at_start:
                             - predicate:

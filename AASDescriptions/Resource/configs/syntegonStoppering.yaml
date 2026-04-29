@@ -130,8 +130,8 @@ syntegonStopperingSystemAAS:
                 parameters:
                     -   name: "Resource"
                         externalRef: "css:Resource"
-                    -   name: "Product"
-                        externalRef: "css:Product"
+                    -   name: "Identifiable"
+                        externalRef: "cssx:Identifiable"
                 transformation: 'params[0].Variables.OccupationState.ProcessQueue[0] = params[1].Parameters.Uuid'
 
             -   key: "Free"
@@ -198,8 +198,8 @@ syntegonStopperingSystemAAS:
                     -   name: "StopperingSystem"
                         modelRef:
                             - AAS: "self"
-                    -   name: "Product"
-                        externalRef: "css:Product"
+                    -   name: "Identifiable"
+                        externalRef: "cssx:Identifiable"
                 conditions:
                     at_start:
                         - not:
@@ -227,8 +227,8 @@ syntegonStopperingSystemAAS:
                     -   name: "StopperingSystem"
                         modelRef:
                             - AAS: "self"
-                    -   name: "Product"
-                        externalRef: "css:Product"
+                    -   name: "Identifiable"
+                        externalRef: "cssx:Identifiable"
                 conditions:
                     at_start:
                         - predicate:

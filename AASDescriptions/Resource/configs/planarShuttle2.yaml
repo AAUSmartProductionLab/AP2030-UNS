@@ -160,8 +160,8 @@ planarTableShuttle2AAS:
                   parameters:
                       -   name: "Resource"
                           externalRef: "css:Resource"
-                      -   name: "Product"
-                          externalRef: "css:Product"
+                      -   name: "Identifiable"
+                          externalRef: "cssx:Identifiable"
                   transformation: 'params[0].Variables.OccupationState.ProcessQueue[0] = params[1].Parameters.Uuid'
 
               -   key: "Free"
@@ -196,13 +196,15 @@ planarTableShuttle2AAS:
                   # requires Uuid + TimeStamp + Position[X, Y]. There is no
                   # Product in this action so the runtime auto-generates
                   # Uuid (exposed in the JSONata context as `uuid`) and
-                  # tracks the response by it. ``params[2]`` is the
+                  # tracks the response by it. ``params[3]`` is the
                   # destination LocationParameter whose Position carries
                   # the planar X/Y in millimetres.
-                  transformation: '{"Uuid": uuid, "TimeStamp": now, "Position": [params[2].Parameters.Location.Position.X, params[2].Parameters.Location.Position.Y]}'
+                  transformation: '{"Uuid": params[1].Parameters.Uuid, "TimeStamp": now, "Position": [params[3].Parameters.Location.Position.X, params[3].Parameters.Location.Position.Y]}'
                   parameters:
                       -   name: "TransportSystem"
                           externalRef: "cssx:Transport"
+                      -   name: "Order"
+                          externalRef: "cssx:Order"
                       -   name: "From"
                           externalRef: "cssx:LocationParameter"
                       -   name: "To"
@@ -213,20 +215,20 @@ planarTableShuttle2AAS:
                               ref: "Operational"
                               parameters: [0]
                           - predicate:
-                              ref: "Free"
-                              parameters: [0]
+                              ref: "Occupied"
+                              parameters: [0, 1]
                           - predicate:
                               external: "cssx:ResourceAt"
-                              parameters: [0 ,1]
+                              parameters: [0, 2]
                   effects:
                       at_end:
                           - not:
                             - predicate:
                                 external: "cssx:ResourceAt"
-                                parameters: [0 ,1]
+                                parameters: [0, 2]
                           - predicate:
                               external: "cssx:ResourceAt"
-                              parameters: [0, 2]
+                              parameters: [0, 3]
 
               -   key: "Transport"
                   semantic_id: "cssx:MoveToPositionCapability"
@@ -302,8 +304,8 @@ planarTableShuttle2AAS:
                       -   name: "TransportSystem"
                           modelRef:
                               - AAS: "self"
-                      -   name: "Product"
-                          externalRef: "css:Product"
+                      -   name: "Identifiable"
+                          externalRef: "cssx:Identifiable"
                   conditions:
                       at_start:
                           - not:
@@ -331,8 +333,8 @@ planarTableShuttle2AAS:
                       -   name: "TransportSystem"
                           modelRef:
                               - AAS: "self"
-                      -   name: "Product"
-                          externalRef: "css:Product"
+                      -   name: "Identifiable"
+                          externalRef: "cssx:Identifiable"
                   conditions:
                       at_start:
                           - predicate:

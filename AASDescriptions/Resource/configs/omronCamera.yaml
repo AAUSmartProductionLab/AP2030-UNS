@@ -161,8 +161,8 @@ omronCameraSystemAAS:
                 parameters:
                     -   name: "Resource"
                         externalRef: "css:Resource"
-                    -   name: "Product"
-                        externalRef: "css:Product"
+                    -   name: "Identifiable"
+                        externalRef: "cssx:Identifiable"
                 transformation: 'params[0].Variables.OccupationState.ProcessQueue[0] = params[1].Parameters.Uuid'
 
             -   key: "Free"
@@ -228,13 +228,15 @@ omronCameraSystemAAS:
                             external: "cssx:Captured"
                             parameters: [1]
                         - oneOf:
-                            - predicate:
-                                external: "cssx:QualityOk"
-                                parameters: [1]
-                            - not:
-                                predicate:
-                                    external: "cssx:QualityOk"
-                                    parameters: [1]
+                            - when: 'data.Result = "Ok"'
+                              predicate:
+                                  external: "cssx:QualityOk"
+                                  parameters: [1]
+                            - when: 'data.Result != "Ok"'
+                              not:
+                                  predicate:
+                                      external: "cssx:QualityOk"
+                                      parameters: [1]
 
             -   key: "Occupy"
                 semantic_id: "cssx:OccupyCapability"
@@ -244,8 +246,8 @@ omronCameraSystemAAS:
                     -   name: "CameraSystem"
                         modelRef:
                             - AAS: "self"
-                    -   name: "Product"
-                        externalRef: "css:Product"
+                    -   name: "Identifiable"
+                        externalRef: "cssx:Identifiable"
                 conditions:
                     at_start:
                         - not:
@@ -273,8 +275,8 @@ omronCameraSystemAAS:
                     -   name: "CameraSystem"
                         modelRef:
                             - AAS: "self"
-                    -   name: "Product"
-                        externalRef: "css:Product"
+                    -   name: "Identifiable"
+                        externalRef: "cssx:Identifiable"
                 conditions:
                     at_start:
                         - predicate:
