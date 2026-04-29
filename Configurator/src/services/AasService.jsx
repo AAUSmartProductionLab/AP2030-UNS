@@ -2905,7 +2905,7 @@ class AasService {
       }
 
       const requested = parseInt(batchData.volume, 10);
-      const N = Math.min(5, Math.max(1, Number.isFinite(requested) ? requested : 1));
+      const N = Math.max(1, Number.isFinite(requested) ? requested : 1);
 
       const orderIds = this.getOrderAasIds(
         productName,
