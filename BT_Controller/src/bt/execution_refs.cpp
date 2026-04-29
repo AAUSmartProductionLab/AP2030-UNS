@@ -239,6 +239,14 @@ namespace bt_exec_refs
                 {
                     branch.index = entry["branch"].get<int>();
                 }
+                if (entry.contains("when") && entry["when"].is_string())
+                {
+                    std::string when = entry["when"].get<std::string>();
+                    if (!when.empty())
+                    {
+                        branch.when_expr = std::move(when);
+                    }
+                }
                 if (entry.contains("atoms") && entry["atoms"].is_array())
                 {
                     for (const auto &atom_json : entry["atoms"])

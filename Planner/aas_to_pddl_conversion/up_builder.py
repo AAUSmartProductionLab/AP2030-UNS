@@ -286,7 +286,12 @@ def _build_effect_branches(
             warnings=warnings,
             context=f"{context} oneOf[{idx}]",
         )
-        branches.append({"branch": idx, "atoms": branch_atoms})
+        branch_entry: Dict[str, Any] = {"branch": idx, "atoms": branch_atoms}
+        if isinstance(child, dict):
+            when_expr = str(child.get("when") or "").strip()
+            if when_expr:
+                branch_entry["when"] = when_expr
+        branches.append(branch_entry)
     return branches
 
 

@@ -51,6 +51,17 @@ def _find_action_node(node: BTNode) -> Optional[ActionNode]:
     return None
 
 
+def _count_action_leaves(node: BTNode) -> int:
+    """Count the number of ``ActionNode`` leaves reachable from *node*."""
+    if isinstance(node, ActionNode):
+        return 1
+    if isinstance(node, (ReactiveSequence, ReactiveSelector, Sequence)):
+        return sum(_count_action_leaves(c) for c in node.children)
+    if isinstance(node, (Inverter, KeepRunningUntilFailure)):
+        return _count_action_leaves(node.child)
+    return 0
+
+
 def _compute_template_sig(node: BTNode, arg_values: List[str]) -> str:
     """Structural signature with arg values replaced by positional placeholders."""
     replacements = sorted(
@@ -154,6 +165,28 @@ def _create_template_tree(
     return template
 
 
+def _collect_leaves_in_order(node: BTNode) -> List[BTNode]:
+    """Return ``ConditionNode``/``ActionNode`` leaves in deterministic DFS order.
+
+    The order matches across structurally-identical subtrees (template +
+    its members), so leaf positions can be aligned by index.
+    """
+    out: List[BTNode] = []
+
+    def _walk(n: BTNode) -> None:
+        if isinstance(n, (ConditionNode, ActionNode)):
+            out.append(n)
+            return
+        if isinstance(n, (ReactiveSequence, ReactiveSelector, Sequence)):
+            for child in n.children:
+                _walk(child)
+        elif isinstance(n, (Inverter, KeepRunningUntilFailure)):
+            _walk(n.child)
+
+    _walk(node)
+    return out
+
+
 def parameterize_subtrees(bt: BehaviorTree) -> None:
     """Replace groups of structurally similar action subtrees with parameterized refs.
 
@@ -185,6 +218,14 @@ def parameterize_subtrees(bt: BehaviorTree) -> None:
     for node, parent, cidx in leaf_entries:
         action_node = _find_action_node(node)
         if action_node is None:
+            continue
+        # Skip rule subtrees that contain more than one ActionNode:
+        # ``parameterize_subtrees`` keys the template's argument tuple off
+        # the FIRST action only, so multi-action subtrees would silently
+        # rewrite every action leaf's args to the first action's values
+        # (losing the second action's distinct argument bindings).
+        # See repo memory: bt_template_per_invocation_port_binding.md.
+        if _count_action_leaves(node) > 1:
             continue
         parts = action_node.action_name.split()
         if len(parts) < 2:
@@ -220,11 +261,63 @@ def parameterize_subtrees(bt: BehaviorTree) -> None:
             n_args = len(first_args)
             param_names = [f"arg{i}" for i in range(n_args)]
             template_tree = _create_template_tree(first_node, first_args, param_names)
-            bt.templates[tid] = (template_tree, param_names)
 
-            for node, parent, cidx, _atype, args in group:
+            # Detect leaves whose ``execution_ref`` varies across members
+            # of this group. For each such position, allocate template
+            # ports (``predicate_ref_<i>`` / ``predicate_args_<i>`` for
+            # conditions, ``action_ref_<i>`` / ``action_args_<i>`` for
+            # actions) and rewrite the template node so the runtime XML
+            # references the port instead of inlining a single member's
+            # alias. The per-invocation ``SubTreeRef`` carries the
+            # original member leaves in ``leaf_refs`` so the XML writer
+            # can register their refs in the alias namespace and emit
+            # per-instance port values.
+            template_leaves = _collect_leaves_in_order(template_tree)
+            member_leaves: List[List[BTNode]] = [
+                _collect_leaves_in_order(entry[0]) for entry in group
+            ]
+            ref_port_extras: List[str] = []
+            # Per-position port-name pair (or ``None``) for use when
+            # building each member's ``SubTreeRef.leaf_bindings``.
+            position_ports: List[Optional[Tuple[str, str]]] = [
+                None for _ in template_leaves
+            ]
+            for pos, tleaf in enumerate(template_leaves):
+                if not getattr(tleaf, "execution_ref", None):
+                    continue
+                refs_at_pos = [
+                    getattr(member_leaves[m][pos], "execution_ref", None)
+                    for m in range(len(group))
+                ]
+                if all(r == refs_at_pos[0] for r in refs_at_pos[1:]):
+                    continue
+                if isinstance(tleaf, ConditionNode):
+                    ref_port = f"predicate_ref_{pos}"
+                    args_port = f"predicate_args_{pos}"
+                else:
+                    ref_port = f"action_ref_{pos}"
+                    args_port = f"action_args_{pos}"
+                # Mark the template node so xml_writer emits port-references.
+                tleaf._template_ref_port = ref_port
+                tleaf._template_args_port = args_port
+                position_ports[pos] = (ref_port, args_port)
+                ref_port_extras.extend([ref_port, args_port])
+
+            all_param_names = param_names + ref_port_extras
+            bt.templates[tid] = (template_tree, all_param_names)
+
+            for member_idx, (node, parent, cidx, _atype, args) in enumerate(group):
                 params = dict(zip(param_names, args))
-                ref = SubTreeRef(tid, params)
+                leaf_bindings: List[Optional[Tuple[BTNode, str, str]]] = []
+                for pos, ports in enumerate(position_ports):
+                    if ports is None:
+                        leaf_bindings.append(None)
+                    else:
+                        ref_port, args_port = ports
+                        leaf_bindings.append(
+                            (member_leaves[member_idx][pos], ref_port, args_port)
+                        )
+                ref = SubTreeRef(tid, params, leaf_bindings=leaf_bindings)
                 if parent is not None:
                     if isinstance(parent, (ReactiveSequence, ReactiveSelector, Sequence)):
                         parent.children[cidx] = ref

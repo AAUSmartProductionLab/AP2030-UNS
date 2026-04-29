@@ -156,12 +156,34 @@ class SubTreeRef(BTNode):
     """Reference to a parameterized subtree template.
 
     Rendered as ``<SubTree ID="template_id" arg0="val0" .../>``.
+
+    ``leaf_bindings`` is a parallel list to the template's leaves (in DFS
+    order). Each entry is either ``None`` (the template position has no
+    parameterized ref) or a tuple ``(member_leaf, ref_port, args_port)``:
+
+    - ``member_leaf`` is the original per-invocation ``ConditionNode``/
+      ``ActionNode`` whose ``execution_ref`` would have been emitted in
+      place of the template's leaf. It is NOT in the executable tree;
+      the XML writer walks it solely to register its ref in the alias
+      namespace.
+    - ``ref_port`` / ``args_port`` are the SubTree port names this
+      invocation should populate (e.g. ``predicate_ref_3``).
     """
 
-    def __init__(self, template_id: str, params: Dict[str, str]):
+    def __init__(
+        self,
+        template_id: str,
+        params: Dict[str, str],
+        leaf_bindings: Optional[
+            List[Optional[Tuple["BTNode", str, str]]]
+        ] = None,
+    ):
         super().__init__(template_id)
         self.template_id = template_id
         self.params = params  # {param_name: concrete_value}
+        self.leaf_bindings: List[
+            Optional[Tuple["BTNode", str, str]]
+        ] = list(leaf_bindings or [])
 
     def tick(self, world: "WorldState") -> Status:
         return Status.FAILURE  # not executed directly

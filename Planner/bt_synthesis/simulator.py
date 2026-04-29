@@ -212,6 +212,7 @@ def _clone_bt_with_params(node: BTNode, params: Dict[str, str]) -> BTNode:
                 k: _replace_template_tokens(v, params)
                 for k, v in node.params.items()
             },
+            leaf_bindings=node.leaf_bindings,
         )
 
     raise ValueError(f"Unknown BT node type while cloning template: {type(node).__name__}")

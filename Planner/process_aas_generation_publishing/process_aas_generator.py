@@ -65,7 +65,8 @@ class ProcessAASGenerator:
         order_info: Dict[str, Any],
         requirements: Dict[str, Any],
         bt_filename: str = "production.xml",
-        planar_table_id: Optional[str] = None
+        planar_table_id: Optional[str] = None,
+        run_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Generate a complete Process AAS YAML configuration.
@@ -101,7 +102,7 @@ class ProcessAASGenerator:
                 
                 # Process metadata with product reference
                 'ProcessInformation': self._generate_process_info(
-                    process_id, order_info, order_aas_id, timestamp
+                    process_id, order_info, order_aas_id, timestamp, run_id
                 ),
                 
                 # Required capabilities with resource references and embedded requirements
@@ -132,6 +133,7 @@ class ProcessAASGenerator:
         requirements: Dict[str, Any],
         bt_filename: str = "production.xml",
         planar_table_id: Optional[str] = None,
+        run_id: Optional[str] = None,
         output_dir: Optional[str] = None,
     ) -> ProcessAASBundle:
         """Generate Process AAS config, IDs, YAML and optional persisted file path."""
@@ -142,6 +144,7 @@ class ProcessAASGenerator:
             requirements,
             bt_filename,
             planar_table_id,
+            run_id,
         )
         system_id = self.get_system_id(config)
         process_aas_id = self.get_aas_id(config)
@@ -233,7 +236,8 @@ class ProcessAASGenerator:
         process_id: str,
         order_info: Dict[str, Any],
         order_aas_id: str,
-        timestamp: str
+        timestamp: str,
+        run_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Generate process information section with product reference.
         
@@ -248,13 +252,18 @@ class ProcessAASGenerator:
         """
         order_name = order_info.get('BatchInformation', {}).get('ProductName', 'Unknown')
         
-        return {
+        process_info = {
             'ProcessName': f"Production of {order_name}",
             'ProcessType': 'AsepticFilling',
             'CreatedAt': timestamp,
             'Status': 'planned',
             'ProductReference': order_aas_id  # Will be converted to ReferenceElement
         }
+
+        if run_id:
+            process_info['RunId'] = str(run_id)
+
+        return process_info
     
     def _generate_required_capabilities(
         self, 

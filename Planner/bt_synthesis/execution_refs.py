@@ -170,6 +170,7 @@ def _ground_effect_args(
             branch_idx = int(entry.get("branch", 0))
         except (TypeError, ValueError):
             branch_idx = 0
+        when_expr = str(entry.get("when") or "").strip()
         atoms_raw = entry.get("atoms")
         if not isinstance(atoms_raw, list):
             atoms_raw = []
@@ -209,7 +210,10 @@ def _ground_effect_args(
                     "value": bool(atom.get("value", True)),
                 }
             )
-        out.append({"branch": branch_idx, "atoms": new_atoms})
+        branch_entry: Dict[str, Any] = {"branch": branch_idx, "atoms": new_atoms}
+        if when_expr:
+            branch_entry["when"] = when_expr
+        out.append(branch_entry)
     return out
 
 
@@ -232,11 +236,22 @@ def resolve_predicate_execution_ref(
     parameter_refs: list[Dict[str, Any]] = []
     for idx, arg in enumerate(arguments):
         object_ref = _resolve_object_ref(planner_metadata, arg)
+        aas_path = object_ref["aas_path"]
+        if not aas_path:
+            # Non-AAS literal argument (e.g. PDDL constant
+            # ``step_1_dispensing``). Carry the literal as a synthetic
+            # ``aas_path`` so the runtime FluentCheck — which builds the
+            # SymbolicState canonical key from
+            # ``lastSegment(parameter_refs[i].aas_path)`` — sees the same
+            # token that the planner-emitted action effect writes via
+            # ``atom.args``. Without this the argument is silently
+            # dropped and reads collide on a single 1-arg key.
+            aas_path = str(arg or "").strip()
         parameter_refs.append(
             {
                 "name": f"p{idx}",
                 "aas_id": object_ref["aas_id"],
-                "aas_path": object_ref["aas_path"],
+                "aas_path": aas_path,
             }
         )
 
@@ -259,17 +274,41 @@ def resolve_predicate_execution_ref(
             selected_binding = candidate
             break
 
+    fluent_aas_path = str(
+        selected_binding.get("fluent_aas_path")
+        or ref.get("fluent_aas_path")
+        or ""
+    )
+    # Ensure ``lastSegment(fluent_aas_path)`` matches the planner's
+    # predicate name. Multiple PDDL predicates can be backed by the same
+    # AAS submodel (e.g. ``step_done`` and ``step_ready`` both live under
+    # the product's step-status submodel); without this disambiguation
+    # they collapse to a single SymbolicState key at runtime AND share
+    # the same blackboard alias in the emitted BT XML, so reads cross-
+    # contaminate. The runtime FluentCheck::tickSymbolic uses
+    # ``lastSegment(fluent_aas_path)`` as the predicate token, so
+    # appending ``/<predicate_name>`` is sufficient and matches the
+    # token written by action-effect application (atom.predicate).
+    if predicate_name:
+        existing_tail = (
+            fluent_aas_path.rstrip("/").rsplit("/", 1)[-1]
+            if fluent_aas_path
+            else ""
+        )
+        if existing_tail.lower() != predicate_name.lower():
+            fluent_aas_path = (
+                f"{fluent_aas_path.rstrip('/')}/{predicate_name}"
+                if fluent_aas_path
+                else predicate_name
+            )
+
     return {
         "source_aas_id": str(
             selected_binding.get("aas_id")
             or ref.get("source_aas_id")
             or ""
         ),
-        "fluent_aas_path": str(
-            selected_binding.get("fluent_aas_path")
-            or ref.get("fluent_aas_path")
-            or ""
-        ),
+        "fluent_aas_path": fluent_aas_path,
         "transformation_aas_path": str(
             selected_binding.get("transformation_aas_path")
             or ref.get("transformation_aas_path")

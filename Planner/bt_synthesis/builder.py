@@ -11,11 +11,29 @@ Public API
 
 from __future__ import annotations
 
+import logging
 from collections import defaultdict
 from dataclasses import dataclass
 from typing import Any, Dict, FrozenSet, List, Mapping, Optional, Tuple
 
 from .execution_refs import resolve_action_execution_ref, resolve_predicate_execution_ref
+from .literals import is_placeholder_literal
+
+
+logger = logging.getLogger(__name__)
+
+
+def _warn_placeholder(literal: object) -> None:
+    """Emit a warning when a PR2 ``<none of those>`` placeholder reaches the
+    BT builder. The UP-PR2 engine should expand these into negation
+    conjunctions during SAS parsing; reaching this point indicates an
+    upstream bug rather than a legitimate fluent.
+    """
+    logger.warning(
+        "Dropping PR2 '<none of those>' placeholder literal %r in BT condition: "
+        "expected expansion in unified_planning.engines.up_pr2.engine._parse_sas_mapping.",
+        literal,
+    )
 
 from .nodes import (
     BTNode,
@@ -60,15 +78,35 @@ def _value_is_false(value: object) -> bool:
 
 
 def _condition_to_literals(raw_condition: object) -> FrozenSet[str]:
+    # PR2 emits ``<none of those>`` as a synthetic catch-all on partial-state
+    # conditions. The UP-PR2 engine is responsible for expanding it into a
+    # conjunction of ``not(sibling_atom)`` literals during SAS parsing
+    # (``_parse_sas_mapping``). If a placeholder still reaches this point,
+    # it means the upstream expansion missed it; log a warning and drop the
+    # literal as a defense-in-depth measure so we never emit a
+    # ``FluentCheck name="<none of those>"`` node.
+    def _filter(items):
+        for raw in items:
+            text = str(raw).strip()
+            if not text:
+                continue
+            if is_placeholder_literal(text):
+                _warn_placeholder(raw)
+                continue
+            yield text.lower()
+
     if isinstance(raw_condition, frozenset):
-        return frozenset(str(l).strip().lower() for l in raw_condition if str(l).strip())
+        return frozenset(_filter(raw_condition))
     if isinstance(raw_condition, set):
-        return frozenset(str(l).strip().lower() for l in raw_condition if str(l).strip())
+        return frozenset(_filter(raw_condition))
     if isinstance(raw_condition, dict):
         literals = set()
         for fluent, value in raw_condition.items():
             fluent_text = str(fluent).strip().lower()
             if not fluent_text:
+                continue
+            if is_placeholder_literal(fluent_text):
+                _warn_placeholder(fluent)
                 continue
             if _value_is_false(value):
                 literals.add(f"not({fluent_text})")
@@ -77,7 +115,13 @@ def _condition_to_literals(raw_condition: object) -> FrozenSet[str]:
         return frozenset(literals)
     if raw_condition is None:
         return frozenset()
-    return frozenset({str(raw_condition).strip().lower()})
+    text = str(raw_condition).strip().lower()
+    if not text:
+        return frozenset()
+    if is_placeholder_literal(text):
+        _warn_placeholder(raw_condition)
+        return frozenset()
+    return frozenset({text})
 
 
 def _rule_action_text(rule: object) -> str:

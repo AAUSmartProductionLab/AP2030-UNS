@@ -40,6 +40,9 @@ namespace bt_exec_refs
     struct EffectBranch
     {
         int index;
+        /// Optional JSONata gate evaluated against the action response
+        /// payload context (``data``) before applying this branch.
+        std::optional<std::string> when_expr;
         std::vector<GroundedAtom> atoms;
     };
 

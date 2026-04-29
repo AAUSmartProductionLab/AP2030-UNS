@@ -69,6 +69,28 @@ class ProcessAASBundleTests(unittest.TestCase):
         self.assertIsNone(bundle.output_path)
         self.assertIn("NoFileOrder", bundle.yaml_content)
 
+    def test_generate_process_aas_bundle_includes_run_id_when_provided(self):
+        generator = ProcessAASGenerator()
+        capabilities = [
+            SimpleNamespace(
+                name="Loading",
+                semantic_id="https://example/Capability/Loading",
+                resources={"resourceA": "https://example/aas/resourceA"},
+            )
+        ]
+
+        bundle = generator.generate_process_aas_bundle(
+            planning_capabilities=capabilities,
+            order_aas_id="https://example/aas/productB",
+            order_info={"BatchInformation": {"ProductName": "RunIdOrder"}},
+            requirements={},
+            run_id="run-123",
+            output_dir=None,
+        )
+
+        process_info = bundle.config[bundle.system_id]["ProcessInformation"]
+        self.assertEqual(process_info.get("RunId"), "run-123")
+
     def test_build_registration_message_contains_expected_fields(self):
         generator = ProcessAASGenerator()
 

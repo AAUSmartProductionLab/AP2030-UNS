@@ -14,7 +14,9 @@ from __future__ import annotations
 import json
 import logging
 import os
+import time
 import traceback
+import uuid
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
@@ -27,6 +29,12 @@ from .bt_synthesis.api import generate_bt_filename, save_bt_xml
 from .process_aas_generation_publishing.process_aas_generator import (
     ProcessAASConfig,
     ProcessAASGenerator,
+)
+from .run_metrics import (
+    env_metrics_dir,
+    env_metrics_topic_prefix,
+    publish_stage_metrics,
+    write_stage_metrics,
 )
 
 logging.basicConfig(
@@ -51,6 +59,8 @@ class PlanningResult:
     planner_warnings: List[str] = field(default_factory=list)
     planning_artifacts: Dict[str, str] = field(default_factory=dict)
     capabilities: List[Dict[str, Any]] = field(default_factory=list)
+    run_id: Optional[str] = None
+    run_metrics: Dict[str, Any] = field(default_factory=dict)
 
     def to_response_dict(self) -> Dict[str, Any]:
         """Convert to MQTT response format."""
@@ -61,6 +71,9 @@ class PlanningResult:
 
         if self.success and self.process_aas_id:
             response["ProcessAasId"] = self.process_aas_id
+
+        if self.run_id:
+            response["RunId"] = self.run_id
 
         if self.error_message:
             response["ErrorMessage"] = self.error_message
@@ -81,6 +94,9 @@ class PlanningResult:
 
         if self.planning_artifacts:
             response["PlanningArtifacts"] = self.planning_artifacts
+
+        if self.run_metrics:
+            response["RunMetrics"] = self.run_metrics
 
         return response
 
@@ -103,6 +119,8 @@ class PlannerConfig:
     bt_base_url: str = "https://aausmartproductionlab.github.io/AP2030-UNS/BTDescriptions"
     planning_timeout_seconds: float = 30.0
     strict_semantic_solve: bool = True
+    metrics_dir: Optional[str] = "/data/run_metrics"
+    metrics_topic_prefix: Optional[str] = "NN/Nybrovej/InnoLab/Stats"
 
     save_intermediate_files: bool = True
 
@@ -132,9 +150,18 @@ class PlannerService:
             ProcessAASConfig(bt_base_url=self.config.bt_base_url)
         )
 
-    def plan_and_register(self, asset_ids: List[str], order_aas_id: str) -> PlanningResult:
+    def plan_and_register(
+        self,
+        asset_ids: List[str],
+        order_aas_id: str,
+        run_id: Optional[str] = None,
+        requested_product_instances: Optional[int] = None,
+    ) -> PlanningResult:
+        effective_run_id = str(run_id or uuid.uuid4())
+        overall_started = time.perf_counter()
         logger.info("Starting planning for order: %s", order_aas_id)
         logger.info("Initial asset IDs: %s", asset_ids)
+        logger.info("Run ID: %s", effective_run_id)
 
         logger.info("Step 1-4: Collecting planning context from AAS models...")
         planning_context = self.context_collector(self.aas_client, order_aas_id, asset_ids)
@@ -143,6 +170,7 @@ class PlannerService:
                 success=False,
                 order_aas_id=order_aas_id,
                 error_message=f"Could not fetch order AAS: {order_aas_id}",
+                run_id=effective_run_id,
             )
 
         logger.info("Resolved to %d assets", len(planning_context.resolved_asset_ids))
@@ -152,6 +180,7 @@ class PlannerService:
                 success=False,
                 order_aas_id=order_aas_id,
                 error_message="No AIPlanning submodels found across product/assets",
+                run_id=effective_run_id,
             )
 
         logger.info("Step 5: Running planning sequence...")
@@ -166,7 +195,34 @@ class PlannerService:
                 success=False,
                 order_aas_id=order_aas_id,
                 error_message=f"AI planning failed: {exc}",
+                run_id=effective_run_id,
             )
+
+        run_metrics = dict(getattr(pipeline_result, "metrics", {}) or {})
+        run_metrics["run_id"] = effective_run_id
+        run_metrics["order_aas_id"] = order_aas_id
+        run_metrics["resolved_asset_count"] = len(planning_context.resolved_asset_ids)
+        run_metrics["planning_source_count"] = len(planning_sources)
+        run_metrics["end_to_end_planning_s"] = time.perf_counter() - overall_started
+        if requested_product_instances is not None:
+            run_metrics["product_instance_count"] = int(requested_product_instances)
+
+        run_metrics_path = write_stage_metrics(
+            metrics_dir=self.config.metrics_dir,
+            run_id=effective_run_id,
+            stage="planner",
+            payload=run_metrics,
+        )
+        if run_metrics_path:
+            pipeline_result.artifacts["planner_metrics"] = run_metrics_path
+
+        publish_stage_metrics(
+            mqtt_client=self.mqtt_client,
+            topic_prefix=self.config.metrics_topic_prefix,
+            stage="planner",
+            run_id=effective_run_id,
+            payload=run_metrics,
+        )
 
         solve_result = pipeline_result.solve_result
         if not getattr(solve_result, "is_solved", False):
@@ -179,6 +235,8 @@ class PlannerService:
                 planner_warnings=pipeline_result.warnings,
                 planning_artifacts=pipeline_result.artifacts,
                 error_message="Planning unsolved in strict mode",
+                run_id=effective_run_id,
+                run_metrics=run_metrics,
             )
 
         bt_xml = pipeline_result.bt_xml
@@ -192,6 +250,8 @@ class PlannerService:
                 planner_warnings=pipeline_result.warnings,
                 planning_artifacts=pipeline_result.artifacts,
                 error_message="Planner solved but did not produce BT XML",
+                run_id=effective_run_id,
+                run_metrics=run_metrics,
             )
 
         planar_table_id = planning_context.planar_table_id
@@ -210,6 +270,7 @@ class PlannerService:
             planning_context.requirements,
             bt_filename,
             planar_table_id,
+            run_id=effective_run_id,
             output_dir=self.config.process_aas_output_dir if self.config.save_intermediate_files else None,
         )
         if process_bundle.output_path:
@@ -242,6 +303,8 @@ class PlannerService:
                 }
                 for cap in pipeline_result.capabilities
             ],
+            run_id=effective_run_id,
+            run_metrics=run_metrics,
         )
 
     def _run_planning_pipeline(
@@ -303,6 +366,8 @@ class ProductionPlannerRuntime:
             registration_topic=self.config.registration_topic,
             process_aas_output_dir="./AASDescriptions/Process/configs",
             bt_output_dir="./BTDescriptions",
+            metrics_dir=env_metrics_dir(),
+            metrics_topic_prefix=env_metrics_topic_prefix(),
             save_intermediate_files=True,
         )
 
@@ -317,6 +382,8 @@ class ProductionPlannerRuntime:
         duration: float = 0.0,
         asset_ids: Optional[List[str]] = None,
         order_aas_id: Optional[str] = None,
+        run_id: Optional[str] = None,
+        product_instance_count: Optional[int] = None,
     ) -> Dict[str, Any]:
         del duration
 
@@ -342,6 +409,8 @@ class ProductionPlannerRuntime:
             result = self.planner_service.plan_and_register(
                 asset_ids=asset_ids,
                 order_aas_id=order_aas_id,
+                run_id=run_id,
+                requested_product_instances=product_instance_count,
             )
 
             if result.success:
@@ -369,9 +438,20 @@ class ProductionPlannerRuntime:
 
             asset_ids = None
             order_aas_id = None
+            run_id = request_uuid
+            product_instance_count = None
             if isinstance(message, dict):
                 asset_ids = message.get("Assets") or message.get("assetIds")
                 order_aas_id = message.get("Order") or message.get("OrderAASId")
+                run_id = message.get("RunId") or request_uuid
+                maybe_count = message.get("ProductInstanceCount")
+                if maybe_count is None:
+                    maybe_count = message.get("ProductInstances")
+                if maybe_count is not None:
+                    try:
+                        product_instance_count = int(maybe_count)
+                    except (TypeError, ValueError):
+                        logger.warning("Ignoring non-integer ProductInstanceCount=%r", maybe_count)
 
             if not asset_ids or not order_aas_id:
                 logger.error("Invalid planning command: missing Assets or Order")
@@ -384,6 +464,8 @@ class ProductionPlannerRuntime:
                 0.0,
                 asset_ids,
                 order_aas_id,
+                run_id,
+                product_instance_count,
             )
 
         except Exception as exc:
@@ -413,6 +495,8 @@ def create_planner_from_env() -> PlannerService:
         planning_timeout_seconds=float(os.getenv("PLANNING_TIMEOUT_SECONDS", "30")),
         strict_semantic_solve=os.getenv("STRICT_SEMANTIC_SOLVE", "true").lower() in {"1", "true", "yes"},
         ai_artifacts_dir=os.getenv("AI_ARTIFACTS_DIR") or None,
+        metrics_dir=env_metrics_dir(),
+        metrics_topic_prefix=env_metrics_topic_prefix(),
     )
     return PlannerService(aas_client, config=config)
 

@@ -1,5 +1,6 @@
 #include "bt/actions/execute_action_node.h"
 
+#include <algorithm>
 #include <chrono>
 #include <ctime>
 #include <iostream>
@@ -460,21 +461,126 @@ void ExecuteAction::applySymbolicEffects()
     // declaration-order first oneOf child, or the lone deterministic
     // branch for non-FOND actions — is selected.
     int outcome = 0;
+    nlohmann::json response_snapshot = nlohmann::json::object();
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        if (last_response_msg_.is_object() && last_response_msg_.contains("Outcome") && last_response_msg_["Outcome"].is_number_integer())
+        if (last_response_msg_.is_object())
         {
-            outcome = last_response_msg_["Outcome"].get<int>();
+            response_snapshot = last_response_msg_;
+            if (last_response_msg_.contains("Outcome") && last_response_msg_["Outcome"].is_number_integer())
+            {
+                outcome = last_response_msg_["Outcome"].get<int>();
+            }
         }
     }
 
     const bt_exec_refs::EffectBranch *selected = nullptr;
-    for (const auto &branch : action_ref_->effects)
-    {
-        if (branch.index == outcome)
+
+    const bool has_when_gates = std::any_of(
+        action_ref_->effects.begin(),
+        action_ref_->effects.end(),
+        [](const bt_exec_refs::EffectBranch &branch)
         {
-            selected = &branch;
-            break;
+            return branch.when_expr.has_value() && !branch.when_expr->empty();
+        });
+
+    if (has_when_gates)
+    {
+        auto is_truthy = [](const nlohmann::json &value)
+        {
+            if (value.is_null())
+            {
+                return false;
+            }
+            if (value.is_boolean())
+            {
+                return value.get<bool>();
+            }
+            if (value.is_number())
+            {
+                return value.get<double>() != 0.0;
+            }
+            if (value.is_string())
+            {
+                const std::string text = value.get<std::string>();
+                return !text.empty() && text != "0" && text != "false";
+            }
+            if (value.is_array() || value.is_object())
+            {
+                return !value.empty();
+            }
+            return false;
+        };
+
+        nlohmann::json params_array = nlohmann::json::array();
+        for (const auto &p : params_)
+        {
+            params_array.push_back(p);
+        }
+
+        nlohmann::json gate_context = {
+            {"data", response_snapshot.is_object() ? response_snapshot : nlohmann::json::object()},
+            {"params", params_array},
+            {"constants", constants_.is_null() ? nlohmann::json::object() : constants_},
+            {"now", nowIso8601()},
+            {"uuid", current_uuid_},
+        };
+
+        std::vector<const bt_exec_refs::EffectBranch *> matched;
+        for (const auto &branch : action_ref_->effects)
+        {
+            if (!branch.when_expr.has_value() || branch.when_expr->empty())
+            {
+                continue;
+            }
+            bool branch_matches = false;
+            try
+            {
+                jsonata::Jsonata gate_expr(*branch.when_expr);
+                auto context_data = nlohmann::ordered_json::parse(gate_context.dump());
+                auto gate_result = gate_expr.evaluate(context_data);
+                nlohmann::json gate_json = nlohmann::json::parse(nlohmann::json(gate_result).dump());
+                branch_matches = is_truthy(gate_json);
+            }
+            catch (const std::exception &e)
+            {
+                BT_LOG_ERROR("ExecuteAction '" << this->name()
+                                               << "' failed to evaluate effect gate for branch "
+                                               << branch.index << ": " << e.what());
+                branch_matches = false;
+            }
+
+            if (branch_matches)
+            {
+                matched.push_back(&branch);
+            }
+        }
+
+        if (matched.size() == 1)
+        {
+            selected = matched.front();
+            BT_LOG_DEBUG("ExecuteAction '" << this->name()
+                                           << "' selected effect branch via when-gate "
+                                           << selected->index);
+        }
+        else if (matched.size() > 1)
+        {
+            BT_LOG_ERROR("ExecuteAction '" << this->name()
+                                           << "' has multiple matching effect gates ("
+                                           << matched.size() << "); using the first match.");
+            selected = matched.front();
+        }
+    }
+
+    if (selected == nullptr)
+    {
+        for (const auto &branch : action_ref_->effects)
+        {
+            if (branch.index == outcome)
+            {
+                selected = &branch;
+                break;
+            }
         }
     }
     if (selected == nullptr)

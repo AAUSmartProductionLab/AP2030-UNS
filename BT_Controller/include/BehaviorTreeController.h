@@ -4,6 +4,8 @@
 #include <atomic>
 #include <memory>
 #include <optional>
+#include <chrono>
+#include <unordered_map>
 #include "mqtt/mqtt_client.h"
 #include "mqtt/node_message_distributor.h"
 #include "aas/aas_client.h"
@@ -20,6 +22,7 @@ void signalHandler(int signum);
 namespace BT
 {
     class Groot2Publisher;
+    class TreeObserver;
 }
 
 struct BtControllerParameters
@@ -53,6 +56,10 @@ struct BtControllerParameters
     std::string registration_config_path;      // Path to orchestrator's AAS description YAML
     std::string registration_topic_pattern;    // MQTT topic pattern for registration
     std::string registration_topic;            // Resolved registration topic
+
+    // Runtime metrics
+    std::string metrics_dir = "/data/run_metrics";
+    std::string metrics_topic_prefix = "NN/Nybrovej/InnoLab/Stats";
 };
 
 class BehaviorTreeController
@@ -76,6 +83,7 @@ private:
     std::unique_ptr<BT::BehaviorTreeFactory> bt_factory_;
     BT::Tree bt_tree_;
     std::unique_ptr<BT::Groot2Publisher> bt_publisher_;
+    std::unique_ptr<BT::TreeObserver> bt_observer_;
 
     std::atomic<bool> mqtt_start_bt_flag_;
     std::atomic<bool> mqtt_suspend_bt_flag_;
@@ -96,6 +104,13 @@ private:
     std::string pending_unsuspend_uuid_;
     std::string pending_reset_uuid_;
     std::mutex pending_command_mutex_;
+
+    // Runtime metrics correlation + timing
+    std::string current_run_id_;
+    std::mutex metrics_mutex_;
+    std::chrono::steady_clock::time_point execute_started_at_;
+    std::atomic<bool> execute_timer_active_{false};
+    std::unordered_map<uint16_t, std::string> node_category_by_uid_;
 
     PackML::State current_packml_state_;
     BT::NodeStatus current_bt_tick_status_;
@@ -136,4 +151,9 @@ private:
 
     // Methods for AAS registration
     bool publishConfigToRegistrationService();
+
+    // Runtime metrics helpers
+    void resetRunMetricsState();
+    void initializeRunMetrics(const std::string &run_id);
+    void publishRunMetrics(BT::NodeStatus final_status);
 };

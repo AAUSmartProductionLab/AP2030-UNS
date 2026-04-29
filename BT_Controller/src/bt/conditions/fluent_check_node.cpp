@@ -119,8 +119,18 @@ void FluentCheck::initializeTopicsFromAAS()
 
         interaction_name_ = lastSegment(predicate_ref_->fluent_aas_path);
 
-        if (!predicate_ref_->transformation_aas_path.empty() &&
-            !predicate_ref_->source_aas_id.empty())
+        // Symbolic-only predicates have no Transformation, no Variables
+        // submodel, and no MQTT subscriptions. Mark init complete and
+        // bail out -- tick() short-circuits to tickSymbolic() before
+        // ever calling ensureInitialized() for these, but builder-time
+        // invocations (and any defensive caller) still land here.
+        if (predicate_ref_->transformation_aas_path.empty())
+        {
+            topics_initialized_ = true;
+            return;
+        }
+
+        if (!predicate_ref_->source_aas_id.empty())
         {
             auto resolver = getResolver(aas_client_);
             auto expr = resolver->getTransformationExpression(
@@ -337,6 +347,29 @@ bool FluentCheck::evaluateAgainst()
 
 BT::NodeStatus FluentCheck::tick()
 {
+    // Eagerly resolve predicate_ref so we can recognise symbolic-only
+    // predicates *before* triggering any MQTT/AAS work. Symbolic
+    // predicates (StepReady / StepDone / etc.) carry an empty
+    // ``transformation_aas_path`` and are served from the process-wide
+    // ``SymbolicState`` -- they have no Variables submodel and no MQTT
+    // subscriptions, so calling ensureInitialized() for them just
+    // produces noise ("could not load submodel 'Variables'",
+    // "subscription failed").
+    if (!predicate_ref_.has_value())
+    {
+        auto ref_input = getInput<std::string>("predicate_ref");
+        if (ref_input.has_value() && !ref_input.value().empty())
+        {
+            predicate_ref_ = bt_exec_refs::parsePredicateRef(ref_input.value());
+        }
+    }
+
+    if (predicate_ref_.has_value() &&
+        predicate_ref_->transformation_aas_path.empty())
+    {
+        return tickSymbolic();
+    }
+
     if (!topics_initialized_)
     {
         // Use the base ensureInitialized() helper so newly-registered
@@ -353,15 +386,6 @@ BT::NodeStatus FluentCheck::tick()
     if (!predicate_ref_.has_value())
     {
         return BT::NodeStatus::FAILURE;
-    }
-
-    // Symbolic-only predicates (StepReady / StepDone / etc.) carry an empty
-    // transformation_aas_path. They are served from the process-wide
-    // ``SymbolicState`` seeded from planner_metadata.initial_state and
-    // mutated by ExecuteAction's symbolic effects.
-    if (predicate_ref_->transformation_aas_path.empty())
-    {
-        return tickSymbolic();
     }
 
     // Data-backed predicate: evaluate against the live params_ /
@@ -492,6 +516,50 @@ namespace
 
 BT::NodeStatus FluentCheck::tickSymbolic()
 {
+    // Prefer symbolic key material from predicate_ref. The parameter_refs
+    // were resolved by the planner to concrete AAS objects whose
+    // ``aas_path`` last-segment is the object's idShort (e.g.
+    // ``AI-Planning/Problem/Objects/planarShuttle1`` -> ``planarShuttle1``).
+    // This matches what the planner emits into ``_planner_initial_state``
+    // and what the action-effect applier writes back to ``SymbolicState``.
+    //
+    // We deliberately do NOT parse args from the ``predicate_args``
+    // input here because BT.CPP has already substituted ``{Param_*}``
+    // placeholders with their full JSON object value
+    // (``{"aas_id":"...","aas_path":"..."}``); using that string would
+    // produce a key that never matches the seeded atoms. The
+    // ``predicate_args`` input is only meaningful for the data-backed
+    // path (which uses it as JSONata input).
+    if (predicate_ref_.has_value() && !predicate_ref_->fluent_aas_path.empty())
+    {
+        const std::string predicate = lastSegment(predicate_ref_->fluent_aas_path);
+        if (!predicate.empty())
+        {
+            std::vector<std::string> args;
+            args.reserve(predicate_ref_->parameter_refs.size());
+            for (const auto &p : predicate_ref_->parameter_refs)
+            {
+                std::string name = lastSegment(p.aas_path);
+                if (name.empty())
+                {
+                    // Empty aas_path shouldn't happen for real predicates,
+                    // but if it does fall back to node-name parsing rather
+                    // than emitting a malformed key.
+                    args.clear();
+                    break;
+                }
+                args.push_back(std::move(name));
+            }
+
+            if (!args.empty() ||
+                predicate_ref_->parameter_refs.empty())
+            {
+                bool value = SymbolicState::instance().getBool(predicate, args);
+                return value ? BT::NodeStatus::SUCCESS : BT::NodeStatus::FAILURE;
+            }
+        }
+    }
+
     auto parsed = parseSymbolicNodeName(this->name());
     if (!parsed.has_value())
     {

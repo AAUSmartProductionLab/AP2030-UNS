@@ -15,6 +15,30 @@ from typing import FrozenSet, List, Optional, Set, Tuple
 
 _PREDICATE_RE = re.compile(r"^(\w+)\((.*)\)$")
 
+# PR2 emits a synthetic ``<none of those>`` literal on partial-state
+# conditions to mean "this state is none of the previously listed partial
+# states". It is not a real fluent and must never be turned into a
+# FluentCheck node or used in state-signature comparisons.
+_PLACEHOLDER_LITERALS: frozenset[str] = frozenset({
+    "<none of those>",
+    "none of those",
+    "<none-of-those>",
+    "none-of-those",
+})
+
+
+def is_placeholder_literal(literal: object) -> bool:
+    """Return ``True`` if *literal* is a PR2 ``<none of those>`` placeholder.
+
+    Handles the optional ``not(...)`` wrapper as well.
+    """
+    text = str(literal or "").strip().lower()
+    if not text:
+        return False
+    if text.startswith("not(") and text.endswith(")"):
+        text = text[4:-1].strip()
+    return text in _PLACEHOLDER_LITERALS
+
 
 def parse_predicate(fluent: str) -> Optional[Tuple[str, List[str]]]:
     """Parse ``name(arg1, arg2, ...)`` into ``(name, [arg1, ...])``.

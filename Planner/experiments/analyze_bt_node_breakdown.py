@@ -15,6 +15,9 @@ directory (or a custom root via ``--benchmarks-root``), this script:
 Outputs:
   - ``node_breakdown.csv`` — one row per (instance, profile, variant)
     with static counts, dynamic visit counts, ticks, success/timeout.
+    - ``fig_node_breakdown_runtime_to_solve.png`` — stacked bars of
+        success-only average category ticks-to-solve, paired trivial vs
+        hoisted per instance (one subplot per profile).
   - ``fig_node_breakdown_static.png`` — stacked bars of static node
     counts per variant per instance.
   - ``fig_node_breakdown_dynamic.png`` — stacked bars of avg per-episode
@@ -143,6 +146,8 @@ def _simulate_with_categories(
     timeouts = 0
     tick_totals: List[int] = []
     cat_totals: Dict[str, List[int]] = {c: [] for c in CATEGORIES}
+    solved_tick_totals: List[int] = []
+    solved_cat_totals: Dict[str, List[int]] = {c: [] for c in CATEGORIES}
 
     for _ in range(n_trials):
         world = make_world(rng=rng, outcome_probability_provider=outcome_probability_provider)
@@ -169,13 +174,20 @@ def _simulate_with_categories(
             cat_totals[c].append(episode_cat[c])
         if success:
             successes += 1
+            solved_tick_totals.append(episode_ticks)
+            for c in CATEGORIES:
+                solved_cat_totals[c].append(episode_cat[c])
 
     return {
         "successes": successes,
         "timeouts": timeouts,
         "n_trials": n_trials,
         "avg_ticks": float(np.mean(tick_totals)) if tick_totals else 0.0,
+        "avg_ticks_solved": float(np.mean(solved_tick_totals)) if solved_tick_totals else 0.0,
         "avg_cat": {c: float(np.mean(cat_totals[c])) if cat_totals[c] else 0.0 for c in CATEGORIES},
+        "avg_cat_solved": {
+            c: float(np.mean(solved_cat_totals[c])) if solved_cat_totals[c] else 0.0 for c in CATEGORIES
+        },
     }
 
 
@@ -261,13 +273,14 @@ def plot_static(df: pd.DataFrame, out: Path) -> None:
                 label=f"{c}" if v_i == 0 else None,
             )
             bottom += np.array(heights)
+        label_y = np.maximum(bottom - np.maximum(bottom * 0.03, 1.0), 0.0)
         for i in range(len(instances)):
             ax.text(
                 x[i] + (v_i - 0.5) * bar_w + bar_w / 2,
-                bottom[i] + 1,
+                label_y[i],
                 v[0].upper(),
                 ha="center",
-                va="bottom",
+                va="top",
                 fontsize=8,
                 alpha=0.7,
             )
@@ -275,10 +288,10 @@ def plot_static(df: pd.DataFrame, out: Path) -> None:
     ax.set_xticks(x)
     ax.set_xticklabels(instances, rotation=30, ha="right")
     ax.set_ylabel("Static node count")
-    ax.set_title("BT static node count by category (T = trivial, H = hoisted)")
     ax.grid(axis="y", linestyle="--", alpha=0.3)
     ax.legend(title="category", loc="upper left", framealpha=0.9)
-    fig.tight_layout()
+    fig.suptitle("BT static node count by category (T = trivial, H = hoisted)", y=0.995)
+    fig.tight_layout(rect=[0, 0, 1, 0.98])
     fig.savefig(out, dpi=150)
     plt.close(fig)
 
@@ -286,7 +299,7 @@ def plot_static(df: pd.DataFrame, out: Path) -> None:
 def plot_dynamic(df: pd.DataFrame, out: Path) -> None:
     profiles = sorted(df["profile"].unique())
     instances = sorted((df["domain"] + "/" + df["problem"]).unique())
-    fig, axes = plt.subplots(len(profiles), 1, figsize=(12, 3.5 * len(profiles)), sharex=True)
+    fig, axes = plt.subplots(len(profiles), 1, figsize=(11, 5.5 * len(profiles)), sharex=True)
     if len(profiles) == 1:
         axes = [axes]
     palette = sns.color_palette("colorblind", len(CATEGORIES))
@@ -316,13 +329,14 @@ def plot_dynamic(df: pd.DataFrame, out: Path) -> None:
                     label=c if v_i == 0 and ax is axes[0] else None,
                 )
                 bottom += np.array(heights)
+            label_y = np.maximum(bottom - np.maximum(bottom * 0.04, 1.0), 1.0)
             for i in range(len(instances)):
                 ax.text(
                     x[i] + (v_i - 0.5) * bar_w + bar_w / 2,
-                    bottom[i] + bottom[i] * 0.01 + 1,
+                    label_y[i],
                     variant[0].upper(),
                     ha="center",
-                    va="bottom",
+                    va="top",
                     fontsize=8,
                     alpha=0.7,
                 )
@@ -331,12 +345,77 @@ def plot_dynamic(df: pd.DataFrame, out: Path) -> None:
         ax.set_xticks(x)
         ax.set_xticklabels(instances, rotation=30, ha="right")
         ax.set_ylabel("Avg per-episode visits (log)")
-        ax.set_title(f"Profile = {profile}")
         ax.grid(axis="y", linestyle="--", alpha=0.3, which="both")
 
     axes[0].legend(title="category", loc="upper left", framealpha=0.9)
-    fig.suptitle("Per-episode behaviour visits by node category (T = trivial, H = hoisted)", y=0.995)
-    fig.tight_layout()
+    fig.suptitle(
+        "Per-episode behaviour visits by node category (T = trivial, H = hoisted)",
+        y=0.995,
+    )
+    fig.tight_layout(rect=[0, 0, 1, 0.98])
+    fig.savefig(out, dpi=150)
+    plt.close(fig)
+
+
+def plot_runtime_to_solve(df: pd.DataFrame, out: Path) -> None:
+    profiles = sorted(df["profile"].unique())
+    instances = sorted((df["domain"] + "/" + df["problem"]).unique())
+    fig, axes = plt.subplots(len(profiles), 1, figsize=(11, 5.5 * len(profiles)), sharex=True)
+    if len(profiles) == 1:
+        axes = [axes]
+    palette = sns.color_palette("colorblind", len(CATEGORIES))
+    colors = dict(zip(CATEGORIES, palette))
+
+    for ax, profile in zip(axes, profiles):
+        sub = df[df["profile"] == profile].copy()
+        sub["instance"] = sub["domain"] + "/" + sub["problem"]
+        x = np.arange(len(instances))
+        bar_w = 0.4
+
+        for v_i, variant in enumerate(["trivial", "hoisted"]):
+            bottom = np.zeros(len(instances))
+            for c in CATEGORIES:
+                col = f"dyn_solved_avg_{c}"
+                heights = []
+                for inst in instances:
+                    row = sub[(sub["instance"] == inst) & (sub["variant"] == variant)]
+                    heights.append(float(row[col].iloc[0]) if len(row) else 0.0)
+                ax.bar(
+                    x + (v_i - 0.5) * bar_w + bar_w / 2,
+                    heights,
+                    bar_w,
+                    bottom=bottom,
+                    color=colors[c],
+                    edgecolor="white",
+                    linewidth=0.4,
+                    label=c if v_i == 0 and ax is axes[0] else None,
+                )
+                bottom += np.array(heights)
+            label_y = np.maximum(bottom - np.maximum(bottom * 0.03, 1.0), 0.0)
+
+            for i in range(len(instances)):
+                ax.text(
+                    x[i] + (v_i - 0.5) * bar_w + bar_w / 2,
+                    label_y[i],
+                    variant[0].upper(),
+                    ha="center",
+                    va="top",
+                    fontsize=8,
+                    alpha=0.7,
+                )
+
+        ax.set_xticks(x)
+        ax.set_xticklabels(instances, rotation=30, ha="right")
+        ax.set_ylabel("Avg category ticks to solve")
+        ax.set_title(f"Profile = {profile}")
+        ax.grid(axis="y", linestyle="--", alpha=0.3)
+
+    axes[0].legend(title="category", loc="upper left", framealpha=0.9)
+    fig.suptitle(
+        "Runtime node-category ticks to solve (successful episodes only, T = trivial, H = hoisted)",
+        y=0.995,
+    )
+    fig.tight_layout(rect=[0, 0, 1, 0.98])
     fig.savefig(out, dpi=150)
     plt.close(fig)
 
@@ -517,16 +596,20 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                     "timeouts": stats["timeouts"],
                     "n_trials": stats["n_trials"],
                     "dyn_avg_ticks": stats["avg_ticks"],
+                    "dyn_solved_avg_ticks": stats["avg_ticks_solved"],
                 }
                 for c in CATEGORIES:
                     row[f"static_{c}"] = static_per_variant[variant_name][c]
                     row[f"dyn_avg_{c}"] = stats["avg_cat"][c]
+                    row[f"dyn_solved_avg_{c}"] = stats["avg_cat_solved"][c]
                 rows.append(row)
 
     fields = [
         "domain", "problem", "profile", "variant",
-        "successes", "timeouts", "n_trials", "dyn_avg_ticks",
-    ] + [f"static_{c}" for c in CATEGORIES] + [f"dyn_avg_{c}" for c in CATEGORIES]
+        "successes", "timeouts", "n_trials", "dyn_avg_ticks", "dyn_solved_avg_ticks",
+    ] + [f"static_{c}" for c in CATEGORIES] + [f"dyn_avg_{c}" for c in CATEGORIES] + [
+        f"dyn_solved_avg_{c}" for c in CATEGORIES
+    ]
     csv_path = out_dir / "node_breakdown.csv"
     with csv_path.open("w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=fields)
@@ -540,6 +623,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     plot_static(df, out_dir / "fig_node_breakdown_static.png")
     plot_dynamic(df, out_dir / "fig_node_breakdown_dynamic.png")
+    plot_runtime_to_solve(df, out_dir / "fig_node_breakdown_runtime_to_solve.png")
     plot_tradeoff(df, out_dir / "fig_condition_vs_wrapper_tradeoff.png")
     print(f"Outputs in {out_dir}")
     return 0

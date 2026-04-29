@@ -98,6 +98,20 @@ def _collect_execution_ref_aliases(
         elif isinstance(node, ActionNode) and node.execution_ref:
             serialized = _ref_to_xml_attr(node.execution_ref)
             entries.append((id(node), "action", dict(node.execution_ref), serialized))
+        elif isinstance(node, SubTreeRef):
+            # Per-invocation leaf refs are NOT in the executable tree but
+            # contribute to the alias namespace so each SubTree call can
+            # bind its own ``predicate_ref_<i>``/``action_ref_<i>`` port.
+            for binding in node.leaf_bindings:
+                if binding is None:
+                    continue
+                leaf, _ref_port, _args_port = binding
+                if isinstance(leaf, ConditionNode) and leaf.execution_ref:
+                    serialized = _ref_to_xml_attr(leaf.execution_ref)
+                    entries.append((id(leaf), "predicate", dict(leaf.execution_ref), serialized))
+                elif isinstance(leaf, ActionNode) and leaf.execution_ref:
+                    serialized = _ref_to_xml_attr(leaf.execution_ref)
+                    entries.append((id(leaf), "action", dict(leaf.execution_ref), serialized))
 
     used_keys: Set[str] = set()
     declarations: List[Tuple[str, str]] = []
@@ -438,6 +452,21 @@ def _bt_node_to_xml(
     elif isinstance(node, SubTreeRef):
         attribs = {"ID": node.template_id}
         attribs.update(node.params)
+        # For each leaf position with a parameterized ref, add per-invocation
+        # ``<port_name>="{<alias_key>}"`` and ``<args_port>="\"{Arg};...\""``
+        # so the SubTree's child blackboard binds these before the template
+        # body's FluentCheck/ExecuteAction reads them.
+        for binding in node.leaf_bindings:
+            if binding is None:
+                continue
+            leaf, ref_port, args_port = binding
+            alias = execution_ref_aliases.get(id(leaf))
+            arg_aliases = execution_arg_aliases.get(id(leaf), [])
+            if alias:
+                attribs[ref_port] = f"{{{alias}}}"
+            if arg_aliases:
+                args_value = ";".join(f"{{{ak}}}" for ak in arg_aliases)
+                attribs[args_port] = f'"{args_value}"'
         attribs.setdefault("_autoremap", "true")
         ET.SubElement(parent_el, "SubTree", attrib=attribs)
 
@@ -445,7 +474,17 @@ def _bt_node_to_xml(
         attrib = {
             "name": node.fluent,
         }
-        if node.execution_ref:
+        ref_port = getattr(node, "_template_ref_port", None)
+        args_port = getattr(node, "_template_args_port", None)
+        if ref_port:
+            # Inside a parameterized template body: defer to the SubTree's
+            # per-invocation port. The SubTree call provides the actual
+            # alias reference; this template node only needs to read from
+            # its local blackboard.
+            attrib["predicate_ref"] = f"{{{ref_port}}}"
+            if args_port:
+                attrib["predicate_args"] = f"{{{args_port}}}"
+        elif node.execution_ref:
             alias = execution_ref_aliases.get(id(node))
             if alias:
                 attrib["predicate_ref"] = f"{{{alias}}}"
@@ -463,16 +502,23 @@ def _bt_node_to_xml(
             "ID": "ExecuteAction",
             "name": node.action_name,
         }
-        arg_aliases = execution_arg_aliases.get(id(node), [])
-        if arg_aliases:
-            args_value = ";".join(f"{{{arg_key}}}" for arg_key in arg_aliases)
-            attrib["action_args"] = f'"{args_value}"'
-        if node.execution_ref:
-            alias = execution_ref_aliases.get(id(node))
-            if alias:
-                attrib["action_ref"] = f"{{{alias}}}"
-            else:
-                attrib["action_ref"] = _ref_to_xml_attr(node.execution_ref)
+        ref_port = getattr(node, "_template_ref_port", None)
+        args_port = getattr(node, "_template_args_port", None)
+        if ref_port:
+            if args_port:
+                attrib["action_args"] = f"{{{args_port}}}"
+            attrib["action_ref"] = f"{{{ref_port}}}"
+        else:
+            arg_aliases = execution_arg_aliases.get(id(node), [])
+            if arg_aliases:
+                args_value = ";".join(f"{{{arg_key}}}" for arg_key in arg_aliases)
+                attrib["action_args"] = f'"{args_value}"'
+            if node.execution_ref:
+                alias = execution_ref_aliases.get(id(node))
+                if alias:
+                    attrib["action_ref"] = f"{{{alias}}}"
+                else:
+                    attrib["action_ref"] = _ref_to_xml_attr(node.execution_ref)
         ET.SubElement(parent_el, "Action", attrib=attrib)
 
     elif isinstance(node, SuccessLeaf):
@@ -624,5 +670,45 @@ def bt_to_xml(
             for pname in param_names:
                 ET.SubElement(st, "input_port", attrib={"name": pname})
 
+    # BT.CPP v4 builds each node's ``fullPath()`` as ``<subtree-prefix>/<name>``
+    # and only auto-disambiguates with a UID suffix when no ``name`` attribute
+    # is set (or when ``name == ID``). Sibling nodes that share the same
+    # explicit ``name`` within a single ``<BehaviorTree>`` therefore collide
+    # and cause ``TreeObserver`` to throw ``"TreeObserver not built correctly"``.
+    # Walk every emitted BehaviorTree and uniquify duplicate names while
+    # leaving inner ``<SubTree>`` invocations (own subtree namespace) alone.
+    _uniquify_names_within_subtrees(root_el)
+
     ET.indent(root_el, space="  ")
     return ET.tostring(root_el, encoding="unicode", xml_declaration=True)
+
+
+def _uniquify_names_within_subtrees(root_el: ET.Element) -> None:
+    """Disambiguate duplicate ``name`` attributes inside each ``<BehaviorTree>``.
+
+    BT.CPP composes each node's path from its containing subtree's prefix and
+    its ``name`` attribute; duplicates cause ``BT::TreeObserver`` to abort with
+    ``"TreeObserver not built correctly"``. Each ``<BehaviorTree>`` is its own
+    subtree namespace, so we walk one tree at a time. ``<SubTree>`` invocation
+    elements start a *new* subtree namespace and are not descended into.
+    """
+    for bt_el in root_el.findall("BehaviorTree"):
+        used: Dict[str, int] = {}
+
+        def _visit(el: ET.Element) -> None:
+            name = el.attrib.get("name")
+            if name:
+                count = used.get(name, 0)
+                if count >= 1:
+                    el.set("name", f"{name}_{count + 1}")
+                used[name] = count + 1
+            for child in el:
+                # ``<SubTree>`` invocations live in a separate path namespace
+                # within BT.CPP; do not include their descendants when checking
+                # for duplicates in the current subtree.
+                if child.tag == "SubTree":
+                    continue
+                _visit(child)
+
+        for child in bt_el:
+            _visit(child)

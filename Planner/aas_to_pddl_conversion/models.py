@@ -68,6 +68,7 @@ class AIPlanningPipelineResult:
     capabilities: List[PlanningCapability] = field(default_factory=list)
     artifacts: Dict[str, str] = field(default_factory=dict)
     planner_metadata: Dict[str, Any] = field(default_factory=dict)
+    metrics: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass

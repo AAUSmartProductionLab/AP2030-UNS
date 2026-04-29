@@ -301,13 +301,13 @@ def _rule_action_name(rule) -> str:
 
 
 def _is_placeholder_literal(literal: str) -> bool:
-    normalized = str(literal or "").strip().lower()
-    return normalized in {
-        "<none of those>",
-        "none of those",
-        "<none-of-those>",
-        "none-of-those",
-    }
+    # Thin wrapper kept for backward compatibility with existing callers in
+    # this module; the canonical implementation lives in ``literals``.
+    # Reaching this branch indicates the UP-PR2 engine missed expanding a
+    # ``<none of those>`` mutex-group catch-all (see
+    # ``unified_planning.engines.up_pr2.engine._parse_sas_mapping``).
+    from .literals import is_placeholder_literal
+    return is_placeholder_literal(literal)
 
 
 def _rule_condition_literals(rule) -> list:

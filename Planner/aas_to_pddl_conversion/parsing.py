@@ -95,13 +95,18 @@ def parse_problem(problem: Dict[str, Any], parsed: _ParsedSource) -> None:
     if objects_section:
         for obj in objects_section.get("value", []):
             name = display_name(obj) or f"Object_{len(object_names) + 1}"
+            obj_ref = object_reference(obj)
             object_names.append(name)
             parsed.objects.append(
                 {
                     "name": name,
-                    "reference": reference_key_tail(obj.get("value")),
+                    "reference": reference_key_tail(obj_ref),
                     "object_aas_path": f"AI-Planning/Problem/Objects/{name}",
-                    "declared_type": parameter_type_from_reference(obj.get("value")),
+                    "declared_type": object_declared_type(
+                        obj,
+                        object_name=name,
+                        source_aas_id=parsed.aas_id,
+                    ),
                     "source_aas_id": parsed.aas_id,
                     "source_aas_name": parsed.aas_name,
                 }
@@ -294,6 +299,14 @@ def parse_term(term: Dict[str, Any], source_name: str, source_objects: List[str]
         return None
 
     values = term.get("value", [])
+    when_expr = None
+    for child in values:
+        if child.get("modelType") != "Property":
+            continue
+        id_short = str(child.get("idShort") or "")
+        if id_short.lower() == "when":
+            when_expr = child.get("value")
+            break
     fluent_ref = find_reference(values, "FluentReference")
 
     if fluent_ref is not None:
@@ -323,6 +336,8 @@ def parse_term(term: Dict[str, Any], source_name: str, source_objects: List[str]
         }
         if term_value is not None:
             atom["value"] = term_value
+        if when_expr is not None:
+            atom["when"] = str(when_expr)
         return atom
 
     operator = term_operator(term)
@@ -367,11 +382,14 @@ def parse_term(term: Dict[str, Any], source_name: str, source_objects: List[str]
         "preferences",
         "preference",
     }:
-        return {
+        node = {
             "kind": "op",
             "op": operator,
             "children": children,
         }
+        if when_expr is not None:
+            node["when"] = str(when_expr)
+        return node
 
     if operator:
         return {
@@ -519,6 +537,89 @@ def parameter_type_from_reference(reference: Optional[Dict[str, Any]]) -> str:
         return semantic_tail(tail) or "Asset"
 
     return "Entity"
+
+
+def object_declared_type(
+    obj: Dict[str, Any],
+    object_name: str = "",
+    source_aas_id: str = "",
+) -> str:
+    explicit = object_parameter_type(obj)
+    if explicit:
+        return explicit
+
+    ref = object_reference(obj)
+    # Heuristic: Order objects commonly self-reference the owning Order AAS
+    # while still requiring a dedicated planning type. AAS servers typically
+    # resolve the literal "self" string to the concrete AAS id, so detect
+    # the same condition by comparing against the parsed source AAS id.
+    if object_name.strip().lower().startswith("order") and (
+        is_self_reference(ref) or _references_aas(ref, source_aas_id)
+    ):
+        return "Order"
+
+    return parameter_type_from_reference(ref)
+
+
+def _references_aas(reference: Optional[Dict[str, Any]], aas_id: str) -> bool:
+    if not isinstance(reference, dict) or not aas_id:
+        return False
+    keys = reference.get("keys", [])
+    aas_key = next(
+        (k for k in keys if str(k.get("type") or "") == "AssetAdministrationShell"),
+        None,
+    )
+    if aas_key is None:
+        return False
+    return str(aas_key.get("value") or "").strip() == aas_id.strip()
+
+
+def object_parameter_type(obj: Dict[str, Any]) -> str:
+    for key in ("parameterType", "ParameterType", "declaredType", "DeclaredType", "declared_type"):
+        value = obj.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+
+    value = obj.get("value")
+    if isinstance(value, list):
+        for child in value:
+            if child.get("modelType") != "Property":
+                continue
+            child_name = str(child.get("idShort") or "").lower()
+            if child_name in {"parametertype", "declaredtype", "declared_type", "type"}:
+                child_value = str(child.get("value") or "").strip()
+                if child_value:
+                    return child_value
+
+    return ""
+
+
+def object_reference(obj: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    value = obj.get("value")
+    if isinstance(value, dict) and isinstance(value.get("keys"), list):
+        return value
+
+    if isinstance(value, list):
+        for child in value:
+            if child.get("modelType") != "ReferenceElement":
+                continue
+            child_ref = child.get("value")
+            if isinstance(child_ref, dict) and isinstance(child_ref.get("keys"), list):
+                return child_ref
+
+    return None
+
+
+def is_self_reference(reference: Optional[Dict[str, Any]]) -> bool:
+    if not isinstance(reference, dict):
+        return False
+    keys = reference.get("keys", [])
+    if not keys:
+        return False
+    aas_key = next((k for k in keys if str(k.get("type") or "") == "AssetAdministrationShell"), None)
+    if aas_key is None:
+        return False
+    return str(aas_key.get("value") or "").strip().lower() == "self"
 
 
 def reference_key_tail(reference: Optional[Dict[str, Any]]) -> str:

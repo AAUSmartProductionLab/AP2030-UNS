@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime
+import time
 from itertools import chain
 from pathlib import Path
 from typing import Any, Dict, Optional, Set
@@ -27,20 +28,53 @@ def run_ai_planning_pipeline(
 ) -> AIPlanningPipelineResult:
     """Run parse->merge->build->solve->export sequence for planning sources."""
     try:
-        from ..bt_synthesis.api import extract_plan_text, solve_result_to_bt_xml
+        from ..bt_synthesis.api import (
+            count_bt_nodes,
+            extract_plan_text,
+            policy_to_bt,
+            policy_to_bt_trivial,
+            solve_result_to_bt_xml,
+        )
     except ImportError:
-        from bt_synthesis.api import extract_plan_text, solve_result_to_bt_xml
+        from bt_synthesis.api import (
+            count_bt_nodes,
+            extract_plan_text,
+            policy_to_bt,
+            policy_to_bt_trivial,
+            solve_result_to_bt_xml,
+        )
 
     warnings: list[str] = []
+    metrics: dict[str, Any] = {
+        "source_count": len(planning_sources),
+        "parse_time_s": 0.0,
+        "build_time_s": 0.0,
+        "planning_time_s": 0.0,
+        "bt_synthesis_time_s": 0.0,
+        "pipeline_total_time_s": 0.0,
+        "policy_rule_count": 0,
+        "plan_action_count": 0,
+        "bt_nodes_trivial": 0,
+        "bt_nodes_hoisted": 0,
+    }
+
+    pipeline_started = time.perf_counter()
+
+    parse_started = time.perf_counter()
     parsed_sources = [parse_source(source) for source in planning_sources]
+    metrics["parse_time_s"] = time.perf_counter() - parse_started
+
     for parsed in parsed_sources:
         warnings.extend(parsed.warnings)
 
+    build_started = time.perf_counter()
     merged = merge_sources(parsed_sources, warnings)
     compile_bop_ordering(merged, bop_config, warnings)
     up_problem = build_up_problem(merged, warnings, semantic_natural_transitions=True)
     artifacts = export_problem_artifacts(up_problem, artifacts_dir, warnings)
+    metrics["build_time_s"] = time.perf_counter() - build_started
 
+    solve_started = time.perf_counter()
     solve_result = solve_with_reduced_fallback(
         up_problem,
         timeout=planning_timeout_seconds,
@@ -59,6 +93,7 @@ def run_ai_planning_pipeline(
             "constraints": len(merged.get("constraints_terms", [])),
         },
     )
+    metrics["planning_time_s"] = time.perf_counter() - solve_started
     bt_solve_result = solve_result
 
     planner_metadata = {}
@@ -70,8 +105,43 @@ def run_ai_planning_pipeline(
     if hasattr(solve_result, "metadata") and isinstance(getattr(solve_result, "metadata", None), dict):
         solve_result.metadata["planner_metadata"] = planner_metadata
 
+    if getattr(solve_result, "is_policy", False):
+        try:
+            metrics["policy_rule_count"] = int(len(solve_result.policy))
+        except Exception as exc:
+            warnings.append(f"Could not count policy rules: {exc}")
+
+        try:
+            policy_result = solve_result.require_policy_result()
+            problem_obj = getattr(solve_result, "metadata", {}).get("problem")
+            hoisted_bt = policy_to_bt(
+                policy_result,
+                problem=problem_obj,
+                planner_metadata=planner_metadata,
+            )
+            trivial_bt = policy_to_bt_trivial(
+                policy_result,
+                problem=problem_obj,
+                planner_metadata=planner_metadata,
+            )
+            metrics["bt_nodes_hoisted"] = int(count_bt_nodes(hoisted_bt.root))
+            metrics["bt_nodes_trivial"] = int(count_bt_nodes(trivial_bt.root))
+        except Exception as exc:
+            warnings.append(f"Could not derive hoisted/trivial BT node counts: {exc}")
+
+    if getattr(solve_result, "is_plan", False):
+        try:
+            up_result = solve_result.require_plan_result()
+            plan = getattr(up_result, "plan", None)
+            actions = list(getattr(plan, "actions", [])) if plan is not None else []
+            metrics["plan_action_count"] = len(actions)
+        except Exception as exc:
+            warnings.append(f"Could not count deterministic plan actions: {exc}")
+
+    bt_started = time.perf_counter()
     bt_xml, conversion_warnings = solve_result_to_bt_xml(solve_result)
     warnings.extend(conversion_warnings)
+    metrics["bt_synthesis_time_s"] = time.perf_counter() - bt_started
 
     if bt_xml:
         write_text_artifact(artifacts, "behavior_tree_xml", "behavior_tree.xml", bt_xml, warnings)
@@ -85,6 +155,7 @@ def run_ai_planning_pipeline(
         export_policy_visualization(solve_result, artifacts, warnings)
 
     capabilities = build_capabilities(merged)
+    metrics["pipeline_total_time_s"] = time.perf_counter() - pipeline_started
     return AIPlanningPipelineResult(
         bt_xml=bt_xml,
         solve_result=solve_result,
@@ -93,6 +164,7 @@ def run_ai_planning_pipeline(
         capabilities=capabilities,
         artifacts=artifacts,
         planner_metadata=planner_metadata,
+        metrics=metrics,
     )
 
 

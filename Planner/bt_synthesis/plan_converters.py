@@ -27,9 +27,21 @@ def solve_result_to_bt_xml(solve_result: Any) -> tuple[str, list[str]]:
         return "", warnings
 
     if getattr(solve_result, "is_policy", False):
-        from .api import policy_to_bt
+        import os
 
-        bt = policy_to_bt(
+        from .api import policy_to_bt, policy_to_bt_trivial
+
+        # Allow runtime selection of the un-optimized ("trivial") policy-to-BT
+        # builder for debugging / comparison against the hoisted BT. This is
+        # primarily used to verify whether runtime failures originate in the
+        # optimizer passes (parameterize_subtrees / deduplicate_subtrees) or
+        # elsewhere in the pipeline. Set BT_SYNTHESIS_TRIVIAL=1 to enable.
+        use_trivial = os.environ.get("BT_SYNTHESIS_TRIVIAL", "").lower() in ("1", "true", "yes")
+        builder = policy_to_bt_trivial if use_trivial else policy_to_bt
+        if use_trivial:
+            warnings.append("BT_SYNTHESIS_TRIVIAL=1: using un-optimized policy_to_bt_trivial builder.")
+
+        bt = builder(
             solve_result.require_policy_result(),
             problem=getattr(solve_result, "metadata", {}).get("problem"),
             planner_metadata=planner_metadata,
