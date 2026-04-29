@@ -11,6 +11,7 @@ services:
       - METRICS_DIR=/data/run_metrics
       - METRICS_TOPIC_PREFIX=${METRICS_TOPIC_PREFIX:-NN/Nybrovej/InnoLab/Stats}
       - BT_SYNTHESIS_TRIVIAL=${BT_SYNTHESIS_TRIVIAL:-}
+      - PLANNING_TIMEOUT_SECONDS=${PLANNING_TIMEOUT_SECONDS:-600}
     volumes:
       - ../../../:/app  # Mount AP2030-UNS repo root
       - ../../../packml_runtime:/app/packml_runtime  # Mount shared PackML runtime
