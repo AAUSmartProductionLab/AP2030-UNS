@@ -2632,6 +2632,12 @@ class AasService {
     lines.push(`${I}${I}Status: 'planned'`);
     lines.push(``);
 
+    lines.push(`${I}Parameters:`);
+    lines.push(`${I}${I}Uuid:`);
+    lines.push(`${I}${I}${I}semanticId: 'cssx:UuidParameter'`);
+    lines.push(`${I}${I}${I}value: '${batchUuid}'`);
+    lines.push(``);
+
     lines.push(`${I}BillOfProcesses:`);
     lines.push(`${I}${I}semanticId: 'https://admin-shell.io/idta/BillOfProcess/1/0'`);
     lines.push(`${I}${I}idShort: 'BillOfProcesses'`);
@@ -2741,6 +2747,14 @@ class AasService {
       lines.push(`${I}${I}${I}${I}    modelRef:`);
       lines.push(`${I}${I}${I}${I}        - AAS: "${inst.aasId}"`);
     });
+    // Add the order itself as a planning object. Use explicit parameterType
+    // so parsing does not infer type from AAS id tail.
+    const orderObjectSuffix = String(batchUuid || '').replace(/[^A-Za-z0-9_]/g, '_');
+    const orderObjectName = `order_${orderObjectSuffix || 'active'}`;
+    lines.push(`${I}${I}${I}${I}-   name: "${orderObjectName}"`);
+    lines.push(`${I}${I}${I}${I}    parameterType: "Order"`);
+    lines.push(`${I}${I}${I}${I}    modelRef:`);
+    lines.push(`${I}${I}${I}${I}        - AAS: "self"`);
     lines.push(`${I}${I}${I}Goal:`);
     instanceIdsList.forEach((_inst, idx) => {
       lines.push(`${I}${I}${I}${I}- predicate:`);
