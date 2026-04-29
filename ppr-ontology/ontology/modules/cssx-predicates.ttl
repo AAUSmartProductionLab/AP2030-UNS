@@ -12,6 +12,7 @@
 :SkillPredicate rdf:type owl:Class .
 :Transport rdf:type owl:Class .
 :LocationParameter rdf:type owl:Class .
+:Identifiable rdf:type owl:Class .
 css:Resource rdf:type owl:Class .
 css:Product rdf:type owl:Class .
 
@@ -122,7 +123,7 @@ css:Product rdf:type owl:Class .
   rdfs:comment "Operational(Resource) — resource is in an operational (ready) state." .
 
 ###  http://www.w3id.org/aau-ra/cssx#Occupied
-###  Occupied(Resource, Product) — resource is currently occupied by a product.
+###  Occupied(Resource, Identifiable) — resource is currently occupied by an identifiable.
 :Occupied rdf:type owl:Class ;
   rdfs:subClassOf :SkillPredicate ;
   rdfs:subClassOf [ rdf:type owl:Restriction ;
@@ -130,8 +131,8 @@ css:Product rdf:type owl:Class .
     owl:allValuesFrom css:Resource ] ;
   rdfs:subClassOf [ rdf:type owl:Restriction ;
     owl:onProperty :predicateParam2 ;
-    owl:allValuesFrom css:Product ] ;
-  rdfs:comment "Occupied(Resource, Product) — resource or station is currently occupied by a product." .
+    owl:allValuesFrom :Identifiable ] ;
+  rdfs:comment "Occupied(Resource, Identifiable) — resource or station is currently occupied by the current lock holder (for example, an Order or Product)." .
 
 ###  http://www.w3id.org/aau-ra/cssx#Free
 ###  Free(Resource) — unary, resource is free and available.

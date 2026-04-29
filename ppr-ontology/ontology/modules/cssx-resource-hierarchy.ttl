@@ -11,11 +11,23 @@
 #    External CSS declarations for VOWL visualization in protege
 #################################################################
 css:Resource rdf:type owl:Class .
+css:Product rdf:type owl:Class .
 :AIDSubmodel rdf:type owl:Class .
 :hasAIDSubmodel rdf:type owl:ObjectProperty .
 #################################################################
 #    Classes
 #################################################################
+
+###  http://www.w3id.org/aau-ra/cssx#Identifiable
+:Identifiable rdf:type owl:Class ;
+  rdfs:comment "Anything that can lock a resource via Occupied(Resource, Identifiable), e.g. products and orders." .
+
+###  http://www.w3id.org/aau-ra/cssx#Order
+:Order rdf:type owl:Class ;
+  rdfs:subClassOf :Identifiable ;
+  rdfs:comment "Production order/process identifier used to claim resources before product loading." .
+
+css:Product rdfs:subClassOf :Identifiable .
 
 ###  http://www.w3id.org/aau-ra/cssx#CPPS
 :CPPS rdf:type owl:Class ;
