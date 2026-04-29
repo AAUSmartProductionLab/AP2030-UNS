@@ -42,20 +42,20 @@ struct BtControllerParameters
     std::string suspend_topic;
     std::string unsuspend_topic;
     std::string reset_topic;
-    
+
     // Response topics for command acknowledgments
     std::string start_response_topic;
     std::string stop_response_topic;
     std::string suspend_response_topic;
     std::string unsuspend_response_topic;
     std::string reset_response_topic;
-    
+
     mqtt_utils::Topic state_publication_config;
 
     // Registration Service Configuration
-    std::string registration_config_path;      // Path to orchestrator's AAS description YAML
-    std::string registration_topic_pattern;    // MQTT topic pattern for registration
-    std::string registration_topic;            // Resolved registration topic
+    std::string registration_config_path;   // Path to orchestrator's AAS description YAML
+    std::string registration_topic_pattern; // MQTT topic pattern for registration
+    std::string registration_topic;         // Resolved registration topic
 
     // Runtime metrics
     std::string metrics_dir = "/data/run_metrics";
@@ -127,7 +127,7 @@ private:
 
     void setStateAndPublish(PackML::State new_packml_state, std::optional<BT::NodeStatus> new_bt_tick_status_opt = std::nullopt);
     void publishCurrentState();
-    void publishCommandResponse(const std::string& response_topic, const std::string& uuid, bool success);
+    void publishCommandResponse(const std::string &response_topic, const std::string &uuid, bool success);
 
     void processBehaviorTreeStart();
     void processStartingState();
