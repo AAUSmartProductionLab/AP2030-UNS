@@ -178,6 +178,18 @@ def _normalize_term(node: Any) -> Dict[str, Any]:
     if not isinstance(node, dict):
         return {}
 
+    # Allow side-car branch gates without changing the existing compact
+    # term syntax, e.g. ``{predicate: {...}, when: 'data.Result="Ok"'}``.
+    when_expr = _first_present(node, "when", "When")
+    if when_expr is not None:
+        node_without_when = {
+            k: v for k, v in node.items() if k not in {"when", "When"}
+        }
+        normalized = _normalize_term(node_without_when)
+        if normalized:
+            normalized["when"] = str(when_expr)
+        return normalized
+
     if _is_fluent_like_payload(node):
         return _normalize_fluent_payload(node)
 
@@ -340,6 +352,7 @@ def _normalize_fluent_payload(payload: Any) -> Dict[str, Any]:
         "PreferenceReference": _first_present(payload, "PreferenceReference", "preferenceReference", "preference"),
         "description": payload.get("description"),
         "value": payload.get("value"),
+        "when": _first_present(payload, "when", "When"),
     }
 
     return {k: v for k, v in normalized.items() if v is not None}

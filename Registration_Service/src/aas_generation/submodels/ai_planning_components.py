@@ -426,20 +426,23 @@ class _PlanningTermBuilder:
     ) -> model.SubmodelElementCollection:
         owner = self.resolve_term_owner(term_owner, fallback_key=action_key)
         term_type = term_cfg.get("type")
+        when_expr = term_cfg.get("when") or term_cfg.get("When")
         current_term_id_short = id_short_override or f"term_{index}"
         fallback_display = _semantic_id_display_name(term_cfg.get("semantic_id")) or (term_type or current_term_id_short)
         term_display_name = self.resolve_term_display_name(term_cfg, fallback_display)
 
         if term_type in {"predicate", "function", "fluent"}:
             if problem_section_name:
-                return self.build_problem_fluent(
+                fluent_term = self.build_problem_fluent(
                     system_id,
                     problem_section_name,
                     term_cfg,
                     id_short_override=current_term_id_short,
                     display_name_override=term_display_name,
                 )
-            return self.build_domain_fluent(
+                self._append_when_property(fluent_term, when_expr)
+                return fluent_term
+            fluent_term = self.build_domain_fluent(
                 system_id,
                 action_key,
                 term_cfg,
@@ -447,6 +450,8 @@ class _PlanningTermBuilder:
                 display_name_override=term_display_name,
                 term_owner=owner,
             )
+            self._append_when_property(fluent_term, when_expr)
+            return fluent_term
 
         if term_type == "constant":
             literal = self.build_constant_property(term_cfg, index)
@@ -478,13 +483,31 @@ class _PlanningTermBuilder:
                     )
                 )
 
-        return model.SubmodelElementCollection(
+        term = model.SubmodelElementCollection(
             id_short=current_term_id_short,
             value=term_elements,
             semantic_id=_make_semantic_id(SemanticIdCatalog.PDDL_TERM),
             supplemental_semantic_id=[_make_semantic_id(semantic_id_str)] if semantic_id_str else [],
             display_name=model.MultiLanguageNameType({"en": term_display_name}),
         )
+        self._append_when_property(term, when_expr)
+        return term
+
+    def _append_when_property(
+        self,
+        term: model.SubmodelElementCollection,
+        when_expr: Any,
+    ) -> None:
+        if when_expr is None:
+            return
+        when_text = str(when_expr).strip()
+        if not when_text:
+            return
+        when_prop = self._typed_property_factory("When", when_text, None)
+        try:
+            term.value.add(when_prop)
+        except AttributeError:
+            term.value.append(when_prop)
 
     def build_domain_fluent(
         self,
