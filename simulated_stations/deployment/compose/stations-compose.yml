@@ -163,7 +163,9 @@ services:
       - PLANAR_SHUTTLE_BASE_TOPIC=NN/Nybrovej/InnoLab/Planar/Xbot1
       - PLANAR_SHUTTLE_NAME=planarShuttle1
       - PLANAR_SHUTTLE_AAS_CONFIG=planarShuttle1.yaml
-      - PLANAR_SHUTTLE_INITIAL=imaLoadingStation
+      - PLANAR_SHUTTLE_INITIAL_X=0.0
+      - PLANAR_SHUTTLE_INITIAL_Y=0.0
+      - PLANAR_SHUTTLE_INITIAL_YAW=0.0
     volumes:
       - ../../:/app
       - ../../../packml_runtime:/app/packml_runtime
@@ -183,7 +185,9 @@ services:
       - PLANAR_SHUTTLE_BASE_TOPIC=NN/Nybrovej/InnoLab/Planar/Xbot2
       - PLANAR_SHUTTLE_NAME=planarShuttle2
       - PLANAR_SHUTTLE_AAS_CONFIG=planarShuttle2.yaml
-      - PLANAR_SHUTTLE_INITIAL=imaDispensingStation
+      - PLANAR_SHUTTLE_INITIAL_X=240.0
+      - PLANAR_SHUTTLE_INITIAL_Y=0.0
+      - PLANAR_SHUTTLE_INITIAL_YAW=0.0
     volumes:
       - ../../:/app
       - ../../../packml_runtime:/app/packml_runtime
@@ -203,7 +207,9 @@ services:
       - PLANAR_SHUTTLE_BASE_TOPIC=NN/Nybrovej/InnoLab/Planar/Xbot3
       - PLANAR_SHUTTLE_NAME=planarShuttle3
       - PLANAR_SHUTTLE_AAS_CONFIG=planarShuttle3.yaml
-      - PLANAR_SHUTTLE_INITIAL=syntegonStopperingStation
+      - PLANAR_SHUTTLE_INITIAL_X=480.0
+      - PLANAR_SHUTTLE_INITIAL_Y=0.0
+      - PLANAR_SHUTTLE_INITIAL_YAW=0.0
     volumes:
       - ../../:/app
       - ../../../packml_runtime:/app/packml_runtime

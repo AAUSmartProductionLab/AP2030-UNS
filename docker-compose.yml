@@ -141,10 +141,13 @@ services:
       - AAS_PORT=${AAS_PORT:-8081}
       - AAS_REGISTRY=${AAS_REGISTRY:-aas-registry}
       - AAS_REGISTRY_PORT=${AAS_REGISTRY_PORT:-8080}
+      - BT_METRICS_DIR=/data/run_metrics
+      - METRICS_TOPIC_PREFIX=${METRICS_TOPIC_PREFIX:-NN/Nybrovej/InnoLab/Stats}
     volumes:
       - ./BT_Controller/config:/AP2030-UNS/BT_Controller/config
       - ./BTDescriptions:/AP2030-UNS/MQTTSchemas
       - ./AASDescriptions:/AP2030-UNS/AASDescriptions
+      - run_metrics:/data/run_metrics
     ports:
     - "1667:1667"
     networks:
@@ -644,3 +647,6 @@ services:
 networks:
   hivemq-network:
     driver: bridge
+
+volumes:
+  run_metrics:
