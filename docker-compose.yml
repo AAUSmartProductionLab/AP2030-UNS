@@ -88,19 +88,20 @@ services:
   #     - timescaledb
   #   restart: unless-stopped
  
-  # groot:
-  #   build:
-  #     context: ./Groot2
-  #     dockerfile: groot2.dockerfile
-  #   container_name: groot2-web
-  #   volumes:
-  #     - ./BT_Controller/config/bt_description:/bt_description
-  #     - ./offlineResponse_1656FB-A61627-4A4CB2-F0C0CA-8531ED-BD332C.dat:/bt_description/offlineResponse_1656FB-A61627-4A4CB2-F0C0CA-8531ED-BD332C.dat
-  #   ports:
-  #     - "6080:6080"
-  #   networks:
-  #     - hivemq-network
-  #   restart: unless-stopped
+  groot:
+    build:
+      context: ./Groot2
+      dockerfile: groot2.dockerfile
+    container_name: groot2-web
+    volumes:
+      - ./BT_Controller/config/bt_description:/bt_description
+      - ./BTDescriptions:/BTDescriptions
+      - ./offlineResponse_1656FB-A61627-4A4CB2-F0C0CA-8531ED-BD332C.dat:/bt_description/offlineResponse_1656FB-A61627-4A4CB2-F0C0CA-8531ED-BD332C.dat
+    ports:
+      - "6080:6080"
+    networks:
+      - hivemq-network
+    restart: unless-stopped
 
   mqtt-explorer:
     image: smeagolworms4/mqtt-explorer
