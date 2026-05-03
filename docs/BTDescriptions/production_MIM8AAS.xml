@@ -46,22 +46,19 @@
       </ReactiveSequence>
     </Occupy>
   </BehaviorTree>
-  <BehaviorTree ID="Loading">
-    <SequenceWithMemory>
-      <PopElement ProductID="{ProductID}" if_empty="SUCCESS" Queue="{ProductIDs}"/>
-      <Occupy Uuid="{ProductID}" Assets="{Assets}">
-        <ReactiveSequence>
-          <ReactiveFallback>
-            <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="PackMLState" Asset="{SelectedAsset}"/>
-            <Sleep msec="10000"/>
-          </ReactiveFallback>
-          <Sequence>
-            <moveToPosition Uuid="{XbotUuid}" TargetPosition="{SelectedAsset}" Asset="{Xbot}"/>
-            <Command_Execution Parameters="'{}'" Uuid="{ProductID}" Operation="Loading" Asset="{SelectedAsset}"/>
-          </Sequence>
-        </ReactiveSequence>
-      </Occupy>
-    </SequenceWithMemory>
+  <BehaviorTree ID="Unloading">
+    <Occupy Uuid="{ProductID}" Assets="{Assets}">
+      <ReactiveSequence>
+        <ReactiveFallback>
+          <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="PackMLState" Asset="{SelectedAsset}"/>
+          <Sleep msec="10000"/>
+        </ReactiveFallback>
+        <Sequence>
+          <moveToPosition Uuid="{XbotUuid}" TargetPosition="{SelectedAsset}" Asset="{Xbot}"/>
+          <Command_Execution Parameters="'{}'" Uuid="{ProductID}" Operation="Unloading" Asset="{SelectedAsset}"/>
+        </Sequence>
+      </ReactiveSequence>
+    </Occupy>
   </BehaviorTree>
   <BehaviorTree ID="Inspection">
     <SamplingGate SamplingRate="{IPCInspection}" BatchSize="{BatchSize}" Queue="{ProductIDs}">
@@ -79,20 +76,6 @@
       </Occupy>
     </SamplingGate>
   </BehaviorTree>
-  <BehaviorTree ID="Unloading">
-    <Occupy Uuid="{ProductID}" Assets="{Assets}">
-      <ReactiveSequence>
-        <ReactiveFallback>
-          <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="PackMLState" Asset="{SelectedAsset}"/>
-          <Sleep msec="10000"/>
-        </ReactiveFallback>
-        <Sequence>
-          <moveToPosition Uuid="{XbotUuid}" TargetPosition="{SelectedAsset}" Asset="{Xbot}"/>
-          <Command_Execution Parameters="'{}'" Uuid="{ProductID}" Operation="Unloading" Asset="{SelectedAsset}"/>
-        </Sequence>
-      </ReactiveSequence>
-    </Occupy>
-  </BehaviorTree>
   <BehaviorTree ID="Dispensing">
     <Occupy Uuid="{ProductID}" Assets="{Assets}">
       <ReactiveSequence>
@@ -106,6 +89,23 @@
         </Sequence>
       </ReactiveSequence>
     </Occupy>
+  </BehaviorTree>
+  <BehaviorTree ID="Loading">
+    <SequenceWithMemory>
+      <PopElement ProductID="{ProductID}" if_empty="SUCCESS" Queue="{ProductIDs}"/>
+      <Occupy Uuid="{ProductID}" Assets="{Assets}">
+        <ReactiveSequence>
+          <ReactiveFallback>
+            <Data_Condition comparison_type="equal" Field="State" expected_value="operational" Property="PackMLState" Asset="{SelectedAsset}"/>
+            <Sleep msec="10000"/>
+          </ReactiveFallback>
+          <Sequence>
+            <moveToPosition Uuid="{XbotUuid}" TargetPosition="{SelectedAsset}" Asset="{Xbot}"/>
+            <Command_Execution Parameters="'{}'" Uuid="{ProductID}" Operation="Loading" Asset="{SelectedAsset}"/>
+          </Sequence>
+        </ReactiveSequence>
+      </Occupy>
+    </SequenceWithMemory>
   </BehaviorTree>
   <TreeNodesModel>
     <Control ID="BC_Fallback"/>
@@ -176,13 +176,17 @@
       <input_port name="ProductIDs"/>
       <input_port name="Station"/>
     </SubTree>
-    <SubTree ID="Loading">
+    <SubTree ID="Unloading">
       <input_port name="Assets"/>
       <input_port name="Xbot"/>
       <input_port name="XbotUuid"/>
       <input_port name="ProductID"/>
       <input_port name="ProductIDs"/>
       <input_port name="Station"/>
+    </SubTree>
+    <SubTree ID="AsepticFilling">
+      <input_port name="Xbot"/>
+      <output_port name="ProductID"/>
     </SubTree>
     <SubTree ID="Inspection">
       <input_port name="Assets"/>
@@ -194,11 +198,7 @@
       <input_port name="IPCInspection"/>
       <input_port name="BatchSize"/>
     </SubTree>
-    <SubTree ID="AsepticFilling">
-      <input_port name="Xbot"/>
-      <output_port name="ProductID"/>
-    </SubTree>
-    <SubTree ID="Unloading">
+    <SubTree ID="Dispensing">
       <input_port name="Assets"/>
       <input_port name="Xbot"/>
       <input_port name="XbotUuid"/>
@@ -206,7 +206,7 @@
       <input_port name="ProductIDs"/>
       <input_port name="Station"/>
     </SubTree>
-    <SubTree ID="Dispensing">
+    <SubTree ID="Loading">
       <input_port name="Assets"/>
       <input_port name="Xbot"/>
       <input_port name="XbotUuid"/>
