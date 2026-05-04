@@ -10,8 +10,8 @@ REPO_ROOT = Planner_ROOT.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from Planner.aas_to_pddl_conversion.models import _ParsedSource
-from Planner.aas_to_pddl_conversion.parsing import parameter_type_from_reference, parse_problem
+from Planner.step1_aas_input.models import _ParsedSource
+from Planner.step1_aas_input.parsing import parameter_type_from_reference, parse_problem
 
 
 class ParsingTypeInferenceTests(unittest.TestCase):

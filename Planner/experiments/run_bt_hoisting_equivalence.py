@@ -33,12 +33,14 @@ if str(_Planner_ROOT) not in sys.path:
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-from bt_synthesis.api import count_bt_nodes, policy_to_bt, policy_to_bt_trivial
-from bt_synthesis.simulator import (
+from step4_policy_to_bt.builder import build_trivial_bt
+from step5_bt_optimization import optimize_bt
+from step6_bt_serialization.xml_writer import count_bt_nodes
+from bt_simulation.simulator import (
     build_global_outcome_probability_provider,
     run_simulation,
 )
-from pddl_planning.planner_core.solver import solve_from_files
+from step3_pddl_solving.solver import solve_from_files
 
 
 @dataclass(frozen=True)
@@ -67,7 +69,8 @@ class VariantMetrics:
 
 def _default_benchmark_root() -> Path:
     return (
-        _REPO_ROOT
+        _Planner_ROOT
+        / "third_party"
         / "unified-planning"
         / "unified_planning"
         / "engines"
@@ -281,8 +284,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         problem_obj = solve_result.metadata.get("problem") if isinstance(solve_result.metadata, dict) else None
         policy_result = solve_result.require_policy_result()
 
-        hoisted_bt = policy_to_bt(policy_result, problem=problem_obj)
-        trivial_bt = policy_to_bt_trivial(policy_result, problem=problem_obj)
+        trivial_bt = build_trivial_bt(policy_result, problem=problem_obj)
+        hoisted_bt = optimize_bt(trivial_bt)
 
         hoisted_nodes = count_bt_nodes(hoisted_bt.root)
         trivial_nodes = count_bt_nodes(trivial_bt.root)

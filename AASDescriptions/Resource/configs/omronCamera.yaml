@@ -1,340 +1,352 @@
 omronCameraSystemAAS:
-  idShort: omronCameraSystemAAS
-  id: 'https://smartproductionlab.aau.dk/aas/omronCameraSystemAAS'
-  globalAssetId: 'https://smartproductionlab.aau.dk/assets/M2VmNjk0OTgtNmE0YS00MzA4LWE4NjMtM2JjZDZjZDhkMTBl'
-  derivedFrom: 'https://smartproductionlab.aau.dk/aas/templates/resource'
-  assetType: 'https://smartproductionlab.aau.dk/Resource/CPPM/QualityControlSystem/omronCameraSystem'
-  serialNumber: 'OMRON-CAM-2024-001'
-  location: 'InnoLab, Nybrovej, AAU'
-  AssetInterfacesDescription:
-    InterfaceMQTT:
-      Title: 'optima Camera System'
-      EndpointMetadata:
-        base: 'mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/QualityControl'
-        contentType: 'application/json'
-      InteractionMetadata:
-        actions:
-        - key: 'Capture'
-          title: 'Capture'
-          synchronous: 'true'
-          input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
-          output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
-          forms:
-            contentType: 'application/json'
-            href: '/CMD/Capture'
-            op: 'invokeAction'
-            mqv_retain: 'false'
-            mqv_controlPacket: subscribe
-            mqv_qos: '2'
-            response:
-              contentType: 'application/json'
-              href: '/DATA/Capture'
-              mqv_controlPacket: 'publish'
-              mqv_retain: 'false'
-        - key: 'Halt'
-          title: 'Halt'
-          synchronous: 'true'
-          input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
-          forms:
-            contentType: 'application/json'
-            href: '/CMD/Halt'
-            op: 'invokeAction'
-            mqv_retain: 'false'
-            mqv_controlPacket: subscribe
-            mqv_qos: '2'
-        - key: 'Occupy'
-          title: 'Occupy'
-          synchronous: 'true'
-          input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
-          output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
-          forms:
-            contentType: 'application/json'
-            href: '/CMD/Occupy'
-            op: 'invokeAction'
-            mqv_retain: 'false'
-            mqv_controlPacket: subscribe
-            mqv_qos: '2'
-            response:
-              contentType: 'application/json'
-              href: '/DATA/Occupy'
-              mqv_controlPacket: 'publish'
-              mqv_retain: 'false'
-        - key: 'Release'
-          title: 'Release'
-          synchronous: 'true'
-          input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
-          output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
-          forms:
-            contentType: 'application/json'
-            href: '/CMD/Release'
-            op: 'invokeAction'
-            mqv_retain: 'false'
-            mqv_controlPacket: subscribe
-            mqv_qos: '2'
-            response:
-              contentType: 'application/json'
-              href: '/DATA/Release'
-              mqv_controlPacket: 'publish'
-              mqv_retain: 'false'
-        properties:
-        - key: 'StationState'
-          title: 'StationState'
-          output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/stationState.schema.json'
-          forms:
-            contentType: 'application/json'
-            href: '/DATA/State'
-            mqv_retain: 'true'
-            mqv_controlPacket: publish
-            mqv_qos: '0'
-        - key: 'Image'
-          title: 'Image'
-          output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/image.schema.json'
-          forms:
-            contentType: 'application/json'
-            href: '/DATA/Image'
-            mqv_retain: 'false'
-            mqv_controlPacket: publish
-            mqv_qos: '0'
-        - key: 'QualityResult'
-          title: 'QualityResult'
-          output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/qualityResult.schema.json'
-          forms:
-            contentType: 'application/json'
-            href: '/DATA/Quality'
-            mqv_retain: 'true'
-            mqv_controlPacket: publish
-            mqv_qos: '2'
+    idShort: omronCameraSystemAAS
+    id: "https://smartproductionlab.aau.dk/aas/omronCameraSystemAAS"
+    globalAssetId: "https://smartproductionlab.aau.dk/assets/M2VmNjk0OTgtNmE0YS00Mz\
+        A4LWE4NjMtM2JjZDZjZDhkMTBl"
+    derivedFrom: "https://smartproductionlab.aau.dk/aas/templates/resource"
+    assetType: "http://www.w3id.org/aau-ra/cssx#QualityControlSystem"
+    serialNumber: "OMRON-CAM-2024-001"
+    location: "InnoLab, Nybrovej, AAU"
+    AssetInterfacesDescription:
+        InterfaceMQTT:
+            Title: "optima Camera System"
+            EndpointMetadata:
+                base: "mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/QualityControl"
+                contentType: "application/json"
+            InteractionMetadata:
+                actions:
+                    - key: "Capture"
+                      title: "Capture"
+                      synchronous: "true"
+                      input: "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.\
+                          schema.json"
+                      output: "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command\
+                          Response.schema.json"
+                      forms:
+                          contentType: "application/json"
+                          href: "/CMD/Capture"
+                          op: "invokeAction"
+                          mqv_retain: "false"
+                          mqv_controlPacket: subscribe
+                          mqv_qos: "2"
+                          response:
+                              contentType: "application/json"
+                              href: "/DATA/Capture"
+                              mqv_controlPacket: "publish"
+                              mqv_retain: "false"
+                    - key: "Halt"
+                      title: "Halt"
+                      synchronous: "true"
+                      input: "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.\
+                          schema.json"
+                      forms:
+                          contentType: "application/json"
+                          href: "/CMD/Halt"
+                          op: "invokeAction"
+                          mqv_retain: "false"
+                          mqv_controlPacket: subscribe
+                          mqv_qos: "2"
+                    - key: "Occupy"
+                      title: "Occupy"
+                      synchronous: "true"
+                      input: "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.\
+                          schema.json"
+                      output: "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command\
+                          Response.schema.json"
+                      forms:
+                          contentType: "application/json"
+                          href: "/CMD/Occupy"
+                          op: "invokeAction"
+                          mqv_retain: "false"
+                          mqv_controlPacket: subscribe
+                          mqv_qos: "2"
+                          response:
+                              contentType: "application/json"
+                              href: "/DATA/Occupy"
+                              mqv_controlPacket: "publish"
+                              mqv_retain: "false"
+                    - key: "Release"
+                      title: "Release"
+                      synchronous: "true"
+                      input: "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.\
+                          schema.json"
+                      output: "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command\
+                          Response.schema.json"
+                      forms:
+                          contentType: "application/json"
+                          href: "/CMD/Release"
+                          op: "invokeAction"
+                          mqv_retain: "false"
+                          mqv_controlPacket: subscribe
+                          mqv_qos: "2"
+                          response:
+                              contentType: "application/json"
+                              href: "/DATA/Release"
+                              mqv_controlPacket: "publish"
+                              mqv_retain: "false"
+                properties:
+                    - key: "StationState"
+                      title: "StationState"
+                      output: "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/station\
+                          State.schema.json"
+                      forms:
+                          contentType: "application/json"
+                          href: "/DATA/State"
+                          mqv_retain: "true"
+                          mqv_controlPacket: publish
+                          mqv_qos: "0"
+                    - key: "Image"
+                      title: "Image"
+                      output: "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/image.s\
+                          chema.json"
+                      forms:
+                          contentType: "application/json"
+                          href: "/DATA/Image"
+                          mqv_retain: "false"
+                          mqv_controlPacket: publish
+                          mqv_qos: "0"
+                    - key: "QualityResult"
+                      title: "QualityResult"
+                      output: "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/quality\
+                          Result.schema.json"
+                      forms:
+                          contentType: "application/json"
+                          href: "/DATA/Quality"
+                          mqv_retain: "true"
+                          mqv_controlPacket: publish
+                          mqv_qos: "2"
 
-  Variables:
-  - key: PackMLState
-    semanticId: 'https://www.omac.org/packml/state'
-    InterfaceReference:
-      Name: 'StationState'
-      Field: 'State'
-  - key: OccupationState
-    semanticId: 'cssx:StationOccupation'
-    InterfaceReference:
-      Name: 'StationState'
-      Field: 'ProcessQueue'
-  - key: Image
-    semanticId: 'cssx:ImageData'
-    InterfaceReference:
-      Name: 'Image'
-      Field: 'Image'
-  - key: QualityResult
-    semanticId: 'cssx:QualityResult'
-    InterfaceReference:
-      Name: 'QualityResult'
-  Parameters:
-    Location:
-      semanticId: 'cssx:LocationParameter'
-      Position:
-        X: 480.0
-        Y: 240.0
-        Yaw: 0.0
-  HierarchicalStructures:
-    Name: 'BillOfMaterials'
-    Archetype: 'OneUp'
-    IsPartOf:
-      aauFillingLineAAS:
-        globalAssetId: 'https://smartproductionlab.aau.dk/assets/MWQ2ODY5ZDEtZTQ3Yy00NWU4LTlmYTAtNTI3YjVlMDk4MWFi'
-  Capabilities:
-  - key: Inspection
-    realizedBy: "Capture"
-    semantic_id: cssx:QualityControlCapability
-  - key: Capture
-    realizedBy: "Capture"
-    semantic_id: cssx:CaptureCapability
+    Variables:
+        - key: PackMLState
+          semanticId: "https://www.omac.org/packml/state"
+          InterfaceReference:
+              Name: "StationState"
+              Field: "State"
+        - key: OccupationState
+          semanticId: "cssx:StationOccupation"
+          InterfaceReference:
+              Name: "StationState"
+              Field: "ProcessQueue"
+        - key: Image
+          semanticId: "cssx:ImageData"
+          InterfaceReference:
+              Name: "Image"
+              Field: "Image"
+        - key: QualityResult
+          semanticId: "cssx:QualityResult"
+          InterfaceReference:
+              Name: "QualityResult"
+    Parameters:
+        Location:
+            semanticId: "cssx:LocationParameter"
+            Position:
+                X: 480.0
+                Y: 240.0
+                Yaw: 0.0
+    HierarchicalStructures:
+        Name: "BillOfMaterials"
+        Archetype: "OneUp"
+        IsPartOf:
+            aauFillingLineAAS:
+                globalAssetId: "https://smartproductionlab.aau.dk/assets/MWQ2ODY5ZDEtZTQ3Yy00NW\
+                    U4LTlmYTAtNTI3YjVlMDk4MWFi"
+    Capabilities:
+        - key: Inspection
+          realizedBy: "Capture"
+          semantic_id: cssx:QualityControlCapability
+        - key: Capture
+          realizedBy: "Capture"
+          semantic_id: cssx:CaptureCapability
 
-  AI-Planning:
-    Domain:
-        Fluents:
-            -   key: "Operational"
-                semantic_id: "cssx:Operational"
-                parameters:
-                    -   name: "Resource"
+    AI-Planning:
+        Domain:
+            Fluents:
+                - key: "Operational"
+                  semantic_id: "cssx:Operational"
+                  parameters:
+                      - name: "Resource"
                         externalRef: "css:Resource"
-                transformation: 'params[0].Variables.PackMLState.State = "Execute"'
+                  transformation: "params[0].Variables.PackMLState.State = \"Execute\""
 
-            -   key: "Occupied"
-                semantic_id: "cssx:Occupied"
-                parameters:
-                    -   name: "Resource"
+                - key: "Occupied"
+                  semantic_id: "cssx:Occupied"
+                  parameters:
+                      - name: "Resource"
                         externalRef: "css:Resource"
-                    -   name: "Identifiable"
+                      - name: "Identifiable"
                         externalRef: "cssx:Identifiable"
-                transformation: 'params[0].Variables.OccupationState.ProcessQueue[0] = params[1].Parameters.Uuid'
+                  transformation: "params[0].Variables.OccupationState.ProcessQueue[0] =
+                      params[1].Parameters.Uuid"
 
-            -   key: "Free"
-                semantic_id: "cssx:Free"
-                parameters:
-                    -   name: "Resource"
+                - key: "Free"
+                  semantic_id: "cssx:Free"
+                  parameters:
+                      - name: "Resource"
                         externalRef: "css:Resource"
-                transformation: '$count(params[0].Variables.OccupationState.ProcessQueue) = 0'
-
-            -   key: "StationAt"
-                semantic_id: "cssx:StationAt"
-                parameters:
-                    -   name: "Resource"
-                        externalRef: "css:Resource"
-                    -   name: "Location"
+                  transformation: "$count(params[0].Variables.OccupationState.ProcessQueue) = 0"
+                - key: "StationAt"
+                  semantic_id: "cssx:StationAt"
+                  parameters:
+                      - name: "CPPM"
+                        externalRef: "css:CPPM"
+                      - name: "Location"
                         externalRef: "cssx:LocationParameter"
 
-        Actions:
-            -   key: "QualityControl"
-                semantic_id: "cssx:QualityControlCapability"
-                SkillReference: "Capture"
-                # JSONata: forward Product Uuid (params[1]) so the camera
-                # capture response can be matched against the issuing BT
-                # node, and the FOND quality outcome can be attributed.
-                transformation: '{"Uuid": params[1].Parameters.Uuid}'
-                parameters:
-                    -   name: "CameraSystem"
+            Actions:
+                - key: "QualityControl"
+                  semantic_id: "cssx:QualityControlCapability"
+                  SkillReference: "Capture"
+                  # JSONata: forward Product Uuid (params[1]) so the camera
+                  # capture response can be matched against the issuing BT
+                  # node, and the FOND quality outcome can be attributed.
+                  transformation: "{\"Uuid\": params[1].Parameters.Uuid}"
+                  parameters:
+                      - name: "CameraSystem"
                         modelRef:
                             - AAS: "self"
-                    -   name: "Product"
+                      - name: "Product"
                         externalRef: "css:Product"
-                    -   name: "TransportSystem"
+                      - name: "TransportSystem"
                         externalRef: "cssx:Transport"
-                    -   name: "CameraLocation"
+                      - name: "CameraLocation"
                         modelRef:
                             - AAS: "self"
                               Submodel: "Parameters"
                               Element: "Location"
-                conditions:
-                    at_start:
-                        - predicate:
-                            ref: "Operational"
-                            parameters: [0]
-                        - predicate:
-                            ref: "Occupied"
-                            parameters: [0, 1]
-                        - predicate:
-                            external: "cssx:On"
-                            parameters: [1, 2]
-                        - predicate:
-                            external: "cssx:ProductAt"
-                            parameters: [1, 3]
-                # FOND: the inspection captures the product (always) and
-                # then non-deterministically reports Ok / NotOk for it.
-                # QualityOk is owned by the Product AAS (cssx:QualityOk)
-                # and parameterised as QualityOk(Product) — unary so the
-                # downstream Unload / Scrap preconditions cannot be
-                # "smuggled" past by binding a free Resource variable to
-                # an inspector that never asserted qualityok.
-                effects:
-                    at_end:
-                        - predicate:
-                            external: "cssx:Captured"
-                            parameters: [1]
-                        - oneOf:
-                            - when: 'data.Result = "Ok"'
-                              predicate:
-                                  external: "cssx:QualityOk"
-                                  parameters: [1]
-                            - when: 'data.Result != "Ok"'
-                              not:
+                  conditions:
+                      at_start:
+                          - predicate:
+                                ref: "Operational"
+                                parameters: [ 0 ]
+                          - predicate:
+                                ref: "Occupied"
+                                parameters: [ 0, 1 ]
+                          - predicate:
+                                external: "cssx:On"
+                                parameters: [ 1, 2 ]
+                          - predicate:
+                                external: "cssx:ProductAt"
+                                parameters: [ 1, 3 ]
+                  # FOND: the inspection captures the product (always) and
+                  # then non-deterministically reports Ok / NotOk for it.
+                  # QualityOk is owned by the Product AAS (cssx:QualityOk)
+                  # and parameterised as QualityOk(Product) — unary so the
+                  # downstream Unload / Scrap preconditions cannot be
+                  # "smuggled" past by binding a free Resource variable to
+                  # an inspector that never asserted qualityok.
+                  effects:
+                      at_end:
+                          - predicate:
+                                external: "cssx:Captured"
+                                parameters: [ 1 ]
+                          - oneOf:
+                                - when: "data.Result = \"Ok\""
                                   predicate:
                                       external: "cssx:QualityOk"
-                                      parameters: [1]
+                                      parameters: [ 1 ]
+                                - when: "data.Result != \"Ok\""
+                                  not:
+                                      predicate:
+                                          external: "cssx:QualityOk"
+                                          parameters: [ 1 ]
 
-            -   key: "Occupy"
-                semantic_id: "cssx:OccupyCapability"
-                SkillReference: "Occupy"
-                transformation: '{"Uuid": params[1].Parameters.Uuid}'
-                parameters:
-                    -   name: "CameraSystem"
+                - key: "Occupy"
+                  semantic_id: "cssx:OccupyCapability"
+                  SkillReference: "Occupy"
+                  transformation: "{\"Uuid\": params[1].Parameters.Uuid}"
+                  parameters:
+                      - name: "CameraSystem"
                         modelRef:
                             - AAS: "self"
-                    -   name: "Identifiable"
+                      - name: "Identifiable"
                         externalRef: "cssx:Identifiable"
-                conditions:
-                    at_start:
-                        - not:
-                            predicate:
-                                ref: "Occupied"
-                                parameters: [0, 1]
-                        - predicate:
-                            ref: "Free"
-                            parameters: [0]
-                effects:
-                    at_end:
-                        - predicate:
-                            ref: "Occupied"
-                            parameters: [0, 1]
-                        - not:
-                            predicate:
+                  conditions:
+                      at_start:
+                          - not:
+                                predicate:
+                                    ref: "Occupied"
+                                    parameters: [ 0, 1 ]
+                          - predicate:
                                 ref: "Free"
-                                parameters: [0]
+                                parameters: [ 0 ]
+                  effects:
+                      at_end:
+                          - predicate:
+                                ref: "Occupied"
+                                parameters: [ 0, 1 ]
+                          - not:
+                                predicate:
+                                    ref: "Free"
+                                    parameters: [ 0 ]
 
-            -   key: "Release"
-                semantic_id: "cssx:ReleaseCapability"
-                SkillReference: "Release"
-                transformation: '{"Uuid": params[1].Parameters.Uuid}'
-                parameters:
-                    -   name: "CameraSystem"
+                - key: "Release"
+                  semantic_id: "cssx:ReleaseCapability"
+                  SkillReference: "Release"
+                  transformation: "{\"Uuid\": params[1].Parameters.Uuid}"
+                  parameters:
+                      - name: "CameraSystem"
                         modelRef:
                             - AAS: "self"
-                    -   name: "Identifiable"
+                      - name: "Identifiable"
                         externalRef: "cssx:Identifiable"
-                conditions:
-                    at_start:
-                        - predicate:
-                            ref: "Operational"
-                            parameters: [0]
-                        - predicate:
-                            ref: "Occupied"
-                            parameters: [0, 1]
-                effects:
-                    at_end:
-                        - not:
-                            - predicate:
+                  conditions:
+                      at_start:
+                          - predicate:
+                                ref: "Operational"
+                                parameters: [ 0 ]
+                          - predicate:
                                 ref: "Occupied"
-                                parameters: [0, 1]
-                        - predicate:
-                            ref: "Free"
-                            parameters: [0]
-    Problem:
-        Objects:
-            -   name: "omronCameraSystem"
-                modelRef:
-                    - AAS: "self"
-            -   name: "captureLocation"
-                modelRef:
-                    - AAS: "self"
-                      Submodel: "Parameters"
-                      Element: "Location"
+                                parameters: [ 0, 1 ]
+                  effects:
+                      at_end:
+                          - not:
+                                - predicate:
+                                      ref: "Occupied"
+                                      parameters: [ 0, 1 ]
+                          - predicate:
+                                ref: "Free"
+                                parameters: [ 0 ]
+        Problem:
+            Objects:
+                - name: "omronCameraSystem"
+                  modelRef:
+                      - AAS: "self"
+                - name: "captureLocation"
+                  modelRef:
+                      - AAS: "self"
+                        Submodel: "Parameters"
+                        Element: "Location"
 
-        Init:
-            -   predicate:
-                ref: "Operational"
-                parameters: [0]
-            -   predicate:
-                ref: "Free"
-                parameters: [0]
-            -   predicate:
-                ref: "StationAt"
-                parameters: [0, 1]
+            Init:
+                - predicate:
+                  ref: "Operational"
+                  parameters: [ 0 ]
+                - predicate:
+                  ref: "Free"
+                  parameters: [ 0 ]
+                - predicate:
+                  ref: "StationAt"
+                  parameters: [ 0, 1 ]
 
-        Goal:
-            -   predicate:
-                ref: "Free"
-                parameters: [0]
-    
-  Skills:
-  - key: Capture
-    description: "Capture image for quality control"
-    semantic_id: "cssx:CaptureSkill"
-    InterfaceReference: Capture
-  - key: Halt
-    description: "Halt the current operation"
-    semantic_id: "cssx:HaltSkill"
-    InterfaceReference: Halt
-  - key: Occupy
-    description: "Occupy the system for exclusive use"
-    semantic_id: "cssx:OccupySkill"
-    InterfaceReference: Occupy
-  - key: Release
-    description: "Release the system from exclusive use"
-    semantic_id: "cssx:ReleaseSkill"
-    InterfaceReference: Release
+            Goal:
+                - predicate:
+                  ref: "Free"
+                  parameters: [ 0 ]
+
+    Skills:
+        - key: Capture
+          description: "Capture image for quality control"
+          semantic_id: "cssx:CaptureSkill"
+          InterfaceReference: Capture
+        - key: Halt
+          description: "Halt the current operation"
+          semantic_id: "cssx:HaltSkill"
+          InterfaceReference: Halt
+        - key: Occupy
+          description: "Occupy the system for exclusive use"
+          semantic_id: "cssx:OccupySkill"
+          InterfaceReference: Occupy
+        - key: Release
+          description: "Release the system from exclusive use"
+          semantic_id: "cssx:ReleaseSkill"
+          InterfaceReference: Release

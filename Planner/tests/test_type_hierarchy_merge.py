@@ -10,7 +10,7 @@ REPO_ROOT = Planner_ROOT.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from Planner.aas_to_pddl_conversion.up_builder import build_type_map, infer_type_parent_map
+from Planner.step2_pddl_construction.up_builder.types import build_type_map, infer_type_parent_map
 
 
 class TypeHierarchyInferenceTests(unittest.TestCase):

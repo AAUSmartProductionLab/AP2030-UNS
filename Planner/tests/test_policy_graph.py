@@ -11,7 +11,7 @@ REPO_ROOT = Planner_ROOT.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from Planner.bt_synthesis.policy_graph import (  # noqa: E402
+from Planner.step4_policy_to_bt.policy_graph import (  # noqa: E402
     _state_match_score,
     build_policy_state_graph,
 )

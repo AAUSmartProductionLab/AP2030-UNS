@@ -8,6 +8,7 @@
 import { toast } from 'react-toastify';
 import mqttService from './MqttService';
 import MappingService from './MappingService';
+import cssxResourceHierarchyTtl from '../../../ppr-ontology/ontology/modules/cssx-resource-hierarchy.ttl?raw';
 import { 
   AasRegistryClient, 
   AasRepositoryClient,
@@ -60,6 +61,9 @@ class AasService {
     // SDK Configurations
     this.registryConfig = new Configuration({ basePath: this.shellRegistryUrl });
     this.repositoryConfig = new Configuration({ basePath: this.repositoryUrl });
+
+    // Lazy cache for ontology-derived CPPM classes (CPPM + all subclasses).
+    this.cppmOntologyClassSet = null;
   }
 
   // ========================================
@@ -86,6 +90,130 @@ class AasService {
       _interface: interfaceName,
       protocolInformation: { href }
     };
+  }
+
+  /**
+   * Extract CSSX class local-name from assetType IRI/CURIE.
+   * Supports:
+   * - http://www.w3id.org/aau-ra/cssx#DispensingSystem
+   * - cssx:DispensingSystem
+   * - css:DispensingSystem
+   * @param {string} assetTypeUrl
+   * @returns {string|null}
+   */
+  extractCssxClassFromAssetType(assetTypeUrl) {
+    if (!assetTypeUrl) return null;
+
+    const isCssOntologyIri = /^https?:\/\/www\.w3id\.org\/(?:aau-ra\/cssx|hsu-aut\/css)#/i.test(assetTypeUrl);
+    const hashMatch = assetTypeUrl.match(/#([A-Za-z][A-Za-z0-9_]*)$/);
+    if (isCssOntologyIri && hashMatch) {
+      return hashMatch[1];
+    }
+
+    const curieMatch = assetTypeUrl.match(/^(?:cssx|css):([A-Za-z][A-Za-z0-9_]*)$/i);
+    if (curieMatch) {
+      return curieMatch[1];
+    }
+
+    return null;
+  }
+
+  /**
+   * Parse cssx-resource-hierarchy.ttl and return CPPM + all subclasses.
+   * @returns {Set<string>}
+   */
+  getCppmOntologyClassSet() {
+    if (this.cppmOntologyClassSet) {
+      return this.cppmOntologyClassSet;
+    }
+
+    const parentMap = new Map();
+    const subClassRegex = /((?::|cssx:)[A-Za-z][A-Za-z0-9_]*|<[^>]+>)\s+[^.]*?\brdfs:subClassOf\s+((?::|cssx:)[A-Za-z][A-Za-z0-9_]*|<[^>]+>)\s*[;.]/gs;
+    let match;
+
+    const toLocalName = term => {
+      if (!term || typeof term !== 'string') return null;
+
+      if (term.startsWith(':')) {
+        return term.slice(1);
+      }
+
+      if (/^cssx:/i.test(term)) {
+        return term.split(':', 2)[1] || null;
+      }
+
+      if (term.startsWith('<') && term.endsWith('>')) {
+        const iri = term.slice(1, -1);
+        const hashMatch = iri.match(/#([A-Za-z][A-Za-z0-9_]*)$/);
+        if (hashMatch) {
+          return hashMatch[1];
+        }
+      }
+
+      return null;
+    };
+
+    while ((match = subClassRegex.exec(cssxResourceHierarchyTtl)) !== null) {
+      const child = toLocalName(match[1]);
+      const parent = toLocalName(match[2]);
+      if (!child || !parent) {
+        continue;
+      }
+
+      if (!parentMap.has(child)) {
+        parentMap.set(child, new Set());
+      }
+      parentMap.get(child).add(parent);
+    }
+
+    const isSubclassOfCppm = (className, visited = new Set()) => {
+      if (className === 'CPPM') return true;
+      if (visited.has(className)) return false;
+      visited.add(className);
+
+      const parents = parentMap.get(className);
+      if (!parents) return false;
+
+      for (const parent of parents) {
+        if (isSubclassOfCppm(parent, new Set(visited))) {
+          return true;
+        }
+      }
+
+      return false;
+    };
+
+    const cppmClasses = new Set(['CPPM']);
+    for (const className of parentMap.keys()) {
+      if (isSubclassOfCppm(className)) {
+        cppmClasses.add(className);
+      }
+    }
+
+    this.cppmOntologyClassSet = cppmClasses;
+    return this.cppmOntologyClassSet;
+  }
+
+  /**
+   * Determine whether an assetType denotes a CPPM resource.
+   * Supports ontology IRIs/CURIEs and legacy /Resource/CPPM URLs.
+   * @param {string} assetTypeUrl
+   * @returns {boolean}
+   */
+  isCppmAssetType(assetTypeUrl) {
+    if (!assetTypeUrl) return false;
+
+    // Legacy assetType format (no ontology IRI).
+    if (/\/Resource\/CPPM\//i.test(assetTypeUrl)) {
+      return true;
+    }
+
+    const cssxClass = this.extractCssxClassFromAssetType(assetTypeUrl);
+    if (!cssxClass) {
+      return false;
+    }
+
+    return this.getCppmOntologyClassSet().has(cssxClass);
   }
 
   /**
@@ -540,15 +668,10 @@ class AasService {
       
       const shells = await Promise.all(shellPromises);
       
-      // Filter to only include CPPM resources (Cyber-Physical Production Modules)
-      // AssetType format: https://smartproductionlab.aau.dk/Resource/{SystemType}/{Category}/{InstanceName}
-      // - CPPS: Cyber-Physical Production System (full system, exclude)
-      // - CPPM: Cyber-Physical Production Module (modules, include)
-      // - CPS: Cyber-Physical System (sub-parts of modules, exclude)
+      // Include resources whose assetType is CPPM or any ontology subclass of CPPM.
       const cppmShells = shells.filter(shell => {
         const assetType = shell.assetInformation?.assetType || '';
-        // Only include Resource/CPPM entries
-        return assetType.includes('/Resource/CPPM/');
+        return this.isCppmAssetType(assetType);
       });
       
       // Extract module data with full AAS metadata
@@ -582,7 +705,7 @@ class AasService {
       // Sort modules by category
       const categoryOrder = [
         'DispensingSystem', 'StopperingSystem', 'LoadingSystem', 
-        'UnloadingSystem', 'QualityControlSystem', 'MovementSystem', 'Other'
+        'UnloadingSystem', 'QualityControlSystem', 'CappingSystem', 'PlanarTable', 'MovementSystem', 'Other'
       ];
       modules.sort((a, b) => {
         const aIndex = categoryOrder.indexOf(a.assetType);
@@ -602,12 +725,19 @@ class AasService {
 
   /**
    * Extract the category from an assetType URL
-   * Format: https://smartproductionlab.aau.dk/Resource/CPPM/{Category}/{InstanceName}
+   * Supports both legacy URLs and ontology IRIs, e.g.:
+   * - https://smartproductionlab.aau.dk/Resource/CPPM/DispensingSystem/imaDispensingSystem
+   * - http://www.w3id.org/aau-ra/cssx#DispensingSystem
    * @param {string} assetTypeUrl - The full assetType URL
    * @returns {string} The category (e.g., 'DispensingSystem', 'LoadingSystem')
    */
   extractCategoryFromAssetType(assetTypeUrl) {
     if (!assetTypeUrl) return 'Other';
+
+    const cssxClass = this.extractCssxClassFromAssetType(assetTypeUrl);
+    if (cssxClass) {
+      return cssxClass;
+    }
     
     // Match pattern: /Resource/CPPM/{Category}/
     const match = assetTypeUrl.match(/\/Resource\/CPPM\/([^\/]+)/);
@@ -655,6 +785,8 @@ class AasService {
       'LoadingSystem': '#0087CD',
       'UnloadingSystem': '#00A0F0',
       'QualityControlSystem': '#9B4DCA',
+      'CappingSystem': '#D96C06',
+      'PlanarTable': '#136058',
       'MovementSystem': '#136058',
       'Other': '#666666'
     };
@@ -666,6 +798,8 @@ class AasService {
       'LoadingSystem': 'Loading Systems',
       'UnloadingSystem': 'Unloading Systems',
       'QualityControlSystem': 'Quality Control',
+      'CappingSystem': 'Capping Systems',
+      'PlanarTable': 'Planar Tables',
       'MovementSystem': 'Movement Systems',
       'Other': 'Other Modules'
     };
@@ -697,7 +831,7 @@ class AasService {
     // Sort categories by defined order
     const categoryOrder = [
       'DispensingSystem', 'StopperingSystem', 'LoadingSystem', 
-      'UnloadingSystem', 'QualityControlSystem', 'MovementSystem', 'Other'
+      'UnloadingSystem', 'QualityControlSystem', 'CappingSystem', 'PlanarTable', 'MovementSystem', 'Other'
     ];
     categories.sort((a, b) => {
       const aIndex = categoryOrder.indexOf(a.assetType);
@@ -1250,15 +1384,16 @@ class AasService {
    */
   getProductAasIds(orderUuid, productFamily = null, productName = null) {
     const baseUrl = 'https://smartproductionlab.aau.dk';
-    const sanitizedFamily = productFamily ? productFamily.toLowerCase().replace(/\s+/g, '-') : 'unknown';
-    const sanitizedProduct = productName ? productName.replace(/\s+/g, '') : 'unknown';
+    const ontologyProductClass = productName
+      ? productName.replace(/[^A-Za-z0-9_]/g, '')
+      : 'UnknownProduct';
     // idShort includes AAS suffix, used in submodel paths
     const idShort = `products/${orderUuid}AAS`;
     return {
       aasId: `${baseUrl}/aas/${idShort}`,
       assetId: this.generateGlobalAssetId(orderUuid),
-      // AssetType uses ontology URL structure: role/category/specific-type/product
-      assetType: `${baseUrl}/product/productFamily/${sanitizedFamily}/${sanitizedProduct}`,
+      // AssetType now points directly to the ontology class IRI.
+      assetType: `http://www.w3id.org/aau-ra/cssx#${ontologyProductClass}`,
       batchInfoSubmodelId: `${baseUrl}/submodels/instances/${idShort}/BatchInformation`,
       requirementsSubmodelId: `${baseUrl}/submodels/instances/${idShort}/Requirements`,
       billOfMaterialsSubmodelId: `${baseUrl}/submodels/instances/${idShort}/HierarchicalStructures`,
@@ -2527,7 +2662,7 @@ class AasService {
   getOrderAasIds(productName, productFamily = null, batchUuid = null) {
     const baseUrl = 'https://smartproductionlab.aau.dk';
     const sanitizedName = productName.replace(/\s+/g, '');
-    const sanitizedFamily = productFamily ? productFamily.toLowerCase().replace(/\s+/g, '-') : 'unknown';
+    const ontologyProductClass = sanitizedName.replace(/[^A-Za-z0-9_]/g, '') || 'UnknownProduct';
     const assetId = batchUuid
       ? this.generateGlobalAssetId(batchUuid)
       : this.generateGlobalAssetId(crypto.randomUUID());
@@ -2537,7 +2672,8 @@ class AasService {
       idShort,
       assetId,
       productName: sanitizedName,
-      assetType: `${baseUrl}/product/productFamily/${sanitizedFamily}/${sanitizedName}`,
+      // Order and instance assets share the ontology product class.
+      assetType: `http://www.w3id.org/aau-ra/cssx#${ontologyProductClass}`,
       batchInfoSubmodelId: `${baseUrl}/submodels/instances/${idShort}/BatchInformation`,
       requirementsSubmodelId: `${baseUrl}/submodels/instances/${idShort}/Requirements`,
       billOfMaterialsSubmodelId: `${baseUrl}/submodels/instances/${idShort}/HierarchicalStructures`,

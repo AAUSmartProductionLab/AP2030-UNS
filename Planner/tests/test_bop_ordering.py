@@ -10,8 +10,8 @@ REPO_ROOT = Planner_ROOT.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from Planner.aas_to_pddl_conversion.bop_ordering import compile_bop_ordering
-from Planner.aas_to_pddl_conversion.utils import match_capability
+from Planner.step2_pddl_construction.bop_ordering import compile_bop_ordering
+from Planner.step2_pddl_construction.utils import match_capability
 
 
 class BoPOrderingTests(unittest.TestCase):

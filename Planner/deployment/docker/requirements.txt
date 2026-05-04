@@ -7,7 +7,8 @@ pddl
 pyparsing
 networkx
 ConfigSpace
-unified-planning
+# Runtime uses the vendored unified-planning fork from Planner/third_party.
+# Keep UP engine plugins installed for backend availability.
 up-pyperplan
 up-fast-downward
 up-enhsp

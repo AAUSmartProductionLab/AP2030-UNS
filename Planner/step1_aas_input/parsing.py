@@ -1,0 +1,757 @@
+from __future__ import annotations
+
+from typing import Any, Dict, List, Optional
+
+from .models import AIPlanningSource, _ParsedSource
+from ..step2_pddl_construction.utils import coerce_numeric_literal, ontology_class_from_iri
+
+
+def parse_source(
+    source: AIPlanningSource,
+    asset_type_by_aas_id: Optional[Dict[str, str]] = None,
+) -> _ParsedSource:
+    parsed = _ParsedSource(aas_id=source.aas_id, aas_name=source.aas_name or source.aas_id)
+
+    top_elements = source.ai_planning_submodel.get("submodelElements", [])
+    domain = find_collection(top_elements, "Domain")
+    problem = find_collection(top_elements, "Problem")
+
+    if problem:
+        parse_problem(
+            problem,
+            parsed,
+            source_asset_type=str(source.asset_type or ""),
+            asset_type_by_aas_id=asset_type_by_aas_id,
+        )
+    else:
+        parsed.warnings.append(f"{parsed.aas_name}: AIPlanning.Problem section missing.")
+
+    source_objects = [obj["name"] for obj in parsed.objects]
+    source_objects_full = list(parsed.objects)
+    if domain:
+        parse_domain(
+            domain,
+            parsed,
+            source_objects,
+            source_objects_full,
+            source_asset_type=str(source.asset_type or ""),
+            asset_type_by_aas_id=asset_type_by_aas_id,
+        )
+    else:
+        parsed.warnings.append(f"{parsed.aas_name}: AIPlanning.Domain section missing.")
+
+    return parsed
+
+
+def parse_domain(
+    domain: Dict[str, Any],
+    parsed: _ParsedSource,
+    source_objects: List[str],
+    source_objects_full: Optional[List[Dict[str, Any]]] = None,
+    source_asset_type: str = "",
+    asset_type_by_aas_id: Optional[Dict[str, str]] = None,
+) -> None:
+    domain_sections = domain.get("value", [])
+    _sof = source_objects_full or []
+
+    fluent_section = find_collection(domain_sections, "Fluents")
+    if fluent_section:
+        for fluent in fluent_section.get("value", []):
+            parsed.fluents.append(parse_fluent(fluent, parsed.aas_name, parsed.aas_id))
+
+    action_section = find_collection(domain_sections, "Actions")
+    if action_section:
+        for action in action_section.get("value", []):
+            parsed.actions.append(
+                parse_action(
+                    action,
+                    parsed.aas_name,
+                    parsed.aas_id,
+                    parsed.warnings,
+                    source_objects,
+                    action_kind="Action",
+                    source_objects_full=_sof,
+                    source_asset_type=source_asset_type,
+                    asset_type_by_aas_id=asset_type_by_aas_id,
+                )
+            )
+
+    process_section = find_collection(domain_sections, "Processes")
+    if process_section:
+        for process in process_section.get("value", []):
+            parsed.actions.append(
+                parse_action(
+                    process,
+                    parsed.aas_name,
+                    parsed.aas_id,
+                    parsed.warnings,
+                    source_objects,
+                    action_kind="Process",
+                    source_objects_full=_sof,
+                    source_asset_type=source_asset_type,
+                    asset_type_by_aas_id=asset_type_by_aas_id,
+                )
+            )
+
+    event_section = find_collection(domain_sections, "Events")
+    if event_section:
+        for event in event_section.get("value", []):
+            parsed.actions.append(
+                parse_action(
+                    event,
+                    parsed.aas_name,
+                    parsed.aas_id,
+                    parsed.warnings,
+                    source_objects,
+                    action_kind="Event",
+                    source_objects_full=_sof,
+                    source_asset_type=source_asset_type,
+                    asset_type_by_aas_id=asset_type_by_aas_id,
+                )
+            )
+
+    constraint_section = find_collection(domain_sections, "Constraints")
+    if constraint_section is not None:
+        parsed.constraints_terms.extend(parse_constraint_terms(constraint_section, parsed.aas_name, source_objects))
+
+
+def parse_problem(
+    problem: Dict[str, Any],
+    parsed: _ParsedSource,
+    source_asset_type: str = "",
+    asset_type_by_aas_id: Optional[Dict[str, str]] = None,
+) -> None:
+    sections = problem.get("value", [])
+
+    objects_section = find_list(sections, "Objects")
+    object_names: List[str] = []
+    if objects_section:
+        for obj in objects_section.get("value", []):
+            name = display_name(obj) or f"Object_{len(object_names) + 1}"
+            obj_ref = object_reference(obj)
+            object_names.append(name)
+            parsed.objects.append(
+                {
+                    "name": name,
+                    "reference": reference_key_tail(obj_ref),
+                    "object_aas_path": f"AI-Planning/Problem/Objects/{name}",
+                    "declared_type": object_declared_type(
+                        obj,
+                        object_name=name,
+                        source_aas_id=parsed.aas_id,
+                        source_asset_type=source_asset_type,
+                        asset_type_by_aas_id=asset_type_by_aas_id,
+                    ),
+                    "source_aas_id": parsed.aas_id,
+                    "source_aas_name": parsed.aas_name,
+                }
+            )
+
+    init_section = find_collection(sections, "Init")
+    if init_section:
+        for term in init_section.get("value", []):
+            node = parse_term(term, parsed.aas_name, object_names)
+            if node is not None:
+                parsed.init_terms.append(node)
+
+    goal_section = find_collection(sections, "Goal")
+    if goal_section:
+        for term in goal_section.get("value", []):
+            node = parse_term(term, parsed.aas_name, object_names)
+            if node is not None:
+                parsed.goal_terms.append(node)
+
+    constraint_section = find_collection(sections, "Constraints")
+    if constraint_section is not None:
+        parsed.constraints_terms.extend(parse_constraint_terms(constraint_section, parsed.aas_name, object_names))
+
+    if find_collection(sections, "Metric") is not None:
+        parsed.warnings.append(
+            f"{parsed.aas_name}: Problem.Metric present; ignored in v1 best-effort pipeline."
+        )
+
+
+def parse_fluent(fluent: Dict[str, Any], source_name: str, source_aas_id: str) -> Dict[str, Any]:
+    param_types: List[str] = []
+    params_list = find_list(fluent.get("value", []), "Parameters")
+    if params_list:
+        for param in params_list.get("value", []):
+            param_types.append(parameter_type_from_reference(param.get("value")))
+
+    transformation = None
+    value_type = "bool"
+    for child in fluent.get("value", []):
+        if child.get("modelType") == "Property" and child.get("idShort") == "Transformation":
+            transformation = child.get("value")
+        if child.get("modelType") == "Property" and child.get("idShort") == "Value":
+            numeric_value = child.get("value")
+            if coerce_numeric_literal(numeric_value) is not None:
+                value_type = "numeric"
+
+    fluent_key = fluent.get("idShort") or display_name(fluent) or "Fluent"
+    fluent_aas_path = f"AI-Planning/Domain/Fluents/{fluent_key}"
+    transformation_aas_path = f"{fluent_aas_path}/Transformation" if transformation else ""
+
+    return {
+        "key": fluent_key,
+        "semantic_id": first_semantic_id(fluent),
+        "param_types": param_types,
+        "transformation": transformation,
+        "fluent_aas_path": fluent_aas_path,
+        "transformation_aas_path": transformation_aas_path,
+        "value_type": value_type,
+        "source": source_name,
+        "source_aas_id": source_aas_id,
+        "source_aas_name": source_name,
+    }
+
+
+def parse_action(
+    action: Dict[str, Any],
+    source_name: str,
+    source_aas_id: str,
+    warnings: List[str],
+    source_objects: List[str],
+    action_kind: str,
+    source_objects_full: Optional[List[Dict[str, Any]]] = None,
+    source_asset_type: str = "",
+    asset_type_by_aas_id: Optional[Dict[str, str]] = None,
+) -> Dict[str, Any]:
+    values = action.get("value", [])
+
+    action_key = action.get("idShort") or display_name(action) or "Action"
+    skill_target = action_key
+    action_path_kind = f"{action_kind}s"
+    action_aas_path = f"AI-Planning/Domain/{action_path_kind}/{action_key}"
+
+    skill_ref = find_reference(values, "SkillReference")
+    if skill_ref is not None:
+        skill_target = reference_key_tail(skill_ref.get("value")) or action_key
+
+    transformation = ""
+    for child in values:
+        if child.get("modelType") == "Property" and child.get("idShort") == "Transformation":
+            transformation = str(child.get("value") or "")
+            break
+    transformation_aas_path = f"{action_aas_path}/Transformation" if transformation else ""
+
+    parameters: List[Dict[str, Any]] = []
+    params_list = find_list(values, "Parameters")
+    if params_list:
+        for idx, param in enumerate(params_list.get("value", [])):
+            param_name = display_name(param) or f"p{idx}"
+            param_ref = param.get("value")
+            param_type = parameter_type_from_reference(
+                param_ref,
+                source_aas_id=source_aas_id,
+                source_asset_type=source_asset_type,
+                asset_type_by_aas_id=asset_type_by_aas_id,
+            )
+            # Fallback: if a ModelReference resolved to a resource AAS type but the
+            # parameter name clearly indicates a location, override to LocationParameter.
+            if (
+                param_type not in ("Entity", "LocationParameter")
+                and param_name.lower().endswith("location")
+            ):
+                param_type = "LocationParameter"
+            entry: Dict[str, Any] = {"name": param_name, "type": param_type}
+            # Detect modelRef parameters whose value is already known from Problem.Objects
+            # (i.e. the object is self or a property of self). These become constants in PDDL.
+            if isinstance(param_ref, dict) and param_ref.get("type") == "ModelReference" and source_objects_full:
+                ref_tail = reference_key_tail(param_ref)
+                matched = next(
+                    (obj for obj in source_objects_full if obj.get("reference") == ref_tail),
+                    None,
+                )
+                if matched is not None:
+                    entry["is_constant"] = True
+                    entry["bound_object"] = matched["name"]
+                else:
+                    warnings.append(
+                        f"{source_name}: ModelReference parameter '{param_name}' in action '{action_key}' "
+                        f"has no matching Problem.Object (ref tail '{ref_tail}'); treated as free variable."
+                    )
+            parameters.append(entry)
+
+    preconditions: List[Dict[str, Any]] = []
+    effects: List[Dict[str, Any]] = []
+
+    cond_section = find_collection(values, "Conditions")
+    if cond_section:
+        for group in cond_section.get("value", []):
+            for term in group.get("value", []):
+                node = parse_term(term, source_name, source_objects)
+                if node is not None:
+                    preconditions.append(node)
+
+    eff_section = find_collection(values, "Effects")
+    if eff_section:
+        for group in eff_section.get("value", []):
+            for term in group.get("value", []):
+                node = parse_term(term, source_name, source_objects)
+                if node is not None:
+                    effects.append(node)
+
+    if not preconditions:
+        warnings.append(f"{source_name}: {action_kind} '{action_key}' has no parsed preconditions.")
+    if not effects:
+        warnings.append(f"{source_name}: {action_kind} '{action_key}' has no parsed effects.")
+
+    action_semantic_ids = semantic_ids_from_item(action)
+
+    return {
+        "key": action_key,
+        "semantic_id": action_semantic_ids[0] if action_semantic_ids else "",
+        "semantic_ids": action_semantic_ids,
+        "skill_target": skill_target,
+        "action_aas_path": action_aas_path,
+        "transformation_aas_path": transformation_aas_path,
+        "transformation": transformation,
+        "parameters": parameters,
+        "preconditions": preconditions,
+        "effects": effects,
+        "action_kind": action_kind,
+        "source_name": source_name,
+        "source_aas_id": source_aas_id,
+    }
+
+
+def parse_constraint_terms(
+    constraints_section: Dict[str, Any],
+    source_name: str,
+    source_objects: List[str],
+) -> List[Dict[str, Any]]:
+    parsed_terms: List[Dict[str, Any]] = []
+    for term in constraints_section.get("value", []):
+        node = parse_term(term, source_name, source_objects)
+        if node is not None:
+            parsed_terms.append(node)
+    return parsed_terms
+
+
+def parse_term(term: Dict[str, Any], source_name: str, source_objects: List[str]) -> Optional[Dict[str, Any]]:
+    model_type = term.get("modelType")
+    if model_type == "Property":
+        return {
+            "kind": "constant",
+            "value": term.get("value"),
+        }
+
+    if model_type != "SubmodelElementCollection":
+        return None
+
+    values = term.get("value", [])
+    when_expr = None
+    for child in values:
+        if child.get("modelType") != "Property":
+            continue
+        id_short = str(child.get("idShort") or "")
+        if id_short.lower() == "when":
+            when_expr = child.get("value")
+            break
+    fluent_ref = find_reference(values, "FluentReference")
+
+    if fluent_ref is not None:
+        fluent_key = fluent_key_from_reference(fluent_ref.get("value"))
+        if not fluent_key:
+            fluent_key = display_name(term) or semantic_tail(first_semantic_id(term)) or "Fluent"
+
+        params: List[Dict[str, Any]] = []
+        params_list = find_list(values, "Parameters")
+        if params_list:
+            for param in params_list.get("value", []):
+                resolved = resolve_parameter_binding(param.get("value"), source_objects)
+                if resolved is not None:
+                    params.append(resolved)
+
+        term_value = None
+        for child in values:
+            if child.get("modelType") == "Property" and child.get("idShort") == "Value":
+                term_value = child.get("value")
+                break
+
+        atom = {
+            "kind": "atom",
+            "fluent": fluent_key,
+            "params": params,
+            "semantic_id": first_semantic_id(term),
+        }
+        if term_value is not None:
+            atom["value"] = term_value
+        if when_expr is not None:
+            atom["when"] = str(when_expr)
+        return atom
+
+    operator = term_operator(term)
+    children: List[Dict[str, Any]] = []
+    for child in values:
+        if child.get("modelType") == "SubmodelElementCollection":
+            parsed_child = parse_term(child, source_name, source_objects)
+            if parsed_child is not None:
+                children.append(parsed_child)
+        elif child.get("modelType") == "Property" and str(child.get("idShort", "")).startswith("term_"):
+            children.append(
+                {
+                    "kind": "constant",
+                    "value": child.get("value"),
+                }
+            )
+
+    if operator in {
+        "not",
+        "and",
+        "or",
+        "oneof",
+        "+",
+        "-",
+        "*",
+        "/",
+        "=",
+        "<",
+        "<=",
+        ">",
+        ">=",
+        "assign",
+        "increase",
+        "decrease",
+        "scale-up",
+        "scale-down",
+        "always",
+        "sometime",
+        "at-most-once",
+        "sometime-before",
+        "sometime-after",
+        "preferences",
+        "preference",
+    }:
+        node = {
+            "kind": "op",
+            "op": operator,
+            "children": children,
+        }
+        if when_expr is not None:
+            node["when"] = str(when_expr)
+        return node
+
+    if operator:
+        return {
+            "kind": "unsupported",
+            "op": operator,
+            "children": children,
+        }
+
+    return None
+
+
+# Map lowered CSSx class-name tails to canonical PDDL operator strings.
+_TAIL_TO_OPERATOR: Dict[str, str] = {
+    # Arithmetic symbols
+    "equal": "=",
+    "lessthan": "<",
+    "lessorequal": "<=",
+    "greaterthan": ">",
+    "greaterorequal": ">=",
+    "add": "+",
+    "subtract": "-",
+    "multiply": "*",
+    "divide": "/",
+    # Hyphenated operators
+    "scaleup": "scale-up",
+    "scaledown": "scale-down",
+    "atmostonce": "at-most-once",
+    "sometimeafter": "sometime-after",
+    "sometimebefore": "sometime-before",
+    "alwayswithin": "always-within",
+    "holdduring": "hold-during",
+    "holdafter": "hold-after",
+}
+
+
+def term_operator(term: Dict[str, Any]) -> Optional[str]:
+    for sid in term.get("supplementalSemanticIds", []):
+        sem = semantic_from_ref(sid)
+        tail = semantic_tail(sem).lower()
+        tail = _TAIL_TO_OPERATOR.get(tail, tail)
+        if tail in {"not", "and", "or"}:
+            return tail
+        if tail:
+            return tail
+    return None
+
+
+def find_collection(items: List[Dict[str, Any]], id_short: str) -> Optional[Dict[str, Any]]:
+    for item in items:
+        if item.get("modelType") == "SubmodelElementCollection" and item.get("idShort") == id_short:
+            return item
+    return None
+
+
+def find_list(items: List[Dict[str, Any]], id_short: str) -> Optional[Dict[str, Any]]:
+    for item in items:
+        if item.get("modelType") == "SubmodelElementList" and item.get("idShort") == id_short:
+            return item
+    return None
+
+
+def find_reference(items: List[Dict[str, Any]], id_short: str) -> Optional[Dict[str, Any]]:
+    for item in items:
+        if item.get("modelType") == "ReferenceElement" and item.get("idShort") == id_short:
+            return item
+    return None
+
+
+def display_name(item: Dict[str, Any]) -> str:
+    display_name_entries = item.get("displayName", [])
+    if isinstance(display_name_entries, list):
+        for lang in display_name_entries:
+            if isinstance(lang, dict) and str(lang.get("language", "")).startswith("en"):
+                text = lang.get("text")
+                if text:
+                    return str(text)
+        if display_name_entries and isinstance(display_name_entries[0], dict):
+            return str(display_name_entries[0].get("text") or "")
+    return str(item.get("idShort") or "")
+
+
+def first_semantic_id(item: Dict[str, Any]) -> str:
+    sem = item.get("semanticId")
+    return semantic_from_ref(sem)
+
+
+def semantic_ids_from_item(item: Dict[str, Any]) -> List[str]:
+    semantic_ids: List[str] = []
+
+    primary = first_semantic_id(item)
+    if primary:
+        semantic_ids.append(primary)
+
+    for sid in item.get("supplementalSemanticIds", []):
+        semantic_id = semantic_from_ref(sid)
+        if semantic_id and semantic_id not in semantic_ids:
+            semantic_ids.append(semantic_id)
+
+    return semantic_ids
+
+
+def semantic_from_ref(ref: Optional[Dict[str, Any]]) -> str:
+    if not isinstance(ref, dict):
+        return ""
+    keys = ref.get("keys", [])
+    if not keys:
+        return ""
+    return str(keys[0].get("value") or "")
+
+
+def semantic_tail(semantic_id: str) -> str:
+    if not semantic_id:
+        return ""
+    if "#" in semantic_id:
+        return semantic_id.rsplit("#", 1)[-1]
+    return semantic_id.rstrip("/").rsplit("/", 1)[-1]
+
+
+def parameter_type_from_reference(
+    reference: Optional[Dict[str, Any]],
+    *,
+    source_aas_id: str = "",
+    source_asset_type: str = "",
+    asset_type_by_aas_id: Optional[Dict[str, str]] = None,
+) -> str:
+    if not isinstance(reference, dict):
+        return "Entity"
+
+    keys = reference.get("keys", [])
+    if not keys:
+        return "Entity"
+
+    kind = str(reference.get("type") or "")
+    tail = str(keys[-1].get("value") or "")
+    if kind == "ExternalReference":
+        ontology_class = ontology_class_from_iri(tail)
+        if ontology_class:
+            return ontology_class
+        return semantic_tail(tail) or "Entity"
+
+    if kind == "ModelReference":
+        # Location model refs (e.g. self/Parameters/Location) should type as LocationParameter,
+        # not as the owning AAS resource type.
+        location_like = {"location", "locationparameter"}
+        for key in keys:
+            value_tail = semantic_tail(str(key.get("value") or "")).lower()
+            if value_tail in location_like:
+                return "LocationParameter"
+
+        aas_key = next((k for k in keys if str(k.get("type")) == "AssetAdministrationShell"), None)
+        if aas_key is not None:
+            aas_value = str(aas_key.get("value") or "")
+            ontology_class = ""
+            if aas_value.strip().lower() == "self" or (source_aas_id and aas_value.strip() == source_aas_id.strip()):
+                ontology_class = ontology_class_from_iri(source_asset_type)
+            elif asset_type_by_aas_id:
+                ontology_class = ontology_class_from_iri(asset_type_by_aas_id.get(aas_value, ""))
+
+            if ontology_class:
+                return ontology_class
+            return semantic_tail(aas_value) or "Asset"
+        return semantic_tail(tail) or "Asset"
+
+    return "Entity"
+
+
+def object_declared_type(
+    obj: Dict[str, Any],
+    object_name: str = "",
+    source_aas_id: str = "",
+    source_asset_type: str = "",
+    asset_type_by_aas_id: Optional[Dict[str, str]] = None,
+) -> str:
+    explicit = object_parameter_type(obj)
+    if explicit:
+        return explicit
+
+    ref = object_reference(obj)
+    # Heuristic: Order objects commonly self-reference the owning Order AAS
+    # while still requiring a dedicated planning type. AAS servers typically
+    # resolve the literal "self" string to the concrete AAS id, so detect
+    # the same condition by comparing against the parsed source AAS id.
+    if object_name.strip().lower().startswith("order") and (
+        is_self_reference(ref) or _references_aas(ref, source_aas_id)
+    ):
+        return "Order"
+
+    return parameter_type_from_reference(
+        ref,
+        source_aas_id=source_aas_id,
+        source_asset_type=source_asset_type,
+        asset_type_by_aas_id=asset_type_by_aas_id,
+    )
+
+
+def _references_aas(reference: Optional[Dict[str, Any]], aas_id: str) -> bool:
+    if not isinstance(reference, dict) or not aas_id:
+        return False
+    keys = reference.get("keys", [])
+    aas_key = next(
+        (k for k in keys if str(k.get("type") or "") == "AssetAdministrationShell"),
+        None,
+    )
+    if aas_key is None:
+        return False
+    return str(aas_key.get("value") or "").strip() == aas_id.strip()
+
+
+def object_parameter_type(obj: Dict[str, Any]) -> str:
+    for key in ("parameterType", "ParameterType", "declaredType", "DeclaredType", "declared_type"):
+        value = obj.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+
+    value = obj.get("value")
+    if isinstance(value, list):
+        for child in value:
+            if child.get("modelType") != "Property":
+                continue
+            child_name = str(child.get("idShort") or "").lower()
+            if child_name in {"parametertype", "declaredtype", "declared_type", "type"}:
+                child_value = str(child.get("value") or "").strip()
+                if child_value:
+                    return child_value
+
+    return ""
+
+
+def object_reference(obj: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    value = obj.get("value")
+    if isinstance(value, dict) and isinstance(value.get("keys"), list):
+        return value
+
+    if isinstance(value, list):
+        for child in value:
+            if child.get("modelType") != "ReferenceElement":
+                continue
+            child_ref = child.get("value")
+            if isinstance(child_ref, dict) and isinstance(child_ref.get("keys"), list):
+                return child_ref
+
+    return None
+
+
+def is_self_reference(reference: Optional[Dict[str, Any]]) -> bool:
+    if not isinstance(reference, dict):
+        return False
+    keys = reference.get("keys", [])
+    if not keys:
+        return False
+    aas_key = next((k for k in keys if str(k.get("type") or "") == "AssetAdministrationShell"), None)
+    if aas_key is None:
+        return False
+    return str(aas_key.get("value") or "").strip().lower() == "self"
+
+
+def reference_key_tail(reference: Optional[Dict[str, Any]]) -> str:
+    if not isinstance(reference, dict):
+        return ""
+    keys = reference.get("keys", [])
+    if not keys:
+        return ""
+    return str(keys[-1].get("value") or "")
+
+
+def fluent_key_from_reference(reference: Optional[Dict[str, Any]]) -> str:
+    if not isinstance(reference, dict):
+        return ""
+
+    keys = reference.get("keys", [])
+    if not keys:
+        return ""
+
+    values = [str(key.get("value") or "") for key in keys]
+    if "Fluents" in values:
+        idx = values.index("Fluents")
+        if idx + 1 < len(values):
+            return values[idx + 1]
+
+    return semantic_tail(values[-1])
+
+
+def resolve_parameter_binding(reference: Optional[Dict[str, Any]], source_objects: List[str]) -> Optional[Dict[str, Any]]:
+    if not isinstance(reference, dict):
+        return None
+
+    keys = reference.get("keys", [])
+    values = [str(key.get("value") or "") for key in keys]
+    if not values:
+        return None
+
+    if "Problem" in values and "Objects" in values:
+        index = last_reference_index(values)
+        if index is not None and 0 <= index < len(source_objects):
+            return {"kind": "object", "name": source_objects[index]}
+
+    if "Constraints" in values and "Parameters" in values:
+        index = last_reference_index(values)
+        if index is not None and 0 <= index < len(source_objects):
+            return {"kind": "object", "name": source_objects[index]}
+
+    if "Parameters" in values:
+        index = last_reference_index(values)
+        if index is not None:
+            return {"kind": "action_param", "index": index}
+
+    if "Objects" in values:
+        index = last_reference_index(values)
+        if index is not None and 0 <= index < len(source_objects):
+            return {"kind": "object", "name": source_objects[index]}
+
+    tail = values[-1]
+    if tail and tail not in {"Parameters", "Objects"}:
+        return {"kind": "object", "name": semantic_tail(tail) or tail}
+
+    return None
+
+
+def last_reference_index(values: List[str]) -> Optional[int]:
+    for value in reversed(values):
+        if value.isdigit():
+            return int(value)
+    return None

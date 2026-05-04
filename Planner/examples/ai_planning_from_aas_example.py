@@ -19,7 +19,7 @@ _REPO_ROOT = _Planner_ROOT.parent
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-from Planner.aas_to_pddl_conversion.models import AIPlanningSource
+from Planner.step1_aas_input.models import AIPlanningSource
 from Planner.production_planner_service import PlannerService
 
 

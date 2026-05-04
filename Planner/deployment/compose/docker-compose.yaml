@@ -7,19 +7,21 @@ services:
     environment:
       - MQTT_BROKER=${MQTT_BROKER:-hivemq-broker}
       - MQTT_PORT=${MQTT_PORT:-1883}
-      - PYTHONPATH=/app
+      - AAS_SERVER_URL=${AAS_SERVER_URL:-http://aas-env:8081}
+      - AAS_REGISTRY_URL=${AAS_REGISTRY_URL:-http://aas-registry:8080}
+      - PRODUCTION_PLANNER_TOPIC=${PRODUCTION_PLANNER_TOPIC:-NN/Nybrovej/InnoLab/ProductionPlanner}
+      - REGISTRATION_TOPIC=${REGISTRATION_TOPIC:-NN/Nybrovej/InnoLab/Registration/Config}
+      - PYTHONPATH=/app/Planner/third_party/unified-planning:/app
+      - PYTHONUNBUFFERED=1
       - METRICS_DIR=/data/run_metrics
       - METRICS_TOPIC_PREFIX=${METRICS_TOPIC_PREFIX:-NN/Nybrovej/InnoLab/Stats}
-      - BT_SYNTHESIS_TRIVIAL=${BT_SYNTHESIS_TRIVIAL:-}
-      - PLANNING_TIMEOUT_SECONDS=${PLANNING_TIMEOUT_SECONDS:-600}
+      - AI_ARTIFACTS_DIR=${AI_ARTIFACTS_DIR:-/data/run_metrics/ai_artifacts}
+      - PLANNING_TIMEOUT_SECONDS=${PLANNING_TIMEOUT_SECONDS:-300}
+      - STRICT_SEMANTIC_SOLVE=${STRICT_SEMANTIC_SOLVE:-true}
     volumes:
       - ../../../:/app  # Mount AP2030-UNS repo root
       - ../../../packml_runtime:/app/packml_runtime  # Mount shared PackML runtime
-      - ../../../unified-planning:/app/unified-planning  # Mount vendored UP fork
       - ../../../MQTTSchemas:/app/MQTTSchemas  # Overlay schemas
       - ../../../AASDescriptions:/app/AASDescriptions  # Mount AAS configs for registration
-      - run_metrics:/data/run_metrics
+      - ../../../run_metrics:/data/run_metrics
     command: ["-m", "Planner.production_planner_service"]
-
-volumes:
-  run_metrics:

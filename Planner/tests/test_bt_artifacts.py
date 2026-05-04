@@ -11,7 +11,7 @@ REPO_ROOT = Planner_ROOT.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from Planner.bt_synthesis.artifacts import generate_bt_filename, save_bt_xml
+from Planner.step6_bt_serialization.artifacts import generate_bt_filename, save_bt_xml
 
 
 class BTArtifactsTests(unittest.TestCase):

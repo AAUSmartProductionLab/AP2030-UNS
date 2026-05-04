@@ -15,7 +15,6 @@ import json
 import logging
 import os
 import time
-import traceback
 import uuid
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
@@ -24,9 +23,23 @@ from packml_runtime.aas_client import AASClient
 from packml_runtime.mqtt import Proxy, ResponseAsync
 from packml_runtime.simulator import PackMLStateMachine
 
-from .aas_to_pddl_conversion import collect_planning_context, run_ai_planning_pipeline
-from .bt_synthesis.api import generate_bt_filename, save_bt_xml
-from .process_aas_generation_publishing.process_aas_generator import (
+from .step1_aas_input import collect_planning_context
+from .step1_aas_input.parsing import parse_source
+from .step2_pddl_construction import (
+    build_capabilities,
+    build_up_problem,
+    compile_bop_ordering,
+    export_problem_artifacts,
+    merge_sources,
+    write_text_artifact,
+)
+from .step2_pddl_construction.models import AIPlanningPipelineResult
+from .step3_pddl_solving import export_policy_visualization, solve_with_reduced_fallback
+from .step4_policy_to_bt import build_trivial_bt
+from .step4_policy_to_bt.plan_converters import deterministic_plan_to_bt_xml, extract_plan_text
+from .step5_bt_optimization import optimize_bt
+from .step6_bt_serialization import bt_to_xml, count_bt_nodes, generate_bt_filename, save_bt_xml
+from .step7_process_aas_publishing.process_aas_generator import (
     ProcessAASConfig,
     ProcessAASGenerator,
 )
@@ -105,11 +118,6 @@ class PlanningResult:
 class PlannerConfig:
     """Configuration for planner orchestration and artifacts."""
 
-    aas_server_url: str = "http://aas-env:8081"
-    aas_registry_url: str = "http://aas-registry:8080"
-
-    mqtt_broker: str = "hivemq-broker"
-    mqtt_port: int = 1883
     registration_topic: str = "NN/Nybrovej/InnoLab/Registration/Config"
 
     process_aas_output_dir: str = "../AASDescriptions/Process/configs"
@@ -145,7 +153,6 @@ class PlannerService:
         self.mqtt_client = mqtt_client
         self.config = config or PlannerConfig()
         self.context_collector = collect_planning_context
-        self.pipeline_runner = run_ai_planning_pipeline
         self.process_generator = ProcessAASGenerator(
             ProcessAASConfig(bt_base_url=self.config.bt_base_url)
         )
@@ -163,7 +170,7 @@ class PlannerService:
         logger.info("Initial asset IDs: %s", asset_ids)
         logger.info("Run ID: %s", effective_run_id)
 
-        logger.info("Step 1-4: Collecting planning context from AAS models...")
+        logger.info("Step 1: Collecting planning context from AAS models...")
         planning_context = self.context_collector(self.aas_client, order_aas_id, asset_ids)
         if not planning_context:
             return PlanningResult(
@@ -183,11 +190,208 @@ class PlannerService:
                 run_id=effective_run_id,
             )
 
-        logger.info("Step 5: Running planning sequence...")
+        logger.info("Step 2-6: Parsing, building, solving, and synthesizing behavior tree...")
         try:
-            pipeline_result = self._run_planning_pipeline(
-                planning_sources,
-                bop_config=planning_context.order_config.get("BillOfProcesses"),
+            warnings: list[str] = []
+            metrics: dict[str, Any] = {
+                "source_count": len(planning_sources),
+                "parse_time_s": 0.0,
+                "build_time_s": 0.0,
+                "planning_time_s": 0.0,
+                "bt_synthesis_time_s": 0.0,
+                "pipeline_total_time_s": 0.0,
+                "policy_rule_count": 0,
+                "plan_action_count": 0,
+                "bt_nodes_trivial": 0,
+                "bt_nodes_hoisted": 0,
+            }
+
+            pipeline_started = time.perf_counter()
+
+            asset_types_by_aas_id = getattr(planning_context, "asset_types_by_aas_id", None)
+            asset_type_lookup: Dict[str, str] = dict(asset_types_by_aas_id or {})
+            for source in planning_sources:
+                if source.aas_id and source.asset_type:
+                    asset_type_lookup.setdefault(source.aas_id, source.asset_type)
+
+            logger.info("Step 2: Parsing AI planning sources...")
+            parse_started = time.perf_counter()
+            parsed_sources = [
+                parse_source(source, asset_type_by_aas_id=asset_type_lookup)
+                for source in planning_sources
+            ]
+            metrics["parse_time_s"] = time.perf_counter() - parse_started
+
+            for parsed in parsed_sources:
+                warnings.extend(parsed.warnings)
+
+            logger.info("Step 3: Building UP planning problem...")
+            build_started = time.perf_counter()
+            merged = merge_sources(parsed_sources, warnings)
+            compile_bop_ordering(
+                merged,
+                planning_context.order_config.get("BillOfProcesses"),
+                warnings,
+            )
+            up_problem = build_up_problem(merged, warnings, semantic_natural_transitions=True)
+            artifacts = export_problem_artifacts(up_problem, self.config.ai_artifacts_dir, warnings)
+            metrics["build_time_s"] = time.perf_counter() - build_started
+
+            if artifacts.get("domain_pddl"):
+                logger.info("PDDL domain written to: %s", artifacts["domain_pddl"])
+            if artifacts.get("problem_pddl"):
+                logger.info("PDDL problem written to: %s", artifacts["problem_pddl"])
+
+            logger.info("Step 4: Solving planning problem...")
+            solve_started = time.perf_counter()
+            solve_result = solve_with_reduced_fallback(
+                up_problem,
+                timeout=self.config.planning_timeout_seconds,
+                warnings=warnings,
+                allow_reduced_fallback=not self.config.strict_semantic_solve,
+                build_reduced_problem=lambda: build_up_problem(
+                    merged,
+                    warnings,
+                    semantic_natural_transitions=False,
+                    drop_natural_transitions=True,
+                    include_trajectory_constraints=False,
+                ),
+                reduced_model_stats={
+                    "events": sum(
+                        1
+                        for action in merged.get("actions", [])
+                        if str(action.get("action_kind") or "") == "Event"
+                    ),
+                    "processes": sum(
+                        1
+                        for action in merged.get("actions", [])
+                        if str(action.get("action_kind") or "") == "Process"
+                    ),
+                    "constraints": len(merged.get("constraints_terms", [])),
+                },
+            )
+            metrics["planning_time_s"] = time.perf_counter() - solve_started
+
+            planner_metadata: Dict[str, Any] = {}
+            solve_problem = getattr(solve_result, "metadata", {}).get("problem")
+            if solve_problem is not None:
+                planner_metadata = dict(getattr(solve_problem, "_planner_metadata", {}) or {})
+            if not planner_metadata:
+                planner_metadata = dict(getattr(up_problem, "_planner_metadata", {}) or {})
+            if hasattr(solve_result, "metadata") and isinstance(getattr(solve_result, "metadata", None), dict):
+                solve_result.metadata["planner_metadata"] = planner_metadata
+
+            policy_trivial_bt = None
+            policy_hoisted_bt = None
+            if getattr(solve_result, "is_policy", False):
+                try:
+                    metrics["policy_rule_count"] = int(len(solve_result.policy))
+                except Exception as exc:
+                    warnings.append(f"Could not count policy rules: {exc}")
+
+                try:
+                    policy_result = solve_result.require_policy_result()
+                    problem_obj = getattr(solve_result, "metadata", {}).get("problem")
+                    policy_trivial_bt = build_trivial_bt(
+                        policy_result,
+                        problem=problem_obj,
+                        planner_metadata=planner_metadata,
+                    )
+                    policy_hoisted_bt = optimize_bt(policy_trivial_bt)
+                    metrics["bt_nodes_hoisted"] = int(count_bt_nodes(policy_hoisted_bt.root))
+                    metrics["bt_nodes_trivial"] = int(count_bt_nodes(policy_trivial_bt.root))
+                except Exception as exc:
+                    warnings.append(f"Could not derive hoisted/trivial BT node counts: {exc}")
+
+            if getattr(solve_result, "is_plan", False):
+                try:
+                    up_result = solve_result.require_plan_result()
+                    plan = getattr(up_result, "plan", None)
+                    actions = list(getattr(plan, "actions", [])) if plan is not None else []
+                    metrics["plan_action_count"] = len(actions)
+                except Exception as exc:
+                    warnings.append(f"Could not count deterministic plan actions: {exc}")
+
+            logger.info("Step 5: Converting solve result to behavior tree...")
+            bt_started = time.perf_counter()
+            bt_xml = ""
+            if not getattr(solve_result, "is_solved", False):
+                warnings.append("Solve result unsolved; skipping BT synthesis.")
+            else:
+                if getattr(solve_result, "is_policy", False):
+                    if policy_hoisted_bt is None:
+                        policy_result = solve_result.require_policy_result()
+                        problem_obj = getattr(solve_result, "metadata", {}).get("problem")
+                        policy_trivial_bt = build_trivial_bt(
+                            policy_result,
+                            problem=problem_obj,
+                            planner_metadata=planner_metadata,
+                        )
+                        policy_hoisted_bt = optimize_bt(policy_trivial_bt)
+                    bt_xml = bt_to_xml(policy_hoisted_bt, planner_metadata=planner_metadata)
+                elif getattr(solve_result, "is_plan", False):
+                    bt_xml = deterministic_plan_to_bt_xml(solve_result, planner_metadata=planner_metadata)
+                    if bt_xml:
+                        warnings.append("Generated reactive BT from deterministic UP plan.")
+                    else:
+                        raise RuntimeError(
+                            "Deterministic solve result produced an empty BT XML payload."
+                        )
+                else:
+                    raise RuntimeError(
+                        "Unexpected solve result mode. Expected either policy or deterministic plan output."
+                    )
+                if not bt_xml:
+                    raise RuntimeError("BT conversion produced an empty XML payload.")
+            metrics["bt_synthesis_time_s"] = time.perf_counter() - bt_started
+
+            logger.info("Step 6: Serializing planning artifacts...")
+            if bt_xml:
+                bt_path = write_text_artifact(artifacts, "behavior_tree_xml", "behavior_tree.xml", bt_xml, warnings)
+                if bt_path:
+                    logger.info("Behavior tree written to: %s", bt_path)
+
+            if getattr(solve_result, "is_plan", False):
+                plan_text = extract_plan_text(solve_result)
+                if plan_text:
+                    plan_path = write_text_artifact(
+                        artifacts,
+                        "deterministic_plan",
+                        "deterministic_plan.txt",
+                        plan_text,
+                        warnings,
+                    )
+                    if plan_path:
+                        logger.info("Deterministic plan written to: %s", plan_path)
+
+            if getattr(solve_result, "is_policy", False):
+                export_policy_visualization(solve_result, artifacts, warnings)
+                try:
+                    policy_lines = [str(rule) for rule in solve_result.policy]
+                    policy_text = "\n".join(policy_lines)
+                    rules_path = write_text_artifact(
+                        artifacts,
+                        "policy_rules",
+                        "policy_rules.txt",
+                        policy_text,
+                        warnings,
+                    )
+                    if rules_path:
+                        logger.info("Policy rules written to: %s", rules_path)
+                except Exception as exc:
+                    warnings.append(f"Could not export policy rules text: {exc}")
+
+            capabilities = build_capabilities(merged)
+            metrics["pipeline_total_time_s"] = time.perf_counter() - pipeline_started
+
+            pipeline_result = AIPlanningPipelineResult(
+                bt_xml=bt_xml,
+                solve_result=solve_result,
+                warnings=warnings,
+                capabilities=capabilities,
+                artifacts=artifacts,
+                planner_metadata=planner_metadata,
+                metrics=metrics,
             )
         except Exception as exc:
             logger.error("Planning sequence failed: %s", exc)
@@ -226,6 +430,11 @@ class PlannerService:
 
         solve_result = pipeline_result.solve_result
         if not getattr(solve_result, "is_solved", False):
+            unsolved_message = (
+                "Planning unsolved in strict mode"
+                if self.config.strict_semantic_solve
+                else "Planning unsolved"
+            )
             return PlanningResult(
                 success=False,
                 order_aas_id=order_aas_id,
@@ -234,7 +443,7 @@ class PlannerService:
                 solver_status=getattr(solve_result, "status", None),
                 planner_warnings=pipeline_result.warnings,
                 planning_artifacts=pipeline_result.artifacts,
-                error_message="Planning unsolved in strict mode",
+                error_message=unsolved_message,
                 run_id=effective_run_id,
                 run_metrics=run_metrics,
             )
@@ -256,9 +465,9 @@ class PlannerService:
 
         planar_table_id = planning_context.planar_table_id
         bt_filename = generate_bt_filename(planning_context.order_config)
-        bt_path = os.path.join(self.config.bt_output_dir, bt_filename)
 
         if self.config.save_intermediate_files:
+            bt_path = os.path.join(self.config.bt_output_dir, bt_filename)
             save_bt_xml(bt_xml, bt_path)
             logger.info("Saved behavior tree to %s", bt_path)
 
@@ -267,7 +476,6 @@ class PlannerService:
             pipeline_result.capabilities,
             order_aas_id,
             planning_context.order_config,
-            planning_context.requirements,
             bt_filename,
             planar_table_id,
             run_id=effective_run_id,
@@ -307,21 +515,6 @@ class PlannerService:
             run_metrics=run_metrics,
         )
 
-    def _run_planning_pipeline(
-        self,
-        planning_sources: List[Any],
-        *,
-        bop_config: Optional[Dict[str, Any]] = None,
-    ):
-        return self.pipeline_runner(
-            planning_sources,
-            planning_timeout_seconds=self.config.planning_timeout_seconds,
-            strict_semantic_solve=self.config.strict_semantic_solve,
-            bop_config=bop_config,
-            artifacts_dir=self.config.ai_artifacts_dir,
-        )
-
-
 class ProductionPlannerRuntime:
     """Runtime host that exposes the production planner service over MQTT."""
 
@@ -359,16 +552,14 @@ class ProductionPlannerRuntime:
 
     def _initialize_planner_service(self) -> None:
         service_config = PlannerConfig(
-            aas_server_url=self.config.aas_server_url,
-            aas_registry_url=self.config.aas_registry_url,
-            mqtt_broker=self.config.broker_address,
-            mqtt_port=self.config.broker_port,
             registration_topic=self.config.registration_topic,
             process_aas_output_dir="./AASDescriptions/Process/configs",
             bt_output_dir="./BTDescriptions",
             metrics_dir=env_metrics_dir(),
             metrics_topic_prefix=env_metrics_topic_prefix(),
             save_intermediate_files=True,
+            planning_timeout_seconds=float(os.getenv("PLANNING_TIMEOUT_SECONDS", "30")),
+            strict_semantic_solve=os.getenv("STRICT_SEMANTIC_SOLVE", "true").lower() in {"1", "true", "yes"},
         )
 
         self.planner_service = PlannerService(
@@ -421,8 +612,7 @@ class ProductionPlannerRuntime:
             return result.to_response_dict()
 
         except Exception as exc:
-            logger.error("Error in planning process: %s", exc)
-            traceback.print_exc()
+            logger.exception("Error in planning process: %s", exc)
             return {
                 "State": "FAILURE",
                 "OrderAASId": order_aas_id,
@@ -469,8 +659,7 @@ class ProductionPlannerRuntime:
             )
 
         except Exception as exc:
-            logger.error("Error in planning callback: %s", exc)
-            traceback.print_exc()
+            logger.exception("Error in planning callback: %s", exc)
 
     def _on_mqtt_ready(self) -> None:
         self._initialize_planner_service()
@@ -479,26 +668,6 @@ class ProductionPlannerRuntime:
 
     def run(self) -> None:
         self.proxy.loop_forever()
-
-
-def create_planner_from_env() -> PlannerService:
-    """Create PlannerService with configuration from environment variables."""
-    aas_client = AASClient(
-        os.getenv("AAS_SERVER_URL", "http://aas-env:8081"),
-        os.getenv("AAS_REGISTRY_URL", "http://aas-registry:8080"),
-    )
-    config = PlannerConfig(
-        aas_server_url=os.getenv("AAS_SERVER_URL", "http://aas-env:8081"),
-        aas_registry_url=os.getenv("AAS_REGISTRY_URL", "http://aas-registry:8080"),
-        mqtt_broker=os.getenv("MQTT_BROKER", "hivemq-broker"),
-        mqtt_port=int(os.getenv("MQTT_PORT", "1883")),
-        planning_timeout_seconds=float(os.getenv("PLANNING_TIMEOUT_SECONDS", "30")),
-        strict_semantic_solve=os.getenv("STRICT_SEMANTIC_SOLVE", "true").lower() in {"1", "true", "yes"},
-        ai_artifacts_dir=os.getenv("AI_ARTIFACTS_DIR") or None,
-        metrics_dir=env_metrics_dir(),
-        metrics_topic_prefix=env_metrics_topic_prefix(),
-    )
-    return PlannerService(aas_client, config=config)
 
 
 def config_from_env() -> RuntimeConfig:

@@ -56,15 +56,16 @@ if str(_Planner_ROOT) not in sys.path:
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-from bt_synthesis.api import policy_to_bt, policy_to_bt_trivial
-from bt_synthesis.simulator import (
+from step4_policy_to_bt.builder import build_trivial_bt
+from step5_bt_optimization import optimize_bt
+from bt_simulation.simulator import (
     NodeTickCountVisitor,  # noqa: F401  (kept for reference / parity)
     _WORLD_KEY,
     build_global_outcome_probability_provider,
     build_simulator,
     convert_to_pytrees,
 )
-from pddl_planning.planner_core.solver import solve_from_files
+from step3_pddl_solving.solver import solve_from_files
 
 
 CATEGORIES = ("action", "condition", "selector", "sequence", "decorator", "leaf_other")
@@ -193,7 +194,8 @@ def _simulate_with_categories(
 
 def _default_benchmark_root() -> Path:
     return (
-        _REPO_ROOT
+        _Planner_ROOT
+        / "third_party"
         / "unified-planning"
         / "unified_planning"
         / "engines"
@@ -559,9 +561,10 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             continue
         problem_obj = sr.metadata.get("problem") if isinstance(sr.metadata, dict) else None
         pol = sr.require_policy_result()
+        trivial_bt = build_trivial_bt(pol, problem=problem_obj)
         bts = {
-            "trivial": policy_to_bt_trivial(pol, problem=problem_obj),
-            "hoisted": policy_to_bt(pol, problem=problem_obj),
+            "trivial": trivial_bt,
+            "hoisted": optimize_bt(trivial_bt),
         }
         domain_pddl = getattr(pol, "domain_pddl", "") or ""
         problem_pddl = getattr(pol, "problem_pddl", "") or ""

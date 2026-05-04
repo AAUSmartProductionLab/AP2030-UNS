@@ -1,22 +1,22 @@
 aauFillingLineAAS:
     idShort: aauFillingLineAAS
-    id: 'https://smartproductionlab.aau.dk/aas/aauFillingLineAAS'
-    globalAssetId: 'https://smartproductionlab.aau.dk/assets/MWQ2ODY5ZDEtZTQ3Yy00NWU4LTlmYTAtNTI3YjVlMDk4MWFi'
-    derivedFrom: 'https://smartproductionlab.aau.dk/aas/templates/resource'
-    assetType: 'https://smartproductionlab.aau.dk/Resource/CPPS/AsepticFillingLine/aauFillingLine'
-    serialNumber: 'AAU-FL-2024-001'
-    location: 'InnoLab, Nybrovej, AAU'
+    id: "https://smartproductionlab.aau.dk/aas/aauFillingLineAAS"
+    globalAssetId: "https://smartproductionlab.aau.dk/assets/MWQ2ODY5ZDEtZTQ3Yy00NW\
+        U4LTlmYTAtNTI3YjVlMDk4MWFi"
+    derivedFrom: "https://smartproductionlab.aau.dk/aas/templates/resource"
+    assetType: "http://www.w3id.org/aau-ra/cssx#FillingLine"
+    serialNumber: "AAU-FL-2024-001"
+    location: "InnoLab, Nybrovej, AAU"
     AssetInterfacesDescription:
     Variables:
     Parameters:
     HierarchicalStructures:
-        Name: 'BillOfMaterials'
+        Name: "BillOfMaterials"
+        # Capabilities:
+        #     - dispenseing:
+        #         realizedBy: "dispense"
 
-    # Capabilities:
-    #     - dispenseing:
-    #         realizedBy: "dispense"
-    
-    # Skills:
+        # Skills:
         # dispense:
         #     description: "dispenseing function for pharmaceutical primary packaging"
         #     semantic_id: "cssx:DispensingMeasurement"

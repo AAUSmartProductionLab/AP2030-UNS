@@ -15,9 +15,9 @@ import sys
 from pathlib import Path
 
 _Planner_ROOT = Path(__file__).resolve().parent.parent
-_REPO_ROOT = _Planner_ROOT.parent
 _UP_PR2_ROOT = (
-    _REPO_ROOT
+    _Planner_ROOT
+    / "third_party"
     / "unified-planning"
     / "unified_planning"
     / "engines"
@@ -27,8 +27,8 @@ _UP_PR2_ROOT = (
 _PR2_ROOT = _UP_PR2_ROOT
 sys.path.insert(0, str(_Planner_ROOT))
 
-from pddl_planning.planner_core.solver import solve_from_files
-from pddl_planning.visualization import create_force_graph_html
+from step3_pddl_solving.solver import solve_from_files
+from step3_pddl_solving.visualization import create_force_graph_html
 
 
 def main():
@@ -100,7 +100,7 @@ def main():
     print("Next steps:")
     print("  1. Open the HTML file in your browser for the interactive graph")
     print("  2. Review the policy structure")
-    print("  3. Convert to BT: bt = policy_to_bt(result)")
+    print("  3. Convert to BT: bt = optimize_bt(build_trivial_bt(result.require_policy_result()))")
     print("=" * 60)
 
 

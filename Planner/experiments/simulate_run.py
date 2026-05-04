@@ -17,9 +17,9 @@ import time
 from pathlib import Path
 
 _PLANNER_ROOT = Path(__file__).resolve().parents[1]
-_REPO_ROOT = _PLANNER_ROOT.parent
 _PR2_ROOT = (
-    _REPO_ROOT
+    _PLANNER_ROOT
+    / "third_party"
     / "unified-planning"
     / "unified_planning"
     / "engines"
@@ -29,9 +29,10 @@ _PR2_ROOT = (
 sys.path.insert(0, str(_PR2_ROOT))
 sys.path.insert(0, str(_PLANNER_ROOT))
 
-from bt_synthesis.api import policy_to_bt, policy_to_bt_trivial  # noqa: E402
-from bt_synthesis.simulator import run_simulation  # noqa: E402
-from pddl_planning.planner_core.solver import solve_from_files  # noqa: E402
+from step4_policy_to_bt.builder import build_trivial_bt  # noqa: E402
+from step5_bt_optimization import optimize_bt  # noqa: E402
+from bt_simulation.simulator import run_simulation  # noqa: E402
+from step3_pddl_solving.solver import solve_from_files  # noqa: E402
 
 
 def main() -> int:
@@ -79,13 +80,14 @@ def main() -> int:
 
     print("Building BT(s) ...")
     variants: list[tuple[str, object]] = []
+    trivial_bt = build_trivial_bt(policy_result, problem=problem_obj)
     if args.variant in ("hoisted", "both"):
         t0 = time.time()
-        variants.append(("hoisted", policy_to_bt(policy_result, problem=problem_obj)))
+        variants.append(("hoisted", optimize_bt(trivial_bt)))
         print(f"  hoisted built in {time.time() - t0:.2f}s")
     if args.variant in ("trivial", "both"):
         t0 = time.time()
-        variants.append(("trivial", policy_to_bt_trivial(policy_result, problem=problem_obj)))
+        variants.append(("trivial", trivial_bt))
         print(f"  trivial built in {time.time() - t0:.2f}s")
 
     domain_pddl = getattr(policy_result, "domain_pddl", "") or domain.read_text()

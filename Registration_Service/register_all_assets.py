@@ -239,9 +239,8 @@ Examples:
         nargs='+',
         default=[
             f'../{PathDefaults.CONFIG_DIR}',
-            f'../{PathDefaults.PRODUCT_CONFIG_DIR}',
         ],
-        help=f'Directories containing config YAML files (default: Resource + Product configs)'
+        help=f'Directories containing config YAML files (default: Resource configs)'
     )
     parser.add_argument(
         '--mqtt-broker',

@@ -11,9 +11,9 @@ REPO_ROOT = Planner_ROOT.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from Planner.aas_to_pddl_conversion.parsing import parse_term
-from Planner.aas_to_pddl_conversion.up_builder import build_up_problem
-from Planner.pddl_planning.planner_core.solve_pipeline import solve_with_reduced_fallback
+from Planner.step1_aas_input.parsing import parse_term
+from Planner.step2_pddl_construction.up_builder.problem import build_up_problem
+from Planner.step3_pddl_solving.solve_pipeline import solve_with_reduced_fallback
 
 
 class _FakePolicyPlan:
@@ -125,10 +125,10 @@ class FondPipelineSupportTests(unittest.TestCase):
         map_back = lambda ai: ai
 
         with patch(
-            "Planner.pddl_planning.planner_core.solve_pipeline.compile_trajectory_constraints",
+            "Planner.step3_pddl_solving.solve_pipeline.compile_trajectory_constraints",
             return_value=("compiled-problem", map_back),
         ), patch(
-            "Planner.pddl_planning.planner_core.solve_pipeline.solve_problem",
+            "Planner.step3_pddl_solving.solve_pipeline.solve_problem",
             return_value=semantic_result,
         ):
             problem = type("Problem", (), {"trajectory_constraints": ["dummy"]})()

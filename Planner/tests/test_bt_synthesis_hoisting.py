@@ -12,7 +12,8 @@ REPO_ROOT = Planner_ROOT.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from Planner.bt_synthesis.api import (
+from Planner.step4_policy_to_bt.builder import build_trivial_bt
+from Planner.step4_policy_to_bt.nodes import (
     ActionNode,
     BehaviorTree,
     ConditionNode,
@@ -23,12 +24,9 @@ from Planner.bt_synthesis.api import (
     SubTreeRef,
     SuccessLeaf,
     WorldState,
-    bt_to_xml,
-    count_bt_nodes,
-    policy_to_bt,
-    policy_to_bt_trivial,
-    solve_result_to_bt_xml,
 )
+from Planner.step5_bt_optimization.optimizer import deduplicate_subtrees, optimize_bt, parameterize_subtrees
+from Planner.step6_bt_serialization.xml_writer import bt_to_xml, count_bt_nodes
 
 
 class _FakeRule:
@@ -112,7 +110,7 @@ class BTSynthesisHoistingTests(unittest.TestCase):
             _FakeRule({"a", "b", "c", "x3"}, "act3 p"),
         ]
 
-        bt = policy_to_bt(_FakeResult(policy, []))
+        bt = optimize_bt(build_trivial_bt(_FakeResult(policy, [])))
         self.assertFalse(_has_linear_condition_sequence_chain(bt.root))
 
     def test_policy_loop_runs_until_problem_goal_is_satisfied(self):
@@ -124,7 +122,7 @@ class BTSynthesisHoistingTests(unittest.TestCase):
                 self.fluents.add("done")
                 return Status.SUCCESS
 
-        bt = policy_to_bt(_FakeResult(policy, []), problem=problem)
+        bt = optimize_bt(build_trivial_bt(_FakeResult(policy, []), problem=problem))
         xml = bt_to_xml(bt)
         world = _World({"ready"})
 
@@ -143,7 +141,7 @@ class BTSynthesisHoistingTests(unittest.TestCase):
             _FakeRule({"a", "c"}, "act2 p"),
         ]
 
-        bt = policy_to_bt(_FakeResult(policy, []))
+        bt = optimize_bt(build_trivial_bt(_FakeResult(policy, [])))
         xml = bt_to_xml(bt)
 
         self.assertNotEqual(getattr(bt.root, "name", ""), "PolicyRoot")
@@ -156,13 +154,13 @@ class BTSynthesisHoistingTests(unittest.TestCase):
         ]
 
         result = _FakeResult(policy, [])
-        xml = bt_to_xml(policy_to_bt(result))
+        xml = bt_to_xml(optimize_bt(build_trivial_bt(result)))
 
         self.assertNotIn("_Done", xml)
 
     def test_negated_predicate_uses_inverter_decorator(self):
         policy = [_FakeRule({"not(ready(product_1))"}, "dispense product_1")]
-        xml = bt_to_xml(policy_to_bt(_FakeResult(policy, [])))
+        xml = bt_to_xml(optimize_bt(build_trivial_bt(_FakeResult(policy, []))))
 
         self.assertIn("<Inverter", xml)
         self.assertIn('<FluentCheck name="ready(product_1)"', xml)
@@ -176,13 +174,13 @@ class BTSynthesisHoistingTests(unittest.TestCase):
         ]
 
         result = _FakeResult(policy, [])
-        xml = bt_to_xml(policy_to_bt(result))
+        xml = bt_to_xml(optimize_bt(build_trivial_bt(result)))
 
         self.assertIn("<Sequence", xml)
         self.assertIn("ReactiveFallback", xml)
         self.assertEqual(xml.count('<FluentCheck name="a"'), 1)
 
-    def test_solve_result_to_bt_xml_emits_execution_refs(self):
+    def test_explicit_policy_pipeline_emits_execution_refs(self):
         policy = [_FakeRule({"ready(product_1)"}, "dispense product_1")]
         metadata = {
             "planner_metadata": {
@@ -235,11 +233,17 @@ class BTSynthesisHoistingTests(unittest.TestCase):
             }
         }
 
-        xml, warnings = solve_result_to_bt_xml(
-            _FakeSolveResult(_FakeResult(policy, []), metadata=metadata)
+        solve_result = _FakeSolveResult(_FakeResult(policy, []), metadata=metadata)
+        planner_metadata = solve_result.metadata["planner_metadata"]
+        bt = optimize_bt(
+            build_trivial_bt(
+                solve_result.require_policy_result(),
+                problem=solve_result.metadata.get("problem"),
+                planner_metadata=planner_metadata,
+            )
         )
+        xml = bt_to_xml(bt, planner_metadata=planner_metadata)
 
-        self.assertEqual(warnings, [])
         self.assertIn("action_ref=", xml)
         self.assertIn("predicate_ref=", xml)
         self.assertIn('<SubTree ID="MainTree" editable="true">', xml)
@@ -342,7 +346,7 @@ class BTSynthesisHoistingTests(unittest.TestCase):
             ),
         ]
 
-        xml = bt_to_xml(policy_to_bt(_FakeResult(policy, [])))
+        xml = bt_to_xml(optimize_bt(build_trivial_bt(_FakeResult(policy, []))))
         root = ET.fromstring(xml)
         ids = [el.attrib.get("ID", "") for el in root.findall("BehaviorTree")]
 
@@ -426,7 +430,7 @@ class BTSynthesisHoistingTests(unittest.TestCase):
             ),
         ]
 
-        xml = bt_to_xml(policy_to_bt(_FakeResult(policy, [])))
+        xml = bt_to_xml(optimize_bt(build_trivial_bt(_FakeResult(policy, []))))
         root = ET.fromstring(xml)
         fallback_names = [
             el.attrib.get("name", "")
@@ -445,7 +449,7 @@ class BTSynthesisHoistingTests(unittest.TestCase):
             _FakeRule({"a", "shared1", "shared2", "x4"}, "act4 p"),
         ]
 
-        optimized_bt = policy_to_bt(_FakeResult(policy, []))
+        optimized_bt = optimize_bt(build_trivial_bt(_FakeResult(policy, [])))
         naive_bt = _naive_rule_tree(policy)
 
         optimized_count = count_bt_nodes(optimized_bt.root)
@@ -459,8 +463,8 @@ class BTSynthesisHoistingTests(unittest.TestCase):
             _FakeRule({"a", "c"}, "act2 p"),
         ]
 
-        hoisted_xml = bt_to_xml(policy_to_bt(_FakeResult(policy, [])))
-        trivial_xml = bt_to_xml(policy_to_bt_trivial(_FakeResult(policy, [])))
+        hoisted_xml = bt_to_xml(optimize_bt(build_trivial_bt(_FakeResult(policy, []))))
+        trivial_xml = bt_to_xml(build_trivial_bt(_FakeResult(policy, [])))
 
         self.assertEqual(hoisted_xml.count('<FluentCheck name="a"'), 1)
         self.assertGreaterEqual(
@@ -482,8 +486,8 @@ class BTSynthesisHoistingTests(unittest.TestCase):
                 self.goal_reached = True
                 return Status.SUCCESS
 
-        hoisted_bt = policy_to_bt(_FakeResult(policy, []))
-        trivial_bt = policy_to_bt_trivial(_FakeResult(policy, []))
+        hoisted_bt = optimize_bt(build_trivial_bt(_FakeResult(policy, [])))
+        trivial_bt = build_trivial_bt(_FakeResult(policy, []))
 
         self.assertEqual(hoisted_bt.tick(_World()), Status.SUCCESS)
         self.assertEqual(trivial_bt.tick(_World()), Status.SUCCESS)

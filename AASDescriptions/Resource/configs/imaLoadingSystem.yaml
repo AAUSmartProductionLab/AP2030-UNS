@@ -1,312 +1,323 @@
 imaLoadingSystemAAS:
     idShort: imaLoadingSystemAAS
-    id: 'https://smartproductionlab.aau.dk/aas/imaLoadingSystemAAS'
-    globalAssetId: 'https://smartproductionlab.aau.dk/assets/ZDNlYmVhZjItZTAyMC00NWMwLTg5NjEtODRiNTFkOWE0NzVl2'
-    derivedFrom: 'https://smartproductionlab.aau.dk/aas/templates/resource'
-    assetType: 'https://smartproductionlab.aau.dk/Resource/CPPM/LoadingSystem/imaLoadingSystem'
-    serialNumber: 'IMA-LS-2024-001'
-    location: 'InnoLab, Nybrovej, AAU'
+    id: "https://smartproductionlab.aau.dk/aas/imaLoadingSystemAAS"
+    globalAssetId: "https://smartproductionlab.aau.dk/assets/ZDNlYmVhZjItZTAyMC00NW\
+        MwLTg5NjEtODRiNTFkOWE0NzVl2"
+    derivedFrom: "https://smartproductionlab.aau.dk/aas/templates/resource"
+    assetType: "http://www.w3id.org/aau-ra/cssx#LoadingSystem"
+    serialNumber: "IMA-LS-2024-001"
+    location: "InnoLab, Nybrovej, AAU"
     AssetInterfacesDescription:
         InterfaceMQTT:
-            Title: 'IMA Loading System'
+            Title: "IMA Loading System"
             EndpointMetadata:
-                base: 'mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/Loading'
-                contentType: 'application/json'
+                base: "mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/Loading"
+                contentType: "application/json"
             InteractionMetadata:
                 actions:
-                    -   key: 'Loading'
-                        title: 'Loading'
-                        synchronous: 'false'
-                        input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
-                        output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
-                        forms:
-                            contentType: 'application/json'
-                            href: '/CMD/Loading'
-                            op: 'invokeAction'
-                            mqv_retain: 'false'
-                            mqv_controlPacket: subscribe
-                            mqv_qos: '2'
-                            response:
-                                contentType: 'application/json'
-                                href: '/DATA/Loading'
-                                mqv_controlPacket: 'publish'
-                                mqv_retain: 'false'
-                    -   key: 'Halt'
-                        title: 'Halt'
-                        synchronous: 'true'
-                        input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
-                        forms:
-                            contentType: 'application/json'
-                            href: '/CMD/Halt'
-                            op: 'invokeAction'
-                            mqv_retain: 'false'
-                            mqv_controlPacket: subscribe
-                            mqv_qos: '2'
-                    -   key: 'Occupy'
-                        title: 'Occupy'
-                        synchronous: 'true'
-                        input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
-                        output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
-                        forms:
-                            contentType: 'application/json'
-                            href: '/CMD/Occupy'
-                            op: 'invokeAction'
-                            mqv_retain: 'false'
-                            mqv_controlPacket: subscribe
-                            mqv_qos: '2'
-                            response:
-                                contentType: 'application/json'
-                                href: '/DATA/Occupy'
-                                mqv_controlPacket: 'publish'
-                                mqv_retain: 'false'
-                    -   key: 'Release'
-                        title: 'Release'
-                        synchronous: 'true'
-                        input: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json'
-                        output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json'
-                        forms:
-                            contentType: 'application/json'
-                            href: '/CMD/Release'
-                            op: 'invokeAction'
-                            mqv_retain: 'false'
-                            mqv_controlPacket: subscribe
-                            mqv_qos: '2'
-                            response:
-                                contentType: 'application/json'
-                                href: '/DATA/Release'
-                                mqv_controlPacket: 'publish'
-                                mqv_retain: 'false'
+                    - key: "Loading"
+                      title: "Loading"
+                      synchronous: "false"
+                      input: "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.\
+                          schema.json"
+                      output: "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command\
+                          Response.schema.json"
+                      forms:
+                          contentType: "application/json"
+                          href: "/CMD/Loading"
+                          op: "invokeAction"
+                          mqv_retain: "false"
+                          mqv_controlPacket: subscribe
+                          mqv_qos: "2"
+                          response:
+                              contentType: "application/json"
+                              href: "/DATA/Loading"
+                              mqv_controlPacket: "publish"
+                              mqv_retain: "false"
+                    - key: "Halt"
+                      title: "Halt"
+                      synchronous: "true"
+                      input: "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.\
+                          schema.json"
+                      forms:
+                          contentType: "application/json"
+                          href: "/CMD/Halt"
+                          op: "invokeAction"
+                          mqv_retain: "false"
+                          mqv_controlPacket: subscribe
+                          mqv_qos: "2"
+                    - key: "Occupy"
+                      title: "Occupy"
+                      synchronous: "true"
+                      input: "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.\
+                          schema.json"
+                      output: "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command\
+                          Response.schema.json"
+                      forms:
+                          contentType: "application/json"
+                          href: "/CMD/Occupy"
+                          op: "invokeAction"
+                          mqv_retain: "false"
+                          mqv_controlPacket: subscribe
+                          mqv_qos: "2"
+                          response:
+                              contentType: "application/json"
+                              href: "/DATA/Occupy"
+                              mqv_controlPacket: "publish"
+                              mqv_retain: "false"
+                    - key: "Release"
+                      title: "Release"
+                      synchronous: "true"
+                      input: "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.\
+                          schema.json"
+                      output: "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command\
+                          Response.schema.json"
+                      forms:
+                          contentType: "application/json"
+                          href: "/CMD/Release"
+                          op: "invokeAction"
+                          mqv_retain: "false"
+                          mqv_controlPacket: subscribe
+                          mqv_qos: "2"
+                          response:
+                              contentType: "application/json"
+                              href: "/DATA/Release"
+                              mqv_controlPacket: "publish"
+                              mqv_retain: "false"
                 properties:
-                    -   key: 'StationState'
-                        title: 'StationState'
-                        output: 'https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/stationState.schema.json'
-                        forms:
-                            contentType: 'application/json'
-                            href: '/DATA/State'
-                            mqv_retain: 'true'
-                            mqv_controlPacket: publish
-                            mqv_qos: '0'
+                    - key: "StationState"
+                      title: "StationState"
+                      output: "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/station\
+                          State.schema.json"
+                      forms:
+                          contentType: "application/json"
+                          href: "/DATA/State"
+                          mqv_retain: "true"
+                          mqv_controlPacket: publish
+                          mqv_qos: "0"
 
     Variables:
-        -   key: "PackMLState"
-            semanticId: 'https://www.omac.org/packml/state'
-            InterfaceReference:
-                Name: 'StationState'
-                Field: 'State'
-        -   key: "OccupationState"
-            semanticId: 'cssx:StationOccupation'
-            InterfaceReference:
-                Name: 'StationState'
-                Field: 'ProcessQueue'
+        - key: "PackMLState"
+          semanticId: "https://www.omac.org/packml/state"
+          InterfaceReference:
+              Name: "StationState"
+              Field: "State"
+        - key: "OccupationState"
+          semanticId: "cssx:StationOccupation"
+          InterfaceReference:
+              Name: "StationState"
+              Field: "ProcessQueue"
 
     Parameters:
         Location:
-            semanticId: 'cssx:LocationParameter'
+            semanticId: "cssx:LocationParameter"
             Position:
                 X: 360.0
                 Y: 840.0
                 Yaw: 270.0
 
     HierarchicalStructures:
-        Name: 'BillOfMaterials'
-        Archetype: 'OneUp'
+        Name: "BillOfMaterials"
+        Archetype: "OneUp"
         IsPartOf:
             aauFillingLineAAS:
-                globalAssetId: 'https://smartproductionlab.aau.dk/assets/MWQ2ODY5ZDEtZTQ3Yy00NWU4LTlmYTAtNTI3YjVlMDk4MWFi'
+                globalAssetId: "https://smartproductionlab.aau.dk/assets/MWQ2ODY5ZDEtZTQ3Yy00NW\
+                    U4LTlmYTAtNTI3YjVlMDk4MWFi"
 
     Capabilities:
-        -   key: "Loading"
-            realizedBy: "Loading"
-            semantic_id: cssx:LoadingCapability
+        - key: "Loading"
+          realizedBy: "Loading"
+          semantic_id: cssx:LoadingCapability
 
     AI-Planning:
         Domain:
             Fluents:
-                -   key: "Operational"
-                    semantic_id: "cssx:Operational"
-                    parameters:
-                        -   name: "Resource"
-                            externalRef: "css:Resource"
-                    transformation: 'params[0].Variables.PackMLState.State = "Execute"'
+                - key: "Operational"
+                  semantic_id: "cssx:Operational"
+                  parameters:
+                      - name: "Resource"
+                        externalRef: "css:Resource"
+                  transformation: "params[0].Variables.PackMLState.State = \"Execute\""
 
-                -   key: "Occupied"
-                    semantic_id: "cssx:Occupied"
-                    parameters:
-                        -   name: "Resource"
-                            externalRef: "css:Resource"
-                        -   name: "Identifiable"
-                            externalRef: "cssx:Identifiable"
-                    transformation: 'params[0].Variables.OccupationState.ProcessQueue[0] = params[1].Parameters.Uuid'
+                - key: "Occupied"
+                  semantic_id: "cssx:Occupied"
+                  parameters:
+                      - name: "Resource"
+                        externalRef: "css:Resource"
+                      - name: "Identifiable"
+                        externalRef: "cssx:Identifiable"
+                  transformation: "params[0].Variables.OccupationState.ProcessQueue[0] =
+                      params[1].Parameters.Uuid"
 
-                -   key: "Free"
-                    semantic_id: "cssx:Free"
-                    parameters:
-                        -   name: "Resource"
-                            externalRef: "css:Resource"
-                    transformation: '$count(params[0].Variables.OccupationState.ProcessQueue) = 0'
+                - key: "Free"
+                  semantic_id: "cssx:Free"
+                  parameters:
+                      - name: "Resource"
+                        externalRef: "css:Resource"
+                  transformation: "$count(params[0].Variables.OccupationState.ProcessQueue) = 0"
 
-                -   key: "StationAt"
-                    semantic_id: "cssx:StationAt"
-                    parameters:
-                        -   name: "Resource"
-                            externalRef: "css:Resource"
-                        -   name: "Location"
-                            externalRef: "cssx:LocationParameter"
+                - key: "StationAt"
+                  semantic_id: "cssx:StationAt"
+                  parameters:
+                      - name: "CPPM"
+                        externalRef: "css:CPPM"
+                      - name: "Location"
+                        externalRef: "cssx:LocationParameter"
 
             Actions:
-                -   key: "Loading"
-                    semantic_id: "cssx:LoadingCapability"
-                    SkillReference: "Loading"
-                    # JSONata: forward Product Uuid (params[1]) so the
-                    # loading station response correlates with the BT node.
-                    transformation: '{"Uuid": params[1].Parameters.Uuid}'
-                    parameters:
-                        -   name: "LoadingSystem"
-                            modelRef:
-                                - AAS: "self"
-                        -   name: "Product"
-                            externalRef: "css:Product"
-                        -   name: "TransportSystem"
-                            externalRef: "cssx:Transport"
-                        -   name: "LoadingLocation"
-                            modelRef:
-                                - AAS: "self"
-                                  Submodel: "Parameters"
-                                  Element: "Location"
-                            
-                    conditions:
-                        at_start:
-                            - predicate:
+                - key: "Loading"
+                  semantic_id: "cssx:LoadingCapability"
+                  SkillReference: "Loading"
+                  # JSONata: forward Product Uuid (params[1]) so the
+                  # loading station response correlates with the BT node.
+                  transformation: "{\"Uuid\": params[1].Parameters.Uuid}"
+                  parameters:
+                      - name: "LoadingSystem"
+                        modelRef:
+                            - AAS: "self"
+                      - name: "Product"
+                        externalRef: "css:Product"
+                      - name: "TransportSystem"
+                        externalRef: "cssx:Transport"
+                      - name: "LoadingLocation"
+                        modelRef:
+                            - AAS: "self"
+                              Submodel: "Parameters"
+                              Element: "Location"
+
+                  conditions:
+                      at_start:
+                          - predicate:
                                 ref: "Operational"
-                                parameters: [0]
-                            - predicate:
+                                parameters: [ 0 ]
+                          - predicate:
                                 ref: "Occupied"
-                                parameters: [0, 1]
-                            - predicate:
+                                parameters: [ 0, 1 ]
+                          - predicate:
                                 external: "cssx:ResourceAt"
-                                parameters: [2, 3]
-                            - predicate:
+                                parameters: [ 2, 3 ]
+                          - predicate:
                                 external: "cssx:Empty"
-                                parameters: [2]
-                    effects:
-                        at_end:
-                            - oneOf:
-                                - when: 'data.Outcome = 0'
+                                parameters: [ 2 ]
+                  effects:
+                      at_end:
+                          - oneOf:
+                                - when: "data.Outcome = 0"
                                   and:
-                                    - predicate:
-                                        external: "cssx:On"
-                                        parameters: [1, 2]
-                                    - predicate:
-                                        external: "cssx:ProductAt"
-                                        parameters: [1, 3]
-                                    - not:
-                                        predicate:
-                                            external: "cssx:Empty"
-                                            parameters: [2]
-                                - when: 'data.Outcome = 1'
+                                      - predicate:
+                                            external: "cssx:On"
+                                            parameters: [ 1, 2 ]
+                                      - predicate:
+                                            external: "cssx:ProductAt"
+                                            parameters: [ 1, 3 ]
+                                      - not:
+                                            predicate:
+                                                external: "cssx:Empty"
+                                                parameters: [ 2 ]
+                                - when: "data.Outcome = 1"
                                   not:
-                                    - predicate:
-                                        external: "cssx:On"
-                                        parameters: [1, 2]
-                -   key: "Occupy"
-                    semantic_id: "cssx:OccupyCapability"
-                    SkillReference: "Occupy"
-                    transformation: '{"Uuid": params[1].Parameters.Uuid}'
-                    parameters:
-                        -   name: "LoadingSystem"
-                            modelRef:
-                                - AAS: "self"
-                        -   name: "Identifiable"
-                            externalRef: "cssx:Identifiable"
-                    conditions:
-                        at_start:
-                            - not:
+                                      - predicate:
+                                            external: "cssx:On"
+                                            parameters: [ 1, 2 ]
+                - key: "Occupy"
+                  semantic_id: "cssx:OccupyCapability"
+                  SkillReference: "Occupy"
+                  transformation: "{\"Uuid\": params[1].Parameters.Uuid}"
+                  parameters:
+                      - name: "LoadingSystem"
+                        modelRef:
+                            - AAS: "self"
+                      - name: "Identifiable"
+                        externalRef: "cssx:Identifiable"
+                  conditions:
+                      at_start:
+                          - not:
                                 predicate:
                                     ref: "Occupied"
-                                    parameters: [0, 1]
-                            - predicate:
+                                    parameters: [ 0, 1 ]
+                          - predicate:
                                 ref: "Free"
-                                parameters: [0]
-                    effects:
-                        at_end:
-                            - predicate:
+                                parameters: [ 0 ]
+                  effects:
+                      at_end:
+                          - predicate:
                                 ref: "Occupied"
-                                parameters: [0, 1]
-                            - not:
+                                parameters: [ 0, 1 ]
+                          - not:
                                 predicate:
                                     ref: "Free"
-                                    parameters: [0]
+                                    parameters: [ 0 ]
 
-                -   key: "Release"
-                    semantic_id: "cssx:ReleaseCapability"
-                    SkillReference: "Release"
-                    transformation: '{"Uuid": params[1].Parameters.Uuid}'
-                    parameters:
-                        -   name: "LoadingSystem"
-                            modelRef:
-                                - AAS: "self"
-                        -   name: "Identifiable"
-                            externalRef: "cssx:Identifiable"
-                    conditions:
-                        at_start:
-                            - predicate:
+                - key: "Release"
+                  semantic_id: "cssx:ReleaseCapability"
+                  SkillReference: "Release"
+                  transformation: "{\"Uuid\": params[1].Parameters.Uuid}"
+                  parameters:
+                      - name: "LoadingSystem"
+                        modelRef:
+                            - AAS: "self"
+                      - name: "Identifiable"
+                        externalRef: "cssx:Identifiable"
+                  conditions:
+                      at_start:
+                          - predicate:
                                 ref: "Operational"
-                                parameters: [0]
-                            - predicate:
+                                parameters: [ 0 ]
+                          - predicate:
                                 ref: "Occupied"
-                                parameters: [0, 1]
-                    effects:
-                        at_end:
-                            - not:
+                                parameters: [ 0, 1 ]
+                  effects:
+                      at_end:
+                          - not:
                                 - predicate:
-                                    ref: "Occupied"
-                                    parameters: [0, 1]
-                            - predicate:
+                                      ref: "Occupied"
+                                      parameters: [ 0, 1 ]
+                          - predicate:
                                 ref: "Free"
-                                parameters: [0]
+                                parameters: [ 0 ]
         Problem:
             Objects:
-                -   name: "imaLoadingSystem"
-                    modelRef:
-                        - AAS: "self"
-                -   name: "loadingLocation"
-                    modelRef:
-                        - AAS: "self"
-                          Submodel: "Parameters"
-                          Element: "Location"
+                - name: "imaLoadingSystem"
+                  modelRef:
+                      - AAS: "self"
+                - name: "loadingLocation"
+                  modelRef:
+                      - AAS: "self"
+                        Submodel: "Parameters"
+                        Element: "Location"
 
             Init:
-                -   predicate:
-                    ref: "Operational"
-                    parameters: [0]
-                -   predicate:
-                    ref: "Free"
-                    parameters: [0]
-                -   predicate:
-                    ref: "StationAt"
-                    parameters: [0, 1]
+                - predicate:
+                  ref: "Operational"
+                  parameters: [ 0 ]
+                - predicate:
+                  ref: "Free"
+                  parameters: [ 0 ]
+                - predicate:
+                  ref: "StationAt"
+                  parameters: [ 0, 1 ]
 
             Goal:
-                -   predicate:
-                    ref: "Free"
-                    parameters: [0]
+                - predicate:
+                  ref: "Free"
+                  parameters: [ 0 ]
     Skills:
-        -   key: "Loading"
-            description: "Loading function for pharmaceutical primary packaging"
-            semantic_id: "cssx:LoadingSkill"
-            InterfaceReference: "Loading"
+        - key: "Loading"
+          description: "Loading function for pharmaceutical primary packaging"
+          semantic_id: "cssx:LoadingSkill"
+          InterfaceReference: "Loading"
 
-        -   key: "Halt"
-            description: "Halt the current operation"
-            semantic_id: "cssx:HaltSkill"
-            InterfaceReference: "Halt"
+        - key: "Halt"
+          description: "Halt the current operation"
+          semantic_id: "cssx:HaltSkill"
+          InterfaceReference: "Halt"
 
-        -   key: "Occupy"
-            description: "Occupy the system for exclusive use"
-            semantic_id: "cssx:OccupySkill"
-            InterfaceReference: "Occupy"
+        - key: "Occupy"
+          description: "Occupy the system for exclusive use"
+          semantic_id: "cssx:OccupySkill"
+          InterfaceReference: "Occupy"
 
-        -   key: "Release"
-            description: "Release the system from exclusive use"
-            semantic_id: "cssx:ReleaseSkill"
-            InterfaceReference: "Release"
+        - key: "Release"
+          description: "Release the system from exclusive use"
+          semantic_id: "cssx:ReleaseSkill"
+          InterfaceReference: "Release"

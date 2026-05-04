@@ -23,16 +23,16 @@ REPO_ROOT = PLANNER_ROOT.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from Planner.bt_synthesis.api import (
+from Planner.step4_policy_to_bt.nodes import (
     ActionNode,
     BehaviorTree,
     ConditionNode,
     ReactiveSelector,
     Sequence,
     SubTreeRef,
-    bt_to_xml,
 )
-from Planner.bt_synthesis.optimizer import parameterize_subtrees
+from Planner.step5_bt_optimization.optimizer import parameterize_subtrees
+from Planner.step6_bt_serialization.xml_writer import bt_to_xml
 
 
 def _make_member(action_args, productat_ref, action_ref):

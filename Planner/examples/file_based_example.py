@@ -16,9 +16,9 @@ import time
 from pathlib import Path
 
 _Planner_ROOT = Path(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-_REPO_ROOT = _Planner_ROOT.parent
 _UP_PR2_ROOT = (
-    _REPO_ROOT
+    _Planner_ROOT
+    / "third_party"
     / "unified-planning"
     / "unified_planning"
     / "engines"
@@ -30,9 +30,11 @@ sys.path.insert(0, str(_PR2_ROOT))
 sys.path.insert(0, str(_Planner_ROOT))
 
 
-from bt_synthesis.api import policy_to_bt, bt_to_xml
-from pddl_planning.planner_core.solver import solve_from_files
-from pddl_planning.visualization import create_force_graph_html
+from step4_policy_to_bt.builder import build_trivial_bt
+from step5_bt_optimization import optimize_bt
+from step6_bt_serialization.xml_writer import bt_to_xml
+from step3_pddl_solving.solver import solve_from_files
+from step3_pddl_solving.visualization import create_force_graph_html
 
 
 def main():
@@ -66,9 +68,13 @@ def main():
         print("No strong-cyclic solution found.")
         return
 
-    # ── Build grouped BT ─────────────────────────────────────────────
+    policy_result = result.require_policy_result()
+    problem_obj = result.metadata.get("problem") if isinstance(result.metadata, dict) else None
+
+    # ── Build trivial BT (Step 4) and optimize (Step 5) ─────────────
     t0 = time.time()
-    bt = policy_to_bt(result)
+    bt_trivial = build_trivial_bt(policy_result, problem=problem_obj)
+    bt = optimize_bt(bt_trivial)
     build_time = time.time() - t0
 
     print(f"Build time: {build_time:.3f}s")
@@ -96,7 +102,7 @@ def main():
     print()
 
     # ── Generate progression BT + XML ───────────────────────────────
-    bt2 = policy_to_bt(result)
+    bt2 = bt
     print("\nBT (progression) structure:")
     print(bt2.pretty())
     print()

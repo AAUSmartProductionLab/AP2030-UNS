@@ -11,8 +11,8 @@ REPO_ROOT = Planner_ROOT.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from Planner.bt_synthesis.causal import GroundedAction
-from Planner.bt_synthesis.simulator import (
+from Planner.step4_policy_to_bt.causal import GroundedAction
+from Planner.bt_simulation.simulator import (
     SimulatedWorld,
     _normalize_outcome_weights,
     build_global_outcome_probability_provider,

@@ -213,3 +213,4 @@ ppr-ontology/validation/outputs/*
 !ppr-ontology/generation/output/.gitkeep
 .claude/settings.local.json
 run_metrics_export/*
+run_metrics/*

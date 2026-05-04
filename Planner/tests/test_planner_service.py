@@ -19,15 +19,6 @@ from Planner.production_planner_service import (
 )
 
 
-class _PipelineResult:
-    def __init__(self, solve_result, bt_xml="", warnings=None, capabilities=None, artifacts=None):
-        self.solve_result = solve_result
-        self.bt_xml = bt_xml
-        self.warnings = warnings or []
-        self.capabilities = capabilities or []
-        self.artifacts = artifacts or {}
-
-
 class PlannerServiceTests(unittest.TestCase):
     def test_planning_result_response_uses_new_fields(self):
         result = PlanningResult(
@@ -63,7 +54,7 @@ class PlannerServiceTests(unittest.TestCase):
         config = PlannerConfig(save_intermediate_files=False, strict_semantic_solve=True)
         service = PlannerService(aas_client=object(), mqtt_client=object(), config=config)
 
-        planning_sources = [object()]
+        planning_sources = [SimpleNamespace(aas_id="https://example/aas/productA", asset_type="Product")]
         service.context_collector = Mock(return_value=SimpleNamespace(
             order_config={
                 "id": "https://example/aas/productA",
@@ -80,17 +71,32 @@ class PlannerServiceTests(unittest.TestCase):
 
         unsolved = SimpleNamespace(
             is_solved=False,
+            is_policy=False,
+            is_plan=False,
             mode="plan",
             backend_name="up",
             status="UNSOLVED",
-        )
-        pipeline_result = _PipelineResult(
-            solve_result=unsolved,
-            warnings=["semantic unsolved"],
-            artifacts={"domain_pddl": "/tmp/domain.pddl"},
+            metadata={},
         )
 
-        with patch.object(service, "_run_planning_pipeline", return_value=pipeline_result) as run_pipeline:
+        with patch("Planner.production_planner_service.parse_source", return_value=SimpleNamespace(warnings=[])), patch(
+            "Planner.production_planner_service.merge_sources", return_value={"actions": [], "constraints_terms": []}
+        ), patch(
+            "Planner.production_planner_service.compile_bop_ordering"
+        ) as compile_bop_mock, patch(
+            "Planner.production_planner_service.build_up_problem", return_value=SimpleNamespace(_planner_metadata={})
+        ), patch(
+            "Planner.production_planner_service.export_problem_artifacts",
+            return_value={"artifacts_dir": "/tmp", "domain_pddl": "/tmp/domain.pddl"},
+        ), patch(
+            "Planner.production_planner_service.solve_with_reduced_fallback", return_value=unsolved
+        ) as solve_mock, patch(
+            "Planner.production_planner_service.build_capabilities", return_value=[]
+        ), patch(
+            "Planner.production_planner_service.write_stage_metrics", return_value=None
+        ), patch(
+            "Planner.production_planner_service.publish_stage_metrics"
+        ):
             result = service.plan_and_register(
                 asset_ids=["https://example/aas/dispensing"],
                 order_aas_id="https://example/aas/productA",
@@ -102,7 +108,12 @@ class PlannerServiceTests(unittest.TestCase):
         self.assertEqual(result.planner_backend, "up")
         self.assertEqual(result.planner_mode, "plan")
 
-        run_pipeline.assert_called_once_with(planning_sources, bop_config={"Processes": []})
+        solve_call = solve_mock.call_args.kwargs
+        self.assertEqual(solve_call["timeout"], config.planning_timeout_seconds)
+        self.assertFalse(solve_call["allow_reduced_fallback"])
+
+        compile_call_args = compile_bop_mock.call_args.args
+        self.assertEqual(compile_call_args[1], {"Processes": []})
 
     def test_plan_and_register_success_uses_pipeline_capabilities_for_process_config(self):
         config = PlannerConfig(
@@ -120,7 +131,7 @@ class PlannerServiceTests(unittest.TestCase):
             "BillOfProcesses": {"Processes": []},
             "Requirements": {"x": 1},
         }
-        planning_sources = [object()]
+        planning_sources = [SimpleNamespace(aas_id="https://example/aas/productA", asset_type="Product")]
         service.context_collector = Mock(return_value=SimpleNamespace(
             order_config=order_config,
             requirements={"x": 1},
@@ -146,21 +157,46 @@ class PlannerServiceTests(unittest.TestCase):
                 resources={"imaDispensing": "https://example/aas/dispensing"},
             )
         ]
+        policy_result = SimpleNamespace(policy=["if ... then ..."])
         solved = SimpleNamespace(
             is_solved=True,
+            is_policy=True,
+            is_plan=False,
             mode="policy",
             backend_name="pr2-direct",
             status="SOLVED_POLICY",
+            policy=["if ... then ..."],
+            metadata={"problem": SimpleNamespace(_planner_metadata={})},
         )
-        pipeline_result = _PipelineResult(
-            solve_result=solved,
-            bt_xml="<root BTCPP_format=\"4\" />",
-            warnings=["using policy conversion"],
-            capabilities=capabilities,
-            artifacts={"behavior_tree_xml": "/tmp/behavior_tree.xml"},
-        )
+        solved.require_policy_result = Mock(return_value=policy_result)
 
-        with patch.object(service, "_run_planning_pipeline", return_value=pipeline_result) as run_pipeline:
+        with patch("Planner.production_planner_service.parse_source", return_value=SimpleNamespace(warnings=[])), patch(
+            "Planner.production_planner_service.merge_sources", return_value={"actions": [], "constraints_terms": []}
+        ), patch(
+            "Planner.production_planner_service.compile_bop_ordering"
+        ), patch(
+            "Planner.production_planner_service.build_up_problem", return_value=SimpleNamespace(_planner_metadata={})
+        ), patch(
+            "Planner.production_planner_service.export_problem_artifacts", return_value={"artifacts_dir": "/tmp"}
+        ), patch(
+            "Planner.production_planner_service.solve_with_reduced_fallback", return_value=solved
+        ), patch(
+            "Planner.production_planner_service.build_trivial_bt", return_value=SimpleNamespace(root=object())
+        ), patch(
+            "Planner.production_planner_service.optimize_bt", return_value=SimpleNamespace(root=object())
+        ), patch(
+            "Planner.production_planner_service.bt_to_xml", return_value="<root BTCPP_format=\"4\" />"
+        ), patch(
+            "Planner.production_planner_service.count_bt_nodes", side_effect=[9, 12]
+        ), patch(
+            "Planner.production_planner_service.export_policy_visualization"
+        ), patch(
+            "Planner.production_planner_service.build_capabilities", return_value=capabilities
+        ), patch(
+            "Planner.production_planner_service.write_stage_metrics", return_value=None
+        ), patch(
+            "Planner.production_planner_service.publish_stage_metrics"
+        ):
             result = service.plan_and_register(
                 asset_ids=["https://example/aas/dispensing"],
                 order_aas_id="https://example/aas/productA",
@@ -177,8 +213,8 @@ class PlannerServiceTests(unittest.TestCase):
         self.assertEqual(generate_args[0], capabilities)
         self.assertEqual(generate_args[1], "https://example/aas/productA")
         self.assertEqual(generate_args[2], order_config)
-        self.assertEqual(generate_args[3], {"x": 1})
-        self.assertEqual(generate_args[5], "https://example/aas/planartable")
+        self.assertEqual(generate_args[3], "production_productA.xml")
+        self.assertEqual(generate_args[4], "https://example/aas/planartable")
         self.assertIsNone(service.process_generator.generate_process_aas_bundle.call_args.kwargs["output_dir"])
 
         service.process_generator.publish_bundle_registration.assert_called_once_with(
@@ -186,8 +222,6 @@ class PlannerServiceTests(unittest.TestCase):
             service.config.registration_topic,
             process_bundle,
         )
-
-        run_pipeline.assert_called_once_with(planning_sources, bop_config={"Processes": []})
 
 
 if __name__ == "__main__":

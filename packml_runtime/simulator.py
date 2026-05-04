@@ -65,6 +65,8 @@ class PackMLStateMachine:
         # Stores original command UUID for pending registration confirmations
         # Key: UUID of the item in queue, Value: UUID of the original registration command
         self.pending_registrations = {}
+        # Stores payloads for queued service-mode execute commands.
+        self.pending_execute_payloads = {}
 
         # Occupation topics (optional - can be disabled for services like planners)
         self.register_topic = None
@@ -370,6 +372,35 @@ class PackMLStateMachine:
 
         self.is_processing = False  # Reset processing flag
 
+        if self.auto_execute and not self.enable_occupation:
+            if completed_uuid in self.pending_execute_payloads:
+                del self.pending_execute_payloads[completed_uuid]
+
+            if self.uuids:
+                if self.uuids[0] == completed_uuid:
+                    self.uuids.pop(0)
+                elif completed_uuid in self.uuids:
+                    self.uuids.remove(completed_uuid)
+
+            self.current_processing_uuid = None
+            self.Uuid = self.uuids[0] if self.uuids else None
+            self.publish_state()
+
+            # Keep service stations ready to accept commands.
+            if self.state != PackMLState.EXECUTE:
+                self.state = PackMLState.EXECUTE
+                self.publish_state()
+
+            if self.uuids:
+                next_uuid = self.uuids[0]
+                next_payload = self.pending_execute_payloads.get(next_uuid)
+                if next_payload:
+                    next_message, next_topic, next_function, next_args = next_payload
+                    self.execute_command(next_message, next_topic, next_function, *next_args)
+            return
+
+        self.transition_to(PackMLState.COMPLETING, completed_uuid)
+
     def abort_command(self):  # External command to trigger "stop current task and clear queue"
         """Attempts to stop the current process, clears the queue, and transitions to ABORTED."""
         print("Abort command received.")
@@ -394,8 +425,43 @@ class PackMLStateMachine:
             
             # Auto-queue for service mode (no occupation) - process commands immediately
             if self.auto_execute and not self.enable_occupation:
-                if command_uuid and command_uuid not in self.uuids:
+                if not command_uuid:
+                    timestamp_failure = datetime.datetime.now(datetime.timezone.utc).isoformat(
+                        timespec='milliseconds').replace('+00:00', 'Z')
+                    response_failure = {
+                        "State": "FAILURE",
+                        "TimeStamp": timestamp_failure,
+                        "Uuid": "UNKNOWN_MESSAGE_UUID"
+                    }
+                    execute_topic.publish(response_failure, self.client, False)
+                    return
+
+                if command_uuid not in self.pending_execute_payloads:
+                    self.pending_execute_payloads[command_uuid] = (
+                        message,
+                        execute_topic,
+                        process_function,
+                        args,
+                    )
+
+                if command_uuid not in self.uuids and command_uuid != self.current_processing_uuid:
                     self.uuids.append(command_uuid)
+                    self.publish_state()
+
+                if self.is_processing or (self.uuids and command_uuid != self.uuids[0]):
+                    timestamp_running = datetime.datetime.now(datetime.timezone.utc).isoformat(
+                        timespec='milliseconds').replace('+00:00', 'Z')
+                    response_running = {
+                        "State": "RUNNING",
+                        "TimeStamp": timestamp_running,
+                        "Uuid": command_uuid
+                    }
+                    execute_topic.publish(response_running, self.client, False)
+                    return
+
+                queued_payload = self.pending_execute_payloads.get(command_uuid)
+                if queued_payload:
+                    message, execute_topic, process_function, args = queued_payload
             
             if self.uuids and command_uuid == self.uuids[0] and not self.is_processing:
                 # Do not pop from self.uuids here; completing_state will.
@@ -486,6 +552,17 @@ class PackMLStateMachine:
             else:  # Conditions for execution not met
                 attempted_uuid = message.get(
                     "Uuid") if message else "UNKNOWN_MESSAGE_UUID"
+                if self.auto_execute and not self.enable_occupation and attempted_uuid in self.uuids:
+                    timestamp_running = datetime.datetime.now(datetime.timezone.utc).isoformat(
+                        timespec='milliseconds').replace('+00:00', 'Z')
+                    response_running = {
+                        "State": "RUNNING",
+                        "TimeStamp": timestamp_running,
+                        "Uuid": attempted_uuid
+                    }
+                    execute_topic.publish(response_running, self.client, False)
+                    return
+
                 current_queue_head = self.uuids[0] if self.uuids else "EMPTY_QUEUE"
                 print(f"Execute command rejected for UUID '{attempted_uuid}'. "
                       f"Current State: {self.state.value}, Expected Head: '{current_queue_head}', "
@@ -500,6 +577,11 @@ class PackMLStateMachine:
                 }
                 execute_topic.publish(response_failure, self.client, False)
         else:  # Not in EXECUTE state
+            if self.auto_execute and not self.enable_occupation:
+                self.transition_to(PackMLState.EXECUTE)
+                self.execute_command(message, execute_topic, process_function, *args)
+                return
+
             attempted_uuid = message.get(
                 "Uuid") if message else "UNKNOWN_MESSAGE_UUID"
             print(

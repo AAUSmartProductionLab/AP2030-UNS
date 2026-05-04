@@ -14,7 +14,7 @@ REPO_ROOT = Planner_ROOT.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from Planner.process_aas_generation_publishing.process_aas_generator import ProcessAASGenerator
+from Planner.step7_process_aas_publishing.process_aas_generator import ProcessAASGenerator
 
 
 class ProcessAASBundleTests(unittest.TestCase):
@@ -34,7 +34,6 @@ class ProcessAASBundleTests(unittest.TestCase):
                 planning_capabilities=capabilities,
                 order_aas_id="https://example/aas/productA",
                 order_info=order_info,
-                requirements={},
                 bt_filename="production_test.xml",
                 planar_table_id="https://example/aas/planar",
                 output_dir=tmp_dir,
@@ -62,7 +61,6 @@ class ProcessAASBundleTests(unittest.TestCase):
             planning_capabilities=capabilities,
             order_aas_id="https://example/aas/productB",
             order_info={"BatchInformation": {"ProductName": "NoFileOrder"}},
-            requirements={},
             output_dir=None,
         )
 
@@ -83,7 +81,6 @@ class ProcessAASBundleTests(unittest.TestCase):
             planning_capabilities=capabilities,
             order_aas_id="https://example/aas/productB",
             order_info={"BatchInformation": {"ProductName": "RunIdOrder"}},
-            requirements={},
             run_id="run-123",
             output_dir=None,
         )

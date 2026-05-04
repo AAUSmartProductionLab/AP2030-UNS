@@ -41,6 +41,7 @@ services:
       - "5173:5173"
     volumes:
       - ./Configurator:/app
+      - ./ppr-ontology:/ppr-ontology:ro
       - /app/node_modules
     environment:
       - NODE_ENV=development
@@ -147,7 +148,7 @@ services:
       - ./BT_Controller/config:/AP2030-UNS/BT_Controller/config
       - ./BTDescriptions:/AP2030-UNS/MQTTSchemas
       - ./AASDescriptions:/AP2030-UNS/AASDescriptions
-      - run_metrics:/data/run_metrics
+      - ./run_metrics:/data/run_metrics
     ports:
     - "1667:1667"
     networks:
@@ -647,6 +648,3 @@ services:
 networks:
   hivemq-network:
     driver: bridge
-
-volumes:
-  run_metrics:

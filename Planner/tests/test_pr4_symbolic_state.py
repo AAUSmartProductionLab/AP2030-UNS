@@ -20,20 +20,22 @@ ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
-from Planner.aas_to_pddl_conversion.up_builder import (  # noqa: E402
-    _atom_to_grounded_atom,
+from Planner.step2_pddl_construction.up_builder.bop_encoding import (  # noqa: E402
     _build_effect_branches,
+)
+from Planner.step2_pddl_construction.up_builder.fluents import (  # noqa: E402
+    _atom_to_grounded_atom,
     _is_symbolic_fluent,
     _walk_effect_term,
 )
-from Planner.bt_synthesis.execution_refs import (  # noqa: E402
+from Planner.step4_policy_to_bt.execution_refs import (  # noqa: E402
     resolve_action_execution_ref,
 )
-from Planner.bt_synthesis.nodes import (  # noqa: E402
+from Planner.step4_policy_to_bt.nodes import (  # noqa: E402
     BehaviorTree,
     SuccessLeaf,
 )
-from Planner.bt_synthesis.xml_writer import bt_to_xml  # noqa: E402
+from Planner.step6_bt_serialization.xml_writer import bt_to_xml  # noqa: E402
 
 
 class SymbolicFluentTests(unittest.TestCase):

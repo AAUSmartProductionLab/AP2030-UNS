@@ -11,7 +11,7 @@ REPO_ROOT = Planner_ROOT.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from Planner.aas_to_pddl_conversion.planning_context import collect_planning_context
+from Planner.step1_aas_input.context import collect_planning_context
 
 
 class _FakeAASClient:

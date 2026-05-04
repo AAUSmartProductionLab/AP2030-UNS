@@ -118,6 +118,16 @@ css:Product rdfs:subClassOf :Identifiable .
   rdfs:subClassOf :CPPS ;
   rdfs:comment "Cyber-Physical Production System. A top-level production resource composed of one or more Cyber-Physical Production Modules (CPPMs)." .
 
+### http://www.w3id.org/aau-ra/cssx#Orchestrator
+:Orchestrator rdf:type owl:Class ;
+  rdfs:subClassOf css:Resource ;
+  rdfs:comment "Coordination software resource used for orchestration across modules." .
+
+### http://www.w3id.org/aau-ra/cssx#ProductionPlanner
+:ProductionPlanner rdf:type owl:Class ;
+  rdfs:subClassOf css:Resource ;
+  rdfs:comment "Planning software resource used to generate policies and behavior trees." .
+
 
 #################################################################
 #    CPPM Types
@@ -134,6 +144,41 @@ css:Product rdfs:subClassOf :Identifiable .
   rdfs:subClassOf :CPPM ;
   rdfs:comment "Cyber-Physical Production Module. A mid-level production resource that belongs to a CPPS and is composed of one or more Cyber-Physical Sub-systems (CPSs)." .
 
+###  http://www.w3id.org/aau-ra/cssx#PlanarTable
+:PlanarTable rdf:type owl:Class ;
+  rdfs:subClassOf :CPPM ;
+  rdfs:comment "Motion module that hosts and coordinates multiple planar shuttles." .
+
+###  http://www.w3id.org/aau-ra/cssx#DispensingSystem
+:DispensingSystem rdf:type owl:Class ;
+  rdfs:subClassOf :CPPM ;
+  rdfs:comment "Module that dispenses product into containers." .
+
+###  http://www.w3id.org/aau-ra/cssx#StopperingSystem
+:StopperingSystem rdf:type owl:Class ;
+  rdfs:subClassOf :CPPM ;
+  rdfs:comment "Module that applies stoppers to containers." .
+
+###  http://www.w3id.org/aau-ra/cssx#CappingSystem
+:CappingSystem rdf:type owl:Class ;
+  rdfs:subClassOf :CPPM ;
+  rdfs:comment "Module that performs container capping." .
+
+###  http://www.w3id.org/aau-ra/cssx#QualityControlSystem
+:QualityControlSystem rdf:type owl:Class ;
+  rdfs:subClassOf :CPPM ;
+  rdfs:comment "Module that performs visual inspection and quality control." .
+
+###  http://www.w3id.org/aau-ra/cssx#LoadingSystem
+:LoadingSystem rdf:type owl:Class ;
+  rdfs:subClassOf :CPPM ;
+  rdfs:comment "Module that loads products onto transport resources." .
+
+###  http://www.w3id.org/aau-ra/cssx#UnloadingSystem
+:UnloadingSystem rdf:type owl:Class ;
+  rdfs:subClassOf :CPPM ;
+  rdfs:comment "Module that unloads products from transport resources." .
+
 #################################################################
 #    CPS Types
 #################################################################
@@ -142,3 +187,8 @@ css:Product rdfs:subClassOf :Identifiable .
 :Transport rdf:type owl:Class ;
   rdfs:subClassOf :CPS ;
   rdfs:comment "A transport sub-system that moves products between production modules (e.g. planar motor shuttle)." .
+
+###  http://www.w3id.org/aau-ra/cssx#PlanarTableShuttle
+:PlanarTableShuttle rdf:type owl:Class ;
+  rdfs:subClassOf :Transport ;
+  rdfs:comment "A planar motor shuttle transport unit operating on a planar table." .
