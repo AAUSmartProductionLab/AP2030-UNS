@@ -214,7 +214,7 @@ class ProcessAASGenerator:
     
     def _generate_process_id(self, order_info: Dict[str, Any]) -> str:
         """Generate a unique process ID based on product info"""
-        order_name = order_info.get('BatchInformation', {}).get('ProductName', 'Unknown')
+        order_name = order_info.get('ProductInformation', {}).get('ProductName', 'Unknown')
         # Clean up product name for ID
         clean_name = ''.join(c for c in order_name if c.isalnum())[:20]
         timestamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
