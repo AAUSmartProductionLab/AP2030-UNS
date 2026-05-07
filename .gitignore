@@ -196,15 +196,11 @@ logs/
 .vscode/
 offlineResponse_1656FB-A61627-4A4CB2-F0C0CA-8531ED-BD332C.dat
 Grafana/grafana-data/grafana.db
-PlanarMotorSimulator/setup.exe
-PlanarMotorSimulator/Simulation Installer.msi
 config.yaml
 deprecated/
-Planner/output/*
-simulated_stations/robotics/ur5/*
-
 physical_stations/*
 simulated_stations/robotics/*
+simulated_stations/PlanarMotorSimulator/*
 Planner/output/*
 
 # ppr-ontology generated outputs
@@ -214,3 +210,6 @@ ppr-ontology/validation/outputs/*
 .claude/settings.local.json
 run_metrics_export/*
 run_metrics/*
+
+
+neo4j/*

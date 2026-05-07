@@ -12,7 +12,7 @@ Before running the system, configure your environment:
 
 ```bash
     # Copy the example environment file
-    cp .env.example .env
+    cp .env.exampleOffice .env
     
     # Edit .env and set your machine's IP address
     # Update EXTERNAL_HOST to your machine's IP (e.g., 192.168.1.100)
@@ -47,16 +47,33 @@ The stack can be first build and then run with the following commands:
     docker compose build --parallel
     docker compose up -d
 ```
-This starts the following applications:
-- HiveMQ Mqtt Broker
-- Mqtt-Explorer
-- TimescaleDB
-- Grafana
-- Portainer
-- Configurator
-- Groot2
-- Behaviour Tree Controller
-- Eclipse Basyx AAS Repository
-- Eclipse Basyx AAS Registry
-- Eclipse Basyx Databridge
-- PackML stations (simulated as python ndoes) 
+
+## Module Flags via .env
+
+Use `COMPOSE_PROFILES` in `.env` to control optional modules while still running with plain `docker compose up`.
+
+Example:
+
+```bash
+COMPOSE_PROFILES=simulated-stations,knowledge-graph
+```
+
+Available profile modules:
+- `simulated-stations`: production planner + simulated station services
+- `knowledge-graph`: Kafka + Neo4j + Kafka Connect bridge
+
+Knowledge graph profile also requires Kafka eventing variables in `.env`:
+
+```bash
+BASYX_FEATURE_KAFKA_ENABLED=true
+SPRING_KAFKA_BOOTSTRAP_SERVERS=PLAINTEXT://kafka:9092
+KAFKA_BOOTSTRAP_SERVERS=PLAINTEXT://kafka:9092
+```
+
+If you disable `knowledge-graph`, set those values back to defaults:
+
+```bash
+BASYX_FEATURE_KAFKA_ENABLED=false
+SPRING_KAFKA_BOOTSTRAP_SERVERS=
+KAFKA_BOOTSTRAP_SERVERS=
+```
