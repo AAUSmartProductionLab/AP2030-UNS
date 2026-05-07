@@ -1,7 +1,7 @@
 cytivaCappingSystemAAS:
     idShort: cytivaCappingSystemAAS
     id: 'https://smartproductionlab.aau.dk/aas/cytivaCappingSystemAAS'
-    globalAssetId: 'https://smartproductionlab.aau.dk/assets/NGQ5ZWE4ZmUtY2Q3OS00Nzc5LWE5YjEtNGEzZGRkODRhNzQ2'
+    globalAssetId: 'https://smartproductionlab.aau.dk/assets/Y3l0aXZhQ2FwcGluZ1N5c3RlbUFBUw=='
     derivedFrom: 'https://smartproductionlab.aau.dk/aas/templates/resource'
     assetType: 'http://www.w3id.org/aau-ra/cssx#CappingSystem'
     serialNumber: 'SYN-SS-2024-001'
