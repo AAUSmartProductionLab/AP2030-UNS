@@ -1,0 +1,106 @@
+services:
+  # Optional eventing backbone for BaSyx -> Kafka -> Neo4j
+  kafka:
+    profiles: ["knowledge-graph"]
+    image: confluentinc/cp-kafka:${KG_KAFKA_VERSION:-7.9.1}
+    container_name: kg-kafka
+    restart: unless-stopped
+    ports:
+      - "${KG_KAFKA_EXTERNAL_PORT:-9093}:9093"
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: INTER_BROKER://kafka:9094,PLAINTEXT://kafka:9092,EXTERNAL://localhost:${KG_KAFKA_EXTERNAL_PORT:-9093}
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTER_BROKER
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENERS: INTER_BROKER://:9094,CONTROLLER://:9095,PLAINTEXT://:9092,EXTERNAL://:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,INTER_BROKER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_BROKER_ID: 1
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9095
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+      CLUSTER_ID: ${KG_KAFKA_CLUSTER_ID:-jmpccZs2RHaYUbZ-LgaIhQ}
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      KAFKA_MIN_INSYNC_REPLICAS: 1
+      KAFKA_NUM_PARTITIONS: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+    healthcheck:
+      test: ["CMD", "bash", "-c", "echo > /dev/tcp/kafka/9092"]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+      start_period: 15s
+    networks:
+      - hivemq-network
+
+  neo4j:
+    profiles: ["knowledge-graph"]
+    image: neo4j:${KG_NEO4J_VERSION:-5-community-bullseye}
+    container_name: kg-neo4j
+    restart: unless-stopped
+    ports:
+      - "${KG_NEO4J_HTTP_PORT:-7474}:7474"
+      - "${KG_NEO4J_BOLT_PORT:-7687}:7687"
+    environment:
+      NEO4J_AUTH: ${KG_NEO4J_AUTH:-none}
+      NEO4J_PLUGINS: '["apoc"]'
+      NEO4J_dbms_memory_heap_max__size: ${KG_NEO4J_HEAP_MAX:-8G}
+      NEO4J_dbms_memory_pagecache_size: ${KG_NEO4J_PAGECACHE:-4G}
+    volumes:
+      - ../neo4j/data:/data
+      - ../neo4j/logs:/logs
+      - ../neo4j/plugins:/plugins
+    healthcheck:
+      test: ["CMD", "cypher-shell", "RETURN 1"]
+      interval: 30s
+      start_period: 10s
+      timeout: 10s
+      retries: 5
+    networks:
+      - hivemq-network
+
+  # Optional connector from https://github.com/dfkibasys/aas_neo4j_integration
+  kafka-connect:
+    profiles: ["knowledge-graph"]
+    image: ${KG_KAFKA_CONNECT_IMAGE:-dfkibasys/aas-neo4j-kafka-connect-plugin:7.9.1-0.1.14}
+    container_name: kg-kafka-connect
+    restart: unless-stopped
+    ports:
+      - "${KG_KAFKA_CONNECT_PORT:-8094}:8083"
+    environment:
+      CONNECT_BOOTSTRAP_SERVERS: kafka:9092
+      CONNECT_REST_ADVERTISED_HOST_NAME: kafka-connect
+      BASYX_AAS_REPO_URL: http://aas-env:8081
+      BASYX_NEO4J_TARGET_URL: http://neo4j:7474/db/neo4j/tx/commit
+    depends_on:
+      kafka:
+        condition: service_healthy
+      neo4j:
+        condition: service_healthy
+      aas-env:
+        condition: service_started
+    networks:
+      - hivemq-network
+
+  akhq:
+    profiles: ["knowledge-graph"]
+    image: tchiotludo/akhq:${KG_AKHQ_VERSION:-0.25.1}
+    container_name: kg-akhq
+    restart: unless-stopped
+    ports:
+      - "${KG_AKHQ_PORT:-8086}:8080"
+    environment:
+      AKHQ_CONFIGURATION: |
+        akhq:
+          connections:
+            ap2030-kafka:
+              properties:
+                bootstrap.servers: "kafka:9092"
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - hivemq-network
+
+

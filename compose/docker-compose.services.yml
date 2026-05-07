@@ -1,0 +1,239 @@
+services:
+  hivemq-broker:
+    image: eclipse-mosquitto
+    container_name: hivemq-broker
+    volumes:
+      - ../Mosquitto/config:/mosquitto/config:rw
+      - ../Mosquitto/data:/mosquitto/data:rw
+      - ../Mosquitto/log:/mosquitto/log:rw
+    restart: unless-stopped
+    ports:
+      - "1883:1883" #default mqtt port
+      - "9001:9001" #default mqtt port for websockets
+    networks:
+      - hivemq-network
+
+  frontend:
+    build:
+      context: ./Configurator
+      dockerfile: Dockerfile.frontend
+      target: dev
+    ports:
+      - "5173:5173"
+    volumes:
+      - ../Configurator:/app
+      - ../ppr-ontology:/ppr-ontology:ro
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - VITE_MQTT_BROKER_HOST=${EXTERNAL_HOST:-localhost}
+      - VITE_MQTT_BROKER_PORT=${MQTT_WS_PORT:-9001}
+      - VITE_AAS_REPOSITORY_URL=http://${EXTERNAL_HOST:-localhost}:8081
+      - VITE_AAS_SHELL_REGISTRY_URL=http://${EXTERNAL_HOST:-localhost}:8082
+    networks:
+      - hivemq-network
+    depends_on:
+      - hivemq-broker
+    restart: unless-stopped
+    
+  # timescaledb:
+  #   image: timescale/timescaledb:latest-pg14
+  #   container_name: timescaledb
+  #   volumes:
+  #     # - ../TimescaleDB/timescaledb-data:/var/lib/postgresql/data
+  #     - ../TimescaleDB/database/init-scripts:/docker-entrypoint-initdb.d
+  #   environment:
+  #     - POSTGRES_PASSWORD=admin
+  #     - POSTGRES_USER=admin
+  #     - POSTGRES_DB=uns_data
+  #   ports:
+  #     - "5432:5432"
+  #   networks:
+  #     - hivemq-network
+  #   restart: unless-stopped
+  # grafana:
+  #   image: grafana/grafana:latest
+  #   container_name: grafana
+  #   user: "472"
+  #   volumes:
+  #     - ../Grafana/grafana-data:/var/lib/grafana
+  #   environment:
+  #     - GF_SECURITY_ADMIN_PASSWORD=admin
+  #     - GF_USERS_ALLOW_SIGN_UP=false
+  #     - GF_PLUGINS_PREINSTALL=grafana-clock-panel,grafana-simple-json-datasource, volkovlabs-image-panel
+  #   ports:
+  #     - "3000:3000"
+  #   networks:
+  #     - hivemq-network
+  #   depends_on:
+  #     - timescaledb
+  #   restart: unless-stopped
+ 
+  # groot:
+  #   build:
+  #     context: ../Groot2
+  #     dockerfile: groot2.dockerfile
+  #   container_name: groot2-web
+  #   volumes:
+  #     - ../BT_Controller/config/bt_description:/bt_description
+  #     - ../offlineResponse_1656FB-A61627-4A4CB2-F0C0CA-8531ED-BD332C.dat:/bt_description/offlineResponse_1656FB-A61627-4A4CB2-F0C0CA-8531ED-BD332C.dat
+  #   ports:
+  #     - "6080:6080"
+  #   networks:
+  #     - hivemq-network
+  #   restart: unless-stopped
+
+  mqtt-explorer:
+    image: smeagolworms4/mqtt-explorer
+    container_name: mqtt-explorer
+    volumes:
+      - ../MQTT-Explorer/config:/mqtt-explorer/config
+    ports:
+      - "4000:4000"
+    environment:
+      - HTTP_PORT=4000
+      - CONFIG_PATH=/mqtt-explorer/config
+    networks:
+      - hivemq-network
+    depends_on:
+      - hivemq-broker
+    restart: unless-stopped
+    
+  # portainer:
+  #   image: portainer/portainer-ce:latest
+  #   container_name: portainer
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #     - ../Portainer/data:/data
+  #   ports:
+  #     - "9000:9000"
+  #   networks:
+  #     - hivemq-network
+  #   restart: unless-stopped
+
+  bt_controller:
+    build:
+      context: .
+      dockerfile: BT_Controller/dockerfile
+    container_name: bt_controller
+    environment:
+      - MQTT_BROKER=${MQTT_BROKER:-hivemq-broker}
+      - MQTT_PORT=${MQTT_PORT:-1883}
+      - AAS_SERVER=${AAS_SERVER:-aas-env}
+      - AAS_PORT=${AAS_PORT:-8081}
+      - AAS_REGISTRY=${AAS_REGISTRY:-aas-registry}
+      - AAS_REGISTRY_PORT=${AAS_REGISTRY_PORT:-8080}
+      - BT_METRICS_DIR=/data/run_metrics
+      - METRICS_TOPIC_PREFIX=${METRICS_TOPIC_PREFIX:-NN/Nybrovej/InnoLab/Stats}
+    volumes:
+      - ../BT_Controller/config:/AP2030-UNS/BT_Controller/config
+      - ../BTDescriptions:/AP2030-UNS/MQTTSchemas
+      - ../AASDescriptions:/AP2030-UNS/AASDescriptions
+      - ../run_metrics:/data/run_metrics
+    ports:
+    - "1667:1667"
+    networks:
+      - hivemq-network
+    depends_on:
+      hivemq-broker:
+        condition: service_started
+      registration-service:
+        condition: service_healthy
+
+  # planar_controller:
+  #   build:
+  #     context: ../Planar_Controller
+  #     dockerfile: Dockerfile
+  #   container_name: planar_controller
+  #   environment:
+  #     - MQTT_BROKER=${MQTT_BROKER:-hivemq-broker}
+  #     - MQTT_PORT=${MQTT_PORT:-1883}
+  #     - PMC_IP=${PMC_IP:-192.168.0.199}
+  #   volumes:
+  #     - ../MQTTSchemas:/app/MQTTSchemas
+  #     - ../AASDescriptions:/app/AASDescriptions
+  #   networks:
+  #     - hivemq-network
+  #   depends_on:
+  #     hivemq-broker:
+  #       condition: service_started
+  #     aas-env:
+  #       condition: service_started
+  #     databridge:
+  #       condition: service_started
+  #     registration-service:
+  #       condition: service_healthy
+  #   restart: unless-stopped
+
+  production_planner:
+    extends:
+      file: ../Planner/deployment/compose/docker-compose.yaml
+      service: production_planner
+    networks:
+      - hivemq-network
+    depends_on:
+      hivemq-broker:
+        condition: service_started
+      aas-env:
+        condition: service_started
+      databridge:
+        condition: service_started
+      registration-service:
+        condition: service_healthy
+
+  registration-service:
+    build:
+      context: .
+      dockerfile: ../Registration_Service/Dockerfile
+    container_name: registration-service
+    environment:
+      - PYTHONUNBUFFERED=1
+      - BASYX_URL=http://${AAS_SERVER:-aas-env}:${AAS_PORT:-8081}
+      - MQTT_BROKER=hivemq-broker
+      - MQTT_PORT=1883
+      # Delegation URL for BaSyx to call - must be reachable from aas-env container
+      - DELEGATION_SERVICE_URL=http://registration-service:8087
+      - EXTERNAL_HOST=${EXTERNAL_HOST:-localhost}
+      - AAS_SERVER_URL=http://${AAS_SERVER:-aas-env}:${AAS_PORT:-8081}
+      - AAS_BASE_URL=https://smartproductionlab.aau.dk
+    volumes:
+      # DataBridge config directory for writing configs
+      - ../databridge:/databridge
+      # AAS configs for registration
+      - ../AASDescriptions/Resource/configs:/app/configs:ro
+      - ../AASDescriptions/Product/configs:/app/product_configs:ro
+      # MQTT Schemas for schema-based message generation
+      - ../MQTTSchemas:/app/MQTTSchemas:ro
+      # Docker socket for container restarts (DataBridge)
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      # Operation Delegation HTTP API port
+      - '8087:8087'
+    command:
+      - python
+      - unified-registration-service.py
+      - --mqtt-broker
+      - hivemq-broker
+      - --mqtt-port
+      - "1883"
+      - --basyx-url
+      - http://${AAS_SERVER:-aas-env}:${AAS_PORT:-8081}
+      - --delegation-url
+      - ${DELEGATION_SERVICE_URL:-http://localhost:8087}
+      - listen
+      - --delegation-port
+      - "8087"
+    restart: unless-stopped
+    depends_on:
+      hivemq-broker:
+        condition: service_started
+      aas-env:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8087/health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 10s
+    networks:
+      - hivemq-network

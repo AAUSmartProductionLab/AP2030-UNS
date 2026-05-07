@@ -1,0 +1,70 @@
+x-station-core-depends: &station-core-depends
+  hivemq-broker:
+    condition: service_started
+  aas-env:
+    condition: service_started
+  databridge:
+    condition: service_started
+  registration-service:
+    condition: service_healthy
+
+services:
+  filling_station:
+    extends:
+      file: ../simulated_stations/deployment/compose/stations-compose.yml
+      service: filling_station
+    depends_on: *station-core-depends
+
+  stoppering_station:
+    extends:
+      file: ../simulated_stations/deployment/compose/stations-compose.yml
+      service: stoppering_station
+    depends_on: *station-core-depends
+
+  load_station:
+    extends:
+      file: ../simulated_stations/deployment/compose/stations-compose.yml
+      service: load_station
+    depends_on: *station-core-depends
+
+  unload_station:
+    extends:
+      file: ../simulated_stations/deployment/compose/stations-compose.yml
+      service: unload_station
+    depends_on: *station-core-depends
+
+  camera_station:
+    extends:
+      file: ../simulated_stations/deployment/compose/stations-compose.yml
+      service: camera_station
+    depends_on: *station-core-depends
+
+  capping_station:
+    extends:
+      file: ../simulated_stations/deployment/compose/stations-compose.yml
+      service: capping_station
+    depends_on: *station-core-depends
+
+  planar_table:
+    extends:
+      file: ../simulated_stations/deployment/compose/stations-compose.yml
+      service: planar_table
+    depends_on: *station-core-depends
+
+  planar_shuttle1:
+    extends:
+      file: ../simulated_stations/deployment/compose/stations-compose.yml
+      service: planar_shuttle1
+    depends_on: *station-core-depends
+
+  planar_shuttle2:
+    extends:
+      file: ../simulated_stations/deployment/compose/stations-compose.yml
+      service: planar_shuttle2
+    depends_on: *station-core-depends
+
+  planar_shuttle3:
+    extends:
+      file: ../simulated_stations/deployment/compose/stations-compose.yml
+      service: planar_shuttle3
+    depends_on: *station-core-depends
