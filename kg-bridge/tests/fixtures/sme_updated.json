@@ -1,0 +1,16 @@
+{
+  "topic": "submodel-events",
+  "base_uri": "urn:kg:aas:",
+  "graph_iri": "urn:kg:aas",
+  "event": {
+    "type": "SME_UPDATED",
+    "id": "urn:sm:sme-updated",
+    "smElementPath": "P2",
+    "smElement": {
+      "modelType": "Property",
+      "idShort": "P2",
+      "valueType": "xs:string",
+      "value": "y"
+    }
+  }
+}

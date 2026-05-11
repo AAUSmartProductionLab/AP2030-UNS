@@ -1,0 +1,10 @@
+{
+  "topic": "aas-events",
+  "base_uri": "urn:kg:aas:",
+  "graph_iri": "urn:kg:aas",
+  "event": {
+    "type": "SM_REF_ADDED",
+    "id": "urn:aas:link",
+    "submodelId": "urn:sm:link"
+  }
+}

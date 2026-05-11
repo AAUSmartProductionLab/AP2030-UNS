@@ -1,0 +1,15 @@
+{
+  "topic": "aas-events",
+  "base_uri": "urn:kg:aas:",
+  "graph_iri": "urn:kg:aas",
+  "event": {
+    "type": "AAS_UPDATED",
+    "id": "urn:aas:updated",
+    "aas": {
+      "id": "urn:aas:updated",
+      "assetInformation": {
+        "assetKind": "Type"
+      }
+    }
+  }
+}

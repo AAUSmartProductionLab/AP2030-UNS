@@ -1,0 +1,15 @@
+{
+  "topic": "aas-events",
+  "base_uri": "urn:kg:aas:",
+  "graph_iri": "urn:kg:aas",
+  "event": {
+    "type": "AAS_CREATED",
+    "id": "urn:aas:created",
+    "aas": {
+      "id": "urn:aas:created",
+      "assetInformation": {
+        "assetKind": "Instance"
+      }
+    }
+  }
+}

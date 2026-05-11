@@ -1,0 +1,21 @@
+{
+  "topic": "submodel-events",
+  "base_uri": "urn:kg:aas:",
+  "graph_iri": "urn:kg:aas",
+  "pre_events": [
+    {
+      "topic": "submodel-events",
+      "event": {
+        "type": "SM_CREATED",
+        "id": "urn:sm:deleted",
+        "submodel": {
+          "id": "urn:sm:deleted"
+        }
+      }
+    }
+  ],
+  "event": {
+    "type": "SM_DELETED",
+    "id": "urn:sm:deleted"
+  }
+}

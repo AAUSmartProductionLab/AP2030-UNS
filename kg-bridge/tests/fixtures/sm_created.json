@@ -1,0 +1,12 @@
+{
+  "topic": "submodel-events",
+  "base_uri": "urn:kg:aas:",
+  "graph_iri": "urn:kg:aas",
+  "event": {
+    "type": "SM_CREATED",
+    "id": "urn:sm:created",
+    "submodel": {
+      "id": "urn:sm:created"
+    }
+  }
+}

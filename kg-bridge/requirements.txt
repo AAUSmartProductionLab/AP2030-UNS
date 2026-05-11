@@ -1,0 +1,5 @@
+confluent-kafka==2.5.3
+SPARQLWrapper==2.0.0
+requests==2.32.3
+pydantic>=2.0,<2.2
+rdflib>=7

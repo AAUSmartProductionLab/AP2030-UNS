@@ -1,0 +1,24 @@
+{
+  "topic": "aas-events",
+  "base_uri": "urn:kg:aas:",
+  "graph_iri": "urn:kg:aas",
+  "pre_events": [
+    {
+      "topic": "aas-events",
+      "event": {
+        "type": "AAS_CREATED",
+        "id": "urn:aas:deleted",
+        "aas": {
+          "id": "urn:aas:deleted",
+          "assetInformation": {
+            "assetKind": "Instance"
+          }
+        }
+      }
+    }
+  ],
+  "event": {
+    "type": "AAS_DELETED",
+    "id": "urn:aas:deleted"
+  }
+}

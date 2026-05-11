@@ -1,0 +1,26 @@
+{
+  "topic": "submodel-events",
+  "base_uri": "urn:kg:aas:",
+  "graph_iri": "urn:kg:aas",
+  "pre_events": [
+    {
+      "topic": "submodel-events",
+      "event": {
+        "type": "SME_CREATED",
+        "id": "urn:sm:sme-deleted",
+        "smElementPath": "P3",
+        "smElement": {
+          "modelType": "Property",
+          "idShort": "P3",
+          "valueType": "xs:string",
+          "value": "z"
+        }
+      }
+    }
+  ],
+  "event": {
+    "type": "SME_DELETED",
+    "id": "urn:sm:sme-deleted",
+    "smElementPath": "P3"
+  }
+}

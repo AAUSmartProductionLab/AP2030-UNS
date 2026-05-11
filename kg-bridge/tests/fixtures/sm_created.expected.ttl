@@ -1,0 +1,5 @@
+@prefix ns1: <https://admin-shell.io/aas/3/0/Identifiable/> .
+
+<urn:kg:aas:urn%3Asm%3Acreated> a <https://admin-shell.io/aas/3/0/Submodel> ;
+    ns1:id "urn:sm:created" .
+

@@ -34,54 +34,54 @@ services:
     networks:
       - hivemq-network
 
-  neo4j:
-    profiles: ["knowledge-graph"]
-    image: neo4j:${KG_NEO4J_VERSION:-5-community-bullseye}
-    container_name: kg-neo4j
-    restart: unless-stopped
-    ports:
-      - "${KG_NEO4J_HTTP_PORT:-7474}:7474"
-      - "${KG_NEO4J_BOLT_PORT:-7687}:7687"
-    environment:
-      NEO4J_AUTH: ${KG_NEO4J_AUTH:-none}
-      NEO4J_PLUGINS: '["apoc"]'
-      NEO4J_dbms_memory_heap_max__size: ${KG_NEO4J_HEAP_MAX:-8G}
-      NEO4J_dbms_memory_pagecache_size: ${KG_NEO4J_PAGECACHE:-4G}
-    volumes:
-      - ../neo4j/data:/data
-      - ../neo4j/logs:/logs
-      - ../neo4j/plugins:/plugins
-    healthcheck:
-      test: ["CMD", "cypher-shell", "RETURN 1"]
-      interval: 30s
-      start_period: 10s
-      timeout: 10s
-      retries: 5
-    networks:
-      - hivemq-network
+  # neo4j:
+  #   profiles: ["knowledge-graph"]
+  #   image: neo4j:${KG_NEO4J_VERSION:-5-community-bullseye}
+  #   container_name: kg-neo4j
+  #   restart: unless-stopped
+  #   ports:
+  #     - "${KG_NEO4J_HTTP_PORT:-7474}:7474"
+  #     - "${KG_NEO4J_BOLT_PORT:-7687}:7687"
+  #   environment:
+  #     NEO4J_AUTH: ${KG_NEO4J_AUTH:-none}
+  #     NEO4J_PLUGINS: '["apoc"]'
+  #     NEO4J_dbms_memory_heap_max__size: ${KG_NEO4J_HEAP_MAX:-8G}
+  #     NEO4J_dbms_memory_pagecache_size: ${KG_NEO4J_PAGECACHE:-4G}
+  #   volumes:
+  #     - ../neo4j/data:/data
+  #     - ../neo4j/logs:/logs
+  #     - ../neo4j/plugins:/plugins
+  #   healthcheck:
+  #     test: ["CMD", "cypher-shell", "RETURN 1"]
+  #     interval: 30s
+  #     start_period: 10s
+  #     timeout: 10s
+  #     retries: 5
+  #   networks:
+  #     - hivemq-network
 
-  # Optional connector from https://github.com/dfkibasys/aas_neo4j_integration
-  kafka-connect:
-    profiles: ["knowledge-graph"]
-    image: ${KG_KAFKA_CONNECT_IMAGE:-dfkibasys/aas-neo4j-kafka-connect-plugin:7.9.1-0.1.14}
-    container_name: kg-kafka-connect
-    restart: unless-stopped
-    ports:
-      - "${KG_KAFKA_CONNECT_PORT:-8094}:8083"
-    environment:
-      CONNECT_BOOTSTRAP_SERVERS: kafka:9092
-      CONNECT_REST_ADVERTISED_HOST_NAME: kafka-connect
-      BASYX_AAS_REPO_URL: http://aas-env:8081
-      BASYX_NEO4J_TARGET_URL: http://neo4j:7474/db/neo4j/tx/commit
-    depends_on:
-      kafka:
-        condition: service_healthy
-      neo4j:
-        condition: service_healthy
-      aas-env:
-        condition: service_started
-    networks:
-      - hivemq-network
+  # # Optional connector from https://github.com/dfkibasys/aas_neo4j_integration
+  # kafka-connect:
+  #   profiles: ["knowledge-graph"]
+  #   image: ${KG_KAFKA_CONNECT_IMAGE:-dfkibasys/aas-neo4j-kafka-connect-plugin:7.9.1-0.1.14}
+  #   container_name: kg-kafka-connect
+  #   restart: unless-stopped
+  #   ports:
+  #     - "${KG_KAFKA_CONNECT_PORT:-8094}:8083"
+  #   environment:
+  #     CONNECT_BOOTSTRAP_SERVERS: kafka:9092
+  #     CONNECT_REST_ADVERTISED_HOST_NAME: kafka-connect
+  #     BASYX_AAS_REPO_URL: http://aas-env:8081
+  #     BASYX_NEO4J_TARGET_URL: http://neo4j:7474/db/neo4j/tx/commit
+  #   depends_on:
+  #     kafka:
+  #       condition: service_healthy
+  #     neo4j:
+  #       condition: service_healthy
+  #     aas-env:
+  #       condition: service_started
+  #   networks:
+  #     - hivemq-network
 
   akhq:
     profiles: ["knowledge-graph"]
@@ -100,6 +100,101 @@ services:
     depends_on:
       kafka:
         condition: service_healthy
+    networks:
+      - hivemq-network
+
+  fuseki:
+    profiles: ["knowledge-graph"]
+    image: stain/jena-fuseki:5.0.0
+    container_name: kg-fuseki
+    user: "0:0"
+    restart: unless-stopped
+    ports:
+      - "${KG_FUSEKI_PORT:-3030}:3030"
+    environment:
+      ADMIN_PASSWORD: ${KG_FUSEKI_ADMIN_PASSWORD:-admin}
+      JVM_ARGS: -Xmx${KG_FUSEKI_HEAP_MAX:-4G}
+    volumes:
+      - ../fuseki/databases:/fuseki/databases
+      - ../fuseki/configuration:/fuseki/configuration
+      - ../ppr-ontology/ontology:/staging/ontology:ro
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:3030/$$/ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    networks:
+      - hivemq-network
+
+  fuseki-bootstrap:
+    profiles: ["knowledge-graph"]
+    image: curlimages/curl:8.7.1
+    container_name: kg-fuseki-bootstrap
+    depends_on:
+      fuseki:
+        condition: service_healthy
+    environment:
+      ADMIN_PASSWORD: ${KG_FUSEKI_ADMIN_PASSWORD:-admin}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        set -eu
+        BASE=http://kg-fuseki:3030/kg
+        for f in /staging/ontology/CSS-Ontology.ttl \
+                 /staging/ontology/modules/cssx-resource-hierarchy.ttl \
+                 /staging/ontology/modules/cssx-predicates.ttl \
+                 /staging/ontology/modules/cssx-capabilities.ttl \
+                 /staging/ontology/modules/cssx-skills.ttl \
+                 /staging/ontology/modules/cssx-ai-planning.ttl \
+                 /staging/ontology/modules/cssx-operational-data.ttl \
+                 /staging/ontology/modules/cssx-parameters.ttl \
+                 /staging/ontology/modules/cssx-bom.ttl \
+                 /staging/ontology/modules/cssx-nameplate.ttl \
+                 /staging/ontology/modules/cssx-product-hierarchy.ttl \
+                 /staging/ontology/modules/cssx-resource-interface.ttl \
+                 /staging/ontology/modules/cssx-technical-data.ttl \
+                 /staging/ontology/modules/cssx-aas-validation.ttl ; do
+          [ -f "$$f" ] || { echo "missing $$f"; continue; }
+          echo "Loading $$f"
+          curl -fsS -u admin:${ADMIN_PASSWORD:-admin} \
+               -X POST -H "Content-Type: text/turtle" \
+               --data-binary @$$f \
+               "$$BASE/data?graph=default"
+        done
+    volumes:
+      - ../ppr-ontology/ontology:/staging/ontology:ro
+    restart: "no"
+    networks:
+      - hivemq-network
+
+  kg-bridge:
+    profiles: ["knowledge-graph"]
+    build:
+      context: ..
+      dockerfile: kg-bridge/Dockerfile
+    container_name: kg-bridge
+    restart: unless-stopped
+    environment:
+      KAFKA_BOOTSTRAP: kafka:9092
+      KAFKA_TOPIC_PATTERN: ${KG_BRIDGE_TOPIC_PATTERN:-(aas-events|submodel-events)}
+      KAFKA_CONSUMER_GROUP: ${KG_BRIDGE_CONSUMER_GROUP:-kg-bridge}
+      KAFKA_AUTO_OFFSET_RESET: ${KG_BRIDGE_AUTO_OFFSET_RESET:-earliest}
+      FUSEKI_UPDATE_URL: http://kg-fuseki:3030/kg/update
+      FUSEKI_QUERY_URL: http://kg-fuseki:3030/kg/sparql
+      FUSEKI_USER: admin
+      FUSEKI_PASSWORD: ${KG_FUSEKI_ADMIN_PASSWORD:-admin}
+      AAS_GRAPH: urn:kg:aas
+      KG_BASE_NS: ${KG_BASE_NS:-urn:kg:aas:}
+      AAS_ID_STRATEGY: ${KG_AAS_ID_STRATEGY:-url-encode}
+      LOG_LEVEL: ${KG_BRIDGE_LOG_LEVEL:-INFO}
+    depends_on:
+      kafka:
+        condition: service_healthy
+      fuseki:
+        condition: service_healthy
+      fuseki-bootstrap:
+        condition: service_completed_successfully
     networks:
       - hivemq-network
 

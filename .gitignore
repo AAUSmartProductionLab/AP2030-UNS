@@ -213,3 +213,4 @@ run_metrics/*
 
 
 neo4j/*
+fuseki/*

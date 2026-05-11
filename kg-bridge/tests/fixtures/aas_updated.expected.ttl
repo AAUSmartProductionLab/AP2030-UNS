@@ -1,0 +1,9 @@
+@prefix ns1: <https://admin-shell.io/aas/3/0/Identifiable/> .
+@prefix ns2: <https://admin-shell.io/aas/3/0/AssetInformation/> .
+@prefix ns3: <https://admin-shell.io/aas/3/0/AssetAdministrationShell/> .
+
+<urn:kg:aas:urn%3Aaas%3Aupdated> a <https://admin-shell.io/aas/3/0/AssetAdministrationShell> ;
+    ns3:assetInformation [ a <https://admin-shell.io/aas/3/0/AssetInformation> ;
+            ns2:assetKind <https://admin-shell.io/aas/3/0/AssetKind/Type> ] ;
+    ns1:id "urn:aas:updated" .
+

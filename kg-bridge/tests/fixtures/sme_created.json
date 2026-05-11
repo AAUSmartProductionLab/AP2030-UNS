@@ -1,0 +1,16 @@
+{
+  "topic": "submodel-events",
+  "base_uri": "urn:kg:aas:",
+  "graph_iri": "urn:kg:aas",
+  "event": {
+    "type": "SME_CREATED",
+    "id": "urn:sm:sme-created",
+    "smElementPath": "P1",
+    "smElement": {
+      "modelType": "Property",
+      "idShort": "P1",
+      "valueType": "xs:string",
+      "value": "x"
+    }
+  }
+}

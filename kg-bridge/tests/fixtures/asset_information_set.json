@@ -1,0 +1,12 @@
+{
+  "topic": "aas-events",
+  "base_uri": "urn:kg:aas:",
+  "graph_iri": "urn:kg:aas",
+  "event": {
+    "type": "ASSET_INFORMATION_SET",
+    "id": "urn:aas:assetinfo",
+    "assetInformation": {
+      "assetKind": "Type"
+    }
+  }
+}

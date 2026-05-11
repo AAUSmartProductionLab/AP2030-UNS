@@ -60,7 +60,7 @@ COMPOSE_PROFILES=simulated-stations,knowledge-graph
 
 Available profile modules:
 - `simulated-stations`: production planner + simulated station services
-- `knowledge-graph`: Kafka + Neo4j + Kafka Connect bridge
+- `knowledge-graph`: Kafka + Neo4j + Kafka Connect + Fuseki + kg-bridge
 
 Knowledge graph profile also requires Kafka eventing variables in `.env`:
 
@@ -69,6 +69,23 @@ BASYX_FEATURE_KAFKA_ENABLED=true
 SPRING_KAFKA_BOOTSTRAP_SERVERS=PLAINTEXT://kafka:9092
 KAFKA_BOOTSTRAP_SERVERS=PLAINTEXT://kafka:9092
 ```
+
+Optional knowledge graph settings:
+
+```bash
+KG_FUSEKI_ADMIN_PASSWORD=admin
+KG_BRIDGE_TOPIC_PATTERN=aas-events.*
+KG_BRIDGE_LOG_LEVEL=INFO
+```
+
+One-time migration when switching to the live py-aas-rdf mapping:
+
+```bash
+./kg-bridge/migrate.sh
+```
+
+This drops `urn:kg:aas` in Fuseki so it can be rebuilt cleanly with the new
+canonical IRIs and predicates.
 
 If you disable `knowledge-graph`, set those values back to defaults:
 
