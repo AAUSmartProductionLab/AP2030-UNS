@@ -7,6 +7,7 @@ Supports both full AAS JSON and lightweight YAML config transmission.
 
 import json
 import logging
+import os
 import queue
 import threading
 import time
@@ -132,15 +133,24 @@ class MQTTConfigRegistrationService:
         self.mqtt_client.on_message = self._on_message
         self.mqtt_client.on_disconnect = self._on_disconnect
 
-        try:
-            logger.info(
-                f"Connecting to MQTT broker {self.mqtt_broker}:{self.mqtt_port}...")
-            self.mqtt_client.connect(
-                self.mqtt_broker, self.mqtt_port, keepalive=60)
-            self.mqtt_client.loop_start()
-        except Exception as e:
-            logger.error(f"Failed to connect to MQTT broker: {e}")
-            raise
+        max_retries = int(os.environ.get("MQTT_CONNECT_RETRIES", "30"))
+        retry_delay = float(os.environ.get("MQTT_CONNECT_RETRY_DELAY_SECONDS", "2"))
+
+        for attempt in range(1, max_retries + 1):
+            try:
+                logger.info(
+                    f"Connecting to MQTT broker {self.mqtt_broker}:{self.mqtt_port} (attempt {attempt}/{max_retries})...")
+                self.mqtt_client.connect(
+                    self.mqtt_broker, self.mqtt_port, keepalive=60)
+                self.mqtt_client.loop_start()
+                return
+            except Exception as e:
+                if attempt == max_retries:
+                    logger.error(f"Failed to connect to MQTT broker: {e}")
+                    raise
+                logger.warning(
+                    f"MQTT connect attempt {attempt}/{max_retries} failed: {e}; retrying in {retry_delay:.1f}s")
+                time.sleep(retry_delay)
 
     def _on_connect(self, client, userdata, flags, reason_code, properties):
         """Callback when connected to MQTT broker"""
