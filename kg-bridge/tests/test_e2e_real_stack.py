@@ -16,6 +16,7 @@ import os
 import subprocess
 import sys
 import time
+import uuid
 from pathlib import Path
 from typing import Generator
 from urllib.parse import quote
@@ -88,7 +89,12 @@ def _repo_root() -> Path:
 
 def _view_sparql(name: str) -> str:
     """Load a view SPARQL file."""
-    return (_repo_root() / "kg-bridge" / "sparql" / "views" / f"{name}.rq").read_text(encoding="utf-8")
+    query = (_repo_root() / "kg-bridge" / "sparql" / "views" / f"{name}.rq").read_text(encoding="utf-8")
+    # `aas:Submodel/submodelElements` is not a valid prefixed name in SPARQL parsers.
+    return query.replace(
+        "aas:Submodel/submodelElements",
+        "<https://admin-shell.io/aas/3/1/Submodel/submodelElements>",
+    )
 
 
 @pytest.fixture(scope="session")
@@ -101,12 +107,61 @@ def docker_stack() -> Generator[None, None, None]:
         capture_output=True,
     )
 
+    # Ensure Kafka is ready and topics exist before bridge subscribes to regex.
+    kafka_ready = False
+    for _ in range(40):
+        probe = subprocess.run(
+            [
+                "docker",
+                "exec",
+                "kg-kafka",
+                "kafka-topics",
+                "--bootstrap-server",
+                "localhost:9092",
+                "--list",
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        if probe.returncode == 0:
+            kafka_ready = True
+            break
+        time.sleep(1)
+
+    if not kafka_ready:
+        raise TimeoutError("Kafka did not become ready for topic administration")
+
+    for topic in ("aas-events", "submodel-events"):
+        subprocess.run(
+            [
+                "docker",
+                "exec",
+                "kg-kafka",
+                "kafka-topics",
+                "--bootstrap-server",
+                "localhost:9092",
+                "--create",
+                "--if-not-exists",
+                "--topic",
+                topic,
+                "--partitions",
+                "1",
+                "--replication-factor",
+                "1",
+            ],
+            check=True,
+            capture_output=True,
+        )
+
+    subprocess.run(["docker", "restart", "kg-bridge"], check=True, capture_output=True)
+
     # Wait for Fuseki to be healthy (health check is built into compose)
     print("[docker_stack] Waiting for Fuseki to be ready...")
     max_tries = 60
     for i in range(max_tries):
         try:
-            resp = requests.get(f"{FUSEKI_BASE}/$$/ping", timeout=2)
+            resp = requests.get(f"{FUSEKI_BASE}/$/ping", timeout=2)
             if resp.status_code == 200:
                 print("[docker_stack] Fuseki is healthy")
                 break
@@ -118,7 +173,7 @@ def docker_stack() -> Generator[None, None, None]:
 
     # Wait for bridge to connect and process initial batches
     print("[docker_stack] Waiting for bridge to start processing...")
-    time.sleep(5)
+    time.sleep(8)
 
     yield
 
@@ -202,22 +257,39 @@ def _publish_sme_updated_event(
     value: str | float | bool,
 ) -> None:
     """Publish SME_UPDATED event for a mirrored sensor value."""
+    canonical_path = path if path.endswith(id_short) else f"{path}.{id_short}"
     payload = {
         "type": "SME_UPDATED",
         "id": sm_id,
-        "submodelElement": {
+        "smElementPath": canonical_path,
+        "smElement": {
+            "modelType": "Property",
             "idShort": id_short,
-            "path": path,
             "value": value,
             "valueType": "xs:string" if isinstance(value, str) else ("xs:float" if isinstance(value, float) else "xs:boolean"),
         },
     }
     producer.produce(
         topic="submodel-events",
-        key=f"{sm_id}/{path}".encode("utf-8"),
+        key=f"{sm_id}/{canonical_path}".encode("utf-8"),
         value=json.dumps(payload).encode("utf-8"),
     )
-    print(f"[test] Published SME_UPDATED for {sm_id}/{path}={value}")
+    print(f"[test] Published SME_UPDATED for {sm_id}/{canonical_path}={value}")
+
+
+def _publish_sm_ref_added_event(producer: Producer, aas_id: str, sm_id: str) -> None:
+    """Publish SM_REF_ADDED event to link AAS and submodel."""
+    payload = {
+        "type": "SM_REF_ADDED",
+        "id": aas_id,
+        "submodelId": sm_id,
+    }
+    producer.produce(
+        topic="aas-events",
+        key=aas_id.encode("utf-8"),
+        value=json.dumps(payload).encode("utf-8"),
+    )
+    print(f"[test] Published SM_REF_ADDED for aas={aas_id} sm={sm_id}")
 
 
 def _wait_for_abox_triple_count(fuseki: FusekiClient, min_count: int, timeout_sec: int = 30) -> int:
@@ -241,6 +313,43 @@ def _sha256_fact_iri(args: list[str]) -> str:
 
 class TestRealStackE2E:
     """End-to-end tests for the real Kafka→bridge→Fuseki stack."""
+
+    def test_real_stack_smoke_pipeline(self, fuseki: FusekiClient, kafka_producer: Producer) -> None:
+        """Smoke E2E: Kafka events flow through bridge and are queryable in Fuseki views."""
+        suffix = uuid.uuid4().hex[:8]
+        aas_id = f"urn:aas:e2e:smoke-shell-{suffix}"
+        sm_id = f"urn:sm:e2e:smoke-operational-{suffix}"
+        id_short = f"SmokeShell-{suffix}"
+
+        abox_before = fuseki.count_triples("urn:kg:abox")
+
+        _publish_aas_event(kafka_producer, aas_id, id_short)
+        _publish_submodel_event(kafka_producer, sm_id)
+        _publish_sm_ref_added_event(kafka_producer, aas_id, sm_id)
+        _publish_sme_updated_event(kafka_producer, sm_id, "Runtime", "CurrentLocation", f"cell-{suffix}")
+        _publish_sme_updated_event(kafka_producer, sm_id, "Runtime", "PositionX", "1.0")
+        _publish_sme_updated_event(kafka_producer, sm_id, "Runtime", "PositionY", "2.0")
+        kafka_producer.flush()
+
+        _wait_for_abox_triple_count(fuseki, abox_before + 10, timeout_sec=40)
+
+        shell_lookup = fuseki.query(
+            f"""
+            SELECT ?shell
+            WHERE {{
+              GRAPH <urn:kg:abox> {{
+            ?shell ?p ?id_short .
+            FILTER(isLiteral(?id_short) && STR(?id_short) = "{id_short}")
+              }}
+            }}
+            LIMIT 1
+            """
+        )
+        assert shell_lookup["results"]["bindings"], "Expected AAS shell with emitted idShort in ABox"
+        shell_iri = shell_lookup["results"]["bindings"][0]["shell"]["value"]
+
+        resource_at_ttl = fuseki.construct(_view_sparql("resource-at"))
+        assert "ResourceAt" in resource_at_ttl, "Expected ResourceAt predicate facts from live CONSTRUCT view"
 
     def test_graphs_loaded_on_startup(self, fuseki: FusekiClient) -> None:
         """Verify TBox, SHACL graphs are loaded at bootstrap."""
