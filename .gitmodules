@@ -22,3 +22,6 @@
 [submodule "aas_neo4j_integration"]
 	path = aas_neo4j_integration
 	url = https://github.com/dfkibasys/aas_neo4j_integration.git
+[submodule "ARSO_Ontology_AAS_Generation"]
+	path = ARSO_Ontology_AAS_Generation
+	url = https://github.com/MartinJensen37/ARSO_Ontology_AAS_Generation.git
