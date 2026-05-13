@@ -1,0 +1,20 @@
+@prefix apex: <https://w3id.org/2026/apex/> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+<https://w3id.org/2026/apex/pddl-plus>
+  a owl:Ontology ;
+  rdfs:comment "APEX module for PDDL+ continuous processes and autonomous events." ;
+  owl:imports <https://w3id.org/2026/apex/pddl-2-1> .
+
+apex:ContinuousProcess a owl:Class ;
+  rdfs:comment "Continuous process construct from PDDL+." .
+
+apex:Event a owl:Class ;
+  rdfs:comment "Autonomous event construct from PDDL+." .
+
+apex:hasContinuousEffect a owl:ObjectProperty ;
+  rdfs:comment "Links a process to continuous numeric effects." .
+
+apex:hasTriggerCondition a owl:ObjectProperty ;
+  rdfs:comment "Links an event to a trigger condition." .

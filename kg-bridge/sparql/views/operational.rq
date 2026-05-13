@@ -1,0 +1,33 @@
+PREFIX aas:  <https://admin-shell.io/aas/3/1/>
+PREFIX arso: <https://w3id.org/2025/arso#>
+PREFIX apex: <https://w3id.org/2026/apex/>
+PREFIX css:  <http://www.w3id.org/hsu-aut/css#>
+
+CONSTRUCT {
+  ?fact a apex:Operational ;
+    apex:hasArgumentBinding ?arg1 .
+
+  ?arg1 a apex:PredicateArgumentBinding ;
+    apex:argumentIndex 1 ;
+    apex:argumentObject ?resource .
+}
+FROM <urn:kg:tbox>
+FROM <urn:kg:abox>
+WHERE {
+  ?resource a css:Resource ;
+    arso:hasAAS ?aas .
+
+  ?aas arso:hasOperationalDataSubmodel ?sm .
+  ?sm aas:Submodel/submodelElements ?sme .
+
+  ?sme apex:smElementPath ?path ;
+    apex:smElementValue ?rawValue .
+
+  FILTER(REGEX(LCASE(STR(?path)), "(operational|isoperational|ready|status)"))
+
+  BIND(LCASE(STR(?rawValue)) AS ?value)
+  FILTER(?value IN ("true", "1", "on", "operational", "ready"))
+
+  BIND(IRI(CONCAT("urn:kg:apex:operational:", ENCODE_FOR_URI(SHA256(STR(?resource))))) AS ?fact)
+  BIND(IRI(CONCAT(STR(?fact), ":arg1")) AS ?arg1)
+}

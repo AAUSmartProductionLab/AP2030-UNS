@@ -1,0 +1,24 @@
+@prefix apex: <https://w3id.org/2026/apex/> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+<https://w3id.org/2026/apex/fond>
+  a owl:Ontology ;
+  rdfs:comment "APEX module for FOND-PDDL non-deterministic planning concepts." ;
+  owl:imports <https://w3id.org/2026/apex/pddl> .
+
+apex:NondeterministicEffect a owl:Class ;
+  rdfs:comment "Non-deterministic effect branch set." .
+
+apex:OneOf a owl:Class ;
+  rdfs:subClassOf apex:NondeterministicEffect ;
+  rdfs:comment "One-of branch construct for FOND outcomes." .
+
+apex:StrongSolution a owl:Class .
+apex:StrongCyclicSolution a owl:Class .
+apex:WeakSolution a owl:Class .
+
+apex:fairnessAssumption a owl:DatatypeProperty ;
+  rdfs:range xsd:boolean ;
+  rdfs:comment "Whether fairness assumptions are required for solution semantics." .

@@ -9,6 +9,7 @@ from pydantic import ValidationError
 
 from conversion.routing import EventRouter
 from runtime.fuseki_client import SparqlClient
+from runtime.materialization import MaterializationRunner
 
 
 class KafkaEventConsumer:
@@ -20,11 +21,13 @@ class KafkaEventConsumer:
         auto_offset_reset: str,
         event_router: EventRouter,
         sparql_client: SparqlClient,
+        materialization_runner: MaterializationRunner | None = None,
     ) -> None:
         self._logger = logging.getLogger("kg-bridge.consumer")
         self._topic_pattern = topic_pattern
         self._event_router = event_router
         self._sparql_client = sparql_client
+        self._materialization_runner = materialization_runner
         self._running = True
 
         config = {
@@ -98,6 +101,9 @@ class KafkaEventConsumer:
                 try:
                     for statement in statements:
                         self._sparql_client.update(statement)
+
+                    if self._materialization_runner and self._materialization_runner.enabled:
+                        self._materialization_runner.apply(self._sparql_client)
                 except Exception:
                     # Keep offset uncommitted so transient SPARQL failures are retried.
                     self._logger.exception("SPARQL UPDATE failed for topic=%s offset=%s", msg.topic(), msg.offset())

@@ -1,0 +1,25 @@
+@prefix apex: <https://w3id.org/2026/apex/> .
+@prefix css:  <http://www.w3id.org/hsu-aut/css#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+<https://w3id.org/2026/apex/execution>
+  a owl:Ontology ;
+  rdfs:comment "APEX module for execution feedback records from runtime systems." ;
+  owl:imports <https://w3id.org/2026/apex/pddl> .
+
+apex:ExecutionRecord a owl:Class ;
+  rdfs:comment "Execution feedback record for a concrete action/predicate instance over time." .
+
+apex:executedBy a owl:ObjectProperty ;
+  rdfs:range css:Resource ;
+  rdfs:comment "Links an execution record to the resource that executed it." .
+
+apex:actualDuration a owl:DatatypeProperty ;
+  rdfs:range xsd:duration ;
+  rdfs:comment "Actual observed execution duration." .
+
+apex:outcome a owl:DatatypeProperty ;
+  rdfs:range xsd:string ;
+  rdfs:comment "Execution outcome code such as succeeded, failed, or aborted." .

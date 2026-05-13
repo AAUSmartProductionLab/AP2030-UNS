@@ -1,0 +1,36 @@
+PREFIX aas:   <https://admin-shell.io/aas/3/1/>
+PREFIX arso:  <https://w3id.org/2025/arso#>
+PREFIX arsox: <https://w3id.org/aau-ra/arso-ext#>
+PREFIX apex:  <https://w3id.org/2026/apex/>
+PREFIX css:   <http://www.w3id.org/hsu-aut/css#>
+
+CONSTRUCT {
+  ?fact a apex:ProductAt ;
+    apex:hasArgumentBinding ?arg1, ?arg2 .
+
+  ?arg1 a apex:PredicateArgumentBinding ;
+    apex:argumentIndex 1 ;
+    apex:argumentObject ?product .
+
+  ?arg2 a apex:PredicateArgumentBinding ;
+    apex:argumentIndex 2 ;
+    apex:argumentLiteral ?location .
+}
+FROM <urn:kg:tbox>
+FROM <urn:kg:abox>
+WHERE {
+  ?product a css:Product ;
+    arsox:hasAASForProduct ?aas .
+
+  ?aas arso:hasOperationalDataSubmodel ?sm .
+  ?sm aas:Submodel/submodelElements ?sme .
+
+  ?sme apex:smElementPath ?path ;
+    apex:smElementValue ?location .
+
+  FILTER(REGEX(LCASE(STR(?path)), "(location|position|station|cell)"))
+
+  BIND(IRI(CONCAT("urn:kg:apex:product-at:", ENCODE_FOR_URI(SHA256(CONCAT(STR(?product), "|", STR(?location)))))) AS ?fact)
+  BIND(IRI(CONCAT(STR(?fact), ":arg1")) AS ?arg1)
+  BIND(IRI(CONCAT(STR(?fact), ":arg2")) AS ?arg2)
+}

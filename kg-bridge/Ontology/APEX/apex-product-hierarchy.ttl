@@ -1,0 +1,17 @@
+@prefix apex: <https://w3id.org/2026/apex/> .
+@prefix css:  <http://www.w3id.org/hsu-aut/css#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+<https://w3id.org/2026/apex/product-hierarchy>
+  a owl:Ontology ;
+  rdfs:comment "APEX product hierarchy classes used by project-specific planning models." ;
+  owl:imports <https://w3id.org/2026/apex/> .
+
+apex:MIM8 a owl:Class ;
+  rdfs:subClassOf css:Product ;
+  rdfs:comment "MIM8 product class used for multi-instance order planning." .
+
+apex:HgH a owl:Class ;
+  rdfs:subClassOf css:Product ;
+  rdfs:comment "Human Growth Hormone product class used in configurable orders." .

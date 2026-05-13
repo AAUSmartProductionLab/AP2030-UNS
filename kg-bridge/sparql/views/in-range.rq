@@ -1,0 +1,85 @@
+PREFIX aas:  <https://admin-shell.io/aas/3/1/>
+PREFIX arso: <https://w3id.org/2025/arso#>
+PREFIX apex: <https://w3id.org/2026/apex/>
+PREFIX css:  <http://www.w3id.org/hsu-aut/css#>
+PREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>
+
+CONSTRUCT {
+  ?fact a apex:InRange ;
+    apex:hasArgumentBinding ?arg1, ?arg2 .
+
+  ?arg1 a apex:PredicateArgumentBinding ;
+    apex:argumentIndex 1 ;
+    apex:argumentObject ?resource .
+
+  ?arg2 a apex:PredicateArgumentBinding ;
+    apex:argumentIndex 2 ;
+    apex:argumentObject ?station .
+}
+FROM <urn:kg:tbox>
+FROM <urn:kg:abox>
+WHERE {
+  ?resource a css:Resource ;
+    arso:hasAAS ?resourceAas .
+
+  ?resourceAas arso:hasOperationalDataSubmodel ?resourceSm .
+  ?resourceSm aas:Submodel/submodelElements ?resourceXNode, ?resourceYNode .
+
+  ?resourceXNode apex:smElementPath ?resourceXPath ;
+    apex:smElementValue ?resourceXRaw .
+  ?resourceYNode apex:smElementPath ?resourceYPath ;
+    apex:smElementValue ?resourceYRaw .
+
+  OPTIONAL {
+    ?resourceSm aas:Submodel/submodelElements ?resourceZNode .
+    ?resourceZNode apex:smElementPath ?resourceZPath ;
+      apex:smElementValue ?resourceZRaw .
+    FILTER(REGEX(LCASE(STR(?resourceZPath)), "(positionz|coordz|z$|\\.z$)"))
+  }
+
+  FILTER(REGEX(LCASE(STR(?resourceXPath)), "(positionx|coordx|x$|\\.x$)"))
+  FILTER(REGEX(LCASE(STR(?resourceYPath)), "(positiony|coordy|y$|\\.y$)"))
+
+  ?station a css:Resource ;
+    arso:hasAAS ?stationAas .
+
+  ?stationAas arso:hasOperationalDataSubmodel ?stationSm .
+  ?stationSm aas:Submodel/submodelElements ?stationXNode, ?stationYNode .
+
+  ?stationXNode apex:smElementPath ?stationXPath ;
+    apex:smElementValue ?stationXRaw .
+  ?stationYNode apex:smElementPath ?stationYPath ;
+    apex:smElementValue ?stationYRaw .
+
+  OPTIONAL {
+    ?stationSm aas:Submodel/submodelElements ?stationZNode .
+    ?stationZNode apex:smElementPath ?stationZPath ;
+      apex:smElementValue ?stationZRaw .
+    FILTER(REGEX(LCASE(STR(?stationZPath)), "(positionz|coordz|z$|\\.z$)"))
+  }
+
+  FILTER(REGEX(LCASE(STR(?stationXPath)), "(positionx|coordx|x$|\\.x$)"))
+  FILTER(REGEX(LCASE(STR(?stationYPath)), "(positiony|coordy|y$|\\.y$)"))
+
+  FILTER(?resource != ?station)
+  FILTER(STR(?resource) < STR(?station))
+  FILTER(REGEX(LCASE(STR(?station)), "(station|cell|line|module|system)"))
+
+  BIND(xsd:double(STR(?resourceXRaw)) AS ?resourceX)
+  BIND(xsd:double(STR(?resourceYRaw)) AS ?resourceY)
+  BIND(xsd:double(COALESCE(STR(?resourceZRaw), "0")) AS ?resourceZ)
+
+  BIND(xsd:double(STR(?stationXRaw)) AS ?stationX)
+  BIND(xsd:double(STR(?stationYRaw)) AS ?stationY)
+  BIND(xsd:double(COALESCE(STR(?stationZRaw), "0")) AS ?stationZ)
+
+  BIND((?resourceX - ?stationX) AS ?dx)
+  BIND((?resourceY - ?stationY) AS ?dy)
+  BIND((?resourceZ - ?stationZ) AS ?dz)
+  BIND((?dx * ?dx) + (?dy * ?dy) + (?dz * ?dz) AS ?distanceSquared)
+  FILTER(?distanceSquared <= 1.0)
+
+  BIND(IRI(CONCAT("urn:kg:apex:in-range:", ENCODE_FOR_URI(SHA256(CONCAT(STR(?resource), "|", STR(?station), "|", STR(?distanceSquared)))))) AS ?fact)
+  BIND(IRI(CONCAT(STR(?fact), ":arg1")) AS ?arg1)
+  BIND(IRI(CONCAT(STR(?fact), ":arg2")) AS ?arg2)
+}

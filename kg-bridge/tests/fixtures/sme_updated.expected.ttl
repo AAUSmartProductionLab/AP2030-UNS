@@ -1,8 +1,8 @@
-@prefix ns1: <https://admin-shell.io/aas/3/0/Referable/> .
-@prefix ns2: <https://admin-shell.io/aas/3/0/Property/> .
+@prefix ns1: <https://admin-shell.io/aas/3/1/Referable/> .
+@prefix ns2: <https://admin-shell.io/aas/3/1/Property/> .
 
-<urn:kg:aas:urn%3Asm%3Asme-updated%2Fsubmodel-elements%2FP2> a <https://admin-shell.io/aas/3/0/Property> ;
+<urn:kg:aas:urn%3Asm%3Asme-updated%2Fsubmodel-elements%2FP2> a <https://admin-shell.io/aas/3/1/Property> ;
     ns2:value "y" ;
-    ns2:valueType <https://admin-shell.io/aas/3/0/DataTypeDefXsd/String> ;
+    ns2:valueType <https://admin-shell.io/aas/3/1/DataTypeDefXsd/String> ;
     ns1:idShort "P2" .
 

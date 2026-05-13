@@ -1,4 +1,4 @@
-"""Load PPR ontology TTL files and extract the rdfs:subClassOf type hierarchy."""
+"""Load ontology TTL files and extract the rdfs:subClassOf type hierarchy."""
 
 from __future__ import annotations
 
@@ -8,14 +8,18 @@ from typing import Dict, List, Optional
 
 
 def _find_ontology_dir() -> Optional[Path]:
-    """Locate the ppr-ontology/ontology directory relative to the Planner."""
+    """Locate ontology sources relative to the Planner package."""
     here = Path(__file__).resolve().parent
-    # Walk up to the repo root (max 5 levels) and look for ppr-ontology/ontology
+    # Walk up to the repo root (max 5 levels) and look for known ontology locations.
     for ancestor in [here] + list(here.parents)[:5]:
-        candidate = ancestor / "ppr-ontology" / "ontology"
-        if candidate.is_dir():
-            return candidate
-    env = os.environ.get("PPR_ONTOLOGY_DIR")
+        candidates = [
+            ancestor / "kg-bridge" / "Ontology" / "APEX",
+            ancestor / "ARSO_Ontology_AAS_Generation" / "Ontology" / "CSS",
+        ]
+        for candidate in candidates:
+            if candidate.is_dir():
+                return candidate
+    env = os.environ.get("PLANNER_ONTOLOGY_DIR")
     if env:
         p = Path(env)
         if p.is_dir():
@@ -44,7 +48,7 @@ def load_type_parent_map(
         ontology_dir = _find_ontology_dir()
     if ontology_dir is None:
         if warnings is not None:
-            warnings.append("PPR ontology directory not found; falling back to heuristic type inference.")
+            warnings.append("Ontology directory not found; falling back to heuristic type inference.")
         return None
 
     g = Graph()
@@ -82,12 +86,18 @@ def _local_name(uri: str) -> str:
 
 
 def _collect_ttl_files(ontology_dir: Path) -> List[Path]:
-    """Return the base ontology and all module TTL files."""
+    """Return ontology files from supported layouts."""
     files: List[Path] = []
+
+    # Prefer parsing all local TTL files in the selected ontology directory.
+    files.extend(sorted(ontology_dir.glob("*.ttl")))
+
     base = ontology_dir / "CSS-Ontology.ttl"
-    if base.exists():
+    if base.exists() and base not in files:
         files.append(base)
+
     modules_dir = ontology_dir / "modules"
     if modules_dir.is_dir():
         files.extend(sorted(modules_dir.glob("*.ttl")))
+
     return files

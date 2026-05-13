@@ -8,10 +8,17 @@ from .events import parse_event
 
 
 class EventRouter:
-    def __init__(self, aas_graph: str, kg_base_ns: str, id_strategy: str = "url-encode") -> None:
+    def __init__(
+        self,
+        aas_graph: str,
+        kg_base_ns: str,
+        id_strategy: str = "url-encode",
+        enable_projection: bool = True,
+    ) -> None:
         self._aas_graph = aas_graph
         self._kg_base_ns = kg_base_ns
         self._id_strategy = id_strategy
+        self._enable_projection = enable_projection
         self._logger = logging.getLogger("kg-bridge.router")
 
     def route(self, raw_event: dict[str, Any], topic: str) -> list[str]:
@@ -37,6 +44,7 @@ class EventRouter:
             graph_iri=self._aas_graph,
             id_strategy=self._id_strategy,
             provenance=provenance or None,
+            enable_projection=self._enable_projection,
         )
         self._logger.debug("Routed %s event on topic=%s to %d statement(s)", payload.get("type"), topic, len(statements))
         return statements

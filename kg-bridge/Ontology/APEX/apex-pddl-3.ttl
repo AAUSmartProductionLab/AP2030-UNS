@@ -1,0 +1,43 @@
+@prefix apex: <https://w3id.org/2026/apex/> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+<https://w3id.org/2026/apex/pddl-3>
+  a owl:Ontology ;
+  rdfs:comment "APEX module for PDDL 3 trajectory constraints and preferences." ;
+  owl:imports <https://w3id.org/2026/apex/pddl> .
+
+apex:TrajectoryConstraint a owl:Class ;
+  rdfs:comment "Base class for trajectory constraints." .
+
+apex:Always a owl:Class ;
+  rdfs:subClassOf apex:TrajectoryConstraint .
+
+apex:Sometime a owl:Class ;
+  rdfs:subClassOf apex:TrajectoryConstraint .
+
+apex:AtMostOnce a owl:Class ;
+  rdfs:subClassOf apex:TrajectoryConstraint .
+
+apex:SometimeAfter a owl:Class ;
+  rdfs:subClassOf apex:TrajectoryConstraint .
+
+apex:SometimeBefore a owl:Class ;
+  rdfs:subClassOf apex:TrajectoryConstraint .
+
+apex:Within a owl:Class ;
+  rdfs:subClassOf apex:TrajectoryConstraint .
+
+apex:AlwaysWithin a owl:Class ;
+  rdfs:subClassOf apex:TrajectoryConstraint .
+
+apex:Preference a owl:Class ;
+  rdfs:comment "Named soft-constraint preference." .
+
+apex:hasViolationCost a owl:DatatypeProperty ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "Penalty/cost for violating a named preference." .
+
+apex:planQualityMetric a owl:ObjectProperty ;
+  rdfs:comment "Links a problem to a quality metric expression over hard/soft constraints." .

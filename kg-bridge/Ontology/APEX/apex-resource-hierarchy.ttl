@@ -1,0 +1,194 @@
+@prefix : <https://w3id.org/2026/apex/> .
+@prefix css: <http://www.w3id.org/hsu-aut/css#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+
+
+#################################################################
+#    External CSS declarations for VOWL visualization in protege
+#################################################################
+css:Resource rdf:type owl:Class .
+css:Product rdf:type owl:Class .
+:AIDSubmodel rdf:type owl:Class .
+:hasAIDSubmodel rdf:type owl:ObjectProperty .
+#################################################################
+#    Classes
+#################################################################
+
+###  https://w3id.org/2026/apex/Identifiable
+:Identifiable rdf:type owl:Class ;
+  rdfs:comment "Anything that can lock a resource via Occupied(Resource, Identifiable), e.g. products and orders." .
+
+###  https://w3id.org/2026/apex/Order
+:Order rdf:type owl:Class ;
+  rdfs:subClassOf :Identifiable ;
+  rdfs:comment "Production order/process identifier used to claim resources before product loading." .
+
+css:Product rdfs:subClassOf :Identifiable .
+
+###  https://w3id.org/2026/apex/CPPS
+:CPPS rdf:type owl:Class ;
+  rdfs:subClassOf css:Resource ;
+  rdfs:comment "Cyber-Physical Production System. A top-level production resource composed of one or more Cyber-Physical Production Modules (CPPMs)." .
+
+###  https://w3id.org/2026/apex/CPPM
+:CPPM rdf:type owl:Class ;
+  rdfs:subClassOf css:Resource ;
+  rdfs:comment "Cyber-Physical Production Module. A mid-level production resource that belongs to a CPPS and is composed of one or more Cyber-Physical Sub-systems (CPSs)." .
+
+###  https://w3id.org/2026/apex/CPS
+:CPS rdf:type owl:Class ;
+  rdfs:subClassOf css:Resource ;
+  rdfs:comment "Cyber-Physical Sub-system. A low-level production resource that belongs to a CPPM and directly performs physical operations." .
+
+
+#################################################################
+#    Object Properties
+#################################################################
+
+###  https://w3id.org/2026/apex/hasCPPM
+:hasCPPM rdf:type owl:ObjectProperty ;
+  rdfs:domain :CPPS ;
+  rdfs:range :CPPM ;
+  rdfs:comment "Relates a CPPS to the CPPMs it is composed of." .
+
+# ###  https://w3id.org/2026/apex/hasCPS
+:hasCPS rdf:type owl:ObjectProperty ;
+  rdfs:domain :CPPM ;
+  rdfs:range :CPS ;
+  rdfs:comment "Relates a CPPM to the CPSs it is composed of." .
+
+# if both CPPS and CPPM can have CPS
+# :hasCPS rdf:type owl:ObjectProperty ;
+#   rdfs:domain [ rdf:type owl:Class ; owl:unionOf ( :CPPM :CPPS ) ] ;
+#   rdfs:range :CPS ;
+#   rdfs:comment "Relates a CPPM or CPPS directly to a CPS." .
+
+
+# Inverse relations should we have them?
+# ###  https://w3id.org/2026/apex/isPartOfCPPS
+# :isPartOfCPPS rdf:type owl:ObjectProperty ;
+#   owl:inverseOf :hasCPPM ;
+#   rdfs:domain :CPPM ;
+#   rdfs:range :CPPS ;
+#   rdfs:comment "Relates a CPPM to the CPPS it belongs to." .
+
+###  https://w3id.org/2026/apex/isPartOfCPPM
+# :isPartOfCPPM rdf:type owl:ObjectProperty ;
+#   owl:inverseOf :hasCPS ;
+#   rdfs:domain :CPS ;
+#   rdfs:range :CPPM ;
+#   rdfs:comment "Relates a CPS to the CPPM it belongs to." .
+
+#################################################################
+#    Individuals
+#################################################################
+
+
+#################################################################
+#    Constraints
+#################################################################
+
+:CPPS rdfs:subClassOf [ rdf:type owl:Restriction ;
+  owl:onProperty :hasCPPM ;
+  owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+  owl:onClass :CPPM
+] .
+
+:CPPM rdfs:subClassOf [ rdf:type owl:Restriction ;
+  owl:onProperty :hasCPS ;
+  owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+  owl:onClass :CPS
+] .
+
+:CPPM rdfs:subClassOf [ rdf:type owl:Restriction ;
+  owl:onProperty :hasAIDSubmodel ;
+  owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+  owl:onClass :AIDSubmodel
+] .
+
+#################################################################
+#    CPPS Types
+#################################################################
+### https://w3id.org/2026/apex/FillingLine
+:FillingLine rdf:type owl:Class ;
+  rdfs:subClassOf :CPPS ;
+  rdfs:comment "Cyber-Physical Production System. A top-level production resource composed of one or more Cyber-Physical Production Modules (CPPMs)." .
+
+### https://w3id.org/2026/apex/Orchestrator
+:Orchestrator rdf:type owl:Class ;
+  rdfs:subClassOf css:Resource ;
+  rdfs:comment "Coordination software resource used for orchestration across modules." .
+
+### https://w3id.org/2026/apex/ProductionPlanner
+:ProductionPlanner rdf:type owl:Class ;
+  rdfs:subClassOf css:Resource ;
+  rdfs:comment "Planning software resource used to generate policies and behavior trees." .
+
+
+#################################################################
+#    CPPM Types
+#################################################################
+:LoadingModule rdf:type owl:Class ;
+  rdfs:subClassOf :CPPM ;
+  rdfs:comment "Cyber-Physical Production Module. A mid-level production resource that belongs to a CPPS and is composed of one or more Cyber-Physical Sub-systems (CPSs)." .
+
+:FillingModule rdf:type owl:Class ;
+  rdfs:subClassOf :CPPM ;
+  rdfs:comment "Cyber-Physical Production Module. A mid-level production resource that belongs to a CPPS and is composed of one or more Cyber-Physical Sub-systems (CPSs)." .
+
+:UnloadingModule rdf:type owl:Class ;
+  rdfs:subClassOf :CPPM ;
+  rdfs:comment "Cyber-Physical Production Module. A mid-level production resource that belongs to a CPPS and is composed of one or more Cyber-Physical Sub-systems (CPSs)." .
+
+###  https://w3id.org/2026/apex/PlanarTable
+:PlanarTable rdf:type owl:Class ;
+  rdfs:subClassOf :CPPM ;
+  rdfs:comment "Motion module that hosts and coordinates multiple planar shuttles." .
+
+###  https://w3id.org/2026/apex/DispensingSystem
+:DispensingSystem rdf:type owl:Class ;
+  rdfs:subClassOf :CPPM ;
+  rdfs:comment "Module that dispenses product into containers." .
+
+###  https://w3id.org/2026/apex/StopperingSystem
+:StopperingSystem rdf:type owl:Class ;
+  rdfs:subClassOf :CPPM ;
+  rdfs:comment "Module that applies stoppers to containers." .
+
+###  https://w3id.org/2026/apex/CappingSystem
+:CappingSystem rdf:type owl:Class ;
+  rdfs:subClassOf :CPPM ;
+  rdfs:comment "Module that performs container capping." .
+
+###  https://w3id.org/2026/apex/QualityControlSystem
+:QualityControlSystem rdf:type owl:Class ;
+  rdfs:subClassOf :CPPM ;
+  rdfs:comment "Module that performs visual inspection and quality control." .
+
+###  https://w3id.org/2026/apex/LoadingSystem
+:LoadingSystem rdf:type owl:Class ;
+  rdfs:subClassOf :CPPM ;
+  rdfs:comment "Module that loads products onto transport resources." .
+
+###  https://w3id.org/2026/apex/UnloadingSystem
+:UnloadingSystem rdf:type owl:Class ;
+  rdfs:subClassOf :CPPM ;
+  rdfs:comment "Module that unloads products from transport resources." .
+
+#################################################################
+#    CPS Types
+#################################################################
+
+###  https://w3id.org/2026/apex/Transport
+:Transport rdf:type owl:Class ;
+  rdfs:subClassOf :CPS ;
+  rdfs:comment "A transport sub-system that moves products between production modules (e.g. planar motor shuttle)." .
+
+###  https://w3id.org/2026/apex/PlanarTableShuttle
+:PlanarTableShuttle rdf:type owl:Class ;
+  rdfs:subClassOf :Transport ;
+  rdfs:comment "A planar motor shuttle transport unit operating on a planar table." .

@@ -6,7 +6,6 @@ import rdflib
 
 from .events import AasEvent, AasEventType, SubmodelEvent, SubmodelEventType
 from .iri import aas_iri, submodel_element_iri, submodel_iri
-from .projection import projection_statements_for_event
 from .sparql import build_delete, build_link, build_unlink, build_upsert
 from py_aas_rdf.models.aas_namespace import AASNameSpace
 
@@ -199,25 +198,14 @@ def event_to_sparql(
     graph_iri: str | None = None,
     id_strategy: str = "url-encode",
     provenance: dict[str, Any] | None = None,
-    enable_projection: bool = True,
 ) -> list[str]:
     """Convert a typed Kafka event to one or more SPARQL UPDATE statements."""
-
-    def _with_projection(base_statements: list[str]) -> list[str]:
-        if not enable_projection:
-            return base_statements
-        return base_statements + projection_statements_for_event(
-            event=event,
-            base_uri=base_uri,
-            graph_iri=graph_iri,
-            id_strategy=id_strategy,
-        )
 
     if isinstance(event, AasEvent):
         if event.type in {AasEventType.AAS_CREATED, AasEventType.AAS_UPDATED}:
             if event.aas is None:
                 raise ValueError(f"{event.type.value} requires event.aas")
-            return _with_projection([
+            return [
                 build_upsert(
                     model=event.aas,
                     target_iri=aas_iri(base_uri, event.id, id_strategy=id_strategy),
@@ -227,45 +215,45 @@ def event_to_sparql(
                     cascade_named_children=False,
                     provenance=provenance,
                 )
-            ])
+            ]
 
         if event.type == AasEventType.AAS_DELETED:
-            return _with_projection([
+            return [
                 build_delete(
                     target_iri=aas_iri(base_uri, event.id, id_strategy=id_strategy),
                     graph_iri=graph_iri,
                     cascade_named_children=False,
                 )
-            ])
+            ]
 
         if event.type == AasEventType.SM_REF_ADDED:
             submodel_id = _submodel_id_from_reference(event)
             if not submodel_id:
                 raise ValueError("SM_REF_ADDED requires submodelId or reference.keys[0].value")
-            return _with_projection([
+            return [
                 build_link(
                     parent_iri=aas_iri(base_uri, event.id, id_strategy=id_strategy),
                     predicate_iri=AASNameSpace.AAS["AssetAdministrationShell/submodels"],
                     child_iri=submodel_iri(base_uri, submodel_id, id_strategy=id_strategy),
                     graph_iri=graph_iri,
                 )
-            ])
+            ]
 
         if event.type == AasEventType.SM_REF_DELETED:
             submodel_id = _submodel_id_from_reference(event)
             if not submodel_id:
                 raise ValueError("SM_REF_DELETED requires submodelId or reference.keys[0].value")
-            return _with_projection([
+            return [
                 build_unlink(
                     parent_iri=aas_iri(base_uri, event.id, id_strategy=id_strategy),
                     predicate_iri=AASNameSpace.AAS["AssetAdministrationShell/submodels"],
                     child_iri=submodel_iri(base_uri, submodel_id, id_strategy=id_strategy),
                     graph_iri=graph_iri,
                 )
-            ])
+            ]
 
         if event.type == AasEventType.ASSET_INFORMATION_SET:
-            return _with_projection([
+            return [
                 _asset_information_set_statement(
                     event=event,
                     base_uri=base_uri,
@@ -273,13 +261,13 @@ def event_to_sparql(
                     id_strategy=id_strategy,
                     provenance=provenance,
                 )
-            ])
+            ]
 
     if isinstance(event, SubmodelEvent):
         if event.type in {SubmodelEventType.SM_CREATED, SubmodelEventType.SM_UPDATED}:
             if event.submodel is None:
                 raise ValueError(f"{event.type.value} requires event.submodel")
-            return _with_projection([
+            return [
                 build_upsert(
                     model=event.submodel,
                     target_iri=submodel_iri(base_uri, event.id, id_strategy=id_strategy),
@@ -289,16 +277,16 @@ def event_to_sparql(
                     cascade_named_children=True,
                     provenance=provenance,
                 )
-            ])
+            ]
 
         if event.type == SubmodelEventType.SM_DELETED:
-            return _with_projection([
+            return [
                 build_delete(
                     target_iri=submodel_iri(base_uri, event.id, id_strategy=id_strategy),
                     graph_iri=graph_iri,
                     cascade_named_children=True,
                 )
-            ])
+            ]
 
         if event.type in {SubmodelEventType.SME_CREATED, SubmodelEventType.SME_UPDATED}:
             if event.smElement is None:
@@ -306,7 +294,7 @@ def event_to_sparql(
             normalized_path = _ensure_path_has_id_short(event.smElementPath, event.smElement.idShort)
             if not normalized_path:
                 raise ValueError(f"{event.type.value} requires smElementPath or smElement.idShort")
-            return _with_projection([
+            return [
                 build_upsert(
                     model=event.smElement,
                     target_iri=submodel_element_iri(
@@ -322,18 +310,18 @@ def event_to_sparql(
                     provenance=provenance,
                     to_rdf_kwargs=_sme_to_rdf_kwargs(event.id, normalized_path, id_strategy=id_strategy),
                 )
-            ])
+            ]
 
         if event.type == SubmodelEventType.SME_DELETED:
             normalized_path = _canonical_path(event.smElementPath)
             if not normalized_path:
                 raise ValueError("SME_DELETED requires smElementPath")
-            return _with_projection([
+            return [
                 build_delete(
                     target_iri=submodel_element_iri(base_uri, event.id, normalized_path, id_strategy=id_strategy),
                     graph_iri=graph_iri,
                     cascade_named_children=True,
                 )
-            ])
+            ]
 
     raise ValueError(f"Unsupported event: {event}")

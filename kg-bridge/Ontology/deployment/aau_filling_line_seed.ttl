@@ -1,0 +1,112 @@
+@prefix aas:   <https://admin-shell.io/aas/3/1/> .
+@prefix arso:  <https://w3id.org/2025/arso#> .
+@prefix arsox: <https://w3id.org/aau-ra/arso-ext#> .
+@prefix apex:  <https://w3id.org/2026/apex/> .
+@prefix css:   <http://www.w3id.org/hsu-aut/css#> .
+
+# Static deployment seed data for local bootstrap.
+# This keeps a minimal, query-ready ABox available even before Kafka traffic starts.
+
+<urn:kg:entity:carrier-01>
+  a css:Resource ;
+  arso:hasAAS <urn:kg:aas:resource:carrier-01> .
+
+<urn:kg:aas:resource:carrier-01>
+  arso:hasOperationalDataSubmodel <urn:kg:sm:resource:carrier-01:operational-data> .
+
+<urn:kg:sm:resource:carrier-01:operational-data>
+  a aas:Submodel ;
+  <https://admin-shell.io/aas/3/1/Submodel/submodelElements>
+    <urn:kg:sme:resource:carrier-01:location>,
+    <urn:kg:sme:resource:carrier-01:position-x>,
+    <urn:kg:sme:resource:carrier-01:position-y>,
+    <urn:kg:sme:resource:carrier-01:position-z>,
+    <urn:kg:sme:resource:carrier-01:operational>,
+    <urn:kg:sme:resource:carrier-01:occupied> .
+
+<urn:kg:sme:resource:carrier-01:location>
+  a apex:MirroredSubmodelElement ;
+  apex:smElementPath "Runtime.CurrentLocation" ;
+  apex:smElementValue "loading-cell-01" .
+
+<urn:kg:sme:resource:carrier-01:position-x>
+  a apex:MirroredSubmodelElement ;
+  apex:smElementPath "Runtime.PositionX" ;
+  apex:smElementValue "0.0" .
+
+<urn:kg:sme:resource:carrier-01:position-y>
+  a apex:MirroredSubmodelElement ;
+  apex:smElementPath "Runtime.PositionY" ;
+  apex:smElementValue "0.0" .
+
+<urn:kg:sme:resource:carrier-01:position-z>
+  a apex:MirroredSubmodelElement ;
+  apex:smElementPath "Runtime.PositionZ" ;
+  apex:smElementValue "0.0" .
+
+<urn:kg:sme:resource:carrier-01:operational>
+  a apex:MirroredSubmodelElement ;
+  apex:smElementPath "Runtime.OperationalStatus" ;
+  apex:smElementValue true .
+
+<urn:kg:sme:resource:carrier-01:occupied>
+  a apex:MirroredSubmodelElement ;
+  apex:smElementPath "Runtime.IsOccupied" ;
+  apex:smElementValue true .
+
+<urn:kg:entity:station-loading-01>
+  a css:Resource ;
+  arso:hasAAS <urn:kg:aas:resource:station-loading-01> .
+
+<urn:kg:aas:resource:station-loading-01>
+  arso:hasOperationalDataSubmodel <urn:kg:sm:resource:station-loading-01:operational-data> .
+
+<urn:kg:sm:resource:station-loading-01:operational-data>
+  a aas:Submodel ;
+  <https://admin-shell.io/aas/3/1/Submodel/submodelElements>
+    <urn:kg:sme:resource:station-loading-01:location>,
+    <urn:kg:sme:resource:station-loading-01:position-x>,
+    <urn:kg:sme:resource:station-loading-01:position-y>,
+    <urn:kg:sme:resource:station-loading-01:position-z>,
+    <urn:kg:sme:resource:station-loading-01:operational> .
+
+<urn:kg:sme:resource:station-loading-01:location>
+  a apex:MirroredSubmodelElement ;
+  apex:smElementPath "Runtime.StationLocation" ;
+  apex:smElementValue "loading-cell-01" .
+
+<urn:kg:sme:resource:station-loading-01:position-x>
+  a apex:MirroredSubmodelElement ;
+  apex:smElementPath "Runtime.PositionX" ;
+  apex:smElementValue "0.0" .
+
+<urn:kg:sme:resource:station-loading-01:position-y>
+  a apex:MirroredSubmodelElement ;
+  apex:smElementPath "Runtime.PositionY" ;
+  apex:smElementValue "0.5" .
+
+<urn:kg:sme:resource:station-loading-01:position-z>
+  a apex:MirroredSubmodelElement ;
+  apex:smElementPath "Runtime.PositionZ" ;
+  apex:smElementValue "0.0" .
+
+<urn:kg:sme:resource:station-loading-01:operational>
+  a apex:MirroredSubmodelElement ;
+  apex:smElementPath "Runtime.OperationalStatus" ;
+  apex:smElementValue true .
+
+<urn:kg:entity:product-batch-01>
+  a css:Product ;
+  arsox:hasAASForProduct <urn:kg:aas:product:batch-01> .
+
+<urn:kg:aas:product:batch-01>
+  arso:hasOperationalDataSubmodel <urn:kg:sm:product:batch-01:operational-data> .
+
+<urn:kg:sm:product:batch-01:operational-data>
+  a aas:Submodel ;
+  <https://admin-shell.io/aas/3/1/Submodel/submodelElements> <urn:kg:sme:product:batch-01:location> .
+
+<urn:kg:sme:product:batch-01:location>
+  a apex:MirroredSubmodelElement ;
+  apex:smElementPath "Runtime.CurrentLocation" ;
+  apex:smElementValue "loading-cell-01" .

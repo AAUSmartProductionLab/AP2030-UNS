@@ -117,7 +117,8 @@ services:
     volumes:
       - ../fuseki/databases:/fuseki/databases
       - ../fuseki/configuration:/fuseki/configuration
-      - ../ppr-ontology/ontology:/staging/ontology:ro
+      - ../ARSO_Ontology_AAS_Generation/Ontology:/staging/arso:ro
+      - ../kg-bridge/Ontology:/staging/kg-ontology:ro
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:3030/$$/ping"]
       interval: 5s
@@ -136,34 +137,78 @@ services:
         condition: service_healthy
     environment:
       ADMIN_PASSWORD: ${KG_FUSEKI_ADMIN_PASSWORD:-admin}
+      KG_TBOX_GRAPH: ${KG_TBOX_GRAPH:-urn:kg:tbox}
+      KG_ABOX_GRAPH: ${KG_ABOX_GRAPH:-urn:kg:abox}
+      KG_SHACL_GRAPH: ${KG_SHACL_GRAPH:-urn:kg:shacl}
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |
         set -eu
         BASE=http://kg-fuseki:3030/kg
-        for f in /staging/ontology/CSS-Ontology.ttl \
-                 /staging/ontology/modules/cssx-resource-hierarchy.ttl \
-                 /staging/ontology/modules/cssx-predicates.ttl \
-                 /staging/ontology/modules/cssx-capabilities.ttl \
-                 /staging/ontology/modules/cssx-skills.ttl \
-                 /staging/ontology/modules/cssx-ai-planning.ttl \
-                 /staging/ontology/modules/cssx-operational-data.ttl \
-                 /staging/ontology/modules/cssx-parameters.ttl \
-                 /staging/ontology/modules/cssx-bom.ttl \
-                 /staging/ontology/modules/cssx-nameplate.ttl \
-                 /staging/ontology/modules/cssx-product-hierarchy.ttl \
-                 /staging/ontology/modules/cssx-resource-interface.ttl \
-                 /staging/ontology/modules/cssx-technical-data.ttl \
-                 /staging/ontology/modules/cssx-aas-validation.ttl ; do
+        TBOX_GRAPH=${KG_TBOX_GRAPH:-urn:kg:tbox}
+        ABOX_GRAPH=${KG_ABOX_GRAPH:-urn:kg:abox}
+        SHACL_GRAPH=${KG_SHACL_GRAPH:-urn:kg:shacl}
+
+        for f in /staging/arso/AAS/aas-rdf-ontology.ttl \
+                 /staging/arso/CSS/CSS-Ontology.ttl \
+                 /staging/arso/ARSO/ARSO_AAS.ttl \
+                 /staging/arso/ARSO/Modules/aid.ttl \
+                 /staging/arso/ARSO/Modules/capabilities.ttl \
+                 /staging/arso/ARSO/Modules/control-component.ttl \
+                 /staging/arso/ARSO/Modules/hierarchical-structures.ttl \
+                 /staging/arso/ARSO/Modules/nameplate.ttl \
+                 /staging/arso/ARSO/Modules/operational-data.ttl \
+                 /staging/arso/ARSO/Modules/parameters.ttl \
+                 /staging/arso/ARSO/Modules/technical-data.ttl \
+                 /staging/kg-ontology/arso-extensions.ttl \
+                 /staging/kg-ontology/APEX/apex.ttl \
+                 /staging/kg-ontology/APEX/apex-predicates.ttl \
+                 /staging/kg-ontology/APEX/apex-product-hierarchy.ttl \
+                 /staging/kg-ontology/APEX/apex-resource-hierarchy.ttl \
+                 /staging/kg-ontology/APEX/apex-pddl.ttl \
+                 /staging/kg-ontology/APEX/apex-pddl-2-1.ttl \
+                 /staging/kg-ontology/APEX/apex-pddl-3.ttl \
+                 /staging/kg-ontology/APEX/apex-pddl-plus.ttl \
+                 /staging/kg-ontology/APEX/apex-ppddl.ttl \
+                 /staging/kg-ontology/APEX/apex-fond.ttl \
+                   /staging/kg-ontology/APEX/apex-execution.ttl ; do
           [ -f "$$f" ] || { echo "missing $$f"; continue; }
-          echo "Loading $$f"
+          echo "Loading TBox $$f"
           curl -fsS -u admin:${ADMIN_PASSWORD:-admin} \
                -X POST -H "Content-Type: text/turtle" \
                --data-binary @$$f \
-               "$$BASE/data?graph=default"
+               "$$BASE/data?graph=$${TBOX_GRAPH}"
         done
+
+        for f in /staging/arso/SHACL/Manual/aas-shacl-schema.ttl \
+                 /staging/arso/SHACL/Manual/arso-rules.shacl.ttl \
+                 /staging/arso/SHACL/Generated/shapes.generated.shacl.ttl \
+                 /staging/kg-ontology/APEX/apex-shacl.ttl ; do
+          [ -f "$$f" ] || { echo "missing $$f"; continue; }
+          echo "Loading SHACL $$f"
+          curl -fsS -u admin:${ADMIN_PASSWORD:-admin} \
+               -X POST -H "Content-Type: text/turtle" \
+               --data-binary @$$f \
+               "$$BASE/data?graph=$${SHACL_GRAPH}"
+        done
+
+        deployment_loaded=0
+        for f in /staging/kg-ontology/deployment/*.ttl ; do
+          [ -f "$$f" ] || continue
+          deployment_loaded=1
+          echo "Loading deployment ABox seed $$f"
+          curl -fsS -u admin:${ADMIN_PASSWORD:-admin} \
+               -X POST -H "Content-Type: text/turtle" \
+               --data-binary @$$f \
+               "$$BASE/data?graph=$${ABOX_GRAPH}"
+        done
+
+        if [ "$$deployment_loaded" -eq 0 ]; then
+          echo "No deployment ABox seed files found in /staging/kg-ontology/deployment"
+        fi
     volumes:
-      - ../ppr-ontology/ontology:/staging/ontology:ro
+      - ../ARSO_Ontology_AAS_Generation/Ontology:/staging/arso:ro
+      - ../kg-bridge/Ontology:/staging/kg-ontology:ro
     restart: "no"
     networks:
       - hivemq-network
@@ -184,9 +229,15 @@ services:
       FUSEKI_QUERY_URL: http://kg-fuseki:3030/kg/sparql
       FUSEKI_USER: admin
       FUSEKI_PASSWORD: ${KG_FUSEKI_ADMIN_PASSWORD:-admin}
-      AAS_GRAPH: urn:kg:aas
+      KG_ABOX_GRAPH: ${KG_ABOX_GRAPH:-urn:kg:abox}
+      KG_TBOX_GRAPH: ${KG_TBOX_GRAPH:-urn:kg:tbox}
+      KG_SHACL_GRAPH: ${KG_SHACL_GRAPH:-urn:kg:shacl}
+      AAS_GRAPH: ${KG_ABOX_GRAPH:-urn:kg:abox}
       KG_BASE_NS: ${KG_BASE_NS:-urn:kg:aas:}
       AAS_ID_STRATEGY: ${KG_AAS_ID_STRATEGY:-url-encode}
+      KG_ENABLE_ARSO_APEX_PROJECTION: ${KG_ENABLE_ARSO_APEX_PROJECTION:-true}
+      KG_ENABLE_MATERIALIZATION: ${KG_ENABLE_MATERIALIZATION:-true}
+      KG_MATERIALIZATION_RULES_DIR: ${KG_MATERIALIZATION_RULES_DIR:-/app/sparql/materialization}
       LOG_LEVEL: ${KG_BRIDGE_LOG_LEVEL:-INFO}
     depends_on:
       kafka:

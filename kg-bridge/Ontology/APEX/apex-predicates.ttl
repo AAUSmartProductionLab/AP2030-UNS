@@ -1,0 +1,29 @@
+@prefix apex: <https://w3id.org/2026/apex/> .
+@prefix css:  <http://www.w3id.org/hsu-aut/css#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+<https://w3id.org/2026/apex/predicates>
+  a owl:Ontology ;
+  rdfs:comment "APEX planning predicate vocabulary with strict n-ary argument bindings." ;
+  owl:imports <https://w3id.org/2026/apex/> .
+
+apex:ResourceAt a owl:Class ;
+  rdfs:subClassOf apex:Predicate ;
+  rdfs:comment "ResourceAt(Resource, LocationLiteral). Argument 1 is css:Resource, argument 2 is a location literal." .
+
+apex:ProductAt a owl:Class ;
+  rdfs:subClassOf apex:Predicate ;
+  rdfs:comment "ProductAt(Product, LocationLiteral). Argument 1 is css:Product, argument 2 is a location literal." .
+
+apex:Occupied a owl:Class ;
+  rdfs:subClassOf apex:Predicate ;
+  rdfs:comment "Occupied(Resource). Argument 1 is css:Resource." .
+
+apex:Operational a owl:Class ;
+  rdfs:subClassOf apex:Predicate ;
+  rdfs:comment "Operational(Resource). Argument 1 is css:Resource." .
+
+apex:InRange a owl:Class ;
+  rdfs:subClassOf apex:Predicate ;
+  rdfs:comment "InRange(Resource, Station). Argument 1 and 2 are resources where argument 2 denotes a station-like resource." .

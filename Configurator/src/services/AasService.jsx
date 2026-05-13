@@ -8,7 +8,7 @@
 import { toast } from 'react-toastify';
 import mqttService from './MqttService';
 import MappingService from './MappingService';
-import cssxResourceHierarchyTtl from '../../../ppr-ontology/ontology/modules/cssx-resource-hierarchy.ttl?raw';
+import resourceHierarchyTtl from '../../../kg-bridge/Ontology/APEX/apex-resource-hierarchy.ttl?raw';
 import { 
   AasRegistryClient, 
   AasRepositoryClient,
@@ -101,7 +101,7 @@ class AasService {
    * @param {string} assetTypeUrl
    * @returns {string|null}
    */
-  extractCssxClassFromAssetType(assetTypeUrl) {
+  extractResourceClassFromAssetType(assetTypeUrl) {
     if (!assetTypeUrl) return null;
 
     const isCssOntologyIri = /^https?:\/\/www\.w3id\.org\/(?:aau-ra\/cssx|hsu-aut\/css)#/i.test(assetTypeUrl);
@@ -119,7 +119,7 @@ class AasService {
   }
 
   /**
-   * Parse cssx-resource-hierarchy.ttl and return CPPM + all subclasses.
+  * Parse resource hierarchy ontology and return CPPM + all subclasses.
    * @returns {Set<string>}
    */
   getCppmOntologyClassSet() {
@@ -128,7 +128,7 @@ class AasService {
     }
 
     const parentMap = new Map();
-    const subClassRegex = /((?::|cssx:)[A-Za-z][A-Za-z0-9_]*|<[^>]+>)\s+[^.]*?\brdfs:subClassOf\s+((?::|cssx:)[A-Za-z][A-Za-z0-9_]*|<[^>]+>)\s*[;.]/gs;
+    const subClassRegex = /((?::|cssx:|apex:)[A-Za-z][A-Za-z0-9_]*|<[^>]+>)\s+[^.]*?\brdfs:subClassOf\s+((?::|cssx:|apex:)[A-Za-z][A-Za-z0-9_]*|<[^>]+>)\s*[;.]/gs;
     let match;
 
     const toLocalName = term => {
@@ -138,7 +138,7 @@ class AasService {
         return term.slice(1);
       }
 
-      if (/^cssx:/i.test(term)) {
+      if (/^(cssx|apex):/i.test(term)) {
         return term.split(':', 2)[1] || null;
       }
 
@@ -153,7 +153,7 @@ class AasService {
       return null;
     };
 
-    while ((match = subClassRegex.exec(cssxResourceHierarchyTtl)) !== null) {
+    while ((match = subClassRegex.exec(resourceHierarchyTtl)) !== null) {
       const child = toLocalName(match[1]);
       const parent = toLocalName(match[2]);
       if (!child || !parent) {
@@ -208,12 +208,12 @@ class AasService {
       return true;
     }
 
-    const cssxClass = this.extractCssxClassFromAssetType(assetTypeUrl);
-    if (!cssxClass) {
+    const resourceClass = this.extractResourceClassFromAssetType(assetTypeUrl);
+    if (!resourceClass) {
       return false;
     }
 
-    return this.getCppmOntologyClassSet().has(cssxClass);
+    return this.getCppmOntologyClassSet().has(resourceClass);
   }
 
   /**
@@ -734,9 +734,9 @@ class AasService {
   extractCategoryFromAssetType(assetTypeUrl) {
     if (!assetTypeUrl) return 'Other';
 
-    const cssxClass = this.extractCssxClassFromAssetType(assetTypeUrl);
-    if (cssxClass) {
-      return cssxClass;
+    const resourceClass = this.extractResourceClassFromAssetType(assetTypeUrl);
+    if (resourceClass) {
+      return resourceClass;
     }
     
     // Match pattern: /Resource/CPPM/{Category}/

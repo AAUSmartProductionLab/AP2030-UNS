@@ -1,0 +1,38 @@
+@prefix apex: <https://w3id.org/2026/apex/> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+<https://w3id.org/2026/apex/pddl>
+  a owl:Ontology ;
+  rdfs:comment "APEX module for core PDDL 1.2 (classical) concepts." ;
+  owl:imports <https://w3id.org/2026/apex/> .
+
+apex:Type a owl:Class ;
+  rdfs:comment "PDDL type symbol." .
+
+apex:Action a owl:Class ;
+  rdfs:comment "PDDL action schema." .
+
+apex:Domain a owl:Class ;
+  rdfs:comment "PDDL domain definition." .
+
+apex:Problem a owl:Class ;
+  rdfs:comment "PDDL problem definition." .
+
+apex:hasParameter a owl:ObjectProperty ;
+  rdfs:comment "Links an action or predicate schema to a parameter description." .
+
+apex:hasPrecondition a owl:ObjectProperty ;
+  rdfs:comment "Links an action to its precondition expression." .
+
+apex:hasEffect a owl:ObjectProperty ;
+  rdfs:comment "Links an action to its effect expression." .
+
+apex:hasInit a owl:ObjectProperty ;
+  rdfs:comment "Links a problem to its initial state expression set." .
+
+apex:hasGoal a owl:ObjectProperty ;
+  rdfs:comment "Links a problem to its goal expression." .
+
+apex:hasObject a owl:ObjectProperty ;
+  rdfs:comment "Links a problem to an object declaration." .

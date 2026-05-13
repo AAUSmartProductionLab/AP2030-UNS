@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from runtime.kafka_consumer import KafkaEventConsumer
 from conversion.routing import EventRouter
 from runtime.fuseki_client import SparqlClient
+from runtime.materialization import MaterializationRunner
 
 
 @dataclass(frozen=True)
@@ -19,11 +20,21 @@ class Settings:
     fuseki_query_url: str
     fuseki_user: str | None
     fuseki_password: str | None
-    aas_graph: str
+    abox_graph: str
+    tbox_graph: str
+    shacl_graph: str
     kg_base_ns: str
     aas_id_strategy: str
     log_level: str
+    enable_projection: bool
+    materialization_rules_dir: str | None
+    enable_materialization: bool
 
+
+def _as_bool(value: str | None, default: bool) -> bool:
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
 def load_settings() -> Settings:
@@ -36,9 +47,14 @@ def load_settings() -> Settings:
         fuseki_query_url=os.getenv("FUSEKI_QUERY_URL", "http://kg-fuseki:3030/kg/sparql"),
         fuseki_user=os.getenv("FUSEKI_USER", "admin"),
         fuseki_password=os.getenv("FUSEKI_PASSWORD", "admin"),
-        aas_graph=os.getenv("AAS_GRAPH", "urn:kg:aas"),
+        abox_graph=os.getenv("KG_ABOX_GRAPH", os.getenv("AAS_GRAPH", "urn:kg:abox")),
+        tbox_graph=os.getenv("KG_TBOX_GRAPH", "urn:kg:tbox"),
+        shacl_graph=os.getenv("KG_SHACL_GRAPH", "urn:kg:shacl"),
         kg_base_ns=os.getenv("KG_BASE_NS", os.getenv("AAS_BASE_URI", "urn:kg:aas:")),
         aas_id_strategy=os.getenv("AAS_ID_STRATEGY", "url-encode"),
+        enable_projection=_as_bool(os.getenv("KG_ENABLE_ARSO_APEX_PROJECTION", "true"), default=True),
+        materialization_rules_dir=os.getenv("KG_MATERIALIZATION_RULES_DIR", "/app/sparql/materialization"),
+        enable_materialization=_as_bool(os.getenv("KG_ENABLE_MATERIALIZATION", "true"), default=True),
         log_level=os.getenv("LOG_LEVEL", "INFO"),
     )
 
@@ -59,6 +75,12 @@ def main() -> None:
     logger = logging.getLogger("kg-bridge")
     logger.info("Starting kg-bridge consumer")
     logger.info("Kafka bootstrap=%s topic_pattern=%s", settings.kafka_bootstrap, settings.kafka_topic_pattern)
+    logger.info(
+        "Named graphs: abox=%s tbox=%s shacl=%s",
+        settings.abox_graph,
+        settings.tbox_graph,
+        settings.shacl_graph,
+    )
 
     sparql_client = SparqlClient(
         update_url=settings.fuseki_update_url,
@@ -67,9 +89,18 @@ def main() -> None:
         password=settings.fuseki_password,
     )
     event_router = EventRouter(
-        aas_graph=settings.aas_graph,
+        aas_graph=settings.abox_graph,
         kg_base_ns=settings.kg_base_ns,
         id_strategy=settings.aas_id_strategy,
+        enable_projection=settings.enable_projection,
+    )
+
+    materialization_runner = MaterializationRunner(
+        rules_dir=settings.materialization_rules_dir,
+        enabled=settings.enable_materialization,
+        abox_graph_iri=settings.abox_graph,
+        tbox_graph_iri=settings.tbox_graph,
+        shacl_graph_iri=settings.shacl_graph,
     )
 
     consumer = KafkaEventConsumer(
@@ -79,6 +110,7 @@ def main() -> None:
         auto_offset_reset=settings.kafka_auto_offset_reset,
         event_router=event_router,
         sparql_client=sparql_client,
+        materialization_runner=materialization_runner,
     )
 
     consumer.run_forever()

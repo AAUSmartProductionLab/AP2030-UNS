@@ -1,0 +1,63 @@
+@prefix arso:  <https://w3id.org/2025/arso#> .
+@prefix arsox: <https://w3id.org/aau-ra/arso-ext#> .
+@prefix css:   <http://www.w3id.org/hsu-aut/css#> .
+@prefix aas:   <https://admin-shell.io/aas/3/1/> .
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+
+<https://w3id.org/aau-ra/arso-ext>
+  a owl:Ontology ;
+  rdfs:comment "ARSO extension links for non-resource AAS projections used by AP2030." ;
+  owl:imports <https://w3id.org/2025/arso> ;
+  owl:imports <http://www.w3id.org/hsu-aut/css> ;
+  owl:imports <https://admin-shell.io/aas/3/1/> .
+
+arsox:hasAASForProduct
+  a owl:ObjectProperty ;
+  rdfs:domain css:Product ;
+  rdfs:range aas:AssetAdministrationShell ;
+  rdfs:comment "Connects a CSS Product to the AAS that represents it." .
+
+arsox:representsProduct
+  a owl:ObjectProperty, owl:FunctionalProperty ;
+  rdfs:domain aas:AssetAdministrationShell ;
+  rdfs:range css:Product ;
+  owl:inverseOf arsox:hasAASForProduct ;
+  rdfs:comment "The CSS Product represented by this AAS." .
+
+arsox:hasAASForProcess
+  a owl:ObjectProperty ;
+  rdfs:domain css:Process ;
+  rdfs:range aas:AssetAdministrationShell ;
+  rdfs:comment "Connects a CSS Process to the AAS that represents it." .
+
+arsox:representsProcess
+  a owl:ObjectProperty, owl:FunctionalProperty ;
+  rdfs:domain aas:AssetAdministrationShell ;
+  rdfs:range css:Process ;
+  owl:inverseOf arsox:hasAASForProcess ;
+  rdfs:comment "The CSS Process represented by this AAS." .
+
+arsox:ProductAssetAdministrationShell
+  a owl:Class ;
+  rdfs:subClassOf aas:AssetAdministrationShell ;
+  rdfs:subClassOf [
+    a owl:Restriction ;
+    owl:onProperty arsox:representsProduct ;
+    owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+    owl:onClass css:Product
+  ] ;
+  rdfs:comment "AAS shell class for digital twins that represent a CSS Product." .
+
+arsox:ProcessAssetAdministrationShell
+  a owl:Class ;
+  rdfs:subClassOf aas:AssetAdministrationShell ;
+  rdfs:subClassOf [
+    a owl:Restriction ;
+    owl:onProperty arsox:representsProcess ;
+    owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+    owl:onClass css:Process
+  ] ;
+  rdfs:comment "AAS shell class for digital twins that represent a CSS Process." .

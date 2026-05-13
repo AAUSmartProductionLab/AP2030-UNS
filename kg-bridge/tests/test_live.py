@@ -1,4 +1,4 @@
-"""Tests for kg-bridge conversion layer: IRI encoding, event parsing, SPARQL generation,
+"""Tests for kg-bridge live layer: IRI encoding, event parsing, SPARQL generation,
 fixture-driven round-trip (G2/G8), idempotency (G3), and cascade boundary (G4)."""
 
 from __future__ import annotations
@@ -10,14 +10,14 @@ import pytest
 import rdflib
 from rdflib.compare import to_isomorphic
 
-from conversion import event_to_sparql, parse_event, submodel_element_iri
-from conversion.events import AasEvent, SubmodelEvent
+from live import event_to_sparql, parse_event, submodel_element_iri
+from live.events import AasEvent, SubmodelEvent
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
-FIXTURES = pathlib.Path(__file__).parent / "fixtures"
+FIXTURES = pathlib.Path(__file__).parent / "live_fixtures"
 BASE_URI = "urn:kg:aas:"
 
 
@@ -27,7 +27,7 @@ def _apply(events: list[tuple[dict, str]], g: rdflib.Graph | None = None) -> rdf
         g = rdflib.Graph()
     for ev_dict, topic in events:
         ev = parse_event(ev_dict, topic=topic)
-        for stmt in event_to_sparql(ev, base_uri=BASE_URI, graph_iri=None, enable_projection=False):
+        for stmt in event_to_sparql(ev, base_uri=BASE_URI, graph_iri=None):
             g.update(stmt)
     return g
 
@@ -41,7 +41,7 @@ def _load_fixture(path: pathlib.Path) -> tuple[rdflib.Graph, rdflib.Graph]:
 
     g = _apply(pre_events)
     ev = parse_event(ev_dict, topic=topic)
-    for stmt in event_to_sparql(ev, base_uri=BASE_URI, graph_iri=None, enable_projection=False):
+    for stmt in event_to_sparql(ev, base_uri=BASE_URI, graph_iri=None):
         g.update(stmt)
 
     expected_ttl_path = path.parent / (path.stem + ".expected.ttl")
@@ -82,7 +82,7 @@ def test_event_to_sparql_sm_ref_added_generates_link():
         {"type": "SM_REF_ADDED", "id": "urn:aas:1", "submodelId": "urn:sm:1"},
         topic="aas-events",
     )
-    statements = event_to_sparql(event=event, base_uri="urn:kg:aas:", graph_iri=None, enable_projection=False)
+    statements = event_to_sparql(event=event, base_uri="urn:kg:aas:", graph_iri=None)
     assert len(statements) == 1
     assert "INSERT DATA" in statements[0]
     assert "AssetAdministrationShell/submodels" in statements[0]
@@ -98,158 +98,11 @@ def test_event_to_sparql_sme_created_uses_path_target():
         },
         topic="submodel-events",
     )
-    statements = event_to_sparql(event=event, base_uri="urn:kg:aas:", graph_iri=None, enable_projection=False)
+    statements = event_to_sparql(event=event, base_uri="urn:kg:aas:", graph_iri=None)
     assert len(statements) == 1
     assert "DELETE" in statements[0]
     assert "INSERT" in statements[0]
     assert "Col1.List1%5B1%5D.P2" in statements[0]
-
-
-def test_projection_sm_ref_added_emits_arso_has_submodel():
-    event = parse_event(
-        {"type": "SM_REF_ADDED", "id": "urn:aas:proj", "submodelId": "urn:sm:proj"},
-        topic="aas-events",
-    )
-
-    statements = event_to_sparql(event=event, base_uri="urn:kg:aas:", graph_iri=None, enable_projection=True)
-    joined = "\n".join(statements)
-
-    assert "https://w3id.org/2025/arso#hasSubmodel" in joined
-
-
-def test_projection_submodel_semantic_id_emits_arso_type_and_apex_semantic_literal():
-    event = parse_event(
-        {
-            "type": "SM_CREATED",
-            "id": "urn:sm:typed",
-            "submodel": {
-                "id": "urn:sm:typed",
-                "semanticId": {
-                    "type": "ExternalReference",
-                    "keys": [
-                        {
-                            "type": "GlobalReference",
-                            "value": "https://admin-shell.io/idta/SubmodelTemplate/CapabilityDescription/1/0",
-                        }
-                    ],
-                },
-            },
-        },
-        topic="submodel-events",
-    )
-
-    statements = event_to_sparql(event=event, base_uri="urn:kg:aas:", graph_iri=None, enable_projection=True)
-    joined = "\n".join(statements)
-
-    assert "https://w3id.org/2025/arso#CapabilitiesSubmodel" in joined
-    assert "https://w3id.org/2026/apex/sourceSemanticId" in joined
-
-
-def test_projection_sme_scalar_value_is_mirrored_in_apex():
-    event = parse_event(
-        {
-            "type": "SME_CREATED",
-            "id": "urn:sm:mirror",
-            "smElementPath": "P1",
-            "smElement": {
-                "modelType": "Property",
-                "idShort": "P1",
-                "valueType": "xs:string",
-                "value": "v1",
-            },
-        },
-        topic="submodel-events",
-    )
-
-    statements = event_to_sparql(event=event, base_uri="urn:kg:aas:", graph_iri=None, enable_projection=True)
-    joined = "\n".join(statements)
-
-    assert "https://w3id.org/2026/apex/MirroredSubmodelElement" in joined
-    assert "https://w3id.org/2026/apex/smElementPath" in joined
-    assert "https://w3id.org/2026/apex/smElementValue" in joined
-
-
-def test_projection_aas_product_shell_representation_links():
-    event = parse_event(
-        {
-            "type": "AAS_CREATED",
-            "id": "urn:aas:product:hgh",
-            "aas": {
-                "id": "urn:aas:product:hgh",
-                "idShort": "ProductTwinHgH",
-                "assetInformation": {"assetKind": "Instance"},
-            },
-        },
-        topic="aas-events",
-    )
-
-    statements = event_to_sparql(event=event, base_uri="urn:kg:aas:", graph_iri=None, enable_projection=True)
-    joined = "\n".join(statements)
-
-    assert "https://w3id.org/aau-ra/arso-ext#representsProduct" in joined
-    assert "https://w3id.org/aau-ra/arso-ext#hasAASForProduct" in joined
-    assert "https://w3id.org/aau-ra/arso-ext#ProductAssetAdministrationShell" in joined
-    assert "http://www.w3id.org/hsu-aut/css#Product" in joined
-
-
-def test_projection_aas_process_shell_representation_links():
-    event = parse_event(
-        {
-            "type": "AAS_CREATED",
-            "id": "urn:aas:process:mixing",
-            "aas": {
-                "id": "urn:aas:process:mixing",
-                "idShort": "ProcessTwin",
-                "assetInformation": {"assetKind": "Instance"},
-            },
-        },
-        topic="aas-events",
-    )
-
-    statements = event_to_sparql(event=event, base_uri="urn:kg:aas:", graph_iri=None, enable_projection=True)
-    joined = "\n".join(statements)
-
-    assert "https://w3id.org/aau-ra/arso-ext#representsProcess" in joined
-    assert "https://w3id.org/aau-ra/arso-ext#hasAASForProcess" in joined
-    assert "https://w3id.org/aau-ra/arso-ext#ProcessAssetAdministrationShell" in joined
-    assert "http://www.w3id.org/hsu-aut/css#Process" in joined
-
-
-def test_projection_aas_resource_shell_representation_links():
-    event = parse_event(
-        {
-            "type": "AAS_CREATED",
-            "id": "urn:aas:resource:loading-station",
-            "aas": {
-                "id": "urn:aas:resource:loading-station",
-                "idShort": "LoadingStationAAS",
-                "assetInformation": {"assetKind": "Instance"},
-            },
-        },
-        topic="aas-events",
-    )
-
-    statements = event_to_sparql(event=event, base_uri="urn:kg:aas:", graph_iri=None, enable_projection=True)
-    joined = "\n".join(statements)
-
-    assert "https://w3id.org/2025/arso#representsResource" in joined
-    assert "https://w3id.org/2025/arso#hasAAS" in joined
-    assert "http://www.w3id.org/hsu-aut/css#Resource" in joined
-
-
-def test_projection_aas_deleted_cleans_inverse_representation_links():
-    event = parse_event(
-        {"type": "AAS_DELETED", "id": "urn:aas:product:to-delete"},
-        topic="aas-events",
-    )
-
-    statements = event_to_sparql(event=event, base_uri="urn:kg:aas:", graph_iri=None, enable_projection=True)
-    joined = "\n".join(statements)
-
-    assert "hasAASForProduct" in joined
-    assert "hasAASForProcess" in joined
-    assert "hasAAS" in joined
-    assert "VALUES ?p" in joined
 
 
 # ---------------------------------------------------------------------------
@@ -300,7 +153,7 @@ def test_upsert_replaces_old_value():
 
     g = _apply([(base, "submodel-events"), (update, "submodel-events")])
 
-    AAS = rdflib.Namespace("https://admin-shell.io/aas/3/1/")
+    AAS = rdflib.Namespace("https://admin-shell.io/aas/3/0/")
     sme_iri = rdflib.URIRef("urn:kg:aas:urn%3Asm%3Areplace%2Fsubmodel-elements%2FP1")
     values = list(g.objects(sme_iri, AAS["Property/value"]))
     assert values == [rdflib.Literal("new")], f"Expected ['new'], got {values}"
@@ -384,9 +237,10 @@ def test_sm_ref_deleted_does_not_delete_submodel_node():
 
     g = _apply([(sm_ev, "submodel-events"), (link_ev, "aas-events"), (unlink_ev, "aas-events")])
 
-    AAS = rdflib.Namespace("https://admin-shell.io/aas/3/1/")
+    AAS = rdflib.Namespace("https://admin-shell.io/aas/3/0/")
     aas_iri = rdflib.URIRef("urn:kg:aas:urn%3Aaas%3Alink2")
     sm_iri = rdflib.URIRef("urn:kg:aas:urn%3Asm%3Alink2")
 
     assert (aas_iri, AAS["AssetAdministrationShell/submodels"], sm_iri) not in g, "Link should be removed"
     assert len(list(g.triples((sm_iri, None, None)))) > 0, "SM triples should survive"
+

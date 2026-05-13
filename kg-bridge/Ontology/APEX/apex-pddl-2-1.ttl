@@ -1,0 +1,39 @@
+@prefix apex: <https://w3id.org/2026/apex/> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+<https://w3id.org/2026/apex/pddl-2-1>
+  a owl:Ontology ;
+  rdfs:comment "APEX module for PDDL 2.1 temporal and numeric planning concepts." ;
+  owl:imports <https://w3id.org/2026/apex/pddl> .
+
+apex:Function a owl:Class ;
+  rdfs:comment "Numeric fluent/function declaration." .
+
+apex:DurativeAction a owl:Class ;
+  rdfs:subClassOf apex:Action ;
+  rdfs:comment "Durative action schema." .
+
+apex:PlanMetric a owl:Class ;
+  rdfs:comment "Optimization metric for a plan." .
+
+apex:hasDuration a owl:ObjectProperty ;
+  rdfs:comment "Links a durative action to its duration constraint." .
+
+apex:hasAtStartCondition a owl:ObjectProperty ;
+  rdfs:comment "Links a durative action to an at-start condition." .
+
+apex:hasAtEndCondition a owl:ObjectProperty ;
+  rdfs:comment "Links a durative action to an at-end condition." .
+
+apex:hasOverAllCondition a owl:ObjectProperty ;
+  rdfs:comment "Links a durative action to an over-all condition." .
+
+apex:hasAtStartEffect a owl:ObjectProperty ;
+  rdfs:comment "Links a durative action to an at-start effect." .
+
+apex:hasAtEndEffect a owl:ObjectProperty ;
+  rdfs:comment "Links a durative action to an at-end effect." .
+
+apex:hasNumericEffect a owl:ObjectProperty ;
+  rdfs:comment "Links actions/effects to numeric assignment, increase, decrease, or scaling expressions." .

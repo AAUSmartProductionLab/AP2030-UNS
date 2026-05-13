@@ -1,0 +1,30 @@
+@prefix apex: <https://w3id.org/2026/apex/> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+<https://w3id.org/2026/apex/ppddl>
+  a owl:Ontology ;
+  rdfs:comment "APEX module for PPDDL probabilistic planning concepts." ;
+  owl:imports <https://w3id.org/2026/apex/pddl> .
+
+apex:ProbabilisticEffect a owl:Class ;
+  rdfs:comment "Probabilistic effect branch set." .
+
+apex:Reward a owl:Class ;
+  rdfs:comment "Reward function element." .
+
+apex:MDPProblem a owl:Class ;
+  rdfs:subClassOf apex:Problem ;
+  rdfs:comment "Markov Decision Process planning problem." .
+
+apex:hasProbability a owl:DatatypeProperty ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "Probability assigned to an effect branch." .
+
+apex:hasRewardFunction a owl:ObjectProperty ;
+  rdfs:comment "Links a problem to its reward function model." .
+
+apex:hasDiscountFactor a owl:DatatypeProperty ;
+  rdfs:range xsd:decimal ;
+  rdfs:comment "Discount factor used in probabilistic optimization." .

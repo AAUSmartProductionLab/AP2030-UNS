@@ -1,5 +1,5 @@
-@prefix ns1: <https://admin-shell.io/aas/3/0/Identifiable/> .
+@prefix ns1: <https://admin-shell.io/aas/3/1/Identifiable/> .
 
-<urn:kg:aas:urn%3Asm%3Aupdated> a <https://admin-shell.io/aas/3/0/Submodel> ;
+<urn:kg:aas:urn%3Asm%3Aupdated> a <https://admin-shell.io/aas/3/1/Submodel> ;
     ns1:id "urn:sm:updated" .
 

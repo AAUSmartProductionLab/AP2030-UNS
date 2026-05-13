@@ -1,0 +1,82 @@
+@prefix apex: <https://w3id.org/2026/apex/> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+<https://w3id.org/2026/apex/>
+  a owl:Ontology ;
+  rdfs:comment "APEX ontology root for planning predicates and execution semantics used by kg-bridge." ;
+  owl:imports <https://w3id.org/2026/apex/predicates> ;
+  owl:imports <https://w3id.org/2026/apex/pddl> ;
+  owl:imports <https://w3id.org/2026/apex/pddl-2-1> ;
+  owl:imports <https://w3id.org/2026/apex/pddl-3> ;
+  owl:imports <https://w3id.org/2026/apex/pddl-plus> ;
+  owl:imports <https://w3id.org/2026/apex/ppddl> ;
+  owl:imports <https://w3id.org/2026/apex/fond> ;
+  owl:imports <https://w3id.org/2026/apex/execution> ;
+  owl:imports <https://w3id.org/2026/apex/shacl> ;
+  owl:versionInfo "0.2.0" .
+
+apex:PDDL12Module a owl:Class ;
+  rdfs:comment "Marker class for PDDL 1.2 (classical) vocabulary migration." .
+
+apex:PDDL21Module a owl:Class ;
+  rdfs:comment "Marker class for PDDL 2.1 (numeric/temporal) vocabulary migration." .
+
+apex:PDDL3Module a owl:Class ;
+  rdfs:comment "Marker class for PDDL 3 trajectory constraints and preferences vocabulary migration." .
+
+apex:PDDLPlusModule a owl:Class ;
+  rdfs:comment "Marker class for PDDL+ processes and events vocabulary migration." .
+
+apex:PPDDLModule a owl:Class ;
+  rdfs:comment "Marker class for probabilistic planning vocabulary migration." .
+
+apex:FONDModule a owl:Class ;
+  rdfs:comment "Marker class for fully observable non-deterministic planning vocabulary migration." .
+
+apex:Predicate a owl:Class ;
+  rdfs:comment "Base class for planning predicate instances represented as n-ary facts." .
+
+apex:MirroredSubmodelElement a owl:Class ;
+  rdfs:comment "Marker class for SubmodelElement nodes that carry bridge-side APEX mirror annotations." .
+
+apex:sourceSemanticId a owl:DatatypeProperty ;
+  rdfs:range xsd:string ;
+  rdfs:comment "Canonical semanticId value observed on a Submodel by the kg-bridge projection mapper." .
+
+apex:smElementPath a owl:DatatypeProperty ;
+  rdfs:range xsd:string ;
+  rdfs:comment "Normalized SubmodelElement path captured from CRUD events." .
+
+apex:smElementModelType a owl:DatatypeProperty ;
+  rdfs:range xsd:string ;
+  rdfs:comment "AAS modelType name mirrored for SubmodelElement projection." .
+
+apex:smElementValue a owl:DatatypeProperty ;
+  rdfs:comment "Literal scalar value mirrored from SubmodelElement payloads when present." .
+
+apex:PredicateArgumentBinding a owl:Class ;
+  rdfs:comment "Reified argument binding used to represent n-ary predicate arguments." .
+
+apex:hasArgumentBinding a owl:ObjectProperty ;
+  rdfs:domain apex:Predicate ;
+  rdfs:range apex:PredicateArgumentBinding ;
+  rdfs:comment "Links a predicate instance to one of its argument bindings." .
+
+apex:argumentIndex a owl:DatatypeProperty ;
+  rdfs:domain apex:PredicateArgumentBinding ;
+  rdfs:range xsd:nonNegativeInteger ;
+  rdfs:comment "1-based argument position for an n-ary predicate argument binding." .
+
+apex:argumentObject a owl:ObjectProperty ;
+  rdfs:domain apex:PredicateArgumentBinding ;
+  rdfs:comment "Object-valued predicate argument for an argument binding." .
+
+apex:argumentLiteral a owl:DatatypeProperty ;
+  rdfs:domain apex:PredicateArgumentBinding ;
+  rdfs:comment "Literal-valued predicate argument for an argument binding." .
+
+apex:asOf a owl:DatatypeProperty ;
+  rdfs:range xsd:dateTime ;
+  rdfs:comment "Timestamp indicating when a materialized predicate fact was last derived." .
