@@ -10,6 +10,7 @@ Each query is a SPARQL CONSTRUCT and is intended to be executed at read time by 
 - product-at.rq
 - occupied.rq
 - operational.rq
+- operational-stoppering-station.rq
 - in-range.rq
 
 ## Notes

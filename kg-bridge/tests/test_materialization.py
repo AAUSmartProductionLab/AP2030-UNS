@@ -92,3 +92,35 @@ def test_materialization_runner_renders_named_graph_tokens(tmp_path: Path):
     assert "<urn:kg:abox>" in client.executed[0]
     assert "<urn:kg:tbox>" in client.executed[0]
     assert "<urn:kg:shacl>" in client.executed[0]
+
+
+def test_shell_typing_rule_contains_expected_type_derivations():
+    rule_path = Path(__file__).resolve().parents[1] / "sparql" / "materialization" / "020-aas-shell-typing.rq"
+    text = rule_path.read_text(encoding="utf-8")
+
+    assert "{{ABOX_GRAPH_N3}}" in text
+    assert "arsox:ProductAssetAdministrationShell" in text
+    assert "arsox:ProcessAssetAdministrationShell" in text
+    assert "arso:HasOperationalDataAAS" in text
+    assert "arso:HasParametersAAS" in text
+    assert "arso:HasCapabilitiesAAS" in text
+    assert "arso:HasSkillsAAS" in text
+    assert "arso:HasSkillsFromCapabilitiesAAS" in text
+    assert "arso:hasOperationalDataSubmodel" in text
+    assert "arso:hasParametersSubmodel" in text
+    assert "arso:hasCapabilitiesSubmodel" in text
+    assert "arso:hasSkillsSubmodel" in text
+
+
+def test_capability_skill_realization_rule_contains_expected_join_pattern():
+    rule_path = Path(__file__).resolve().parents[1] / "sparql" / "materialization" / "030-capability-skill-realization.rq"
+    text = rule_path.read_text(encoding="utf-8")
+
+    assert "{{ABOX_GRAPH_N3}}" in text
+    assert "css:isRealizedBySkill" in text
+    assert "arso:hasCapabilitiesSubmodel" in text
+    assert "arso:hasSkillsSubmodel" in text
+    assert "aas:RelationshipElement/first" in text
+    assert "aas:RelationshipElement/second" in text
+    assert "aas:Referable/idShort" in text
+    assert "https://admin-shell.io/idta/CapabilityDescription/CapabilityRealizedBy/1/0" in text

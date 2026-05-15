@@ -1,0 +1,11 @@
+ASK
+FROM <urn:kg:abox>
+WHERE {
+  ?sme <https://admin-shell.io/aas/3/0/RC01/Property/value> ?rawValue .
+
+  FILTER(CONTAINS(STR(?sme), "syntegonStopperingSystemAAS"))
+  FILTER(CONTAINS(STR(?sme), "Variables/element/PackMLState.State"))
+
+  BIND(UCASE(STR(?rawValue)) AS ?packmlState)
+  FILTER(?packmlState = "EXECUTE")
+}

@@ -1,0 +1,89 @@
+PREFIX aas:  <https://admin-shell.io/aas/3/1/>
+PREFIX arso: <https://w3id.org/2025/arso#>
+PREFIX css:  <http://www.w3id.org/hsu-aut/css#>
+
+WITH {{ABOX_GRAPH_N3}}
+INSERT {
+  ?capability css:isRealizedBySkill ?skill .
+}
+WHERE {
+  ?shell arso:hasCapabilitiesSubmodel ?capsSm ;
+         arso:hasSkillsSubmodel ?skillsSm .
+
+  ?capsSm (<https://admin-shell.io/aas/3/1/Submodel/submodelElements>|<https://admin-shell.io/aas/3/1/SubmodelElementCollection/value>|<https://admin-shell.io/aas/3/1/SubmodelElementList/value>)+ ?realizedByList .
+
+  ?realizedByList a aas:SubmodelElementList ;
+                  aas:HasSemantics/semanticId ?realizedBySemanticRef ;
+                  aas:SubmodelElementList/value ?rel .
+
+  ?realizedBySemanticRef aas:Reference/keys ?realizedBySemanticKey .
+  ?realizedBySemanticKey aas:Key/value "https://admin-shell.io/idta/CapabilityDescription/CapabilityRealizedBy/1/0" .
+
+  ?rel a aas:RelationshipElement ;
+       aas:RelationshipElement/first ?firstRef ;
+       aas:RelationshipElement/second ?secondRef .
+
+  ?firstRef aas:Reference/keys ?firstKey .
+  ?firstKey aas:Key/value ?capContainerIdShort .
+
+  ?capsSm (<https://admin-shell.io/aas/3/1/Submodel/submodelElements>|<https://admin-shell.io/aas/3/1/SubmodelElementCollection/value>|<https://admin-shell.io/aas/3/1/SubmodelElementList/value>)+ ?capContainer .
+  ?capContainer a aas:SubmodelElementCollection ;
+                aas:Referable/idShort ?capContainerIdShort ;
+                aas:SubmodelElementCollection/value ?capability .
+
+  ?capability a aas:Capability .
+
+  ?secondRef aas:Reference/keys ?secondKey .
+  ?secondKey aas:Key/value ?skillIdShort .
+
+  ?skillsSm (<https://admin-shell.io/aas/3/1/Submodel/submodelElements>|<https://admin-shell.io/aas/3/1/SubmodelElementCollection/value>|<https://admin-shell.io/aas/3/1/SubmodelElementList/value>)+ ?skill .
+  ?skill a aas:SubmodelElementCollection ;
+         aas:Referable/idShort ?skillIdShort .
+
+  FILTER NOT EXISTS { ?capability css:isRealizedBySkill ?skill . }
+}
+;
+WITH {{ABOX_GRAPH_N3}}
+DELETE {
+  ?capability css:isRealizedBySkill ?skill .
+}
+WHERE {
+  ?capability css:isRealizedBySkill ?skill .
+  FILTER NOT EXISTS {
+    ?shell arso:hasCapabilitiesSubmodel ?capsSm ;
+           arso:hasSkillsSubmodel ?skillsSm .
+
+    ?capsSm (<https://admin-shell.io/aas/3/1/Submodel/submodelElements>|<https://admin-shell.io/aas/3/1/SubmodelElementCollection/value>|<https://admin-shell.io/aas/3/1/SubmodelElementList/value>)+ ?realizedByList .
+
+    ?realizedByList a aas:SubmodelElementList ;
+                    aas:HasSemantics/semanticId ?realizedBySemanticRef ;
+                    aas:SubmodelElementList/value ?rel .
+
+    ?realizedBySemanticRef aas:Reference/keys ?realizedBySemanticKey .
+    ?realizedBySemanticKey aas:Key/value "https://admin-shell.io/idta/CapabilityDescription/CapabilityRealizedBy/1/0" .
+
+    ?rel a aas:RelationshipElement ;
+         aas:RelationshipElement/first ?firstRef ;
+         aas:RelationshipElement/second ?secondRef .
+
+    ?firstRef aas:Reference/keys ?firstKey .
+    ?firstKey aas:Key/value ?capContainerIdShort .
+
+    ?capsSm (<https://admin-shell.io/aas/3/1/Submodel/submodelElements>|<https://admin-shell.io/aas/3/1/SubmodelElementCollection/value>|<https://admin-shell.io/aas/3/1/SubmodelElementList/value>)+ ?capContainer .
+    ?capContainer a aas:SubmodelElementCollection ;
+                  aas:Referable/idShort ?capContainerIdShort ;
+                  aas:SubmodelElementCollection/value ?resolvedCapability .
+
+    ?resolvedCapability a aas:Capability .
+
+    ?secondRef aas:Reference/keys ?secondKey .
+    ?secondKey aas:Key/value ?skillIdShort .
+
+    ?skillsSm (<https://admin-shell.io/aas/3/1/Submodel/submodelElements>|<https://admin-shell.io/aas/3/1/SubmodelElementCollection/value>|<https://admin-shell.io/aas/3/1/SubmodelElementList/value>)+ ?resolvedSkill .
+    ?resolvedSkill a aas:SubmodelElementCollection ;
+                   aas:Referable/idShort ?skillIdShort .
+
+    FILTER(?resolvedCapability = ?capability)
+    FILTER(?resolvedSkill = ?skill)
+  }
+}
