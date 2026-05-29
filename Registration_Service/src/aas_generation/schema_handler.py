@@ -34,8 +34,9 @@ class SchemaHandler:
         """
         # Default to the workspace root (parent of Registration_Service)
         if project_root is None:
-            # schema_handler.py is in src/aas_generation, so go up 3 levels to workspace root
-            self.project_root = Path(__file__).parent.parent.parent.parent
+            # schema_handler.py is in src/aas_generation:
+            # /app/src/aas_generation/schema_handler.py -> /app
+            self.project_root = Path(__file__).resolve().parents[2]
         else:
             self.project_root = project_root
         self._schema_cache: Dict[str, Dict] = {}
