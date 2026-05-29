@@ -12,11 +12,20 @@ from pmclib import xbot_commands as xbot
 from pmclib import system_commands as sys
 from pmclib import pmc_types as pm
 import time
+import threading
 from math import sqrt
 
 
 # Constants
 POSITION_TOLERANCE_M = 0.005
+
+# Global lock serializing ALL access to the PMC library.
+# pmclib is a thin pass-through to a single shared .NET session (PMCLIB.dll)
+# and provides no synchronization of its own. Concurrent calls from the motion
+# thread and the position-publisher thread can race, causing a motion command
+# to be accepted but never executed. Every pmclib call must hold this lock.
+# Reentrant so nested helpers (e.g. activate_xbot -> ensure_xbot_ready) don't deadlock.
+PMC_LOCK = threading.RLock()
 
 
 def connect_to_pmc(pmc_ip=None):
@@ -59,7 +68,8 @@ def disconnect_from_pmc():
 def check_mastership():
     """Check if we have mastership."""
     try:
-        is_master = sys.is_master()
+        with PMC_LOCK:
+            is_master = sys.is_master()
         return is_master
     except Exception as e:
         print(f"ERROR: Mastership check failed: {e}")
@@ -72,34 +82,35 @@ def ensure_xbot_ready(xbot_id):
     Handles recovery from STOPPED, MOTION, or other states.
     """
     try:
-        status = xbot.get_xbot_status(
-            xbot_id=xbot_id, feedback_type=pm.FEEDBACKOPTION.POSITION)
-        state = status.xbot_state
-
-        if state == pm.XBOTSTATE.XBOT_IDLE:
-            return True
-
-        if state == pm.XBOTSTATE.XBOT_MOTION:
-            xbot.stop_motion(xbot_id=xbot_id)
-            time.sleep(0.5)
+        with PMC_LOCK:
             status = xbot.get_xbot_status(
                 xbot_id=xbot_id, feedback_type=pm.FEEDBACKOPTION.POSITION)
             state = status.xbot_state
 
-        if state == pm.XBOTSTATE.XBOT_STOPPED:
-            xbot.deactivate_xbots()
-            time.sleep(0.5)
-            xbot.activate_xbots()
-            time.sleep(0.5)
-            status = xbot.get_xbot_status(
-                xbot_id=xbot_id, feedback_type=pm.FEEDBACKOPTION.POSITION)
-            state = status.xbot_state
+            if state == pm.XBOTSTATE.XBOT_IDLE:
+                return True
 
-        if state == pm.XBOTSTATE.XBOT_IDLE:
-            return True
-        else:
-            print(f"ERROR: XBot {xbot_id} in state {state}, cannot proceed")
-            return False
+            if state == pm.XBOTSTATE.XBOT_MOTION:
+                xbot.stop_motion(xbot_id=xbot_id)
+                time.sleep(0.5)
+                status = xbot.get_xbot_status(
+                    xbot_id=xbot_id, feedback_type=pm.FEEDBACKOPTION.POSITION)
+                state = status.xbot_state
+
+            if state == pm.XBOTSTATE.XBOT_STOPPED:
+                xbot.deactivate_xbots()
+                time.sleep(0.5)
+                xbot.activate_xbots()
+                time.sleep(0.5)
+                status = xbot.get_xbot_status(
+                    xbot_id=xbot_id, feedback_type=pm.FEEDBACKOPTION.POSITION)
+                state = status.xbot_state
+
+            if state == pm.XBOTSTATE.XBOT_IDLE:
+                return True
+            else:
+                print(f"ERROR: XBot {xbot_id} in state {state}, cannot proceed")
+                return False
 
     except Exception as e:
         print(f"ERROR: XBot {xbot_id} preparation failed: {e}")
@@ -112,7 +123,8 @@ def activate_xbot(xbot_id):
         if not ensure_xbot_ready(xbot_id):
             return False
 
-        xbot.activate_xbots()
+        with PMC_LOCK:
+            xbot.activate_xbots()
         time.sleep(0.5)
 
         return True
@@ -125,7 +137,8 @@ def activate_xbot(xbot_id):
 def get_active_xbot_ids():
     """Get list of all active XBot IDs in the system."""
     try:
-        rtn = xbot.get_xbot_ids()
+        with PMC_LOCK:
+            rtn = xbot.get_xbot_ids()
         # access attributes using snake_case as per pmclib conventions
         return [rtn.xbot_ids_array[i] for i in range(rtn.xbot_count)]
     except Exception as e:
@@ -136,8 +149,9 @@ def get_active_xbot_ids():
 def get_xbot_position(xbot_id):
     """Get current XBot position, return None if failed."""
     try:
-        status = xbot.get_xbot_status(
-            xbot_id=xbot_id, feedback_type=pm.FEEDBACKOPTION.POSITION)
+        with PMC_LOCK:
+            status = xbot.get_xbot_status(
+                xbot_id=xbot_id, feedback_type=pm.FEEDBACKOPTION.POSITION)
         pos = status.feedback_position_si
         return (float(pos[0]), float(pos[1]))
     except Exception as e:
@@ -165,26 +179,28 @@ def execute_path(xbot_id, path_meters, workspace):
         target = path_meters[i + 1]
 
         # Send motion command with DIRECT path type
-        xbot.linear_motion_si(
-            cmd_label=i + 1,
-            xbot_id=xbot_id,
-            position_mode=pm.POSITIONMODE.ABSOLUTE,
-            path_type=pm.LINEARPATHTYPE.DIRECT,
-            target_xmeters=target[0],
-            target_ymeters=target[1],
-            final_speed_meters_ps=0.0,
-            max_speed_meters_ps=0.5,
-            max_acceleration_meters_ps2=1.0,
-            corner_radius=0.0
-        )
+        with PMC_LOCK:
+            xbot.linear_motion_si(
+                cmd_label=i + 1,
+                xbot_id=xbot_id,
+                position_mode=pm.POSITIONMODE.ABSOLUTE,
+                path_type=pm.LINEARPATHTYPE.DIRECT,
+                target_xmeters=target[0],
+                target_ymeters=target[1],
+                final_speed_meters_ps=0.0,
+                max_speed_meters_ps=0.5,
+                max_acceleration_meters_ps2=1.0,
+                corner_radius=0.0
+            )
 
         # Wait for completion
         timeout = 30.0
         start_time = time.time()
 
         while time.time() - start_time < timeout:
-            status = xbot.get_xbot_status(
-                xbot_id=xbot_id, feedback_type=pm.FEEDBACKOPTION.POSITION)
+            with PMC_LOCK:
+                status = xbot.get_xbot_status(
+                    xbot_id=xbot_id, feedback_type=pm.FEEDBACKOPTION.POSITION)
             pos = status.feedback_position_si
             current_x, current_y = float(pos[0]), float(pos[1])
             state = status.xbot_state

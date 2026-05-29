@@ -21,7 +21,8 @@ from library.xbot_controller import (
     disconnect_from_pmc,
     activate_xbot,
     get_xbot_position,
-    get_active_xbot_ids
+    get_active_xbot_ids,
+    PMC_LOCK
 )
 from library.occupancy_grid import (
     load_workspace_from_pmc,
@@ -46,7 +47,8 @@ MQTT_BASE_TOPIC = "NN/Nybrovej/InnoLab/Planar"
 # Global Workspace Config
 WORKSPACE = None
 ACTIVE_XBOT_IDS = set()
-PMC_LOCK = threading.Lock()
+# PMC_LOCK is imported from library.xbot_controller so that ALL PMC access
+# (this module + the library's internal calls) is serialized through one lock.
 XBOT_POS_PUBLISHERS = {}
 
 def get_flyway_centers():
@@ -109,7 +111,8 @@ def find_nearest_valid(position, grid, w, h):
 def execute_rotation(xbot_id, target_rad):
     """Execute rotation, skipping if already at target angle."""
     try:
-        status = xbot.get_xbot_status(xbot_id=xbot_id, feedback_type=pm.FEEDBACKOPTION.POSITION)
+        with PMC_LOCK:
+            status = xbot.get_xbot_status(xbot_id=xbot_id, feedback_type=pm.FEEDBACKOPTION.POSITION)
         curr_rz = float(status.feedback_position_si[5])
         delta = target_rad - curr_rz
         while delta > np.pi: delta -= 2*np.pi
@@ -122,14 +125,16 @@ def execute_rotation(xbot_id, target_rad):
         
         print(f"XBot {xbot_id}: Rotating from {np.degrees(curr_rz):.1f}° to {np.degrees(target_rad):.1f}° (delta: {np.degrees(delta):.1f}°)", flush=True)
         
-        xbot.rotary_motion_p2p(
-            cmd_label=9999, xbot_id=xbot_id, mode=pm.ROTATIONMODE.NO_ANGLE_WRAP,
-            target_rz=target_rad, target_rz_vel=1.0, target_rz_acc=2.0,
-            position_mode=pm.POSITIONMODE.ABSOLUTE
-        )
+        with PMC_LOCK:
+            xbot.rotary_motion_p2p(
+                cmd_label=9999, xbot_id=xbot_id, mode=pm.ROTATIONMODE.NO_ANGLE_WRAP,
+                target_rz=target_rad, target_rz_vel=1.0, target_rz_acc=2.0,
+                position_mode=pm.POSITIONMODE.ABSOLUTE
+            )
         t_start = time.time()
         while time.time() - t_start < 30:
-            s = xbot.get_xbot_status(xbot_id=xbot_id, feedback_type=pm.FEEDBACKOPTION.POSITION)
+            with PMC_LOCK:
+                s = xbot.get_xbot_status(xbot_id=xbot_id, feedback_type=pm.FEEDBACKOPTION.POSITION)
             if s.xbot_state == pm.XBOTSTATE.XBOT_ERROR: return False
             if abs(float(s.feedback_position_si[5]) - target_rad) < 0.02: return True
             time.sleep(0.05)
@@ -137,7 +142,8 @@ def execute_rotation(xbot_id, target_rad):
     except Exception as e:
         # Get current position for debugging
         try:
-            status = xbot.get_xbot_status(xbot_id=xbot_id, feedback_type=pm.FEEDBACKOPTION.POSITION)
+            with PMC_LOCK:
+                status = xbot.get_xbot_status(xbot_id=xbot_id, feedback_type=pm.FEEDBACKOPTION.POSITION)
             pos = status.feedback_position_si
             curr_x, curr_y = float(pos[0]), float(pos[1])
             print(f"Rotation Error at position ({curr_x:.3f}, {curr_y:.3f}): {e}", flush=True)
@@ -246,33 +252,48 @@ def perform_xbot_task(xbot_id, goal_pos, goal_rot, execute_topic_publisher):
             pt_next = path_meters[i+1]
             
             # Send Linear Motion (X then Y)
-            xbot.linear_motion_si(
-                cmd_label=i*10, xbot_id=xbot_id, position_mode=pm.POSITIONMODE.ABSOLUTE,
-                path_type=pm.LINEARPATHTYPE.XTHENY,
-                target_xmeters=pt_next[0], target_ymeters=pt_next[1],
-                final_speed_meters_ps=0.0, max_speed_meters_ps=0.5,
-                max_acceleration_meters_ps2=1.0, corner_radius=0.0
-            )
-            
+            with PMC_LOCK:
+                xbot.linear_motion_si(
+                    cmd_label=i*10, xbot_id=xbot_id, position_mode=pm.POSITIONMODE.ABSOLUTE,
+                    path_type=pm.LINEARPATHTYPE.XTHENY,
+                    target_xmeters=pt_next[0], target_ymeters=pt_next[1],
+                    final_speed_meters_ps=0.0, max_speed_meters_ps=0.5,
+                    max_acceleration_meters_ps2=1.0, corner_radius=0.0
+                )
+
             # Wait loop
             t_move_start = time.time()
             while time.time() - t_move_start < 30:
-                s = xbot.get_xbot_status(xbot_id=xbot_id, feedback_type=pm.FEEDBACKOPTION.POSITION)
+                with PMC_LOCK:
+                    s = xbot.get_xbot_status(xbot_id=xbot_id, feedback_type=pm.FEEDBACKOPTION.POSITION)
                 if s.xbot_state == pm.XBOTSTATE.XBOT_OBSTACLE_DETECTED:
                     # Collision
                     print(f"XBot {xbot_id}: Obstacle Detected!", flush=True)
-                    xbot.stop_motion(xbot_id=xbot_id)
+                    with PMC_LOCK:
+                        xbot.stop_motion(xbot_id=xbot_id)
                     path_interrupted = True
                     break
                 if s.xbot_state == pm.XBOTSTATE.XBOT_ERROR:
                      print(f"XBot {xbot_id}: Hardware Error!", flush=True)
                      raise Exception("XBot Error State")
-                
+
                 cp = s.feedback_position_si
                 d = sqrt((float(cp[0])-pt_next[0])**2 + (float(cp[1])-pt_next[1])**2)
                 if d < 0.005: break
                 time.sleep(0.05)
-            
+            else:
+                # Loop exited via the 30s condition (no break) => the move was
+                # accepted but never completed. Stop the bot and FAIL the command
+                # instead of silently proceeding as if the waypoint was reached.
+                print(f"XBot {xbot_id}: Move TIMEOUT - waypoint {pt_next} not reached in 30s "
+                      f"(last state={s.xbot_state}, dist={d:.4f}m)", flush=True)
+                try:
+                    with PMC_LOCK:
+                        xbot.stop_motion(xbot_id=xbot_id)
+                except Exception:
+                    pass
+                raise Exception(f"Move timeout: XBot {xbot_id} did not reach waypoint {pt_next} within 30s")
+
             if path_interrupted: break
         
         if path_interrupted:
@@ -312,14 +333,16 @@ class PlanarSystemHandler:
         # Activation is handled per-bot on demand or we can do bulk here
         # Original code did bulk activation on Start
         try:
-            xbot.activate_xbots()
+            with PMC_LOCK:
+                xbot.activate_xbots()
         except: pass
-        
+
     def on_stopping(self):
         print("System: Stopping...", flush=True)
         try:
-            xbot.deactivate_xbots()
-            xbot.stop_motion(xbot_id=0) # 0 = all? No, check lib.
+            with PMC_LOCK:
+                xbot.deactivate_xbots()
+                xbot.stop_motion(xbot_id=0) # 0 = all? No, check lib.
         except: pass
         
     def on_resetting(self):
@@ -387,8 +410,9 @@ def publish_positions_loop(proxy):
                     # We need to acquire lock? PMC calls are likely thread-safe in C++ lib but let's be careful.
                     # xbot_controller functions don't use lock except for activation in our code.
                     
-                    s = xbot.get_xbot_status(xbot_id=xbot_id, feedback_type=pm.FEEDBACKOPTION.POSITION)
-                    
+                    with PMC_LOCK:
+                        s = xbot.get_xbot_status(xbot_id=xbot_id, feedback_type=pm.FEEDBACKOPTION.POSITION)
+
                     # Check if valid
                     # If xbot_state is error or not connected, maybe skip?
                     # s.feedback_position_si is [x, y, z, rx, ry, rz]
