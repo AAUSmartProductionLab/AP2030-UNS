@@ -527,10 +527,11 @@ const XbotTracker = () => {
           const poseData = typeof message === 'string' ? JSON.parse(message) : message;
           
           // Use batched update instead of immediate setState
+          // Cursed fix to rotate the visualisation by 90deg with a shifted origin to the right bottom corner instead of the left one. 
           batchXbotUpdate(xbotSubConfig.id, {
-            targetX: poseData.Position[0] !== undefined ? parseFloat(poseData.Position[0]) : undefined,
-            targetY: poseData.Position[1] !== undefined ? parseFloat(poseData.Position[1]) : undefined,
-            targetYaw: poseData.Position[2] !== undefined ? parseFloat(poseData.Position[2]) : undefined
+            targetX: poseData.Position[1] !== undefined ? (4*240)-parseFloat(poseData.Position[1]) : undefined,
+            targetY: poseData.Position[0] !== undefined ? parseFloat(poseData.Position[0]) : undefined,
+            targetYaw: poseData.Position[2] !== undefined ? 270 - parseFloat(poseData.Position[2])  : undefined
           });
         } catch (error) {
           console.error(`XbotTracker: Error processing pose message for Xbot ID ${xbotSubConfig.id}:`, error);
