@@ -528,9 +528,9 @@ const XbotTracker = () => {
           
           // Use batched update instead of immediate setState
           batchXbotUpdate(xbotSubConfig.id, {
-            targetX: poseData.X !== undefined ? parseFloat(poseData.X) * 1000 : undefined,
-            targetY: poseData.Y !== undefined ? parseFloat(poseData.Y) * 1000 : undefined,
-            targetYaw: poseData.Rz !== undefined ? parseFloat(poseData.Rz) : undefined
+            targetX: poseData.Position[0] !== undefined ? parseFloat(poseData.Position[0]) : undefined,
+            targetY: poseData.Position[1] !== undefined ? parseFloat(poseData.Position[1]) : undefined,
+            targetYaw: poseData.Position[2] !== undefined ? parseFloat(poseData.Position[2]) : undefined
           });
         } catch (error) {
           console.error(`XbotTracker: Error processing pose message for Xbot ID ${xbotSubConfig.id}:`, error);
