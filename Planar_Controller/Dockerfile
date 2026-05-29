@@ -35,7 +35,7 @@ RUN sed -i 's/\r$//' entrypoint.sh && chmod +x entrypoint.sh
 # Set environment variable to ensure output is flushed immediately
 ENV PYTHONUNBUFFERED=1
 # Add the library folder to PYTHONPATH so imports in xbot_planner.py work as-is
-ENV PYTHONPATH="${PYTHONPATH}:/app/library"
+ENV PYTHONPATH="/app/library:/app/common"
 
 RUN chmod +x entrypoint.sh
 

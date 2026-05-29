@@ -111,17 +111,12 @@ class ResponseAsync(Topic):
                          subscribe_schema_path, qos, callback_method)
 
     def publish(self, request, client, publish_properties=None, retain=False):
-        try:
-            # Validate only if schema is available
-            if self.pub_schema is not None:
-                validate(instance=request, schema=self.pub_schema,
-                         resolver=self.pub_resolver)
-            # Publish regardless of schema availability
+        if self.pub_schema is not None:
+            validate(instance=request, schema=self.pub_schema,
+                     resolver=self.pub_resolver)
             client.publish(self.pubtopic, json.dumps(request),
                            self.qos, retain=retain)
             print(f"Published to {self.pubtopic}: {request}", flush=True)
-        except Exception as e:
-            print(f"Error in publish: {e}", flush=True)
 
     def callback(self, client, userdata, message):
         # run callback function in separate thread
@@ -176,8 +171,8 @@ class Publisher(Topic):
         if self.pub_schema != None:
             validate(instance=request, schema=self.pub_schema,
                      resolver=self.pub_resolver)
-            client.publish(self.pubtopic, json.dumps(request),
-                           self.qos, retain=retain)
+        client.publish(self.pubtopic, json.dumps(request),
+                        self.qos, retain=retain)
 
 
 class Proxy(mqtt.Client):

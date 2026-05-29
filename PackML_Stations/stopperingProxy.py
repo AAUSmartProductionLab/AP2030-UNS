@@ -20,12 +20,6 @@ def stopper_callback(topic, client, message, properties):
         print(f"Error in dispense_callback: {e}")
 
 
-state = Publisher(
-    BASE_TOPIC+"/DATA/State",
-    "./MQTTSchemas/stationState.schema.json",
-    2
-)
-
 stopper = ResponseAsync(
     BASE_TOPIC+"/DATA/Stoppering",
     BASE_TOPIC+"/CMD/Stoppering",

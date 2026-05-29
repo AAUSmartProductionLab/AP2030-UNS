@@ -12,5 +12,7 @@ RUN apt-get update && apt-get install -y ffmpeg libsm6 libxext6 \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+ENV PYTHONPATH=/app/common
+
 # Define entrypoint with a default command that can be overridden
 ENTRYPOINT ["python"]

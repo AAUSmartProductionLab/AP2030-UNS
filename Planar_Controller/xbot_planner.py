@@ -295,7 +295,7 @@ class SimpleController:
             payload["Uuid"] = xbot_obj.uuid
 
         try:
-            self.mqtt_client.publish(topic, json.dumps(payload), qos=1)
+            self.mqtt_client.publish(topic, json.dumps(payload), qos=1, retain=True)
             print(
                 f"  [MQTT] Published state '{packml_state}' for XBot {xbot_id}")
         except Exception as e:

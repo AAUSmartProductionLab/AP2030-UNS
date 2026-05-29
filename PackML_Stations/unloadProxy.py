@@ -19,13 +19,6 @@ def unload_callback(topic, client, message, properties):
     except Exception as e:
         print(f"Error in dispense_callback: {e}")
 
-
-state = Publisher(
-    BASE_TOPIC+"/DATA/State",
-    "./MQTTSchemas/stationState.schema.json",
-    2
-)
-
 unload = ResponseAsync(
     BASE_TOPIC+"/DATA/Unloading",
     BASE_TOPIC+"/CMD/Unloading",
