@@ -68,8 +68,7 @@ private:
         std::string topic;
         std::vector<MqttSubBase*> instances;  // All instances listening to this topic
         int qos;
-        bool subscribed;
-        
+
         void routeMessage(const std::string &msg_topic, const json &msg, mqtt::properties props) const
         {
             for (MqttSubBase *instance : instances)

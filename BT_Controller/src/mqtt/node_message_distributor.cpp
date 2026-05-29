@@ -17,10 +17,7 @@ std::vector<std::string> NodeMessageDistributor::getActiveTopicPatterns() const
     std::set<std::string> unique_topics;
     for (const auto &handler : topic_handlers_)
     {
-        if (handler.subscribed)
-        {
-            unique_topics.insert(handler.topic);
-        }
+        unique_topics.insert(handler.topic);
     }
     return std::vector<std::string>(unique_topics.begin(), unique_topics.end());
 }
@@ -93,7 +90,6 @@ bool NodeMessageDistributor::subscribeForActiveNodes(const BT::Tree &tree,
             handler.topic = topic_str;
             handler.instances = instances_for_topic;
             handler.qos = topic_to_max_qos[topic_str];
-            handler.subscribed = false;
             topic_handlers_.push_back(handler);
         }
     }
@@ -139,17 +135,6 @@ bool NodeMessageDistributor::subscribeForActiveNodes(const BT::Tree &tree,
             {
                 std::cout << "  Subscribed: " << topic_str << std::endl;
                 success_count++;
-
-                // Mark as subscribed
-                std::lock_guard<std::mutex> lock(handlers_mutex_);
-                for (auto &h : topic_handlers_)
-                {
-                    if (h.topic == topic_str)
-                    {
-                        h.subscribed = true;
-                        break;
-                    }
-                }
             }
             else
             {
@@ -172,26 +157,32 @@ void NodeMessageDistributor::handle_incoming_message(const std::string &msg_topi
                                                      const json &payload,
                                                      mqtt::properties props)
 {
-    // Route message to registered handlers
-    // Note: We rely on MQTT broker retained messages instead of local caching
-    std::lock_guard<std::mutex> lock(handlers_mutex_);
-    bool handled = false;
-    for (const auto &handler : topic_handlers_)
+    std::vector<MqttSubBase *> targets;
     {
-        // handler.topic is the subscribed topic (can have wildcards)
-        // msg_topic is the actual topic the message arrived on
-        if (handler.subscribed && mqtt_utils::topicMatches(handler.topic, msg_topic))
+        std::lock_guard<std::mutex> lock(handlers_mutex_);
+        for (const auto &handler : topic_handlers_)
         {
-            handler.routeMessage(msg_topic, payload, props);
-            handled = true;
-            // If multiple handlers match (e.g. overlapping wildcards), all will be called.
+            // handler.topic is the subscribed topic (can have wildcards); msg_topic is
+            // the actual topic the message arrived on.
+            if (mqtt_utils::topicMatches(handler.topic, msg_topic))
+            {
+                for (MqttSubBase *instance : handler.instances)
+                {
+                    if (instance)
+                    {
+                        targets.push_back(instance);
+                    }
+                }
+            }
         }
     }
 
-    if (!handled)
+    // Route outside the lock. If multiple handlers match (e.g. overlapping wildcards),
+    // all their instances are invoked. Unmatched messages are normal for wildcard
+    // subscriptions without a specific handler and are simply ignored.
+    for (MqttSubBase *instance : targets)
     {
-        // Message not handled - this is normal for messages from wildcard subscriptions
-        // that don't have a specific handler (e.g., CMD topics when we only care about DATA)
+        instance->processMessage(msg_topic, payload, props);
     }
 }
 
@@ -240,7 +231,7 @@ bool NodeMessageDistributor::registerLateInitializingNode(MqttSubBase *instance,
                     handler_exists = true;
                     // Check if instance is already in the list
                     bool instance_already_registered = false;
-                    for (MqttSubBase* existing : h.instances)
+                    for (MqttSubBase *existing : h.instances)
                     {
                         if (existing == instance)
                         {
@@ -265,7 +256,6 @@ bool NodeMessageDistributor::registerLateInitializingNode(MqttSubBase *instance,
                 handler.topic = topic_str;
                 handler.instances.push_back(instance);
                 handler.qos = qos;
-                handler.subscribed = false;
                 topic_handlers_.push_back(handler);
             }
         }
@@ -275,7 +265,7 @@ bool NodeMessageDistributor::registerLateInitializingNode(MqttSubBase *instance,
         try
         {
             std::cout << "Late-init node " << instance->getBTNodeName()
-                      << (handler_exists ? " re-subscribing to: " : " subscribing to: ") 
+                      << (handler_exists ? " re-subscribing to: " : " subscribing to: ")
                       << topic_str << std::endl;
 
             auto token = mqtt_client_.subscribe_topic(topic_str, qos);
@@ -287,20 +277,7 @@ bool NodeMessageDistributor::registerLateInitializingNode(MqttSubBase *instance,
                     std::cerr << "Timeout subscribing to " << topic_str << std::endl;
                     all_success = false;
                 }
-                else if (token->get_return_code() == mqtt::SUCCESS)
-                {
-                    // Mark as subscribed
-                    std::lock_guard<std::mutex> lock(handlers_mutex_);
-                    for (auto &h : topic_handlers_)
-                    {
-                        if (h.topic == topic_str)
-                        {
-                            h.subscribed = true;
-                            break;
-                        }
-                    }
-                }
-                else
+                else if (token->get_return_code() != mqtt::SUCCESS)
                 {
                     std::cerr << "Subscription failed for " << topic_str << std::endl;
                     all_success = false;
