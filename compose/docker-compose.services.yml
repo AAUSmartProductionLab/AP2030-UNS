@@ -15,7 +15,7 @@ services:
 
   frontend:
     build:
-      context: ./Configurator
+      context: ../Configurator
       dockerfile: Dockerfile.frontend
       target: dev
     ports:
@@ -113,7 +113,7 @@ services:
 
   bt_controller:
     build:
-      context: .
+      context: ..
       dockerfile: BT_Controller/dockerfile
     container_name: bt_controller
     environment:
@@ -183,8 +183,8 @@ services:
 
   registration-service:
     build:
-      context: .
-      dockerfile: ../Registration_Service/Dockerfile
+      context: ..
+      dockerfile: Registration_Service/Dockerfile
     container_name: registration-service
     environment:
       - PYTHONUNBUFFERED=1
