@@ -14,50 +14,20 @@
   owl:imports <http://www.w3id.org/hsu-aut/css> ;
   owl:imports <https://admin-shell.io/aas/3/1/> .
 
-arsox:hasAASForProduct
-  a owl:ObjectProperty ;
-  rdfs:domain css:Product ;
-  rdfs:range aas:AssetAdministrationShell ;
-  rdfs:comment "Connects a CSS Product to the AAS that represents it." .
-
-arsox:representsProduct
-  a owl:ObjectProperty, owl:FunctionalProperty ;
-  rdfs:domain aas:AssetAdministrationShell ;
-  rdfs:range css:Product ;
-  owl:inverseOf arsox:hasAASForProduct ;
-  rdfs:comment "The CSS Product represented by this AAS." .
-
-arsox:hasAASForProcess
-  a owl:ObjectProperty ;
-  rdfs:domain css:Process ;
-  rdfs:range aas:AssetAdministrationShell ;
-  rdfs:comment "Connects a CSS Process to the AAS that represents it." .
-
-arsox:representsProcess
-  a owl:ObjectProperty, owl:FunctionalProperty ;
-  rdfs:domain aas:AssetAdministrationShell ;
-  rdfs:range css:Process ;
-  owl:inverseOf arsox:hasAASForProcess ;
-  rdfs:comment "The CSS Process represented by this AAS." .
+arsox:ResourceAssetAdministrationShell
+  a owl:Class ;
+  rdfs:subClassOf aas:AssetAdministrationShell ;
+  owl:disjointWith arsox:ProductAssetAdministrationShell ;
+  owl:disjointWith arsox:ProcessAssetAdministrationShell ;
+  rdfs:comment "AAS shell class for digital twins that represent a CSS Resource (physical production asset)." .
 
 arsox:ProductAssetAdministrationShell
   a owl:Class ;
   rdfs:subClassOf aas:AssetAdministrationShell ;
-  rdfs:subClassOf [
-    a owl:Restriction ;
-    owl:onProperty arsox:representsProduct ;
-    owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ;
-    owl:onClass css:Product
-  ] ;
+  owl:disjointWith arsox:ProcessAssetAdministrationShell ;
   rdfs:comment "AAS shell class for digital twins that represent a CSS Product." .
 
 arsox:ProcessAssetAdministrationShell
   a owl:Class ;
   rdfs:subClassOf aas:AssetAdministrationShell ;
-  rdfs:subClassOf [
-    a owl:Restriction ;
-    owl:onProperty arsox:representsProcess ;
-    owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ;
-    owl:onClass css:Process
-  ] ;
   rdfs:comment "AAS shell class for digital twins that represent a CSS Process." .

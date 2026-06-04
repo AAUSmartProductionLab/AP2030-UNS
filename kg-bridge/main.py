@@ -29,6 +29,9 @@ class Settings:
     enable_projection: bool
     materialization_rules_dir: str | None
     enable_materialization: bool
+    enable_structural_reasoning: bool
+    disable_legacy_structural_materialization: bool
+    disabled_materialization_rule_prefixes: tuple[str, ...]
 
 
 def _as_bool(value: str | None, default: bool) -> bool:
@@ -38,6 +41,26 @@ def _as_bool(value: str | None, default: bool) -> bool:
 
 
 def load_settings() -> Settings:
+    enable_structural_reasoning = _as_bool(os.getenv("KG_ENABLE_STRUCTURAL_REASONING", "false"), default=False)
+    disable_legacy_structural_materialization = _as_bool(
+        os.getenv("KG_DISABLE_LEGACY_STRUCTURAL_MATERIALIZATION", "false"),
+        default=False,
+    )
+
+    disabled_prefixes: list[str] = []
+    configured_prefixes = os.getenv("KG_DISABLED_MATERIALIZATION_RULE_PREFIXES", "")
+    if configured_prefixes.strip():
+        disabled_prefixes.extend(
+            prefix.strip()
+            for prefix in configured_prefixes.split(",")
+            if prefix.strip()
+        )
+
+    if enable_structural_reasoning and disable_legacy_structural_materialization:
+        for legacy_prefix in ("010-", "020-", "030-"):
+            if legacy_prefix not in disabled_prefixes:
+                disabled_prefixes.append(legacy_prefix)
+
     return Settings(
         kafka_bootstrap=os.getenv("KAFKA_BOOTSTRAP", "kafka:9092"),
         kafka_topic_pattern=os.getenv("KAFKA_TOPIC_PATTERN", "(aas-events|submodel-events)"),
@@ -50,11 +73,17 @@ def load_settings() -> Settings:
         abox_graph=os.getenv("KG_ABOX_GRAPH", os.getenv("AAS_GRAPH", "urn:kg:abox")),
         tbox_graph=os.getenv("KG_TBOX_GRAPH", "urn:kg:tbox"),
         shacl_graph=os.getenv("KG_SHACL_GRAPH", "urn:kg:shacl"),
-        kg_base_ns=os.getenv("KG_BASE_NS", os.getenv("AAS_BASE_URI", "urn:kg:aas:")),
-        aas_id_strategy=os.getenv("AAS_ID_STRATEGY", "url-encode"),
+        # identity strategy: AAS/Submodel IDs are already valid IRIs, so they are used
+        # verbatim as RDF node IRIs (base_ns empty). This keeps the graph readable and
+        # makes SME IRIs <submodel-id>/submodel-elements/<path>. See conversion/iri.py.
+        kg_base_ns=os.getenv("KG_BASE_NS", os.getenv("AAS_BASE_URI", "")),
+        aas_id_strategy=os.getenv("AAS_ID_STRATEGY", "identity"),
         enable_projection=_as_bool(os.getenv("KG_ENABLE_ARSO_APEX_PROJECTION", "true"), default=True),
         materialization_rules_dir=os.getenv("KG_MATERIALIZATION_RULES_DIR", "/app/sparql/materialization"),
         enable_materialization=_as_bool(os.getenv("KG_ENABLE_MATERIALIZATION", "true"), default=True),
+        enable_structural_reasoning=enable_structural_reasoning,
+        disable_legacy_structural_materialization=disable_legacy_structural_materialization,
+        disabled_materialization_rule_prefixes=tuple(disabled_prefixes),
         log_level=os.getenv("LOG_LEVEL", "INFO"),
     )
 
@@ -81,6 +110,12 @@ def main() -> None:
         settings.tbox_graph,
         settings.shacl_graph,
     )
+    logger.info(
+        "Structural reasoning=%s legacy structural materialization disabled=%s disabled rule prefixes=%s",
+        settings.enable_structural_reasoning,
+        settings.disable_legacy_structural_materialization,
+        settings.disabled_materialization_rule_prefixes,
+    )
 
     sparql_client = SparqlClient(
         update_url=settings.fuseki_update_url,
@@ -101,6 +136,7 @@ def main() -> None:
         abox_graph_iri=settings.abox_graph,
         tbox_graph_iri=settings.tbox_graph,
         shacl_graph_iri=settings.shacl_graph,
+        disabled_rule_prefixes=settings.disabled_materialization_rule_prefixes,
     )
 
     consumer = KafkaEventConsumer(

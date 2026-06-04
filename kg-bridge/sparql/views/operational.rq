@@ -1,7 +1,8 @@
-PREFIX aas:  <https://admin-shell.io/aas/3/1/>
-PREFIX arso: <https://w3id.org/2025/arso#>
-PREFIX apex: <https://w3id.org/2026/apex/>
-PREFIX css:  <http://www.w3id.org/hsu-aut/css#>
+PREFIX arso:  <https://w3id.org/2025/arso#>
+PREFIX arsox: <https://w3id.org/aau-ra/arso-ext#>
+PREFIX apex:  <https://w3id.org/2026/apex/>
+PREFIX aas-sm: <https://admin-shell.io/aas/3/1/Submodel/>
+PREFIX aas-smc: <https://admin-shell.io/aas/3/1/SubmodelElementCollection/>
 
 CONSTRUCT {
   ?fact a apex:Operational ;
@@ -9,25 +10,26 @@ CONSTRUCT {
 
   ?arg1 a apex:PredicateArgumentBinding ;
     apex:argumentIndex 1 ;
-    apex:argumentObject ?resource .
+    apex:argumentObject ?aas .
 }
 FROM <urn:kg:tbox>
 FROM <urn:kg:abox>
 WHERE {
-  ?resource a css:Resource ;
-    arso:hasAAS ?aas .
+  ?aas a arsox:ResourceAssetAdministrationShell ;
+    arso:hasOperationalDataSubmodel ?sm .
 
-  ?aas arso:hasOperationalDataSubmodel ?sm .
-  ?sm <https://admin-shell.io/aas/3/1/Submodel/submodelElements> ?sme .
+  ?sm (aas-sm:submodelElements
+      |aas-smc:value)+ ?sme .
 
-  ?sme apex:smElementPath ?path ;
+  ?sme apex:smElementSemanticId ?sid ;
     apex:smElementValue ?rawValue .
 
-  FILTER(LCASE(STR(?path)) = "packmlstate.state")
-
+  BIND(LCASE(STR(?sid)) AS ?sidLower)
+  BIND(LCASE(STR(?rawValue)) AS ?valueLower)
   BIND(UCASE(STR(?rawValue)) AS ?packmlState)
-  FILTER(?packmlState = "EXECUTE")
+  FILTER(?sidLower = "https://w3id.org/2026/apex/semantic/state/operational")
+  FILTER(?valueLower IN ("true", "1", "on", "run", "running", "execute", "executing") || ?packmlState = "EXECUTE")
 
-  BIND(IRI(CONCAT("urn:kg:apex:operational:", ENCODE_FOR_URI(SHA256(STR(?resource))))) AS ?fact)
+  BIND(IRI(CONCAT("urn:kg:apex:operational:", ENCODE_FOR_URI(SHA256(STR(?aas))))) AS ?fact)
   BIND(IRI(CONCAT(STR(?fact), ":arg1")) AS ?arg1)
 }

@@ -16,10 +16,72 @@ from Planner.production_planner_service import (
     PlanningResult,
     PlannerConfig,
     PlannerService,
+    _resolve_shacl_gate_enabled,
 )
 
 
 class PlannerServiceTests(unittest.TestCase):
+    def test_resolve_shacl_gate_enabled_respects_explicit_true_false(self):
+        self.assertTrue(
+            _resolve_shacl_gate_enabled(
+                gate_env="true",
+                query_endpoint="http://kg-fuseki:3030/kg/sparql",
+                shacl_graph="urn:kg:shacl",
+                timeout_seconds=1.0,
+            )
+        )
+        self.assertFalse(
+            _resolve_shacl_gate_enabled(
+                gate_env="false",
+                query_endpoint="http://kg-fuseki:3030/kg/sparql",
+                shacl_graph="urn:kg:shacl",
+                timeout_seconds=1.0,
+            )
+        )
+
+    def test_resolve_shacl_gate_enabled_auto_uses_probe(self):
+        with patch("Planner.production_planner_service._is_shacl_graph_available", return_value=True):
+            enabled = _resolve_shacl_gate_enabled(
+                gate_env="auto",
+                query_endpoint="http://kg-fuseki:3030/kg/sparql",
+                shacl_graph="urn:kg:shacl",
+                timeout_seconds=1.0,
+            )
+
+        self.assertTrue(enabled)
+
+    def test_resolve_shacl_gate_enabled_invalid_value_falls_back_to_auto_probe(self):
+        with patch("Planner.production_planner_service._is_shacl_graph_available", return_value=False):
+            enabled = _resolve_shacl_gate_enabled(
+                gate_env="invalid-value",
+                query_endpoint="http://kg-fuseki:3030/kg/sparql",
+                shacl_graph="urn:kg:shacl",
+                timeout_seconds=1.0,
+            )
+
+        self.assertFalse(enabled)
+
+    def test_planner_service_uses_kg_context_collector_in_kg_mode(self):
+        config = PlannerConfig(
+            input_mode="kg",
+            kg_query_endpoint="http://kg-fuseki:3030/kg/sparql",
+            kg_abox_graph="urn:kg:abox",
+            kg_tbox_graph="urn:kg:tbox",
+            kg_query_timeout_seconds=3.0,
+            kg_capability_matching_enabled=True,
+        )
+        service = PlannerService(aas_client=object(), mqtt_client=object(), config=config)
+
+        self.assertTrue(hasattr(service.context_collector, "func"))
+        self.assertEqual(service.context_collector.func.__name__, "collect_planning_context_from_kg")
+
+    def test_planner_service_falls_back_to_aas_collector_on_invalid_mode(self):
+        config = PlannerConfig(input_mode="unknown")
+        service = PlannerService(aas_client=object(), mqtt_client=object(), config=config)
+
+        self.assertFalse(hasattr(service.context_collector, "func"))
+        self.assertEqual(service.context_collector.__name__, "collect_planning_context")
+
     def test_planning_result_response_uses_new_fields(self):
         result = PlanningResult(
             success=True,
@@ -114,6 +176,47 @@ class PlannerServiceTests(unittest.TestCase):
 
         compile_call_args = compile_bop_mock.call_args.args
         self.assertEqual(compile_call_args[1], {"Processes": []})
+
+    def test_plan_and_register_fails_fast_when_shacl_gate_is_non_conformant(self):
+        config = PlannerConfig(save_intermediate_files=False, shacl_gate_enabled=True)
+        service = PlannerService(aas_client=object(), mqtt_client=object(), config=config)
+        service.context_collector = Mock()
+
+        shacl_result = SimpleNamespace(
+            conforms=False,
+            report_text="Constraint Violation in Shape",
+            data_triples=123,
+            shape_triples=9,
+        )
+
+        with patch("Planner.production_planner_service.run_pre_planning_shacl_gate", return_value=shacl_result):
+            result = service.plan_and_register(
+                asset_ids=["https://example/aas/dispensing"],
+                order_aas_id="https://example/aas/productA",
+            )
+
+        self.assertFalse(result.success)
+        self.assertIn("SHACL pre-planning gate failed", result.error_message)
+        self.assertTrue(result.planner_warnings)
+        service.context_collector.assert_not_called()
+
+    def test_plan_and_register_fails_when_shacl_gate_raises_error(self):
+        config = PlannerConfig(save_intermediate_files=False, shacl_gate_enabled=True)
+        service = PlannerService(aas_client=object(), mqtt_client=object(), config=config)
+        service.context_collector = Mock()
+
+        with patch(
+            "Planner.production_planner_service.run_pre_planning_shacl_gate",
+            side_effect=RuntimeError("Fuseki unavailable"),
+        ):
+            result = service.plan_and_register(
+                asset_ids=["https://example/aas/dispensing"],
+                order_aas_id="https://example/aas/productA",
+            )
+
+        self.assertFalse(result.success)
+        self.assertIn("SHACL pre-planning gate error", result.error_message)
+        service.context_collector.assert_not_called()
 
     def test_plan_and_register_success_uses_pipeline_capabilities_for_process_config(self):
         config = PlannerConfig(

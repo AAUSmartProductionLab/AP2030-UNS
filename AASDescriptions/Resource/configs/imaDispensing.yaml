@@ -108,12 +108,12 @@ imaDispensingSystemAAS:
 
     Variables:
         - key: PackMLState
-          semanticId: "https://www.omac.org/packml/state"
+          semanticId: "https://w3id.org/2026/apex/semantic/state/operational"
           InterfaceReference:
               Name: "StationState"
               Field: "State"
         - key: OccupationState
-          semanticId: "cssx:StationOccupation"
+          semanticId: "https://w3id.org/2026/apex/semantic/state/occupied"
           InterfaceReference:
               Name: "StationState"
               Field: "ProcessQueue"
@@ -124,7 +124,7 @@ imaDispensingSystemAAS:
               Name: "Weight"
     Parameters:
         Location:
-            semanticId: "cssx:LocationParameter"
+            semanticId: "https://w3id.org/2026/apex/semantic/location/label"
             Position:
                 X: 240.0
                 Y: 0.0

@@ -169,87 +169,144 @@ def test_projection_sme_scalar_value_is_mirrored_in_apex():
     assert "https://w3id.org/2026/apex/smElementValue" in joined
 
 
-def test_projection_aas_product_shell_representation_links():
+def test_projection_sme_semantic_id_is_mirrored_in_apex():
     event = parse_event(
         {
-            "type": "AAS_CREATED",
-            "id": "urn:aas:product:hgh",
-            "aas": {
-                "id": "urn:aas:product:hgh",
-                "idShort": "ProductTwinHgH",
-                "assetInformation": {"assetKind": "Instance"},
+            "type": "SME_CREATED",
+            "id": "urn:sm:mirror-semantic",
+            "smElementPath": "Runtime.CurrentLocation",
+            "smElement": {
+                "modelType": "Property",
+                "idShort": "CurrentLocation",
+                "valueType": "xs:string",
+                "value": "LoadingStation",
+                "semanticId": {
+                    "type": "ExternalReference",
+                    "keys": [
+                        {
+                            "type": "GlobalReference",
+                            "value": "https://w3id.org/2026/apex/semantic/location/label",
+                        }
+                    ],
+                },
             },
         },
-        topic="aas-events",
+        topic="submodel-events",
     )
 
     statements = event_to_sparql(event=event, base_uri="urn:kg:aas:", graph_iri=None, enable_projection=True)
     joined = "\n".join(statements)
 
-    assert "https://w3id.org/aau-ra/arso-ext#representsProduct" in joined
-    assert "https://w3id.org/aau-ra/arso-ext#hasAASForProduct" in joined
-    assert "https://w3id.org/aau-ra/arso-ext#ProductAssetAdministrationShell" in joined
-    assert "http://www.w3id.org/hsu-aut/css#Product" in joined
+    assert "https://w3id.org/2026/apex/smElementSemanticId" in joined
+    assert "https://w3id.org/2026/apex/semantic/location/label" in joined
 
 
-def test_projection_aas_process_shell_representation_links():
-    event = parse_event(
-        {
-            "type": "AAS_CREATED",
-            "id": "urn:aas:process:mixing",
-            "aas": {
-                "id": "urn:aas:process:mixing",
-                "idShort": "ProcessTwin",
-                "assetInformation": {"assetKind": "Instance"},
-            },
-        },
-        topic="aas-events",
-    )
-
-    statements = event_to_sparql(event=event, base_uri="urn:kg:aas:", graph_iri=None, enable_projection=True)
-    joined = "\n".join(statements)
-
-    assert "https://w3id.org/aau-ra/arso-ext#representsProcess" in joined
-    assert "https://w3id.org/aau-ra/arso-ext#hasAASForProcess" in joined
-    assert "https://w3id.org/aau-ra/arso-ext#ProcessAssetAdministrationShell" in joined
-    assert "http://www.w3id.org/hsu-aut/css#Process" in joined
+def _insert_block(statements: list) -> str:
+    """Extract only INSERT DATA statements to check what was actually asserted."""
+    return "\n".join(s for s in statements if s and "INSERT DATA" in s)
 
 
-def test_projection_aas_resource_shell_representation_links():
-    event = parse_event(
-        {
-            "type": "AAS_CREATED",
-            "id": "urn:aas:resource:loading-station",
-            "aas": {
-                "id": "urn:aas:resource:loading-station",
-                "idShort": "LoadingStationAAS",
-                "assetInformation": {"assetKind": "Instance"},
-            },
-        },
-        topic="aas-events",
-    )
+def test_projection_aas_product_shell_typed_directly():
+    """Product AAS gets arsox:ProductAssetAdministrationShell — no synthetic entity node."""
+    stmts = event_to_sparql(
+        event=parse_event(
+            {"type": "AAS_CREATED", "id": "urn:aas:product:hgh",
+             "aas": {"id": "urn:aas:product:hgh", "idShort": "ProductTwinHgH",
+                     "assetInformation": {"assetKind": "Instance"}}},
+            topic="aas-events"),
+        base_uri="urn:kg:aas:", graph_iri=None, enable_projection=True)
 
-    statements = event_to_sparql(event=event, base_uri="urn:kg:aas:", graph_iri=None, enable_projection=True)
-    joined = "\n".join(statements)
-
-    assert "https://w3id.org/2025/arso#representsResource" in joined
-    assert "https://w3id.org/2025/arso#hasAAS" in joined
-    assert "http://www.w3id.org/hsu-aut/css#Resource" in joined
+    inserts = _insert_block(stmts)
+    shell = "<urn:kg:aas:urn%3Aaas%3Aproduct%3Ahgh>"
+    assert f"{shell} <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://w3id.org/aau-ra/arso-ext#ProductAssetAdministrationShell> ." in inserts
+    assert "ProcessAssetAdministrationShell" not in inserts
+    assert "ResourceAssetAdministrationShell" not in inserts
 
 
-def test_projection_aas_deleted_cleans_inverse_representation_links():
+def test_projection_aas_process_shell_typed_directly():
+    """Process AAS gets arsox:ProcessAssetAdministrationShell — no synthetic entity node."""
+    stmts = event_to_sparql(
+        event=parse_event(
+            {"type": "AAS_CREATED", "id": "urn:aas:process:mixing",
+             "aas": {"id": "urn:aas:process:mixing", "idShort": "ProcessTwin",
+                     "assetInformation": {"assetKind": "Instance"}}},
+            topic="aas-events"),
+        base_uri="urn:kg:aas:", graph_iri=None, enable_projection=True)
+
+    inserts = _insert_block(stmts)
+    shell = "<urn:kg:aas:urn%3Aaas%3Aprocess%3Amixing>"
+    assert f"{shell} <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://w3id.org/aau-ra/arso-ext#ProcessAssetAdministrationShell> ." in inserts
+    assert "ProductAssetAdministrationShell" not in inserts
+    assert "ResourceAssetAdministrationShell" not in inserts
+
+
+def test_projection_aas_resource_shell_typed_directly():
+    """Resource AAS gets arsox:ResourceAssetAdministrationShell — no synthetic entity node."""
+    stmts = event_to_sparql(
+        event=parse_event(
+            {"type": "AAS_CREATED", "id": "urn:aas:resource:loading-station",
+             "aas": {"id": "urn:aas:resource:loading-station", "idShort": "LoadingStationAAS",
+                     "assetInformation": {"assetKind": "Instance"}}},
+            topic="aas-events"),
+        base_uri="urn:kg:aas:", graph_iri=None, enable_projection=True)
+
+    inserts = _insert_block(stmts)
+    shell = "<urn:kg:aas:urn%3Aaas%3Aresource%3Aloading-station>"
+    assert f"{shell} <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://w3id.org/aau-ra/arso-ext#ResourceAssetAdministrationShell> ." in inserts
+    assert "ProductAssetAdministrationShell" not in inserts
+    assert "ProcessAssetAdministrationShell" not in inserts
+
+
+def test_projection_aas_category_overrides_id_keyword():
+    """Explicit category=product wins over process keyword in the AAS ID."""
+    stmts = event_to_sparql(
+        event=parse_event(
+            {"type": "AAS_CREATED", "id": "urn:aas:process:looks-like-process",
+             "aas": {"id": "urn:aas:process:looks-like-process",
+                     "idShort": "ProcessTwinButCategoryProduct",
+                     "category": "product",
+                     "assetInformation": {"assetKind": "Instance"}}},
+            topic="aas-events"),
+        base_uri="urn:kg:aas:", graph_iri=None, enable_projection=True)
+
+    inserts = _insert_block(stmts)
+    shell = "<urn:kg:aas:urn%3Aaas%3Aprocess%3Alooks-like-process>"
+    assert f"{shell} <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://w3id.org/aau-ra/arso-ext#ProductAssetAdministrationShell> ." in inserts
+    assert "ProcessAssetAdministrationShell" not in inserts
+    assert "ResourceAssetAdministrationShell" not in inserts
+
+
+def test_projection_aas_production_planner_typed_as_resource():
+    """productionPlannerAAS contains 'planner', not 'product' — must be ResourceAAS."""
+    stmts = event_to_sparql(
+        event=parse_event(
+            {"type": "AAS_CREATED", "id": "urn:aas:resource:production-planner",
+             "aas": {"id": "urn:aas:resource:production-planner",
+                     "idShort": "productionPlannerAAS",
+                     "assetInformation": {"assetKind": "Instance"}}},
+            topic="aas-events"),
+        base_uri="urn:kg:aas:", graph_iri=None, enable_projection=True)
+
+    inserts = _insert_block(stmts)
+    assert "ResourceAssetAdministrationShell" in inserts
+    assert "ProductAssetAdministrationShell" not in inserts
+    assert "ProcessAssetAdministrationShell" not in inserts
+
+
+def test_projection_aas_deleted_cleans_shell_type_and_legacy_links():
+    """AAS_DELETED removes the shell type and any legacy entity-link predicates."""
     event = parse_event(
         {"type": "AAS_DELETED", "id": "urn:aas:product:to-delete"},
         topic="aas-events",
     )
+    joined = "\n".join(event_to_sparql(event=event, base_uri="urn:kg:aas:", graph_iri=None, enable_projection=True))
 
-    statements = event_to_sparql(event=event, base_uri="urn:kg:aas:", graph_iri=None, enable_projection=True)
-    joined = "\n".join(statements)
-
-    assert "hasAASForProduct" in joined
-    assert "hasAASForProcess" in joined
-    assert "hasAAS" in joined
-    assert "VALUES ?p" in joined
+    # Shell types are cleaned up
+    assert "AssetAdministrationShell" in joined  # type cleanup present
+    # arso:hasResourceAAS is the canonical cleanup predicate; old names are absent.
+    assert "hasResourceAAS" in joined
+    assert "hasProductAAS" not in joined
+    assert "hasProcessAAS" not in joined
 
 
 # ---------------------------------------------------------------------------

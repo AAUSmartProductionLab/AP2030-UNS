@@ -19,6 +19,7 @@ import time
 import uuid
 from pathlib import Path
 from typing import Generator
+from unittest.mock import Mock
 from urllib.parse import quote
 
 import pytest
@@ -33,6 +34,9 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 COMPOSE_FILE = REPO_ROOT / "docker-compose.yml"
 FUSEKI_BASE = os.getenv("FUSEKI_BASE", "http://localhost:3030")
 KAFKA_BOOTSTRAP = os.getenv("KAFKA_BOOTSTRAP", "localhost:9093")
+
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 
 class FusekiClient:
@@ -581,3 +585,82 @@ class TestRealStackE2E:
 
         assert tbox_before == tbox_after, "TBox should never be modified by AAS events"
         print(f"[test] ✓ TBox integrity maintained ({tbox_before} = {tbox_after} triples)")
+
+    def test_planner_shacl_gate_blocks_on_injected_violation(self, fuseki: FusekiClient) -> None:
+        """Smoke E2E: planner SHACL gate fails fast when an isolated shape is violated."""
+        pytest.importorskip("pyshacl")
+
+        from Planner.production_planner_service import PlannerConfig, PlannerService
+
+        suffix = uuid.uuid4().hex[:8]
+        abox_graph = f"urn:kg:e2e:abox:{suffix}"
+        shacl_graph = f"urn:kg:e2e:shacl:{suffix}"
+
+        cppm = f"urn:kg:e2e:cppm:{suffix}"
+        cpps_a = f"urn:kg:e2e:cpps:a:{suffix}"
+        cpps_b = f"urn:kg:e2e:cpps:b:{suffix}"
+
+        # Minimal isolated shape: each apex:CPPM must have exactly one inverse apex:hasCPPM link.
+        fuseki.update(
+            f"""
+            PREFIX apex: <https://w3id.org/2026/apex/>
+            PREFIX sh: <http://www.w3.org/ns/shacl#>
+            INSERT DATA {{
+              GRAPH <{shacl_graph}> {{
+                apex:E2ECppmSingleParentShape
+                  a sh:NodeShape ;
+                  sh:targetClass apex:CPPM ;
+                  sh:property [
+                    sh:path [ sh:inversePath apex:hasCPPM ] ;
+                    sh:class apex:CPPS ;
+                    sh:minCount 1 ;
+                    sh:maxCount 1
+                  ] .
+              }}
+            }}
+            """
+        )
+
+        # Inject deterministic violation: one CPPM with two CPPS parents.
+        fuseki.update(
+            f"""
+            PREFIX apex: <https://w3id.org/2026/apex/>
+            INSERT DATA {{
+              GRAPH <{abox_graph}> {{
+                <{cppm}> a apex:CPPM .
+                <{cpps_a}> a apex:CPPS ; apex:hasCPPM <{cppm}> .
+                <{cpps_b}> a apex:CPPS ; apex:hasCPPM <{cppm}> .
+              }}
+            }}
+            """
+        )
+
+        try:
+            planner = PlannerService(
+                aas_client=object(),
+                mqtt_client=object(),
+                config=PlannerConfig(
+                    save_intermediate_files=False,
+                    shacl_gate_enabled=True,
+                    shacl_query_endpoint=f"{FUSEKI_BASE}/kg/sparql",
+                    shacl_abox_graph=abox_graph,
+                    shacl_tbox_graph="urn:kg:tbox",
+                    shacl_shapes_graph=shacl_graph,
+                    shacl_gate_timeout_seconds=20.0,
+                ),
+            )
+            planner.context_collector = Mock()
+
+            result = planner.plan_and_register(
+                asset_ids=["urn:kg:e2e:resource:dummy"],
+                order_aas_id="urn:kg:e2e:order:dummy",
+            )
+
+            assert result.success is False, "Expected planning to fail when SHACL gate does not conform"
+            assert result.error_message is not None
+            assert "SHACL pre-planning gate failed" in result.error_message
+            assert result.planner_warnings, "Expected SHACL report excerpt in planner warnings"
+            planner.context_collector.assert_not_called()
+        finally:
+            fuseki.update(f"CLEAR GRAPH <{abox_graph}>")
+            fuseki.update(f"CLEAR GRAPH <{shacl_graph}>")

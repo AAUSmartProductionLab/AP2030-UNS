@@ -17,13 +17,16 @@ import os
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from functools import partial
+from typing import Any, Callable, Dict, List, Optional
+
+import requests
 
 from packml_runtime.aas_client import AASClient
 from packml_runtime.mqtt import Proxy, ResponseAsync
 from packml_runtime.simulator import PackMLStateMachine
 
-from .step1_aas_input import collect_planning_context
+from .step1_aas_input import collect_planning_context, collect_planning_context_from_kg
 from .step1_aas_input.parsing import parse_source
 from .step2_pddl_construction import (
     build_capabilities,
@@ -49,12 +52,81 @@ from .run_metrics import (
     publish_stage_metrics,
     write_stage_metrics,
 )
+from .step0_validation import ShaclGateConfig, run_pre_planning_shacl_gate
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
+
+
+def _parse_bool_env(raw: str) -> bool:
+    return raw.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _is_shacl_graph_available(
+    query_endpoint: str,
+    shacl_graph: str,
+    timeout_seconds: float,
+) -> bool:
+    ask_query = f"""
+ASK
+FROM <{shacl_graph}>
+WHERE {{ ?s ?p ?o }}
+""".strip()
+
+    try:
+        response = requests.post(
+            query_endpoint,
+            data={"query": ask_query},
+            headers={"Accept": "application/sparql-results+json"},
+            timeout=timeout_seconds,
+        )
+        response.raise_for_status()
+        payload = response.json()
+    except Exception as exc:
+        logger.info("SHACL gate auto-detect probe failed against %s: %s", query_endpoint, exc)
+        return False
+
+    return bool(payload.get("boolean", False))
+
+
+def _resolve_shacl_gate_enabled(
+    gate_env: Optional[str],
+    query_endpoint: str,
+    shacl_graph: str,
+    timeout_seconds: float,
+) -> bool:
+    if gate_env is not None and gate_env.strip():
+        raw = gate_env.strip().lower()
+        if raw in {"1", "true", "yes", "on"}:
+            return True
+        if raw in {"0", "false", "no", "off"}:
+            return False
+        if raw != "auto":
+            logger.warning(
+                "Unsupported PLANNER_SHACL_GATE_ENABLED=%r. Falling back to auto mode.",
+                gate_env,
+            )
+
+    return _is_shacl_graph_available(query_endpoint, shacl_graph, timeout_seconds)
+
+
+def _build_context_collector(config: "PlannerConfig") -> Callable[..., Any]:
+    mode = str(config.input_mode or "aas").strip().lower()
+    if mode == "kg":
+        return partial(
+            collect_planning_context_from_kg,
+            query_endpoint=config.kg_query_endpoint,
+            abox_graph=config.kg_abox_graph,
+            tbox_graph=config.kg_tbox_graph,
+            timeout_seconds=config.kg_query_timeout_seconds,
+            enable_capability_matching=config.kg_capability_matching_enabled,
+        )
+    if mode != "aas":
+        logger.warning("Unsupported planner input mode '%s'; falling back to AAS mode", mode)
+    return collect_planning_context
 
 
 @dataclass
@@ -127,10 +199,34 @@ class PlannerConfig:
     bt_base_url: str = "https://aausmartproductionlab.github.io/AP2030-UNS/BTDescriptions"
     planning_timeout_seconds: float = 30.0
     strict_semantic_solve: bool = True
+    input_mode: str = "aas"
+    kg_query_endpoint: str = "http://kg-fuseki:3030/kg/sparql"
+    kg_abox_graph: str = "urn:kg:abox"
+    kg_tbox_graph: str = "urn:kg:tbox"
+    kg_query_timeout_seconds: float = 10.0
+    kg_capability_matching_enabled: bool = True
+    shacl_gate_enabled: bool = False
+    shacl_query_endpoint: str = "http://kg-fuseki:3030/kg/sparql"
+    shacl_abox_graph: str = "urn:kg:abox"
+    shacl_tbox_graph: str = "urn:kg:tbox"
+    shacl_shapes_graph: str = "urn:kg:shacl"
+    shacl_gate_timeout_seconds: float = 20.0
+    shacl_gate_inference: str = "rdfs"
     metrics_dir: Optional[str] = "/data/run_metrics"
     metrics_topic_prefix: Optional[str] = "NN/Nybrovej/InnoLab/Stats"
 
     save_intermediate_files: bool = True
+
+    def to_shacl_gate_config(self) -> ShaclGateConfig:
+        return ShaclGateConfig(
+            enabled=self.shacl_gate_enabled,
+            sparql_endpoint=self.shacl_query_endpoint,
+            abox_graph_iri=self.shacl_abox_graph,
+            tbox_graph_iri=self.shacl_tbox_graph,
+            shacl_graph_iri=self.shacl_shapes_graph,
+            timeout_seconds=self.shacl_gate_timeout_seconds,
+            inference=self.shacl_gate_inference,
+        )
 
 
 @dataclass(frozen=True)
@@ -152,7 +248,8 @@ class PlannerService:
         self.aas_client = aas_client
         self.mqtt_client = mqtt_client
         self.config = config or PlannerConfig()
-        self.context_collector = collect_planning_context
+        self.context_collector = _build_context_collector(self.config)
+        logger.info("Planner input mode: %s", self.config.input_mode)
         self.process_generator = ProcessAASGenerator(
             ProcessAASConfig(bt_base_url=self.config.bt_base_url)
         )
@@ -169,6 +266,36 @@ class PlannerService:
         logger.info("Starting planning for order: %s", order_aas_id)
         logger.info("Initial asset IDs: %s", asset_ids)
         logger.info("Run ID: %s", effective_run_id)
+
+        if self.config.shacl_gate_enabled:
+            logger.info("Step 0: Running SHACL fail-fast gate before planning...")
+            try:
+                gate_result = run_pre_planning_shacl_gate(self.config.to_shacl_gate_config())
+            except Exception as exc:
+                logger.error("SHACL pre-planning gate failed with error: %s", exc)
+                return PlanningResult(
+                    success=False,
+                    order_aas_id=order_aas_id,
+                    error_message=f"SHACL pre-planning gate error: {exc}",
+                    run_id=effective_run_id,
+                )
+
+            logger.info(
+                "SHACL pre-planning gate executed: conforms=%s data_triples=%d shape_triples=%d",
+                gate_result.conforms,
+                gate_result.data_triples,
+                gate_result.shape_triples,
+            )
+
+            if not gate_result.conforms:
+                report_excerpt = "\n".join(gate_result.report_text.strip().splitlines()[:25]).strip()
+                return PlanningResult(
+                    success=False,
+                    order_aas_id=order_aas_id,
+                    error_message="SHACL pre-planning gate failed; planning aborted.",
+                    planner_warnings=[report_excerpt or "SHACL validation reported non-conformance."],
+                    run_id=effective_run_id,
+                )
 
         logger.info("Step 1: Collecting planning context from AAS models...")
         planning_context = self.context_collector(self.aas_client, order_aas_id, asset_ids)
@@ -216,10 +343,16 @@ class PlannerService:
 
             logger.info("Step 2: Parsing AI planning sources...")
             parse_started = time.perf_counter()
-            parsed_sources = [
-                parse_source(source, asset_type_by_aas_id=asset_type_lookup)
-                for source in planning_sources
-            ]
+            pre_parsed = getattr(planning_context, "pre_parsed_sources", None) or []
+            if pre_parsed:
+                # Phase 4 KG path: domain + init already assembled from KG projections.
+                logger.info("Using %d KG-pre-parsed source(s) (bypassing AAS parse)", len(pre_parsed))
+                parsed_sources = list(pre_parsed)
+            else:
+                parsed_sources = [
+                    parse_source(source, asset_type_by_aas_id=asset_type_lookup)
+                    for source in planning_sources
+                ]
             metrics["parse_time_s"] = time.perf_counter() - parse_started
 
             for parsed in parsed_sources:
@@ -551,6 +684,30 @@ class ProductionPlannerRuntime:
         self.proxy.on_ready(self._on_mqtt_ready)
 
     def _initialize_planner_service(self) -> None:
+        planner_input_mode = os.getenv("PLANNER_INPUT_MODE", "aas")
+        kg_query_endpoint = os.getenv("PLANNER_KG_QUERY_ENDPOINT", "http://kg-fuseki:3030/kg/sparql")
+        kg_abox_graph = os.getenv("PLANNER_KG_ABOX_GRAPH", os.getenv("KG_ABOX_GRAPH", "urn:kg:abox"))
+        kg_tbox_graph = os.getenv("PLANNER_KG_TBOX_GRAPH", os.getenv("KG_TBOX_GRAPH", "urn:kg:tbox"))
+        kg_query_timeout_seconds = float(os.getenv("PLANNER_KG_QUERY_TIMEOUT_SECONDS", "10"))
+        kg_capability_matching_enabled = _parse_bool_env(
+            os.getenv("PLANNER_KG_CAPABILITY_MATCHING_ENABLED", "true")
+        )
+
+        shacl_query_endpoint = os.getenv("PLANNER_SHACL_QUERY_ENDPOINT", "http://kg-fuseki:3030/kg/sparql")
+        shacl_abox_graph = os.getenv("PLANNER_SHACL_ABOX_GRAPH", os.getenv("KG_ABOX_GRAPH", "urn:kg:abox"))
+        shacl_tbox_graph = os.getenv("PLANNER_SHACL_TBOX_GRAPH", os.getenv("KG_TBOX_GRAPH", "urn:kg:tbox"))
+        shacl_shapes_graph = os.getenv(
+            "PLANNER_SHACL_SHAPES_GRAPH",
+            os.getenv("KG_SHACL_GRAPH", "urn:kg:shacl"),
+        )
+        shacl_gate_timeout_seconds = float(os.getenv("PLANNER_SHACL_TIMEOUT_SECONDS", "20"))
+        shacl_gate_enabled = _resolve_shacl_gate_enabled(
+            gate_env=os.getenv("PLANNER_SHACL_GATE_ENABLED", "auto"),
+            query_endpoint=shacl_query_endpoint,
+            shacl_graph=shacl_shapes_graph,
+            timeout_seconds=min(shacl_gate_timeout_seconds, 3.0),
+        )
+
         service_config = PlannerConfig(
             registration_topic=self.config.registration_topic,
             process_aas_output_dir="./AASDescriptions/Process/configs",
@@ -559,7 +716,20 @@ class ProductionPlannerRuntime:
             metrics_topic_prefix=env_metrics_topic_prefix(),
             save_intermediate_files=True,
             planning_timeout_seconds=float(os.getenv("PLANNING_TIMEOUT_SECONDS", "30")),
-            strict_semantic_solve=os.getenv("STRICT_SEMANTIC_SOLVE", "true").lower() in {"1", "true", "yes"},
+            strict_semantic_solve=_parse_bool_env(os.getenv("STRICT_SEMANTIC_SOLVE", "true")),
+            input_mode=planner_input_mode,
+            kg_query_endpoint=kg_query_endpoint,
+            kg_abox_graph=kg_abox_graph,
+            kg_tbox_graph=kg_tbox_graph,
+            kg_query_timeout_seconds=kg_query_timeout_seconds,
+            kg_capability_matching_enabled=kg_capability_matching_enabled,
+            shacl_gate_enabled=shacl_gate_enabled,
+            shacl_query_endpoint=shacl_query_endpoint,
+            shacl_abox_graph=shacl_abox_graph,
+            shacl_tbox_graph=shacl_tbox_graph,
+            shacl_shapes_graph=shacl_shapes_graph,
+            shacl_gate_timeout_seconds=shacl_gate_timeout_seconds,
+            shacl_gate_inference=os.getenv("PLANNER_SHACL_INFERENCE", "rdfs"),
         )
 
         self.planner_service = PlannerService(

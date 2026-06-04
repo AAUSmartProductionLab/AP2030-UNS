@@ -12,6 +12,11 @@ _LIST_TOKEN_RE = re.compile(r"^(?P<name>[^\[\]]+?)(?:\[(?P<index>\d+)\])?$")
 def _encode_identifier(value: str, id_strategy: str) -> str:
     if id_strategy == "base64-url-encode":
         return base_64_url_encode(value)
+    if id_strategy == "identity":
+        # The identifier is already a valid IRI; use it as-is. Must mirror
+        # py_aas_rdf's identity branch exactly so the manual projection IRIs
+        # line up with the to_rdf full-mirror IRIs (the view join depends on it).
+        return value
     return url_encode(value)
 
 
@@ -41,6 +46,9 @@ def _encode_sm_element_path(sm_element_path: str) -> str:
 def _submodel_elements_prefix(submodel_id: str, id_strategy: str) -> str:
     if id_strategy == "base64-url-encode":
         return f"{base_64_url_encode(submodel_id)}/submodel-elements/"
+    if id_strategy == "identity":
+        # Mirror py_aas_rdf submodel.to_rdf identity common_pref exactly.
+        return f"{submodel_id}/submodel-elements/"
     return url_encode(f"{submodel_id}/submodel-elements/")
 
 

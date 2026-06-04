@@ -1,0 +1,119 @@
+version: 0.3
+updated: 2026-06-02
+notes:
+  - Phase 3 semantic-only binding baseline.
+  - Not wired into runtime yet.
+  - Dynamic views now require semanticId bindings (legacy regex mapping removed).
+  - Canonical type identifiers for planning/execution are in APEX namespace.
+
+type_namespace_policy:
+  canonical_base: https://w3id.org/2026/apex/
+  compatibility_aliases:
+    - apex_type: https://w3id.org/2026/apex/Resource
+      legacy_type: http://www.w3id.org/hsu-aut/css#Resource
+    - apex_type: https://w3id.org/2026/apex/Product
+      legacy_type: http://www.w3id.org/hsu-aut/css#Product
+
+predicates:
+  - name: ResourceAt
+    iri: https://w3id.org/2026/apex/ResourceAt
+    mode: computed
+    strategy: literal_location_match
+    view: sparql/views/resource-at.rq
+    args:
+      - index: 1
+        kind: object
+        type: https://w3id.org/2026/apex/Resource
+      - index: 2
+        kind: literal
+        type: xsd:string
+    params:
+      source: mirrored_submodel_elements
+      path_binding_mode: semantic_id
+      semantic_id: https://w3id.org/2026/apex/semantic/location/label
+
+  - name: ProductAt
+    iri: https://w3id.org/2026/apex/ProductAt
+    mode: computed
+    strategy: literal_location_match
+    view: sparql/views/product-at.rq
+    args:
+      - index: 1
+        kind: object
+        type: https://w3id.org/2026/apex/Product
+      - index: 2
+        kind: literal
+        type: xsd:string
+    params:
+      source: mirrored_submodel_elements
+      path_binding_mode: semantic_id
+      semantic_id: https://w3id.org/2026/apex/semantic/location/label
+
+  - name: Occupied
+    iri: https://w3id.org/2026/apex/Occupied
+    mode: computed
+    strategy: boolean_state_match
+    view: sparql/views/occupied.rq
+    args:
+      - index: 1
+        kind: object
+        type: https://w3id.org/2026/apex/Resource
+    params:
+      source: mirrored_submodel_elements
+      path_binding_mode: semantic_id
+      semantic_id: https://w3id.org/2026/apex/semantic/state/occupied
+      truthy_values: ["true", "1", "on", "occupied", "busy"]
+
+  - name: Operational
+    iri: https://w3id.org/2026/apex/Operational
+    mode: computed
+    strategy: boolean_state_match
+    view: sparql/views/operational.rq
+    args:
+      - index: 1
+        kind: object
+        type: https://w3id.org/2026/apex/Resource
+    params:
+      source: mirrored_submodel_elements
+      path_binding_mode: semantic_id
+      semantic_id: https://w3id.org/2026/apex/semantic/state/operational
+      truthy_values: ["true", "1", "on", "run", "running", "execute", "executing"]
+
+  - name: InRange
+    iri: https://w3id.org/2026/apex/InRange
+    mode: computed
+    strategy: euclidean_distance_threshold
+    view: sparql/views/in-range.rq
+    args:
+      - index: 1
+        kind: object
+        type: https://w3id.org/2026/apex/Resource
+      - index: 2
+        kind: object
+        type: https://w3id.org/2026/apex/Resource
+    params:
+      source: mirrored_submodel_elements
+      path_binding_mode: semantic_id
+      x_semantic_id: https://w3id.org/2026/apex/semantic/position/x
+      y_semantic_id: https://w3id.org/2026/apex/semantic/position/y
+      z_semantic_id: https://w3id.org/2026/apex/semantic/position/z
+      station_selection_mode: type_or_capability_with_idshort_fallback
+      station_types:
+        - https://w3id.org/2026/apex/CPPS
+        - https://w3id.org/2026/apex/CPPM
+        - https://w3id.org/2026/apex/CPS
+        - https://w3id.org/2026/apex/LoadingModule
+        - https://w3id.org/2026/apex/FillingModule
+        - https://w3id.org/2026/apex/UnloadingModule
+        - https://w3id.org/2026/apex/PlanarTable
+        - https://w3id.org/2026/apex/DispensingSystem
+        - https://w3id.org/2026/apex/StopperingSystem
+        - https://w3id.org/2026/apex/CappingSystem
+        - https://w3id.org/2026/apex/QualityControlSystem
+        - https://w3id.org/2026/apex/LoadingSystem
+        - https://w3id.org/2026/apex/UnloadingSystem
+      capability_predicates:
+        - http://www.w3id.org/hsu-aut/css#providesSkill
+        - http://www.w3id.org/hsu-aut/css#providesCapability
+      idshort_hint_contains: station
+      distance_squared_threshold: 1.0

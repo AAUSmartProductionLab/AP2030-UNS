@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import logging
 import traceback
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
-from .models import AIPlanningSource
+import requests
+
+from .models import AIPlanningSource, _ParsedSource
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +20,10 @@ class PlanningContext:
     planning_sources: List[AIPlanningSource]
     planar_table_id: Optional[str]
     asset_types_by_aas_id: Dict[str, str]
+    # Phase 4: pre-parsed sources from KG (domain from projected apex:Action +
+    # init from live predicate views).  When non-empty, the service skips
+    # parse_source() and uses these directly.
+    pre_parsed_sources: List[_ParsedSource] = field(default_factory=list)
 
 
 def collect_planning_context(
@@ -51,6 +57,324 @@ def collect_planning_context(
         planar_table_id=planar_table_id,
         asset_types_by_aas_id=asset_types_by_aas_id,
     )
+
+
+def collect_planning_context_from_kg(
+    aas_client: Any,
+    order_aas_id: str,
+    asset_ids: List[str],
+    query_endpoint: str,
+    abox_graph: str,
+    tbox_graph: str,
+    timeout_seconds: float = 10.0,
+    enable_capability_matching: bool = True,
+) -> Optional[PlanningContext]:
+    """Collect planning context using KG capability matching and domain projection.
+
+    Phase 4 integration:
+    - Capability matching: select candidate resources from KG (Phase 4A).
+    - Domain from KG: build _ParsedSource from projected apex:Action individuals
+      (Phase 4B — uses apex:RefKey data from bridge ReferenceElement storage).
+    - Problem.Init from KG: live predicate state from strategy views (Phase 4C option B).
+    - Problem.Objects still read from AAS (PDDL names are AAS-authored; not in KG).
+    Falls back gracefully to AAS-only mode on any KG failure.
+    """
+    from .kg_domain import collect_domain_sources_from_kg
+    from .kg_problem import collect_init_from_kg, merge_init
+
+    order_config = fetch_order_config(aas_client, order_aas_id)
+    if not order_config:
+        return None
+
+    requirements = order_config.get("Requirements", {})
+    selected_asset_ids = list(dict.fromkeys(asset_ids))
+
+    if enable_capability_matching:
+        required_capabilities = _extract_required_capability_ids(order_config)
+        if required_capabilities:
+            matched_from_kg = _select_resource_aas_ids_by_capability(
+                required_capabilities=required_capabilities,
+                query_endpoint=query_endpoint,
+                abox_graph=abox_graph,
+                tbox_graph=tbox_graph,
+                timeout_seconds=timeout_seconds,
+            )
+            if matched_from_kg:
+                selected_asset_ids = list(dict.fromkeys(list(asset_ids) + sorted(matched_from_kg)))
+                logger.info("KG capability matching selected %d resource candidate(s)", len(matched_from_kg))
+            else:
+                logger.info("KG capability matching returned no candidates; falling back to provided assets")
+
+    resolved_asset_ids = resolve_asset_hierarchies(aas_client, selected_asset_ids + [order_aas_id])
+    asset_types_by_aas_id = collect_asset_types_by_aas_id(
+        aas_client,
+        [order_aas_id] + [aid for aid in resolved_asset_ids if aid != order_aas_id],
+    )
+    planar_table_id = find_planar_table_from_assets(aas_client, resolved_asset_ids)
+
+    # ── Phase 4B: domain from KG projected apex:Action individuals ─────────────
+    kg_domain_sources = collect_domain_sources_from_kg(
+        query_endpoint=query_endpoint,
+        abox_graph=abox_graph,
+        tbox_graph=tbox_graph,
+        timeout_seconds=timeout_seconds,
+    )
+
+    if kg_domain_sources:
+        # ── Phase 4C: Problem.Objects + live KG init ───────────────────────────
+        # Build AAS IRI → PDDL name mapping.
+        # Primary: apex:aasIdShort literal stored by the bridge on each AAS node.
+        # Fallback: AAS REST parsing if the KG doesn't yet have idShort data
+        #           (e.g. legacy graph from before this bridge change).
+        aas_iri_to_pddl_name: Dict[str, str] = _build_aas_name_map_from_kg(
+            query_endpoint=query_endpoint,
+            abox_graph=abox_graph,
+            timeout_seconds=timeout_seconds,
+        )
+
+        # Read Problem.Objects from AAS (gives us author-chosen PDDL names +
+        # types + location objects that aren't direct AAS IRIs).
+        aas_planning_sources = collect_ai_planning_sources(aas_client, order_aas_id, resolved_asset_ids)
+
+        # If KG name map is incomplete, fill gaps from AAS Problem.Objects.
+        for aas_source in aas_planning_sources:
+            if aas_source.aas_id not in aas_iri_to_pddl_name:
+                top_elems = aas_source.ai_planning_submodel.get("submodelElements", [])
+                from .parsing import find_collection
+                problem = find_collection(top_elems, "Problem")
+                if problem:
+                    from .parsing import find_list, display_name as _dn
+                    objects_section = find_list(problem.get("value", []), "Objects")
+                    if objects_section:
+                        for obj in (objects_section.get("value", []) or []):
+                            obj_name = _dn(obj)
+                            if obj_name:
+                                aas_iri_to_pddl_name[aas_source.aas_id] = obj_name
+                                break
+
+        # Merge Problem.Objects + static init terms into each KG-domain source.
+        aas_sources_by_id = {s.aas_id: s for s in aas_planning_sources}
+        for kg_src in kg_domain_sources:
+            aas_src = aas_sources_by_id.get(kg_src.aas_id)
+            if aas_src:
+                from .parsing import parse_problem, find_collection as _fc
+                top_elems = aas_src.ai_planning_submodel.get("submodelElements", [])
+                problem_section = _fc(top_elems, "Problem")
+                if problem_section:
+                    parse_problem(problem_section, kg_src,
+                                  source_asset_type=aas_src.asset_type or "",
+                                  asset_type_by_aas_id=asset_types_by_aas_id)
+
+        # Augment init with KG live state; KG values override AAS for covered predicates.
+        if aas_iri_to_pddl_name:
+            live_init = collect_init_from_kg(
+                aas_iri_to_pddl_name=aas_iri_to_pddl_name,
+                query_endpoint=query_endpoint,
+                abox_graph=abox_graph,
+                tbox_graph=tbox_graph,
+                timeout_seconds=timeout_seconds,
+            )
+            if live_init:
+                for kg_src in kg_domain_sources:
+                    kg_src.init_terms = merge_init(kg_src.init_terms, live_init)
+                logger.info("Augmented Problem.Init with %d KG live term(s)", len(live_init))
+
+        logger.info("Using KG-domain path: %d source(s)", len(kg_domain_sources))
+        return PlanningContext(
+            order_config=order_config,
+            requirements=requirements,
+            resolved_asset_ids=resolved_asset_ids,
+            planning_sources=[],
+            planar_table_id=planar_table_id,
+            asset_types_by_aas_id=asset_types_by_aas_id,
+            pre_parsed_sources=kg_domain_sources,
+        )
+
+    # ── Fallback: full AAS path ────────────────────────────────────────────────
+    logger.info("No KG domain data available; falling back to AAS domain path")
+    planning_sources = collect_ai_planning_sources(aas_client, order_aas_id, resolved_asset_ids)
+    return PlanningContext(
+        order_config=order_config,
+        requirements=requirements,
+        resolved_asset_ids=resolved_asset_ids,
+        planning_sources=planning_sources,
+        planar_table_id=planar_table_id,
+        asset_types_by_aas_id=asset_types_by_aas_id,
+    )
+
+
+def _build_aas_name_map_from_kg(
+    query_endpoint: str,
+    abox_graph: str,
+    timeout_seconds: float,
+) -> Dict[str, str]:
+    """Query apex:aasIdShort literals to build {aas_iri: idShort} map.
+
+    Requires bridge to store apex:aasIdShort on AAS nodes (added in Phase 4).
+    Returns empty dict on failure (caller falls back to AAS REST parsing).
+    """
+    query = f"""
+PREFIX apex: <https://w3id.org/2026/apex/>
+SELECT ?aas ?idShort
+FROM <{abox_graph}>
+WHERE {{
+  ?aas apex:aasIdShort ?idShort .
+}}
+""".strip()
+    try:
+        response = requests.post(
+            query_endpoint,
+            data={"query": query},
+            headers={"Accept": "application/sparql-results+json"},
+            timeout=timeout_seconds,
+        )
+        response.raise_for_status()
+        bindings = response.json().get("results", {}).get("bindings", [])
+        result: Dict[str, str] = {}
+        for row in bindings:
+            aas_iri = (row.get("aas") or {}).get("value")
+            id_short = (row.get("idShort") or {}).get("value")
+            if aas_iri and id_short:
+                result[aas_iri] = id_short
+        if result:
+            logger.info("KG idShort map: %d entry(ies)", len(result))
+        return result
+    except Exception as exc:
+        logger.debug("apex:aasIdShort query failed (bridge may not store it yet): %s", exc)
+        return {}
+
+
+def _extract_required_capability_ids(order_config: Dict[str, Any]) -> List[str]:
+    required: List[str] = []
+    processes = (order_config.get("BillOfProcesses") or {}).get("Processes") or []
+    for process in processes:
+        if not isinstance(process, dict):
+            continue
+        for _step_name, step_payload in process.items():
+            if not isinstance(step_payload, dict):
+                continue
+            semantic_id = str(step_payload.get("semantic_id") or "").strip()
+            if semantic_id:
+                required.append(semantic_id)
+    return list(dict.fromkeys(required))
+
+
+def _normalize_semantic_iri(value: str) -> str:
+    return value.strip().rstrip("/")
+
+
+def _semantic_tail(value: str) -> str:
+    normalized = _normalize_semantic_iri(value)
+    if "#" in normalized:
+        return normalized.rsplit("#", 1)[-1]
+    if "/" in normalized:
+        return normalized.rsplit("/", 1)[-1]
+    return normalized
+
+
+def _semantic_id_matches(left: str, right: str) -> bool:
+    left_norm = _normalize_semantic_iri(left).lower()
+    right_norm = _normalize_semantic_iri(right).lower()
+    if left_norm == right_norm:
+        return True
+    return _semantic_tail(left_norm) == _semantic_tail(right_norm)
+
+
+def _select_resource_aas_ids_by_capability(
+    required_capabilities: List[str],
+    query_endpoint: str,
+    abox_graph: str,
+    tbox_graph: str,
+    timeout_seconds: float,
+) -> List[str]:
+    try:
+        inventory = _query_resource_capability_inventory(
+            query_endpoint=query_endpoint,
+            abox_graph=abox_graph,
+            tbox_graph=tbox_graph,
+            timeout_seconds=timeout_seconds,
+        )
+    except Exception as exc:
+        logger.warning("KG capability inventory query failed: %s", exc)
+        return []
+
+    matched: List[str] = []
+    for aas_id, offered_semantics in inventory.items():
+        if any(
+            _semantic_id_matches(required, offered)
+            for required in required_capabilities
+            for offered in offered_semantics
+        ):
+            matched.append(aas_id)
+    return matched
+
+
+def _query_resource_capability_inventory(
+    query_endpoint: str,
+    abox_graph: str,
+    tbox_graph: str,
+    timeout_seconds: float,
+) -> Dict[str, List[str]]:
+    # Filter to AAS nodes that have at least one AI-Planning action mirrored in the KG.
+    # Paths use the BaSyx element hierarchy relative to the submodel root: Domain.Actions.<ActionKey>.*
+    # Under the identity IRI strategy the AAS node IRI *is* the AAS id, and the SME IRI is
+    # <submodel-id>/submodel-elements/<path> — so STR(?aas) is directly usable by the AAS
+    # client and the submodel join uses a single literal "/submodel-elements/" separator.
+    query = f"""
+PREFIX apex:  <https://w3id.org/2026/apex/>
+PREFIX arso:  <https://w3id.org/2025/arso#>
+PREFIX arsox: <https://w3id.org/aau-ra/arso-ext#>
+PREFIX css:   <http://www.w3id.org/hsu-aut/css#>
+
+SELECT DISTINCT ?aas ?providedCapability ?providedSkill
+FROM <{tbox_graph}>
+FROM <{abox_graph}>
+WHERE {{
+  ?aas a arsox:ResourceAssetAdministrationShell .
+
+  FILTER EXISTS {{
+    ?aas arso:hasSubmodel ?submodel .
+    ?sme a apex:MirroredSubmodelElement ;
+      apex:smElementPath ?actionPath .
+    FILTER(STRSTARTS(STR(?actionPath), "Domain.Actions."))
+    FILTER(STRSTARTS(STR(?sme), CONCAT(STR(?submodel), "/submodel-elements/")))
+  }}
+
+  OPTIONAL {{ ?aas css:providesCapability ?providedCapability . }}
+  OPTIONAL {{ ?aas css:providesSkill ?providedSkill . }}
+}}
+""".strip()
+
+    response = requests.post(
+        query_endpoint,
+        data={"query": query},
+        headers={"Accept": "application/sparql-results+json"},
+        timeout=timeout_seconds,
+    )
+    response.raise_for_status()
+    payload = response.json()
+
+    inventory: Dict[str, List[str]] = {}
+    for row in payload.get("results", {}).get("bindings", []):
+        # Under identity strategy the AAS node IRI equals the raw AAS id.
+        aas_id = (row.get("aas") or {}).get("value")
+        if not aas_id:
+            continue
+
+        offered = []
+        capability = (row.get("providedCapability") or {}).get("value")
+        skill = (row.get("providedSkill") or {}).get("value")
+        if capability:
+            offered.append(capability)
+        if skill:
+            offered.append(skill)
+
+        bucket = inventory.setdefault(aas_id, [])
+        for semantic in offered:
+            if semantic not in bucket:
+                bucket.append(semantic)
+
+    return inventory
 
 
 def collect_asset_types_by_aas_id(aas_client: Any, aas_ids: List[str]) -> Dict[str, str]:

@@ -1,8 +1,10 @@
-PREFIX aas:  <https://admin-shell.io/aas/3/1/>
-PREFIX arso: <https://w3id.org/2025/arso#>
-PREFIX apex: <https://w3id.org/2026/apex/>
-PREFIX css:  <http://www.w3id.org/hsu-aut/css#>
-PREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>
+PREFIX arso:  <https://w3id.org/2025/arso#>
+PREFIX arsox: <https://w3id.org/aau-ra/arso-ext#>
+PREFIX apex:  <https://w3id.org/2026/apex/>
+PREFIX css:   <http://www.w3id.org/hsu-aut/css#>
+PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
+PREFIX aas-sm: <https://admin-shell.io/aas/3/1/Submodel/>
+PREFIX aas-smc: <https://admin-shell.io/aas/3/1/SubmodelElementCollection/>
 
 CONSTRUCT {
   ?fact a apex:InRange ;
@@ -10,60 +12,69 @@ CONSTRUCT {
 
   ?arg1 a apex:PredicateArgumentBinding ;
     apex:argumentIndex 1 ;
-    apex:argumentObject ?resource .
+    apex:argumentObject ?resourceAas .
 
   ?arg2 a apex:PredicateArgumentBinding ;
     apex:argumentIndex 2 ;
-    apex:argumentObject ?station .
+    apex:argumentObject ?stationAas .
 }
 FROM <urn:kg:tbox>
 FROM <urn:kg:abox>
 WHERE {
-  ?resource a css:Resource ;
-    arso:hasAAS ?resourceAas .
+  # Moving resource (shuttle/robot) — has X/Y position data.
+  ?resourceAas a arsox:ResourceAssetAdministrationShell ;
+    arso:hasOperationalDataSubmodel ?resourceSm .
 
-  ?resourceAas arso:hasOperationalDataSubmodel ?resourceSm .
-  ?resourceSm aas:Submodel/submodelElements ?resourceXNode, ?resourceYNode .
+  ?resourceSm (aas-sm:submodelElements
+              |aas-smc:value)+ ?resourceXNode, ?resourceYNode .
 
-  ?resourceXNode apex:smElementPath ?resourceXPath ;
-    apex:smElementValue ?resourceXRaw .
-  ?resourceYNode apex:smElementPath ?resourceYPath ;
-    apex:smElementValue ?resourceYRaw .
+  ?resourceXNode apex:smElementSemanticId ?resourceXSid ; apex:smElementValue ?resourceXRaw .
+  ?resourceYNode apex:smElementSemanticId ?resourceYSid ; apex:smElementValue ?resourceYRaw .
 
-  OPTIONAL {
-    ?resourceSm aas:Submodel/submodelElements ?resourceZNode .
-    ?resourceZNode apex:smElementPath ?resourceZPath ;
-      apex:smElementValue ?resourceZRaw .
-    FILTER(REGEX(LCASE(STR(?resourceZPath)), "(positionz|coordz|z$|\\.z$)"))
-  }
-
-  FILTER(REGEX(LCASE(STR(?resourceXPath)), "(positionx|coordx|x$|\\.x$)"))
-  FILTER(REGEX(LCASE(STR(?resourceYPath)), "(positiony|coordy|y$|\\.y$)"))
-
-  ?station a css:Resource ;
-    arso:hasAAS ?stationAas .
-
-  ?stationAas arso:hasOperationalDataSubmodel ?stationSm .
-  ?stationSm aas:Submodel/submodelElements ?stationXNode, ?stationYNode .
-
-  ?stationXNode apex:smElementPath ?stationXPath ;
-    apex:smElementValue ?stationXRaw .
-  ?stationYNode apex:smElementPath ?stationYPath ;
-    apex:smElementValue ?stationYRaw .
+  FILTER(LCASE(STR(?resourceXSid)) = "https://w3id.org/2026/apex/semantic/position/x")
+  FILTER(LCASE(STR(?resourceYSid)) = "https://w3id.org/2026/apex/semantic/position/y")
 
   OPTIONAL {
-    ?stationSm aas:Submodel/submodelElements ?stationZNode .
-    ?stationZNode apex:smElementPath ?stationZPath ;
-      apex:smElementValue ?stationZRaw .
-    FILTER(REGEX(LCASE(STR(?stationZPath)), "(positionz|coordz|z$|\\.z$)"))
+    ?resourceSm (aas-sm:submodelElements
+                |aas-smc:value)+ ?resourceZNode .
+    ?resourceZNode apex:smElementSemanticId ?resourceZSid ; apex:smElementValue ?resourceZRaw .
+    FILTER(LCASE(STR(?resourceZSid)) = "https://w3id.org/2026/apex/semantic/position/z")
   }
 
-  FILTER(REGEX(LCASE(STR(?stationXPath)), "(positionx|coordx|x$|\\.x$)"))
-  FILTER(REGEX(LCASE(STR(?stationYPath)), "(positiony|coordy|y$|\\.y$)"))
+  # Station — identified by having capabilities/skills or by idShort containing "station/system/camera".
+  ?stationAas a arsox:ResourceAssetAdministrationShell ;
+    arso:hasOperationalDataSubmodel ?stationSm .
 
-  FILTER(?resource != ?station)
-  FILTER(STR(?resource) < STR(?station))
-  FILTER(REGEX(LCASE(STR(?station)), "(station|cell|line|module|system)"))
+  ?stationSm (aas-sm:submodelElements
+             |aas-smc:value)+ ?stationXNode, ?stationYNode .
+
+  ?stationXNode apex:smElementSemanticId ?stationXSid ; apex:smElementValue ?stationXRaw .
+  ?stationYNode apex:smElementSemanticId ?stationYSid ; apex:smElementValue ?stationYRaw .
+
+  FILTER(LCASE(STR(?stationXSid)) = "https://w3id.org/2026/apex/semantic/position/x")
+  FILTER(LCASE(STR(?stationYSid)) = "https://w3id.org/2026/apex/semantic/position/y")
+
+  OPTIONAL {
+    ?stationSm (aas-sm:submodelElements
+               |aas-smc:value)+ ?stationZNode .
+    ?stationZNode apex:smElementSemanticId ?stationZSid ; apex:smElementValue ?stationZRaw .
+    FILTER(LCASE(STR(?stationZSid)) = "https://w3id.org/2026/apex/semantic/position/z")
+  }
+
+  # Distinguish station from robot: station has capabilities/skills, or its idShort marks it.
+  OPTIONAL { ?stationAas css:providesCapability ?stationCap . }
+  OPTIONAL { ?stationAas css:providesSkill ?stationSkill . }
+  OPTIONAL { ?stationAas apex:aasIdShort ?stationIdShort . }
+
+  FILTER(?resourceAas != ?stationAas)
+  FILTER(STR(?resourceAas) < STR(?stationAas))
+  FILTER(
+    BOUND(?stationCap)
+    || BOUND(?stationSkill)
+    || (BOUND(?stationIdShort) && CONTAINS(LCASE(STR(?stationIdShort)), "station"))
+    || (BOUND(?stationIdShort) && CONTAINS(LCASE(STR(?stationIdShort)), "system"))
+    || (BOUND(?stationIdShort) && CONTAINS(LCASE(STR(?stationIdShort)), "camera"))
+  )
 
   BIND(xsd:double(STR(?resourceXRaw)) AS ?resourceX)
   BIND(xsd:double(STR(?resourceYRaw)) AS ?resourceY)
@@ -79,7 +90,7 @@ WHERE {
   BIND((?dx * ?dx) + (?dy * ?dy) + (?dz * ?dz) AS ?distanceSquared)
   FILTER(?distanceSquared <= 1.0)
 
-  BIND(IRI(CONCAT("urn:kg:apex:in-range:", ENCODE_FOR_URI(SHA256(CONCAT(STR(?resource), "|", STR(?station), "|", STR(?distanceSquared)))))) AS ?fact)
+  BIND(IRI(CONCAT("urn:kg:apex:in-range:", ENCODE_FOR_URI(SHA256(CONCAT(STR(?resourceAas), "|", STR(?stationAas), "|", STR(?distanceSquared)))))) AS ?fact)
   BIND(IRI(CONCAT(STR(?fact), ":arg1")) AS ?arg1)
   BIND(IRI(CONCAT(STR(?fact), ":arg2")) AS ?arg2)
 }

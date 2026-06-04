@@ -130,6 +130,25 @@ class VariablesSubmodelBuilder:
                 all_schema_fields = self.schema_handler.extract_data_fields(
                     prop['schema'])
 
+                # If a schema encodes tuple data in an array (for example Position[x,y,theta]),
+                # allow explicit field selection by title (X/Y/Theta) from extract_operation_variables.
+                if specific_field and specific_field not in all_schema_fields:
+                    schema_doc = self.schema_handler.load_schema(prop['schema'])
+                    if schema_doc:
+                        tuple_fields = self.schema_handler.extract_operation_variables(schema_doc)
+                        if specific_field in tuple_fields:
+                            tuple_field = tuple_fields[specific_field]
+                            all_schema_fields[specific_field] = {
+                                'type': tuple_field.get('type', 'string'),
+                                'aas_type': self.schema_handler.get_aas_type(tuple_field.get('type', 'string')),
+                                'description': tuple_field.get('description', ''),
+                                'default_value': 0.0 if tuple_field.get('type') == 'number' else (
+                                    0 if tuple_field.get('type') == 'integer' else (
+                                        False if tuple_field.get('type') == 'boolean' else ''
+                                    )
+                                ),
+                            }
+
                 # If a specific field is requested, filter to just that field
                 if specific_field and specific_field in all_schema_fields:
                     schema_fields = {
@@ -139,6 +158,10 @@ class VariablesSubmodelBuilder:
 
         # Use schema-derived fields if available, otherwise fall back to config
         if schema_fields:
+            field_semantic_ids = var_config.get('field_semantic_ids') or var_config.get('fieldSemanticIds') or {}
+            if not isinstance(field_semantic_ids, dict):
+                field_semantic_ids = {}
+
             for field_name, field_def in schema_fields.items():
                 # Get default value from config if provided, otherwise use schema default
                 config_value = None
@@ -157,16 +180,44 @@ class VariablesSubmodelBuilder:
 
                 value = config_value if config_value is not None else field_def['default_value']
                 value_type = field_def['aas_type']
+                property_semantic_id = None
+
+                explicit_field_semantic_id = field_semantic_ids.get(field_name)
+                if explicit_field_semantic_id:
+                    property_semantic_id = self.semantic_factory.create_external_reference(explicit_field_semantic_id)
+                elif semantic_id and (
+                    (specific_field and field_name == specific_field)
+                    or (not specific_field and len(schema_fields) == 1)
+                ):
+                    property_semantic_id = self.semantic_factory.create_external_reference(semantic_id)
 
                 elements.append(
                     self.element_factory.create_property(
                         id_short=field_name,
                         value_type=value_type,
-                        value=value
+                        value=value,
+                        semantic_id=property_semantic_id,
                     )
                 )
         else:
             # Fallback: use fields defined directly in config
+            field_semantic_ids = var_config.get('field_semantic_ids') or var_config.get('fieldSemanticIds') or {}
+            if not isinstance(field_semantic_ids, dict):
+                field_semantic_ids = {}
+
+            config_value_keys = [
+                key for key in var_config.keys()
+                if key not in [
+                    'semanticId',
+                    'semantic_id',
+                    'InterfaceReference',
+                    'interface_reference',
+                    'Field',
+                    'field',
+                    'field_semantic_ids',
+                    'fieldSemanticIds',
+                ]
+            ]
             for key, value in var_config.items():
                 if key in [
                     'semanticId',
@@ -175,6 +226,8 @@ class VariablesSubmodelBuilder:
                     'interface_reference',
                     'Field',
                     'field',
+                    'field_semantic_ids',
+                    'fieldSemanticIds',
                 ]:
                     continue
 
@@ -189,11 +242,19 @@ class VariablesSubmodelBuilder:
                     value_type = model.datatypes.String
                     value = str(value)
 
+                property_semantic_id = None
+                explicit_field_semantic_id = field_semantic_ids.get(key)
+                if explicit_field_semantic_id:
+                    property_semantic_id = self.semantic_factory.create_external_reference(explicit_field_semantic_id)
+                elif semantic_id and len(config_value_keys) == 1:
+                    property_semantic_id = self.semantic_factory.create_external_reference(semantic_id)
+
                 elements.append(
                     self.element_factory.create_property(
                         id_short=key,
                         value_type=value_type,
-                        value=value
+                        value=value,
+                        semantic_id=property_semantic_id,
                     )
                 )
 

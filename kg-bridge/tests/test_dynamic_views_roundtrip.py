@@ -69,6 +69,7 @@ def _upsert_mirrored_projection(
     path: str,
     id_short: str,
     value: str | bool,
+    semantic_id: str | None = None,
 ) -> None:
     if path.endswith(id_short):
         canonical_path = path
@@ -79,27 +80,44 @@ def _upsert_mirrored_projection(
     sm = submodel_iri(BASE_URI, sm_id)
     value_n3 = rdflib.Literal(value).n3()
     path_n3 = rdflib.Literal(canonical_path).n3()
+    semantic_id_n3 = rdflib.Literal(semantic_id).n3() if semantic_id else None
+
+    insert_lines = [
+        f"  {sm.n3()} <https://admin-shell.io/aas/3/1/Submodel/submodelElements> {sme.n3()} .",
+        f"  {sme.n3()} a apex:MirroredSubmodelElement .",
+        f"  {sme.n3()} apex:smElementPath {path_n3} .",
+        f"  {sme.n3()} apex:smElementModelType \"Property\" .",
+        f"  {sme.n3()} apex:smElementValue {value_n3} .",
+    ]
+    if semantic_id_n3:
+        insert_lines.append(f"  {sme.n3()} apex:smElementSemanticId {semantic_id_n3} .")
+
+    delete_lines = [
+        f"  {sme.n3()} apex:smElementPath ?old_path .",
+        f"  {sme.n3()} apex:smElementModelType ?old_type .",
+        f"  {sme.n3()} apex:smElementValue ?old_value .",
+        f"  {sme.n3()} apex:smElementSemanticId ?old_semantic_id .",
+    ]
+
+    where_lines = [
+        f"  OPTIONAL {{ {sme.n3()} apex:smElementPath ?old_path . }}",
+        f"  OPTIONAL {{ {sme.n3()} apex:smElementModelType ?old_type . }}",
+        f"  OPTIONAL {{ {sme.n3()} apex:smElementValue ?old_value . }}",
+        f"  OPTIONAL {{ {sme.n3()} apex:smElementSemanticId ?old_semantic_id . }}",
+    ]
 
     graph.update(
         "\n".join(
             [
                 "PREFIX apex: <https://w3id.org/2026/apex/>",
                 "DELETE {",
-                f"  {sme.n3()} apex:smElementPath ?old_path .",
-                f"  {sme.n3()} apex:smElementModelType ?old_type .",
-                f"  {sme.n3()} apex:smElementValue ?old_value .",
+                *delete_lines,
                 "}",
                 "INSERT {",
-                f"  {sm.n3()} <https://admin-shell.io/aas/3/1/Submodel/submodelElements> {sme.n3()} .",
-                f"  {sme.n3()} a apex:MirroredSubmodelElement .",
-                f"  {sme.n3()} apex:smElementPath {path_n3} .",
-                f"  {sme.n3()} apex:smElementModelType \"Property\" .",
-                f"  {sme.n3()} apex:smElementValue {value_n3} .",
+                *insert_lines,
                 "}",
                 "WHERE {",
-                f"  OPTIONAL {{ {sme.n3()} apex:smElementPath ?old_path . }}",
-                f"  OPTIONAL {{ {sme.n3()} apex:smElementModelType ?old_type . }}",
-                f"  OPTIONAL {{ {sme.n3()} apex:smElementValue ?old_value . }}",
+                *where_lines,
                 "}",
             ]
         )
@@ -159,23 +177,50 @@ def _create_actor(graph: rdflib.Graph, aas_id: str, sm_id: str, id_short: str) -
     _insert_operational_submodel_link(graph, aas_id=aas_id, sm_id=sm_id)
 
 
-def _emit_sme(graph: rdflib.Graph, sm_id: str, path: str, id_short: str, value: str | bool, event_type: str) -> None:
+def _emit_sme(
+    graph: rdflib.Graph,
+    sm_id: str,
+    path: str,
+    id_short: str,
+    value: str | bool,
+    event_type: str,
+    semantic_id: str | None = None,
+) -> None:
+    sm_element = {
+        "modelType": "Property",
+        "idShort": id_short,
+        "valueType": "xs:string" if isinstance(value, str) else "xs:boolean",
+        "value": value,
+    }
+    if semantic_id:
+        sm_element["semanticId"] = {
+            "type": "ExternalReference",
+            "keys": [
+                {
+                    "type": "GlobalReference",
+                    "value": semantic_id,
+                }
+            ],
+        }
+
     _apply_event(
         graph,
         {
             "type": event_type,
             "id": sm_id,
             "smElementPath": path,
-            "smElement": {
-                "modelType": "Property",
-                "idShort": id_short,
-                "valueType": "xs:string" if isinstance(value, str) else "xs:boolean",
-                "value": value,
-            },
+            "smElement": sm_element,
         },
         topic="submodel-events",
     )
-    _upsert_mirrored_projection(graph, sm_id=sm_id, path=path, id_short=id_short, value=value)
+    _upsert_mirrored_projection(
+        graph,
+        sm_id=sm_id,
+        path=path,
+        id_short=id_short,
+        value=value,
+        semantic_id=semantic_id,
+    )
 
 
 def _argument_literal_for_entity(facts: rdflib.Graph, predicate_class: rdflib.URIRef, entity: rdflib.URIRef) -> set[rdflib.Literal]:
@@ -234,16 +279,16 @@ def test_dynamic_views_react_immediately_to_sme_updates():
     _create_actor(dataset, aas_id=station_aas, sm_id=station_sm, id_short="LoadingStationAAS")
     _create_actor(dataset, aas_id=product_aas, sm_id=product_sm, id_short="ProductBatchAAS")
 
-    _emit_sme(dataset, resource_sm, "Runtime.CurrentLocation", "CurrentLocation", "loading-cell-01", "SME_CREATED")
-    _emit_sme(dataset, resource_sm, "Runtime.PositionX", "PositionX", "0.0", "SME_CREATED")
-    _emit_sme(dataset, resource_sm, "Runtime.PositionY", "PositionY", "0.0", "SME_CREATED")
-    _emit_sme(dataset, resource_sm, "Runtime.IsOccupied", "IsOccupied", "true", "SME_CREATED")
-    _emit_sme(dataset, resource_sm, "Runtime.OperationalStatus", "OperationalStatus", "true", "SME_CREATED")
-    _emit_sme(dataset, station_sm, "Runtime.StationLocation", "StationLocation", "loading-cell-01", "SME_CREATED")
-    _emit_sme(dataset, station_sm, "Runtime.PositionX", "PositionX", "0.0", "SME_CREATED")
-    _emit_sme(dataset, station_sm, "Runtime.PositionY", "PositionY", "0.5", "SME_CREATED")
-    _emit_sme(dataset, station_sm, "Runtime.OperationalStatus", "OperationalStatus", "true", "SME_CREATED")
-    _emit_sme(dataset, product_sm, "Runtime.CurrentLocation", "CurrentLocation", "loading-cell-01", "SME_CREATED")
+    _emit_sme(dataset, resource_sm, "Runtime.CurrentLocation", "CurrentLocation", "loading-cell-01", "SME_CREATED", semantic_id="https://w3id.org/2026/apex/semantic/location/label")
+    _emit_sme(dataset, resource_sm, "Runtime.PositionX", "PositionX", "0.0", "SME_CREATED", semantic_id="https://w3id.org/2026/apex/semantic/position/x")
+    _emit_sme(dataset, resource_sm, "Runtime.PositionY", "PositionY", "0.0", "SME_CREATED", semantic_id="https://w3id.org/2026/apex/semantic/position/y")
+    _emit_sme(dataset, resource_sm, "Runtime.IsOccupied", "IsOccupied", "true", "SME_CREATED", semantic_id="https://w3id.org/2026/apex/semantic/state/occupied")
+    _emit_sme(dataset, resource_sm, "Runtime.OperationalStatus", "OperationalStatus", "true", "SME_CREATED", semantic_id="https://w3id.org/2026/apex/semantic/state/operational")
+    _emit_sme(dataset, station_sm, "Runtime.StationLocation", "StationLocation", "loading-cell-01", "SME_CREATED", semantic_id="https://w3id.org/2026/apex/semantic/location/label")
+    _emit_sme(dataset, station_sm, "Runtime.PositionX", "PositionX", "0.0", "SME_CREATED", semantic_id="https://w3id.org/2026/apex/semantic/position/x")
+    _emit_sme(dataset, station_sm, "Runtime.PositionY", "PositionY", "0.5", "SME_CREATED", semantic_id="https://w3id.org/2026/apex/semantic/position/y")
+    _emit_sme(dataset, station_sm, "Runtime.OperationalStatus", "OperationalStatus", "true", "SME_CREATED", semantic_id="https://w3id.org/2026/apex/semantic/state/operational")
+    _emit_sme(dataset, product_sm, "Runtime.CurrentLocation", "CurrentLocation", "loading-cell-01", "SME_CREATED", semantic_id="https://w3id.org/2026/apex/semantic/location/label")
 
     resource_at = _run_construct(dataset, "resource-at.rq")
     product_at = _run_construct(dataset, "product-at.rq")
@@ -260,9 +305,9 @@ def test_dynamic_views_react_immediately_to_sme_updates():
     resource_entity = _entity_bound_as_first_argument(resource_at, APEX["ResourceAt"], "carrier-01")
     assert rdflib.Literal("loading-cell-01") in _argument_literal_for_entity(resource_at, APEX["ResourceAt"], resource_entity)
 
-    _emit_sme(dataset, resource_sm, "Runtime.CurrentLocation", "CurrentLocation", "inspection-cell-02", "SME_UPDATED")
-    _emit_sme(dataset, resource_sm, "Runtime.PositionX", "PositionX", "5.0", "SME_UPDATED")
-    _emit_sme(dataset, resource_sm, "Runtime.PositionY", "PositionY", "5.0", "SME_UPDATED")
+    _emit_sme(dataset, resource_sm, "Runtime.CurrentLocation", "CurrentLocation", "inspection-cell-02", "SME_UPDATED", semantic_id="https://w3id.org/2026/apex/semantic/location/label")
+    _emit_sme(dataset, resource_sm, "Runtime.PositionX", "PositionX", "5.0", "SME_UPDATED", semantic_id="https://w3id.org/2026/apex/semantic/position/x")
+    _emit_sme(dataset, resource_sm, "Runtime.PositionY", "PositionY", "5.0", "SME_UPDATED", semantic_id="https://w3id.org/2026/apex/semantic/position/y")
 
     resource_at_after_move = _run_construct(dataset, "resource-at.rq")
     in_range_after_move = _run_construct(dataset, "in-range.rq")
@@ -272,9 +317,9 @@ def test_dynamic_views_react_immediately_to_sme_updates():
     assert rdflib.Literal("loading-cell-01") not in values_after_move
     assert (None, RDF.type, APEX["InRange"]) not in in_range_after_move
 
-    _emit_sme(dataset, station_sm, "Runtime.StationLocation", "StationLocation", "inspection-cell-02", "SME_UPDATED")
-    _emit_sme(dataset, station_sm, "Runtime.PositionX", "PositionX", "5.0", "SME_UPDATED")
-    _emit_sme(dataset, station_sm, "Runtime.PositionY", "PositionY", "5.0", "SME_UPDATED")
+    _emit_sme(dataset, station_sm, "Runtime.StationLocation", "StationLocation", "inspection-cell-02", "SME_UPDATED", semantic_id="https://w3id.org/2026/apex/semantic/location/label")
+    _emit_sme(dataset, station_sm, "Runtime.PositionX", "PositionX", "5.0", "SME_UPDATED", semantic_id="https://w3id.org/2026/apex/semantic/position/x")
+    _emit_sme(dataset, station_sm, "Runtime.PositionY", "PositionY", "5.0", "SME_UPDATED", semantic_id="https://w3id.org/2026/apex/semantic/position/y")
 
     in_range_after_station_update = _run_construct(dataset, "in-range.rq")
     assert (None, RDF.type, APEX["InRange"]) in in_range_after_station_update

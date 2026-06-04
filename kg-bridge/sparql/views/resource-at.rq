@@ -1,7 +1,8 @@
-PREFIX aas:  <https://admin-shell.io/aas/3/1/>
-PREFIX arso: <https://w3id.org/2025/arso#>
-PREFIX apex: <https://w3id.org/2026/apex/>
-PREFIX css:  <http://www.w3id.org/hsu-aut/css#>
+PREFIX arso:  <https://w3id.org/2025/arso#>
+PREFIX arsox: <https://w3id.org/aau-ra/arso-ext#>
+PREFIX apex:  <https://w3id.org/2026/apex/>
+PREFIX aas-sm: <https://admin-shell.io/aas/3/1/Submodel/>
+PREFIX aas-smc: <https://admin-shell.io/aas/3/1/SubmodelElementCollection/>
 
 CONSTRUCT {
   ?fact a apex:ResourceAt ;
@@ -9,7 +10,7 @@ CONSTRUCT {
 
   ?arg1 a apex:PredicateArgumentBinding ;
     apex:argumentIndex 1 ;
-    apex:argumentObject ?resource .
+    apex:argumentObject ?aas .
 
   ?arg2 a apex:PredicateArgumentBinding ;
     apex:argumentIndex 2 ;
@@ -18,18 +19,19 @@ CONSTRUCT {
 FROM <urn:kg:tbox>
 FROM <urn:kg:abox>
 WHERE {
-  ?resource a css:Resource ;
-    arso:hasAAS ?aas .
+  ?aas a arsox:ResourceAssetAdministrationShell ;
+    arso:hasOperationalDataSubmodel ?sm .
 
-  ?aas arso:hasOperationalDataSubmodel ?sm .
-  ?sm aas:Submodel/submodelElements ?sme .
+  ?sm (aas-sm:submodelElements
+      |aas-smc:value)+ ?sme .
 
-  ?sme apex:smElementPath ?path ;
+  ?sme apex:smElementSemanticId ?sid ;
     apex:smElementValue ?location .
 
-  FILTER(REGEX(LCASE(STR(?path)), "(location|position|station|cell)"))
+  BIND(LCASE(STR(?sid)) AS ?sidLower)
+  FILTER(?sidLower = "https://w3id.org/2026/apex/semantic/location/label")
 
-  BIND(IRI(CONCAT("urn:kg:apex:resource-at:", ENCODE_FOR_URI(SHA256(CONCAT(STR(?resource), "|", STR(?location)))))) AS ?fact)
+  BIND(IRI(CONCAT("urn:kg:apex:resource-at:", ENCODE_FOR_URI(SHA256(CONCAT(STR(?aas), "|", STR(?location)))))) AS ?fact)
   BIND(IRI(CONCAT(STR(?fact), ":arg1")) AS ?arg1)
   BIND(IRI(CONCAT(STR(?fact), ":arg2")) AS ?arg2)
 }

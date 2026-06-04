@@ -124,7 +124,7 @@ orchestratorAAS:
 
   Variables:
     - key: PackMLState
-      semanticId: "https://www.omac.org/packml/state"
+      semanticId: "https://w3id.org/2026/apex/semantic/state/operational"
       InterfaceReference:
 
         Name: "State"

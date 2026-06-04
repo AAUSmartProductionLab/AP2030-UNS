@@ -22,26 +22,36 @@ css:Product rdf:type owl:Class .
 :Identifiable rdf:type owl:Class ;
   rdfs:comment "Anything that can lock a resource via Occupied(Resource, Identifiable), e.g. products and orders." .
 
+###  https://w3id.org/2026/apex/Resource
+:Resource rdf:type owl:Class ;
+  owl:equivalentClass css:Resource ;
+  rdfs:comment "APEX canonical resource type aliasing css:Resource for planning/execution contracts." .
+
+###  https://w3id.org/2026/apex/Product
+:Product rdf:type owl:Class ;
+  owl:equivalentClass css:Product ;
+  rdfs:comment "APEX canonical product type aliasing css:Product for planning/execution contracts." .
+
 ###  https://w3id.org/2026/apex/Order
 :Order rdf:type owl:Class ;
   rdfs:subClassOf :Identifiable ;
   rdfs:comment "Production order/process identifier used to claim resources before product loading." .
 
-css:Product rdfs:subClassOf :Identifiable .
+:Product rdfs:subClassOf :Identifiable .
 
 ###  https://w3id.org/2026/apex/CPPS
 :CPPS rdf:type owl:Class ;
-  rdfs:subClassOf css:Resource ;
+  rdfs:subClassOf :Resource ;
   rdfs:comment "Cyber-Physical Production System. A top-level production resource composed of one or more Cyber-Physical Production Modules (CPPMs)." .
 
 ###  https://w3id.org/2026/apex/CPPM
 :CPPM rdf:type owl:Class ;
-  rdfs:subClassOf css:Resource ;
+  rdfs:subClassOf :Resource ;
   rdfs:comment "Cyber-Physical Production Module. A mid-level production resource that belongs to a CPPS and is composed of one or more Cyber-Physical Sub-systems (CPSs)." .
 
 ###  https://w3id.org/2026/apex/CPS
 :CPS rdf:type owl:Class ;
-  rdfs:subClassOf css:Resource ;
+  rdfs:subClassOf :Resource ;
   rdfs:comment "Cyber-Physical Sub-system. A low-level production resource that belongs to a CPPM and directly performs physical operations." .
 
 
@@ -60,6 +70,12 @@ css:Product rdfs:subClassOf :Identifiable .
   rdfs:domain :CPPM ;
   rdfs:range :CPS ;
   rdfs:comment "Relates a CPPM to the CPSs it is composed of." .
+
+css:providesSkill owl:propertyChainAxiom ( :hasCPPM css:providesSkill ) ;
+  rdfs:comment "Infers CPPS skill provision through hasCPPM -> providesSkill." .
+
+css:providesSkill owl:propertyChainAxiom ( :hasCPS css:providesSkill ) ;
+  rdfs:comment "Infers CPPM skill provision through hasCPS -> providesSkill." .
 
 # if both CPPS and CPPM can have CPS
 # :hasCPS rdf:type owl:ObjectProperty ;
@@ -120,12 +136,12 @@ css:Product rdfs:subClassOf :Identifiable .
 
 ### https://w3id.org/2026/apex/Orchestrator
 :Orchestrator rdf:type owl:Class ;
-  rdfs:subClassOf css:Resource ;
+  rdfs:subClassOf :Resource ;
   rdfs:comment "Coordination software resource used for orchestration across modules." .
 
 ### https://w3id.org/2026/apex/ProductionPlanner
 :ProductionPlanner rdf:type owl:Class ;
-  rdfs:subClassOf css:Resource ;
+  rdfs:subClassOf :Resource ;
   rdfs:comment "Planning software resource used to generate policies and behavior trees." .
 
 

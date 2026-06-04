@@ -1,0 +1,61 @@
+version: 0.1
+updated: 2026-06-01
+notes:
+  - Draft Phase 0 semantic-id and required-variable contract.
+  - Runtime now requires semantic ID bindings for dynamic predicate strategy views.
+  - Planning/execution semantic IDs, including type hierarchy identifiers, are canonicalized in APEX namespace.
+
+semantic_id_convention:
+  namespace_base: https://w3id.org/2026/apex/semantic/
+  rule: Use stable, globally unique APEX semantic IDs for planning/execution concepts (predicates, actions, variables, type hierarchy identifiers).
+  migration_policy: Legacy regex fallback removed from dynamic predicate views; required variables must be semantically tagged at AAS source generation time.
+
+type_hierarchy_identifier_policy:
+  canonical_type_base: https://w3id.org/2026/apex/
+  required_core_types:
+    - https://w3id.org/2026/apex/Resource
+    - https://w3id.org/2026/apex/Product
+    - https://w3id.org/2026/apex/CPPS
+    - https://w3id.org/2026/apex/CPPM
+    - https://w3id.org/2026/apex/CPS
+  compatibility_aliases:
+    - apex_type: https://w3id.org/2026/apex/Resource
+      legacy_type: http://www.w3id.org/hsu-aut/css#Resource
+    - apex_type: https://w3id.org/2026/apex/Product
+      legacy_type: http://www.w3id.org/hsu-aut/css#Product
+
+required_variables_by_asset_type:
+  - asset_type: https://w3id.org/2026/apex/Resource
+    variables:
+      - name: position_x
+        semantic_id: https://w3id.org/2026/apex/semantic/position/x
+        datatype: xsd:double
+        used_by: [InRange]
+      - name: position_y
+        semantic_id: https://w3id.org/2026/apex/semantic/position/y
+        datatype: xsd:double
+        used_by: [InRange]
+      - name: position_z
+        semantic_id: https://w3id.org/2026/apex/semantic/position/z
+        datatype: xsd:double
+        optional: true
+        used_by: [InRange]
+      - name: location_label
+        semantic_id: https://w3id.org/2026/apex/semantic/location/label
+        datatype: xsd:string
+        used_by: [ResourceAt]
+      - name: occupied_state
+        semantic_id: https://w3id.org/2026/apex/semantic/state/occupied
+        datatype: xsd:boolean
+        used_by: [Occupied]
+      - name: operational_state
+        semantic_id: https://w3id.org/2026/apex/semantic/state/operational
+        datatype: xsd:boolean
+        used_by: [Operational]
+
+  - asset_type: https://w3id.org/2026/apex/Product
+    variables:
+      - name: location_label
+        semantic_id: https://w3id.org/2026/apex/semantic/location/label
+        datatype: xsd:string
+        used_by: [ProductAt]

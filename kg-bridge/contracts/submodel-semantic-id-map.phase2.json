@@ -1,0 +1,46 @@
+{
+  "version": "0.1",
+  "updated": "2026-06-02",
+  "notes": [
+    "Phase 2 ingestion hardening: externalize Submodel semanticId to class mapping.",
+    "Runtime loader merges this map with defensive built-in defaults."
+  ],
+  "mappings": [
+    {
+      "semantic_id": "https://admin-shell.io/idta/nameplate/3/0/Nameplate",
+      "class_iri": "https://w3id.org/2025/arso#DigitalNameplateSubmodel"
+    },
+    {
+      "semantic_id": "https://admin-shell.io/idta/HierarchicalStructures/1/1/Submodel",
+      "class_iri": "https://w3id.org/2025/arso#HierarchicalStructuresSubmodel"
+    },
+    {
+      "semantic_id": "https://admin-shell.io/idta/AssetInterfacesDescription/1/0/Submodel",
+      "class_iri": "https://w3id.org/2025/arso#AIDSubmodel"
+    },
+    {
+      "semantic_id": "https://admin-shell.io/idta/SubmodelTemplate/CapabilityDescription/1/0",
+      "class_iri": "https://w3id.org/2025/arso#CapabilitiesSubmodel"
+    },
+    {
+      "semantic_id": "https://admin-shell.io/idta/ControlComponentType/1/0",
+      "class_iri": "https://w3id.org/2025/arso#SkillsSubmodel"
+    },
+    {
+      "semantic_id": "https://admin-shell.io/idta-02003-2-0",
+      "class_iri": "https://w3id.org/2025/arso#TechnicalDataSubmodel"
+    },
+    {
+      "semantic_id": "https://admin-shell.io/idta/Variables/1/0/Submodel",
+      "class_iri": "https://w3id.org/2025/arso#OperationalDataSubmodel"
+    },
+    {
+      "semantic_id": "https://smartfactory.de/aas/submodel/Skills#1/0",
+      "class_iri": "https://w3id.org/2025/arso#SkillsSubmodel"
+    },
+    {
+      "semantic_id": "https://smartfactory.de/aas/submodel/Capabilities#1/0",
+      "class_iri": "https://w3id.org/2025/arso#CapabilitiesSubmodel"
+    }
+  ]
+}

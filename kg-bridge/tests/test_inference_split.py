@@ -33,6 +33,7 @@ def test_dynamic_views_exist_and_are_construct_only():
 
     existing = {path.name for path in views_dir.glob("*.rq")}
     assert expected_views.issubset(existing)
+    assert "operational-stoppering-station.rq" not in existing
 
     for name in expected_views:
         query = (views_dir / name).read_text(encoding="utf-8")
@@ -43,3 +44,24 @@ def test_dynamic_views_exist_and_are_construct_only():
         assert "INSERT" not in upper
         assert "DELETE" not in upper
         assert "WITH" not in upper
+
+
+def test_dynamic_views_use_semantic_id_bindings():
+    views_dir = _repo_root() / "kg-bridge" / "sparql" / "views"
+    expected_views = {
+        "resource-at.rq",
+        "product-at.rq",
+        "occupied.rq",
+        "operational.rq",
+        "in-range.rq",
+    }
+
+    for name in expected_views:
+        query = (views_dir / name).read_text(encoding="utf-8")
+        assert "apex:smElementSemanticId" in query
+        assert "(location|position|station|cell)" not in query
+        assert "(occupied|isoccupied|busy)" not in query
+        assert "(operational|enabled|state)" not in query
+        assert "(positionx|coordx|x$|\\.x$)" not in query
+        assert "(positiony|coordy|y$|\\.y$)" not in query
+        assert "(station|cell|line|module|system)" not in query

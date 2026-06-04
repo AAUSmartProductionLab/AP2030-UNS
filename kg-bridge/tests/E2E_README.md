@@ -14,6 +14,7 @@ The `test_e2e_real_stack.py` test suite validates:
 6. **Multi-Actor Spatial Reasoning**: InRange predicate correctly computes 3D distance between resources
 7. **Zero-Lag Updates**: Position changes trigger immediate view updates without delay
 8. **No Write Amplification**: TBox remains isolated from ABox writes; predicate views aren't materialized
+9. **Planner Fail-Fast Gate**: Planner rejects execution when SHACL validation fails
 
 ## Test Classes and Fixtures
 
@@ -42,6 +43,7 @@ The `test_e2e_real_stack.py` test suite validates:
 | `test_in_range_view_with_sha256_fact_iris` | Validate InRange produces SHA256-derived fact IRIs |
 | `test_zero_lag_resource_at_on_position_update` | Confirm immediate view updates |
 | `test_tbox_isolation_no_write_amplification` | TBox count unchanged after batch events |
+| `test_planner_shacl_gate_blocks_on_injected_violation` | Inject SHACL violation and verify planner aborts before context collection |
 
 ## Prerequisites
 

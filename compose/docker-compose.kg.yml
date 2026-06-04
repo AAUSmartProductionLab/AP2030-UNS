@@ -167,13 +167,20 @@ services:
                  /staging/kg-ontology/APEX/apex-resource-hierarchy.ttl \
                  /staging/kg-ontology/APEX/apex-pddl.ttl \
                  /staging/kg-ontology/APEX/apex-pddl-2-1.ttl \
-                 /staging/kg-ontology/APEX/apex-pddl-3.ttl \
                  /staging/kg-ontology/APEX/apex-pddl-plus.ttl \
-                 /staging/kg-ontology/APEX/apex-ppddl.ttl \
                  /staging/kg-ontology/APEX/apex-fond.ttl \
-                   /staging/kg-ontology/APEX/apex-execution.ttl ; do
+                 /staging/kg-ontology/APEX/apex-execution.ttl ; do
           [ -f "$$f" ] || { echo "missing $$f"; continue; }
           echo "Loading TBox $$f"
+          curl -fsS -u admin:${ADMIN_PASSWORD:-admin} \
+               -X POST -H "Content-Type: text/turtle" \
+               --data-binary @$$f \
+               "$$BASE/data?graph=$${TBOX_GRAPH}"
+        done
+
+        for f in /staging/kg-ontology/APEX/extensions/*.ttl ; do
+          [ -f "$$f" ] || continue
+          echo "Loading APEX extension $$f"
           curl -fsS -u admin:${ADMIN_PASSWORD:-admin} \
                -X POST -H "Content-Type: text/turtle" \
                --data-binary @$$f \
@@ -233,11 +240,14 @@ services:
       KG_TBOX_GRAPH: ${KG_TBOX_GRAPH:-urn:kg:tbox}
       KG_SHACL_GRAPH: ${KG_SHACL_GRAPH:-urn:kg:shacl}
       AAS_GRAPH: ${KG_ABOX_GRAPH:-urn:kg:abox}
-      KG_BASE_NS: ${KG_BASE_NS:-urn:kg:aas:}
-      AAS_ID_STRATEGY: ${KG_AAS_ID_STRATEGY:-url-encode}
+      KG_BASE_NS: ${KG_BASE_NS:-}
+      AAS_ID_STRATEGY: ${KG_AAS_ID_STRATEGY:-identity}
       KG_ENABLE_ARSO_APEX_PROJECTION: ${KG_ENABLE_ARSO_APEX_PROJECTION:-true}
       KG_ENABLE_MATERIALIZATION: ${KG_ENABLE_MATERIALIZATION:-true}
       KG_MATERIALIZATION_RULES_DIR: ${KG_MATERIALIZATION_RULES_DIR:-/app/sparql/materialization}
+      KG_ENABLE_STRUCTURAL_REASONING: ${KG_ENABLE_STRUCTURAL_REASONING:-false}
+      KG_DISABLE_LEGACY_STRUCTURAL_MATERIALIZATION: ${KG_DISABLE_LEGACY_STRUCTURAL_MATERIALIZATION:-false}
+      KG_DISABLED_MATERIALIZATION_RULE_PREFIXES: ${KG_DISABLED_MATERIALIZATION_RULE_PREFIXES:-}
       LOG_LEVEL: ${KG_BRIDGE_LOG_LEVEL:-INFO}
     depends_on:
       kafka:

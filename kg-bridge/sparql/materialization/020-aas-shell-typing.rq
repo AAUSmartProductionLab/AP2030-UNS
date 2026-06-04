@@ -1,42 +1,8 @@
 PREFIX arso:  <https://w3id.org/2025/arso#>
 PREFIX arsox: <https://w3id.org/aau-ra/arso-ext#>
 
-WITH {{ABOX_GRAPH_N3}}
-INSERT {
-  ?aas a arsox:ProductAssetAdministrationShell .
-}
-WHERE {
-  ?aas arsox:representsProduct ?product .
-  FILTER NOT EXISTS { ?aas a arsox:ProductAssetAdministrationShell . }
-}
-;
-WITH {{ABOX_GRAPH_N3}}
-DELETE {
-  ?aas a arsox:ProductAssetAdministrationShell .
-}
-WHERE {
-  ?aas a arsox:ProductAssetAdministrationShell .
-  FILTER NOT EXISTS { ?aas arsox:representsProduct ?product . }
-}
-;
-WITH {{ABOX_GRAPH_N3}}
-INSERT {
-  ?aas a arsox:ProcessAssetAdministrationShell .
-}
-WHERE {
-  ?aas arsox:representsProcess ?process .
-  FILTER NOT EXISTS { ?aas a arsox:ProcessAssetAdministrationShell . }
-}
-;
-WITH {{ABOX_GRAPH_N3}}
-DELETE {
-  ?aas a arsox:ProcessAssetAdministrationShell .
-}
-WHERE {
-  ?aas a arsox:ProcessAssetAdministrationShell .
-  FILTER NOT EXISTS { ?aas arsox:representsProcess ?process . }
-}
-;
+# Resource/Product/ProcessAssetAdministrationShell types are now set directly
+# by the bridge projection on AAS_CREATED events — no derived rules needed.
 WITH {{ABOX_GRAPH_N3}}
 INSERT {
   ?aas a arso:HasOperationalDataAAS .

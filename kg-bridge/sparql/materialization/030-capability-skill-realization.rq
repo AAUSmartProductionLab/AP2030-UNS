@@ -1,6 +1,14 @@
 PREFIX aas:  <https://admin-shell.io/aas/3/1/>
 PREFIX arso: <https://w3id.org/2025/arso#>
 PREFIX css:  <http://www.w3id.org/hsu-aut/css#>
+PREFIX aas-key: <https://admin-shell.io/aas/3/1/Key/>
+PREFIX aas-ref: <https://admin-shell.io/aas/3/1/Reference/>
+PREFIX aas-rel: <https://admin-shell.io/aas/3/1/RelationshipElement/>
+PREFIX aas-rfb: <https://admin-shell.io/aas/3/1/Referable/>
+PREFIX aas-sem: <https://admin-shell.io/aas/3/1/HasSemantics/>
+PREFIX aas-sm: <https://admin-shell.io/aas/3/1/Submodel/>
+PREFIX aas-smc: <https://admin-shell.io/aas/3/1/SubmodelElementCollection/>
+PREFIX aas-sml: <https://admin-shell.io/aas/3/1/SubmodelElementList/>
 
 WITH {{ABOX_GRAPH_N3}}
 INSERT {
@@ -10,35 +18,35 @@ WHERE {
   ?shell arso:hasCapabilitiesSubmodel ?capsSm ;
          arso:hasSkillsSubmodel ?skillsSm .
 
-  ?capsSm (<https://admin-shell.io/aas/3/1/Submodel/submodelElements>|<https://admin-shell.io/aas/3/1/SubmodelElementCollection/value>|<https://admin-shell.io/aas/3/1/SubmodelElementList/value>)+ ?realizedByList .
+  ?capsSm (aas-sm:submodelElements|aas-smc:value|aas-sml:value)+ ?realizedByList .
 
   ?realizedByList a aas:SubmodelElementList ;
-                  aas:HasSemantics/semanticId ?realizedBySemanticRef ;
-                  aas:SubmodelElementList/value ?rel .
+                  aas-sem:semanticId ?realizedBySemanticRef ;
+                  aas-sml:value ?rel .
 
-  ?realizedBySemanticRef aas:Reference/keys ?realizedBySemanticKey .
-  ?realizedBySemanticKey aas:Key/value "https://admin-shell.io/idta/CapabilityDescription/CapabilityRealizedBy/1/0" .
+  ?realizedBySemanticRef aas-ref:keys ?realizedBySemanticKey .
+  ?realizedBySemanticKey aas-key:value "https://admin-shell.io/idta/CapabilityDescription/CapabilityRealizedBy/1/0" .
 
   ?rel a aas:RelationshipElement ;
-       aas:RelationshipElement/first ?firstRef ;
-       aas:RelationshipElement/second ?secondRef .
+       aas-rel:first ?firstRef ;
+       aas-rel:second ?secondRef .
 
-  ?firstRef aas:Reference/keys ?firstKey .
-  ?firstKey aas:Key/value ?capContainerIdShort .
+  ?firstRef aas-ref:keys ?firstKey .
+  ?firstKey aas-key:value ?capContainerIdShort .
 
-  ?capsSm (<https://admin-shell.io/aas/3/1/Submodel/submodelElements>|<https://admin-shell.io/aas/3/1/SubmodelElementCollection/value>|<https://admin-shell.io/aas/3/1/SubmodelElementList/value>)+ ?capContainer .
+  ?capsSm (aas-sm:submodelElements|aas-smc:value|aas-sml:value)+ ?capContainer .
   ?capContainer a aas:SubmodelElementCollection ;
-                aas:Referable/idShort ?capContainerIdShort ;
-                aas:SubmodelElementCollection/value ?capability .
+                aas-rfb:idShort ?capContainerIdShort ;
+                aas-smc:value ?capability .
 
   ?capability a aas:Capability .
 
-  ?secondRef aas:Reference/keys ?secondKey .
-  ?secondKey aas:Key/value ?skillIdShort .
+  ?secondRef aas-ref:keys ?secondKey .
+  ?secondKey aas-key:value ?skillIdShort .
 
-  ?skillsSm (<https://admin-shell.io/aas/3/1/Submodel/submodelElements>|<https://admin-shell.io/aas/3/1/SubmodelElementCollection/value>|<https://admin-shell.io/aas/3/1/SubmodelElementList/value>)+ ?skill .
+  ?skillsSm (aas-sm:submodelElements|aas-smc:value|aas-sml:value)+ ?skill .
   ?skill a aas:SubmodelElementCollection ;
-         aas:Referable/idShort ?skillIdShort .
+         aas-rfb:idShort ?skillIdShort .
 
   FILTER NOT EXISTS { ?capability css:isRealizedBySkill ?skill . }
 }
@@ -53,35 +61,35 @@ WHERE {
     ?shell arso:hasCapabilitiesSubmodel ?capsSm ;
            arso:hasSkillsSubmodel ?skillsSm .
 
-    ?capsSm (<https://admin-shell.io/aas/3/1/Submodel/submodelElements>|<https://admin-shell.io/aas/3/1/SubmodelElementCollection/value>|<https://admin-shell.io/aas/3/1/SubmodelElementList/value>)+ ?realizedByList .
+    ?capsSm (aas-sm:submodelElements|aas-smc:value|aas-sml:value)+ ?realizedByList .
 
     ?realizedByList a aas:SubmodelElementList ;
-                    aas:HasSemantics/semanticId ?realizedBySemanticRef ;
-                    aas:SubmodelElementList/value ?rel .
+                    aas-sem:semanticId ?realizedBySemanticRef ;
+                    aas-sml:value ?rel .
 
-    ?realizedBySemanticRef aas:Reference/keys ?realizedBySemanticKey .
-    ?realizedBySemanticKey aas:Key/value "https://admin-shell.io/idta/CapabilityDescription/CapabilityRealizedBy/1/0" .
+    ?realizedBySemanticRef aas-ref:keys ?realizedBySemanticKey .
+    ?realizedBySemanticKey aas-key:value "https://admin-shell.io/idta/CapabilityDescription/CapabilityRealizedBy/1/0" .
 
     ?rel a aas:RelationshipElement ;
-         aas:RelationshipElement/first ?firstRef ;
-         aas:RelationshipElement/second ?secondRef .
+         aas-rel:first ?firstRef ;
+         aas-rel:second ?secondRef .
 
-    ?firstRef aas:Reference/keys ?firstKey .
-    ?firstKey aas:Key/value ?capContainerIdShort .
+    ?firstRef aas-ref:keys ?firstKey .
+    ?firstKey aas-key:value ?capContainerIdShort .
 
-    ?capsSm (<https://admin-shell.io/aas/3/1/Submodel/submodelElements>|<https://admin-shell.io/aas/3/1/SubmodelElementCollection/value>|<https://admin-shell.io/aas/3/1/SubmodelElementList/value>)+ ?capContainer .
+    ?capsSm (aas-sm:submodelElements|aas-smc:value|aas-sml:value)+ ?capContainer .
     ?capContainer a aas:SubmodelElementCollection ;
-                  aas:Referable/idShort ?capContainerIdShort ;
-                  aas:SubmodelElementCollection/value ?resolvedCapability .
+                  aas-rfb:idShort ?capContainerIdShort ;
+                  aas-smc:value ?resolvedCapability .
 
     ?resolvedCapability a aas:Capability .
 
-    ?secondRef aas:Reference/keys ?secondKey .
-    ?secondKey aas:Key/value ?skillIdShort .
+    ?secondRef aas-ref:keys ?secondKey .
+    ?secondKey aas-key:value ?skillIdShort .
 
-    ?skillsSm (<https://admin-shell.io/aas/3/1/Submodel/submodelElements>|<https://admin-shell.io/aas/3/1/SubmodelElementCollection/value>|<https://admin-shell.io/aas/3/1/SubmodelElementList/value>)+ ?resolvedSkill .
+    ?skillsSm (aas-sm:submodelElements|aas-smc:value|aas-sml:value)+ ?resolvedSkill .
     ?resolvedSkill a aas:SubmodelElementCollection ;
-                   aas:Referable/idShort ?skillIdShort .
+                   aas-rfb:idShort ?skillIdShort .
 
     FILTER(?resolvedCapability = ?capability)
     FILTER(?resolvedSkill = ?skill)

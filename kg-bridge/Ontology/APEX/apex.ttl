@@ -5,17 +5,15 @@
 
 <https://w3id.org/2026/apex/>
   a owl:Ontology ;
-  rdfs:comment "APEX ontology root for planning predicates and execution semantics used by kg-bridge." ;
+  rdfs:comment "APEX core ontology root for planning predicates and execution semantics used by kg-bridge." ;
   owl:imports <https://w3id.org/2026/apex/predicates> ;
   owl:imports <https://w3id.org/2026/apex/pddl> ;
   owl:imports <https://w3id.org/2026/apex/pddl-2-1> ;
-  owl:imports <https://w3id.org/2026/apex/pddl-3> ;
   owl:imports <https://w3id.org/2026/apex/pddl-plus> ;
-  owl:imports <https://w3id.org/2026/apex/ppddl> ;
   owl:imports <https://w3id.org/2026/apex/fond> ;
   owl:imports <https://w3id.org/2026/apex/execution> ;
   owl:imports <https://w3id.org/2026/apex/shacl> ;
-  owl:versionInfo "0.2.0" .
+  owl:versionInfo "0.3.0" .
 
 apex:PDDL12Module a owl:Class ;
   rdfs:comment "Marker class for PDDL 1.2 (classical) vocabulary migration." .
@@ -24,13 +22,13 @@ apex:PDDL21Module a owl:Class ;
   rdfs:comment "Marker class for PDDL 2.1 (numeric/temporal) vocabulary migration." .
 
 apex:PDDL3Module a owl:Class ;
-  rdfs:comment "Marker class for PDDL 3 trajectory constraints and preferences vocabulary migration." .
+  rdfs:comment "Marker class for optional PDDL 3 trajectory constraints and preferences vocabulary migration." .
 
 apex:PDDLPlusModule a owl:Class ;
   rdfs:comment "Marker class for PDDL+ processes and events vocabulary migration." .
 
 apex:PPDDLModule a owl:Class ;
-  rdfs:comment "Marker class for probabilistic planning vocabulary migration." .
+  rdfs:comment "Marker class for optional probabilistic planning vocabulary migration." .
 
 apex:FONDModule a owl:Class ;
   rdfs:comment "Marker class for fully observable non-deterministic planning vocabulary migration." .
@@ -52,6 +50,10 @@ apex:smElementPath a owl:DatatypeProperty ;
 apex:smElementModelType a owl:DatatypeProperty ;
   rdfs:range xsd:string ;
   rdfs:comment "AAS modelType name mirrored for SubmodelElement projection." .
+
+apex:smElementSemanticId a owl:DatatypeProperty ;
+  rdfs:range xsd:string ;
+  rdfs:comment "Canonical semanticId value mirrored from SubmodelElement payloads when present." .
 
 apex:smElementValue a owl:DatatypeProperty ;
   rdfs:comment "Literal scalar value mirrored from SubmodelElement payloads when present." .
@@ -80,3 +82,71 @@ apex:argumentLiteral a owl:DatatypeProperty ;
 apex:asOf a owl:DatatypeProperty ;
   rdfs:range xsd:dateTime ;
   rdfs:comment "Timestamp indicating when a materialized predicate fact was last derived." .
+
+apex:aasIdShort a owl:DatatypeProperty ;
+  rdfs:range xsd:string ;
+  rdfs:comment "AAS idShort literal stored on each AAS node by the bridge at creation time; enables PDDL object name lookup without reversing the identity IRI." .
+
+apex:smElementRefType a owl:DatatypeProperty ;
+  rdfs:range xsd:string ;
+  rdfs:comment "AAS reference type (ExternalReference or ModelReference) of a ReferenceElement value." .
+
+apex:RefKey a owl:Class ;
+  rdfs:comment "One key in a mirrored AAS reference element value (index + type + value)." .
+
+apex:hasRefKey a owl:ObjectProperty ;
+  rdfs:domain apex:MirroredSubmodelElement ;
+  rdfs:range apex:RefKey ;
+  rdfs:comment "Links a mirrored ReferenceElement to its ordered key nodes." .
+
+apex:refKeyIndex a owl:DatatypeProperty ;
+  rdfs:domain apex:RefKey ;
+  rdfs:range xsd:nonNegativeInteger ;
+  rdfs:comment "0-based position of this key within the reference's key list." .
+
+apex:refKeyType a owl:DatatypeProperty ;
+  rdfs:domain apex:RefKey ;
+  rdfs:range xsd:string ;
+  rdfs:comment "AAS KeyTypes value (e.g. GlobalReference, SubmodelElementCollection)." .
+
+apex:refKeyValue a owl:DatatypeProperty ;
+  rdfs:domain apex:RefKey ;
+  rdfs:range xsd:string ;
+  rdfs:comment "Key value string (type IRI, idShort, or element path segment)." .
+
+apex:hasSourceAAS a owl:ObjectProperty ;
+  rdfs:comment "Links a projected apex:Action to the AAS node from which it was materialized." .
+
+apex:ProjectedConstraint a owl:Class ;
+  rdfs:comment "A projected condition or effect of an apex:Action, linked by a timing-role predicate." .
+
+apex:constraintPath a owl:DatatypeProperty ;
+  rdfs:domain apex:ProjectedConstraint ;
+  rdfs:range xsd:string ;
+  rdfs:comment "The submodel-element path of the condition/effect term that produced this constraint." .
+
+apex:ConstraintArg a owl:Class ;
+  rdfs:comment "An ordered argument binding for a ProjectedConstraint, mapping a predicate argument position to an action parameter index." .
+
+apex:constraintArg a owl:ObjectProperty ;
+  rdfs:domain apex:ProjectedConstraint ;
+  rdfs:range apex:ConstraintArg ;
+  rdfs:comment "Links a projected constraint to one of its ordered argument bindings." .
+
+apex:constraintArgPosition a owl:DatatypeProperty ;
+  rdfs:domain apex:ConstraintArg ;
+  rdfs:range xsd:nonNegativeInteger ;
+  rdfs:comment "0-based position of this argument in the predicate's argument list." .
+
+apex:constraintArgActionParamIndex a owl:DatatypeProperty ;
+  rdfs:domain apex:ConstraintArg ;
+  rdfs:range xsd:nonNegativeInteger ;
+  rdfs:comment "Index of the action parameter this constraint argument is bound to." .
+
+apex:TemporalProcess a owl:Class ;
+  rdfs:subClassOf apex:Action ;
+  rdfs:comment "A PDDL+ process action (durative, triggered by conditions, advancing over time)." .
+
+apex:TemporalEvent a owl:Class ;
+  rdfs:subClassOf apex:Action ;
+  rdfs:comment "A PDDL+ event action (instantaneous, triggered by conditions)." .

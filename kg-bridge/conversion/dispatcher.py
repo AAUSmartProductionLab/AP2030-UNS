@@ -64,6 +64,9 @@ def _sme_to_rdf_kwargs(submodel_id: str, sm_element_path: str, id_strategy: str)
         from py_aas_rdf.models import base_64_url_encode
 
         base_prefix = f"{base_64_url_encode(submodel_id)}/submodel-elements/"
+    elif id_strategy == "identity":
+        # Mirror py_aas_rdf submodel.to_rdf identity common_pref exactly.
+        base_prefix = f"{submodel_id}/submodel-elements/"
     else:
         from py_aas_rdf.models import url_encode
 

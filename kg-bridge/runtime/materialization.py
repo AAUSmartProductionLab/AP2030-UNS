@@ -17,6 +17,7 @@ class MaterializationRunner:
         abox_graph_iri: str | None = None,
         tbox_graph_iri: str | None = None,
         shacl_graph_iri: str | None = None,
+        disabled_rule_prefixes: tuple[str, ...] = (),
     ) -> None:
         self._logger = logging.getLogger("kg-bridge.materialization")
         self._rules: list[tuple[str, str]] = []
@@ -60,6 +61,10 @@ class MaterializationRunner:
             return
 
         for file_path in sorted(directory.glob("*.rq")):
+            if disabled_rule_prefixes and file_path.name.startswith(disabled_rule_prefixes):
+                self._logger.info("Skipping disabled materialization rule: %s", file_path.name)
+                continue
+
             query = file_path.read_text(encoding="utf-8").strip()
             if not query:
                 continue

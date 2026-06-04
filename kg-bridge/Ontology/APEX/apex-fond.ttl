@@ -15,6 +15,24 @@ apex:OneOf a owl:Class ;
   rdfs:subClassOf apex:NondeterministicEffect ;
   rdfs:comment "One-of branch construct for FOND outcomes." .
 
+apex:EffectBranch a owl:Class ;
+  rdfs:comment "A single branch alternative inside a nondeterministic oneOf effect." .
+
+apex:hasBranch a owl:ObjectProperty ;
+  rdfs:domain apex:NondeterministicEffect ;
+  rdfs:range apex:EffectBranch ;
+  rdfs:comment "Links a nondeterministic effect to one of its branches." .
+
+apex:hasBranchEffect a owl:ObjectProperty ;
+  rdfs:domain apex:EffectBranch ;
+  rdfs:range apex:Predicate ;
+  rdfs:comment "Links an effect branch to a projected predicate effect node." .
+
+apex:branchGuard a owl:DatatypeProperty ;
+  rdfs:domain apex:EffectBranch ;
+  rdfs:range xsd:string ;
+  rdfs:comment "Guard expression associated with a branch (for example, data.Outcome tests)." .
+
 apex:StrongSolution a owl:Class .
 apex:StrongCyclicSolution a owl:Class .
 apex:WeakSolution a owl:Class .

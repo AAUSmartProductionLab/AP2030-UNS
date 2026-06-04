@@ -9,7 +9,7 @@
 
 <urn:kg:entity:carrier-01>
   a css:Resource ;
-  arso:hasAAS <urn:kg:aas:resource:carrier-01> .
+  arso:hasResourceAAS <urn:kg:aas:resource:carrier-01> .
 
 <urn:kg:aas:resource:carrier-01>
   arso:hasOperationalDataSubmodel <urn:kg:sm:resource:carrier-01:operational-data> .
@@ -56,7 +56,7 @@
 
 <urn:kg:entity:station-loading-01>
   a css:Resource ;
-  arso:hasAAS <urn:kg:aas:resource:station-loading-01> .
+  arso:hasResourceAAS <urn:kg:aas:resource:station-loading-01> .
 
 <urn:kg:aas:resource:station-loading-01>
   arso:hasOperationalDataSubmodel <urn:kg:sm:resource:station-loading-01:operational-data> .
@@ -97,7 +97,7 @@
 
 <urn:kg:entity:product-batch-01>
   a css:Product ;
-  arsox:hasAASForProduct <urn:kg:aas:product:batch-01> .
+  arsox:hasResourceAASForProduct <urn:kg:aas:product:batch-01> .
 
 <urn:kg:aas:product:batch-01>
   arso:hasOperationalDataSubmodel <urn:kg:sm:product:batch-01:operational-data> .

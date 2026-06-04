@@ -1,4 +1,6 @@
 @prefix apex: <https://w3id.org/2026/apex/> .
+@prefix arso: <https://www.w3id.org/hsu-aut/aries/ontologies/arso/ontology/> .
+@prefix css:  <http://www.w3id.org/hsu-aut/css#> .
 @prefix owl:  <http://www.w3.org/2002/07/owl#> .
 @prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
@@ -51,4 +53,86 @@ apex:PredicateShape
     sh:path apex:hasArgumentBinding ;
     sh:class apex:PredicateArgumentBinding ;
     sh:minCount 1
+  ] .
+
+apex:ResourceLocationShape
+  a sh:NodeShape ;
+  sh:targetClass arsox:ResourceAssetAdministrationShell ;
+  sh:sparql [
+    sh:message "Each ResourceAssetAdministrationShell must expose a location through an operational-data submodel or a ResourceAt fact." ;
+    sh:select """
+      PREFIX apex:  <https://w3id.org/2026/apex/>
+      PREFIX arso:  <https://w3id.org/2025/arso#>
+      PREFIX arsox: <https://w3id.org/aau-ra/arso-ext#>
+      SELECT $this
+      WHERE {
+        FILTER NOT EXISTS {
+          $this arso:hasOperationalDataSubmodel ?opSm .
+        }
+        FILTER NOT EXISTS {
+          ?fact a apex:ResourceAt ;
+            apex:hasArgumentBinding ?arg1, ?arg2 .
+          ?arg1 apex:argumentIndex 1 ;
+            apex:argumentObject $this .
+          ?arg2 apex:argumentIndex 2 .
+        }
+      }
+    """
+  ] .
+
+apex:PredicateDefinitionShape
+  a sh:NodeShape ;
+  sh:targetClass apex:Predicate ;
+  sh:sparql [
+    sh:message "Predicate sourceSemanticId must resolve to a declared predicate class." ;
+    sh:select """
+      PREFIX apex: <https://w3id.org/2026/apex/>
+      PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+      SELECT $this
+      WHERE {
+        $this apex:sourceSemanticId ?sid .
+        FILTER(isLiteral(?sid))
+        FILTER(
+          STRSTARTS(STR(?sid), "http://") ||
+          STRSTARTS(STR(?sid), "https://") ||
+          STRSTARTS(STR(?sid), "urn:")
+        )
+        BIND(IRI(STR(?sid)) AS ?sidIri)
+        FILTER NOT EXISTS {
+          ?sidIri rdfs:subClassOf* apex:Predicate .
+        }
+      }
+    """
+  ] .
+
+apex:ActionSkillReferenceShape
+  a sh:NodeShape ;
+  sh:targetClass apex:Action ;
+  sh:property [
+    sh:path apex:skillReferenceKey ;
+    sh:datatype xsd:string ;
+    sh:minCount 1
+  ] ;
+  sh:sparql [
+    sh:message "Action SkillReference must resolve to an existing skill idShort in the graph." ;
+    sh:select """
+      PREFIX apex: <https://w3id.org/2026/apex/>
+      SELECT $this
+      WHERE {
+        $this apex:skillReferenceKey ?skillKey .
+        FILTER NOT EXISTS {
+          ?skill <https://admin-shell.io/aas/3/1/Referable/idShort> ?skillKey .
+        }
+      }
+    """
+  ] .
+
+apex:CppmBelongsToExactlyOneCppsShape
+  a sh:NodeShape ;
+  sh:targetClass apex:CPPM ;
+  sh:property [
+    sh:path [ sh:inversePath apex:hasCPPM ] ;
+    sh:class apex:CPPS ;
+    sh:minCount 1 ;
+    sh:maxCount 1
   ] .

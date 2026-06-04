@@ -1,0 +1,55 @@
+version: 0.2
+updated: 2026-06-01
+notes:
+  - Phase 0 capability taxonomy locked from user-confirmed main use-case capabilities.
+  - Planning remains skill-level.
+  - Current runtime does not perform capability-based resource selection.
+  - Capabilities are retained as domain vocabulary and compatibility metadata.
+  - Canonical identifiers for planning/execution concepts use APEX namespace.
+
+policy:
+  planning_unit: skill
+  resource_selection_mode: explicit_resource_assignment
+  capability_matching_active: false
+  bridge_relation: http://www.w3id.org/hsu-aut/css#isRealizedBySkill
+
+canonical_namespace:
+  capability_base: https://w3id.org/2026/apex/capability/
+  compatibility_legacy_base: https://smartproductionlab.aau.dk/Capability/
+
+main_capability_set:
+  - id: https://w3id.org/2026/apex/capability/Loading
+    legacy_aliases:
+      - https://smartproductionlab.aau.dk/Capability/Loading
+  - id: https://w3id.org/2026/apex/capability/Dispensing
+    legacy_aliases:
+      - https://smartproductionlab.aau.dk/Capability/Dispensing
+  - id: https://w3id.org/2026/apex/capability/Stoppering
+    legacy_aliases:
+      - https://smartproductionlab.aau.dk/Capability/Stoppering
+  - id: https://w3id.org/2026/apex/capability/Capping
+    legacy_aliases:
+      - https://smartproductionlab.aau.dk/Capability/Capping
+  - id: https://w3id.org/2026/apex/capability/QualityControl
+    legacy_aliases:
+      - https://smartproductionlab.aau.dk/Capability/QualityControl
+  - id: https://w3id.org/2026/apex/capability/Unloading
+    legacy_aliases:
+      - https://smartproductionlab.aau.dk/Capability/Unloading
+  - id: https://w3id.org/2026/apex/capability/MoveToPosition
+    legacy_aliases:
+      - https://smartproductionlab.aau.dk/Capability/MoveToPosition
+
+observed_non_main_capabilities:
+  - legacy_id: https://smartproductionlab.aau.dk/Capability/Capture
+    proposed_apex_id: https://w3id.org/2026/apex/capability/Capture
+  - legacy_id: https://smartproductionlab.aau.dk/Capability/MotionSystem
+    proposed_apex_id: https://w3id.org/2026/apex/capability/MotionSystem
+
+status:
+  selection_locked: true
+  lock_basis: user-confirmed main capabilities for this use case
+  follow_up:
+    - Keep alias mapping for legacy smartproductionlab capability IDs.
+    - Treat non-main capabilities as optional extensions unless promoted.
+

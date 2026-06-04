@@ -1,6 +1,7 @@
 @prefix apex: <https://w3id.org/2026/apex/> .
 @prefix owl:  <http://www.w3.org/2002/07/owl#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
 
 <https://w3id.org/2026/apex/pddl>
   a owl:Ontology ;
@@ -13,6 +14,9 @@ apex:Type a owl:Class ;
 apex:Action a owl:Class ;
   rdfs:comment "PDDL action schema." .
 
+apex:Parameter a owl:Class ;
+  rdfs:comment "PDDL parameter definition used by projected action schemas." .
+
 apex:Domain a owl:Class ;
   rdfs:comment "PDDL domain definition." .
 
@@ -20,7 +24,23 @@ apex:Problem a owl:Class ;
   rdfs:comment "PDDL problem definition." .
 
 apex:hasParameter a owl:ObjectProperty ;
+  rdfs:range apex:Parameter ;
   rdfs:comment "Links an action or predicate schema to a parameter description." .
+
+apex:parameterIndex a owl:DatatypeProperty ;
+  rdfs:domain apex:Parameter ;
+  rdfs:range xsd:nonNegativeInteger ;
+  rdfs:comment "0-based parameter index in the original action parameter list." .
+
+apex:parameterTypeRef a owl:DatatypeProperty ;
+  rdfs:domain apex:Parameter ;
+  rdfs:range xsd:string ;
+  rdfs:comment "Parameter type reference (typically semantic/type URI string)." .
+
+apex:skillReferenceKey a owl:DatatypeProperty ;
+  rdfs:domain apex:Action ;
+  rdfs:range xsd:string ;
+  rdfs:comment "Action skill reference key as declared in AI-Planning action metadata." .
 
 apex:hasPrecondition a owl:ObjectProperty ;
   rdfs:comment "Links an action to its precondition expression." .

@@ -1,0 +1,35 @@
+@prefix apex: <https://w3id.org/2026/apex/> .
+@prefix css:  <http://www.w3id.org/hsu-aut/css#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+<https://w3id.org/2026/apex/extensions/main-capabilities>
+  a owl:Ontology ;
+  rdfs:comment "APEX extension module for main AP2030 use-case capabilities." ;
+  owl:imports <https://w3id.org/2026/apex/> ;
+  owl:imports <http://www.w3id.org/hsu-aut/css> .
+
+apex:MainLineCapability a owl:Class ;
+  rdfs:subClassOf css:Capability ;
+  rdfs:comment "Base class for the main capabilities in the AP2030 use case." .
+
+apex:LoadingCapability a owl:Class ;
+  rdfs:subClassOf apex:MainLineCapability .
+
+apex:DispensingCapability a owl:Class ;
+  rdfs:subClassOf apex:MainLineCapability .
+
+apex:StopperingCapability a owl:Class ;
+  rdfs:subClassOf apex:MainLineCapability .
+
+apex:CappingCapability a owl:Class ;
+  rdfs:subClassOf apex:MainLineCapability .
+
+apex:QualityControlCapability a owl:Class ;
+  rdfs:subClassOf apex:MainLineCapability .
+
+apex:UnloadingCapability a owl:Class ;
+  rdfs:subClassOf apex:MainLineCapability .
+
+apex:MoveToPositionCapability a owl:Class ;
+  rdfs:subClassOf apex:MainLineCapability .
