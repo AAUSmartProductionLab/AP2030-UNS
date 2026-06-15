@@ -1,6 +1,0 @@
-@prefix ns1: <https://admin-shell.io/aas/3/1/AssetAdministrationShell/> .
-@prefix ns2: <https://admin-shell.io/aas/3/1/AssetInformation/> .
-
-<urn:kg:aas:urn%3Aaas%3Aassetinfo> ns1:assetInformation [ a <https://admin-shell.io/aas/3/1/AssetInformation> ;
-            ns2:assetKind <https://admin-shell.io/aas/3/1/AssetKind/Type> ] .
-

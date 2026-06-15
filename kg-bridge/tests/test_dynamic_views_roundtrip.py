@@ -54,7 +54,6 @@ def _apply_event(graph: rdflib.Graph, payload: dict, topic: str) -> None:
         event=event,
         base_uri=BASE_URI,
         graph_iri=None,
-        enable_projection=True,
     )
     for statement in statements:
         normalized = _normalize_update_for_rdflib(statement)

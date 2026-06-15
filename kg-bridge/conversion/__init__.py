@@ -8,7 +8,7 @@ from .events import (
     parse_event,
 )
 from .iri import aas_iri, submodel_element_iri, submodel_iri
-from .sparql import build_delete, build_link, build_unlink, build_upsert
+from .sparql import build_delete, build_link, build_unlink
 
 __all__ = [
     "AasEvent",
@@ -20,7 +20,6 @@ __all__ = [
     "build_delete",
     "build_link",
     "build_unlink",
-    "build_upsert",
     "event_to_sparql",
     "parse_event",
     "submodel_element_iri",

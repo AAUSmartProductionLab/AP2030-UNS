@@ -1,4 +1,4 @@
-@prefix ns1: <https://admin-shell.io/aas/3/1/AssetAdministrationShell/> .
+@prefix ns1: <https://w3id.org/2025/arso#> .
 
-<urn:kg:aas:urn%3Aaas%3Alink> ns1:submodels <urn:kg:aas:urn%3Asm%3Alink> .
+<urn:kg:aas:urn%3Aaas%3Alink> ns1:hasSubmodel <urn:kg:aas:urn%3Asm%3Alink> .
 

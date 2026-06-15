@@ -1,8 +1,7 @@
-@prefix ns1: <https://admin-shell.io/aas/3/1/Property/> .
-@prefix ns2: <https://admin-shell.io/aas/3/1/Referable/> .
+@prefix ns1: <https://w3id.org/2026/apex/> .
 
-<urn:kg:aas:urn%3Asm%3Asme-created%2Fsubmodel-elements%2FP1> a <https://admin-shell.io/aas/3/1/Property> ;
-    ns1:value "x" ;
-    ns1:valueType <https://admin-shell.io/aas/3/1/DataTypeDefXsd/String> ;
-    ns2:idShort "P1" .
+<urn:kg:aas:urn%3Asm%3Asme-created%2Fsubmodel-elements%2FP1> a ns1:MirroredSubmodelElement ;
+    ns1:smElementModelType "Property" ;
+    ns1:smElementPath "P1" ;
+    ns1:smElementValue "x" .
 

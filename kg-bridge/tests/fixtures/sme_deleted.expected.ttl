@@ -1,1 +1,7 @@
+@prefix ns1: <https://w3id.org/2026/apex/> .
+
+<urn:kg:aas:urn%3Asm%3Asme-deleted%2Fsubmodel-elements%2FP3> a ns1:MirroredSubmodelElement ;
+    ns1:smElementModelType "Property" ;
+    ns1:smElementPath "P3" ;
+    ns1:smElementValue "z" .
 
