@@ -8,7 +8,7 @@ from .events import AasEvent, AasEventType, SubmodelEvent, SubmodelEventType
 from .iri import aas_iri, submodel_element_iri, submodel_iri
 from .projection import projection_statements_for_event
 from .sparql import build_delete, build_link, build_unlink, build_upsert
-from py_aas_rdf.models.aas_namespace import AASNameSpace
+from .aas_models import AASNameSpace, base_64_url_encode, url_encode
 
 _ANY_PREDICATE_SENTINEL = rdflib.URIRef("urn:py-aas-rdf:any-predicate")
 
@@ -61,15 +61,11 @@ def _encode_list_indices(path: str) -> str:
 
 def _sme_to_rdf_kwargs(submodel_id: str, sm_element_path: str, id_strategy: str) -> dict[str, Any]:
     if id_strategy == "base64-url-encode":
-        from py_aas_rdf.models import base_64_url_encode
-
         base_prefix = f"{base_64_url_encode(submodel_id)}/submodel-elements/"
     elif id_strategy == "identity":
         # Mirror py_aas_rdf submodel.to_rdf identity common_pref exactly.
         base_prefix = f"{submodel_id}/submodel-elements/"
     else:
-        from py_aas_rdf.models import url_encode
-
         base_prefix = url_encode(f"{submodel_id}/submodel-elements/")
 
     parent_path = ""

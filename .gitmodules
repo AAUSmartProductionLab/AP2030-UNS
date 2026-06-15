@@ -16,9 +16,6 @@
 [submodule "unified-planning"]
 	path = Planner/third_party/unified-planning
 	url = git@github.com:tristan-schwoerer/unified-planning.git
-[submodule "py-aas-rdf"]
-	path = py-aas-rdf
-	url = git@github.com:tristan-schwoerer/py-aas-rdf.git
 [submodule "aas_neo4j_integration"]
 	path = aas_neo4j_integration
 	url = https://github.com/dfkibasys/aas_neo4j_integration.git

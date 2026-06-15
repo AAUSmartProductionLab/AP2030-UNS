@@ -1,93 +1,61 @@
-"""Guardrail: under id_strategy='identity', the two IRI-construction paths must agree.
+"""Guardrail: under id_strategy='identity', the ``iri.py`` IRI builder produces
+the expected readable IRIs.
 
-kg-bridge builds SubmodelElement IRIs in two places that MUST produce byte-identical
-IRIs, or the predicate-view join (`?sm aas:Submodel/submodelElements ?node .
-?node apex:smElementValue ...`) silently breaks:
-
-  1. py_aas_rdf `to_rdf()`            → emits aas:Submodel/submodelElements <SME_IRI>
-  2. kg-bridge iri.submodel_element_iri → the node projection.py annotates with apex:*
-
-This test pins that invariant for the identity strategy (base_uri="").
+Previously this test verified parity with py-aas-rdf's ``to_rdf()`` output. Now that
+py-aas-rdf has been removed and the kg-bridge uses its own lightweight AAS models,
+the test directly validates the IRI contract that downstream consumers (view queries,
+Planner) depend on.
 """
 
 from __future__ import annotations
 
-import rdflib
-
 from conversion.iri import submodel_element_iri, submodel_iri
-from py_aas_rdf.models.submodel import Submodel
-from py_aas_rdf.models.submodel_element_collection import SubmodelElementCollection
-from py_aas_rdf.models.submodel_element_list import AasSubmodelElements, SubmodelElementList
-from py_aas_rdf.models.property import Property
-
-AAS = rdflib.Namespace("https://admin-shell.io/aas/3/1/")
-_CHILD_PREDICATES = (
-    AAS["Submodel/submodelElements"],
-    AAS["SubmodelElementCollection/value"],
-    AAS["SubmodelElementList/value"],
-)
-
-
-def _to_rdf_sme_iris(submodel: Submodel) -> set[str]:
-    graph, _ = submodel.to_rdf(base_uri="", id_strategy="identity")
-    return {
-        str(obj)
-        for _subject, predicate, obj in graph
-        if predicate in _CHILD_PREDICATES
-    }
 
 
 def test_identity_submodel_root_iri_matches():
     sm_id = "https://smartproductionlab.aau.dk/submodels/instances/imaAAS/AIPlanning"
-    submodel = Submodel(id=sm_id, idShort="AIPlanning", submodelElements=[])
-    graph, node = submodel.to_rdf(base_uri="", id_strategy="identity")
-
-    # Identity uses the id verbatim — no percent-encoding, no urn prefix.
-    assert str(node) == sm_id
     assert str(submodel_iri("", sm_id, id_strategy="identity")) == sm_id
 
 
 def test_identity_nested_collection_iris_match_iri_helper():
     sm_id = "https://smartproductionlab.aau.dk/submodels/instances/imaAAS/AIPlanning"
-    leaf = Property(idShort="State", valueType="xs:string", value="Execute")
-    dispensing = SubmodelElementCollection(idShort="Dispensing", value=[leaf])
-    actions = SubmodelElementCollection(idShort="Actions", value=[dispensing])
-    domain = SubmodelElementCollection(idShort="Domain", value=[actions])
-    submodel = Submodel(id=sm_id, idShort="AIPlanning", submodelElements=[domain])
+    sm_prefix = f"{sm_id}/submodel-elements"
+    id_strategy = "identity"
 
-    to_rdf_iris = _to_rdf_sme_iris(submodel)
-
-    for path in (
-        "Domain",
-        "Domain.Actions",
-        "Domain.Actions.Dispensing",
-        "Domain.Actions.Dispensing.State",
-    ):
-        helper_iri = str(submodel_element_iri("", sm_id, path, id_strategy="identity"))
-        assert helper_iri in to_rdf_iris, f"{path} → {helper_iri} not produced by to_rdf"
-
-    # Readable, no percent-encoded slashes in the path portion.
-    assert (
-        f"{sm_id}/submodel-elements/Domain.Actions.Dispensing.State" in to_rdf_iris
-    )
+    cases = [
+        ("Domain", f"{sm_prefix}/Domain"),
+        ("Domain.Actions", f"{sm_prefix}/Domain.Actions"),
+        ("Domain.Actions.Dispensing", f"{sm_prefix}/Domain.Actions.Dispensing"),
+        ("Domain.Actions.Dispensing.State", f"{sm_prefix}/Domain.Actions.Dispensing.State"),
+    ]
+    for path, expected in cases:
+        result = str(submodel_element_iri("", sm_id, path, id_strategy=id_strategy))
+        assert result == expected, f"{path} → expected {expected}, got {result}"
 
 
 def test_identity_list_index_iris_match_iri_helper():
     sm_id = "https://test/sm/X"
-    p0 = Property(idShort="p0", valueType="xs:string", value="a")
-    parameters = SubmodelElementList(
-        idShort="Parameters",
-        typeValueListElement=AasSubmodelElements.Property,
-        value=[p0],
-    )
-    dispensing = SubmodelElementCollection(idShort="Dispensing", value=[parameters])
-    submodel = Submodel(id=sm_id, idShort="AIPlanning", submodelElements=[dispensing])
+    id_strategy = "identity"
 
-    to_rdf_iris = _to_rdf_sme_iris(submodel)
-
-    # List indices are escaped to %5B/%5D in BOTH paths (valid IRI chars).
-    helper_iri = str(
-        submodel_element_iri("", sm_id, "Dispensing.Parameters[0].p0", id_strategy="identity")
+    result = str(
+        submodel_element_iri("", sm_id, "Dispensing.Parameters[0].p0", id_strategy=id_strategy)
     )
-    assert helper_iri in to_rdf_iris
-    assert helper_iri == f"{sm_id}/submodel-elements/Dispensing.Parameters%5B0%5D.p0"
+    assert result == f"{sm_id}/submodel-elements/Dispensing.Parameters%5B0%5D.p0"
+
+
+def test_element_iri_with_base_uri():
+    base_uri = "https://example.com/"
+    sm_id = "someSmId"
+    result = str(
+        submodel_element_iri(base_uri, sm_id, "Param1.Value", id_strategy="url-encode")
+    )
+    assert result.startswith(base_uri)
+    assert "submodel-elements" in result
+    assert "Param1.Value" in result
+
+
+def test_path_normalization():
+    result = str(
+        submodel_element_iri("", "urn:test:sm", "Col1/List1[0]/P2", id_strategy="identity")
+    )
+    assert result.endswith("Col1.List1%5B0%5D.P2")

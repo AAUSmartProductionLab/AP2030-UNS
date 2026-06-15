@@ -78,16 +78,6 @@ KG_BRIDGE_TOPIC_PATTERN=aas-events.*
 KG_BRIDGE_LOG_LEVEL=INFO
 ```
 
-One-time migration when switching to the live py-aas-rdf mapping:
-
-```bash
-./kg-bridge/migrate.sh
-```
-
-This drops the ABox graph (`KG_ABOX_GRAPH`, default `urn:kg:abox`) in Fuseki so
-it can be rebuilt cleanly with the new canonical IRIs and predicates. TBox and
-SHACL graphs are not dropped.
-
 If you disable `knowledge-graph`, set those values back to defaults:
 
 ```bash

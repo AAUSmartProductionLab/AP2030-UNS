@@ -1,15 +1,16 @@
-from __future__ import annotations
 
 from enum import Enum
 from typing import Annotated, Union
 
 from pydantic import BaseModel, Field, TypeAdapter
 
-from py_aas_rdf.models.asset_administraion_shell import AssetAdministrationShell
-from py_aas_rdf.models.asset_information import AssetInformation
-from py_aas_rdf.models.reference import Reference
-from py_aas_rdf.models.submodel import Submodel
-from py_aas_rdf.models.submodel_element_choice import SubmodelElementChoice
+from .aas_models import (
+    AssetAdministrationShell,
+    AssetInformation,
+    Reference,
+    Submodel,
+    SubmodelElementChoice,
+)
 
 
 class AasEventType(str, Enum):

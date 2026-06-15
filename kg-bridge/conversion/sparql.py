@@ -5,8 +5,8 @@ from typing import Any
 import rdflib
 from rdflib.namespace import PROV, XSD
 
-from py_aas_rdf.models.aas_namespace import AASNameSpace
-from py_aas_rdf.models.rdfiable import RDFiable
+from .aas_models import AASNameSpace
+
 
 _ANY_PREDICATE_SENTINEL = rdflib.URIRef("urn:py-aas-rdf:any-predicate")
 _NAMED_CHILD_PREDICATES = (
@@ -87,7 +87,7 @@ def _append_provenance(graph: rdflib.Graph, subject: rdflib.URIRef, provenance: 
 
 
 def build_upsert(
-    model: RDFiable,
+    model: Any,
     target_iri: rdflib.URIRef | None = None,
     graph_iri: str | None = None,
     base_uri: str = "",

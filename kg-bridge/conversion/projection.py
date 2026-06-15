@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 import rdflib
-from py_aas_rdf.models import base_64_url_encode, url_encode
+from .aas_models import base_64_url_encode, url_encode
 
 from .events import AasEvent, AasEventType, SubmodelEvent, SubmodelEventType
 from .iri import aas_iri, submodel_element_iri, submodel_iri

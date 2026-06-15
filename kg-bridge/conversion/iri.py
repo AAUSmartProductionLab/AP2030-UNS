@@ -4,7 +4,7 @@ import re
 
 import rdflib
 
-from py_aas_rdf.models import base_64_url_encode, url_encode
+from .aas_models import base_64_url_encode, url_encode
 
 _LIST_TOKEN_RE = re.compile(r"^(?P<name>[^\[\]]+?)(?:\[(?P<index>\d+)\])?$")
 
