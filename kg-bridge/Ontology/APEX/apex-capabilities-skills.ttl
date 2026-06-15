@@ -1,0 +1,40 @@
+@prefix apex: <https://w3id.org/2026/apex/> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+<https://w3id.org/2026/apex/capabilities-skills>
+  a owl:Ontology ;
+  rdfs:comment "APEX module for general (domain-neutral) capability and skill class hierarchy." ;
+  owl:imports <https://w3id.org/2026/apex/> .
+
+# ── Base capability / skill classes ────────────────────────────
+
+apex:Capability a owl:Class ;
+  rdfs:comment "Base class for all capabilities (what a resource can do). Equivalent to css:Capability." .
+
+apex:Skill a owl:Class ;
+  rdfs:comment "Base class for all skills (how a resource executes an operation). Equivalent to css:Skill." .
+
+# ── General (domain-neutral) capabilities ──────────────────────
+
+apex:OccupyCapability a owl:Class ;
+  rdfs:subClassOf apex:Capability ;
+  rdfs:comment "Capability to lock a resource for exclusive access by an identifiable entity (product, order)." .
+
+apex:ReleaseCapability a owl:Class ;
+  rdfs:subClassOf apex:Capability ;
+  rdfs:comment "Capability to release a previously locked resource." .
+
+# ── General (domain-neutral) skills ────────────────────────────
+
+apex:OccupySkill a owl:Class ;
+  rdfs:subClassOf apex:Skill ;
+  rdfs:comment "Skill to lock a resource for exclusive access." .
+
+apex:ReleaseSkill a owl:Class ;
+  rdfs:subClassOf apex:Skill ;
+  rdfs:comment "Skill to release a previously locked resource." .
+
+apex:HaltSkill a owl:Class ;
+  rdfs:subClassOf apex:Skill ;
+  rdfs:comment "Skill to halt the current operation on a resource." .

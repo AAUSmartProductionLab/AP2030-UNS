@@ -1,0 +1,104 @@
+@prefix apex: <https://w3id.org/2026/apex/> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+<https://w3id.org/2026/apex/aas-planning-roles>
+  a owl:Ontology ;
+  rdfs:comment """Canonical vocabulary for the *roles* that AI-Planning SubmodelElements
+play inside an AAS. These IRIs are the single source of truth used in two places:
+the Registration Service stamps them as element semanticIds when it CONSTRUCTS an
+AIPlanning submodel, and the kg-bridge reads them when it PARSES one to project the
+apex:Action planning graph. Only planning-meaningful semanticIds are declared here:
+action/process/event execution models, parameter bindings, timing-group roles, and
+references. Structural container roles (PlanningDomainSection, ActionCollection, etc.)
+have been removed — the bridge navigates by recursively scanning for these leaf-level
+roles rather than requiring intermediate container markers.""" ;
+  owl:imports <https://w3id.org/2026/apex/> ;
+  owl:versionInfo "0.2.0" .
+
+# ── Submodel gate ─────────────────────────────────────────────────────────────
+
+apex:AIPlanningSubmodel a owl:Class ;
+  rdfs:label "AI-Planning Submodel" ;
+  rdfs:comment "Submodel carrying AI-Planning data. Gates AIPlanning projection in the bridge." .
+
+# ── Execution-model elements (the 'action' definitions) ───────────────────────
+
+apex:SkillExecutionModel a owl:Class ;
+  rdfs:label "Skill execution model" ;
+  rdfs:comment """The planning/execution description of one specific skill implementation:
+its parameters, pre/at-start/at-end/over-all conditions, effects and duration, expressed
+so the planner can sequence and orchestrate skills. The concrete skill it applies to is
+linked by the child apex:SkillReference element (a ModelReference to the skill), not by
+this class. Projected by the bridge into an apex:Action node.""" .
+
+apex:ProcessExecutionModel a owl:Class ;
+  rdfs:subClassOf apex:SkillExecutionModel ;
+  rdfs:label "Process execution model" ;
+  rdfs:comment "Continuous (PDDL+ process) execution model. Projected into apex:Action + apex:TemporalProcess." .
+
+apex:EventExecutionModel a owl:Class ;
+  rdfs:subClassOf apex:SkillExecutionModel ;
+  rdfs:label "Event execution model" ;
+  rdfs:comment "Instantaneous (PDDL+ event) execution model. Projected into apex:Action + apex:TemporalEvent." .
+
+# ── References ────────────────────────────────────────────────────────────────
+
+apex:SkillReference a owl:Class ;
+  rdfs:label "Skill reference" ;
+  rdfs:comment "ReferenceElement inside a SkillExecutionModel pointing to the concrete skill implementation it realises. Last key value yields apex:skillReferenceKey." .
+
+apex:FluentReference a owl:Class ;
+  rdfs:label "Fluent reference" ;
+  rdfs:comment "ReferenceElement inside a condition/effect term pointing to the predicate/function it asserts. Last key value yields the constraint's predicate identity." .
+
+# ── Parameters ────────────────────────────────────────────────────────────────
+
+apex:ActionParameter a owl:Class ;
+  rdfs:label "Action parameter" ;
+  rdfs:comment "A ReferenceElement inside an execution model or a condition/effect term binding a parameter. As an action parameter its last key value is the parameter type ref; as a term argument its last key value is the owning action's parameter index." .
+
+# ── Conditions & effects (timing-group roles) ─────────────────────────────────
+
+# Timing-group classes. Each maps to exactly one projected timing-role edge on the
+# action (apex:hasPrecondition, apex:hasAtStartEffect, ...). The bridge projector holds
+# the class -> role-edge mapping (see conversion/aiplanning.py _TIMING_GROUP_ROLE).
+
+apex:PreconditionGroup a owl:Class ;
+  rdfs:label "Precondition group" ;
+  rdfs:comment "Classical precondition group -> apex:hasPrecondition." .
+
+apex:AtStartConditionGroup a owl:Class ;
+  rdfs:label "At-start condition group" ;
+  rdfs:comment "Durative at-start condition group -> apex:hasAtStartCondition." .
+
+apex:AtEndConditionGroup a owl:Class ;
+  rdfs:label "At-end condition group" ;
+  rdfs:comment "Durative at-end condition group -> apex:hasAtEndCondition." .
+
+apex:OverallConditionGroup a owl:Class ;
+  rdfs:label "Over-all condition group" ;
+  rdfs:comment "Durative invariant condition group -> apex:hasOverAllCondition." .
+
+apex:EffectGroup a owl:Class ;
+  rdfs:label "Effect group" ;
+  rdfs:comment "Classical (instantaneous) effect group of a non-durative action -> apex:hasEffect." .
+
+apex:AtStartEffectGroup a owl:Class ;
+  rdfs:label "At-start effect group" ;
+  rdfs:comment "Durative at-start effect group -> apex:hasAtStartEffect." .
+
+apex:AtEndEffectGroup a owl:Class ;
+  rdfs:label "At-end effect group" ;
+  rdfs:comment "Durative at-end effect group -> apex:hasAtEndEffect." .
+
+apex:ContinuousEffectGroup a owl:Class ;
+  rdfs:label "Continuous effect group" ;
+  rdfs:comment "PDDL+ continuous effect group. Collapses to apex:hasEffect until the consumer models continuous effects distinctly." .
+
+# ── Terms ─────────────────────────────────────────────────────────────────────
+
+apex:PlanningTerm a owl:Class ;
+  rdfs:label "Planning term" ;
+  rdfs:comment "A condition/effect term SMC. Carries this class as its semanticId and the asserted predicate/operator IRI as a supplemental semanticId; the asserted predicate identity for a leaf term comes from its child apex:FluentReference." .
