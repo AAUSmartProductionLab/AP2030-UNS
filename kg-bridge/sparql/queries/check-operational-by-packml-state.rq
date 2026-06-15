@@ -1,0 +1,59 @@
+# ════════════════════════════════════════════════════════════════════
+# DIAGNOSTIC: List all named graphs that contain data
+# ════════════════════════════════════════════════════════════════════
+PREFIX arsox: <https://w3id.org/aau-ra/arso-ext#>
+PREFIX apex:  <https://w3id.org/2026/apex/>
+
+SELECT DISTINCT ?g WHERE { GRAPH ?g { ?s ?p ?o } }
+
+# ════════════════════════════════════════════════════════════════════
+# DIAGNOSTIC: List all registered resource AAS shells
+# ════════════════════════════════════════════════════════════════════
+PREFIX arsox: <https://w3id.org/aau-ra/arso-ext#>
+PREFIX apex:  <https://w3id.org/2026/apex/>
+
+SELECT ?aas ?idShort WHERE {
+  ?aas a arsox:ResourceAssetAdministrationShell .
+  OPTIONAL { ?aas apex:aasIdShort ?idShort }
+}
+
+# ════════════════════════════════════════════════════════════════════
+# DIAGNOSTIC: Count PredicateObservations (0 = no events processed)
+# ════════════════════════════════════════════════════════════════════
+PREFIX apex: <https://w3id.org/2026/apex/>
+
+SELECT (COUNT(?obs) AS ?count) WHERE {
+  ?obs a apex:PredicateObservation .
+}
+
+# ════════════════════════════════════════════════════════════════════
+# Operational check: evaluate apex:Operational for ALL stations
+# Returns no rows if no AAS events have been processed yet.
+# ════════════════════════════════════════════════════════════════════
+PREFIX arso:  <https://w3id.org/2025/arso#>
+PREFIX arsox: <https://w3id.org/aau-ra/arso-ext#>
+PREFIX apex:  <https://w3id.org/2026/apex/>
+
+SELECT ?stationId ?idShort ?packmlState ?isOperational
+WHERE {
+  ?aas a arsox:ResourceAssetAdministrationShell .
+  OPTIONAL { ?aas apex:aasIdShort ?idShort }
+
+  ?aas arso:hasOperationalDataSubmodel ?sm .
+
+  ?obs a apex:PredicateObservation ;
+    apex:projectedFromSubmodel ?sm ;
+    apex:predicateSemanticId "https://w3id.org/2026/apex/semantic/state/operational" ;
+    apex:predicateValue ?rawValue .
+
+  BIND(STR(?rawValue) AS ?packmlState)
+
+  BIND(
+    LCASE(?packmlState) IN ("true", "1", "on", "run", "running", "execute", "executing")
+    || UCASE(?packmlState) = "EXECUTE"
+    AS ?isOperational
+  )
+
+  BIND(STR(?aas) AS ?stationId)
+}
+ORDER BY DESC(?isOperational)

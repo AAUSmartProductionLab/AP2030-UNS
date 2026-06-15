@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<catalog prefer="public" xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog">
+    <!-- APEX core modules -->
+    <uri name="https://w3id.org/2026/apex/" uri="apex.ttl"/>
+    <uri name="https://w3id.org/2026/apex/predicates" uri="apex-predicates.ttl"/>
+    <uri name="https://w3id.org/2026/apex/pddl" uri="apex-pddl.ttl"/>
+    <uri name="https://w3id.org/2026/apex/pddl-2-1" uri="apex-pddl-2-1.ttl"/>
+    <uri name="https://w3id.org/2026/apex/pddl-plus" uri="apex-pddl-plus.ttl"/>
+    <uri name="https://w3id.org/2026/apex/pddl-3" uri="apex-pddl-3.ttl"/>
+    <uri name="https://w3id.org/2026/apex/ppddl" uri="apex-ppddl.ttl"/>
+    <uri name="https://w3id.org/2026/apex/fond" uri="apex-fond.ttl"/>
+    <uri name="https://w3id.org/2026/apex/execution" uri="apex-execution.ttl"/>
+    <uri name="https://w3id.org/2026/apex/aas-planning-roles" uri="apex-aas-planning-roles.ttl"/>
+    <uri name="https://w3id.org/2026/apex/capabilities-skills" uri="apex-capabilities-skills.ttl"/>
+    <uri name="https://w3id.org/2026/apex/shacl" uri="apex-shacl.ttl"/>
+    <uri name="https://w3id.org/2026/apex/product-hierarchy" uri="apex-product-hierarchy.ttl"/>
+    <uri name="https://w3id.org/2026/apex/resource-hierarchy" uri="apex-resource-hierarchy.ttl"/>
+</catalog>

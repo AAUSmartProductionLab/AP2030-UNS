@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<catalog prefer="public" xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog">
+    <!-- ARSO -->
+    <uri name="https://w3id.org/2025/arso" uri="../../ARSO_Ontology_AAS_Generation/Ontology/ARSO/ARSO_AAS.ttl"/>
+    <uri name="https://w3id.org/2025/arso/modules/nameplate" uri="../../ARSO_Ontology_AAS_Generation/Ontology/ARSO/Modules/nameplate.ttl"/>
+    <uri name="https://w3id.org/2025/arso/modules/hierarchical-structures" uri="../../ARSO_Ontology_AAS_Generation/Ontology/ARSO/Modules/hierarchical-structures.ttl"/>
+    <uri name="https://w3id.org/2025/arso/modules/aid" uri="../../ARSO_Ontology_AAS_Generation/Ontology/ARSO/Modules/aid.ttl"/>
+    <uri name="https://w3id.org/2025/arso/modules/control-component" uri="../../ARSO_Ontology_AAS_Generation/Ontology/ARSO/Modules/control-component.ttl"/>
+    <uri name="https://w3id.org/2025/arso/modules/capabilities" uri="../../ARSO_Ontology_AAS_Generation/Ontology/ARSO/Modules/capabilities.ttl"/>
+    <uri name="https://w3id.org/2025/arso/modules/operational-data" uri="../../ARSO_Ontology_AAS_Generation/Ontology/ARSO/Modules/operational-data.ttl"/>
+    <uri name="https://w3id.org/2025/arso/modules/parameters" uri="../../ARSO_Ontology_AAS_Generation/Ontology/ARSO/Modules/parameters.ttl"/>
+    <uri name="https://w3id.org/2025/arso/modules/technical-data" uri="../../ARSO_Ontology_AAS_Generation/Ontology/ARSO/Modules/technical-data.ttl"/>
+    <!-- CSS (Capability-Skill-Service) -->
+    <uri name="http://www.w3id.org/hsu-aut/css" uri="../../ARSO_Ontology_AAS_Generation/Ontology/CSS/CSS-Ontology.ttl"/>
+    <!-- AAS v3.1 -->
+    <uri name="https://admin-shell.io/aas/3/1/" uri="../../ARSO_Ontology_AAS_Generation/Ontology/AAS/aas-rdf-ontology.ttl"/>
+</catalog>

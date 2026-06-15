@@ -1,0 +1,29 @@
+PREFIX apex: <https://w3id.org/2026/apex/>
+PREFIX arso: <https://w3id.org/2025/arso#>
+
+# Link each projected apex:Action to the AAS that owns its AI-Planning submodel.
+#
+# The action graph itself (apex:Action / Parameter / ProjectedConstraint / ConstraintArg)
+# is now projected at ingest by conversion/aiplanning.py — semantic-ID-driven, from the
+# typed submodel tree — which also emits an apex:projectedFromSubmodel back-link on each
+# action. The owning AAS is the one fact a single submodel event cannot know locally
+# (the AAS->submodel link, arso:hasSubmodel, arrives on the separate AAS event), so it is
+# derived here by a clean declarative join. This replaces the former regex-over-path rule.
+
+WITH {{ABOX_GRAPH_N3}}
+INSERT { ?action apex:hasSourceAAS ?aas . }
+WHERE {
+  ?action apex:projectedFromSubmodel ?sm .
+  ?aas    arso:hasSubmodel ?sm .
+  FILTER NOT EXISTS { ?action apex:hasSourceAAS ?aas . }
+}
+;
+WITH {{ABOX_GRAPH_N3}}
+DELETE { ?action apex:hasSourceAAS ?aas . }
+WHERE {
+  ?action apex:hasSourceAAS ?aas .
+  FILTER NOT EXISTS {
+    ?action apex:projectedFromSubmodel ?sm .
+    ?aas    arso:hasSubmodel ?sm .
+  }
+}
