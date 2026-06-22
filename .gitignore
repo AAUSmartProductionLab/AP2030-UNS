@@ -210,6 +210,7 @@ ppr-ontology/generation/output/*
 !ppr-ontology/generation/output/.gitkeep
 .claude/settings.local.json
 fuseki/*
+graphdb/*
 neo4j/*
 run_metrics/*
 run_metrics_export/*
