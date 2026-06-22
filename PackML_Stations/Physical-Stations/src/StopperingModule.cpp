@@ -340,7 +340,7 @@ bool StopperingModule::waitForButton(int buttonPin, unsigned long timeoutMs)
     unsigned long startTime = millis();
     while (!buttonPressed && (millis() - startTime < timeoutMs))
     {
-        delay(10);  // yield CPU to WiFi / MQTT / FreeRTOS tasks
+        delay(10); // yield CPU to WiFi / MQTT / FreeRTOS tasks
     }
 
     detachInterrupt(digitalPinToInterrupt(buttonPin));

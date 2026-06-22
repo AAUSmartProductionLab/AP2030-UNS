@@ -223,7 +223,7 @@ bool FillingModule::waitForButton(int buttonPin, unsigned long timeoutMs)
     unsigned long startTime = millis();
     while (!(*flag) && (millis() - startTime < timeoutMs))
     {
-        delay(10);  // yield CPU to WiFi / MQTT / FreeRTOS tasks
+        delay(10); // yield CPU to WiFi / MQTT / FreeRTOS tasks
     }
 
     detachInterrupt(digitalPinToInterrupt(buttonPin));
