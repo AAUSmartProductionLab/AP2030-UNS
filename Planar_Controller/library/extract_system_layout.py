@@ -17,7 +17,7 @@ import os
 def connect_to_pmc(pmc_ip=None):
     """Connect to PMC system."""
     try:
-        if pmc_ip:
+        if pmc_ip: 
             print(f"Connecting to PMC at {pmc_ip}...")
             success = sys.connect_to_specific_pmc(pmc_ip)
         else:

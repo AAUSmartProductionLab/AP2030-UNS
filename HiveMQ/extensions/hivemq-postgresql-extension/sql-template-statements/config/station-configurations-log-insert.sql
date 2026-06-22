@@ -1,1 +1,0 @@
-SELECT log_station_configurations(${mqtt-payload-utf8}::JSONB);

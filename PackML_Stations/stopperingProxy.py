@@ -3,13 +3,39 @@ import time
 from PackMLSimulator import PackMLStateMachine
 import os
 
-BROKER_ADDRESS = os.getenv("MQTT_BROKER", "hivemq-broker")
+## Use when build with docker-compose and environment variables for configuration
+BROKER_ADDRESS = os.getenv("MQTT_BROKER", "localhost")
 BROKER_PORT = int(os.getenv("MQTT_PORT", "1883"))
 BASE_TOPIC = "NN/Nybrovej/InnoLab/Stoppering"
 
 
-def stopper_process(duration=2.0):
-    time.sleep(duration)
+uuid = ""
+simulation_running = False
+
+
+def VC_response_callback(topic, client, message, properties):
+    print(f"Received VC response: {message}")
+    global simulation_running
+    simulation_running = False
+
+def stopper_process():
+    """
+    Simulate dispensing process with PT1 element (first-order lag) characteristics
+    Uses normal distribution for both duration and final weight
+    """
+
+    global simulation_running
+    simulation_running = True
+
+    VC_cmd_publisher.publish({
+        "Command": "StartStoppering",
+        "Uuid": uuid
+    }, stopperProxy, True)
+
+    print("Stoppering process started, waiting for VC response...")
+    
+    while simulation_running:
+        time.sleep(0.1)  # Sleep briefly to avoid busy waiting
 
 
 def stopper_callback(topic, client, message, properties):
@@ -35,12 +61,23 @@ stopper = ResponseAsync(
     stopper_callback
 )
 
+VC_cmd_publisher = Publisher(
+    BASE_TOPIC + "/VC/CMD/Stoppering",
+    "./MQTTSchemas/command.schema.json",
+    2)
+
+VC_cmd_subscriber = Subscriber(
+    BASE_TOPIC + "/VC/Response/Stoppering",
+    "./MQTTSchemas/commandResponse.schema.json",
+    2,
+    VC_response_callback
+)
 
 stopperProxy = Proxy(
     BROKER_ADDRESS,
     BROKER_PORT,
     "StopperingProxy",
-    [stopper]
+    [stopper, VC_cmd_publisher, VC_cmd_subscriber]
 )
 
 state_machine = PackMLStateMachine(

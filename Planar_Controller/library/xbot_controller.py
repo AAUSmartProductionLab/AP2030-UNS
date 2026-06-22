@@ -22,9 +22,10 @@ POSITION_TOLERANCE_M = 0.005
 def connect_to_pmc(pmc_ip=None):
     """Connect to PMC system and gain mastership."""
     try:
-        if pmc_ip:
+        if pmc_ip and False: # Try to use the auto-search first, as it is more robust in dynamic environments
             success = sys.connect_to_specific_pmc(pmc_ip)
         else:
+            print("INFO: Attempting auto-search for PMC...")
             success = sys.auto_search_and_connect_to_pmc()
 
         if not success:

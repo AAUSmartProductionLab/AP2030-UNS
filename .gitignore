@@ -209,3 +209,10 @@ Planner/output/*
 ppr-ontology/generation/output/*
 !ppr-ontology/generation/output/.gitkeep
 .claude/settings.local.json
+fuseki/*
+neo4j/*
+run_metrics/*
+run_metrics_export/*
+*.pdf
+simulated_stations/PlanarMotorSimulator/setup.exe
+simulated_stations/PlanarMotorSimulator/Simulation Installer.msi

@@ -39,8 +39,13 @@ from PackMLSimulator import PackMLStateMachine, PackMLState
 from MQTT_classes import Proxy, ResponseAsync, Publisher, Topic
 
 # MQTT Configuration
-MQTT_BROKER = os.environ.get("MQTT_BROKER", "localhost")
-MQTT_PORT = int(os.environ.get("MQTT_PORT", 1883))
+# MQTT_BROKER = os.environ.get("MQTT_BROKER", "localhost")
+# MQTT_PORT = int(os.environ.get("MQTT_PORT", 1883))
+# MQTT_BASE_TOPIC = "NN/Nybrovej/InnoLab/Planar"
+
+## Use when running without docker-compose
+MQTT_BROKER = "localhost" 
+MQTT_PORT = 1883  
 MQTT_BASE_TOPIC = "NN/Nybrovej/InnoLab/Planar"
 
 # Global Workspace Config
@@ -368,6 +373,7 @@ def handle_xbot_motion_cmd(topic, client, message, properties, xbot_sm, xbot_id)
 
 def publish_positions_loop(proxy):
     """Background thread to publish XBot positions"""
+    import clr  # Ensure CLR is initialized in this thread (This a fix from chat)
     last_positions = {}
     print("Starting Position Publisher Loop...", flush=True)
     while True:

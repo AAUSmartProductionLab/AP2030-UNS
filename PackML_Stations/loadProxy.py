@@ -4,13 +4,32 @@ from PackMLSimulator import PackMLStateMachine
 
 import os
 
-BROKER_ADDRESS = os.getenv("MQTT_BROKER", "hivemq-broker")
+BROKER_ADDRESS = os.getenv("MQTT_BROKER", "localhost")
 BROKER_PORT = int(os.getenv("MQTT_PORT", "1883"))
 BASE_TOPIC = "NN/Nybrovej/InnoLab/Loading"
 
+uuid = ""
+simulation_running = False
 
-def load_process(duration=2.0):
-    time.sleep(duration)
+
+def VC_response_callback(topic, client, message, properties):
+    print(f"Received VC response: {message}")
+    global simulation_running
+    simulation_running = False
+
+def load_process():
+    global simulation_running
+    simulation_running = True
+
+    print("Starting loading process...")
+
+    VC_cmd_publisher.publish({
+        "Command": "StartLoading",
+        "Uuid": uuid
+    }, loadProxy, True)
+
+    while simulation_running:
+        time.sleep(0.1)  # Sleep briefly to avoid busy waiting
 
 
 def load_callback(topic, client, message, properties):
@@ -36,12 +55,23 @@ load = ResponseAsync(
     load_callback
 )
 
+VC_cmd_publisher = Publisher(
+    BASE_TOPIC + "/VC/CMD/Loading",
+    "./MQTTSchemas/command.schema.json",
+    2)
+
+VC_cmd_subscriber = Subscriber(
+    BASE_TOPIC + "/VC/Response/Loading",
+    "./MQTTSchemas/commandResponse.schema.json",
+    2,
+    VC_response_callback
+)
 
 loadProxy = Proxy(
     BROKER_ADDRESS,
     BROKER_PORT,
     "LoadingProxy",
-    [load]
+    [load, VC_cmd_publisher, VC_cmd_subscriber]
 )
 
 state_machine = PackMLStateMachine(
