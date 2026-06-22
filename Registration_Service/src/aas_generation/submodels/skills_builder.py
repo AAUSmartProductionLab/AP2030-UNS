@@ -100,6 +100,7 @@ class SkillBuilder:
         self.delegation_url=delegation_url
         self.schema_handler=schema_handler
         self.SMC=None
+        self._exec_params: list[Dict] = []  # reset per skill
 
         self._create()
 
@@ -146,6 +147,13 @@ class SkillBuilder:
             interface_reference = self._create_interface_reference(
                 interface_name, self.system_id)
             elements.append(interface_reference)
+
+        # Build ExecutionModel if configured
+        execution_config = self.config.get('ExecutionModel')
+        if execution_config:
+            execution_model = self._build_execution_model(execution_config)
+            if execution_model:
+                elements.append(execution_model)
   
 
         if not elements:
@@ -413,4 +421,282 @@ class SkillBuilder:
             ),
             description=model.MultiLanguageTextType(
                 {"en": f"Reference to {interface_name} action interface"})
+        )
+
+    # ── ExecutionModel builder (replaces separate AI-Planning submodel) ──────
+
+    # Logic / arithmetic / FOND operator semantic IDs
+    _CSSX = 'http://www.w3id.org/aau-ra/cssx#'
+    _LOGIC_OPS = {
+        'and':    f'{_CSSX}And',
+        'or':     f'{_CSSX}Or',
+        'not':    f'{_CSSX}Not',
+        'oneOf':  f'{_CSSX}OneOf',
+        'when':   f'{_CSSX}When',
+    }
+
+    def _build_execution_model(self, exec_cfg: Dict) -> model.SubmodelElementCollection | None:
+        """Build the ExecutionModel SMC for this skill."""
+        elements: list[model.SubmodelElement] = []
+
+        # Parameters (SubmodelElementList — preserves ordering)
+        params = exec_cfg.get('Parameters', []) or []
+        self._exec_params = params
+        if params:
+            param_elements = [self._build_parameter_ref(i, p) for i, p in enumerate(params)]
+            elements.append(model.SubmodelElementList(
+                id_short="Parameters",
+                type_value_list_element=model.ReferenceElement,
+                semantic_id_list_element=SemanticIdFactory.create_external_reference(
+                    f'{self._CSSX}ExecutionModelParameter'),
+                value=tuple(p for p in param_elements if p is not None),
+            ))
+
+        # Conditions and Effects with timing groups
+        timing_groups = {
+            'Conditions': ['PreConditions', 'InvariantConditions', 'PostConditions'],
+            'Effects': ['StartEffects', 'ContinuousEffects', 'EndEffects'],
+        }
+        for section_key, group_names in timing_groups.items():
+            section_cfg = exec_cfg.get(section_key, {}) or {}
+            group_elements = []
+            for group_name in group_names:
+                group_cfg = section_cfg.get(group_name, []) or []
+                terms = [self._build_term_tree(t, i) for i, t in enumerate(group_cfg)]
+                group_elements.append(model.SubmodelElementCollection(
+                    id_short=group_name,
+                    value=tuple(t for t in terms if t is not None),
+                ))
+            if group_elements:
+                elements.append(model.SubmodelElementCollection(
+                    id_short=section_key,
+                    value=tuple(group_elements),
+                ))
+
+        if not elements:
+            return None
+
+        return model.SubmodelElementCollection(
+            id_short="ExecutionModel",
+            value=tuple(elements),
+            description=model.MultiLanguageTextType({
+                "en": "Symbolic execution model: parameters, conditions, and effects"
+            }),
+        )
+
+    # ── Submodel ID helpers ─────────────────────────────────────────────────────
+
+    @property
+    def _skills_submodel_id(self) -> str:
+        return f"{self.base_url}/submodels/instances/{self.system_id}/Skills"
+
+    def _param_path_keys(self, param_idx: int) -> list[model.Key]:
+        """ModelReference keys pointing to a parameter by index inside the
+        SubmodelElementList."""
+        return [
+            model.Key(model.KeyTypes.SUBMODEL, self._skills_submodel_id),
+            model.Key(model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION, self.name),
+            model.Key(model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION, "ExecutionModel"),
+            model.Key(model.KeyTypes.SUBMODEL_ELEMENT_LIST, "Parameters"),
+            model.Key(model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION, str(param_idx)),
+        ]
+
+    # ── Parameter builder ────────────────────────────────────────────────────────
+
+    def _build_parameter_ref(self, idx: int, param_cfg: Dict) -> model.ReferenceElement | None:
+        """Build a ReferenceElement for one execution-model parameter.
+
+        - modelRef given → ModelReference with explicit keys.
+        - semanticId only (no modelRef) → ExternalReference to the ontology concept.
+        """
+        param_name = param_cfg.get('key') or f"param_{idx}"
+        semantic_id_str = param_cfg.get('semanticId') or param_cfg.get('semantic_id')
+        model_ref = param_cfg.get('modelRef')
+
+        if model_ref:
+            parts = model_ref if isinstance(model_ref, list) else [model_ref]
+            has_aas = any(isinstance(p, dict) and 'AAS' in p for p in parts)
+            has_path = any(
+                isinstance(p, dict) and
+                ('Submodel' in p or 'Element' in p or 'Property' in p)
+                for p in parts)
+            drop_aas = has_aas and has_path  # AASd-125: drop AAS if Submodel follows
+
+            keys: list[model.Key] = []
+            for part in parts:
+                if not isinstance(part, dict):
+                    continue
+                if 'AAS' in part:
+                    if drop_aas:
+                        continue
+                    v = part['AAS']
+                    if v == 'self':
+                        v = f"{self.base_url}/aas/{self.system_id}"
+                    keys.append(model.Key(model.KeyTypes.ASSET_ADMINISTRATION_SHELL, str(v)))
+                if 'Submodel' in part:
+                    keys.append(model.Key(model.KeyTypes.SUBMODEL, str(part['Submodel'])))
+                if 'Element' in part:
+                    keys.append(model.Key(model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION, str(part['Element'])))
+                if 'Property' in part:
+                    keys.append(model.Key(model.KeyTypes.PROPERTY, str(part['Property'])))
+            if not keys:
+                return None  # modelRef parsed to empty keys
+            ref_value = model.ModelReference(
+                tuple(keys),
+                keys[-1].type,
+            )
+        elif semantic_id_str:
+            ref_value = model.ExternalReference(
+                (model.Key(model.KeyTypes.GLOBAL_REFERENCE, semantic_id_str),)
+            )
+        else:
+            return None
+
+        # All list elements share a common semantic_id (AASd-114).
+        # Individual type info lives in the reference value (ModelRef/ExternalRef).
+        semantic_id = SemanticIdFactory.create_external_reference(f'{self._CSSX}ExecutionModelParameter')
+
+        return model.ReferenceElement(
+            id_short=None,  # SubmodelElementList auto-assigns [N]
+            display_name=model.MultiLanguageNameType({"en": param_name}),
+            value=ref_value,
+        )
+
+    # ── Term tree builder (recursive) ────────────────────────────────────────────
+
+    def _build_term_tree(self, term_cfg: Dict, idx: int) -> model.SubmodelElementCollection | None:
+        """Recursively build a term tree (predicate / logic / FOND).
+
+        Recognised YAML shapes:
+
+        * Atomic predicate
+            {"predicate": "cssx:Operational", "args": [...]}
+            {"predicate": ..., "args": [...], "negated": true}  → wrapped in ``not``
+
+        * Logic operators
+            {"and":  [child, …]}
+            {"or":   [child, …]}
+            {"not":  [child]}
+            {"oneOf": [{"when": "…", ...}, …]}
+        """
+        if not isinstance(term_cfg, dict):
+            return None
+
+        # ── operator dispatch ──
+        # ``when`` is special: its value is a condition string, not child terms.
+        if 'when' in term_cfg:
+            when_cond = term_cfg['when']
+            child_cfg = {k: v for k, v in term_cfg.items() if k != 'when'}
+            return self._build_compound_term('when', [child_cfg], idx, {'when': when_cond})
+
+        for op_key in ('and', 'or', 'not', 'oneOf'):
+            if op_key in term_cfg:
+                children = term_cfg[op_key]
+                if not isinstance(children, list):
+                    children = [children]
+                return self._build_compound_term(op_key, children, idx, term_cfg)
+
+        # ── atomic predicate ──
+        predicate_uri = term_cfg.get('predicate') or term_cfg.get('semantic_id')
+        if predicate_uri:
+            negated = term_cfg.get('negated', False)
+            if negated:
+                # Strip negated to avoid infinite recursion
+                clean_cfg = {k: v for k, v in term_cfg.items() if k != 'negated'}
+                return self._build_compound_term('not', [clean_cfg], idx, {'negated': True})
+            return self._build_atomic_term(predicate_uri, term_cfg.get('args', []), idx)
+
+        return None
+
+    def _build_atomic_term(
+        self, predicate_uri: str, args: list, idx: int
+    ) -> model.SubmodelElementCollection:
+        """Build a predicate term SMC with Arg_N children."""
+        short_name = predicate_uri.rsplit('#', 1)[-1] if '#' in predicate_uri else predicate_uri.rsplit('/', 1)[-1]
+
+        elements: list[model.SubmodelElement] = []
+        for i, arg in enumerate(args):
+            ref = self._build_term_arg(arg, i)
+            if ref is not None:
+                elements.append(ref)
+
+        return model.SubmodelElementCollection(
+            id_short=f"term_{idx}",
+            value=tuple(elements),
+            semantic_id=SemanticIdFactory.create_external_reference(predicate_uri),
+            display_name=model.MultiLanguageNameType({"en": short_name}),
+        )
+
+    def _build_compound_term(
+        self, operator: str,
+        children: list[Dict],
+        idx: int,
+        parent_cfg: Dict | None = None,
+    ) -> model.SubmodelElementCollection | None:
+        """Build a logic / FOND term containing child terms."""
+        if not children:
+            return None
+
+        op_semantic = self._LOGIC_OPS.get(operator, f'{self._CSSX}{operator.capitalize()}')
+        display = operator.capitalize()
+
+        # ``when`` prepends the condition string
+        when_condition = ''
+        if operator == 'when' and isinstance(parent_cfg, dict):
+            when_condition = str(parent_cfg.get('when', ''))
+            display = f"{display}: {when_condition}" if when_condition else display
+
+        elements: list[model.SubmodelElement] = []
+        for i, child_cfg in enumerate(children):
+            child = self._build_term_tree(child_cfg, i)
+            if child is not None:
+                elements.append(child)
+
+        if not elements:
+            return None
+
+        return model.SubmodelElementCollection(
+            id_short=f"term_{idx}",
+            value=tuple(elements),
+            semantic_id=SemanticIdFactory.create_external_reference(op_semantic),
+            display_name=model.MultiLanguageNameType({"en": display}),
+        )
+
+    # ── Argument builder ─────────────────────────────────────────────────────
+
+    def _get_param_name(self, idx: int) -> str:
+        """Return the parameter key at the given index, or '?' if out of range."""
+        params = getattr(self, '_exec_params', []) or []
+        if 0 <= idx < len(params) and isinstance(params[idx], dict):
+            return params[idx].get('key', '?')
+        return '?'
+
+    def _build_term_arg(self, arg_cfg, idx: int) -> model.ReferenceElement | None:
+        """Build a ReferenceElement for a term argument.
+
+        Args are integer indices (or legacy string names) referring to a
+        parameter position in the Parameters SMC.
+
+        idShort = ``param_N``, displayName = actual parameter key.
+        """
+        if isinstance(arg_cfg, int):
+            param_idx = arg_cfg
+        elif isinstance(arg_cfg, str):
+            param_idx = int(arg_cfg)
+        elif isinstance(arg_cfg, dict):
+            # legacy dict format — extract numeric value
+            raw = arg_cfg.get('value', arg_cfg.get('Literal', ''))
+            param_idx = int(raw)
+        else:
+            param_idx = int(arg_cfg)
+
+        param_name = self._get_param_name(param_idx)
+
+        return model.ReferenceElement(
+            id_short=f"param_{param_idx}",
+            display_name=model.MultiLanguageNameType({"en": param_name}),
+            value=model.ModelReference(
+                tuple(self._param_path_keys(param_idx)),
+                model.KeyTypes.SUBMODEL_ELEMENT_COLLECTION,
+            ),
         )

@@ -3,8 +3,6 @@ PREFIX arsox: <https://w3id.org/aau-ra/arso-ext#>
 PREFIX apex:  <https://w3id.org/2026/apex/>
 PREFIX css:   <http://www.w3id.org/hsu-aut/css#>
 PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
-PREFIX aas-sm: <https://admin-shell.io/aas/3/1/Submodel/>
-PREFIX aas-smc: <https://admin-shell.io/aas/3/1/SubmodelElementCollection/>
 
 CONSTRUCT {
   ?fact a apex:InRange ;
@@ -21,44 +19,52 @@ CONSTRUCT {
 FROM <urn:kg:tbox>
 FROM <urn:kg:abox>
 WHERE {
-  # Moving resource (shuttle/robot) — has X/Y position data.
+  # Moving resource (shuttle/robot) -- has X/Y position data.
   ?resourceAas a arsox:ResourceAssetAdministrationShell ;
-    arso:hasOperationalDataSubmodel ?resourceSm .
+    arso:hasSubmodel ?resourceSm .
 
-  ?resourceSm (aas-sm:submodelElements
-              |aas-smc:value)+ ?resourceXNode, ?resourceYNode .
-
-  ?resourceXNode apex:smElementSemanticId ?resourceXSid ; apex:smElementValue ?resourceXRaw .
-  ?resourceYNode apex:smElementSemanticId ?resourceYSid ; apex:smElementValue ?resourceYRaw .
-
+  ?resourceXNode a apex:MirroredSubmodelElement ;
+    apex:smElementSemanticId ?resourceXSid ; apex:smElementValue ?resourceXRaw .
   FILTER(LCASE(STR(?resourceXSid)) = "https://w3id.org/2026/apex/semantic/position/x")
+  BIND(STRBEFORE(STR(?resourceXNode), "/submodel-elements/") AS ?resourceXSmStr)
+  FILTER(IRI(?resourceXSmStr) = ?resourceSm)
+
+  ?resourceYNode a apex:MirroredSubmodelElement ;
+    apex:smElementSemanticId ?resourceYSid ; apex:smElementValue ?resourceYRaw .
   FILTER(LCASE(STR(?resourceYSid)) = "https://w3id.org/2026/apex/semantic/position/y")
+  BIND(STRBEFORE(STR(?resourceYNode), "/submodel-elements/") AS ?resourceYSmStr)
+  FILTER(IRI(?resourceYSmStr) = ?resourceSm)
 
   OPTIONAL {
-    ?resourceSm (aas-sm:submodelElements
-                |aas-smc:value)+ ?resourceZNode .
-    ?resourceZNode apex:smElementSemanticId ?resourceZSid ; apex:smElementValue ?resourceZRaw .
+    ?resourceZNode a apex:MirroredSubmodelElement ;
+      apex:smElementSemanticId ?resourceZSid ; apex:smElementValue ?resourceZRaw .
     FILTER(LCASE(STR(?resourceZSid)) = "https://w3id.org/2026/apex/semantic/position/z")
+    BIND(STRBEFORE(STR(?resourceZNode), "/submodel-elements/") AS ?resourceZSmStr)
+    FILTER(IRI(?resourceZSmStr) = ?resourceSm)
   }
 
-  # Station — identified by having capabilities/skills or by idShort containing "station/system/camera".
+  # Station -- identified by having capabilities/skills or by idShort.
   ?stationAas a arsox:ResourceAssetAdministrationShell ;
-    arso:hasOperationalDataSubmodel ?stationSm .
+    arso:hasSubmodel ?stationSm .
 
-  ?stationSm (aas-sm:submodelElements
-             |aas-smc:value)+ ?stationXNode, ?stationYNode .
-
-  ?stationXNode apex:smElementSemanticId ?stationXSid ; apex:smElementValue ?stationXRaw .
-  ?stationYNode apex:smElementSemanticId ?stationYSid ; apex:smElementValue ?stationYRaw .
-
+  ?stationXNode a apex:MirroredSubmodelElement ;
+    apex:smElementSemanticId ?stationXSid ; apex:smElementValue ?stationXRaw .
   FILTER(LCASE(STR(?stationXSid)) = "https://w3id.org/2026/apex/semantic/position/x")
+  BIND(STRBEFORE(STR(?stationXNode), "/submodel-elements/") AS ?stationXSmStr)
+  FILTER(IRI(?stationXSmStr) = ?stationSm)
+
+  ?stationYNode a apex:MirroredSubmodelElement ;
+    apex:smElementSemanticId ?stationYSid ; apex:smElementValue ?stationYRaw .
   FILTER(LCASE(STR(?stationYSid)) = "https://w3id.org/2026/apex/semantic/position/y")
+  BIND(STRBEFORE(STR(?stationYNode), "/submodel-elements/") AS ?stationYSmStr)
+  FILTER(IRI(?stationYSmStr) = ?stationSm)
 
   OPTIONAL {
-    ?stationSm (aas-sm:submodelElements
-               |aas-smc:value)+ ?stationZNode .
-    ?stationZNode apex:smElementSemanticId ?stationZSid ; apex:smElementValue ?stationZRaw .
+    ?stationZNode a apex:MirroredSubmodelElement ;
+      apex:smElementSemanticId ?stationZSid ; apex:smElementValue ?stationZRaw .
     FILTER(LCASE(STR(?stationZSid)) = "https://w3id.org/2026/apex/semantic/position/z")
+    BIND(STRBEFORE(STR(?stationZNode), "/submodel-elements/") AS ?stationZSmStr)
+    FILTER(IRI(?stationZSmStr) = ?stationSm)
   }
 
   # Distinguish station from robot: station has capabilities/skills, or its idShort marks it.

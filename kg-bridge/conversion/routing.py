@@ -29,22 +29,13 @@ class EventRouter:
         if not isinstance(payload, dict):
             payload = raw_event
 
-        meta = raw_event.get("meta") if isinstance(raw_event.get("meta"), dict) else {}
-        provenance: dict[str, Any] = {}
-        for key in ("sourceUrl", "registrationTime"):
-            if key in meta:
-                provenance[key] = meta[key]
-            elif key in raw_event:
-                provenance[key] = raw_event[key]
-
         event = parse_event(payload, topic)
+        self._logger.info("Routed %s event type=%s id=%s", topic, event.type.value if hasattr(event, 'type') else '?', getattr(event, 'id', '?'))
         statements = event_to_sparql(
             event=event,
             base_uri=self._kg_base_ns,
             graph_iri=self._aas_graph,
             id_strategy=self._id_strategy,
-            provenance=provenance or None,
-            enable_projection=self._enable_projection,
         )
-        self._logger.debug("Routed %s event on topic=%s to %d statement(s)", payload.get("type"), topic, len(statements))
+        self._logger.info("Routed %s event type=%s: produced %d SPARQL statement(s)", topic, getattr(event, 'type', '?'), len(statements))
         return statements

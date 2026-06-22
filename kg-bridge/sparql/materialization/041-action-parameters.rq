@@ -1,0 +1,37 @@
+PREFIX apex: <https://w3id.org/2026/apex/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>
+
+# ── Action parameters ────────────────────────────────────────────────────────
+# Skills.<SkillKey>.ExecutionModel.Parameters.<ParamName> → parameter node with
+# name, type ref (semanticId = last key), and self-ref detection.
+
+WITH {{ABOX_GRAPH_N3}}
+INSERT {
+  ?action apex:hasParameter ?param .
+  ?param a apex:Parameter ;
+    apex:parameterKey ?paramName ;
+    apex:parameterTypeRef ?typeRef ;
+    apex:parameterIsSelfRef ?isSelfRef .
+}
+WHERE {
+  ?sme a apex:MirroredSubmodelElement ;
+    apex:smElementPath ?path ;
+    apex:smElementRefType ?refType .
+  FILTER(REGEX(STR(?path), "^([^.]+)\\.ExecutionModel\\.Parameters\\.([^.]+)$"))
+  BIND(REPLACE(STR(?path), "^([^.]+)\\.ExecutionModel\\.Parameters\\.([^.]+)$", "$1") AS ?actionKey)
+  BIND(REPLACE(STR(?path), "^([^.]+)\\.ExecutionModel\\.Parameters\\.([^.]+)$", "$2") AS ?paramName)
+  BIND(REPLACE(STR(?sme), "^(.*)/submodel-elements/.*$", "$1") AS ?submodelRoot)
+  BIND(IRI(CONCAT("urn:kg:apex:action:", ENCODE_FOR_URI(SHA256(CONCAT(?submodelRoot, "|", ?actionKey))))) AS ?action)
+  BIND(IRI(CONCAT("urn:kg:apex:parameter:", ENCODE_FOR_URI(SHA256(CONCAT(?submodelRoot, "|", ?actionKey, "|", ?paramName))))) AS ?param)
+  # Last key value = semanticId type reference (GlobalReference).
+  ?sme apex:hasRefKey ?lastKey .
+  ?lastKey apex:refKeyValue ?typeRef ; apex:refKeyIndex ?maxIdx .
+  FILTER NOT EXISTS { ?sme apex:hasRefKey ?other . ?other apex:refKeyIndex ?otherIdx . FILTER(?otherIdx > ?maxIdx) }
+  # Self-ref: ModelReference with a single AssetAdministrationShell key.
+  ?sme apex:hasRefKey ?firstKey .
+  ?firstKey apex:refKeyIndex 0 ; apex:refKeyType ?firstKeyType .
+  BIND(IF(?refType = "ModelReference" && ?firstKeyType = "AssetAdministrationShell",
+          "true"^^xsd:boolean, "false"^^xsd:boolean) AS ?isSelfRef)
+  FILTER NOT EXISTS { ?param apex:parameterKey ?paramName . }
+}

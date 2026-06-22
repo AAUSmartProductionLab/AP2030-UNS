@@ -87,5 +87,16 @@ class MaterializationRunner:
 
     def apply(self, sparql_client: SparqlClient) -> None:
         for path, query in self._rules:
-            self._logger.debug("Applying materialization rule: %s", path)
-            sparql_client.update(query)
+            self._logger.info("Applying materialization rule: %s", path)
+            # Log the full query (it's a SPARQL UPDATE, we need to see all parts)
+            lines = query.split('\n')
+            self._logger.info("Rendered query (%d lines):", len(lines))
+            for i, line in enumerate(lines[:60]):
+                self._logger.info("  L%03d: %s", i, line)
+            if len(lines) > 60:
+                self._logger.info("  ... (%d more lines)", len(lines) - 60)
+            try:
+                sparql_client.update(query)
+                self._logger.info("Materialization rule succeeded: %s", path)
+            except Exception as exc:
+                self._logger.error("Materialization rule FAILED: %s — %s", path, exc)

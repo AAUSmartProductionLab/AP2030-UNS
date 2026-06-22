@@ -163,8 +163,6 @@ class AASBuilder:
             submodel_names.append('OfferedCapabilityDescription')
         if 'Skills' in config and config.get('Skills'):
             submodel_names.append('Skills')
-        if 'AI-Planning' in config and config.get('AI-Planning'):
-            submodel_names.append('AIPlanning')
         if 'ProcessInformation' in config:
             submodel_names.append('ProcessInformation')
         if 'RequiredCapabilities' in config:

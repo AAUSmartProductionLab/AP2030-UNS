@@ -1,5 +1,6 @@
 @prefix apex: <https://w3id.org/2026/apex/> .
-@prefix arso: <https://www.w3id.org/hsu-aut/aries/ontologies/arso/ontology/> .
+@prefix arso: <https://w3id.org/2025/arso#> .
+@prefix arsox: <https://w3id.org/aau-ra/arso-ext#> .
 @prefix css:  <http://www.w3id.org/hsu-aut/css#> .
 @prefix owl:  <http://www.w3.org/2002/07/owl#> .
 @prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .

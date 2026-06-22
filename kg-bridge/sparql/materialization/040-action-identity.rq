@@ -1,0 +1,71 @@
+PREFIX apex: <https://w3id.org/2026/apex/>
+PREFIX arso: <https://w3id.org/2025/arso#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>
+
+# ── Action identity from mirrored ExecutionModel SME data ────────────────────
+#
+# Each Skill with an ExecutionModel SMC (<SkillKey>.ExecutionModel) is projected
+# into a deterministic apex:Action IRI (SHA256 of submodelRoot|skillKey).
+# The sourceSemanticId is taken from the parent skill SMC (the ExecutionModel
+# itself has no semantic ID on the SME node — it lives on the skill).
+
+# ── Action nodes ─────────────────────────────────────────────────────────────
+
+WITH {{ABOX_GRAPH_N3}}
+INSERT {
+  ?action a apex:Action ;
+    apex:sourceSemanticId ?skillSemanticId ;
+    rdfs:label ?actionKey .
+}
+WHERE {
+  ?execSme a apex:MirroredSubmodelElement ;
+    apex:smElementPath ?execPath .
+  FILTER(REGEX(STR(?execPath), "^([^.]+)\\.ExecutionModel$"))
+  BIND(REPLACE(STR(?execPath), "^([^.]+)\\.ExecutionModel$", "$1") AS ?actionKey)
+
+  # Parent skill SMC carries the semantic ID
+  ?skillSme a apex:MirroredSubmodelElement ;
+    apex:smElementPath ?skillPath ;
+    apex:smElementSemanticId ?skillSemanticId .
+  FILTER(STR(?skillPath) = ?actionKey)
+
+  BIND(REPLACE(STR(?execSme), "^(.*)/submodel-elements/.*$", "$1") AS ?submodelRoot)
+  BIND(IRI(CONCAT("urn:kg:apex:action:", ENCODE_FOR_URI(SHA256(CONCAT(?submodelRoot, "|", ?actionKey))))) AS ?action)
+  FILTER NOT EXISTS { ?action apex:sourceSemanticId ?skillSemanticId . }
+}
+;
+
+# ── Source AAS link ──────────────────────────────────────────────────────────
+# Derive apex:hasSourceAAS by matching the SME IRI prefix to the owning AAS
+# via arso:hasSubmodel.
+
+WITH {{ABOX_GRAPH_N3}}
+INSERT { ?action apex:hasSourceAAS ?aas . }
+WHERE {
+  ?execSme a apex:MirroredSubmodelElement ;
+    apex:smElementPath ?execPath .
+  FILTER(REGEX(STR(?execPath), "^([^.]+)\\.ExecutionModel$"))
+  BIND(REPLACE(STR(?execPath), "^([^.]+)\\.ExecutionModel$", "$1") AS ?actionKey)
+  BIND(REPLACE(STR(?execSme), "^(.*)/submodel-elements/.*$", "$1") AS ?submodelRoot)
+  BIND(IRI(CONCAT("urn:kg:apex:action:", ENCODE_FOR_URI(SHA256(CONCAT(?submodelRoot, "|", ?actionKey))))) AS ?action)
+  ?aas arso:hasSubmodel ?submodelIri .
+  FILTER(STRSTARTS(STR(?execSme), CONCAT(STR(?submodelIri), "/submodel-elements/")))
+  FILTER NOT EXISTS { ?action apex:hasSourceAAS ?aas . }
+}
+;
+
+# ── SkillReference ────────────────────────────────────────────────────────────
+# The skill key IS the reference key (no separate SkillReference child needed).
+
+WITH {{ABOX_GRAPH_N3}}
+INSERT { ?action apex:skillReferenceKey ?actionKey . }
+WHERE {
+  ?execSme a apex:MirroredSubmodelElement ;
+    apex:smElementPath ?execPath .
+  FILTER(REGEX(STR(?execPath), "^([^.]+)\\.ExecutionModel$"))
+  BIND(REPLACE(STR(?execPath), "^([^.]+)\\.ExecutionModel$", "$1") AS ?actionKey)
+  BIND(REPLACE(STR(?execSme), "^(.*)/submodel-elements/.*$", "$1") AS ?submodelRoot)
+  BIND(IRI(CONCAT("urn:kg:apex:action:", ENCODE_FOR_URI(SHA256(CONCAT(?submodelRoot, "|", ?actionKey))))) AS ?action)
+  FILTER NOT EXISTS { ?action apex:skillReferenceKey ?actionKey . }
+}

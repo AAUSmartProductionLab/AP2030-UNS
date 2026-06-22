@@ -1,0 +1,95 @@
+PREFIX apex: <https://w3id.org/2026/apex/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>
+
+# ── Conditions and effects from ExecutionModel terms ─────────────────────────
+#
+# Skills.<SkillKey>.ExecutionModel.(Conditions|Effects).<Group>.term_<N>
+# Each term is a SubmodelElementCollection (semantic_id = predicate URI)
+# containing a Predicate Property and Arg_N child ReferenceElements.
+#
+# Timing roles:
+#   Conditions.PreConditions       → apex:hasPrecondition
+#   Conditions.InvariantConditions → apex:hasInvariantCondition
+#   Conditions.PostConditions      → apex:hasPostCondition
+#   Effects.StartEffects           → apex:hasAtStartEffect
+#   Effects.ContinuousEffects      → apex:hasContinuousEffect
+#   Effects.EndEffects             → apex:hasAtEndEffect
+
+# ── Step 1: Term → ProjectedConstraint with predicate + role ─────────────────
+
+WITH {{ABOX_GRAPH_N3}}
+INSERT {
+  ?action ?role ?constraint .
+  ?constraint a apex:ProjectedConstraint ;
+    apex:sourceSemanticId ?predicateSid ;
+    apex:constraintPath ?termPath .
+}
+WHERE {
+  ?sme a apex:MirroredSubmodelElement ;
+    apex:smElementPath ?path .
+  FILTER(REGEX(STR(?path),
+    "^([^.]+)\\.ExecutionModel\\.(Conditions|Effects)\\.([^.]+)\\.term_\\d+$"))
+
+  BIND(REPLACE(STR(?path), "^([^.]+)\\.ExecutionModel\\..*$", "$1") AS ?actionKey)
+  BIND(REPLACE(STR(?sme), "^(.*)/submodel-elements/.*$", "$1") AS ?submodelRoot)
+  BIND(IRI(CONCAT("urn:kg:apex:action:", ENCODE_FOR_URI(SHA256(CONCAT(?submodelRoot, "|", ?actionKey))))) AS ?action)
+
+  # term path = full path without last segment
+  BIND(REPLACE(STR(?path), "\\.term_\\d+$", "") AS ?termPath)
+  BIND(IRI(CONCAT("urn:kg:apex:constraint:", ENCODE_FOR_URI(SHA256(?termPath)))) AS ?constraint)
+
+  # predicate semantic ID: from the ReferenceElement's semantic_id
+  ?sme apex:smElementSemanticId ?predicateSid .
+
+  # timing role
+  BIND(
+    IF(CONTAINS(?termPath, ".Conditions.PreConditions."),       apex:hasPrecondition,
+    IF(CONTAINS(?termPath, ".Conditions.InvariantConditions."), apex:hasInvariantCondition,
+    IF(CONTAINS(?termPath, ".Conditions.PostConditions."),      apex:hasPostCondition,
+    IF(CONTAINS(?termPath, ".Effects.StartEffects."),           apex:hasAtStartEffect,
+    IF(CONTAINS(?termPath, ".Effects.ContinuousEffects."),      apex:hasContinuousEffect,
+    IF(CONTAINS(?termPath, ".Effects.EndEffects."),             apex:hasAtEndEffect,
+                                                                 apex:hasEffect))))))
+    AS ?role)
+
+  FILTER NOT EXISTS { ?constraint apex:constraintPath ?termPath . }
+}
+;
+
+# ── Step 2: Arg_N child elements → ConstraintArg entries ───────────────────
+# Each term is an SMC with Arg_N child ReferenceElements.  For
+# SubmodelElement args the reference is a ModelReference([AAS, SEC]) and we
+# take the *last* ref-key (the actual element path).  For Literal args the
+# reference is a GlobalReference([GLOBAL_REFERENCE]) and we take that key.
+
+WITH {{ABOX_GRAPH_N3}}
+INSERT {
+  ?constraint apex:constraintArg ?argBinding .
+  ?argBinding a apex:ConstraintArg ;
+    apex:constraintArgPosition ?argPos ;
+    apex:constraintArgValue ?argValue ;
+    apex:constraintArgType ?argType .
+}
+WHERE {
+  ?sme a apex:MirroredSubmodelElement ;
+    apex:smElementPath ?path .
+  FILTER(REGEX(STR(?path),
+    "^([^.]+)\\.ExecutionModel\\.(Conditions|Effects)\\.([^.]+)\\.term_\\d+\\.Arg_\\d+$"))
+
+  BIND(REPLACE(STR(?path), "^(.*)\\.term_\\d+\\.Arg_\\d+$", "$1") AS ?termPath)
+  BIND(REPLACE(STR(?path), "^.*\\.Arg_(\\d+)$", "$1") AS ?argPosStr)
+  BIND(xsd:nonNegativeInteger(?argPosStr) AS ?argPos)
+  BIND(IRI(CONCAT("urn:kg:apex:constraint:", ENCODE_FOR_URI(SHA256(?termPath)))) AS ?constraint)
+
+  # For ModelReference: take the last key (highest index) which holds the
+  # actual element path (the first key is the owning AAS prefix).
+  # For GlobalReference: take the only key (index 0).
+  ?sme apex:hasRefKey ?argKey .
+  ?argKey apex:refKeyValue ?argValue ; apex:refKeyIndex ?maxIdx ; apex:refKeyType ?argKeyType .
+  FILTER NOT EXISTS { ?sme apex:hasRefKey ?other . ?other apex:refKeyIndex ?otherIdx . FILTER(?otherIdx > ?maxIdx) }
+
+  BIND(STR(?argKeyType) AS ?argType)
+  BIND(IRI(CONCAT("urn:kg:apex:carg:", ENCODE_FOR_URI(SHA256(CONCAT(?termPath, "|", ?argPosStr)))))) AS ?argBinding)
+  FILTER NOT EXISTS { ?argBinding apex:constraintArgPosition ?argPos . }
+}

@@ -1,8 +1,6 @@
 PREFIX arso:  <https://w3id.org/2025/arso#>
 PREFIX arsox: <https://w3id.org/aau-ra/arso-ext#>
 PREFIX apex:  <https://w3id.org/2026/apex/>
-PREFIX aas-sm: <https://admin-shell.io/aas/3/1/Submodel/>
-PREFIX aas-smc: <https://admin-shell.io/aas/3/1/SubmodelElementCollection/>
 
 CONSTRUCT {
   ?fact a apex:Occupied ;
@@ -16,13 +14,15 @@ FROM <urn:kg:tbox>
 FROM <urn:kg:abox>
 WHERE {
   ?aas a arsox:ResourceAssetAdministrationShell ;
-    arso:hasOperationalDataSubmodel ?sm .
+    arso:hasSubmodel ?sm .
 
-  ?sm (aas-sm:submodelElements
-      |aas-smc:value)+ ?sme .
-
-  ?sme apex:smElementSemanticId ?sid ;
+  ?sme a apex:MirroredSubmodelElement ;
+    apex:smElementSemanticId ?sid ;
     apex:smElementValue ?rawValue .
+
+  BIND(STRBEFORE(STR(?sme), "/submodel-elements/") AS ?submodelIdStr)
+  BIND(IRI(?submodelIdStr) AS ?smeSubmodel)
+  FILTER(?smeSubmodel = ?sm)
 
   BIND(LCASE(STR(?sid)) AS ?sidLower)
   FILTER(?sidLower = "https://w3id.org/2026/apex/semantic/state/occupied")

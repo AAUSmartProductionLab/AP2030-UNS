@@ -1,430 +1,288 @@
 planarTableShuttle1AAS:
-    idShort: planarTableShuttle1AAS
-    id: "https://smartproductionlab.aau.dk/aas/planarTableShuttle1AAS"
-    globalAssetId: "https://smartproductionlab.aau.dk/assets/ODYwM2Q2YjYtYmUzOS00NT\
-        AxLWFhZDktYjc1MjhhMzUzOGNm"
-    derivedFrom: "https://smartproductionlab.aau.dk/aas/templates/resource"
-    assetType: "http://www.w3id.org/aau-ra/cssx#PlanarTableShuttle"
-    serialNumber: "PM-S1-2024-001"
-    location: "InnoLab, Nybrovej, AAU"
-    AssetInterfacesDescription:
-        InterfaceMQTT:
-            Title: "Planar Motors Shuttle"
-            EndpointMetadata:
-                base: "mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/Planar/Xbot1"
-                contentType: "application/json"
-            InteractionMetadata:
-                actions:
-                    - key: "MoveToPosition"
-                      title: "MoveToPosition"
-                      synchronous: "false"
-                      input: "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/moveToPo\
-                          sition.schema.json"
-                      output: "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command\
-                          Response.schema.json"
-                      forms:
-                          contentType: "application/json"
-                          href: "/CMD/XYMotion"
-                          op: "invokeAction"
-                          mqv_retain: "false"
-                          mqv_controlPacket: subscribe
-                          mqv_qos: "2"
-                          response:
-                              contentType: "application/json"
-                              href: "/DATA/XYMotion"
-                              mqv_controlPacket: "publish"
-                              mqv_retain: "false"
-                    - key: "Halt"
-                      title: "Halt"
-                      synchronous: "true"
-                      input: "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.\
-                          schema.json"
-                      forms:
-                          contentType: "application/json"
-                          href: "/CMD/Halt"
-                          op: "invokeAction"
-                          mqv_retain: "false"
-                          mqv_controlPacket: subscribe
-                          mqv_qos: "2"
-                    - key: "Occupy"
-                      title: "Occupy"
-                      synchronous: "true"
-                      input: "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.\
-                          schema.json"
-                      output: "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command\
-                          Response.schema.json"
-                      forms:
-                          contentType: "application/json"
-                          href: "/CMD/Occupy"
-                          op: "invokeAction"
-                          mqv_retain: "false"
-                          mqv_controlPacket: subscribe
-                          mqv_qos: "2"
-                          response:
-                              contentType: "application/json"
-                              href: "/DATA/Occupy"
-                              mqv_controlPacket: "publish"
-                              mqv_retain: "false"
-                    - key: "Release"
-                      title: "Release"
-                      synchronous: "true"
-                      input: "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.\
-                          schema.json"
-                      output: "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command\
-                          Response.schema.json"
-                      forms:
-                          contentType: "application/json"
-                          href: "/CMD/Release"
-                          op: "invokeAction"
-                          mqv_retain: "false"
-                          mqv_controlPacket: subscribe
-                          mqv_qos: "2"
-                          response:
-                              contentType: "application/json"
-                              href: "/DATA/Release"
-                              mqv_controlPacket: "publish"
-                              mqv_retain: "false"
-                properties:
-                    - key: "StationState"
-                      title: "StationState"
-                      output: "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/station\
-                          State.schema.json"
-                      forms:
-                          contentType: "application/json"
-                          href: "/DATA/State"
-                          mqv_retain: "true"
-                          mqv_controlPacket: publish
-                          mqv_qos: "0"
-                    - key: "ProductID"
-                      title: "ProductID"
-                      input: "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/productI\
-                          d.schema.json"
-                      forms:
-                          contentType: "application/json"
-                          href: "/DATA/ProductId"
-                          mqv_retain: "false"
-                          mqv_controlPacket: publish
-                          mqv_qos: "0"
-                    - key: "Location"
-                      title: "Location"
-                      output: "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/positio\
-                          nStamped.schema.json"
-                      forms:
-                          contentType: "application/json"
-                          href: "/DATA/Location"
-                          mqv_retain: "true"
-                          mqv_controlPacket: publish
-                          mqv_qos: "0"
-
-    Variables:
-        - key: PackMLState
-          semanticId: "https://w3id.org/2026/apex/semantic/state/operational"
-          InterfaceReference:
-              Name: "StationState"
-              Field: "State"
-        - key: OccupationState
-          semanticId: "https://w3id.org/2026/apex/semantic/state/occupied"
-          InterfaceReference:
-              Name: "StationState"
-              Field: "ProcessQueue"
-        - key: Location
-          semanticId: "https://w3id.org/2026/apex/semantic/location/label"
-          InterfaceReference:
-              Name: "Location"
-              Field: "Position"
-        - key: PositionX
-          semanticId: "https://w3id.org/2026/apex/semantic/position/x"
-          InterfaceReference:
-              Name: "Location"
-              Field: "X"
-        - key: PositionY
-          semanticId: "https://w3id.org/2026/apex/semantic/position/y"
-          InterfaceReference:
-              Name: "Location"
-              Field: "Y"
-
-    Parameters:
-        ProductID:
-            semanticId: "cssx:ProductIdentifier"
-            InterfaceReference: "ProductID"
-        Location:
-            semanticId: "cssx:InitialLocationParameter"
-            Position:
-                X: 0.0
-                Y: 0.0
-                Yaw: 0.0
-
-    HierarchicalStructures:
-        Name: "BillOfMaterials"
-        Archetype: "OneUp"
-        IsPartOf:
-            planarTableAAS:
-                globalAssetId: "https://smartproductionlab.aau.dk/assets/ZTM1NTAzNzQtMDZkNi00N2\
-                    Q4LWI1YTktMGNhMmY0MDEyNTk4"
-    Capabilities:
+  idShort: planarTableShuttle1AAS
+  id: https://smartproductionlab.aau.dk/aas/planarTableShuttle1AAS
+  globalAssetId: https://smartproductionlab.aau.dk/assets/ODYwM2Q2YjYtYmUzOS00NTAxLWFhZDktYjc1MjhhMzUzOGNm
+  derivedFrom: https://smartproductionlab.aau.dk/aas/templates/resource
+  assetType: http://www.w3id.org/aau-ra/cssx#PlanarTableShuttle
+  serialNumber: PM-S1-2024-001
+  location: InnoLab, Nybrovej, AAU
+  AssetInterfacesDescription:
+    InterfaceMQTT:
+      Title: Planar Motors Shuttle
+      EndpointMetadata:
+        base: mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/Planar/Xbot1
+        contentType: application/json
+      InteractionMetadata:
+        actions:
         - key: MoveToPosition
-          realizedBy: "MoveToPosition"
-          semantic_id: cssx:MoveToPositionCapability
-
-    AI-Planning:
-        Domain:
-            Fluents:
-                - key: "Operational"
-                  semantic_id: "cssx:Operational"
-                  parameters:
-                      - name: "Resource"
-                        externalRef: "css:Resource"
-                  transformation: "params[0].Variables.PackMLState.State = \"Execute\""
-
-                - key: "Occupied"
-                  semantic_id: "cssx:Occupied"
-                  parameters:
-                      - name: "Resource"
-                        externalRef: "css:Resource"
-                      - name: "Identifiable"
-                        externalRef: "cssx:Identifiable"
-                  transformation: "params[0].Variables.OccupationState.ProcessQueue[0] =
-                      params[1].Parameters.Uuid"
-
-                - key: "Free"
-                  semantic_id: "cssx:Free"
-                  parameters:
-                      - name: "Resource"
-                        externalRef: "css:Resource"
-                  transformation: "$count(params[0].Variables.OccupationState.ProcessQueue) = 0"
-
-                - key: "Empty"
-                  semantic_id: "cssx:Empty"
-                  parameters:
-                      - name: "TransportSystem"
-                        externalRef: "cssx:Transport"
-
-                - key: "ResourceAt"
-                  semantic_id: "cssx:ResourceAt"
-                  parameters:
-                      - name: "Resource"
-                        externalRef: "css:Resource"
-                      - name: "Location"
-                        externalRef: "cssx:LocationParameter"
-                  constants:
-                      threshold: 50.0
-                  transformation: "$sqrt($power(params[0].Variables.Location.Position[0] -
-                      params[1].Parameters.Location.Position.X, 2) +
-                      $power(params[0].Variables.Location.Position[1] -
-                      params[1].Parameters.Location.Position.Y, 2)) <
-                      constants.threshold"
-
-            Actions:
-                - key: "Move"
-                  semantic_id: "cssx:MoveToPositionCapability"
-                  SkillReference: "MoveToPosition"
-                  # JSONata: build a moveToPosition request body. Schema
-                  # requires Uuid + TimeStamp + Position[X, Y]. There is no
-                  # Product in this action so the runtime auto-generates
-                  # Uuid (exposed in the JSONata context as `uuid`) and
-                  # tracks the response by it. ``params[3]`` is the
-                  # destination LocationParameter whose Position carries
-                  # the planar X/Y in millimetres.
-                  transformation: "{\"Uuid\": params[1].Parameters.Uuid, \"TimeStamp\": now,
-                      \"Position\": [params[3].Parameters.Location.Position.X,
-                      params[3].Parameters.Location.Position.Y]}"
-                  parameters:
-                      - name: "TransportSystem"
-                        externalRef: "cssx:Transport"
-                      - name: "Order"
-                        externalRef: "cssx:Order"
-                      - name: "From"
-                        externalRef: "cssx:LocationParameter"
-                      - name: "To"
-                        externalRef: "cssx:LocationParameter"
-                  conditions:
-                      at_start:
-                          - predicate:
-                                ref: "Operational"
-                                parameters: [ 0 ]
-                          - predicate:
-                                ref: "Occupied"
-                                parameters: [ 0, 1 ]
-                          - predicate:
-                                external: "cssx:ResourceAt"
-                                parameters: [ 0, 2 ]
-                  effects:
-                      at_end:
-                          - not:
-                                - predicate:
-                                      external: "cssx:ResourceAt"
-                                      parameters: [ 0, 2 ]
-                          - predicate:
-                                external: "cssx:ResourceAt"
-                                parameters: [ 0, 3 ]
-
-                - key: "Transport"
-                  semantic_id: "cssx:MoveToPositionCapability"
-                  SkillReference: "MoveToPosition"
-                  # JSONata: ``params[1]`` is the Product (its Uuid drives
-                  # response correlation), ``params[3]`` is the
-                  # destination LocationParameter (X/Y in mm).
-                  transformation: "{\"Uuid\": params[1].Parameters.Uuid, \"TimeStamp\": now,
-                      \"Position\": [params[3].Parameters.Location.Position.X,
-                      params[3].Parameters.Location.Position.Y]}"
-                  parameters:
-                      - name: "TransportSystem"
-                        externalRef: "cssx:Transport"
-                      - name: "Product"
-                        externalRef: "css:Product"
-                      - name: "From"
-                        externalRef: "cssx:LocationParameter"
-                      - name: "To"
-                        externalRef: "cssx:LocationParameter"
-                      - name: "DestinationStation"
-                        externalRef: "css:CPPM"
-                  conditions:
-                      at_start:
-                          - predicate:
-                                ref: "Operational"
-                                parameters: [ 0 ]
-
-                          - predicate:
-                                ref: "Occupied"
-                                parameters: [ 0, 1 ]
-
-                          - predicate:
-                                external: "cssx:On"
-                                parameters: [ 1, 0 ]
-
-                          - predicate:
-                                external: "cssx:ProductAt"
-                                parameters: [ 1, 2 ]
-
-                          - predicate:
-                                external: "cssx:ResourceAt"
-                                parameters: [ 0, 2 ]
-
-                          - predicate:
-                                ref: "Occupied"
-                                parameters: [ 4, 1 ]
-
-                          - predicate:
-                                external: "cssx:StationAt"
-                                parameters: [ 4, 3 ]
-                  effects:
-                      at_end:
-                          - not:
-                                - predicate:
-                                      external: "cssx:ResourceAt"
-                                      parameters: [ 0, 2 ]
-                          - not:
-                                - predicate:
-                                      external: "cssx:ProductAt"
-                                      parameters: [ 1, 2 ]
-                          - predicate:
-                                external: "cssx:ResourceAt"
-                                parameters: [ 0, 3 ]
-
-                          - predicate:
-                                external: "cssx:ProductAt"
-                                parameters: [ 1, 3 ]
-
-                - key: "Occupy"
-                  semantic_id: "cssx:OccupyCapability"
-                  SkillReference: "Occupy"
-                  transformation: "{\"Uuid\": params[1].Parameters.Uuid}"
-                  parameters:
-                      - name: "TransportSystem"
-                        modelRef:
-                            - AAS: "self"
-                      - name: "Identifiable"
-                        externalRef: "cssx:Identifiable"
-                  conditions:
-                      at_start:
-                          - not:
-                                predicate:
-                                    ref: "Occupied"
-                                    parameters: [ 0, 1 ]
-                          - predicate:
-                                ref: "Free"
-                                parameters: [ 0 ]
-                  effects:
-                      at_end:
-                          - predicate:
-                                ref: "Occupied"
-                                parameters: [ 0, 1 ]
-                          - not:
-                                predicate:
-                                    ref: "Free"
-                                    parameters: [ 0 ]
-
-                - key: "Release"
-                  semantic_id: "cssx:ReleaseCapability"
-                  SkillReference: "Release"
-                  transformation: "{\"Uuid\": params[1].Parameters.Uuid}"
-                  parameters:
-                      - name: "TransportSystem"
-                        modelRef:
-                            - AAS: "self"
-                      - name: "Identifiable"
-                        externalRef: "cssx:Identifiable"
-                  conditions:
-                      at_start:
-                          - predicate:
-                                ref: "Operational"
-                                parameters: [ 0 ]
-                          - predicate:
-                                ref: "Occupied"
-                                parameters: [ 0, 1 ]
-                  effects:
-                      at_end:
-                          - not:
-                                - predicate:
-                                      ref: "Occupied"
-                                      parameters: [ 0, 1 ]
-                          - predicate:
-                                ref: "Free"
-                                parameters: [ 0 ]
-        Problem:
-            Objects:
-                - name: "planarShuttle1"
-                  modelRef:
-                      - AAS: "self"
-                - name: "initialLocation1"
-                  modelRef:
-                      - AAS: "self"
-                        Submodel: "Parameters"
-                        Element: "Location"
-
-            Init:
-                - predicate:
-                  ref: "Operational"
-                  parameters: [ 0 ]
-                - predicate:
-                  ref: "Free"
-                  parameters: [ 0 ]
-                - predicate:
-                  ref: "Empty"
-                  parameters: [ 0 ]
-                - predicate:
-                  ref: "ResourceAt"
-                  parameters: [ 0, 1 ]
-
-            Goal:
-                - predicate:
-                  ref: "Free"
-                  parameters: [ 0 ]
-
-    Skills:
-        - key: MoveToPosition
-          description: "Move the planar shuttle to a target position"
-          semantic_id: "cssx:MoveToPositionSkill"
-          InterfaceReference: MoveToPosition
+          title: MoveToPosition
+          synchronous: 'false'
+          input: https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/moveToPosition.schema.json
+          output: https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json
+          forms:
+            contentType: application/json
+            href: /CMD/XYMotion
+            op: invokeAction
+            mqv_retain: 'false'
+            mqv_controlPacket: subscribe
+            mqv_qos: '2'
+            response:
+              contentType: application/json
+              href: /DATA/XYMotion
+              mqv_controlPacket: publish
+              mqv_retain: 'false'
         - key: Halt
-          description: "Halt the current operation"
-          semantic_id: "cssx:HaltSkill"
-          InterfaceReference: Halt
+          title: Halt
+          synchronous: 'true'
+          input: https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json
+          forms:
+            contentType: application/json
+            href: /CMD/Halt
+            op: invokeAction
+            mqv_retain: 'false'
+            mqv_controlPacket: subscribe
+            mqv_qos: '2'
         - key: Occupy
-          description: "Occupy the system for exclusive use"
-          semantic_id: "cssx:OccupySkill"
-          InterfaceReference: Occupy
+          title: Occupy
+          synchronous: 'true'
+          input: https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json
+          output: https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json
+          forms:
+            contentType: application/json
+            href: /CMD/Occupy
+            op: invokeAction
+            mqv_retain: 'false'
+            mqv_controlPacket: subscribe
+            mqv_qos: '2'
+            response:
+              contentType: application/json
+              href: /DATA/Occupy
+              mqv_controlPacket: publish
+              mqv_retain: 'false'
         - key: Release
-          description: "Release the dispensing system from exclusive use"
-          semantic_id: "cssx:ReleaseSkill"
-          InterfaceReference: Release
+          title: Release
+          synchronous: 'true'
+          input: https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json
+          output: https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json
+          forms:
+            contentType: application/json
+            href: /CMD/Release
+            op: invokeAction
+            mqv_retain: 'false'
+            mqv_controlPacket: subscribe
+            mqv_qos: '2'
+            response:
+              contentType: application/json
+              href: /DATA/Release
+              mqv_controlPacket: publish
+              mqv_retain: 'false'
+        properties:
+        - key: StationState
+          title: StationState
+          output: https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/DestinationStationState.schema.json
+          forms:
+            contentType: application/json
+            href: /DATA/State
+            mqv_retain: 'true'
+            mqv_controlPacket: publish
+            mqv_qos: '0'
+        - key: ProductID
+          title: ProductID
+          input: https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/productId.schema.json
+          forms:
+            contentType: application/json
+            href: /DATA/ProductId
+            mqv_retain: 'false'
+            mqv_controlPacket: publish
+            mqv_qos: '0'
+        - key: Location
+          title: Location
+          output: https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/positionStamped.schema.json
+          forms:
+            contentType: application/json
+            href: /DATA/Location
+            mqv_retain: 'true'
+            mqv_controlPacket: publish
+            mqv_qos: '0'
+  Variables:
+  - key: PackMLState
+    semanticId: https://w3id.org/2026/apex/semantic/state/operational
+    InterfaceReference:
+      Name: StationState
+      Field: State
+  - key: OccupationState
+    semanticId: https://w3id.org/2026/apex/semantic/state/occupied
+    InterfaceReference:
+      Name: StationState
+      Field: ProcessQueue
+  - key: Location
+    semanticId: https://w3id.org/2026/apex/semantic/location/label
+    InterfaceReference:
+      Name: Location
+      Field: Position
+  - key: PositionX
+    semanticId: https://w3id.org/2026/apex/semantic/position/x
+    InterfaceReference:
+      Name: Location
+      Field: X
+  - key: PositionY
+    semanticId: https://w3id.org/2026/apex/semantic/position/y
+    InterfaceReference:
+      Name: Location
+      Field: Y
+  Parameters:
+    ProductID:
+      semanticId: cssx:ProductIdentifier
+      InterfaceReference: ProductID
+    Location:
+      semanticId: cssx:InitialLocationParameter
+      Position:
+        X: 0.0
+        Y: 0.0
+        Yaw: 0.0
+  HierarchicalStructures:
+    Name: BillOfMaterials
+    Archetype: OneUp
+    IsPartOf:
+      planarTableAAS:
+        globalAssetId: https://smartproductionlab.aau.dk/assets/ZTM1NTAzNzQtMDZkNi00N2Q4LWI1YTktMGNhMmY0MDEyNTk4
+  Capabilities:
+  - key: MoveToPosition
+    realizedBy: MoveToPosition
+    semantic_id: cssx:MoveToPositionCapability
+  Skills:
+  - key: MoveToPosition
+    description: Move the planar shuttle to a target position
+    semantic_id: cssx:MoveToPositionSkill
+    InterfaceReference: MoveToPosition
+    ExecutionModel:
+      Parameters:
+      - key: TransportSystem
+        semanticId: cssx:Transport
+        modelRef:
+        - AAS: self
+      - key: Product
+        semanticId: css:Product
+      - key: From
+        semanticId: cssx:LocationParameter
+      - key: To
+        semanticId: cssx:LocationParameter
+      - key: DestinationStation
+        semanticId: css:CPPM
+      Conditions:
+        PreConditions:
+        - predicate: cssx:Operational
+          args:
+          - 0
+        - predicate: cssx:Occupied
+          args:
+          - 0
+          - 1
+        - predicate: cssx:On
+          args:
+          - 1
+          - 0
+        - predicate: cssx:ProductAt
+          args:
+          - 1
+          - 2
+        - predicate: cssx:ResourceAt
+          args:
+          - 0
+          - 2
+        - predicate: cssx:Occupied
+          args:
+          - 4
+          - 1
+        - predicate: cssx:StationAt
+          args:
+          - 4
+          - 3
+      Effects:
+        EndEffects:
+        - predicate: cssx:ResourceAt
+          args:
+          - 0
+          - 3
+        - predicate: cssx:ProductAt
+          args:
+          - 1
+          - 3
+        StartEffects:
+        - predicate: cssx:ResourceAt
+          args:
+          - 0
+          - 2
+          negated: true
+        - predicate: cssx:ProductAt
+          args:
+          - 1
+          - 2
+          negated: true
+  - key: Halt
+    description: Halt the current operation
+    semantic_id: cssx:HaltSkill
+    InterfaceReference: Halt
+  - key: Occupy
+    description: Occupy the system for exclusive use
+    semantic_id: cssx:OccupySkill
+    InterfaceReference: Occupy
+    ExecutionModel:
+      Parameters:
+      - key: TransportSystem
+        semanticId: cssx:Transport
+        modelRef:
+        - AAS: self
+      - key: Identifiable
+        semanticId: cssx:Identifiable
+      Conditions:
+        PreConditions:
+        - predicate: cssx:Free
+          args:
+          - 0
+        - predicate: cssx:Occupied
+          args:
+          - 0
+          - 1
+          negated: true
+      Effects:
+        EndEffects:
+        - predicate: cssx:Occupied
+          args:
+          - 0
+          - 1
+        - predicate: cssx:Free
+          args:
+          - 0
+          negated: true
+  - key: Release
+    description: Release the dispensing system from exclusive use
+    semantic_id: cssx:ReleaseSkill
+    InterfaceReference: Release
+    ExecutionModel:
+      Parameters:
+      - key: TransportSystem
+        semanticId: cssx:Transport
+        modelRef:
+        - AAS: self
+      - key: Identifiable
+        semanticId: cssx:Identifiable
+      Conditions:
+        PreConditions:
+        - predicate: cssx:Operational
+          args:
+          - 0
+        - predicate: cssx:Occupied
+          args:
+          - 0
+          - 1
+      Effects:
+        EndEffects:
+        - predicate: cssx:Occupied
+          args:
+          - 0
+          - 1
+          negated: true
+        - predicate: cssx:Free
+          args:
+          - 0

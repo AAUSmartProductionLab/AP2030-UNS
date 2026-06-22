@@ -166,6 +166,7 @@ services:
   #   restart: unless-stopped
 
   production_planner:
+    profiles: ["full-stack"]
     extends:
       file: ../Planner/deployment/compose/docker-compose.yaml
       service: production_planner

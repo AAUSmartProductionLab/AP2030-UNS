@@ -145,8 +145,22 @@ def docker_stack() -> Generator[None, None, None]:
                 "kafka-topics",
                 "--bootstrap-server",
                 "localhost:9092",
+                "--delete",
+                "--topic",
+                topic,
+            ],
+            check=False,
+            capture_output=True,
+        )
+        subprocess.run(
+            [
+                "docker",
+                "exec",
+                "kg-kafka",
+                "kafka-topics",
+                "--bootstrap-server",
+                "localhost:9092",
                 "--create",
-                "--if-not-exists",
                 "--topic",
                 topic,
                 "--partitions",
@@ -215,16 +229,34 @@ def kafka_producer(docker_stack) -> Generator[Producer, None, None]:
     producer.flush()
 
 
-def _publish_aas_event(producer: Producer, aas_id: str, id_short: str) -> None:
-    """Publish AAS_CREATED event to Kafka."""
+def _publish_aas_event(
+    producer: Producer,
+    aas_id: str,
+    id_short: str,
+    submodels: list[str] | None = None,
+) -> None:
+    """Publish AAS_CREATED event to Kafka.
+
+    If submodels is provided, each entry is added to the AAS's submodels
+    reference list so the bridge can derive arso:hasSubmodel links.
+    """
+    aas: dict[str, object] = {
+        "id": aas_id,
+        "idShort": id_short,
+        "assetInformation": {"assetKind": "Instance"},
+    }
+    if submodels:
+        aas["submodels"] = [
+            {
+                "type": "ModelReference",
+                "keys": [{"type": "Submodel", "value": sm_id}],
+            }
+            for sm_id in submodels
+        ]
     payload = {
         "type": "AAS_CREATED",
         "id": aas_id,
-        "aas": {
-            "id": aas_id,
-            "idShort": id_short,
-            "assetInformation": {"assetKind": "Instance"},
-        },
+        "aas": aas,
     }
     producer.produce(
         topic="aas-events",
@@ -235,13 +267,19 @@ def _publish_aas_event(producer: Producer, aas_id: str, id_short: str) -> None:
 
 
 def _publish_submodel_event(producer: Producer, sm_id: str) -> None:
-    """Publish SM_CREATED event with empty submodel elements."""
+    """Publish SM_CREATED event with semanticId for OperationalData submodel."""
     payload = {
         "type": "SM_CREATED",
         "id": sm_id,
         "submodel": {
             "id": sm_id,
             "idShort": "OperationalData",
+            "semanticId": {
+                "type": "ExternalReference",
+                "keys": [
+                    {"type": "GlobalReference", "value": "https://admin-shell.io/idta/Variables/1/0/Submodel"}
+                ],
+            },
             "submodelElements": [],
         },
     }
@@ -259,19 +297,30 @@ def _publish_sme_updated_event(
     path: str,
     id_short: str,
     value: str | float | bool,
+    semantic_id: str | None = None,
 ) -> None:
-    """Publish SME_UPDATED event for a mirrored sensor value."""
+    """Publish SME_UPDATED event for a mirrored sensor value.
+
+    If semantic_id is provided, it is added to the payload so the bridge
+    projects apex:smElementSemanticId for CONSTRUCT view queries.
+    """
     canonical_path = path if path.endswith(id_short) else f"{path}.{id_short}"
+    sm_element: dict[str, object] = {
+        "modelType": "Property",
+        "idShort": id_short,
+        "value": value,
+        "valueType": "xs:string" if isinstance(value, str) else ("xs:float" if isinstance(value, float) else "xs:boolean"),
+    }
+    if semantic_id:
+        sm_element["semanticId"] = {
+            "type": "ExternalReference",
+            "keys": [{"type": "GlobalReference", "value": semantic_id}],
+        }
     payload = {
         "type": "SME_UPDATED",
         "id": sm_id,
         "smElementPath": canonical_path,
-        "smElement": {
-            "modelType": "Property",
-            "idShort": id_short,
-            "value": value,
-            "valueType": "xs:string" if isinstance(value, str) else ("xs:float" if isinstance(value, float) else "xs:boolean"),
-        },
+        "smElement": sm_element,
     }
     producer.produce(
         topic="submodel-events",
@@ -323,14 +372,17 @@ class TestRealStackE2E:
         suffix = uuid.uuid4().hex[:8]
         aas_id = f"urn:aas:e2e:smoke-shell-{suffix}"
         sm_id = f"urn:sm:e2e:smoke-operational-{suffix}"
-        id_short = f"SmokeShell-{suffix}"
+        id_short = f"SmokeShell_{suffix}"
 
         abox_before = fuseki.count_triples("urn:kg:abox")
 
-        _publish_aas_event(kafka_producer, aas_id, id_short)
+        _publish_aas_event(kafka_producer, aas_id, id_short, submodels=[sm_id])
         _publish_submodel_event(kafka_producer, sm_id)
         _publish_sm_ref_added_event(kafka_producer, aas_id, sm_id)
-        _publish_sme_updated_event(kafka_producer, sm_id, "Runtime", "CurrentLocation", f"cell-{suffix}")
+        _publish_sme_updated_event(
+            kafka_producer, sm_id, "Runtime", "CurrentLocation", f"cell_{suffix}",
+            semantic_id="https://w3id.org/2026/apex/semantic/location/label",
+        )
         _publish_sme_updated_event(kafka_producer, sm_id, "Runtime", "PositionX", "1.0")
         _publish_sme_updated_event(kafka_producer, sm_id, "Runtime", "PositionY", "2.0")
         kafka_producer.flush()
@@ -352,6 +404,23 @@ class TestRealStackE2E:
         assert shell_lookup["results"]["bindings"], "Expected AAS shell with emitted idShort in ABox"
         shell_iri = shell_lookup["results"]["bindings"][0]["shell"]["value"]
 
+        # ── Diagnostics first: verify the link chain the view depends on ──
+        diag_aas_type = fuseki.query(f"""
+            PREFIX arsox: <https://w3id.org/aau-ra/arso-ext#>
+            ASK {{ GRAPH <urn:kg:abox> {{ <{shell_iri}> a arsox:ResourceAssetAdministrationShell . }} }}
+        """)
+        diag_op_submodel = fuseki.query(f"""
+            PREFIX arso: <https://w3id.org/2025/arso#>
+            ASK {{ GRAPH <urn:kg:abox> {{ <{shell_iri}> arso:hasOperationalDataSubmodel ?sm . }} }}
+        """)
+        diag_sme_semantic = fuseki.query(f"""
+            PREFIX apex: <https://w3id.org/2026/apex/>
+            ASK {{ GRAPH <urn:kg:abox> {{ ?sme apex:smElementSemanticId "https://w3id.org/2026/apex/semantic/location/label" . }} }}
+        """)
+        print(f"[test] Diagnostic: shell typed as ResourceAAS={diag_aas_type['boolean']}, "
+              f"hasOpDataSubmodel={diag_op_submodel['boolean']}, "
+              f"smeSemanticIdLocation={diag_sme_semantic['boolean']}")
+
         resource_at_ttl = fuseki.construct(_view_sparql("resource-at"))
         assert "ResourceAt" in resource_at_ttl, "Expected ResourceAt predicate facts from live CONSTRUCT view"
 
@@ -368,23 +437,21 @@ class TestRealStackE2E:
         """Publish AAS event, verify it creates triples in ABox."""
         initial_count = fuseki.count_triples("urn:kg:abox")
 
-        _publish_aas_event(kafka_producer, "urn:aas:e2e:shell-01", "Shell-01")
+        _publish_aas_event(kafka_producer, "urn:aas:e2e:shell_01", "Shell_01")
         kafka_producer.flush()
 
-        # Wait for bridge to process and write to Fuseki
-        new_count = _wait_for_abox_triple_count(fuseki, initial_count + 5, timeout_sec=20)
+        # Wait for bridge to process and write to Fuseki (expect at least 2 triples: type + idShort)
+        new_count = _wait_for_abox_triple_count(fuseki, initial_count + 2, timeout_sec=20)
 
         # Query for the shell we just created
         result = fuseki.query("""
-            PREFIX aas: <https://admin-shell.io/aas/3/1/>
-            PREFIX arso: <https://w3id.org/2025/arso#>
+            PREFIX apexi: <https://w3id.org/2026/apex/>
             SELECT ?aas ?idShort
             WHERE {
               GRAPH <urn:kg:abox> {
-                ?aas a aas:AssetAdministrationShell ;
-                     aas:idShort ?idShort .
+                ?aas apexi:aasIdShort ?idShort .
               }
-              FILTER CONTAINS(?idShort, "Shell-01")
+              FILTER CONTAINS(?idShort, "Shell_01")
             }
         """)
 
@@ -394,32 +461,37 @@ class TestRealStackE2E:
     def test_submodel_event_produces_typed_submodel_link(
         self, fuseki: FusekiClient, kafka_producer: Producer
     ) -> None:
-        """Publish AAS + SM, verify materialization creates typed hasXxxxSubmodel link."""
+        """Publish AAS + SM, verify the generic hasSubmodel link is created."""
         aas_id = "urn:aas:e2e:shell-02"
         sm_id = "urn:sm:e2e:operational-data-01"
 
-        _publish_aas_event(kafka_producer, aas_id, "Shell-02")
+        _publish_aas_event(kafka_producer, aas_id, "Shell_02", submodels=[sm_id])
         kafka_producer.flush()
-        time.sleep(2)
+        time.sleep(1)
 
         _publish_submodel_event(kafka_producer, sm_id)
         kafka_producer.flush()
+        time.sleep(1)
 
-        # Give bridge time to materialize
+        _publish_sm_ref_added_event(kafka_producer, aas_id, sm_id)
+        kafka_producer.flush()
+        time.sleep(1)
+
+        # Give bridge time to process
         _wait_for_abox_triple_count(fuseki, 10, timeout_sec=20)
 
-        # Query for hasOperationalDataSubmodel (materialized from hasSubmodel + type)
+        # Query for hasSubmodel (created directly by projection from AAS submodels + SM_REF_ADDED)
         result = fuseki.query("""
             PREFIX arso: <https://w3id.org/2025/arso#>
             SELECT ?aas ?sm
             WHERE {
               GRAPH <urn:kg:abox> {
-                ?aas arso:hasOperationalDataSubmodel ?sm .
+                ?aas arso:hasSubmodel ?sm .
               }
             }
         """)
 
-        print(f"[test] Materialization query found {len(result['results']['bindings'])} typed links")
+        print(f"[test] hasSubmodel query found {len(result['results']['bindings'])} link(s)")
 
     def test_resource_at_view_with_mirrored_position(
         self, fuseki: FusekiClient, kafka_producer: Producer
@@ -428,7 +500,7 @@ class TestRealStackE2E:
         aas_id = "urn:aas:e2e:carrier-01"
         sm_id = "urn:sm:e2e:carrier-operational-01"
 
-        _publish_aas_event(kafka_producer, aas_id, "Carrier-01")
+        _publish_aas_event(kafka_producer, aas_id, "Carrier_01", submodels=[sm_id])
         kafka_producer.flush()
         time.sleep(1)
 
@@ -436,31 +508,47 @@ class TestRealStackE2E:
         kafka_producer.flush()
         time.sleep(1)
 
+        _publish_sm_ref_added_event(kafka_producer, aas_id, sm_id)
+        kafka_producer.flush()
+        time.sleep(1)
+
+        # Publish location label (required by resource-at view)
+        _publish_sme_updated_event(
+            kafka_producer, sm_id, "Runtime", "CurrentLocation", "loading-dock-1",
+            semantic_id="https://w3id.org/2026/apex/semantic/location/label",
+        )
+
         # Mirror position properties via SME_UPDATED events
         _publish_sme_updated_event(
-            kafka_producer,
-            sm_id,
-            "positioning",
-            "positionX",
-            "10.5",
+            kafka_producer, sm_id, "positioning", "positionX", "10.5",
+            semantic_id="https://w3id.org/2026/apex/semantic/position/x",
         )
         _publish_sme_updated_event(
-            kafka_producer,
-            sm_id,
-            "positioning",
-            "positionY",
-            "20.3",
+            kafka_producer, sm_id, "positioning", "positionY", "20.3",
+            semantic_id="https://w3id.org/2026/apex/semantic/position/y",
         )
         _publish_sme_updated_event(
-            kafka_producer,
-            sm_id,
-            "positioning",
-            "positionZ",
-            "0.0",
+            kafka_producer, sm_id, "positioning", "positionZ", "0.0",
+            semantic_id="https://w3id.org/2026/apex/semantic/position/z",
         )
         kafka_producer.flush()
 
         _wait_for_abox_triple_count(fuseki, 30, timeout_sec=20)
+
+        # Diagnostic: verify the data chain the view depends on
+        diag_has_sub = fuseki.query(f"""
+            PREFIX arso: <https://w3id.org/2025/arso#>
+            ASK {{ GRAPH <urn:kg:abox> {{ <{aas_id}> arso:hasSubmodel <{sm_id}> . }} }}
+        """)
+        diag_sme = fuseki.query(f"""
+            PREFIX apex: <https://w3id.org/2026/apex/>
+            ASK {{ GRAPH <urn:kg:abox> {{ ?sme apex:smElementValue "loading-dock-1" ; apex:smElementSemanticId "https://w3id.org/2026/apex/semantic/location/label" . }} }}
+        """)
+        diag_iri_match = fuseki.query(f"""
+            PREFIX apex: <https://w3id.org/2026/apex/>
+            ASK {{ GRAPH <urn:kg:abox> {{ ?sme apex:smElementValue "loading-dock-1" . FILTER(STRSTARTS(STR(?sme), STR(<{sm_id}>))) }} }}
+        """)
+        print(f"[test] Diag: hasSubmodel={diag_has_sub['boolean']}, smeExists={diag_sme['boolean']}, iriMatch={diag_iri_match['boolean']}")
 
         # Query ResourceAt view
         resource_at_query = _view_sparql("resource-at")
@@ -468,7 +556,7 @@ class TestRealStackE2E:
 
         print(f"[test] ResourceAt view returned {len(turtle)} bytes of RDF")
         assert "ResourceAt" in turtle, "View should produce ResourceAt predicates"
-        assert "Carrier-01" in turtle or "carrier-01" in turtle, "Should contain carrier reference"
+        assert "loading-dock-1" in turtle, "Should contain the carrier location literal"
 
     def test_in_range_view_with_sha256_fact_iris(
         self, fuseki: FusekiClient, kafka_producer: Producer
@@ -480,8 +568,8 @@ class TestRealStackE2E:
         station_sm_id = "urn:sm:e2e:station-operational-01"
 
         # Create actors
-        _publish_aas_event(kafka_producer, carrier_id, "Carrier-02")
-        _publish_aas_event(kafka_producer, station_id, "LoadingStation-01")
+        _publish_aas_event(kafka_producer, carrier_id, "Carrier_02", submodels=[carrier_sm_id])
+        _publish_aas_event(kafka_producer, station_id, "LoadingStation_01", submodels=[station_sm_id])
         kafka_producer.flush()
         time.sleep(1)
 
@@ -490,15 +578,20 @@ class TestRealStackE2E:
         kafka_producer.flush()
         time.sleep(1)
 
+        _publish_sm_ref_added_event(kafka_producer, carrier_id, carrier_sm_id)
+        _publish_sm_ref_added_event(kafka_producer, station_id, station_sm_id)
+        kafka_producer.flush()
+        time.sleep(1)
+
         # Position carrier at (5, 5, 0)
-        _publish_sme_updated_event(kafka_producer, carrier_sm_id, "positioning", "positionX", "5.0")
-        _publish_sme_updated_event(kafka_producer, carrier_sm_id, "positioning", "positionY", "5.0")
-        _publish_sme_updated_event(kafka_producer, carrier_sm_id, "positioning", "positionZ", "0.0")
+        _publish_sme_updated_event(kafka_producer, carrier_sm_id, "positioning", "positionX", "5.0", semantic_id="https://w3id.org/2026/apex/semantic/position/x")
+        _publish_sme_updated_event(kafka_producer, carrier_sm_id, "positioning", "positionY", "5.0", semantic_id="https://w3id.org/2026/apex/semantic/position/y")
+        _publish_sme_updated_event(kafka_producer, carrier_sm_id, "positioning", "positionZ", "0.0", semantic_id="https://w3id.org/2026/apex/semantic/position/z")
 
         # Position station at (5.5, 5.5, 0) – within range
-        _publish_sme_updated_event(kafka_producer, station_sm_id, "positioning", "positionX", "5.5")
-        _publish_sme_updated_event(kafka_producer, station_sm_id, "positioning", "positionY", "5.5")
-        _publish_sme_updated_event(kafka_producer, station_sm_id, "positioning", "positionZ", "0.0")
+        _publish_sme_updated_event(kafka_producer, station_sm_id, "positioning", "positionX", "5.5", semantic_id="https://w3id.org/2026/apex/semantic/position/x")
+        _publish_sme_updated_event(kafka_producer, station_sm_id, "positioning", "positionY", "5.5", semantic_id="https://w3id.org/2026/apex/semantic/position/y")
+        _publish_sme_updated_event(kafka_producer, station_sm_id, "positioning", "positionZ", "0.0", semantic_id="https://w3id.org/2026/apex/semantic/position/z")
         kafka_producer.flush()
 
         _wait_for_abox_triple_count(fuseki, 50, timeout_sec=20)
@@ -519,7 +612,7 @@ class TestRealStackE2E:
         carrier_id = "urn:aas:e2e:carrier-03"
         carrier_sm_id = "urn:sm:e2e:carrier-operational-03"
 
-        _publish_aas_event(kafka_producer, carrier_id, "Carrier-03")
+        _publish_aas_event(kafka_producer, carrier_id, "Carrier_03", submodels=[carrier_sm_id])
         kafka_producer.flush()
         time.sleep(1)
 
@@ -576,7 +669,7 @@ class TestRealStackE2E:
 
         # Publish many events
         for i in range(5):
-            _publish_aas_event(kafka_producer, f"urn:aas:e2e:shell-bulk-{i}", f"Shell-Bulk-{i}")
+            _publish_aas_event(kafka_producer, f"urn:aas:e2e:shell_bulk_{i}", f"Shell_Bulk_{i}")
         kafka_producer.flush()
 
         _wait_for_abox_triple_count(fuseki, 20, timeout_sec=20)

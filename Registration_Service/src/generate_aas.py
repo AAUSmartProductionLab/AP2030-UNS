@@ -23,7 +23,6 @@ from .aas_generation.submodels import (
     AssetInterfacesBuilder,
     VariablesSubmodelBuilder,
     SkillsSubmodelBuilder,
-    AIPlanningSubmodelBuilder,
     ParametersSubmodelBuilder,
     HierarchicalStructuresSubmodelBuilder,
     CapabilitiesSubmodelBuilder,
@@ -115,7 +114,6 @@ class AASGenerator:
         self.skills_builder = SkillsSubmodelBuilder(
             self.base_url, self.delegation_base_url, self.schema_handler
         )
-        self.ai_planning_builder = AIPlanningSubmodelBuilder(self.base_url)
         self.parameters_builder = ParametersSubmodelBuilder(
             self.base_url, self.semantic_factory, self.element_factory,
             self.schema_handler
@@ -310,9 +308,6 @@ class AASGenerator:
                 self.system_id, self.system_config),
             self.skills_builder.build(self.system_id, self.system_config)
         ]
-        ai_planning_submodel = self.ai_planning_builder.build(self.system_id, self.system_config)
-        if ai_planning_submodel is not None:
-            submodels.append(ai_planning_submodel)
 
         # Product AAS specific submodels (conditional on config sections)
         product_submodels = self._build_product_submodels()
