@@ -17,6 +17,7 @@ const String StopperingModule::TOPIC_PUB_STOPPERING_DATA = "/DATA/Stoppering";
 const String StopperingModule::TOPIC_PUB_VC_CMD = "/VC/CMD/Stoppering";
 const String StopperingModule::TOPIC_SUB_VC_RESPONSE = "/VC/Response/Stoppering";
 volatile bool StopperingModule::vcResponseReceived = false;
+volatile bool StopperingModule::buttonPressed = false;
 
 void StopperingModule::setup(ESP32Module *moduleInstance)
 {
@@ -304,21 +305,58 @@ void StopperingModule::stopLinearActuator()
     delay(10);
 }
 
+// ---------------------------------------------------------------------------
+// Interrupt Service Routine for limit switch
+// ---------------------------------------------------------------------------
+
+void IRAM_ATTR StopperingModule::buttonISR()
+{
+    buttonPressed = true;
+}
+
+// ---------------------------------------------------------------------------
+// Interrupt-driven button wait (replaces tight-loop polling)
+// ---------------------------------------------------------------------------
+
 bool StopperingModule::waitForButton(int buttonPin, unsigned long timeoutMs)
 {
-    unsigned long startTime = millis();
-
-    // Wait for button to be pressed (HIGH when pressed due to logic)
-    while (digitalRead(buttonPin) == LOW)
+    if (buttonPin != BUTTON_PIN)
     {
-        if (millis() - startTime >= timeoutMs)
-        {
-            return false; // Timeout
-        }
-        // delay(5); // Sample the endswitch at 200Hz
+        Serial.print("  ⚠️  waitForButton: unknown pin ");
+        Serial.println(buttonPin);
+        return false;
     }
 
-    return true; // Button pressed
+    buttonPressed = false;
+
+    Serial.print("  Waiting for button on pin ");
+    Serial.print(buttonPin);
+    Serial.print(" (interrupt-driven, timeout ");
+    Serial.print(timeoutMs);
+    Serial.println("ms)");
+
+    attachInterrupt(digitalPinToInterrupt(buttonPin), buttonISR, FALLING);
+
+    unsigned long startTime = millis();
+    while (!buttonPressed && (millis() - startTime < timeoutMs))
+    {
+        delay(10);  // yield CPU to WiFi / MQTT / FreeRTOS tasks
+    }
+
+    detachInterrupt(digitalPinToInterrupt(buttonPin));
+
+    if (buttonPressed)
+    {
+        Serial.print("  Button pressed after ");
+        Serial.print(millis() - startTime);
+        Serial.println(" ms");
+        return true;
+    }
+    else
+    {
+        Serial.println("  Button wait TIMEOUT");
+        return false;
+    }
 }
 
 void StopperingModule::publishVcCommand(const String &uuid)

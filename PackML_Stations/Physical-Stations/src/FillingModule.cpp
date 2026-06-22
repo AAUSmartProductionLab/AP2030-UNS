@@ -16,6 +16,8 @@ const String FillingModule::TOPIC_PUB_WEIGHT = "/DATA/Weight";
 const String FillingModule::TOPIC_PUB_VC_CMD = "/VC/CMD/Dispensing";
 const String FillingModule::TOPIC_SUB_VC_RESPONSE = "/VC/Response/Dispensing";
 volatile bool FillingModule::vcResponseReceived = false;
+volatile bool FillingModule::buttonTopPressed = false;
+volatile bool FillingModule::buttonBottomPressed = false;
 
 // Static member initialization
 ESP32Module *FillingModule::esp32Module = nullptr;
@@ -167,29 +169,77 @@ void FillingModule::stopMotor()
     analogWrite(PIN_ENB, 0);
 }
 
+// ---------------------------------------------------------------------------
+// Interrupt Service Routines for limit switches
+// ---------------------------------------------------------------------------
+
+void IRAM_ATTR FillingModule::buttonTopISR()
+{
+    buttonTopPressed = true;
+}
+
+void IRAM_ATTR FillingModule::buttonBottomISR()
+{
+    buttonBottomPressed = true;
+}
+
+// ---------------------------------------------------------------------------
+// Interrupt-driven button wait (replaces tight-loop polling)
+// ---------------------------------------------------------------------------
+
 bool FillingModule::waitForButton(int buttonPin, unsigned long timeoutMs)
 {
-    unsigned long startTime = millis();
-    Serial.print("  Waiting for button on pin ");
-    Serial.print(buttonPin);
-    Serial.print(", current state: ");
-    Serial.println(digitalRead(buttonPin) == 0 ? "Not pressed" : "Pressed");
+    // Select the correct flag and ISR for this pin
+    volatile bool *flag = nullptr;
+    void (*isr)() = nullptr;
 
-    // Button will read HIGH when physically pressed
-    while (digitalRead(buttonPin) == LOW)
+    if (buttonPin == BUTTON_PIN_TOP)
     {
-        if (millis() - startTime >= timeoutMs)
-        {
-            Serial.println("  Button wait TIMEOUT");
-            return false; // Timeout
-        }
-        // delay(5); // Sample the endswitch at 200Hz
+        flag = &buttonTopPressed;
+        isr = buttonTopISR;
+    }
+    else if (buttonPin == BUTTON_PIN_BOTTOM)
+    {
+        flag = &buttonBottomPressed;
+        isr = buttonBottomISR;
+    }
+    else
+    {
+        Serial.print("  ⚠️  waitForButton: unknown pin ");
+        Serial.println(buttonPin);
+        return false;
     }
 
-    Serial.print("  Button pressed after ");
-    Serial.print(millis() - startTime);
-    Serial.println(" ms");
-    return true; // Button pressed
+    *flag = false;
+
+    Serial.print("  Waiting for button on pin ");
+    Serial.print(buttonPin);
+    Serial.print(" (interrupt-driven, timeout ");
+    Serial.print(timeoutMs);
+    Serial.println("ms)");
+
+    attachInterrupt(digitalPinToInterrupt(buttonPin), isr, FALLING);
+
+    unsigned long startTime = millis();
+    while (!(*flag) && (millis() - startTime < timeoutMs))
+    {
+        delay(10);  // yield CPU to WiFi / MQTT / FreeRTOS tasks
+    }
+
+    detachInterrupt(digitalPinToInterrupt(buttonPin));
+
+    if (*flag)
+    {
+        Serial.print("  Button pressed after ");
+        Serial.print(millis() - startTime);
+        Serial.println(" ms");
+        return true;
+    }
+    else
+    {
+        Serial.println("  Button wait TIMEOUT");
+        return false;
+    }
 }
 
 bool FillingModule::runFillingCycle()

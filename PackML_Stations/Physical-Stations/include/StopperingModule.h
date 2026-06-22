@@ -132,8 +132,18 @@ private:
      */
     static void stopLinearActuator();
 
+    // Interrupt-driven limit switch flag (set by ISR, polled by waitForButton)
+    static volatile bool buttonPressed;
+
     /**
-     * @brief Wait for limit switch with timeout
+     * @brief ISR for limit switch — sets buttonPressed
+     */
+    static void IRAM_ATTR buttonISR();
+
+    /**
+     * @brief Wait for button press with timeout (interrupt-driven)
+     * Attaches an interrupt on the given pin, then polls the flag with
+     * delay(10) to yield CPU to WiFi/MQTT tasks.  Detaches interrupt on return.
      * @param buttonPin Pin number of button to monitor
      * @param timeoutMs Timeout in milliseconds
      * @return true if button pressed, false if timeout

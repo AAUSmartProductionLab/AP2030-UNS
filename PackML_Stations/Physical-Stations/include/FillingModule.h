@@ -113,8 +113,24 @@ private:
      */
     static void onVcResponse(const String &topic, const JsonDocument &msg);
 
+    // Interrupt-driven limit switch flags (set by ISR, polled by waitForButton)
+    static volatile bool buttonTopPressed;
+    static volatile bool buttonBottomPressed;
+
     /**
-     * @brief Wait for button press with timeout
+     * @brief ISR for top limit switch — sets buttonTopPressed
+     */
+    static void IRAM_ATTR buttonTopISR();
+
+    /**
+     * @brief ISR for bottom limit switch — sets buttonBottomPressed
+     */
+    static void IRAM_ATTR buttonBottomISR();
+
+    /**
+     * @brief Wait for button press with timeout (interrupt-driven)
+     * Attaches an interrupt on the given pin, then polls the flag with
+     * delay(10) to yield CPU to WiFi/MQTT tasks.  Detaches interrupt on return.
      * @param buttonPin Pin number of button to monitor
      * @param timeoutMs Timeout in milliseconds
      * @return true if button pressed, false if timeout
