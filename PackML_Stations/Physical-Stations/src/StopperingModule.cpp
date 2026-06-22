@@ -14,6 +14,9 @@ const String baseTopic = "NN/Nybrovej/InnoLab";
 const String moduleName = "Stoppering";
 const String StopperingModule::TOPIC_SUB_STOPPERING_CMD = "/CMD/Stoppering";
 const String StopperingModule::TOPIC_PUB_STOPPERING_DATA = "/DATA/Stoppering";
+const String StopperingModule::TOPIC_PUB_VC_CMD = "/VC/CMD/Stoppering";
+const String StopperingModule::TOPIC_SUB_VC_RESPONSE = "/VC/Response/Stoppering";
+volatile bool StopperingModule::vcResponseReceived = false;
 
 void StopperingModule::setup(ESP32Module *moduleInstance)
 {
@@ -21,16 +24,16 @@ void StopperingModule::setup(ESP32Module *moduleInstance)
 
     // Initialize ESP32 (WiFi, MQTT, Time)
     esp32Module->setup(baseTopic, moduleName);
-    
+
     // Wait for Serial to be ready
     delay(500);
     Serial.println("\n=== Starting Stoppering Module Setup ===");
     Serial.println("Initializing hardware...");
-    Serial.flush();  // Ensure message is sent
+    Serial.flush(); // Ensure message is sent
 
     // Initialize stoppering hardware
     initHardware();
-    
+
     Serial.println("Hardware initialization complete");
     Serial.flush();
 
@@ -50,6 +53,14 @@ void StopperingModule::setup(ESP32Module *moduleInstance)
         });
     stateMachine->subscribeToTopics();
     stateMachine->publishState();
+
+    // Register VC (Visual Components) response handler for visualization mirroring
+    {
+        String vcResponseTopic = esp32Module->getBaseTopic() + "/" + esp32Module->getModuleName() + TOPIC_SUB_VC_RESPONSE;
+        esp32Module->registerTopicHandler(vcResponseTopic, onVcResponse);
+        esp32Module->subscribeTopic(vcResponseTopic, 2);
+    }
+
     Serial.println("Stoppering Module ready!\n");
 }
 
@@ -112,7 +123,7 @@ void StopperingModule::initServo()
     // Move to home position (outer)
     servo.write(120);
     delay(SERVO_MOVE_TIME);
-    
+
     // Keep servo attached during initialization to avoid PWM conflicts
     // It will be detached after first use in runServo()
     Serial.println("Servo initialized to home position");
@@ -158,6 +169,10 @@ bool StopperingModule::runStopperingCycle()
 {
     Serial.println("Starting stoppering cycle");
 
+    // Notify Visual Components to start visualization (parallel with physical movement)
+    vcResponseReceived = false;
+    publishVcCommand(esp32Module->getCommandUuid());
+
     // Position DC motor down to working position
     if (!moveDCDown())
     {
@@ -177,6 +192,23 @@ bool StopperingModule::runStopperingCycle()
     // Return DC motor to home position
     moveDCUp();
     delay(500);
+
+    // Wait for VC animation to complete before reporting SUCCESS
+    {
+        unsigned long startWait = millis();
+        while (!vcResponseReceived && (millis() - startWait < VC_RESPONSE_TIMEOUT))
+        {
+            delay(50);
+        }
+        if (vcResponseReceived)
+        {
+            Serial.println("✅ VC animation completed");
+        }
+        else
+        {
+            Serial.println("⚠️  VC response timeout — physical operation completed, proceeding anyway");
+        }
+    }
 
     Serial.println("Stoppering cycle completed successfully");
     return true;
@@ -204,7 +236,7 @@ void StopperingModule::runServo()
 {
     Serial.println("Moving servo to position stopper");
     Serial.flush();
-    
+
     // Re-attach servo if needed (in case it was detached)
     if (!servo.attached())
     {
@@ -219,7 +251,7 @@ void StopperingModule::runServo()
     // Return to home position (outer)
     servo.write(121);
     delay(SERVO_MOVE_TIME);
-    
+
     // Detach servo to prevent vibration
     servo.detach();
     Serial.println("Servo cycle complete, servo detached");
@@ -283,8 +315,46 @@ bool StopperingModule::waitForButton(int buttonPin, unsigned long timeoutMs)
         {
             return false; // Timeout
         }
-        //delay(5); // Sample the endswitch at 200Hz
+        // delay(5); // Sample the endswitch at 200Hz
     }
 
     return true; // Button pressed
+}
+
+void StopperingModule::publishVcCommand(const String &uuid)
+{
+    AsyncMqttClient &client = esp32Module->getMqttClient();
+    String fullTopic = esp32Module->getBaseTopic() + "/" + esp32Module->getModuleName() + TOPIC_PUB_VC_CMD;
+
+    JsonDocument doc;
+    doc["Command"] = "StartStoppering";
+    doc["Uuid"] = uuid;
+
+    char output[256];
+    size_t len = serializeJson(doc, output);
+    client.publish(fullTopic.c_str(), 2, true, output, len);
+
+    Serial.print("📺 Published VC command to ");
+    Serial.println(fullTopic);
+}
+
+void StopperingModule::onVcResponse(const String &topic, const JsonDocument &msg)
+{
+    Serial.print("📺 VC Response on ");
+    Serial.print(topic);
+    Serial.print(": ");
+    if (msg["State"].is<String>())
+    {
+        Serial.print("State=");
+        Serial.print(msg["State"].as<String>());
+    }
+    if (msg["Uuid"].is<String>())
+    {
+        Serial.print(" Uuid=");
+        Serial.print(msg["Uuid"].as<String>());
+    }
+    Serial.println();
+
+    // Signal that VC has finished its animation
+    vcResponseReceived = true;
 }

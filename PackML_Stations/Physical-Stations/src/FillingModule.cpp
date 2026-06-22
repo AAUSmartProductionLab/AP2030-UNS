@@ -13,6 +13,9 @@ const String FillingModule::TOPIC_PUB_NEEDLE_DATA = "/DATA/Needle";
 const String FillingModule::TOPIC_SUB_TARE_CMD = "/CMD/Tare";
 const String FillingModule::TOPIC_PUB_TARE_DATA = "/DATA/Tare";
 const String FillingModule::TOPIC_PUB_WEIGHT = "/DATA/Weight";
+const String FillingModule::TOPIC_PUB_VC_CMD = "/VC/CMD/Dispensing";
+const String FillingModule::TOPIC_SUB_VC_RESPONSE = "/VC/Response/Dispensing";
+volatile bool FillingModule::vcResponseReceived = false;
 
 // Static member initialization
 ESP32Module *FillingModule::esp32Module = nullptr;
@@ -62,6 +65,13 @@ void FillingModule::setup(ESP32Module *moduleInstance)
     // Subscribe to MQTT topics now that state machine is fully configured
     stateMachine->subscribeToTopics();
     stateMachine->publishState();
+
+    // Register VC (Visual Components) response handler for visualization mirroring
+    {
+        String vcResponseTopic = esp32Module->getBaseTopic() + "/" + esp32Module->getModuleName() + TOPIC_SUB_VC_RESPONSE;
+        esp32Module->registerTopicHandler(vcResponseTopic, onVcResponse);
+        esp32Module->subscribeTopic(vcResponseTopic, 2);
+    }
 
     Serial.println("Filling Module ready!\n");
 }
@@ -173,7 +183,7 @@ bool FillingModule::waitForButton(int buttonPin, unsigned long timeoutMs)
             Serial.println("  Button wait TIMEOUT");
             return false; // Timeout
         }
-        //delay(5); // Sample the endswitch at 200Hz
+        // delay(5); // Sample the endswitch at 200Hz
     }
 
     Serial.print("  Button pressed after ");
@@ -185,6 +195,10 @@ bool FillingModule::waitForButton(int buttonPin, unsigned long timeoutMs)
 bool FillingModule::runFillingCycle()
 {
     Serial.println("Starting filling cycle");
+
+    // Notify Visual Components to start visualization (parallel with physical movement)
+    vcResponseReceived = false;
+    publishVcCommand(esp32Module->getCommandUuid());
 
     // Move down to fill position
     if (!moveToBottom())
@@ -207,6 +221,23 @@ bool FillingModule::runFillingCycle()
     long weightInt = random(1800, 2200);
     float weight = weightInt / 1000.0;
     publishWeight(weight);
+
+    // Wait for VC animation to complete before reporting SUCCESS
+    {
+        unsigned long startWait = millis();
+        while (!vcResponseReceived && (millis() - startWait < VC_RESPONSE_TIMEOUT))
+        {
+            delay(50);
+        }
+        if (vcResponseReceived)
+        {
+            Serial.println("✅ VC animation completed");
+        }
+        else
+        {
+            Serial.println("⚠️  VC response timeout — physical operation completed, proceeding anyway");
+        }
+    }
 
     Serial.println("Filling cycle completed successfully");
     return true;
@@ -283,4 +314,42 @@ void FillingModule::publishWeight(double weight)
     Serial.print("⚖️  Published weight: ");
     Serial.print(weight);
     Serial.println(" g");
+}
+
+void FillingModule::publishVcCommand(const String &uuid)
+{
+    AsyncMqttClient &client = esp32Module->getMqttClient();
+    String fullTopic = esp32Module->getBaseTopic() + "/" + esp32Module->getModuleName() + TOPIC_PUB_VC_CMD;
+
+    JsonDocument doc;
+    doc["Command"] = "StartDispensing";
+    doc["Uuid"] = uuid;
+
+    char output[256];
+    size_t len = serializeJson(doc, output);
+    client.publish(fullTopic.c_str(), 2, true, output, len);
+
+    Serial.print("📺 Published VC command to ");
+    Serial.println(fullTopic);
+}
+
+void FillingModule::onVcResponse(const String &topic, const JsonDocument &msg)
+{
+    Serial.print("📺 VC Response on ");
+    Serial.print(topic);
+    Serial.print(": ");
+    if (msg["State"].is<String>())
+    {
+        Serial.print("State=");
+        Serial.print(msg["State"].as<String>());
+    }
+    if (msg["Uuid"].is<String>())
+    {
+        Serial.print(" Uuid=");
+        Serial.print(msg["Uuid"].as<String>());
+    }
+    Serial.println();
+
+    // Signal that VC has finished its animation
+    vcResponseReceived = true;
 }

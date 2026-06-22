@@ -6,9 +6,14 @@
 #include <AsyncMqttClient.h>
 #include <ArduinoJson.h>
 #include <LittleFS.h>
+#include <functional>
+#include <map>
 
 // Forward declaration
 class PackMLStateMachine;
+
+// Topic handler type for module-level MQTT subscriptions (non-PackML topics, e.g. VC responses)
+using TopicHandler = std::function<void(const String &topic, const JsonDocument &msg)>;
 
 /**
  * @class ESP32Module
@@ -24,109 +29,137 @@ class PackMLStateMachine;
 class ESP32Module
 {
 public:
-    /**
-     * @brief Constructor - creates an uninitialized ESP32Module instance
-     */
-    ESP32Module();
+        /**
+         * @brief Constructor - creates an uninitialized ESP32Module instance
+         */
+        ESP32Module();
 
-    /**
-     * @brief Initialize ESP32 module with WiFi, MQTT, and time sync
-     * @param baseTopic MQTT base topic for the station
-     * @param baudRate Serial baud rate (default 115200)
-     */
-    void setup(const String &baseTopic, const String &moduleName, unsigned long baudRate = 115200);
+        /**
+         * @brief Initialize ESP32 module with WiFi, MQTT, and time sync
+         * @param baseTopic MQTT base topic for the station
+         * @param baudRate Serial baud rate (default 115200)
+         */
+        void setup(const String &baseTopic, const String &moduleName, unsigned long baudRate = 115200);
 
-    /**
-     * @brief Get the MQTT client instance
-     * @return AsyncMqttClient reference for publishing messages
-     */
-    AsyncMqttClient &getMqttClient();
+        /**
+         * @brief Get the MQTT client instance
+         * @return AsyncMqttClient reference for publishing messages
+         */
+        AsyncMqttClient &getMqttClient();
 
-    /**
-     * @brief Get the current command UUID
-     * @return Current command UUID string
-     */
-    String getCommandUuid();
+        /**
+         * @brief Get the current command UUID
+         * @return Current command UUID string
+         */
+        String getCommandUuid();
 
-    /**
-     * @brief Set the PackML state machine instance
-     * @param sm Pointer to PackMLStateMachine
-     */
-    void setStateMachine(PackMLStateMachine *sm);
-    /**
-     * @brief Publish the stored YAML configuration (from filesystem) to MQTT
-     * 
-     * Sends the YAML config to the Registration/Config topic where the
-     * Registration Service will generate the full AAS description.
-     */
-    void publishDescriptionFromFile();
+        /**
+         * @brief Set the PackML state machine instance
+         * @param sm Pointer to PackMLStateMachine
+         */
+        void setStateMachine(PackMLStateMachine *sm);
 
-    /**
-     * @brief Read configuration YAML from filesystem (LittleFS)
-     * @param path Optional path (default: "/config.yaml")
-     * @return The YAML string, or empty String if failed
-     */
-    String readConfig(const char *path = "/config.yaml");
+        /**
+         * @brief Register a module-level handler for a specific MQTT topic
+         * @param topic Full MQTT topic to match (exact)
+         * @param handler Callback invoked when message arrives on this topic
+         */
+        void registerTopicHandler(const String &topic, TopicHandler handler);
+
+        /**
+         * @brief Subscribe to an MQTT topic (thin wrapper around mqttClient.subscribe)
+         * @param topic Full MQTT topic to subscribe to
+         * @param qos Quality of Service (default 0)
+         */
+        void subscribeTopic(const String &topic, uint8_t qos = 0);
+
+        /**
+         * @brief Get the base MQTT topic
+         */
+        String getBaseTopic() const;
+
+        /**
+         * @brief Get the module name
+         */
+        String getModuleName() const;
+
+        /**
+         * @brief Publish the stored YAML configuration (from filesystem) to MQTT
+         *
+         * Sends the YAML config to the Registration/Config topic where the
+         * Registration Service will generate the full AAS description.
+         */
+        void publishDescriptionFromFile();
+
+        /**
+         * @brief Read configuration YAML from filesystem (LittleFS)
+         * @param path Optional path (default: "/config.yaml")
+         * @return The YAML string, or empty String if failed
+         */
+        String readConfig(const char *path = "/config.yaml");
 
 private:
-    // WiFi and MQTT Configuration
-    // These values are injected at build time from the root .env file
-    // See copy_config.py pre-build script
-    struct WiFiMQTTConfig
-    {
+        // WiFi and MQTT Configuration
+        // These values are injected at build time from the root .env file
+        // See copy_config.py pre-build script
+        struct WiFiMQTTConfig
+        {
 #ifdef WIFI_SSID_ENV
-        const char *ssid = WIFI_SSID_ENV;
+                const char *ssid = WIFI_SSID_ENV;
 #else
-        const char *ssid = "AAU5G_CISCO";  // Fallback default
+                const char *ssid = "AAU5G_CISCO"; // Fallback default
 #endif
 #ifdef WIFI_PASSWORD_ENV
-        const char *password = WIFI_PASSWORD_ENV;
+                const char *password = WIFI_PASSWORD_ENV;
 #else
-        const char *password = "5G_rules";  // Fallback default
+                const char *password = "5G_rules"; // Fallback default
 #endif
 #ifdef MQTT_SERVER
-        const char *mqttServer = MQTT_SERVER;
+                const char *mqttServer = MQTT_SERVER;
 #else
-        const char *mqttServer = "192.168.100.123";  // Fallback default
+                const char *mqttServer = "192.168.100.123"; // Fallback default
 #endif
 #ifdef MQTT_PORT_NUM
-        int mqttPort = MQTT_PORT_NUM;
+                int mqttPort = MQTT_PORT_NUM;
 #else
-        int mqttPort = 1883;  // Fallback default
+                int mqttPort = 1883; // Fallback default
 #endif
-    };
+        };
 
-    // Instance members
-    AsyncMqttClient mqttClient;
-    PackMLStateMachine *stateMachine;
-    String commandUuid;
-    WiFiMQTTConfig config;
-    String baseTopic;
-    String moduleName;
-    bool initialized;
-    const char *configFilePath;
+        // Instance members
+        AsyncMqttClient mqttClient;
+        PackMLStateMachine *stateMachine;
+        String commandUuid;
+        WiFiMQTTConfig config;
+        String baseTopic;
+        String moduleName;
+        bool initialized;
+        const char *configFilePath;
 
-    /**
-     * @brief Initialize WiFi connection
-     */
-    void initWiFi();
+        // Module-level topic handlers (for non-PackML subscriptions, e.g. VC responses)
+        std::map<String, TopicHandler> topicHandlers;
 
-    /**
-     * @brief Initialize MQTT client
-     */
-    void initMQTT();
+        /**
+         * @brief Initialize WiFi connection
+         */
+        void initWiFi();
 
-    /**
-     * @brief Initialize NTP time synchronization
-     */
-    void initializeTime();
+        /**
+         * @brief Initialize MQTT client
+         */
+        void initMQTT();
 
-    /**
-     * @brief MQTT event handlers
-     */
-    void onMqttConnect(bool sessionPresent);
-    void onMqttDisconnect(AsyncMqttClientDisconnectReason reason);
-    void onMqttMessage(char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total);
+        /**
+         * @brief Initialize NTP time synchronization
+         */
+        void initializeTime();
+
+        /**
+         * @brief MQTT event handlers
+         */
+        void onMqttConnect(bool sessionPresent);
+        void onMqttDisconnect(AsyncMqttClientDisconnectReason reason);
+        void onMqttMessage(char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total);
 };
 
 #endif // ESP32_MODULE_H

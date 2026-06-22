@@ -31,26 +31,26 @@ void ESP32Module::setup(const String &topic, const String &name, unsigned long b
         Serial.begin(baudRate);
         delay(100);
     }
-    
+
     Serial.println("=== Initializing ESP32 Module ===");
     Serial.flush();
     delay(100);
-    
+
     baseTopic = topic;
     moduleName = name;
-    
+
     Serial.println("Step 1: Initializing WiFi...");
     Serial.flush();
     initWiFi();
-    
+
     Serial.println("Step 2: Initializing MQTT...");
     Serial.flush();
     initMQTT();
-    
+
     Serial.println("Step 3: Initializing Time...");
     Serial.flush();
     initializeTime();
-    
+
     Serial.println("Step 4: Publishing Description...");
     Serial.flush();
     publishDescriptionFromFile();
@@ -74,7 +74,7 @@ void ESP32Module::initWiFi()
     while (WiFi.status() != WL_CONNECTED && attempts < 20)
     {
         delay(500);
-        //Serial.print(".");
+        // Serial.print(".");
         Serial.println(WiFi.status());
         attempts++;
         esp_task_wdt_reset();
@@ -107,20 +107,17 @@ void ESP32Module::initMQTT()
                          { 
                              Serial.println("[CALLBACK] onConnect triggered!");
                              Serial.flush();
-                             this->onMqttConnect(sessionPresent); 
-                         });
+                             this->onMqttConnect(sessionPresent); });
     mqttClient.onDisconnect([this](AsyncMqttClientDisconnectReason reason)
                             { 
                                 Serial.println("[CALLBACK] onDisconnect triggered!");
                                 Serial.flush();
-                                this->onMqttDisconnect(reason); 
-                            });
+                                this->onMqttDisconnect(reason); });
     mqttClient.onMessage([this](char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total)
                          { 
                              Serial.println("[CALLBACK] onMessage triggered!");
                              Serial.flush();
-                             this->onMqttMessage(topic, payload, properties, len, index, total); 
-                         });
+                             this->onMqttMessage(topic, payload, properties, len, index, total); });
 
     // Set server and credentials
     Serial.println("Setting MQTT server...");
@@ -158,7 +155,6 @@ void ESP32Module::initializeTime()
 
     // Set Danish time with automatic daylight saving
     configTzTime("CET-1CEST-2,M3.5.0/02,M10.5.0/03", "pool.ntp.org", "time.nist.gov");
-
 
     struct tm timeinfo;
     for (int i = 0; i < 10; i++)
@@ -287,10 +283,12 @@ void ESP32Module::onMqttDisconnect(AsyncMqttClientDisconnectReason reason)
         Serial.println("Reconnection attempt sent");
         Serial.flush();
         // Wait a bit before next attempt
-        for (int i = 0; i < 10; ++i) {
+        for (int i = 0; i < 10; ++i)
+        {
             delay(500);
             esp_task_wdt_reset();
-            if (mqttClient.connected()) {
+            if (mqttClient.connected())
+            {
                 Serial.println("MQTT reconnected!");
                 Serial.flush();
                 return;
@@ -340,6 +338,14 @@ void ESP32Module::onMqttMessage(char *topic, char *payload, AsyncMqttClientMessa
         Serial.println(commandUuid);
     }
 
+    // Check module-level topic handlers first (e.g. VC responses)
+    auto handlerIt = topicHandlers.find(topicStr);
+    if (handlerIt != topicHandlers.end())
+    {
+        handlerIt->second(topicStr, doc);
+        return; // Handled by module — don't also route to state machine
+    }
+
     // Route message to PackML state machine
     if (stateMachine)
     {
@@ -364,4 +370,31 @@ String ESP32Module::getCommandUuid()
 void ESP32Module::setStateMachine(PackMLStateMachine *sm)
 {
     stateMachine = sm;
+}
+
+void ESP32Module::registerTopicHandler(const String &topic, TopicHandler handler)
+{
+    topicHandlers[topic] = handler;
+    Serial.print("Registered topic handler for: ");
+    Serial.println(topic);
+}
+
+void ESP32Module::subscribeTopic(const String &topic, uint8_t qos)
+{
+    uint16_t packetId = mqttClient.subscribe(topic.c_str(), qos);
+    Serial.print("  ✓ Subscribed to: ");
+    Serial.print(topic);
+    Serial.print(" (packetId: ");
+    Serial.print(packetId);
+    Serial.println(")");
+}
+
+String ESP32Module::getBaseTopic() const
+{
+    return baseTopic;
+}
+
+String ESP32Module::getModuleName() const
+{
+    return moduleName;
 }

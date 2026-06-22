@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include <ESP32Servo.h>
+#include <ArduinoJson.h>
 
 // Forward declarations
 class ESP32Module;
@@ -70,6 +71,15 @@ private:
     // Custom MQTT action/data topics
     static const String TOPIC_SUB_STOPPERING_CMD;
     static const String TOPIC_PUB_STOPPERING_DATA;
+
+    // VC (Visual Components) communication topics
+    static const String TOPIC_PUB_VC_CMD;
+    static const String TOPIC_SUB_VC_RESPONSE;
+
+    // VC synchronisation — process waits for VC animation to complete before returning SUCCESS
+    static volatile bool vcResponseReceived;
+    static const unsigned long VC_RESPONSE_TIMEOUT = 30000; // 30 seconds
+
     /**
      * @brief Initialize servo motor to home position
      */
@@ -129,6 +139,17 @@ private:
      * @return true if button pressed, false if timeout
      */
     static bool waitForButton(int buttonPin, unsigned long timeoutMs);
+
+    /**
+     * @brief Publish VC command to start visualization
+     * @param uuid Command UUID for correlation
+     */
+    static void publishVcCommand(const String &uuid);
+
+    /**
+     * @brief Handle VC response message (logging only in fire-and-forget mode)
+     */
+    static void onVcResponse(const String &topic, const JsonDocument &msg);
 
     // Static members
     static ESP32Module *esp32Module;

@@ -55,6 +55,14 @@ private:
     static const String TOPIC_PUB_TARE_DATA;
     static const String TOPIC_PUB_WEIGHT;
 
+    // VC (Visual Components) communication topics
+    static const String TOPIC_PUB_VC_CMD;
+    static const String TOPIC_SUB_VC_RESPONSE;
+
+    // VC synchronisation — process waits for VC animation to complete before returning SUCCESS
+    static volatile bool vcResponseReceived;
+    static const unsigned long VC_RESPONSE_TIMEOUT = 30000; // 30 seconds
+
     /**
      * @brief Execute complete filling cycle
      * @return true if successful, false if motion error occurred
@@ -93,6 +101,17 @@ private:
      * @param weight Weight value to publish
      */
     static void publishWeight(double weight);
+
+    /**
+     * @brief Publish VC command to start visualization
+     * @param uuid Command UUID for correlation
+     */
+    static void publishVcCommand(const String &uuid);
+
+    /**
+     * @brief Handle VC response message (logging only in fire-and-forget mode)
+     */
+    static void onVcResponse(const String &topic, const JsonDocument &msg);
 
     /**
      * @brief Wait for button press with timeout
