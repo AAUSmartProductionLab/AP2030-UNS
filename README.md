@@ -53,7 +53,7 @@ Now open the "Main_Layout_w_Assembly.vcmx" file in Visual Components and make su
 
 When running the simulation the stations that has been configured and sent to the AAS from the Frontend application running on the Main branch, will be retrieved and placed according to the defined configuration.
 
-<img src="./Media/VC_Stations_Retrieved.png" alt="PMC Layout" width="250" />
+<img src="./Media/VC_Stations_retrieved.png" alt="PMC Layout" width="250" />
 
 The simualtion will be paused and must be reset and started agian to initiliazie all stations properly. Notice that the "USE_AAS" box has been automatically unticked to prevent duplicating stations when restarting the simulation. 
 
