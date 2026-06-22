@@ -1221,9 +1221,10 @@ def main():
 
     try:
         # Connect to PMC
-        pmc_ip = os.environ.get("PMC_IP")
-        if not connect_to_pmc(pmc_ip):
-            return False
+        # pmc_ip = os.environ.get("PMC_IP")
+        # if not connect_to_pmc(pmc_ip):
+        #     return False
+        connect_to_pmc()
 
         # Load workspace configuration from PMC
         print("\n" + "="*70)

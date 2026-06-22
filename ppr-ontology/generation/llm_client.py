@@ -233,31 +233,37 @@ def _run_claude_cli(
     conversation_text: str,
     max_output_tokens: int,
 ) -> tuple[str, bool]:
+    """Invoke the Claude Code CLI in print mode.
+
+    The conversation goes via **stdin** instead of via a file the CLI has to
+    Read — this avoids the CLI emitting tool_use blocks during this call.
+    Without `--allowedTools Read`, the CLI cannot perform any tool use, so the
+    Anthropic API request it builds has no `tool_use` content blocks and the
+    "tool_use ids must be unique" 400 cannot occur.
+
+    The system prompt is still passed via `--append-system-prompt-file` which
+    is a CLI flag (the CLI reads the file before sending the request — no
+    in-conversation tool use involved).
+    """
     with tempfile.TemporaryDirectory(prefix="claude-llm-client-") as tmp:
         tmp_dir = Path(tmp)
         system_file = tmp_dir / "system_instruction.txt"
-        convo_file = tmp_dir / "conversation.txt"
         system_file.write_text(system_instruction, encoding="utf-8")
-        convo_file.write_text(conversation_text, encoding="utf-8")
 
-        file_prompt = (
-            "Read and obey both files exactly before answering. "
-            f"System instruction file: {system_file.as_posix()} | "
-            f"Conversation file: {convo_file.as_posix()}. "
-            "Return ONLY the final JSON object with no markdown, no prose, and no code fences."
-        )
-
-        def _build_cmd(include_bare: bool, include_max_tokens: bool, include_system_file: bool) -> list[str]:
+        # The conversation goes via stdin (see _run below); -p with no arg
+        # tells the CLI to read the prompt from stdin.
+        def _build_cmd(
+            include_bare: bool,
+            include_max_tokens: bool,
+            include_system_file: bool,
+        ) -> list[str]:
             cmd = ["claude"]
             if include_bare:
                 cmd.append("--bare")
             cmd.extend([
                 "-p",
-                file_prompt,
                 "--output-format",
                 "json",
-                "--allowedTools",
-                "Read",
                 "--model",
                 model_name,
             ])
@@ -278,6 +284,7 @@ def _run_claude_cli(
                 cmd,
                 cwd=str(Path.cwd()),
                 env=os.environ.copy(),
+                input=conversation_text,
                 capture_output=True,
                 text=True,
                 encoding="utf-8",
@@ -305,6 +312,12 @@ def _run_claude_cli(
             raise RuntimeError(detail)
 
         payload = _extract_claude_json_payload(proc.stdout)
+        # Detect API errors that the CLI surfaces inside its result envelope
+        # (returncode 0 but is_error=true). Treat the same as a non-zero exit.
+        if isinstance(payload, dict) and payload.get("is_error"):
+            detail = str(payload.get("result") or payload).strip() or "Unknown Claude CLI error"
+            raise RuntimeError(detail)
+
         result_text = str(payload.get("result") or "").strip()
         if not result_text:
             raise RuntimeError("Claude CLI output JSON did not contain a non-empty 'result' field")

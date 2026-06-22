@@ -76,6 +76,9 @@ class Config:
     groq_api_key: str   = ""
     claude_api_key: str = ""
 
+    # Validation profile: "v1" (legacy) or "v2" (CSSx_AAS + unified pyshacl)
+    validation_profile: str = "v2"
+
 
 def load_config(yaml_path: Path | None = None) -> Config:
     path = yaml_path or (_GEN_DIR / "config.yaml")
@@ -125,6 +128,10 @@ def load_config(yaml_path: Path | None = None) -> Config:
 
     out_cfg = raw.get("output", {})
     paths_cfg = raw.get("paths", {})
+    validation_cfg = raw.get("validation", {}) if isinstance(raw, dict) else {}
+    validation_profile = str(validation_cfg.get("profile", "v2")).strip().lower()
+    if validation_profile not in {"v1", "v2"}:
+        sys.exit("ERROR: validation.profile must be 'v1' or 'v2'.")
     generation_mode = str(opts.get("generation_mode", "json")).strip().lower()
     if generation_mode not in {"json", "json-description"}:
         sys.exit("ERROR: options.generation_mode must be 'json' or 'json-description'.")
@@ -167,12 +174,19 @@ def load_config(yaml_path: Path | None = None) -> Config:
         claude_api_key = claude_api_key,
         gen_dir       = _GEN_DIR,
         root_dir      = _ROOT,
-        context_dir   = _ROOT / "api" / "context",
+        # v2 + json mode → context_v2/ (LLM emits full AAS JSON with semanticIds);
+        # json-description mode reuses context/ since the builder injects semanticIds.
+        context_dir   = (
+            _ROOT / "api" / "context_v2"
+            if validation_profile == "v2" and generation_mode == "json"
+            else _ROOT / "api" / "context"
+        ),
         rag_dir       = _GEN_DIR / "RAG",
         output_json   = _ROOT / out_cfg.get("json_file", "generation/output/aas_output.json"),
         output_issues = _ROOT / out_cfg.get("issues_file", "generation/output/aas_issues.json"),
         shacl_shapes  = shacl_shapes,
         ontology_paths = ontology_paths,
+        validation_profile = validation_profile,
     )
 
 

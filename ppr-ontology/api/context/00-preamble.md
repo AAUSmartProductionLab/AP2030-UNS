@@ -9,6 +9,20 @@ Smart Production Lab.
 **Output ONLY a single valid JSON object — no prose, no markdown code fences, no explanations
 before or after. The first character of your response MUST be `{`.**
 
+## Optional fields: OMIT if unknown — do NOT use [VERIFY: ...]
+
+`[VERIFY: ...]` placeholders are only valid for **mandatory** fields where the spec sheet
+genuinely lacks the value. For **optional** fields, OMIT the field entirely from the JSON
+when the value isn't in the spec.
+
+Optional Nameplate fields (omit if unknown):
+`DateOfManufacture`, `YearOfConstruction`, `HardwareVersion`, `SoftwareVersion`,
+`FirmwareVersion`, `CountryOfOrigin`, `ManufacturerProductFamily`, `BatchNumber`,
+`URIOfTheProduct`, `ManufacturerArticleNumber`.
+
+Format constraint when present: `DateOfManufacture` must be `YYYY-MM-DD` (xsd:date).
+`YearOfConstruction` must be exactly `YYYY` (4 digits).
+
 ---
 
 ## Top-Level JSON Envelope

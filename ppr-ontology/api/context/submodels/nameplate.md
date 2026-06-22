@@ -13,20 +13,23 @@
 | `ManufacturerName` | `MultiLanguageProperty` | — | value: `[{"language": "en", "text": "..."}]` — MANDATORY |
 | `SerialNumber` | `Property` | `xs:string` | MANDATORY |
 
-## Optional Fields
+## Optional Fields — OMIT if not in spec sheet (do NOT use [VERIFY: ...])
 
-| idShort | modelType | valueType | Format constraint |
+| idShort | modelType | valueType | Format constraint when present |
 |---|---|---|---|
 | `ManufacturerProductDesignation` | `MultiLanguageProperty` | — | Multi-language |
 | `ManufacturerProductFamily` | `MultiLanguageProperty` | — | Multi-language |
 | `URIOfTheProduct` | `Property` | `xs:string` | Product URI |
 | `ManufacturerArticleNumber` | `Property` | `xs:string` | — |
 | `BatchNumber` | `Property` | `xs:string` | — |
-| `YearOfConstruction` | `Property` | `xs:string` | **Exactly 4 digits: `YYYY`** |
-| `DateOfManufacture` | `Property` | `xs:string` | **Format: `YYYY-MM-DD`** |
+| `YearOfConstruction` | `Property` | `xs:string` | **Exactly 4 digits: `YYYY`**, omit if unknown |
+| `DateOfManufacture` | `Property` | `xs:string` | **Format: `YYYY-MM-DD`**, omit if unknown |
 | `HardwareVersion` | `Property` | `xs:string` | — |
 | `SoftwareVersion` | `Property` | `xs:string` | — |
 | `CountryOfOrigin` | `Property` | `xs:string` | ISO 3166-1 alpha-2 |
+
+**Rule:** if the value is not stated in the spec sheet, **omit the field**. Do not emit
+`"value": "[VERIFY: ...]"` for optional fields — the validator treats that as a generation defect.
 
 ## JSON Template
 
@@ -64,6 +67,8 @@
       "valueType": "xs:string",
       "value": "2024"
     }
+    /* Omit DateOfManufacture, HardwareVersion, etc. when the spec sheet
+       doesn't state a value. Don't fill them with [VERIFY: ...] markers. */
   ]
 }
 ```

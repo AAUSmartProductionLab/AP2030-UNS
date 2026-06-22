@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<catalog prefer="public" xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog">
+    <uri id="Local CSS Ontology" name="http://www.w3id.org/hsu-aut/css" uri="CSS-Ontology.ttl"/>
+    <uri id="Local AAS v3.1 Ontology" name="https://admin-shell.io/aas/3/1/" uri="aas-rdf-ontology.ttl"/>
+    <uri id="ARSO Nameplate Module" name="https://w3id.org/2025/arso/modules/nameplate" uri="modules/nameplate.ttl"/>
+    <uri id="ARSO Hierarchical Structures Module" name="https://w3id.org/2025/arso/modules/hierarchical-structures" uri="modules/hierarchical_structures.ttl"/>
+    <uri id="ARSO AID Module" name="https://w3id.org/2025/arso/modules/aid" uri="modules/aid.ttl"/>
+    <uri id="ARSO Skills Module" name="https://w3id.org/2025/arso/modules/skills" uri="modules/skills.ttl"/>
+    <uri id="ARSO Capabilities Module" name="https://w3id.org/2025/arso/modules/capabilities" uri="modules/capabilities.ttl"/>
+    <uri id="ARSO Operational Data Module" name="https://w3id.org/2025/arso/modules/operational-data" uri="modules/operational_data.ttl"/>
+    <uri id="ARSO Parameters Module" name="https://w3id.org/2025/arso/modules/parameters" uri="modules/parameters.ttl"/>
+    <group id="Folder Repository, directory=, recursive=true, Auto-Update=true, version=2" prefer="public" xml:base=""/>
+</catalog>

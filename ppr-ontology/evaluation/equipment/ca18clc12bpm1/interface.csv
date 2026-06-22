@@ -1,0 +1,6 @@
+Kind,Name,Type,Direction,Topic,Description
+property,DetectionState,boolean,read,smartproductionlab/lab/ca18clc12bpm1/state,True when target object is within sensing range.
+property,SensingDistance,double,read,smartproductionlab/lab/ca18clc12bpm1/distance,Last measured proximity distance in millimetres.
+property,OutputMode,string,read/write,smartproductionlab/lab/ca18clc12bpm1/mode,Discrete output mode — values: "PNP" or "NPN".
+action,TeachIn,—,write,smartproductionlab/lab/ca18clc12bpm1/teach,Trigger teach-in routine to learn the current target as the switching point.
+action,Reset,—,write,smartproductionlab/lab/ca18clc12bpm1/reset,Restore factory default switching distance.

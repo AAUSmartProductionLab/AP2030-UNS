@@ -1,0 +1,25 @@
+asset_name: "LinFill120"
+asset_type: "filling-station/syringe"
+protocol: "mqtt"
+base_url: "https://smartproductionlab.aau.dk"
+selected_submodels:
+  - Nameplate
+  - HierarchicalStructures
+  - AID
+  - Skills
+  - Capabilities
+  - OperationalData
+
+# No PDF datasheet — spec.md is the authoritative source for this module.
+datasheet: null
+
+interface_files: []
+
+notes: |
+  LinFill-120 vertical syringe filling station by Elara Automation GmbH.
+  Communicates over MQTT 3.1.1 via an onboard ESP32-WROOM-32.
+  Commands (subscribed): START | STOP | HOME | RESET on {base}/filling/cmd.
+  Published state:       {base}/filling/state  (IDLE | RUNNING | ERROR | HOMING)
+  Published data:        {base}/filling/cycletime  (float, seconds)
+                         {base}/filling/syringeweight  (float, grams)
+  Serial: EA-LF-2024-00472 | Manufacturer: Elara Automation GmbH | Order: EA-LF120-230V-EU

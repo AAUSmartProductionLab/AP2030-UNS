@@ -1,0 +1,25 @@
+asset_name: "PlungerSet80"
+asset_type: "stoppering-station/syringe"
+protocol: "mqtt"
+base_url: "https://smartproductionlab.aau.dk"
+selected_submodels:
+  - Nameplate
+  - HierarchicalStructures
+  - AID
+  - Skills
+  - Capabilities
+  - OperationalData
+
+# No PDF datasheet — spec.md is the authoritative source for this module.
+datasheet: null
+
+interface_files: []
+
+notes: |
+  PlungerSet-80 automated stoppering station by Elara Automation GmbH.
+  Shares its base platform (ESP32, L298N, firmware v1.4.2) with the LinFill-120.
+  Communicates over MQTT 3.1.1 via an onboard ESP32-WROOM-32.
+  Commands (subscribed): START | STOP | HOME | RESET on {base}/stoppering/cmd.
+  Published state:       {base}/stoppering/state  (IDLE | RUNNING | ERROR | HOMING)
+  Published data:        {base}/stoppering/cycletime  (float, seconds)
+  Serial: EA-PS-2024-00391 | Manufacturer: Elara Automation GmbH | Order: EA-PS080-230V-EU

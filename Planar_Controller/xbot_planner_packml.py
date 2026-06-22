@@ -434,11 +434,11 @@ def main():
     print("=== Planar Controller V2 (PackML) ===", flush=True)
     
     # 1. Connect PMC
-    pmc_ip = os.environ.get("PMC_IP")
-    if not connect_to_pmc(pmc_ip):
-        print("Failed to connect to PMC", flush=True)
-        return
-
+    # pmc_ip = os.environ.get("PMC_IP")
+    # if not connect_to_pmc(pmc_ip):
+    #     print("Failed to connect to PMC", flush=True)
+    #     return
+    connect_to_pmc()
     global WORKSPACE
     WORKSPACE = load_workspace_from_pmc(pmc_sys)
     if not WORKSPACE: return

@@ -44,12 +44,12 @@ root_env_file = os.path.abspath(root_env_file)
 env_vars = load_env_file(root_env_file)
 
 # Get MQTT configuration from .env (with defaults)
-mqtt_broker = env_vars.get("EXTERNAL_HOST", "192.168.0.104")
+mqtt_broker = env_vars.get("EXTERNAL_HOST", "192.168.100.137")
 mqtt_port = env_vars.get("MQTT_PORT", "1883")
 
 # Get WiFi configuration from .env (with defaults)
-wifi_ssid = env_vars.get("WIFI_SSID", "AP2030")
-wifi_password = env_vars.get("WIFI_PASSWORD", "NovoNordisk")
+wifi_ssid = env_vars.get("WIFI_SSID", "matrix_table")
+wifi_password = env_vars.get("WIFI_PASSWORD", "matrix_table")
 
 # Inject as build flags so they're available at compile time
 env.Append(CPPDEFINES=[

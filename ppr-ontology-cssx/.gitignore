@@ -1,0 +1,23 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+build/
+dist/
+
+# Editor / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Project
+generation/output/
+evaluation/results/
+ui/node_modules/
+ui/dist/
+ui/.vite/
+
+# Secrets — your config.yaml has API keys; copy it to config.local.yaml before publishing

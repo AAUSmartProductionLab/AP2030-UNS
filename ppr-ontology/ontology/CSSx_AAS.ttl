@@ -1,0 +1,732 @@
+@prefix cssx: <https://w3id.org/2025/cssx#> .
+@prefix css:  <https://w3id.org/2025/css#> .
+@prefix aas:  <https://admin-shell.io/aas/3/1/> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+#################################################################
+# ONTOLOGY METADATA
+#################################################################
+
+<https://w3id.org/2025/cssx>
+  rdf:type owl:Ontology ;
+  owl:versionIRI <https://w3id.org/2025/cssx/0.4.0> ;
+  owl:imports <https://admin-shell.io/aas/3/1/> ;
+  rdfs:comment """CSSx v0.4 — Domain extension ontology for Resource AAS.
+
+  This ontology:
+    - imports the official AAS v3.1 ontology for structural validation
+    - defines domain-specific submodel types as subclasses of aas:Submodel
+    - defines domain-specific SMEs as subclasses of AAS element types
+    - expresses all domain constraints in OWL for owl2shacl derivation
+    - uses AAS properties (submodelElements, value, etc.) for containment
+    - adds cssx: properties only for cross-submodel dependency checks
+
+  Structural/formatting validation is handled by the AAS ontology + SHACL.
+  This ontology adds ONLY domain-specific constraints on top.""" .
+
+
+#################################################################
+#################################################################
+##
+##  MODULE 0: CSS RESOURCE ↔ AAS LINK
+##
+##  Connects the real-world CSS Resource concept to its AAS
+##  digital twin representation. This is the root of all
+##  cross-submodel dependency reasoning.
+##
+#################################################################
+#################################################################
+
+css:Resource rdf:type owl:Class ;
+  rdfs:label "CSS Resource" ;
+  rdfs:comment "A real-world production resource (machine, module, device)." .
+
+cssx:hasAAS rdf:type owl:ObjectProperty ;
+  rdfs:domain css:Resource ;
+  rdfs:range aas:AssetAdministrationShell ;
+  rdfs:comment "Connects a CSS Resource to the AAS that represents it." .
+
+cssx:representsResource rdf:type owl:ObjectProperty , owl:FunctionalProperty ;
+  rdfs:domain aas:AssetAdministrationShell ;
+  rdfs:range css:Resource ;
+  owl:inverseOf cssx:hasAAS ;
+  rdfs:comment "The CSS Resource this AAS represents." .
+
+# Each Resource has exactly one AAS
+css:Resource rdfs:subClassOf [
+  rdf:type owl:Restriction ;
+  owl:onProperty cssx:hasAAS ;
+  owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+  owl:onClass aas:AssetAdministrationShell ] .
+
+# Each AAS represents exactly one Resource
+aas:AssetAdministrationShell rdfs:subClassOf [
+  rdf:type owl:Restriction ;
+  owl:onProperty cssx:representsResource ;
+  owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+  owl:onClass css:Resource ] .
+
+
+#################################################################
+##  Convenience: AAS → typed submodel direct links
+##
+##  The AAS ontology uses aas:AssetAdministrationShell/submodels
+##  → aas:Reference (indirection). For OWL reasoning over
+##  cross-submodel dependencies, we need direct typed links.
+##  The JSON-to-RDF projection creates these.
+#################################################################
+
+cssx:hasSubmodel rdf:type owl:ObjectProperty ;
+  rdfs:domain aas:AssetAdministrationShell ;
+  rdfs:range aas:Submodel ;
+  rdfs:comment "Direct link from AAS to a submodel instance (bypassing Reference indirection)." .
+
+
+#################################################################
+#################################################################
+##
+##  MODULE 1: SUBMODEL TYPE CLASSES
+##
+##  Each is a subclass of aas:Submodel. Inherits all AAS
+##  structural rules (id, idShort, semanticId, administration,
+##  submodelElements, etc.) automatically.
+##
+#################################################################
+#################################################################
+
+cssx:DigitalNameplateSubmodel rdf:type owl:Class ;
+  rdfs:subClassOf aas:Submodel ;
+  rdfs:label "Digital Nameplate Submodel" ;
+  rdfs:comment "IDTA 02006 — Digital Nameplate for Industrial Equipment." .
+
+cssx:HierarchicalStructuresSubmodel rdf:type owl:Class ;
+  rdfs:subClassOf aas:Submodel ;
+  rdfs:label "Hierarchical Structures Submodel" ;
+  rdfs:comment "IDTA 02011 — Hierarchical Structures enabling Bills of Material." .
+
+cssx:AIDSubmodel rdf:type owl:Class ;
+  rdfs:subClassOf aas:Submodel ;
+  rdfs:label "Asset Interfaces Description Submodel" ;
+  rdfs:comment "IDTA 02017 — Asset Interfaces Description." .
+
+cssx:SkillsSubmodel rdf:type owl:Class ;
+  rdfs:subClassOf aas:Submodel ;
+  rdfs:label "Skills Submodel" ;
+  rdfs:comment "Control Component Type/Instance — Skills." .
+
+cssx:CapabilitiesSubmodel rdf:type owl:Class ;
+  rdfs:subClassOf aas:Submodel ;
+  rdfs:label "Capabilities Submodel" ;
+  rdfs:comment "IDTA 02020 — Capability Description." .
+
+cssx:OperationalDataSubmodel rdf:type owl:Class ;
+  rdfs:subClassOf aas:Submodel ;
+  rdfs:label "Operational Data Submodel" ;
+  rdfs:comment "Custom — Runtime variable bindings." .
+
+cssx:ParametersSubmodel rdf:type owl:Class ;
+  rdfs:subClassOf aas:Submodel ;
+  rdfs:label "Parameters Submodel" ;
+  rdfs:comment "Custom — Static configuration parameters." .
+
+# --- Typed sub-properties for cross-submodel dependency checking ---
+
+cssx:hasDigitalNameplateSubmodel rdf:type owl:ObjectProperty , owl:FunctionalProperty ;
+  rdfs:subPropertyOf cssx:hasSubmodel ;
+  rdfs:range cssx:DigitalNameplateSubmodel .
+
+cssx:hasHierarchicalStructuresSubmodel rdf:type owl:ObjectProperty , owl:FunctionalProperty ;
+  rdfs:subPropertyOf cssx:hasSubmodel ;
+  rdfs:range cssx:HierarchicalStructuresSubmodel .
+
+cssx:hasAIDSubmodel rdf:type owl:ObjectProperty , owl:FunctionalProperty ;
+  rdfs:subPropertyOf cssx:hasSubmodel ;
+  rdfs:range cssx:AIDSubmodel .
+
+cssx:hasSkillsSubmodel rdf:type owl:ObjectProperty ;
+  rdfs:subPropertyOf cssx:hasSubmodel ;
+  rdfs:range cssx:SkillsSubmodel .
+
+cssx:hasCapabilitiesSubmodel rdf:type owl:ObjectProperty ;
+  rdfs:subPropertyOf cssx:hasSubmodel ;
+  rdfs:range cssx:CapabilitiesSubmodel .
+
+cssx:hasOperationalDataSubmodel rdf:type owl:ObjectProperty ;
+  rdfs:subPropertyOf cssx:hasSubmodel ;
+  rdfs:range cssx:OperationalDataSubmodel .
+
+cssx:hasParametersSubmodel rdf:type owl:ObjectProperty ;
+  rdfs:subPropertyOf cssx:hasSubmodel ;
+  rdfs:range cssx:ParametersSubmodel .
+
+
+#################################################################
+#################################################################
+##
+##  MODULE 2: DIGITAL NAMEPLATE (IDTA 02006) — ELEMENT TYPES
+##
+##  Each typed SME is a subclass of the appropriate AAS element.
+##  Containment uses aas:Submodel/submodelElements and
+##  aas:SubmodelElementCollection/value from the AAS ontology.
+##
+##  SMT structure:
+##    Nameplate (Submodel)
+##      ├─ URIOfTheProduct [Property, anyURI, 0..1]
+##      ├─ ManufacturerName [MLP, mandatory]
+##      ├─ ManufacturerProductDesignation [MLP, mandatory]
+##      ├─ ContactInformation [SMC, mandatory]
+##      │    ├─ Street, Zipcode, CityTown [MLP]
+##      │    ├─ NationalCode [Property]
+##      │    ├─ Phone [SMC] → TelephoneNumber [Property]
+##      │    └─ Email [SMC] → EmailAddress [Property]
+##      ├─ ManufacturerProductFamily [MLP, 0..1]
+##      ├─ ManufacturerProductType [Property, 0..1]
+##      ├─ OrderCodeOfManufacturer [Property, mandatory]
+##      ├─ SerialNumber [Property, 0..1]
+##      ├─ YearOfConstruction [Property, 0..1]
+##      ├─ DateOfManufacture [Property, 0..1]
+##      ├─ CountryOfOrigin [Property, 0..1]
+##      ├─ Markings [SMC, 0..1]
+##      │    └─ Marking [SMC, 0..*]
+##      └─ AssetSpecificProperties [SMC, 0..1]
+##
+#################################################################
+#################################################################
+
+# --- Typed elements (subclasses of AAS types) ---
+
+cssx:ManufacturerNameMLP rdf:type owl:Class ;
+  rdfs:subClassOf aas:MultiLanguageProperty ;
+  rdfs:comment "MLP ManufacturerName. Mandatory per IDTA 02006." .
+
+cssx:ManufacturerProductDesignationMLP rdf:type owl:Class ;
+  rdfs:subClassOf aas:MultiLanguageProperty ;
+  rdfs:comment "MLP ManufacturerProductDesignation. Mandatory per IDTA 02006." .
+
+cssx:ContactInformationSMC rdf:type owl:Class ;
+  rdfs:subClassOf aas:SubmodelElementCollection ;
+  rdfs:comment "SMC ContactInformation (IDTA 02002). Mandatory per IDTA 02006." .
+
+cssx:OrderCodeProperty rdf:type owl:Class ;
+  rdfs:subClassOf aas:Property ;
+  rdfs:comment "Property OrderCodeOfManufacturer. Mandatory per IDTA 02006 v3.0." .
+
+cssx:SerialNumberProperty rdf:type owl:Class ;
+  rdfs:subClassOf aas:Property ;
+  rdfs:comment "Property SerialNumber." .
+
+cssx:DateOfManufactureProperty rdf:type owl:Class ;
+  rdfs:subClassOf aas:Property ;
+  rdfs:comment "Property DateOfManufacture." .
+
+cssx:YearOfConstructionProperty rdf:type owl:Class ;
+  rdfs:subClassOf aas:Property ;
+  rdfs:comment "Property YearOfConstruction." .
+
+cssx:CountryOfOriginProperty rdf:type owl:Class ;
+  rdfs:subClassOf aas:Property ;
+  rdfs:comment "Property CountryOfOrigin." .
+
+cssx:URIOfTheProductProperty rdf:type owl:Class ;
+  rdfs:subClassOf aas:Property ;
+  rdfs:comment "Property URIOfTheProduct." .
+
+cssx:MarkingsSMC rdf:type owl:Class ;
+  rdfs:subClassOf aas:SubmodelElementCollection ;
+  rdfs:comment "SMC Markings container." .
+
+cssx:MarkingSMC rdf:type owl:Class ;
+  rdfs:subClassOf aas:SubmodelElementCollection ;
+  rdfs:comment "SMC Marking entry within Markings." .
+
+cssx:AssetSpecificPropertiesSMC rdf:type owl:Class ;
+  rdfs:subClassOf aas:SubmodelElementCollection ;
+  rdfs:comment "SMC AssetSpecificProperties." .
+
+# --- Nameplate must contain mandatory elements ---
+
+cssx:DigitalNameplateSubmodel rdfs:subClassOf [
+  rdf:type owl:Restriction ;
+  owl:onProperty <https://admin-shell.io/aas/3/1/Submodel/submodelElements> ;
+  owl:someValuesFrom cssx:ManufacturerNameMLP ] .
+
+cssx:DigitalNameplateSubmodel rdfs:subClassOf [
+  rdf:type owl:Restriction ;
+  owl:onProperty <https://admin-shell.io/aas/3/1/Submodel/submodelElements> ;
+  owl:someValuesFrom cssx:ManufacturerProductDesignationMLP ] .
+
+cssx:DigitalNameplateSubmodel rdfs:subClassOf [
+  rdf:type owl:Restriction ;
+  owl:onProperty <https://admin-shell.io/aas/3/1/Submodel/submodelElements> ;
+  owl:someValuesFrom cssx:ContactInformationSMC ] .
+
+cssx:DigitalNameplateSubmodel rdfs:subClassOf [
+  rdf:type owl:Restriction ;
+  owl:onProperty <https://admin-shell.io/aas/3/1/Submodel/submodelElements> ;
+  owl:someValuesFrom cssx:OrderCodeProperty ] .
+
+
+#################################################################
+#################################################################
+##
+##  MODULE 3: HIERARCHICAL STRUCTURES (IDTA 02011) — ELEMENT TYPES
+##
+##  SMT structure:
+##    HierarchicalStructures (Submodel)
+##      ├─ ArcheType [Property: "Full" | "OneDown" | "OneUp"]
+##      └─ EntryNode [Entity]
+##           ├─ entityType: SelfManagedEntity | CoManagedEntity
+##           ├─ globalAssetId [for SelfManagedEntity]
+##           ├─ HasPart [RelationshipElement, 0..*]
+##           │    └─ second → child Entity (may reference external AAS)
+##           ├─ IsPartOf [RelationshipElement, 0..*]
+##           └─ child Entity nodes (recursive)
+##
+#################################################################
+#################################################################
+
+# --- Typed elements ---
+
+cssx:ArcheTypeProperty rdf:type owl:Class ;
+  rdfs:subClassOf aas:Property ;
+  rdfs:comment "Property ArcheType: 'Full', 'OneDown', or 'OneUp'." .
+
+cssx:BomEntity rdf:type owl:Class ;
+  rdfs:subClassOf aas:Entity ;
+  rdfs:comment "An Entity node in the BoM hierarchy (EntryNode or child)." .
+
+cssx:HasPartRelationship rdf:type owl:Class ;
+  rdfs:subClassOf aas:RelationshipElement ;
+  rdfs:comment "HasPart relationship between BoM entities." .
+
+cssx:IsPartOfRelationship rdf:type owl:Class ;
+  rdfs:subClassOf aas:RelationshipElement ;
+  rdfs:comment "IsPartOf relationship between BoM entities." .
+
+# --- HierarchicalStructures must contain ArcheType and at least one Entity ---
+
+cssx:HierarchicalStructuresSubmodel rdfs:subClassOf [
+  rdf:type owl:Restriction ;
+  owl:onProperty <https://admin-shell.io/aas/3/1/Submodel/submodelElements> ;
+  owl:someValuesFrom cssx:ArcheTypeProperty ] .
+
+cssx:HierarchicalStructuresSubmodel rdfs:subClassOf [
+  rdf:type owl:Restriction ;
+  owl:onProperty <https://admin-shell.io/aas/3/1/Submodel/submodelElements> ;
+  owl:someValuesFrom cssx:BomEntity ] .
+
+# --- Each BomEntity may contain HasPart/IsPartOf relationships ---
+# (These use aas:Entity/statements to hold child elements)
+# Structural validation of Entity is handled by AAS ontology.
+# The typing as BomEntity allows SHACL to verify BoM-specific content.
+
+
+#################################################################
+#################################################################
+##
+##  MODULE 4: ASSET INTERFACES DESCRIPTION (IDTA 02017) — ELEMENT TYPES
+##
+##  SMT structure (W3C WoT TD aligned):
+##    AID (Submodel)
+##      └─ Interface [SMC, 1..*]
+##           ├─ title [Property]
+##           ├─ EndpointMetadata [SMC]
+##           │    ├─ base [Property, anyURI]
+##           │    ├─ contentType [Property]
+##           │    └─ securityDefinitions [SMC]
+##           ├─ InteractionMetadata [SMC]
+##           │    ├─ properties [SMC]
+##           │    │    └─ InterfaceProperty [SMC, 0..*]
+##           │    ├─ actions [SMC]
+##           │    │    └─ InterfaceAction [SMC, 0..*]
+##           │    └─ events [SMC]
+##           │         └─ InterfaceEvent [SMC, 0..*]
+##           └─ ExternalDescriptor [File, optional]
+##
+#################################################################
+#################################################################
+
+# --- Typed elements ---
+
+cssx:InterfaceSMC rdf:type owl:Class ;
+  rdfs:subClassOf aas:SubmodelElementCollection ;
+  rdfs:comment "SMC Interface within AID. One per communication interface." .
+
+cssx:EndpointMetadataSMC rdf:type owl:Class ;
+  rdfs:subClassOf aas:SubmodelElementCollection ;
+  rdfs:comment "SMC EndpointMetadata within Interface." .
+
+cssx:InteractionMetadataSMC rdf:type owl:Class ;
+  rdfs:subClassOf aas:SubmodelElementCollection ;
+  rdfs:comment "SMC InteractionMetadata within Interface." .
+
+cssx:InterfaceTitleProperty rdf:type owl:Class ;
+  rdfs:subClassOf aas:Property ;
+  rdfs:comment "Property title of an Interface." .
+
+cssx:EndpointBaseProperty rdf:type owl:Class ;
+  rdfs:subClassOf aas:Property ;
+  rdfs:comment "Property base (endpoint URI) within EndpointMetadata." .
+
+cssx:ContentTypeProperty rdf:type owl:Class ;
+  rdfs:subClassOf aas:Property ;
+  rdfs:comment "Property contentType within EndpointMetadata." .
+
+cssx:SecurityDefinitionsSMC rdf:type owl:Class ;
+  rdfs:subClassOf aas:SubmodelElementCollection ;
+  rdfs:comment "SMC securityDefinitions within EndpointMetadata." .
+
+cssx:PropertiesSMC rdf:type owl:Class ;
+  rdfs:subClassOf aas:SubmodelElementCollection ;
+  rdfs:comment "SMC properties (PropertyAffordances) within InteractionMetadata." .
+
+cssx:ActionsSMC rdf:type owl:Class ;
+  rdfs:subClassOf aas:SubmodelElementCollection ;
+  rdfs:comment "SMC actions (ActionAffordances) within InteractionMetadata." .
+
+cssx:EventsSMC rdf:type owl:Class ;
+  rdfs:subClassOf aas:SubmodelElementCollection ;
+  rdfs:comment "SMC events (EventAffordances) within InteractionMetadata." .
+
+cssx:InterfacePropertySMC rdf:type owl:Class ;
+  rdfs:subClassOf aas:SubmodelElementCollection ;
+  rdfs:comment "A PropertyAffordance entry (readable/writable data point)." .
+
+cssx:InterfaceActionSMC rdf:type owl:Class ;
+  rdfs:subClassOf aas:SubmodelElementCollection ;
+  rdfs:comment "An ActionAffordance entry (invokable operation)." .
+
+cssx:InterfaceEventSMC rdf:type owl:Class ;
+  rdfs:subClassOf aas:SubmodelElementCollection ;
+  rdfs:comment "An EventAffordance entry (subscribable notification)." .
+
+cssx:ExternalDescriptorFile rdf:type owl:Class ;
+  rdfs:subClassOf aas:File ;
+  rdfs:comment "File ExternalDescriptor — external TD document reference." .
+
+# --- AID must contain at least one Interface ---
+
+cssx:AIDSubmodel rdfs:subClassOf [
+  rdf:type owl:Restriction ;
+  owl:onProperty <https://admin-shell.io/aas/3/1/Submodel/submodelElements> ;
+  owl:someValuesFrom cssx:InterfaceSMC ] .
+
+# --- Each Interface must contain EndpointMetadata ---
+
+cssx:InterfaceSMC rdfs:subClassOf [
+  rdf:type owl:Restriction ;
+  owl:onProperty <https://admin-shell.io/aas/3/1/SubmodelElementCollection/value> ;
+  owl:someValuesFrom cssx:EndpointMetadataSMC ] .
+
+# --- Each EndpointMetadata must contain a base URI ---
+
+cssx:EndpointMetadataSMC rdfs:subClassOf [
+  rdf:type owl:Restriction ;
+  owl:onProperty <https://admin-shell.io/aas/3/1/SubmodelElementCollection/value> ;
+  owl:someValuesFrom cssx:EndpointBaseProperty ] .
+
+
+#################################################################
+#################################################################
+##
+##  MODULE 5: SKILLS (CC Type/Instance) — ELEMENT TYPES
+##
+##  SMT structure:
+##    Skills (Submodel)
+##      └─ Skill [SMC, 1..*]
+##           ├─ SkillInterfaceRef [ReferenceElement → Interface in AID]
+##           ├─ Modes [SMC]
+##           │    └─ Mode [Property, 0..*]
+##           └─ Operations [SMC]
+##                └─ SkillOperation [Operation, 0..*]
+##
+#################################################################
+#################################################################
+
+cssx:SkillSMC rdf:type owl:Class ;
+  rdfs:subClassOf aas:SubmodelElementCollection ;
+  rdfs:comment "SMC Skill entry within the Skills submodel." .
+
+cssx:SkillInterfaceRef rdf:type owl:Class ;
+  rdfs:subClassOf aas:ReferenceElement ;
+  rdfs:comment "ReferenceElement pointing to an Interface in AID." .
+
+cssx:SkillModesSMC rdf:type owl:Class ;
+  rdfs:subClassOf aas:SubmodelElementCollection ;
+  rdfs:comment "SMC Modes within a Skill." .
+
+cssx:SkillOperationsSMC rdf:type owl:Class ;
+  rdfs:subClassOf aas:SubmodelElementCollection ;
+  rdfs:comment "SMC Operations within a Skill." .
+
+cssx:SkillOperation rdf:type owl:Class ;
+  rdfs:subClassOf aas:Operation ;
+  rdfs:comment "An Operation exposed by a skill." .
+
+# --- Skills submodel must contain at least one Skill ---
+
+cssx:SkillsSubmodel rdfs:subClassOf [
+  rdf:type owl:Restriction ;
+  owl:onProperty <https://admin-shell.io/aas/3/1/Submodel/submodelElements> ;
+  owl:someValuesFrom cssx:SkillSMC ] .
+
+
+#################################################################
+#################################################################
+##
+##  MODULE 6: CAPABILITIES (IDTA 02020) — ELEMENT TYPES
+##
+##  SMT structure:
+##    Capabilities (Submodel)
+##      └─ CapabilitySet [SMC]
+##           └─ Capability [SMC, 1..*]
+##                ├─ SemanticId [semanticId on the SMC]
+##                └─ RealizedBy [ReferenceElement → Skill in Skills SM]
+##
+#################################################################
+#################################################################
+
+cssx:CapabilitySetSMC rdf:type owl:Class ;
+  rdfs:subClassOf aas:SubmodelElementCollection ;
+  rdfs:comment "SMC CapabilitySet container." .
+
+cssx:CapabilitySMC rdf:type owl:Class ;
+  rdfs:subClassOf aas:SubmodelElementCollection ;
+  rdfs:comment "SMC Capability entry. Must have a semanticId." .
+
+cssx:RealizedByRef rdf:type owl:Class ;
+  rdfs:subClassOf aas:ReferenceElement ;
+  rdfs:comment "ReferenceElement linking a capability to its realizing skill." .
+
+# --- Capabilities submodel must contain a CapabilitySet ---
+
+cssx:CapabilitiesSubmodel rdfs:subClassOf [
+  rdf:type owl:Restriction ;
+  owl:onProperty <https://admin-shell.io/aas/3/1/Submodel/submodelElements> ;
+  owl:someValuesFrom cssx:CapabilitySetSMC ] .
+
+# --- CapabilitySet must contain at least one Capability ---
+
+cssx:CapabilitySetSMC rdfs:subClassOf [
+  rdf:type owl:Restriction ;
+  owl:onProperty <https://admin-shell.io/aas/3/1/SubmodelElementCollection/value> ;
+  owl:someValuesFrom cssx:CapabilitySMC ] .
+
+# --- Each Capability must have a RealizedBy reference ---
+
+cssx:CapabilitySMC rdfs:subClassOf [
+  rdf:type owl:Restriction ;
+  owl:onProperty <https://admin-shell.io/aas/3/1/SubmodelElementCollection/value> ;
+  owl:someValuesFrom cssx:RealizedByRef ] .
+
+# --- Each Capability must have a semanticId ---
+# (semanticId is inherited from aas:HasSemantics and validated by AAS SHACL)
+# We enforce presence for CapabilitySMC specifically:
+
+cssx:CapabilitySMC rdfs:subClassOf [
+  rdf:type owl:Restriction ;
+  owl:onProperty <https://admin-shell.io/aas/3/1/HasSemantics/semanticId> ;
+  owl:minCardinality "1"^^xsd:nonNegativeInteger ] .
+
+
+#################################################################
+#################################################################
+##
+##  MODULE 7: OPERATIONAL DATA (Custom) — ELEMENT TYPES
+##
+##    OperationalData (Submodel)
+##      └─ Datapoint [Property, 1..*]
+##           ├─ valueType: xs:decimal (constrained)
+##           └─ semanticId: mandatory
+##      └─ DatapointGroup [SMC, 0..*]
+##           └─ contains only Datapoint children
+##
+#################################################################
+#################################################################
+
+cssx:Datapoint rdf:type owl:Class ;
+  rdfs:subClassOf aas:Property ;
+  rdfs:comment "A domain-specific measurement or value, represented as an AAS Property." .
+
+# Datapoint must use decimal values
+cssx:Datapoint rdfs:subClassOf [
+  rdf:type owl:Restriction ;
+  owl:onProperty <https://admin-shell.io/aas/3/1/Property/valueType> ;
+  owl:hasValue <https://admin-shell.io/aas/3/1/DataTypeDefXsd/Decimal> ] .
+
+# Datapoint must have exactly one value
+cssx:Datapoint rdfs:subClassOf [
+  rdf:type owl:Restriction ;
+  owl:onProperty <https://admin-shell.io/aas/3/1/Property/value> ;
+  owl:cardinality "1"^^xsd:nonNegativeInteger ] .
+
+# Datapoint must have a semanticId
+cssx:Datapoint rdfs:subClassOf [
+  rdf:type owl:Restriction ;
+  owl:onProperty <https://admin-shell.io/aas/3/1/HasSemantics/semanticId> ;
+  owl:minCardinality "1"^^xsd:nonNegativeInteger ] .
+
+cssx:DatapointGroup rdf:type owl:Class ;
+  rdfs:subClassOf aas:SubmodelElementCollection ;
+  rdfs:comment "A structured group of Datapoints." .
+
+# DatapointGroup may only contain Datapoints
+cssx:DatapointGroup rdfs:subClassOf [
+  rdf:type owl:Restriction ;
+  owl:onProperty <https://admin-shell.io/aas/3/1/SubmodelElementCollection/value> ;
+  owl:allValuesFrom cssx:Datapoint ] .
+
+# OperationalDataSubmodel must contain at least one Datapoint
+cssx:OperationalDataSubmodel rdfs:subClassOf [
+  rdf:type owl:Restriction ;
+  owl:onProperty <https://admin-shell.io/aas/3/1/Submodel/submodelElements> ;
+  owl:someValuesFrom cssx:Datapoint ] .
+
+
+#################################################################
+#################################################################
+##
+##  MODULE 8: PARAMETERS (Custom) — ELEMENT TYPES
+##
+##    Parameters (Submodel)
+##      └─ ParameterEntry [SMC, 1..*]
+##           ├─ name [Property]
+##           ├─ value [Property]
+##           ├─ valueType [Property]
+##           └─ unit [Property, optional]
+##
+#################################################################
+#################################################################
+
+cssx:ParameterEntrySMC rdf:type owl:Class ;
+  rdfs:subClassOf aas:SubmodelElementCollection ;
+  rdfs:comment "A parameter entry within the Parameters submodel." .
+
+# Parameters submodel must contain at least one ParameterEntry
+cssx:ParametersSubmodel rdfs:subClassOf [
+  rdf:type owl:Restriction ;
+  owl:onProperty <https://admin-shell.io/aas/3/1/Submodel/submodelElements> ;
+  owl:someValuesFrom cssx:ParameterEntrySMC ] .
+
+
+#################################################################
+#################################################################
+##
+##  MODULE 9: CROSS-SUBMODEL DEPENDENCY CONSTRAINTS
+##
+##  These use cssx:hasSubmodel (direct links) because the
+##  AAS reference indirection prevents OWL from reasoning
+##  about submodel types across the shell.
+##
+#################################################################
+#################################################################
+
+# --- Mandatory submodels ---
+
+# Every AAS must have exactly one DigitalNameplate
+aas:AssetAdministrationShell rdfs:subClassOf [
+  rdf:type owl:Restriction ;
+  owl:onProperty cssx:hasDigitalNameplateSubmodel ;
+  owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+  owl:onClass cssx:DigitalNameplateSubmodel ] .
+
+# Every AAS must have exactly one HierarchicalStructures
+aas:AssetAdministrationShell rdfs:subClassOf [
+  rdf:type owl:Restriction ;
+  owl:onProperty cssx:hasHierarchicalStructuresSubmodel ;
+  owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+  owl:onClass cssx:HierarchicalStructuresSubmodel ] .
+
+# At most one AID
+aas:AssetAdministrationShell rdfs:subClassOf [
+  rdf:type owl:Restriction ;
+  owl:onProperty cssx:hasAIDSubmodel ;
+  owl:maxQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+  owl:onClass cssx:AIDSubmodel ] .
+
+# --- Conditional dependencies ---
+
+# Skills present → AID required
+[ rdf:type owl:Class ;
+  owl:intersectionOf (
+    aas:AssetAdministrationShell
+    [ rdf:type owl:Restriction ;
+      owl:onProperty cssx:hasSubmodel ;
+      owl:someValuesFrom cssx:SkillsSubmodel ] )
+] rdfs:subClassOf [
+  rdf:type owl:Restriction ;
+  owl:onProperty cssx:hasSubmodel ;
+  owl:someValuesFrom cssx:AIDSubmodel ] .
+
+# OperationalData present → AID required
+[ rdf:type owl:Class ;
+  owl:intersectionOf (
+    aas:AssetAdministrationShell
+    [ rdf:type owl:Restriction ;
+      owl:onProperty cssx:hasSubmodel ;
+      owl:someValuesFrom cssx:OperationalDataSubmodel ] )
+] rdfs:subClassOf [
+  rdf:type owl:Restriction ;
+  owl:onProperty cssx:hasSubmodel ;
+  owl:someValuesFrom cssx:AIDSubmodel ] .
+
+# Parameters present → AID required
+[ rdf:type owl:Class ;
+  owl:intersectionOf (
+    aas:AssetAdministrationShell
+    [ rdf:type owl:Restriction ;
+      owl:onProperty cssx:hasSubmodel ;
+      owl:someValuesFrom cssx:ParametersSubmodel ] )
+] rdfs:subClassOf [
+  rdf:type owl:Restriction ;
+  owl:onProperty cssx:hasSubmodel ;
+  owl:someValuesFrom cssx:AIDSubmodel ] .
+
+# Capabilities present ↔ Skills present (mutual)
+[ rdf:type owl:Class ;
+  owl:intersectionOf (
+    aas:AssetAdministrationShell
+    [ rdf:type owl:Restriction ;
+      owl:onProperty cssx:hasSubmodel ;
+      owl:someValuesFrom cssx:CapabilitiesSubmodel ] )
+] rdfs:subClassOf [
+  rdf:type owl:Restriction ;
+  owl:onProperty cssx:hasSubmodel ;
+  owl:someValuesFrom cssx:SkillsSubmodel ] .
+
+[ rdf:type owl:Class ;
+  owl:intersectionOf (
+    aas:AssetAdministrationShell
+    [ rdf:type owl:Restriction ;
+      owl:onProperty cssx:hasSubmodel ;
+      owl:someValuesFrom cssx:SkillsSubmodel ] )
+] rdfs:subClassOf [
+  rdf:type owl:Restriction ;
+  owl:onProperty cssx:hasSubmodel ;
+  owl:someValuesFrom cssx:CapabilitiesSubmodel ] .
+
+
+#################################################################
+#################################################################
+##
+##  NOTES ON SPARQL-BASED RULES (separate manual SHACL file)
+##
+##  Constraints that cannot be expressed as OWL axioms:
+##
+##  1. Each SkillInterfaceRef must point to an InterfaceSMC
+##     within the AIDSubmodel of the SAME AAS.
+##
+##  2. Each RealizedByRef must point to a SkillSMC within
+##     the SkillsSubmodel of the SAME AAS.
+##
+##  3. Each BomEntity with entityType SelfManagedEntity must
+##     have a globalAssetId (conditional on property value).
+##
+##  4. ArcheTypeProperty value must be one of:
+##     "Full", "OneDown", "OneUp".
+##
+#################################################################
+#################################################################

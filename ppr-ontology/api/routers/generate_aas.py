@@ -30,7 +30,20 @@ from generation.config import load_config, Config
 from generation.context_loader import load_context
 from generation.rag_loader import load_rag
 from generation.prompt_builder import build_system_instruction, build_user_prompt
-from generation.pipeline import run_pipeline
+from generation.pipeline import run_pipeline as run_pipeline_v1
+from generation.v2.pipeline_v2 import run_pipeline as run_pipeline_v2
+
+
+def _select_pipeline(cfg: "Config"):
+    """Return the run_pipeline callable for the active validation.profile."""
+    profile = getattr(cfg, "validation_profile", "v2")
+    if profile == "v1":
+        return run_pipeline_v1
+    return run_pipeline_v2
+
+
+# Default `run_pipeline` — kept for any legacy callers that bypass cfg dispatch.
+run_pipeline = run_pipeline_v2
 
 router = APIRouter()
 
@@ -335,6 +348,9 @@ async def _stream_pipeline(req: GenerateAasRequest) -> AsyncGenerator[str, None]
         rag_dir=base_cfg.rag_dir,
         output_json=base_cfg.output_json,
         output_issues=base_cfg.output_issues,
+        shacl_shapes=base_cfg.shacl_shapes,
+        ontology_paths=base_cfg.ontology_paths,
+        validation_profile=base_cfg.validation_profile,
     )
 
     yield _sse({
@@ -471,7 +487,8 @@ async def _stream_pipeline(req: GenerateAasRequest) -> AsyncGenerator[str, None]
                 supplemental_context=supplemental_context,
             )
 
-            aas_json, conforms, issues, attempts = run_pipeline(
+            run_pipeline_fn = _select_pipeline(cfg)
+            aas_json, conforms, issues, attempts = run_pipeline_fn(
                 cfg,
                 system_instruction,
                 user_prompt,

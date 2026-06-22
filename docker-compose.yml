@@ -165,7 +165,6 @@ services:
     environment:
       - MQTT_BROKER=hivemq-broker
       - MQTT_PORT=1883
-      - PMC_IP=${PMC_IP:-192.168.0.199}
     volumes:
       - ./MQTTSchemas:/app/MQTTSchemas
       - ./AASDescriptions:/app/AASDescriptions
