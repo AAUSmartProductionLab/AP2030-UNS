@@ -173,7 +173,7 @@ bool FillingModule::waitForButton(int buttonPin, unsigned long timeoutMs)
     Serial.print("  Waiting for button on pin ");
     Serial.print(buttonPin);
     Serial.print(", current state: ");
-    Serial.println(digitalRead(buttonPin) == 0 ? "Not pressed" : "Pressed");
+    Serial.println(digitalRead(buttonPin) == LOW ? "LOW (not pressed)" : "HIGH (pressed)");
 
     // Button will read HIGH when physically pressed
     while (digitalRead(buttonPin) == LOW)
@@ -183,7 +183,8 @@ bool FillingModule::waitForButton(int buttonPin, unsigned long timeoutMs)
             Serial.println("  Button wait TIMEOUT");
             return false; // Timeout
         }
-        // delay(5); // Sample the endswitch at 200Hz
+        delay(5); // Sample the endswitch at 200Hz, prevent tight loop
+        esp_task_wdt_reset();
     }
 
     Serial.print("  Button pressed after ");

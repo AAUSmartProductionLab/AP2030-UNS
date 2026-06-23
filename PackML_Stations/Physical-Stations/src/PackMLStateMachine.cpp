@@ -24,12 +24,18 @@ void PackMLStateMachine::subscribeToTopics()
     if (!client->connected())
     {
         Serial.println("⚠️  WARNING: MQTT client is NOT connected! Subscriptions will fail.");
-        Serial.flush();
+        if (Serial)
+        {
+            Serial.flush();
+        }
     }
     else
     {
         Serial.println("✓ MQTT client is connected, proceeding with subscriptions");
-        Serial.flush();
+        if (Serial)
+        {
+            Serial.flush();
+        }
     }
 
     Serial.println("📡 Subscribing to MQTT topics...");
@@ -175,7 +181,7 @@ void PackMLStateMachine::executeCommand(const JsonDocument &message, const Strin
     publishCommandStatus(topic, commandUuid, "RUNNING");
 
     // Create task data
-    TaskData* taskData = new TaskData();
+    TaskData *taskData = new TaskData();
     taskData->sm = this;
     taskData->topic = topic;
     taskData->uuid = commandUuid;
@@ -187,11 +193,10 @@ void PackMLStateMachine::executeCommand(const JsonDocument &message, const Strin
     xTaskCreate(
         processTask,
         "ProcessTask",
-        8192,  // Stack size
-        (void*)taskData,
-        1,     // Priority
-        &processTaskHandle
-    );
+        8192, // Stack size
+        (void *)taskData,
+        1, // Priority
+        &processTaskHandle);
 }
 
 void PackMLStateMachine::executeCommand(const JsonDocument &message, const String &dataTopic,
@@ -264,7 +269,7 @@ void PackMLStateMachine::executeCommand(const JsonDocument &message, const Strin
     publishCommandStatus(topic, commandUuid, "RUNNING");
 
     // Create task data
-    TaskData* taskData = new TaskData();
+    TaskData *taskData = new TaskData();
     taskData->sm = this;
     taskData->topic = topic;
     taskData->uuid = commandUuid;
@@ -276,11 +281,10 @@ void PackMLStateMachine::executeCommand(const JsonDocument &message, const Strin
     xTaskCreate(
         processTask,
         "ProcessTask",
-        8192,  // Stack size
-        (void*)taskData,
-        1,     // Priority
-        &processTaskHandle
-    );
+        8192, // Stack size
+        (void *)taskData,
+        1, // Priority
+        &processTaskHandle);
 }
 
 void PackMLStateMachine::occupyCommand(const String &uuid)
@@ -662,11 +666,11 @@ String PackMLStateMachine::stateToString(PackMLState state)
     }
 }
 
-void PackMLStateMachine::processTask(void* parameter)
+void PackMLStateMachine::processTask(void *parameter)
 {
-    TaskData* data = (TaskData*)parameter;
+    TaskData *data = (TaskData *)parameter;
     bool success = true;
-    
+
     // Execute the function in this separate task
     if (data->isBoolFunc && data->boolFunc)
     {
@@ -677,7 +681,7 @@ void PackMLStateMachine::processTask(void* parameter)
         data->voidFunc();
         success = true;
     }
-    
+
     // Publish completion status
     if (success)
     {
@@ -687,15 +691,15 @@ void PackMLStateMachine::processTask(void* parameter)
     {
         data->sm->publishCommandStatus(data->topic, data->uuid, "FAILURE");
     }
-    
+
     // Mark processing as complete
     data->sm->isProcessing = false;
     data->sm->currentProcessingUuid = "";
     data->sm->processTaskHandle = nullptr;
-    
+
     // Clean up
     delete data;
-    
+
     // Delete this task
     vTaskDelete(NULL);
 }

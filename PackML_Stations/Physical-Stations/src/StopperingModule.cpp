@@ -29,13 +29,19 @@ void StopperingModule::setup(ESP32Module *moduleInstance)
     delay(500);
     Serial.println("\n=== Starting Stoppering Module Setup ===");
     Serial.println("Initializing hardware...");
-    Serial.flush(); // Ensure message is sent
+    if (Serial)
+    {
+        Serial.flush();
+    } // Ensure message is sent
 
     // Initialize stoppering hardware
     initHardware();
 
     Serial.println("Hardware initialization complete");
-    Serial.flush();
+    if (Serial)
+    {
+        Serial.flush();
+    }
 
     // Create PackML state machine with MQTT client from ESP32Module
     stateMachine = new PackMLStateMachine(baseTopic, moduleName, &(esp32Module->getMqttClient()));
@@ -114,7 +120,10 @@ void StopperingModule::initHardware()
 void StopperingModule::initServo()
 {
     Serial.println("Initializing servo to home position");
-    Serial.flush();
+    if (Serial)
+    {
+        Serial.flush();
+    }
 
     // Move to intermediate position
     servo.write(90);
@@ -127,7 +136,10 @@ void StopperingModule::initServo()
     // Keep servo attached during initialization to avoid PWM conflicts
     // It will be detached after first use in runServo()
     Serial.println("Servo initialized to home position");
-    Serial.flush();
+    if (Serial)
+    {
+        Serial.flush();
+    }
 }
 
 void StopperingModule::initLinearActuator()
@@ -235,7 +247,10 @@ void StopperingModule::runLinearActuator()
 void StopperingModule::runServo()
 {
     Serial.println("Moving servo to position stopper");
-    Serial.flush();
+    if (Serial)
+    {
+        Serial.flush();
+    }
 
     // Re-attach servo if needed (in case it was detached)
     if (!servo.attached())
@@ -255,7 +270,10 @@ void StopperingModule::runServo()
     // Detach servo to prevent vibration
     servo.detach();
     Serial.println("Servo cycle complete, servo detached");
-    Serial.flush();
+    if (Serial)
+    {
+        Serial.flush();
+    }
 }
 
 bool StopperingModule::moveDCDown()
@@ -313,9 +331,11 @@ bool StopperingModule::waitForButton(int buttonPin, unsigned long timeoutMs)
     {
         if (millis() - startTime >= timeoutMs)
         {
+            Serial.println("  Button wait TIMEOUT");
             return false; // Timeout
         }
-        // delay(5); // Sample the endswitch at 200Hz
+        delay(5); // Sample the endswitch at 200Hz, prevent tight loop
+        esp_task_wdt_reset();
     }
 
     return true; // Button pressed

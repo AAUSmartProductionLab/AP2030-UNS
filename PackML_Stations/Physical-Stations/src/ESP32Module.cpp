@@ -20,7 +20,10 @@ void ESP32Module::setup(const String &topic, const String &name, unsigned long b
     if (initialized)
     {
         Serial.println("ESP32Module already initialized");
-        Serial.flush();
+        if (Serial)
+        {
+            Serial.flush();
+        }
         return;
     }
 
@@ -33,31 +36,49 @@ void ESP32Module::setup(const String &topic, const String &name, unsigned long b
     }
 
     Serial.println("=== Initializing ESP32 Module ===");
-    Serial.flush();
+    if (Serial)
+    {
+        Serial.flush();
+    }
     delay(100);
 
     baseTopic = topic;
     moduleName = name;
 
     Serial.println("Step 1: Initializing WiFi...");
-    Serial.flush();
+    if (Serial)
+    {
+        Serial.flush();
+    }
     initWiFi();
 
     Serial.println("Step 2: Initializing MQTT...");
-    Serial.flush();
+    if (Serial)
+    {
+        Serial.flush();
+    }
     initMQTT();
 
     Serial.println("Step 3: Initializing Time...");
-    Serial.flush();
+    if (Serial)
+    {
+        Serial.flush();
+    }
     initializeTime();
 
     Serial.println("Step 4: Publishing Description...");
-    Serial.flush();
+    if (Serial)
+    {
+        Serial.flush();
+    }
     publishDescriptionFromFile();
 
     initialized = true;
     Serial.println("=== ESP32 Module Initialized ===\n");
-    Serial.flush();
+    if (Serial)
+    {
+        Serial.flush();
+    }
 }
 
 void ESP32Module::initWiFi()
@@ -66,7 +87,10 @@ void ESP32Module::initWiFi()
     Serial.println(config.ssid);
     Serial.print("with Password: ");
     Serial.println(config.password);
-    Serial.flush();
+    if (Serial)
+    {
+        Serial.flush();
+    }
 
     WiFi.begin(config.ssid, config.password);
 
@@ -85,12 +109,18 @@ void ESP32Module::initWiFi()
         Serial.println("\nWiFi Connected!");
         Serial.print("IP Address: ");
         Serial.println(WiFi.localIP());
-        Serial.flush();
+        if (Serial)
+        {
+            Serial.flush();
+        }
     }
     else
     {
         Serial.println("\nWiFi Connection Failed!");
-        Serial.flush();
+        if (Serial)
+        {
+            Serial.flush();
+        }
     }
 }
 
@@ -100,36 +130,48 @@ void ESP32Module::initMQTT()
     Serial.print(config.mqttServer);
     Serial.print(":");
     Serial.println(config.mqttPort);
-    Serial.flush();
+    if (Serial)
+    {
+        Serial.flush();
+    }
 
     // Configure AsyncMqttClient callbacks using lambda to capture 'this'
     mqttClient.onConnect([this](bool sessionPresent)
                          { 
                              Serial.println("[CALLBACK] onConnect triggered!");
-                             Serial.flush();
+                             if (Serial) { Serial.flush(); }
                              this->onMqttConnect(sessionPresent); });
     mqttClient.onDisconnect([this](AsyncMqttClientDisconnectReason reason)
                             { 
                                 Serial.println("[CALLBACK] onDisconnect triggered!");
-                                Serial.flush();
+                                if (Serial) { Serial.flush(); }
                                 this->onMqttDisconnect(reason); });
     mqttClient.onMessage([this](char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total)
                          { 
                              Serial.println("[CALLBACK] onMessage triggered!");
-                             Serial.flush();
+                             if (Serial) { Serial.flush(); }
                              this->onMqttMessage(topic, payload, properties, len, index, total); });
 
     // Set server and credentials
     Serial.println("Setting MQTT server...");
-    Serial.flush();
+    if (Serial)
+    {
+        Serial.flush();
+    }
     mqttClient.setServer(config.mqttServer, config.mqttPort);
 
     // Connect to MQTT broker
     Serial.println("Calling mqttClient.connect()...");
-    Serial.flush();
+    if (Serial)
+    {
+        Serial.flush();
+    }
     mqttClient.connect();
     Serial.println("mqttClient.connect() called");
-    Serial.flush();
+    if (Serial)
+    {
+        Serial.flush();
+    }
 
 // For ESP32-S3: Wait for async_tcp task to be created, then add it to watchdog
 #if CONFIG_IDF_TARGET_ESP32S3
@@ -274,14 +316,20 @@ void ESP32Module::onMqttDisconnect(AsyncMqttClientDisconnectReason reason)
 {
     Serial.println("MQTT Disconnected: " + String((uint8_t)reason));
     Serial.println("Attempting to reconnect to MQTT broker...");
-    Serial.flush();
+    if (Serial)
+    {
+        Serial.flush();
+    }
 
     // Keep trying to reconnect until successful
     while (WiFi.status() == WL_CONNECTED)
     {
         mqttClient.connect();
         Serial.println("Reconnection attempt sent");
-        Serial.flush();
+        if (Serial)
+        {
+            Serial.flush();
+        }
         // Wait a bit before next attempt
         for (int i = 0; i < 10; ++i)
         {
@@ -290,13 +338,19 @@ void ESP32Module::onMqttDisconnect(AsyncMqttClientDisconnectReason reason)
             if (mqttClient.connected())
             {
                 Serial.println("MQTT reconnected!");
-                Serial.flush();
+                if (Serial)
+                {
+                    Serial.flush();
+                }
                 return;
             }
         }
     }
     Serial.println("WiFi disconnected, cannot reconnect to MQTT");
-    Serial.flush();
+    if (Serial)
+    {
+        Serial.flush();
+    }
 }
 
 void ESP32Module::onMqttMessage(char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total)
