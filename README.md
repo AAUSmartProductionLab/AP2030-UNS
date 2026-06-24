@@ -55,18 +55,18 @@ When running the simulation the stations that has been configured and sent to th
 
 <img src="./Media/VC_Stations_retrieved.png" alt="PMC Layout" width="450" />
 
-The simualtion will be paused and must be reset and started agian to initiliazie all stations properly. Notice that the "USE_AAS" box has been automatically unticked to prevent duplicating stations when restarting the simulation. 
+The simulation will be paused and must be reset and started again to initialize all stations properly. Notice that the "USE_AAS" box has been automatically unchecked to prevent duplicating stations when restarting the simulation. 
 
-After starting the Planar Motor Controller within Visual Components must be disconnected and reconnected to the Planar Motor Simulation to properly initilize the xbots. When reconnecting the xbots should be automatically placed according to the layout defined in the Planar Motor Tool. Notice, the IP Address has been set to 127.0.0.1 (localhost) - can be changed when resetting the simulation.
+After restarting, the Planar Motor Controller, within Visual Components, must be disconnected and reconnected to the Planar Motor Simulation to properly initialize the xbots. When reconnecting, the xbots should automatically be placed according to the layout defined in the Planar Motor Tool. Notice, the IP Address has been set to 127.0.0.1 (localhost) - can be changed when resetting the simulation.
 
 <img src="./Media/VC_Reconnect_PMC.png" alt="PMC Layout" width="450" />
 
 The simulation is now prepared to run any orders that will be planned and sent using the AAS running on Main branch.
 
 # Implementation details
-The AAS_Link process executor loads stations into the main layout using a python script that sends an HTTP request to the AAS (running on another PC or server) to get the stations within the BOM of the aauFillingLineAAS. From these stations the locations can also be retrieved, which is used to place them in the world, accordingly.
+The AAS_Link process executor loads stations into the main layout using a python script that sends an HTTP request to the AAS (running on another PC or server) to get the stations within the BOM of the "aauFillingLineAAS". From these stations, the locations can also be retrieved, which is used to place them in the world, accordingly.
 
 
 Each station that is loaded into Visual Components has an associated python script, which enables it to communicate with its corresponding proxy (see PackML_Stations folder) using MQTT. When any command is retrieved the python scripts will execute the station's process and respond to the proxy afterwards.
 
-The xbots are moved around in VC by shadowing the movements of the Planar Motor Simulation after it receives commands from the behaviour tree controller (the unit orchestrating the processes for a given order).
+The xbots are moved around in VC by shadowing the movements of the Planar Motor Simulation after it receives commands from the behaviour tree controller (the unit orchestrating the processes for a given order). To enable the PMC in Visual Components to shadow the actual (or simulated) PMC an add-on is required. See how to install it at [VC Forum](https://forum.visualcomponents.com/t/new-planar-motor-add-on-for-advanced-motion/4937).
