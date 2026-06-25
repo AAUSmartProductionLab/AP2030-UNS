@@ -1,0 +1,178 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix css: <http://www.w3id.org/hsu-aut/css#> .
+@prefix cssx: <http://www.w3id.org/aau-ra/cssx#> .
+@prefix cask: <http://www.w3id.org/hsu-aut/cask#> .
+@prefix aasv: <http://www.w3id.org/aau-ra/resourceaas-validation#> .
+
+aasv:ResourceAASDependencyShape
+  a sh:NodeShape ;
+  sh:targetClass css:Resource ;
+  sh:targetClass cask:PhysicalResource ;
+  sh:targetClass cask:SoftwareResource ;
+
+  sh:or (
+    [
+      sh:property [
+        sh:path css:providesSkill ;
+        sh:qualifiedValueShape [ sh:class css:Skill ] ;
+        sh:qualifiedMaxCount 0 ;
+      ]
+    ]
+    [
+      sh:property [
+        sh:path css:providesCapability ;
+        sh:qualifiedValueShape [ sh:class css:Capability ] ;
+        sh:qualifiedMinCount 1 ;
+      ]
+    ]
+  ) ;
+
+  sh:or (
+    [
+      sh:property [
+        sh:path css:providesCapability ;
+        sh:qualifiedValueShape [ sh:class css:Capability ] ;
+        sh:qualifiedMaxCount 0 ;
+      ]
+    ]
+    [
+      sh:property [
+        sh:path css:providesSkill ;
+        sh:qualifiedValueShape [ sh:class css:Skill ] ;
+        sh:qualifiedMinCount 1 ;
+      ]
+    ]
+  ) ;
+
+  sh:or (
+    [
+      sh:property [
+        sh:path aasv:hasSubmodel ;
+        sh:qualifiedValueShape [ sh:class aasv:SkillsSubmodel ] ;
+        sh:qualifiedMaxCount 0 ;
+      ]
+    ]
+    [
+      sh:property [
+        sh:path aasv:hasSubmodel ;
+        sh:qualifiedValueShape [ sh:class aasv:CapabilitiesSubmodel ] ;
+        sh:qualifiedMinCount 1 ;
+      ]
+    ]
+  ) ;
+
+  sh:or (
+    [
+      sh:property [
+        sh:path aasv:hasSubmodel ;
+        sh:qualifiedValueShape [ sh:class aasv:CapabilitiesSubmodel ] ;
+        sh:qualifiedMaxCount 0 ;
+      ]
+    ]
+    [
+      sh:property [
+        sh:path aasv:hasSubmodel ;
+        sh:qualifiedValueShape [ sh:class aasv:SkillsSubmodel ] ;
+        sh:qualifiedMinCount 1 ;
+      ]
+    ]
+  ) ;
+
+  sh:property [
+    sh:path css:providesSkill ;
+    sh:node [
+      sh:property [
+        sh:path css:accessibleThrough ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:message "Each provided Skill must expose exactly one SkillInterface." ;
+      ] ;
+    ] ;
+  ] ;
+
+  sh:sparql [
+    a sh:SPARQLConstraint ;
+    sh:message "If Skills, OperationalData, or Parameters are present, AID submodel must be present." ;
+    sh:select """
+      PREFIX css: <http://www.w3id.org/hsu-aut/css#>
+      PREFIX cssx: <http://www.w3id.org/aau-ra/cssx#>
+      PREFIX aasv: <http://www.w3id.org/aau-ra/resourceaas-validation#>
+      SELECT $this
+      WHERE {
+        FILTER(
+          (
+            EXISTS { $this css:providesSkill ?skill }
+            || EXISTS { $this aasv:hasSubmodel ?skillSm . ?skillSm a aasv:SkillsSubmodel . }
+            || EXISTS { $this cssx:hasOperationalData ?opData }
+            || EXISTS { $this aasv:hasSubmodel ?opSm . ?opSm a aasv:OperationalDataSubmodel . }
+            || EXISTS { $this cssx:hasResourceParameter ?param }
+            || EXISTS { $this aasv:hasSubmodel ?paramSm . ?paramSm a aasv:ParametersSubmodel . }
+          )
+          && !EXISTS {
+            $this aasv:hasSubmodel ?aidSm .
+            ?aidSm a aasv:AIDSubmodel .
+          }
+        )
+      }
+    """ ;
+  ] ;
+
+  sh:sparql [
+    a sh:SPARQLConstraint ;
+    sh:message "If Skills are present, a SoftwareInterface must be present and linked to the skill interface." ;
+    sh:select """
+      PREFIX css: <http://www.w3id.org/hsu-aut/css#>
+      PREFIX cssx: <http://www.w3id.org/aau-ra/cssx#>
+      SELECT $this
+      WHERE {
+        FILTER (
+          EXISTS { $this css:providesSkill ?skill }
+          && !EXISTS {
+            $this cssx:hasResourceInterface ?resourceInterface .
+            ?resourceInterface a cssx:SoftwareInterface .
+            ?skill css:accessibleThrough ?skillInterface .
+            ?skillInterface a css:SkillInterface .
+            ?skillInterface cssx:skillInterfaceUsesSoftwareInterface ?resourceInterface .
+          }
+        )
+      }
+    """ ;
+  ] ;
+
+  sh:sparql [
+    a sh:SPARQLConstraint ;
+    sh:message "If AID exists, at least one ResourceInterface must be mapped for the Resource." ;
+    sh:select """
+      PREFIX aasv: <http://www.w3id.org/aau-ra/resourceaas-validation#>
+      PREFIX cssx: <http://www.w3id.org/aau-ra/cssx#>
+      SELECT $this
+      WHERE {
+        FILTER (
+          EXISTS {
+            $this aasv:hasSubmodel ?aidSm .
+            ?aidSm a aasv:AIDSubmodel .
+          }
+          && !EXISTS { $this cssx:hasResourceInterface ?ri . }
+        )
+      }
+    """ ;
+  ] ;
+
+  sh:sparql [
+    a sh:SPARQLConstraint ;
+    sh:message "Each SkillInterface must use a ResourceInterface provided by the same Resource." ;
+    sh:select """
+      PREFIX css: <http://www.w3id.org/hsu-aut/css#>
+      PREFIX cssx: <http://www.w3id.org/aau-ra/cssx#>
+      SELECT $this
+      WHERE {
+        $this css:providesSkill ?skill .
+        ?skill css:accessibleThrough ?skillInterface .
+        FILTER NOT EXISTS {
+          ?skillInterface cssx:skillInterfaceUsesSoftwareInterface ?resourceInterface .
+          $this cssx:hasResourceInterface ?resourceInterface .
+        }
+      }
+    """ ;
+  ] .

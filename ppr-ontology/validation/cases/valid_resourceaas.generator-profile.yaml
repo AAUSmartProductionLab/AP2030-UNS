@@ -1,0 +1,156 @@
+PHARM_DISP_VF_001_AAS:
+  idShort: PHARM_DISP_VF_001_AAS
+  id: https://pharma-example.org/ids/aas/PHARM-DISP-VF-001
+  globalAssetId: https://pharma-example.org/ids/assets/PHARM-DISP-VF-001
+  DigitalNameplate:
+    URIOfTheProduct: https://smartproductionlab.aau.dk/PPR/assets/PharmDispensingModule/VF-001
+    ManufacturerName: Syntegon Technology GmbH
+    ManufacturerProductDesignation: MLF 5000 – Dispensing & Weighing Module (Vials
+      and Cartridges)
+    ManufacturerProductFamily: MLF Series Dispensing Modules
+    ManufacturerArticleNumber: MLF5000-VF-GMP
+    SerialNumber: SN-2024-MLF-001
+    BatchNumber: BN-2024-Q1-001
+    YearOfConstruction: '2024'
+    DateOfManufacture: '2024-02-15'
+    HardwareVersion: v4.1
+    SoftwareVersion: MLF-SW v7.2.1 GxP
+    CountryOfOrigin: DE
+  AID:
+    InterfaceMQTT:
+      InteractionMetadata:
+        actions: {}
+        properties:
+          net_weight:
+            key: net_weight
+            title: Net fill weight
+            forms:
+              href: pharma/MLF5000/net_weight
+              contentType: application/json
+              mqv_retain: 'false'
+              mqv_controlPacket: subscribe
+              mqv_qos: '1'
+          fill_volume:
+            key: fill_volume
+            title: Dispensed fill volume
+            forms:
+              href: pharma/MLF5000/fill_volume
+              contentType: application/json
+              mqv_retain: 'false'
+              mqv_controlPacket: subscribe
+              mqv_qos: '1'
+          pump_pressure:
+            key: pump_pressure
+            title: Dispensing pump pressure
+            forms:
+              href: pharma/MLF5000/pump_pressure
+              contentType: application/json
+              mqv_retain: 'false'
+              mqv_controlPacket: subscribe
+              mqv_qos: '1'
+          product_temperature:
+            key: product_temperature
+            title: Product temperature
+            forms:
+              href: pharma/MLF5000/product_temperature
+              contentType: application/json
+              mqv_retain: 'false'
+              mqv_controlPacket: subscribe
+              mqv_qos: '1'
+          balance_reading:
+            key: balance_reading
+            title: Analytical balance gross reading
+            forms:
+              href: pharma/MLF5000/balance_reading
+              contentType: application/json
+              mqv_retain: 'false'
+              mqv_controlPacket: subscribe
+              mqv_qos: '1'
+          fill_weight_timeseries:
+            key: fill_weight_timeseries
+            title: Batch fill weight time series stream
+            forms:
+              href: pharma/MLF5000/fill_weight_timeseries
+              contentType: application/json
+              mqv_retain: 'false'
+              mqv_controlPacket: subscribe
+              mqv_qos: '1'
+          state:
+            key: state
+            title: Module PackML state
+            forms:
+              href: pharma/MLF5000/state
+              contentType: application/json
+              mqv_retain: 'false'
+              mqv_controlPacket: subscribe
+              mqv_qos: '1'
+      Title: MLF5000 MQTT Interface
+      EndpointMetadata:
+        base: mqtt://192.168.20.50:1883/
+        contentType: application/json
+  Variables:
+    LogicalData_FillingControl:
+      semanticId: https://smartproductionlab.aau.dk/PPR/OperationalData/LogicalData/FillingControl
+    StateData_DispensingModule:
+      semanticId: https://smartproductionlab.aau.dk/PPR/OperationalData/StateData/DispensingModule
+  Parameters:
+    ModuleLinePosition:
+      ParameterValue: Station_03
+      Unit: ''
+    ModuleLineId:
+      ParameterValue: FILLLINE-A-001
+      Unit: ''
+    BalanceCalibrationOffset:
+      ParameterValue: '0.000'
+      Unit: g
+    BalanceCalibrationDate:
+      ParameterValue: '2024-07-01'
+      Unit: ''
+    BalanceCertificateId:
+      ParameterValue: CAL-SAR-2024-0701
+      Unit: ''
+    PumpCalibrationFactor:
+      ParameterValue: '1.000'
+      Unit: ''
+    PumpCalibrationDate:
+      ParameterValue: '2024-07-01'
+      Unit: ''
+    MaxAllowedFillVolumeML:
+      ParameterValue: '50.0'
+      Unit: mL
+    MinAllowedFillVolumeML:
+      ParameterValue: '0.1'
+      Unit: mL
+    MaxProductTemperatureC:
+      ParameterValue: '25.0'
+      Unit: °C
+    MaxContainerThroughput:
+      ParameterValue: '3600'
+      Unit: containers/h
+    GMP_ZoneClass:
+      ParameterValue: ISO 5 / EU GMP Grade A
+      Unit: ''
+  HierarchicalStructures:
+    Name: PHARM_DISP_VF_001
+  Capabilities:
+    DispensingCapability:
+      semantic_id: https://smartproductionlab.aau.dk/PPR/capabilities/Dispensing/1/0
+    WeighingCapability:
+      semantic_id: https://smartproductionlab.aau.dk/PPR/capabilities/Weighing/1/0
+  Skills:
+    DispenseSkill:
+      semantic_id: https://smartproductionlab.aau.dk/PPR/skills/DispenseSkill/1/0
+      description: Dispense Target Volume into Container
+      interface: Dispense
+    WeighSkill:
+      semantic_id: https://smartproductionlab.aau.dk/PPR/skills/WeighSkill/1/0
+      description: Gravimetric Check-Weighing of Filled Container
+      interface: Weigh
+    PrimeSkill:
+      semantic_id: https://smartproductionlab.aau.dk/PPR/skills/PrimeSkill/1/0
+      description: Prime Dispensing Pump and Purge Air
+      interface: Prime
+    TareSkill:
+      semantic_id: https://smartproductionlab.aau.dk/PPR/skills/TareSkill/1/0
+      description: Tare Empty Container on Analytical Balance
+      interface: Tare

@@ -1,0 +1,53 @@
+@prefix aasv: <http://www.w3id.org/aau-ra/resourceaas-validation#> .
+@prefix css: <http://www.w3id.org/hsu-aut/css#> .
+@prefix cssx: <http://www.w3id.org/aau-ra/cssx#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1AAS> a css:Resource ;
+    cssx:dateOfManufacture "[VERIFY: manufacture date YYYY-MM-DD]"^^xsd:date ;
+    cssx:hasManufacturer <https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1AAS#manufacturer> ;
+    cssx:hasResourceBoM <https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1AAS#resource-bom-1> ;
+    cssx:manufacturerProductDesignation "CA18CLC12BPM1" ;
+    cssx:serialNumber "CA18CLC12BPM1" ;
+    cssx:uriOfTheProduct "https://smartproductionlab.aau.dk/assets/CA18CLC12BPM1AAS"^^xsd:anyURI ;
+    aasv:hasDigitalNameplateSubmodel <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/Nameplate> ;
+    aasv:hasHierarchicalStructuresSubmodel <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/HierarchicalStructures> ;
+    aasv:hasMappedElement <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/HierarchicalStructures#trace-archetype-0-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/HierarchicalStructures#trace-entrynode-1-0> ;
+    aasv:hasSubmodel <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/HierarchicalStructures>,
+        <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/Nameplate> ;
+    aasv:sourceIdShort "CA18CLC12BPM1AAS" .
+
+<https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1AAS#manufacturer> a cssx:Manufacturer ;
+    cssx:manufacturerName "Carlo Gavazzi"@en .
+
+<https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1AAS#resource-bom-1> a cssx:ResourceBoM ;
+    cssx:hasBoMItem <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/HierarchicalStructures#bom-entry-parentsystemaas> .
+
+<https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/HierarchicalStructures> a aasv:HierarchicalStructuresSubmodel ;
+    aasv:bomArchetype "OneUp" ;
+    aasv:bomName "BillOfMaterials" ;
+    aasv:hasBomEntry <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/HierarchicalStructures#bom-entry-parentsystemaas> ;
+    aasv:hasIdShort "HierarchicalStructures" ;
+    aasv:hasMappedElement <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/HierarchicalStructures#trace-archetype-0-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/HierarchicalStructures#trace-entrynode-1-0> ;
+    aasv:sourceSemanticId "https://admin-shell.io/idta/HierarchicalStructures/1/1/Submodel" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/HierarchicalStructures#bom-entry-parentsystemaas> a cssx:ResourceBoMItem,
+        aasv:BomEntry ;
+    cssx:itemNumber "parentSystemAAS" ;
+    aasv:bomEntryGlobalAssetId "[VERIFY: parent system globalAssetId]" ;
+    aasv:bomEntryName "parentSystemAAS" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/HierarchicalStructures#trace-archetype-0-0> aasv:sourceElementPath "ArcheType[0]" ;
+    aasv:sourceIdShort "ArcheType" ;
+    aasv:sourceSemanticId "https://admin-shell.io/idta/HierarchicalStructures/ArcheType/1/0" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/HierarchicalStructures#trace-entrynode-1-0> aasv:sourceElementPath "EntryNode[1]" ;
+    aasv:sourceIdShort "EntryNode" ;
+    aasv:sourceSemanticId "https://admin-shell.io/idta/HierarchicalStructures/EntryNode/1/0" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1AAS/Nameplate> a aasv:DigitalNameplateSubmodel ;
+    aasv:hasIdShort "DigitalNameplate" ;
+    aasv:sourceSemanticId "https://admin-shell.io/IDTA 02006-3-0" .
+

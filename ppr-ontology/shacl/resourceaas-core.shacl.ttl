@@ -1,0 +1,29 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix css: <http://www.w3id.org/hsu-aut/css#> .
+@prefix cask: <http://www.w3id.org/hsu-aut/cask#> .
+@prefix aasv: <http://www.w3id.org/aau-ra/resourceaas-validation#> .
+
+aasv:ResourceAASCoreShape
+  a sh:NodeShape ;
+  sh:targetClass css:Resource ;
+  sh:targetClass cask:PhysicalResource ;
+  sh:targetClass cask:SoftwareResource ;
+  sh:message "ResourceAAS core structure is invalid." ;
+
+  sh:property [
+    sh:path aasv:hasSubmodel ;
+    sh:qualifiedValueShape [ sh:class aasv:DigitalNameplateSubmodel ] ;
+    sh:qualifiedMinCount 1 ;
+    sh:qualifiedMaxCount 1 ;
+    sh:message "DigitalNameplate submodel is mandatory." ;
+  ] ;
+
+  sh:property [
+    sh:path aasv:hasSubmodel ;
+    sh:qualifiedValueShape [ sh:class aasv:HierarchicalStructuresSubmodel ] ;
+    sh:qualifiedMinCount 1 ;
+    sh:qualifiedMaxCount 1 ;
+    sh:message "HierarchicalStructures (BoM-equivalent) submodel is mandatory." ;
+  ] .

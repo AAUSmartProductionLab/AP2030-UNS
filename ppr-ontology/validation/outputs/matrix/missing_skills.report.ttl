@@ -1,0 +1,28 @@
+@prefix css: <http://www.w3id.org/hsu-aut/css#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+[] a sh:ValidationReport ;
+    sh:conforms false ;
+    sh:result [ a sh:ValidationResult ;
+            sh:focusNode <https://pharma-example.org/ids/aas/PHARM-DISP-VF-001> ;
+            sh:resultMessage "Less than 1 values on <https://pharma-example.org/ids/aas/PHARM-DISP-VF-001>->css:providesSkill" ;
+            sh:resultPath css:providesSkill ;
+            sh:resultSeverity sh:Violation ;
+            sh:sourceConstraintComponent sh:MinCountConstraintComponent ;
+            sh:sourceShape css:Resource-providesSkill ],
+        [ a sh:ValidationResult ;
+            sh:focusNode <https://pharma-example.org/ids/aas/PHARM-DISP-VF-001#capability-dispensingcapability> ;
+            sh:resultMessage "Less than 1 values on <https://pharma-example.org/ids/aas/PHARM-DISP-VF-001#capability-dispensingcapability>->css:isRealizedBySkill" ;
+            sh:resultPath css:isRealizedBySkill ;
+            sh:resultSeverity sh:Violation ;
+            sh:sourceConstraintComponent sh:MinCountConstraintComponent ;
+            sh:sourceShape css:Capability-isRealizedBySkill ],
+        [ a sh:ValidationResult ;
+            sh:focusNode <https://pharma-example.org/ids/aas/PHARM-DISP-VF-001#capability-weighingcapability> ;
+            sh:resultMessage "Less than 1 values on <https://pharma-example.org/ids/aas/PHARM-DISP-VF-001#capability-weighingcapability>->css:isRealizedBySkill" ;
+            sh:resultPath css:isRealizedBySkill ;
+            sh:resultSeverity sh:Violation ;
+            sh:sourceConstraintComponent sh:MinCountConstraintComponent ;
+            sh:sourceShape css:Capability-isRealizedBySkill ] .
+

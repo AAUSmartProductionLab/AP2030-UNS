@@ -1,0 +1,50 @@
+% Model comparison table — run model-comparison-v2b
+% Equipment: LinFill-120 (filling station, MQTT) and PlungerSet-80 (stoppering station, OPC-UA)
+% Input: lifecycle PDF + interface spec (MQTT or NodeSet XML) + line BOM PDF
+% Gemini-3-Flash on LinFill-120 excluded (JSON truncation error on all attempts).
+
+\begin{table}[ht]
+\centering
+\caption{%
+  Model comparison on two pharmaceutical filling-line assets (v2b evaluation).
+  \textbf{V@A$k$}: number of SHACL constraint violations on attempt $k$
+  (\texttt{---} = attempt not reached).
+  \textbf{Att.}: total retry-loop iterations consumed.
+  \textbf{MandCov}: mandatory-field coverage $\in[0,1]$ — fraction of required
+  AAS submodel elements present in the final output.
+  \textbf{ValAcc}: value accuracy $\in[0,1]$ — fraction of ground-truth values
+  matched by substring in the generated AAS.
+  \textbf{Verify}: uncertainty rate $\in[0,1]$ — fraction of populated fields
+  flagged \texttt{[VERIFY:]} by the model.
+  \textbf{Time}: total wall-clock time for all attempts combined.
+  Gemini-3-Flash on the filling station is omitted (JSON parse error on all 3 attempts).%
+}
+\label{tab:model-comparison-v2b}
+\small
+\begin{tabular}{llcrrrccccc}
+\toprule
+\multirow{2}{*}{\textbf{Model}} &
+\multirow{2}{*}{\textbf{Equipment}} &
+\multirow{2}{*}{\textbf{Conforms}} &
+\multicolumn{3}{c}{\textbf{Violations}} &
+\multirow{2}{*}{\textbf{Att.}} &
+\multirow{2}{*}{\textbf{MandCov}} &
+\multirow{2}{*}{\textbf{ValAcc}} &
+\multirow{2}{*}{\textbf{Verify}} &
+\multirow{2}{*}{\textbf{Time (s)}} \\
+\cmidrule(lr){4-6}
+& & & \textbf{V@A1} & \textbf{V@A2} & \textbf{V@A3} & & & & & \\
+\midrule
+% --- LinFill-120 (filling station, MQTT interface) ---
+Claude Sonnet 4.6   & LinFill-120    & \checkmark & 5 &  0 & \text{---} & 2 & 1.000 & 0.750 & 0.000 &  60.9 \\
+Claude Haiku 4.5    & LinFill-120    & \texttimes & 1 &  1 &  1         & 3 & 0.867 & 0.714 & 0.000 &  79.7 \\
+Gemini 3.1 Pro      & LinFill-120    & \checkmark & 5 &  0 & \text{---} & 2 & 0.933 & 0.714 & 0.000 &  94.8 \\
+\midrule
+% --- PlungerSet-80 (stoppering station, OPC-UA NodeSet interface) ---
+Claude Sonnet 4.6   & PlungerSet-80  & \texttimes & 1 &  1 &  7         & 3 & 0.333 & 0.000 & 0.600 & 317.3 \\
+Claude Haiku 4.5    & PlungerSet-80  & \texttimes & 1 &  9 &  1         & 3 & 0.000 & 1.000 & 0.000 & 108.4 \\
+Gemini 3.1 Pro      & PlungerSet-80  & \texttimes & 6 &  1 &  1         & 3 & 0.733 & 0.750 & 0.000 & 240.1 \\
+Gemini 3 Flash      & PlungerSet-80  & \texttimes & 1 &  1 &  6         & 3 & 0.733 & 0.750 & 0.000 & 301.6 \\
+\bottomrule
+\end{tabular}
+\end{table}

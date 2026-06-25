@@ -1,0 +1,27 @@
+asset_name: "CA18CLC12BPM1"
+asset_type: "sensor/proximity/capacitive"
+protocol: "mqtt"
+base_url: "https://smartproductionlab.aau.dk"
+selected_submodels:
+  - Nameplate
+  - HierarchicalStructures
+  - AID
+  - Skills
+  - Capabilities
+  - OperationalData
+
+# Real datasheet (replace path with the absolute one you used during the
+# initial UI test). If absent, the runner falls back to spec.md.
+datasheet: "datasheet.pdf"
+
+# Synthetic interface specification — vendors rarely publish per-component
+# MQTT/OPC UA mappings. We declare a realistic CSV that lists actions and
+# properties as they'd appear in a production UNS-aware controller.
+interface_files:
+  - { path: "interface.csv", kind: "csv-mqtt-actions-properties" }
+
+# Used by the runner if the runtime PDF isn't available; otherwise PDF wins.
+notes: |
+  Carlo Gavazzi CA18CLC12BPM1 — capacitive proximity sensor, M18, DC PNP/NPN
+  selectable, teach-in tuning. Real datasheet is the published Carlo Gavazzi
+  product page. MQTT interface is synthetic for evaluation purposes.

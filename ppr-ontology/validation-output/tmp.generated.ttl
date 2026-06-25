@@ -1,0 +1,50 @@
+@prefix aasv: <http://www.w3id.org/aau-ra/resourceaas-validation#> .
+@prefix css: <http://www.w3id.org/hsu-aut/css#> .
+@prefix cssx: <http://www.w3id.org/aau-ra/cssx#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1> a css:Resource ;
+    cssx:dateOfManufacture "[VERIFY: DateOfManufacture not found in datasheet]"^^xsd:date ;
+    cssx:hardwareVersion "[VERIFY: HardwareVersion not found in datasheet]" ;
+    cssx:hasManufacturer <https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1#manufacturer> ;
+    cssx:hasResourceBoM <https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1#resource-bom-1> ;
+    cssx:manufacturerProductDesignation "CA18CLC12BPM1" ;
+    cssx:manufacturerProductFamily "[VERIFY: ManufacturerProductFamily not found in datasheet]" ;
+    cssx:productArticleNumberOfManufacturer "[VERIFY: ManufacturerArticleNumber not found in datasheet]" ;
+    cssx:serialNumber "[VERIFY: SerialNumber not found in datasheet]" ;
+    cssx:softwareVersion "[VERIFY: SoftwareVersion not found in datasheet]" ;
+    cssx:uriOfTheProduct "[VERIFY: URIOfTheProduct not found in datasheet]"^^xsd:anyURI ;
+    cssx:yearOfConstruction "[VERIFY: YearOfConstruction unclear — datasheet mentions 2010 revision but no manufacture date]" ;
+    aasv:hasDigitalNameplateSubmodel <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1/DigitalNameplate> ;
+    aasv:hasHierarchicalStructuresSubmodel <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1/HierarchicalStructures> ;
+    aasv:hasMappedElement <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1/HierarchicalStructures#trace-archetype-0-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1/HierarchicalStructures#trace-ca18clc12bpm1-1-0> ;
+    aasv:hasSubmodel <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1/DigitalNameplate>,
+        <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1/HierarchicalStructures> ;
+    aasv:sourceIdShort "CA18CLC12BPM1_AAS" .
+
+<https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1#manufacturer> a cssx:Manufacturer ;
+    cssx:manufacturerName "Carlo Gavazzi"@en .
+
+<https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1#resource-bom-1> a cssx:ResourceBoM .
+
+<https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1/DigitalNameplate> a aasv:DigitalNameplateSubmodel ;
+    aasv:hasIdShort "DigitalNameplate" ;
+    aasv:sourceSemanticId "https://admin-shell.io/idta/nameplate/3/0/Nameplate" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1/HierarchicalStructures> a aasv:HierarchicalStructuresSubmodel ;
+    aasv:bomArchetype "OneUp" ;
+    aasv:bomName "CA18CLC12BPM1" ;
+    aasv:hasIdShort "HierarchicalStructures" ;
+    aasv:hasMappedElement <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1/HierarchicalStructures#trace-archetype-0-0>,
+        <https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1/HierarchicalStructures#trace-ca18clc12bpm1-1-0> ;
+    aasv:sourceSemanticId "https://admin-shell.io/idta/HierarchicalStructures/1/1/Submodel" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1/HierarchicalStructures#trace-archetype-0-0> aasv:sourceElementPath "ArcheType[0]" ;
+    aasv:sourceIdShort "ArcheType" ;
+    aasv:sourceSemanticId "https://admin-shell.io/idta/HierarchicalStructures/1/1/ArcheType" .
+
+<https://smartproductionlab.aau.dk/submodels/instances/CA18CLC12BPM1/HierarchicalStructures#trace-ca18clc12bpm1-1-0> aasv:sourceElementPath "CA18CLC12BPM1[1]" ;
+    aasv:sourceIdShort "CA18CLC12BPM1" ;
+    aasv:sourceSemanticId "https://admin-shell.io/idta/HierarchicalStructures/1/1/EntryNode" .
+

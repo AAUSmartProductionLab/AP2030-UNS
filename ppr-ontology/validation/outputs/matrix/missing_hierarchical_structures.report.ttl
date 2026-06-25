@@ -1,0 +1,23 @@
+@prefix aasv: <http://www.w3id.org/aau-ra/resourceaas-validation#> .
+@prefix css: <http://www.w3id.org/hsu-aut/css#> .
+@prefix cssx: <http://www.w3id.org/aau-ra/cssx#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+[] a sh:ValidationReport ;
+    sh:conforms false ;
+    sh:result [ a sh:ValidationResult ;
+            sh:focusNode <https://pharma-example.org/ids/aas/PHARM-DISP-VF-001> ;
+            sh:resultMessage "Less than 1 values on <https://pharma-example.org/ids/aas/PHARM-DISP-VF-001>->cssx:hasResourceBoM" ;
+            sh:resultPath cssx:hasResourceBoM ;
+            sh:resultSeverity sh:Violation ;
+            sh:sourceConstraintComponent sh:MinCountConstraintComponent ;
+            sh:sourceShape css:Resource-hasResourceBoM ],
+        [ a sh:ValidationResult ;
+            sh:focusNode <https://pharma-example.org/ids/aas/PHARM-DISP-VF-001> ;
+            sh:resultMessage "Less than 1 values on <https://pharma-example.org/ids/aas/PHARM-DISP-VF-001>->aasv:hasHierarchicalStructuresSubmodel" ;
+            sh:resultPath aasv:hasHierarchicalStructuresSubmodel ;
+            sh:resultSeverity sh:Violation ;
+            sh:sourceConstraintComponent sh:MinCountConstraintComponent ;
+            sh:sourceShape css:Resource-hasHierarchicalStructuresSubmodel ] .
+

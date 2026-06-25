@@ -1,0 +1,141 @@
+@prefix : <http://www.w3id.org/aau-ra/cssx#> .
+@prefix css: <http://www.w3id.org/hsu-aut/css#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+#################################################################
+#    Classes
+#################################################################
+
+###  http://www.w3id.org/aau-ra/cssx#OperationalData
+:OperationalData rdf:type owl:Class ;
+  rdfs:comment "Operational data associated with a resource during use." .
+
+###  http://www.w3id.org/aau-ra/cssx#MeasurementData
+:MeasurementData rdf:type owl:Class ;
+  rdfs:subClassOf :OperationalData ;
+  rdfs:comment "Measured operational data such as sensor readings." .
+
+###  http://www.w3id.org/aau-ra/cssx#TimeSeriesData
+:TimeSeriesData rdf:type owl:Class ;
+  rdfs:subClassOf :OperationalData ;
+  rdfs:comment "Operational data represented as time series." .
+
+###  http://www.w3id.org/aau-ra/cssx#LogicalData
+:LogicalData rdf:type owl:Class ;
+  rdfs:subClassOf :OperationalData ;
+  rdfs:comment "Logical operational data such as flags or boolean variables." .
+
+###  http://www.w3id.org/aau-ra/cssx#StateData
+:StateData rdf:type owl:Class ;
+  rdfs:subClassOf :OperationalData ;
+  rdfs:comment "Operational state variables of a resource." .
+
+###  http://www.w3id.org/aau-ra/cssx#MeasuredValue
+:MeasuredValue rdf:type owl:Class ;
+  rdfs:comment "Value object associated with a measurement data point." .
+
+###  http://www.w3id.org/aau-ra/cssx#MeasurementQualifier
+:MeasurementQualifier rdf:type owl:Class ;
+  rdfs:comment "Qualifier metadata describing context or quality of a measurement." .
+
+###  http://www.w3id.org/aau-ra/cssx#DataConcept
+:DataConcept rdf:type owl:Class ;
+  rdfs:comment "Conceptual descriptor for operational data semantics." .
+
+###  http://www.w3id.org/aau-ra/cssx#TimeSeriesMetadata
+:TimeSeriesMetadata rdf:type owl:Class ;
+  rdfs:comment "Metadata describing a time-series dataset." .
+
+###  http://www.w3id.org/aau-ra/cssx#TimeSeriesSegment
+:TimeSeriesSegment rdf:type owl:Class ;
+  rdfs:comment "Segment of a time-series dataset." .
+
+:MeasurementData rdfs:subClassOf [ rdf:type owl:Restriction ;
+  owl:onProperty :hasMeasuredValue ;
+  owl:someValuesFrom :MeasuredValue
+] .
+
+:OperationalData rdfs:subClassOf [ rdf:type owl:Restriction ;
+  owl:onProperty :dataReferencesInterface ;
+  owl:someValuesFrom :ResourceInterface
+] .
+
+#################################################################
+#    Object Properties
+#################################################################
+
+###  http://www.w3id.org/aau-ra/cssx#hasOperationalData
+:hasOperationalData rdf:type owl:ObjectProperty ;
+  rdfs:domain css:Resource ;
+  rdfs:range :OperationalData .
+
+###  http://www.w3id.org/aau-ra/cssx#hasMeasuredValue
+:hasMeasuredValue rdf:type owl:ObjectProperty ;
+  rdfs:domain :MeasurementData ;
+  rdfs:range :MeasuredValue .
+
+###  http://www.w3id.org/aau-ra/cssx#hasMeasurementQualifier
+:hasMeasurementQualifier rdf:type owl:ObjectProperty ;
+  rdfs:domain :MeasurementData ;
+  rdfs:range :MeasurementQualifier .
+
+###  http://www.w3id.org/aau-ra/cssx#hasDataConcept
+:hasDataConcept rdf:type owl:ObjectProperty ;
+  rdfs:domain :OperationalData ;
+  rdfs:range :DataConcept .
+
+###  http://www.w3id.org/aau-ra/cssx#hasTimeSeriesMetadata
+:hasTimeSeriesMetadata rdf:type owl:ObjectProperty ;
+  rdfs:domain :TimeSeriesData ;
+  rdfs:range :TimeSeriesMetadata .
+
+###  http://www.w3id.org/aau-ra/cssx#hasTimeSeriesSegment
+:hasTimeSeriesSegment rdf:type owl:ObjectProperty ;
+  rdfs:domain :TimeSeriesData ;
+  rdfs:range :TimeSeriesSegment .
+
+###  http://www.w3id.org/aau-ra/cssx#dataReferencesInterface
+:dataReferencesInterface rdf:type owl:ObjectProperty ;
+  rdfs:domain :OperationalData ;
+  rdfs:range :ResourceInterface .
+
+#################################################################
+#    Datatype Properties
+#################################################################
+
+###  http://www.w3id.org/aau-ra/cssx#measurementTimestamp
+:measurementTimestamp rdf:type owl:DatatypeProperty ;
+  rdfs:domain :MeasurementData ;
+  rdfs:range xsd:dateTime .
+
+###  http://www.w3id.org/aau-ra/cssx#measuredNumericValue
+:measuredNumericValue rdf:type owl:DatatypeProperty ;
+  rdfs:domain :MeasuredValue ;
+  rdfs:range xsd:decimal .
+
+###  http://www.w3id.org/aau-ra/cssx#measuredUnit
+:measuredUnit rdf:type owl:DatatypeProperty ;
+  rdfs:domain :MeasuredValue ;
+  rdfs:range xsd:string .
+
+###  http://www.w3id.org/aau-ra/cssx#timeSeriesStart
+:timeSeriesStart rdf:type owl:DatatypeProperty ;
+  rdfs:domain :TimeSeriesSegment ;
+  rdfs:range xsd:dateTime .
+
+###  http://www.w3id.org/aau-ra/cssx#timeSeriesEnd
+:timeSeriesEnd rdf:type owl:DatatypeProperty ;
+  rdfs:domain :TimeSeriesSegment ;
+  rdfs:range xsd:dateTime .
+
+###  http://www.w3id.org/aau-ra/cssx#timeSeriesValueCount
+:timeSeriesValueCount rdf:type owl:DatatypeProperty ;
+  rdfs:domain :TimeSeriesSegment ;
+  rdfs:range xsd:integer .
+
+#################################################################
+#    Individuals
+#################################################################

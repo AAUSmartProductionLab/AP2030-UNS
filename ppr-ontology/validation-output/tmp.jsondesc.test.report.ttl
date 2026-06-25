@@ -1,0 +1,38 @@
+@prefix css: <http://www.w3id.org/hsu-aut/css#> .
+@prefix cssx: <http://www.w3id.org/aau-ra/cssx#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+[] a sh:ValidationReport ;
+    sh:conforms false ;
+    sh:result [ a sh:ValidationResult ;
+            sh:focusNode <https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1AAS> ;
+            sh:resultMessage "Value is not Literal with datatype rdf:langString" ;
+            sh:resultPath cssx:manufacturerProductDesignation ;
+            sh:resultSeverity sh:Violation ;
+            sh:sourceConstraintComponent sh:DatatypeConstraintComponent ;
+            sh:sourceShape css:Resource-manufacturerProductDesignation ;
+            sh:value "CA18CLC12BPM1" ],
+        [ a sh:ValidationResult ;
+            sh:focusNode <https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1AAS> ;
+            sh:resultMessage "Value is not Literal with datatype xsd:date" ;
+            sh:resultPath cssx:dateOfManufacture ;
+            sh:resultSeverity sh:Violation ;
+            sh:sourceConstraintComponent sh:DatatypeConstraintComponent ;
+            sh:sourceShape css:Resource-dateOfManufacture ;
+            sh:value "[VERIFY: manufacture date YYYY-MM-DD]"^^xsd:date ],
+        [ a sh:ValidationResult ;
+            sh:focusNode <https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1AAS> ;
+            sh:resultMessage "Less than 1 values on <https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1AAS>->css:providesCapability" ;
+            sh:resultPath css:providesCapability ;
+            sh:resultSeverity sh:Violation ;
+            sh:sourceConstraintComponent sh:MinCountConstraintComponent ;
+            sh:sourceShape css:Resource-providesCapability ],
+        [ a sh:ValidationResult ;
+            sh:focusNode <https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1AAS> ;
+            sh:resultMessage "Less than 1 values on <https://smartproductionlab.aau.dk/aas/CA18CLC12BPM1AAS>->css:providesSkill" ;
+            sh:resultPath css:providesSkill ;
+            sh:resultSeverity sh:Violation ;
+            sh:sourceConstraintComponent sh:MinCountConstraintComponent ;
+            sh:sourceShape css:Resource-providesSkill ] .
+

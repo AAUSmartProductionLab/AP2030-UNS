@@ -1,0 +1,32 @@
+# Matrix sweep config for `python -m evaluation.run_eval --matrix evaluation/matrix.yaml ...`
+#
+# Cartesian product: equipment × configs × repetitions = N experiments.
+# Each cell writes one JSONL row to --output. Re-running appends; combine
+# multiple runs into one file then plot with `plot_results.py`.
+#
+# Cost-aware: keep this small for the first pass, expand once one row works.
+
+repetitions: 3                # k repetitions per cell to measure variance
+
+equipment:
+  - ca18clc12bpm1             # Carlo Gavazzi proximity sensor — MQTT, real datasheet
+  - abb-irb1200                # ABB articulated robot — OPC UA NodeSet
+  - festo-cmmt-conveyor        # Festo CMMT-AS belt drive — HTTP REST
+
+configs:
+  # ---------- v2 (full pipeline) on three providers, json-description mode ----------
+  - { provider: claude, model: claude-opus-4-5-20251101,  mode: json-description, ablation: full,         pipeline: v2 }
+  - { provider: claude, model: claude-sonnet-4-5-20250929, mode: json-description, ablation: full,         pipeline: v2 }
+  - { provider: gemini, model: gemini-2.5-pro,             mode: json-description, ablation: full,         pipeline: v2 }
+  - { provider: groq,   model: llama-3.3-70b-versatile,    mode: json-description, ablation: full,         pipeline: v2 }
+
+  # ---------- ablations: same model (Claude Opus), different setup ----------
+  - { provider: claude, model: claude-opus-4-5-20251101,  mode: json-description, ablation: no-feedback,   pipeline: v2 }
+  - { provider: claude, model: claude-opus-4-5-20251101,  mode: json-description, ablation: no-templates,  pipeline: v2 }
+  - { provider: claude, model: claude-opus-4-5-20251101,  mode: json-description, ablation: zero-shot,     pipeline: v2 }
+
+  # ---------- json mode (direct AAS) ----------
+  - { provider: claude, model: claude-opus-4-5-20251101,  mode: json,             ablation: full,         pipeline: v2 }
+
+  # ---------- v1 baseline for comparison ----------
+  - { provider: claude, model: claude-opus-4-5-20251101,  mode: json-description, ablation: full,         pipeline: v1 }

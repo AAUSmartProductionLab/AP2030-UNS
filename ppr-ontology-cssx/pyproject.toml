@@ -1,0 +1,27 @@
+﻿[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ppr-ontology-arso"
+version = "0.1.0"
+description = "AAS generation + ARSO ontology validation pipeline"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "rdflib>=7.0.0",
+  "pyshacl>=0.27.0",
+  "basyx-python-sdk>=1.2.1,<2.0.0",
+  "fastapi>=0.110",
+  "uvicorn[standard]>=0.27",
+  "pydantic>=2.5",
+  "pyyaml>=6.0",
+  "openai>=1.40.0",
+  "google-genai>=0.7.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["api*", "generation*", "tools*", "evaluation*"]
+
+

@@ -1,0 +1,187 @@
+services:
+
+  aas-env:
+    image: eclipsebasyx/aas-environment:2.0.0-SNAPSHOT
+    container_name: aas-env
+    environment:
+      - SERVER_PORT=8081
+      - EXTERNAL_HOST=localhost
+      - BASYX_BACKEND=MongoDB
+      - BASYX_ENVIRONMENT=file:aas
+      - BASYX_CORS_ALLOWED_ORIGINS=*
+      - BASYX_CORS_ALLOWED_METHODS=GET,POST,PATCH,DELETE,PUT,OPTIONS,HEAD
+      - BASYX_AASREPOSITORY_FEATURE_REGISTRYINTEGRATION=http://aas-registry:8080
+      - BASYX_SUBMODELREPOSITORY_FEATURE_REGISTRYINTEGRATION=http://sm-registry:8080
+      - BASYX_EXTERNALURL=http://localhost:8081
+      - SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE=500MB
+      - SPRING_SERVLET_MULTIPART_MAX_REQUEST_SIZE=500MB
+      - SPRING_DATA_MONGODB_HOST=mongo
+      - SPRING_DATA_MONGODB_DATABASE=aas-env
+      - SPRING_DATA_MONGODB_AUTHENTICATION_DATABASE=admin
+      - SPRING_DATA_MONGODB_USERNAME=mongoAdmin
+      - SPRING_DATA_MONGODB_PASSWORD=mongoPassword
+      - MQTT_HOSTNAME=hivemq-broker
+      - MQTT_PORT=1883
+      - MQTT_CLIENTID=aas-env-client
+      - BASYX_AASREPOSITORY_FEATURE_MQTT_ENABLED=false
+      - BASYX_SUBMODELREPOSITORY_FEATURE_MQTT_ENABLED=false
+    volumes:
+      - ./aas:/application/aas
+    ports:
+      - '8081:8081'
+    restart: always
+    depends_on:
+      aas-registry:
+        condition: service_healthy
+      sm-registry:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+    networks:
+      - hivemq-network
+
+  aas-registry:
+    image: eclipsebasyx/aas-registry-log-mongodb:2.0.0-SNAPSHOT
+    container_name: aas-registry
+    ports:
+      - '8082:8080'
+    environment:
+      - SERVER_PORT=8080
+      - SPRING_DATA_MONGODB_HOST=mongo
+      - SPRING_DATA_MONGODB_PORT=27017
+      - SPRING_DATA_MONGODB_DATABASE=aas-registry
+      - SPRING_DATA_MONGODB_AUTHENTICATION_DATABASE=admin
+      - SPRING_DATA_MONGODB_USERNAME=mongoAdmin
+      - SPRING_DATA_MONGODB_PASSWORD=mongoPassword
+      - BASYX_CORS_ALLOWED_ORIGINS=*
+      - BASYX_CORS_ALLOWED_METHODS=GET,POST,PATCH,DELETE,PUT,OPTIONS,HEAD
+    restart: always
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - hivemq-network
+
+  sm-registry:
+    image: eclipsebasyx/submodel-registry-log-mongodb:2.0.0-SNAPSHOT
+    container_name: sm-registry
+    ports:
+      - '8083:8080'
+    environment:
+      - SERVER_PORT=8080
+      - SPRING_DATA_MONGODB_HOST=mongo
+      - SPRING_DATA_MONGODB_PORT=27017
+      - SPRING_DATA_MONGODB_DATABASE=sm-registry
+      - SPRING_DATA_MONGODB_AUTHENTICATION_DATABASE=admin
+      - SPRING_DATA_MONGODB_USERNAME=mongoAdmin
+      - SPRING_DATA_MONGODB_PASSWORD=mongoPassword
+      - BASYX_CORS_ALLOWED_ORIGINS=*
+      - BASYX_CORS_ALLOWED_METHODS=GET,POST,PATCH,DELETE,PUT,OPTIONS,HEAD
+    restart: always
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - hivemq-network
+
+  aas-discovery:
+    image: eclipsebasyx/aas-discovery:2.0.0-SNAPSHOT
+    container_name: aas-discovery
+    environment:
+      - SERVER_PORT=8081
+      - SPRING_APPLICATION_NAME=AAS Discovery Service
+      - BASYX_AASDISCOVERYSERVICE_NAME=aas-discovery-service
+      - BASYX_BACKEND=MongoDB
+      - BASYX_CORS_ALLOWED_ORIGINS=*
+      - BASYX_CORS_ALLOWED_METHODS=GET,POST,PATCH,DELETE,PUT,OPTIONS,HEAD
+      - SPRING_DATA_MONGODB_HOST=mongo
+      - SPRING_DATA_MONGODB_DATABASE=aas-discovery
+      - SPRING_DATA_MONGODB_AUTHENTICATION_DATABASE=admin
+      - SPRING_DATA_MONGODB_USERNAME=mongoAdmin
+      - SPRING_DATA_MONGODB_PASSWORD=mongoPassword
+    ports:
+      - '8084:8081'
+    restart: always
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - hivemq-network
+
+  mongo:
+    image: mongo:5.0.10
+    container_name: mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mongoAdmin
+      MONGO_INITDB_ROOT_PASSWORD: mongoPassword
+    restart: always
+    healthcheck:
+      test: mongo
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - hivemq-network
+
+  aas-web-ui:
+    image: eclipsebasyx/aas-gui:SNAPSHOT
+    container_name: aas-ui
+    ports:
+      - '3001:3000'
+    environment:
+      AAS_REGISTRY_PATH: http://localhost:8082/shell-descriptors
+      SUBMODEL_REGISTRY_PATH: http://localhost:8083/submodel-descriptors
+      AAS_REPO_PATH: http://localhost:8081/shells
+      SUBMODEL_REPO_PATH: http://localhost:8081/submodels
+      CD_REPO_PATH: http://localhost:8081/concept-descriptions
+      AAS_DISCOVERY_PATH: http://localhost:8084/lookup/shells
+      LOGO_PATH: novo logo.png
+      PRIMARY_COLOR: '#0036AA'
+      DASHBOARD_SERVICE_PATH: http://localhost:8085/api/elements
+    restart: always
+    depends_on:
+      aas-env:
+        condition: service_started
+    networks:
+      - hivemq-network 
+
+  dashboard-api:
+    image: aaronzi/basyx-dashboard-api:SNAPSHOT_02
+    container_name: dashboard-api
+    environment:
+      - SERVER_PORT=8085
+      - SPRING_DATA_MONGODB_HOST=mongo
+      - SPRING_DATA_MONGODB_DATABASE=aas-dashboard
+      - SPRING_DATA_MONGODB_AUTHENTICATION_DATABASE=admin
+      - SPRING_DATA_MONGODB_USERNAME=mongoAdmin
+      - SPRING_DATA_MONGODB_PASSWORD=mongoPassword
+      - BASYX_CORS_ALLOWED_ORIGINS=*
+      - BASYX_CORS_ALLOWED_METHODS=GET,POST,PATCH,DELETE,PUT,OPTIONS,HEAD
+      - BASYX_EXTERNALURL=http://localhost:8085
+    ports:
+      - '8085:8085'
+    volumes:
+      - ./logo:/usr/src/app/dist/Logo
+    restart: always
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - hivemq-network
+
+  databridge:
+    image: eclipsebasyx/databridge:1.0.0-milestone-08
+    container_name: databridge
+    volumes:
+      - ./databridge:/usr/share/config
+    restart: always
+    depends_on:
+      aas-env:
+        condition: service_healthy
+    networks:
+      - hivemq-network
+
+#################¤ NETWORKS AND VOLUMES ####################
+networks:
+  hivemq-network:
+    driver: bridge

@@ -1,0 +1,1172 @@
+@prefix aasv: <http://www.w3id.org/aau-ra/resourceaas-validation#> .
+@prefix cask: <http://www.w3id.org/hsu-aut/cask#> .
+@prefix css: <http://www.w3id.org/hsu-aut/css#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+
+css:Capability a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment """Implementation-independent specification of a function in industrial production to achieve an effect in the physical or virtual world.
+
+Notes:
+- A capability can be restricted by constraints.
+- A capability can be specified by capability properties.
+- A capability can be realized by skills""" ;
+    owl:disjointWith css:Resource,
+        css:ServiceOffer,
+        css:ServiceProvider,
+        css:ServiceRequester,
+        css:Skill,
+        css:SkillInterface,
+        css:SkillParameter ;
+    sh:property css:Capability-isRealizedBy,
+        css:Capability-isRealizedBySkill,
+        css:Capability-isRestrictedBy,
+        css:Capability-isSpecifiedBy .
+
+css:Process a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment """Production-relevant activity at any level of granularity that might affect materials and is performed by resources.
+
+Notes:
+- In general, a process can be decomposed into sub-processes or single activities.
+- A process can require capabilities to express that any suitable resource used for
+performing this process needs to provide compatible capabilities.
+- A process step relates to materials that constitute either input or output for the processing in this step""" ;
+    owl:disjointWith css:Resource,
+        css:Service,
+        css:ServiceOffer,
+        css:ServiceProvider,
+        css:Skill,
+        css:SkillInterface,
+        css:SkillParameter ;
+    sh:property css:Process-hasInput,
+        css:Process-hasOutput,
+        css:Process-requiresCapability .
+
+css:Property a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment """Quality or characteristic inherent in or ascribed to any CSS model element
+
+Notes:
+- Properties may be used to describe and differentiate all kinds of PPR entities (i.e., products, process steps, resources)
+- Capabilities, services and offers are specified by properties in order to detail their description with regard to certain entities (e.g. products, process steps, resources)""" ;
+    owl:disjointWith css:Resource,
+        css:Service,
+        css:ServiceOffer,
+        css:ServiceProvider,
+        css:ServiceRequester,
+        css:Skill,
+        css:SkillInterface ;
+    sh:property css:Property-isRealizedBy,
+        css:Property-isRealizedBySkillParameter .
+
+css:PropertyConstraint a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment "A PropertyConstraint is a constraint that determines the applicability of a Capability and that refers to one or more Properties of the same Capability (see Figure 15). An important aspect of PropertyConstraints is that they always refer to a single Capability and assume no knowledge of a sequence of Capabilities or dependencies between Capabilities." ;
+    rdfs:subClassOf css:Constraint ;
+    sh:property css:PropertyConstraint-referencesProperty .
+
+css:Resource a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment """Entity capable of performing functions specified as Capabilities and potentially implemented as Skills.
+
+Notes
+- A production resource may consist of hardware, software or both
+- A production resource may only provide capabilities (i.e. when engineering a resource, for planning purposes) and may additionally provide skills for automatic execution of the specified function.
+- A human becomes a Production Resource, if that person is able to perform a function specified as a capability.""" ;
+    owl:disjointWith css:Service,
+        css:ServiceOffer,
+        css:Skill,
+        css:SkillInterface,
+        css:SkillParameter,
+        css:StateMachine ;
+    sh:property css:Resource-behaviorConformsTo,
+        css:Resource-provides,
+        css:Resource-providesCapability,
+        css:Resource-providesSkill .
+
+css:Service a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment """Description of the commercial aspects and means of provision of offered capabilities.
+
+Notes:
+- The term “service” should be understood in the sense of economics and shall not be confused with e.g., web services.
+- The capabilities and means of provisions are specified by properties
+- A service is demanded by service requesters and provided by a service provider
+- A service is an input for an offer proposed by""" ;
+    owl:disjointWith css:ServiceOffer,
+        css:ServiceProvider,
+        css:ServiceRequester,
+        css:Skill,
+        css:SkillInterface,
+        css:SkillParameter,
+        css:StateMachine ;
+    sh:property css:Service-assures,
+        css:Service-isInputFor,
+        css:Service-isSpecifiedBy,
+        css:Service-offersUseOf .
+
+css:ServiceProvider a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment "Provides Services and can propose ServiceOffers to ServiceRequesters." ;
+    owl:disjointWith css:Skill,
+        css:SkillInterface,
+        css:SkillParameter,
+        css:StateMachine ;
+    sh:property css:ServiceProvider-offers,
+        css:ServiceProvider-proposes .
+
+css:ServiceRequester a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment """Demands Services under particular commercial aspects by providing either a specification of
+services or a specification of product requirements.""" ;
+    owl:disjointWith css:Skill,
+        css:SkillInterface,
+        css:SkillParameter,
+        css:StateMachine ;
+    sh:property css:ServiceRequester-demands,
+        css:ServiceRequester-receives,
+        css:ServiceRequester-requiresProduct .
+
+css:Skill a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment """Executable implementation of an encapsulated (automation) function specified by a Capability.
+
+Notes:
+- A skill must have a skill interface. 
+- One capability can be realized by more than one skill. 
+- A skill may have any number of SkillParameters. 
+- A skill’s behavior conforms to a state machine. 
+- A skill controls a process step""" ;
+    owl:disjointWith css:SkillParameter ;
+    sh:property css:Skill-accessibleThrough,
+        css:Skill-behaviorConformsTo,
+        css:Skill-controls,
+        css:Skill-hasCurrentState,
+        css:Skill-hasParameter,
+        css:Skill-hasTrigger .
+
+css:SkillInterface a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment """Access point to configure, control and monitor a skill.
+
+Notes:
+- A skill interface exposes interaction points to be used by other external systems
+(e.g. MES, other skills).
+- A skill interface exposes the state machine of a skill so that skill states can be
+monitored and transitions triggered.
+- A skill interface exposes the parameters of a skill so that they can be written and read.""" ;
+    owl:disjointWith css:SkillParameter,
+        css:StateMachine ;
+    sh:property css:SkillInterface-exposes,
+        css:SkillInterface-exposesSkillParameter,
+        css:SkillInterface-exposesSkillTrigger,
+        css:SkillInterface-exposesStateMachine .
+
+css:SkillTrigger a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    sh:property css:SkillTrigger-hasParameter .
+
+css:State a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    sh:property css:State-hasIncomingTransition,
+        css:State-hasOutgoingTransition .
+
+css:StateMachine a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    sh:property css:StateMachine-consistsOfState,
+        css:StateMachine-consistsOfTransition .
+
+css:Transition a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    sh:property css:Transition-hasSourceState,
+        css:Transition-hasTargetState,
+        css:Transition-isInvokedBy .
+
+css:TransitionConstraint a rdfs:Class,
+        rdfs:Resource,
+        owl:Class,
+        sh:NodeShape ;
+    rdfs:comment "A TransitionConstraint is an expression between multiple Capabilities or Services, determining the applicability of a Capability or Service in a wider context. In a Transition-Constraint, a dependent Capability or Service is restricted by one or more referenced Capabilities or Services. TransitionConstraints can be used to formulate requirements going beyond PropertyConstraints, especially sequence requirements." ;
+    rdfs:subClassOf css:Constraint ;
+    sh:property css:TransitionConstraint-references .
+
+<http://www.w3id.org/aau-ra/cssx> a rdfs:Resource,
+        owl:Ontology ;
+    rdfs:comment "CSS extension ontology for PPR concepts aligned with submodel template needs." ;
+    owl:imports <http://www.w3id.org/aau-ra/cssx-bom.ttl>,
+        <http://www.w3id.org/aau-ra/cssx-capabilities.ttl>,
+        <http://www.w3id.org/aau-ra/cssx-nameplate.ttl>,
+        <http://www.w3id.org/aau-ra/cssx-operational-data.ttl>,
+        <http://www.w3id.org/aau-ra/cssx-parameters.ttl>,
+        <http://www.w3id.org/aau-ra/cssx-resource-interface.ttl>,
+        <http://www.w3id.org/aau-ra/cssx-skills.ttl>,
+        <http://www.w3id.org/aau-ra/cssx-technical-data.ttl>,
+        <http://www.w3id.org/hsu-aut/css>,
+        <https://raw.githubusercontent.com/w3c/wot-resources/main/td/v1.1/ontology/td.ttl> ;
+    owl:versionIRI <http://www.w3id.org/aau-ra/cssx/0.1.0> .
+
+aasv:HierarchicalStructuresSparqlShape a sh:NodeShape ;
+    sh:sparql [ a sh:SPARQLConstraint ;
+            sh:message "HierarchicalStructures has an Archetype set but no entity entries (IsPartOf/HasPart) are defined yet." ;
+            sh:select """\r
+      PREFIX aasv: <http://www.w3id.org/aau-ra/resourceaas-validation#>\r
+      SELECT $this\r
+      WHERE {\r
+        FILTER (\r
+          EXISTS { $this aasv:bomArchetype ?arch . }\r
+          && !EXISTS { $this aasv:hasBomEntry ?entry . }\r
+        )\r
+      }\r
+    """ ;
+            sh:severity sh:Warning ] ;
+    sh:targetClass aasv:HierarchicalStructuresSubmodel .
+
+aasv:ResourceAASDependencySparqlShape a sh:NodeShape ;
+    sh:sparql [ a sh:SPARQLConstraint ;
+            sh:message "If Skills, OperationalData, or Parameters are present, AID submodel must be present." ;
+            sh:select """\r
+      PREFIX css: <http://www.w3id.org/hsu-aut/css#>\r
+      PREFIX cssx: <http://www.w3id.org/aau-ra/cssx#>\r
+      PREFIX aasv: <http://www.w3id.org/aau-ra/resourceaas-validation#>\r
+      SELECT $this\r
+      WHERE {\r
+        FILTER(\r
+          (\r
+            EXISTS { $this css:providesSkill ?skill }\r
+            || EXISTS { $this aasv:hasSubmodel ?skillSm . ?skillSm a aasv:SkillsSubmodel . }\r
+            || EXISTS { $this cssx:hasOperationalData ?opData }\r
+            || EXISTS { $this aasv:hasSubmodel ?opSm . ?opSm a aasv:OperationalDataSubmodel . }\r
+            || EXISTS { $this cssx:hasResourceParameter ?param }\r
+            || EXISTS { $this aasv:hasSubmodel ?paramSm . ?paramSm a aasv:ParametersSubmodel . }\r
+          )\r
+          && !EXISTS {\r
+            $this aasv:hasSubmodel ?aidSm .\r
+            ?aidSm a aasv:AIDSubmodel .\r
+          }\r
+        )\r
+      }\r
+    """ ],
+        [ a sh:SPARQLConstraint ;
+            sh:message "If Skills are present, a SoftwareInterface must be present and linked to the skill interface." ;
+            sh:select """\r
+      PREFIX css: <http://www.w3id.org/hsu-aut/css#>\r
+      PREFIX cssx: <http://www.w3id.org/aau-ra/cssx#>\r
+      SELECT $this\r
+      WHERE {\r
+        FILTER (\r
+          EXISTS { $this css:providesSkill ?skill }\r
+          && !EXISTS {\r
+            $this cssx:hasResourceInterface ?resourceInterface .\r
+            ?resourceInterface a cssx:SoftwareInterface .\r
+            ?skill css:accessibleThrough ?skillInterface .\r
+            ?skillInterface a css:SkillInterface .\r
+            ?skillInterface cssx:skillInterfaceUsesSoftwareInterface ?resourceInterface .\r
+          }\r
+        )\r
+      }\r
+    """ ],
+        [ a sh:SPARQLConstraint ;
+            sh:message "If AID exists, at least one ResourceInterface must be mapped for the Resource." ;
+            sh:select """\r
+      PREFIX aasv: <http://www.w3id.org/aau-ra/resourceaas-validation#>\r
+      PREFIX cssx: <http://www.w3id.org/aau-ra/cssx#>\r
+      SELECT $this\r
+      WHERE {\r
+        FILTER (\r
+          EXISTS {\r
+            $this aasv:hasSubmodel ?aidSm .\r
+            ?aidSm a aasv:AIDSubmodel .\r
+          }\r
+          && !EXISTS { $this cssx:hasResourceInterface ?ri . }\r
+        )\r
+      }\r
+    """ ],
+        [ a sh:SPARQLConstraint ;
+            sh:message "Each SkillInterface must use a ResourceInterface provided by the same Resource." ;
+            sh:select """\r
+      PREFIX css: <http://www.w3id.org/hsu-aut/css#>\r
+      PREFIX cssx: <http://www.w3id.org/aau-ra/cssx#>\r
+      SELECT $this\r
+      WHERE {\r
+        $this css:providesSkill ?skill .\r
+        ?skill css:accessibleThrough ?skillInterface .\r
+        FILTER NOT EXISTS {\r
+          ?skillInterface cssx:skillInterfaceUsesSoftwareInterface ?resourceInterface .\r
+          $this cssx:hasResourceInterface ?resourceInterface .\r
+        }\r
+      }\r
+    """ ],
+        [ a sh:SPARQLConstraint ;
+            sh:message "Each provided Capability must be linked via isRealizedBySkill to a Skill provided by the same Resource." ;
+            sh:select """\r
+      PREFIX css: <http://www.w3id.org/hsu-aut/css#>\r
+      SELECT $this\r
+      WHERE {\r
+        $this css:providesCapability ?capability .\r
+        FILTER NOT EXISTS {\r
+          $this css:providesSkill ?skill .\r
+          ?capability css:isRealizedBySkill ?skill .\r
+        }\r
+      }\r
+    """ ] ;
+    sh:targetClass cask:PhysicalResource,
+        cask:SoftwareResource,
+        css:Resource .
+
+aasv:ResourceAASSemanticSparqlShape a sh:NodeShape ;
+    sh:sparql [ a sh:SPARQLConstraint ;
+            sh:message "If DigitalNameplate is present, serialNumber and manufacturerName must be mapped in CSSx." ;
+            sh:select """\r
+      PREFIX aasv: <http://www.w3id.org/aau-ra/resourceaas-validation#>\r
+      PREFIX cssx: <http://www.w3id.org/aau-ra/cssx#>\r
+      SELECT $this\r
+      WHERE {\r
+        FILTER (\r
+          EXISTS {\r
+            $this aasv:hasSubmodel ?sm .\r
+            ?sm a aasv:DigitalNameplateSubmodel .\r
+          }\r
+          && (\r
+            !EXISTS { $this cssx:serialNumber ?serial . }\r
+            || !EXISTS {\r
+              $this cssx:hasManufacturer ?m .\r
+              ?m cssx:manufacturerName ?name .\r
+            }\r
+          )\r
+        )\r
+      }\r
+    """ ] ;
+    sh:targetClass cask:PhysicalResource,
+        cask:SoftwareResource,
+        css:Resource .
+
+css:InputParameter a rdfs:Resource,
+        owl:Class ;
+    rdfs:subClassOf css:SkillParameter .
+
+css:OutputParameter a rdfs:Resource,
+        owl:Class ;
+    rdfs:subClassOf css:SkillParameter .
+
+css:accessibleThrough-shape a sh:NodeShape ;
+    sh:class css:Skill ;
+    sh:targetSubjectsOf css:accessibleThrough .
+
+css:assures-shape a sh:NodeShape ;
+    sh:class css:Service ;
+    sh:targetSubjectsOf css:assures .
+
+css:behaviorConformsTo-shape a sh:NodeShape ;
+    sh:class css:Resource,
+        css:Skill ;
+    sh:targetSubjectsOf css:behaviorConformsTo .
+
+css:consistsOfState-shape a sh:NodeShape ;
+    sh:class css:StateMachine ;
+    sh:targetSubjectsOf css:consistsOfState .
+
+css:consistsOfTransition-shape a sh:NodeShape ;
+    sh:class css:StateMachine ;
+    sh:targetSubjectsOf css:consistsOfTransition .
+
+css:controls-shape a sh:NodeShape ;
+    sh:class css:Skill ;
+    sh:targetSubjectsOf css:controls .
+
+css:demands-shape a sh:NodeShape ;
+    sh:class css:ServiceRequester ;
+    sh:targetSubjectsOf css:demands .
+
+css:exposes-shape a sh:NodeShape ;
+    sh:class css:SkillInterface ;
+    sh:targetSubjectsOf css:exposes .
+
+css:exposesSkillParameter-shape a sh:NodeShape ;
+    sh:class css:SkillInterface ;
+    sh:targetSubjectsOf css:exposesSkillParameter .
+
+css:exposesSkillTrigger-shape a sh:NodeShape ;
+    sh:class css:SkillInterface ;
+    sh:targetSubjectsOf css:exposesSkillTrigger .
+
+css:exposesStateMachine-shape a sh:NodeShape ;
+    sh:class css:SkillInterface ;
+    sh:targetSubjectsOf css:exposesStateMachine .
+
+css:hasCurrentState-shape a sh:NodeShape ;
+    sh:class css:Skill ;
+    sh:targetSubjectsOf css:hasCurrentState .
+
+css:hasIncomingTransition-shape a sh:NodeShape ;
+    sh:class css:State ;
+    sh:targetSubjectsOf css:hasIncomingTransition .
+
+css:hasInput-shape a sh:NodeShape ;
+    sh:class css:Process ;
+    sh:targetSubjectsOf css:hasInput .
+
+css:hasOutgoingTransition-shape a sh:NodeShape ;
+    sh:class css:State ;
+    sh:targetSubjectsOf css:hasOutgoingTransition .
+
+css:hasOutput-shape a sh:NodeShape ;
+    sh:class css:Process ;
+    sh:targetSubjectsOf css:hasOutput .
+
+css:hasSourceState-shape a sh:NodeShape ;
+    sh:class css:Transition ;
+    sh:targetSubjectsOf css:hasSourceState .
+
+css:hasTargetState-shape a sh:NodeShape ;
+    sh:class css:Transition ;
+    sh:targetSubjectsOf css:hasTargetState .
+
+css:hasTrigger-shape a sh:NodeShape ;
+    sh:class css:Skill ;
+    sh:targetSubjectsOf css:hasTrigger .
+
+css:isInputFor-shape a sh:NodeShape ;
+    sh:class css:Service ;
+    sh:targetSubjectsOf css:isInputFor .
+
+css:isInvokedBy-shape a sh:NodeShape ;
+    sh:class css:Transition ;
+    sh:targetSubjectsOf css:isInvokedBy .
+
+css:isRealizedBySkill-shape a sh:NodeShape ;
+    sh:class css:Capability ;
+    sh:targetSubjectsOf css:isRealizedBySkill .
+
+css:isRealizedBySkillParameter-shape a sh:NodeShape ;
+    sh:class css:Property ;
+    sh:targetSubjectsOf css:isRealizedBySkillParameter .
+
+css:isRestrictedBy-shape a sh:NodeShape ;
+    sh:class css:Capability ;
+    sh:targetSubjectsOf css:isRestrictedBy .
+
+css:offers-shape a sh:NodeShape ;
+    sh:class css:ServiceProvider ;
+    sh:targetSubjectsOf css:offers .
+
+css:offersUseOf-shape a sh:NodeShape ;
+    sh:class css:Service ;
+    sh:targetSubjectsOf css:offersUseOf .
+
+css:proposes-shape a sh:NodeShape ;
+    sh:class css:ServiceProvider ;
+    sh:targetSubjectsOf css:proposes .
+
+css:provides-shape a sh:NodeShape ;
+    sh:class css:Resource ;
+    sh:targetSubjectsOf css:provides .
+
+css:providesCapability-shape a sh:NodeShape ;
+    sh:class css:Resource ;
+    sh:targetSubjectsOf css:providesCapability .
+
+css:providesSkill-shape a sh:NodeShape ;
+    sh:class css:Resource ;
+    sh:targetSubjectsOf css:providesSkill .
+
+css:receives-shape a sh:NodeShape ;
+    sh:class css:ServiceRequester ;
+    sh:targetSubjectsOf css:receives .
+
+css:references-shape a sh:NodeShape ;
+    sh:class css:TransitionConstraint ;
+    sh:targetSubjectsOf css:references .
+
+css:referencesProperty-shape a sh:NodeShape ;
+    sh:class css:PropertyConstraint ;
+    sh:targetSubjectsOf css:referencesProperty .
+
+css:requiresCapability-shape a sh:NodeShape ;
+    sh:class css:Process ;
+    sh:targetSubjectsOf css:requiresCapability .
+
+css:requiresProduct-shape a sh:NodeShape ;
+    sh:class css:ServiceRequester ;
+    sh:targetSubjectsOf css:requiresProduct .
+
+rdf:first a rdf:Property ;
+    rdfs:subPropertyOf rdf:first .
+
+rdf:rest a rdf:Property ;
+    rdfs:subPropertyOf rdf:rest .
+
+rdf:type a rdf:Property ;
+    rdfs:subPropertyOf rdf:type .
+
+rdfs:comment a rdf:Property ;
+    rdfs:subPropertyOf rdfs:comment .
+
+rdfs:domain a rdf:Property ;
+    rdfs:subPropertyOf rdfs:domain .
+
+rdfs:isDefinedBy a rdf:Property ;
+    rdfs:subPropertyOf rdfs:isDefinedBy .
+
+rdfs:range a rdf:Property ;
+    rdfs:subPropertyOf rdfs:range .
+
+rdfs:subClassOf a rdf:Property ;
+    rdfs:subPropertyOf rdfs:subClassOf .
+
+rdfs:subPropertyOf a rdf:Property ;
+    rdfs:subPropertyOf rdfs:subPropertyOf .
+
+owl:disjointWith a rdf:Property ;
+    rdfs:subPropertyOf owl:disjointWith .
+
+owl:imports a rdf:Property ;
+    rdfs:subPropertyOf owl:imports .
+
+owl:unionOf a rdf:Property ;
+    rdfs:subPropertyOf owl:unionOf .
+
+owl:versionIRI a rdf:Property ;
+    rdfs:subPropertyOf owl:versionIRI .
+
+<http://www.w3id.org/aau-ra/cssx-bom.ttl> a rdfs:Resource .
+
+<http://www.w3id.org/aau-ra/cssx-capabilities.ttl> a rdfs:Resource .
+
+<http://www.w3id.org/aau-ra/cssx-nameplate.ttl> a rdfs:Resource .
+
+<http://www.w3id.org/aau-ra/cssx-operational-data.ttl> a rdfs:Resource .
+
+<http://www.w3id.org/aau-ra/cssx-parameters.ttl> a rdfs:Resource .
+
+<http://www.w3id.org/aau-ra/cssx-resource-interface.ttl> a rdfs:Resource .
+
+<http://www.w3id.org/aau-ra/cssx-skills.ttl> a rdfs:Resource .
+
+<http://www.w3id.org/aau-ra/cssx-technical-data.ttl> a rdfs:Resource .
+
+<http://www.w3id.org/aau-ra/cssx/0.1.0> a rdfs:Resource .
+
+<http://www.w3id.org/hsu-aut/css> a rdfs:Resource,
+        owl:Ontology ;
+    rdfs:comment """An ontology for the Capability, Skill and Service reference model defined by Plattform Industrie 4.0. See https://www.plattform-i40.de/IP/Redaktion/DE/Downloads/Publikation/CapabilitiesSkillsServices.html for a description of the abstract reference model.
+
+Includes extensions defined in https://www.plattform-i40.de/IP/Redaktion/DE/Downloads/Publikation/2025-i40-capabilities.pdf?__blob=publicationFile&v=5.""" ;
+    rdfs:isDefinedBy "https://www.plattform-i40.de/IP/Redaktion/DE/Downloads/Publikation/2025-i40-capabilities.pdf?__blob=publicationFile&v=5",
+        "https://www.plattform-i40.de/IP/Redaktion/DE/Downloads/Publikation/CapabilitiesSkillsServices.html" ;
+    owl:versionIRI <http://www.w3id.org/hsu-aut/css/2.0.1> .
+
+css:Capability-isRealizedBy a sh:PropertyShape ;
+    sh:path css:isRealizedBy .
+
+css:Capability-isRealizedBySkill a sh:PropertyShape ;
+    sh:class css:Skill ;
+    sh:path css:isRealizedBySkill .
+
+css:Capability-isRestrictedBy a sh:PropertyShape ;
+    sh:class css:Constraint ;
+    sh:path css:isRestrictedBy .
+
+css:Capability-isSpecifiedBy a sh:PropertyShape ;
+    sh:class css:Property ;
+    sh:path css:isSpecifiedBy .
+
+css:Process-hasInput a sh:PropertyShape ;
+    sh:class css:Product ;
+    sh:path css:hasInput .
+
+css:Process-hasOutput a sh:PropertyShape ;
+    sh:class css:Product ;
+    sh:path css:hasOutput .
+
+css:Process-requiresCapability a sh:PropertyShape ;
+    sh:class css:Capability ;
+    sh:path css:requiresCapability .
+
+css:Property-isRealizedBy a sh:PropertyShape ;
+    sh:path css:isRealizedBy .
+
+css:Property-isRealizedBySkillParameter a sh:PropertyShape ;
+    sh:class css:SkillParameter ;
+    sh:path css:isRealizedBySkillParameter .
+
+css:PropertyConstraint-referencesProperty a sh:PropertyShape ;
+    sh:class css:Property ;
+    sh:path css:referencesProperty .
+
+css:Resource-behaviorConformsTo a sh:PropertyShape ;
+    sh:class css:StateMachine ;
+    sh:path css:behaviorConformsTo .
+
+css:Resource-provides a sh:PropertyShape ;
+    sh:path css:provides .
+
+css:Resource-providesCapability a sh:PropertyShape ;
+    sh:class css:Capability ;
+    sh:path css:providesCapability .
+
+css:Resource-providesSkill a sh:PropertyShape ;
+    sh:class css:Skill ;
+    sh:path css:providesSkill .
+
+css:Service-assures a sh:PropertyShape ;
+    sh:class css:Product ;
+    sh:path css:assures .
+
+css:Service-isInputFor a sh:PropertyShape ;
+    sh:class css:ServiceOffer ;
+    sh:path css:isInputFor .
+
+css:Service-isSpecifiedBy a sh:PropertyShape ;
+    sh:class css:Property ;
+    sh:path css:isSpecifiedBy .
+
+css:Service-offersUseOf a sh:PropertyShape ;
+    sh:class css:Capability ;
+    sh:path css:offersUseOf .
+
+css:ServiceProvider-offers a sh:PropertyShape ;
+    sh:class css:Service ;
+    sh:path css:offers .
+
+css:ServiceProvider-proposes a sh:PropertyShape ;
+    sh:class css:ServiceOffer ;
+    sh:path css:proposes .
+
+css:ServiceRequester-demands a sh:PropertyShape ;
+    sh:class css:Service ;
+    sh:path css:demands .
+
+css:ServiceRequester-receives a sh:PropertyShape ;
+    sh:class css:ServiceOffer ;
+    sh:path css:receives .
+
+css:ServiceRequester-requiresProduct a sh:PropertyShape ;
+    sh:class css:Product ;
+    sh:path css:requiresProduct .
+
+css:Skill-accessibleThrough a sh:PropertyShape ;
+    sh:class css:SkillInterface ;
+    sh:path css:accessibleThrough .
+
+css:Skill-behaviorConformsTo a sh:PropertyShape ;
+    sh:class css:StateMachine ;
+    sh:path css:behaviorConformsTo .
+
+css:Skill-controls a sh:PropertyShape ;
+    sh:class css:Process ;
+    sh:path css:controls .
+
+css:Skill-hasCurrentState a sh:PropertyShape ;
+    sh:class css:State ;
+    sh:path css:hasCurrentState .
+
+css:Skill-hasParameter a sh:PropertyShape ;
+    sh:class css:SkillParameter ;
+    sh:path css:hasParameter .
+
+css:Skill-hasTrigger a sh:PropertyShape ;
+    sh:class css:SkillTrigger ;
+    sh:path css:hasTrigger .
+
+css:SkillInterface-exposes a sh:PropertyShape ;
+    sh:path css:exposes .
+
+css:SkillInterface-exposesSkillParameter a sh:PropertyShape ;
+    sh:class css:SkillParameter ;
+    sh:path css:exposesSkillParameter .
+
+css:SkillInterface-exposesSkillTrigger a sh:PropertyShape ;
+    sh:class css:SkillTrigger ;
+    sh:path css:exposesSkillTrigger .
+
+css:SkillInterface-exposesStateMachine a sh:PropertyShape ;
+    sh:class css:StateMachine ;
+    sh:path css:exposesStateMachine .
+
+css:SkillTrigger-hasParameter a sh:PropertyShape ;
+    sh:class css:SkillParameter ;
+    sh:path css:hasParameter .
+
+css:State-hasIncomingTransition a sh:PropertyShape ;
+    sh:class css:Transition ;
+    sh:path css:hasIncomingTransition .
+
+css:State-hasOutgoingTransition a sh:PropertyShape ;
+    sh:class css:Transition ;
+    sh:path css:hasOutgoingTransition .
+
+css:StateMachine-consistsOfState a sh:PropertyShape ;
+    sh:class css:State ;
+    sh:path css:consistsOfState .
+
+css:StateMachine-consistsOfTransition a sh:PropertyShape ;
+    sh:class css:Transition ;
+    sh:path css:consistsOfTransition .
+
+css:Transition-hasSourceState a sh:PropertyShape ;
+    sh:class css:State ;
+    sh:path css:hasSourceState .
+
+css:Transition-hasTargetState a sh:PropertyShape ;
+    sh:class css:State ;
+    sh:path css:hasTargetState .
+
+css:Transition-isInvokedBy a sh:PropertyShape ;
+    sh:class css:SkillTrigger ;
+    sh:path css:isInvokedBy .
+
+css:TransitionConstraint-references a sh:PropertyShape ;
+    sh:path css:references .
+
+<http://www.w3id.org/hsu-aut/css/2.0.1> a rdfs:Resource .
+
+<https://www.w3.org/2019/wot/td> a rdfs:Resource .
+
+"A PropertyConstraint is a constraint that determines the applicability of a Capability and that refers to one or more Properties of the same Capability (see Figure 15). An important aspect of PropertyConstraints is that they always refer to a single Capability and assume no knowledge of a sequence of Capabilities or dependencies between Capabilities." a rdfs:Resource .
+
+"A TransitionConstraint is an expression between multiple Capabilities or Services, determining the applicability of a Capability or Service in a wider context. In a Transition-Constraint, a dependent Capability or Service is restricted by one or more referenced Capabilities or Services. TransitionConstraints can be used to formulate requirements going beyond PropertyConstraints, especially sequence requirements." a rdfs:Resource .
+
+"""Access point to configure, control and monitor a skill.
+
+Notes:
+- A skill interface exposes interaction points to be used by other external systems
+(e.g. MES, other skills).
+- A skill interface exposes the state machine of a skill so that skill states can be
+monitored and transitions triggered.
+- A skill interface exposes the parameters of a skill so that they can be written and read.""" a rdfs:Resource .
+
+"""An ontology for the Capability, Skill and Service reference model defined by Plattform Industrie 4.0. See https://www.plattform-i40.de/IP/Redaktion/DE/Downloads/Publikation/CapabilitiesSkillsServices.html for a description of the abstract reference model.
+
+Includes extensions defined in https://www.plattform-i40.de/IP/Redaktion/DE/Downloads/Publikation/2025-i40-capabilities.pdf?__blob=publicationFile&v=5.""" a rdfs:Resource .
+
+"CSS extension ontology for PPR concepts aligned with submodel template needs." a rdfs:Resource .
+
+"""Condition imposed on a capability that further details its applicability. 
+
+Notes:
+- A capability constraint can be formulated as one of the following three constraint types:
+▪ A precondition, i.e., a condition that must hold before a function can be executed.
+▪ A postcondition, i.e., a condition that must hold after a function has been executed.
+▪ An invariant, i.e., a condition that must hold during the execution of a
+function.
+- A capability constraint restricts the values of the properties associated with the respective capability.
+- A capability constraint can involve one or more properties""" a rdfs:Resource .
+
+"""Data unit to configure, control and monitor the execution of a skill.
+
+Notes:
+- Skill parameters might be used as in- /output parameters
+- Skill parameters might be used as results
+- Skill parameters might have a relation or be equivalent to capability properties""" a rdfs:Resource .
+
+"""Demands Services under particular commercial aspects by providing either a specification of
+services or a specification of product requirements.""" a rdfs:Resource .
+
+"""Description of the commercial aspects and means of provision of offered capabilities.
+
+Notes:
+- The term “service” should be understood in the sense of economics and shall not be confused with e.g., web services.
+- The capabilities and means of provisions are specified by properties
+- A service is demanded by service requesters and provided by a service provider
+- A service is an input for an offer proposed by""" a rdfs:Resource .
+
+"""Entity capable of performing functions specified as Capabilities and potentially implemented as Skills.
+
+Notes
+- A production resource may consist of hardware, software or both
+- A production resource may only provide capabilities (i.e. when engineering a resource, for planning purposes) and may additionally provide skills for automatic execution of the specified function.
+- A human becomes a Production Resource, if that person is able to perform a function specified as a capability.""" a rdfs:Resource .
+
+"""Executable implementation of an encapsulated (automation) function specified by a Capability.
+
+Notes:
+- A skill must have a skill interface. 
+- One capability can be realized by more than one skill. 
+- A skill may have any number of SkillParameters. 
+- A skill’s behavior conforms to a state machine. 
+- A skill controls a process step""" a rdfs:Resource .
+
+"""Implementation-independent specification of a function in industrial production to achieve an effect in the physical or virtual world.
+
+Notes:
+- A capability can be restricted by constraints.
+- A capability can be specified by capability properties.
+- A capability can be realized by skills""" a rdfs:Resource .
+
+"""Physical object being used as an input or created as an output of a production process.
+
+Notes:
+- The term Product may be used for objects in various states of manufacturing and may be seen as a generic term for raw materials, work in process and finished goods. Consumable supplies such as fuel, lubricants or cleaning agents may also be regarded as products. Furthermore, both purchased parts as well as parts manufactured in-house may be regarded as products.
+- Besides the actual product, there can be additional artifacts related to that product that are created and used in different life cycle phases to specify the product.
+▪ 3D/CAD models
+▪ specifications
+▪ BOM
+- A Service Requester may use these additional artifacts to formulate requirements against products.""" a rdfs:Resource .
+
+"""Production-relevant activity at any level of granularity that might affect materials and is performed by resources.
+
+Notes:
+- In general, a process can be decomposed into sub-processes or single activities.
+- A process can require capabilities to express that any suitable resource used for
+performing this process needs to provide compatible capabilities.
+- A process step relates to materials that constitute either input or output for the processing in this step""" a rdfs:Resource .
+
+"""Proposal for a binding contract from the Service Provider to execute one or more particular services that a ServiceRequester can receive and accept.
+
+Notes:
+- A ServiceOffer should determine the commercial aspects of the service provision
+and may remain valid for a certain period of time.
+- An Offer may consist of partial offers proposed by different service providers""" a rdfs:Resource .
+
+"Provides Services and can propose ServiceOffers to ServiceRequesters." a rdfs:Resource .
+
+"""Quality or characteristic inherent in or ascribed to any CSS model element
+
+Notes:
+- Properties may be used to describe and differentiate all kinds of PPR entities (i.e., products, process steps, resources)
+- Capabilities, services and offers are specified by properties in order to detail their description with regard to certain entities (e.g. products, process steps, resources)""" a rdfs:Resource .
+
+"https://www.plattform-i40.de/IP/Redaktion/DE/Downloads/Publikation/2025-i40-capabilities.pdf?__blob=publicationFile&v=5" a rdfs:Resource .
+
+"https://www.plattform-i40.de/IP/Redaktion/DE/Downloads/Publikation/CapabilitiesSkillsServices.html" a rdfs:Resource .
+
+owl:Ontology a rdfs:Resource .
+
+css:accessibleThrough a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain css:Skill ;
+    rdfs:range css:SkillInterface .
+
+css:assures a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain css:Service ;
+    rdfs:range css:Product .
+
+css:consistsOfState a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain css:StateMachine ;
+    rdfs:range css:State .
+
+css:consistsOfTransition a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain css:StateMachine ;
+    rdfs:range css:Transition .
+
+css:controls a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain css:Skill ;
+    rdfs:range css:Process .
+
+css:demands a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain css:ServiceRequester ;
+    rdfs:range css:Service .
+
+css:exposesSkillParameter a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain css:SkillInterface ;
+    rdfs:range css:SkillParameter ;
+    rdfs:subPropertyOf css:exposes .
+
+css:exposesSkillTrigger a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain css:SkillInterface ;
+    rdfs:range css:SkillTrigger ;
+    rdfs:subPropertyOf css:exposes .
+
+css:exposesStateMachine a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain css:SkillInterface ;
+    rdfs:range css:StateMachine ;
+    rdfs:subPropertyOf css:exposes .
+
+css:hasCurrentState a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain css:Skill ;
+    rdfs:range css:State .
+
+css:hasIncomingTransition a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain css:State ;
+    rdfs:range css:Transition .
+
+css:hasInput a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain css:Process ;
+    rdfs:range css:Product .
+
+css:hasOutgoingTransition a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain css:State ;
+    rdfs:range css:Transition .
+
+css:hasOutput a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain css:Process ;
+    rdfs:range css:Product .
+
+css:hasParameter a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain [ a rdfs:Resource,
+                owl:Class ;
+            owl:unionOf [ a rdfs:Resource ;
+                    rdf:first css:Skill ;
+                    rdf:rest [ a rdfs:Resource ;
+                            rdf:first css:SkillTrigger ;
+                            rdf:rest () ] ] ] ;
+    rdfs:range css:SkillParameter .
+
+css:hasSourceState a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain css:Transition ;
+    rdfs:range css:State .
+
+css:hasTargetState a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain css:Transition ;
+    rdfs:range css:State .
+
+css:hasTrigger a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain css:Skill ;
+    rdfs:range css:SkillTrigger .
+
+css:isInputFor a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain css:Service ;
+    rdfs:range css:ServiceOffer .
+
+css:isInvokedBy a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain css:Transition ;
+    rdfs:range css:SkillTrigger .
+
+css:isRealizedBySkill a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain css:Capability ;
+    rdfs:range css:Skill ;
+    rdfs:subPropertyOf css:isRealizedBy .
+
+css:isRealizedBySkillParameter a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain css:Property ;
+    rdfs:range css:SkillParameter ;
+    rdfs:subPropertyOf css:isRealizedBy .
+
+css:isRestrictedBy a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain css:Capability ;
+    rdfs:range css:Constraint .
+
+css:isSpecifiedBy a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain [ a rdfs:Resource,
+                owl:Class ;
+            owl:unionOf [ a rdfs:Resource ;
+                    rdf:first css:Capability ;
+                    rdf:rest [ a rdfs:Resource ;
+                            rdf:first css:Service ;
+                            rdf:rest () ] ] ] ;
+    rdfs:range css:Property .
+
+css:offers a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain css:ServiceProvider ;
+    rdfs:range css:Service .
+
+css:offersUseOf a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain css:Service ;
+    rdfs:range css:Capability .
+
+css:proposes a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain css:ServiceProvider ;
+    rdfs:range css:ServiceOffer .
+
+css:providesCapability a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain css:Resource ;
+    rdfs:range css:Capability ;
+    rdfs:subPropertyOf css:provides .
+
+css:providesSkill a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain css:Resource ;
+    rdfs:range css:Skill ;
+    rdfs:subPropertyOf css:provides .
+
+css:receives a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain css:ServiceRequester ;
+    rdfs:range css:ServiceOffer .
+
+css:references a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain css:TransitionConstraint ;
+    rdfs:range [ a rdfs:Resource,
+                owl:Class ;
+            owl:unionOf [ a rdfs:Resource ;
+                    rdf:first css:Capability ;
+                    rdf:rest [ a rdfs:Resource ;
+                            rdf:first css:Service ;
+                            rdf:rest () ] ] ] .
+
+css:referencesProperty a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain css:PropertyConstraint ;
+    rdfs:range css:Property .
+
+css:requiresCapability a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain css:Process ;
+    rdfs:range css:Capability .
+
+css:requiresProduct a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain css:ServiceRequester ;
+    rdfs:range css:Product .
+
+css:behaviorConformsTo a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain css:Resource,
+        css:Skill ;
+    rdfs:range css:StateMachine .
+
+css:Constraint a rdfs:Resource,
+        owl:Class ;
+    rdfs:comment """Condition imposed on a capability that further details its applicability. 
+
+Notes:
+- A capability constraint can be formulated as one of the following three constraint types:
+▪ A precondition, i.e., a condition that must hold before a function can be executed.
+▪ A postcondition, i.e., a condition that must hold after a function has been executed.
+▪ An invariant, i.e., a condition that must hold during the execution of a
+function.
+- A capability constraint restricts the values of the properties associated with the respective capability.
+- A capability constraint can involve one or more properties""" ;
+    owl:disjointWith css:Resource,
+        css:Service,
+        css:ServiceOffer,
+        css:ServiceProvider,
+        css:ServiceRequester,
+        css:Skill,
+        css:SkillInterface,
+        css:SkillParameter .
+
+css:isRealizedBy a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain [ a rdfs:Resource,
+                owl:Class ;
+            owl:unionOf [ a rdfs:Resource ;
+                    rdf:first css:Capability ;
+                    rdf:rest [ a rdfs:Resource ;
+                            rdf:first css:Property ;
+                            rdf:rest () ] ] ] ;
+    rdfs:range [ a rdfs:Resource,
+                owl:Class ;
+            owl:unionOf [ a rdfs:Resource ;
+                    rdf:first css:Skill ;
+                    rdf:rest [ a rdfs:Resource ;
+                            rdf:first css:SkillParameter ;
+                            rdf:rest () ] ] ] .
+
+css:provides a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain css:Resource .
+
+css:exposes a rdfs:Resource,
+        owl:ObjectProperty ;
+    rdfs:domain css:SkillInterface ;
+    rdfs:range [ a rdfs:Resource,
+                owl:Class ;
+            owl:unionOf [ a rdfs:Resource ;
+                    rdf:first css:SkillParameter ;
+                    rdf:rest [ a rdfs:Resource ;
+                            rdf:first css:SkillTrigger ;
+                            rdf:rest [ a rdfs:Resource ;
+                                    rdf:first css:StateMachine ;
+                                    rdf:rest () ] ] ] ] .
+
+() a rdfs:Resource .
+
+css:Product a rdfs:Resource,
+        owl:Class ;
+    rdfs:comment """Physical object being used as an input or created as an output of a production process.
+
+Notes:
+- The term Product may be used for objects in various states of manufacturing and may be seen as a generic term for raw materials, work in process and finished goods. Consumable supplies such as fuel, lubricants or cleaning agents may also be regarded as products. Furthermore, both purchased parts as well as parts manufactured in-house may be regarded as products.
+- Besides the actual product, there can be additional artifacts related to that product that are created and used in different life cycle phases to specify the product.
+▪ 3D/CAD models
+▪ specifications
+▪ BOM
+- A Service Requester may use these additional artifacts to formulate requirements against products.""" ;
+    owl:disjointWith css:Service,
+        css:ServiceOffer,
+        css:ServiceProvider,
+        css:ServiceRequester,
+        css:Skill,
+        css:SkillInterface,
+        css:SkillParameter .
+
+css:ServiceOffer a rdfs:Resource,
+        owl:Class ;
+    rdfs:comment """Proposal for a binding contract from the Service Provider to execute one or more particular services that a ServiceRequester can receive and accept.
+
+Notes:
+- A ServiceOffer should determine the commercial aspects of the service provision
+and may remain valid for a certain period of time.
+- An Offer may consist of partial offers proposed by different service providers""" ;
+    owl:disjointWith css:ServiceProvider,
+        css:ServiceRequester,
+        css:Skill,
+        css:SkillInterface,
+        css:SkillParameter,
+        css:StateMachine .
+
+css:SkillParameter a rdfs:Resource,
+        owl:Class ;
+    rdfs:comment """Data unit to configure, control and monitor the execution of a skill.
+
+Notes:
+- Skill parameters might be used as in- /output parameters
+- Skill parameters might be used as results
+- Skill parameters might have a relation or be equivalent to capability properties""" ;
+    owl:disjointWith css:StateMachine .
+
+owl:Class a rdfs:Resource .
+
+owl:ObjectProperty a rdfs:Resource .
+

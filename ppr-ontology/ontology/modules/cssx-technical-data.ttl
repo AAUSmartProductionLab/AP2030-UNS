@@ -1,0 +1,113 @@
+@prefix : <http://www.w3id.org/aau-ra/cssx#> .
+@prefix css: <http://www.w3id.org/hsu-aut/css#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+#################################################################
+#    Classes
+#################################################################
+
+###  http://www.w3id.org/aau-ra/cssx#ProductTechnicalData
+:ProductTechnicalData rdf:type owl:Class ;
+  rdfs:comment "Technical and production-relevant data for a product, excluding identification/nameplate data." .
+
+###  http://www.w3id.org/aau-ra/cssx#ProductClassification
+:ProductClassification rdf:type owl:Class ;
+  rdfs:comment "Classification information used to categorize a product for engineering and production purposes." .
+
+###  http://www.w3id.org/aau-ra/cssx#OperationalSpecification
+:OperationalSpecification rdf:type owl:Class ;
+  rdfs:comment "Product-related operational specifications such as handling, operating, or storage constraints." .
+
+###  http://www.w3id.org/aau-ra/cssx#OrderData
+:OrderData rdf:type owl:Class ;
+  rdfs:comment "Production-order-relevant data for planning and execution, excluding nameplate identification data." .
+
+#################################################################
+#    Object Properties
+#################################################################
+
+###  http://www.w3id.org/aau-ra/cssx#hasProductTechnicalData
+:hasProductTechnicalData rdf:type owl:ObjectProperty , owl:FunctionalProperty ;
+  rdfs:domain css:Product ;
+  rdfs:range :ProductTechnicalData .
+
+###  http://www.w3id.org/aau-ra/cssx#hasProductClassification
+:hasProductClassification rdf:type owl:ObjectProperty ;
+  rdfs:domain :ProductTechnicalData ;
+  rdfs:range :ProductClassification .
+
+###  http://www.w3id.org/aau-ra/cssx#hasOperationalSpecification
+:hasOperationalSpecification rdf:type owl:ObjectProperty ;
+  rdfs:domain :ProductTechnicalData ;
+  rdfs:range :OperationalSpecification .
+
+###  http://www.w3id.org/aau-ra/cssx#hasOrderData
+:hasOrderData rdf:type owl:ObjectProperty ;
+  rdfs:domain :ProductTechnicalData ;
+  rdfs:range :OrderData .
+
+#################################################################
+#    Datatype Properties
+#################################################################
+
+###  http://www.w3id.org/aau-ra/cssx#classificationSystem
+:classificationSystem rdf:type owl:DatatypeProperty ;
+  rdfs:domain :ProductClassification ;
+  rdfs:range xsd:string .
+
+###  http://www.w3id.org/aau-ra/cssx#classificationCode
+:classificationCode rdf:type owl:DatatypeProperty ;
+  rdfs:domain :ProductClassification ;
+  rdfs:range xsd:string .
+
+###  http://www.w3id.org/aau-ra/cssx#classificationLabel
+:classificationLabel rdf:type owl:DatatypeProperty ;
+  rdfs:domain :ProductClassification ;
+  rdfs:range rdf:langString .
+
+###  http://www.w3id.org/aau-ra/cssx#operationalConstraint
+:operationalConstraint rdf:type owl:DatatypeProperty ;
+  rdfs:domain :OperationalSpecification ;
+  rdfs:range rdf:langString .
+
+###  http://www.w3id.org/aau-ra/cssx#handlingInstruction
+:handlingInstruction rdf:type owl:DatatypeProperty ;
+  rdfs:domain :OperationalSpecification ;
+  rdfs:range rdf:langString .
+
+###  http://www.w3id.org/aau-ra/cssx#storageCondition
+:storageCondition rdf:type owl:DatatypeProperty ;
+  rdfs:domain :OperationalSpecification ;
+  rdfs:range rdf:langString .
+
+###  http://www.w3id.org/aau-ra/cssx#orderQuantity
+:orderQuantity rdf:type owl:DatatypeProperty ;
+  rdfs:domain :OrderData ;
+  rdfs:range xsd:decimal .
+
+###  http://www.w3id.org/aau-ra/cssx#orderBatchSize
+:orderBatchSize rdf:type owl:DatatypeProperty ;
+  rdfs:domain :OrderData ;
+  rdfs:range xsd:decimal .
+
+###  http://www.w3id.org/aau-ra/cssx#orderTimestamp
+:orderTimestamp rdf:type owl:DatatypeProperty ;
+  rdfs:domain :OrderData ;
+  rdfs:range xsd:dateTime .
+
+###  http://www.w3id.org/aau-ra/cssx#packagingType
+:packagingType rdf:type owl:DatatypeProperty ;
+  rdfs:domain :OrderData ;
+  rdfs:range xsd:string .
+
+###  http://www.w3id.org/aau-ra/cssx#orderStatus
+:orderStatus rdf:type owl:DatatypeProperty ;
+  rdfs:domain :OrderData ;
+  rdfs:range xsd:string .
+
+#################################################################
+#    Individuals
+#################################################################

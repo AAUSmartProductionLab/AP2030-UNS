@@ -1,0 +1,82 @@
+asset_name: "CA18CLC12BPM1"
+description: |
+  Ground truth for the Carlo Gavazzi capacitive proximity sensor evaluation case.
+  Mandatory submodels and SMEs that an accurate generation MUST produce, with the
+  expected semanticIds (IDTA where applicable) and value substring checks where
+  the spec sheet provides a clear answer.
+
+expected_submodels:
+  DigitalNameplate:
+    submodelElements:
+      - idShort: ManufacturerName
+        semanticId: "https://admin-shell.io/zvei/nameplate/1/0/Nameplate/ManufacturerName"
+        expected_value_contains: "Carlo Gavazzi"
+        required: true
+      - idShort: ManufacturerProductDesignation
+        semanticId: "https://admin-shell.io/zvei/nameplate/1/0/Nameplate/ManufacturerProductDesignation"
+        expected_value_contains: "CA18CLC12BPM1"
+        required: true
+      - idShort: ContactInformation
+        semanticId: "https://admin-shell.io/zvei/nameplate/1/0/Nameplate/ContactInformation"
+        required: true
+      - idShort: OrderCodeOfManufacturer
+        semanticId: "https://admin-shell.io/zvei/nameplate/1/0/Nameplate/OrderCodeOfManufacturer"
+        required: true
+      # Optional fields — flagged so we can measure how many the LLM nailed,
+      # but not penalised when omitted (since the spec doesn't always state them).
+      - idShort: ManufacturerProductFamily
+        expected_value_contains: "CA"
+        required: false
+      - idShort: CountryOfOrigin
+        expected_value_contains: "IT"
+        required: false
+
+  AID:
+    submodelElements:
+      - idShort: InterfaceMQTT
+        semanticId: "https://admin-shell.io/idta/AssetInterfacesDescription/1/0/Interface"
+        required: true
+      - idShort: EndpointMetadata
+        path: [InterfaceMQTT, EndpointMetadata]
+        semanticId: "https://admin-shell.io/idta/AssetInterfacesDescription/1/0/EndpointMetadata"
+        required: true
+      - idShort: InteractionMetadata
+        path: [InterfaceMQTT, InteractionMetadata]
+        semanticId: "https://admin-shell.io/idta/AssetInterfacesDescription/1/0/InteractionMetadata"
+        required: true
+
+  Skills:
+    submodelElements:
+      - idShort: TeachIn
+        required: true
+      - idShort: Reset
+        required: true
+
+  Capabilities:
+    submodelElements:
+      - idShort: CapabilitySet
+        required: true
+
+  OperationalData:
+    submodelElements:
+      - idShort: DetectionState
+        required: true
+      - idShort: SensingDistance
+        required: true
+
+  HierarchicalStructures:
+    submodelElements:
+      - idShort: ArcheType
+        semanticId: "https://admin-shell.io/idta/HierarchicalStructures/ArcheType/1/0"
+        required: true
+      - idShort: EntryNode
+        semanticId: "https://admin-shell.io/idta/HierarchicalStructures/EntryNode/1/0"
+        required: true
+
+# Optional consistency checks the runner can later wire in — Skills must
+# reference AID actions, Capabilities realizedBy Skills.
+expected_cross_references:
+  - skill: TeachIn
+    references_aid_action: TeachIn
+  - skill: Reset
+    references_aid_action: Reset

@@ -1,0 +1,127 @@
+@prefix : <http://www.w3id.org/aau-ra/cssx#> .
+@prefix css: <http://www.w3id.org/hsu-aut/css#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+
+
+#################################################################
+#    External CSS declarations for VOWL visualization in protege
+#################################################################
+css:Resource rdf:type owl:Class .
+:AIDSubmodel rdf:type owl:Class .
+:hasAIDSubmodel rdf:type owl:ObjectProperty .
+#################################################################
+#    Classes
+#################################################################
+
+###  http://www.w3id.org/aau-ra/cssx#CPPS
+:CPPS rdf:type owl:Class ;
+  rdfs:subClassOf css:Resource ;
+  rdfs:comment "Cyber-Physical Production System. A top-level production resource composed of one or more Cyber-Physical Production Modules (CPPMs)." .
+
+###  http://www.w3id.org/aau-ra/cssx#CPPM
+:CPPM rdf:type owl:Class ;
+  rdfs:subClassOf css:Resource ;
+  rdfs:comment "Cyber-Physical Production Module. A mid-level production resource that belongs to a CPPS and is composed of one or more Cyber-Physical Sub-systems (CPSs)." .
+
+###  http://www.w3id.org/aau-ra/cssx#CPS
+:CPS rdf:type owl:Class ;
+  rdfs:subClassOf css:Resource ;
+  rdfs:comment "Cyber-Physical Sub-system. A low-level production resource that belongs to a CPPM and directly performs physical operations." .
+
+
+#################################################################
+#    Object Properties
+#################################################################
+
+###  http://www.w3id.org/aau-ra/cssx#hasCPPM
+:hasCPPM rdf:type owl:ObjectProperty ;
+  rdfs:domain :CPPS ;
+  rdfs:range :CPPM ;
+  rdfs:comment "Relates a CPPS to the CPPMs it is composed of." .
+
+# ###  http://www.w3id.org/aau-ra/cssx#hasCPS
+:hasCPS rdf:type owl:ObjectProperty ;
+  rdfs:domain :CPPM ;
+  rdfs:range :CPS ;
+  rdfs:comment "Relates a CPPM to the CPSs it is composed of." .
+
+# if both CPPS and CPPM can have CPS
+# :hasCPS rdf:type owl:ObjectProperty ;
+#   rdfs:domain [ rdf:type owl:Class ; owl:unionOf ( :CPPM :CPPS ) ] ;
+#   rdfs:range :CPS ;
+#   rdfs:comment "Relates a CPPM or CPPS directly to a CPS." .
+
+
+# Inverse relations should we have them?
+# ###  http://www.w3id.org/aau-ra/cssx#isPartOfCPPS
+# :isPartOfCPPS rdf:type owl:ObjectProperty ;
+#   owl:inverseOf :hasCPPM ;
+#   rdfs:domain :CPPM ;
+#   rdfs:range :CPPS ;
+#   rdfs:comment "Relates a CPPM to the CPPS it belongs to." .
+
+###  http://www.w3id.org/aau-ra/cssx#isPartOfCPPM
+# :isPartOfCPPM rdf:type owl:ObjectProperty ;
+#   owl:inverseOf :hasCPS ;
+#   rdfs:domain :CPS ;
+#   rdfs:range :CPPM ;
+#   rdfs:comment "Relates a CPS to the CPPM it belongs to." .
+
+#################################################################
+#    Individuals
+#################################################################
+
+
+#################################################################
+#    Constraints
+#################################################################
+
+:CPPS rdfs:subClassOf [ rdf:type owl:Restriction ;
+  owl:onProperty :hasCPPM ;
+  owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+  owl:onClass :CPPM
+] .
+
+:CPPM rdfs:subClassOf [ rdf:type owl:Restriction ;
+  owl:onProperty :hasCPS ;
+  owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+  owl:onClass :CPS
+] .
+
+:CPPM rdfs:subClassOf [ rdf:type owl:Restriction ;
+  owl:onProperty :hasAIDSubmodel ;
+  owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+  owl:onClass :AIDSubmodel
+] .
+
+#################################################################
+#    CPPS Types
+#################################################################
+### http://www.w3id.org/aau-ra/cssx#FillingLine
+:FillingLine rdf:type owl:Class ;
+  rdfs:subClassOf :CPPS ;
+  rdfs:comment "Cyber-Physical Production System. A top-level production resource composed of one or more Cyber-Physical Production Modules (CPPMs)." .
+
+
+#################################################################
+#    CPPM Types
+#################################################################
+:LoadingModule rdf:type owl:Class ;
+  rdfs:subClassOf :CPPM ;
+  rdfs:comment "Cyber-Physical Production Module. A mid-level production resource that belongs to a CPPS and is composed of one or more Cyber-Physical Sub-systems (CPSs)." .
+
+:FillingModule rdf:type owl:Class ;
+  rdfs:subClassOf :CPPM ;
+  rdfs:comment "Cyber-Physical Production Module. A mid-level production resource that belongs to a CPPS and is composed of one or more Cyber-Physical Sub-systems (CPSs)." .
+
+:UnloadingModule rdf:type owl:Class ;
+  rdfs:subClassOf :CPPM ;
+  rdfs:comment "Cyber-Physical Production Module. A mid-level production resource that belongs to a CPPS and is composed of one or more Cyber-Physical Sub-systems (CPSs)." .
+
+#################################################################
+#    CPS Types
+#################################################################
