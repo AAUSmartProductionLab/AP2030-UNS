@@ -1,0 +1,194 @@
+@prefix apso: <https://w3id.org/2025/apso#> .
+@prefix aas:  <https://admin-shell.io/aas/3/1/> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+#################################################################
+# ONTOLOGY METADATA
+#################################################################
+
+<https://w3id.org/2025/apso/modules/bill-of-process>
+  rdf:type owl:Ontology ;
+  owl:imports <https://admin-shell.io/aas/3/1/> ;
+  rdfs:comment """APSO module: Bill of Process submodel for Product AAS blueprint.
+
+This revised module follows the updated diagram and explicitly includes
+Process, ProcessOrder and ProcessStructure. Processes is an SML that can contain
+process strings and structured process descriptions. ProcessOrder is modeled as
+an annotated relationship element that orders two Process entries by references.""" .
+
+#################################################################
+# SMT STRUCTURE OVERVIEW
+#################################################################
+# BoP (Submodel)
+#   ├─ RecipeId [Property/Identifier, 1]
+#   └─ Processes [SML, 1]
+#        ├─ Process [Property/string, 0..*]
+#        ├─ ProcessStructure [SMC, 0..*]
+#        ├─ Process [SMC, 0..*]
+#        │    ├─ processId [Identifier, 1]
+#        │    ├─ semanticId [Identifier, 1]
+#        │    ├─ sequenceNumber [Integer, 1]
+#        │    ├─ estimatedDuration [SMC, 0..1]
+#        │    ├─ parameters [SMC, 0..1]
+#        │    └─ requirements [SMC, 0..1]
+#        └─ ProcessOrder [ARE, 0..*]
+#             ├─ idShort [Identifier, 1]
+#             ├─ first [Reference, 1]
+#             └─ second [Reference, 1]
+#
+# ProcessStructure [SMC, 0..*]
+#   ├─ processId [Identifier, 1]
+#   ├─ semanticId [Identifier, 1]
+#   ├─ description [string, 0..1]
+#   ├─ estimatedDuration [SMC, 0..1]
+#   ├─ parameters [SMC, 0..1]
+#   ├─ requirements [SMC, 0..1]
+#   └─ nextReference [ReferenceElement, 0..1]
+#
+# Additional relation:
+#   Entity IsDisassembleBy Process or ProcessStructure
+
+#################################################################
+# SUBMODEL AND ELEMENT TYPES
+#################################################################
+
+apso:BillOfProcessSubmodel rdf:type owl:Class ;
+  rdfs:subClassOf aas:Submodel ;
+  rdfs:label "BoP Submodel" ;
+  rdfs:comment "Bill of Process describing manufacturing and disassembly process sequences for a Product AAS." .
+
+apso:RecipeIdProperty rdf:type owl:Class ;
+  rdfs:subClassOf aas:Property ;
+  rdfs:comment "RecipeId:identifier [1]." .
+
+apso:ProcessesSML rdf:type owl:Class ;
+  rdfs:subClassOf aas:SubmodelElementList ;
+  rdfs:comment "Processes:SML [1], containing process strings, Process SMCs, ProcessStructure SMCs and ProcessOrder AREs." .
+
+apso:ProcessProperty rdf:type owl:Class ;
+  rdfs:subClassOf aas:Property ;
+  rdfs:comment "Process:string [0..*], lightweight process name/label entry." .
+
+apso:ProcessSMC rdf:type owl:Class ;
+  rdfs:subClassOf aas:SubmodelElementCollection ;
+  rdfs:comment "Process:SMC [0..*], structured process entry with id, semantic identifier, sequence number and optional duration, parameters and requirements." .
+
+apso:ProcessOrderARE rdf:type owl:Class ;
+  rdfs:subClassOf aas:AnnotatedRelationshipElement ;
+  rdfs:comment "ProcessOrder:ARE [0..*], ordering relation between two Process entries via first and second references." .
+
+apso:ProcessStructureSMC rdf:type owl:Class ;
+  rdfs:subClassOf aas:SubmodelElementCollection ;
+  rdfs:comment "ProcessStructure:SMC [0..*], structured process definition used for process structures and disassembly links." .
+
+apso:ProcessIdProperty rdf:type owl:Class ; rdfs:subClassOf aas:Property ; rdfs:comment "processId:Identifier [1]." .
+apso:ProcessSemanticIdProperty rdf:type owl:Class ; rdfs:subClassOf aas:Property ; rdfs:comment "semanticId:Identifier [1]." .
+apso:ProcessSequenceNumberProperty rdf:type owl:Class ; rdfs:subClassOf aas:Property ; rdfs:comment "sequenceNumber:Integer [1]." .
+apso:ProcessDescriptionProperty rdf:type owl:Class ; rdfs:subClassOf aas:Property ; rdfs:comment "description:string [0..1]." .
+
+apso:EstimatedDurationSMC rdf:type owl:Class ;
+  rdfs:subClassOf aas:SubmodelElementCollection ;
+  rdfs:comment "estimatedDuration:SMC [0..1]." .
+
+apso:DurationValueProperty rdf:type owl:Class ;
+  rdfs:subClassOf aas:Property ;
+  rdfs:comment "value:Integer [1]." .
+
+apso:DurationSemanticIdProperty rdf:type owl:Class ;
+  rdfs:subClassOf aas:Property ;
+  rdfs:comment "semanticId:Identifier [1]." .
+
+apso:ProcessParametersSMC rdf:type owl:Class ;
+  rdfs:subClassOf aas:SubmodelElementCollection ;
+  rdfs:comment "parameters:SMC [0..1], containing parameter entries." .
+
+apso:ParameterSMC rdf:type owl:Class ;
+  rdfs:subClassOf aas:SubmodelElementCollection ;
+  rdfs:comment "parameter:SMC [1..*], individual parameter entry." .
+
+apso:ParameterIdProperty rdf:type owl:Class ; rdfs:subClassOf aas:Property ; rdfs:comment "parameterId:Identifier [1]." .
+apso:ParameterSemanticIdProperty rdf:type owl:Class ; rdfs:subClassOf aas:Property ; rdfs:comment "semanticId:Identifier [1]." .
+apso:ParameterDescriptionProperty rdf:type owl:Class ; rdfs:subClassOf aas:Property ; rdfs:comment "description:string [0..1]." .
+apso:ParameterValueDataElement rdf:type owl:Class ; rdfs:subClassOf aas:DataElement ; rdfs:comment "value:DataElement [1]." .
+apso:ParameterUnitProperty rdf:type owl:Class ; rdfs:subClassOf aas:Property ; rdfs:comment "unit:Qualifier [0..1] or string unit in simple projections." .
+apso:ParameterUnitSemanticIdProperty rdf:type owl:Class ; rdfs:subClassOf aas:Property ; rdfs:comment "unitSemanticId:Identifier [0..1]." .
+
+apso:ProcessRequirementsSMC rdf:type owl:Class ;
+  rdfs:subClassOf aas:SubmodelElementCollection ;
+  rdfs:comment "requirements:SMC [0..1], containing process requirement entries." .
+
+apso:ProcessRequirementSMC rdf:type owl:Class ;
+  rdfs:subClassOf aas:SubmodelElementCollection ;
+  rdfs:comment "requirement:SMC [1..*], individual process requirement entry." .
+
+apso:NextReferenceElement rdf:type owl:Class ;
+  rdfs:subClassOf aas:ReferenceElement ;
+  rdfs:comment "nextReference:ReferenceElement [0..1]." .
+
+apso:IsDisassembleByRelationship rdf:type owl:Class ;
+  rdfs:subClassOf aas:RelationshipElement ;
+  rdfs:comment "Relationship from a BoM Entity to the Process or ProcessStructure that disassembles it." .
+
+#################################################################
+# CONTAINMENT CONSTRAINTS
+#################################################################
+
+apso:BillOfProcessSubmodel rdfs:subClassOf
+  [ rdf:type owl:Restriction ;
+    owl:onProperty <https://admin-shell.io/aas/3/1/Submodel/submodelElements> ;
+    owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+    owl:onClass apso:RecipeIdProperty ],
+  [ rdf:type owl:Restriction ;
+    owl:onProperty <https://admin-shell.io/aas/3/1/Submodel/submodelElements> ;
+    owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+    owl:onClass apso:ProcessesSML ] .
+
+apso:ProcessesSML rdfs:subClassOf
+  [ rdf:type owl:Restriction ;
+    owl:onProperty <https://admin-shell.io/aas/3/1/SubmodelElementList/value> ;
+    owl:allValuesFrom [ rdf:type owl:Class ; owl:unionOf ( apso:ProcessProperty apso:ProcessSMC apso:ProcessStructureSMC apso:ProcessOrderARE ) ] ],
+  [ rdf:type owl:Restriction ;
+    owl:onProperty <https://admin-shell.io/aas/3/1/SubmodelElementList/value> ;
+    owl:someValuesFrom [ rdf:type owl:Class ; owl:unionOf ( apso:ProcessProperty apso:ProcessSMC apso:ProcessStructureSMC ) ] ] .
+
+apso:ProcessSMC rdfs:subClassOf
+  [ rdf:type owl:Restriction ; owl:onProperty <https://admin-shell.io/aas/3/1/SubmodelElementCollection/value> ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass apso:ProcessIdProperty ],
+  [ rdf:type owl:Restriction ; owl:onProperty <https://admin-shell.io/aas/3/1/SubmodelElementCollection/value> ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass apso:ProcessSemanticIdProperty ],
+  [ rdf:type owl:Restriction ; owl:onProperty <https://admin-shell.io/aas/3/1/SubmodelElementCollection/value> ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass apso:ProcessSequenceNumberProperty ],
+  [ rdf:type owl:Restriction ; owl:onProperty <https://admin-shell.io/aas/3/1/SubmodelElementCollection/value> ; owl:maxQualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass apso:EstimatedDurationSMC ],
+  [ rdf:type owl:Restriction ; owl:onProperty <https://admin-shell.io/aas/3/1/SubmodelElementCollection/value> ; owl:maxQualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass apso:ProcessParametersSMC ],
+  [ rdf:type owl:Restriction ; owl:onProperty <https://admin-shell.io/aas/3/1/SubmodelElementCollection/value> ; owl:maxQualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass apso:ProcessRequirementsSMC ] .
+
+apso:ProcessStructureSMC rdfs:subClassOf
+  [ rdf:type owl:Restriction ; owl:onProperty <https://admin-shell.io/aas/3/1/SubmodelElementCollection/value> ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass apso:ProcessIdProperty ],
+  [ rdf:type owl:Restriction ; owl:onProperty <https://admin-shell.io/aas/3/1/SubmodelElementCollection/value> ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass apso:ProcessSemanticIdProperty ],
+  [ rdf:type owl:Restriction ; owl:onProperty <https://admin-shell.io/aas/3/1/SubmodelElementCollection/value> ; owl:maxQualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass apso:ProcessDescriptionProperty ],
+  [ rdf:type owl:Restriction ; owl:onProperty <https://admin-shell.io/aas/3/1/SubmodelElementCollection/value> ; owl:maxQualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass apso:EstimatedDurationSMC ],
+  [ rdf:type owl:Restriction ; owl:onProperty <https://admin-shell.io/aas/3/1/SubmodelElementCollection/value> ; owl:maxQualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass apso:ProcessParametersSMC ],
+  [ rdf:type owl:Restriction ; owl:onProperty <https://admin-shell.io/aas/3/1/SubmodelElementCollection/value> ; owl:maxQualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass apso:ProcessRequirementsSMC ],
+  [ rdf:type owl:Restriction ; owl:onProperty <https://admin-shell.io/aas/3/1/SubmodelElementCollection/value> ; owl:maxQualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass apso:NextReferenceElement ] .
+
+apso:ProcessOrderARE rdfs:subClassOf
+  [ rdf:type owl:Restriction ; owl:onProperty <https://admin-shell.io/aas/3/1/RelationshipElement/first> ; owl:minCardinality 1 ],
+  [ rdf:type owl:Restriction ; owl:onProperty <https://admin-shell.io/aas/3/1/RelationshipElement/second> ; owl:minCardinality 1 ] .
+
+apso:EstimatedDurationSMC rdfs:subClassOf
+  [ rdf:type owl:Restriction ; owl:onProperty <https://admin-shell.io/aas/3/1/SubmodelElementCollection/value> ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass apso:DurationValueProperty ],
+  [ rdf:type owl:Restriction ; owl:onProperty <https://admin-shell.io/aas/3/1/SubmodelElementCollection/value> ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass apso:DurationSemanticIdProperty ] .
+
+apso:ProcessParametersSMC rdfs:subClassOf
+  [ rdf:type owl:Restriction ; owl:onProperty <https://admin-shell.io/aas/3/1/SubmodelElementCollection/value> ; owl:someValuesFrom apso:ParameterSMC ] .
+
+apso:ParameterSMC rdfs:subClassOf
+  [ rdf:type owl:Restriction ; owl:onProperty <https://admin-shell.io/aas/3/1/SubmodelElementCollection/value> ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass apso:ParameterIdProperty ],
+  [ rdf:type owl:Restriction ; owl:onProperty <https://admin-shell.io/aas/3/1/SubmodelElementCollection/value> ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass apso:ParameterSemanticIdProperty ],
+  [ rdf:type owl:Restriction ; owl:onProperty <https://admin-shell.io/aas/3/1/SubmodelElementCollection/value> ; owl:maxQualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass apso:ParameterDescriptionProperty ],
+  [ rdf:type owl:Restriction ; owl:onProperty <https://admin-shell.io/aas/3/1/SubmodelElementCollection/value> ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass apso:ParameterValueDataElement ],
+  [ rdf:type owl:Restriction ; owl:onProperty <https://admin-shell.io/aas/3/1/SubmodelElementCollection/value> ; owl:maxQualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass apso:ParameterUnitProperty ],
+  [ rdf:type owl:Restriction ; owl:onProperty <https://admin-shell.io/aas/3/1/SubmodelElementCollection/value> ; owl:maxQualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass apso:ParameterUnitSemanticIdProperty ] .
+
+apso:ProcessRequirementsSMC rdfs:subClassOf
+  [ rdf:type owl:Restriction ; owl:onProperty <https://admin-shell.io/aas/3/1/SubmodelElementCollection/value> ; owl:someValuesFrom apso:ProcessRequirementSMC ] .

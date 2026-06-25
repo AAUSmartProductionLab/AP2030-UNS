@@ -1,0 +1,61 @@
+@prefix apso: <https://w3id.org/2025/apso#> .
+@prefix aas:  <https://admin-shell.io/aas/3/1/> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+#################################################################
+# ONTOLOGY METADATA
+#################################################################
+
+<https://w3id.org/2025/apso/modules/requirements>
+  rdf:type owl:Ontology ;
+  owl:imports <https://admin-shell.io/aas/3/1/> ;
+  rdfs:comment """APSO module: Requirements submodel for Product AAS blueprint.""" .
+
+
+#################################################################
+# SMT STRUCTURE OVERVIEW
+#################################################################
+# Requirements (Submodel)
+#   ├─ semanticId [identifier, 1]
+#   ├─ description [string, 0..1]
+#   └─ requirements [SMC, 1..*]
+#        └─ requirement [SMC, 1..*]
+#             ├─ requirementId [Identifier, 1]
+#             ├─ semanticId [Identifier, 1]
+#             ├─ description [string, 0..1]
+#             ├─ value [DataElement, 1]
+#             ├─ unit [string, 0..1]
+#             └─ unitSemanticId [Identifier, 0..1]
+
+apso:RequirementsSubmodel rdf:type owl:Class ;
+  rdfs:subClassOf aas:Submodel ;
+  rdfs:label "Requirements Submodel" ;
+  rdfs:comment "Optional product-level requirements with semantic identifiers and typed values." .
+
+apso:RequirementsCollectionSMC rdf:type owl:Class ; rdfs:subClassOf aas:SubmodelElementCollection ; rdfs:comment "Container for one or more requirement entries." .
+apso:RequirementSMC rdf:type owl:Class ; rdfs:subClassOf aas:SubmodelElementCollection ; rdfs:comment "Single requirement entry." .
+apso:RequirementIdProperty rdf:type owl:Class ; rdfs:subClassOf aas:Property .
+apso:RequirementSemanticIdProperty rdf:type owl:Class ; rdfs:subClassOf aas:Property .
+apso:RequirementDescriptionProperty rdf:type owl:Class ; rdfs:subClassOf aas:Property .
+apso:RequirementValueDataElement rdf:type owl:Class ; rdfs:subClassOf aas:DataElement .
+apso:RequirementUnitProperty rdf:type owl:Class ; rdfs:subClassOf aas:Property .
+apso:RequirementUnitSemanticIdProperty rdf:type owl:Class ; rdfs:subClassOf aas:Property .
+
+apso:RequirementsSubmodel rdfs:subClassOf [
+  rdf:type owl:Restriction ; owl:onProperty <https://admin-shell.io/aas/3/1/Submodel/submodelElements> ;
+  owl:someValuesFrom apso:RequirementsCollectionSMC ] .
+
+apso:RequirementsCollectionSMC rdfs:subClassOf [
+  rdf:type owl:Restriction ; owl:onProperty <https://admin-shell.io/aas/3/1/SubmodelElementCollection/value> ;
+  owl:someValuesFrom apso:RequirementSMC ] .
+
+apso:RequirementSMC rdfs:subClassOf
+  [ rdf:type owl:Restriction ; owl:onProperty <https://admin-shell.io/aas/3/1/SubmodelElementCollection/value> ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass apso:RequirementIdProperty ],
+  [ rdf:type owl:Restriction ; owl:onProperty <https://admin-shell.io/aas/3/1/SubmodelElementCollection/value> ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass apso:RequirementSemanticIdProperty ],
+  [ rdf:type owl:Restriction ; owl:onProperty <https://admin-shell.io/aas/3/1/SubmodelElementCollection/value> ; owl:maxQualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass apso:RequirementDescriptionProperty ],
+  [ rdf:type owl:Restriction ; owl:onProperty <https://admin-shell.io/aas/3/1/SubmodelElementCollection/value> ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass apso:RequirementValueDataElement ],
+  [ rdf:type owl:Restriction ; owl:onProperty <https://admin-shell.io/aas/3/1/SubmodelElementCollection/value> ; owl:maxQualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass apso:RequirementUnitProperty ],
+  [ rdf:type owl:Restriction ; owl:onProperty <https://admin-shell.io/aas/3/1/SubmodelElementCollection/value> ; owl:maxQualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass apso:RequirementUnitSemanticIdProperty ] .

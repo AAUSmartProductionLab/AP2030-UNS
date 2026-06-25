@@ -1,0 +1,144 @@
+@prefix apso: <https://w3id.org/2025/apso#> .
+@prefix aas:  <https://admin-shell.io/aas/3/1/> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+#################################################################
+# ONTOLOGY METADATA
+#################################################################
+
+<https://w3id.org/2025/apso/modules/bill-of-materials>
+  rdf:type owl:Ontology ;
+  owl:imports <https://admin-shell.io/aas/3/1/> ;
+  rdfs:comment """APSO module: Bill of Materials submodel for Product AAS blueprint.
+
+This module follows the revised Product AAS diagram. The BoM contains one
+EntryNode entity, one ArcheType string, zero or more JointConnection annotated
+relationship elements, and zero or more JointParams collections. JointParams is
+modeled explicitly because JointConnection.annotations/JointParamsRef points to
+one such collection.""" .
+
+#################################################################
+# SMT STRUCTURE OVERVIEW
+#################################################################
+# BoM (Submodel)
+#   ├─ EntryNode [Entity, 1]
+#   ├─ ArcheType [Property/string, 1]
+#   ├─ JointConnection [AnnotatedRelationshipElement, 0..*]
+#   │    ├─ idShort [Identifier, 1]
+#   │    ├─ first [Reference, 1]
+#   │    ├─ second [Reference, 1]
+#   │    └─ annotations
+#   │         ├─ JointParamsRef [ReferenceElement, 1]
+#   │         ├─ JointType [Property/string, 1]
+#   │         └─ JointStandard [Property/string, 0..1]
+#   └─ JointParams [SMC, 0..*]
+#        ├─ idShort [Identifier, 1]
+#        ├─ TypeParam [Property, 0..*]
+#        ├─ TypeRange [Range, 0..*]
+#        └─ TypeFile [File, 0..1]
+#
+# Entity
+#   ├─ idShort [Identifier, 1]
+#   └─ globalAssetId [Identifier, 0..1]
+
+#################################################################
+# SUBMODEL AND ELEMENT TYPES
+#################################################################
+
+apso:BillOfMaterialsSubmodel rdf:type owl:Class ;
+  rdfs:subClassOf aas:Submodel ;
+  rdfs:label "BoM Submodel" ;
+  rdfs:comment "Product assembly structure with entry entity, hierarchy archetype, joint connections and joint parameter collections." .
+
+apso:BomEntryNodeEntity rdf:type owl:Class ;
+  rdfs:subClassOf aas:Entity ;
+  rdfs:comment "EntryNode:Entity [1], root of the Product BoM." .
+
+apso:BomEntity rdf:type owl:Class ;
+  rdfs:subClassOf aas:Entity ;
+  rdfs:comment "Entity with idShort [1] and optional globalAssetId [0..1]. May resolve to a Product AAS or Part AAS." .
+
+apso:BomArcheTypeProperty rdf:type owl:Class ;
+  rdfs:subClassOf aas:Property ;
+  rdfs:comment "ArcheType:string [1]." .
+
+apso:JointConnectionARE rdf:type owl:Class ;
+  rdfs:subClassOf aas:AnnotatedRelationshipElement ;
+  rdfs:comment "JointConnection:ARE [0..*] connecting two BoM entities via first and second references." .
+
+apso:JointParamsRefReferenceElement rdf:type owl:Class ;
+  rdfs:subClassOf aas:ReferenceElement ;
+  rdfs:comment "Annotation JointParamsRef:ReferenceElement [1], pointing to a JointParamsSMC." .
+
+apso:JointTypeProperty rdf:type owl:Class ;
+  rdfs:subClassOf aas:Property ;
+  rdfs:comment "Annotation JointType:string [1]." .
+
+apso:JointStandardProperty rdf:type owl:Class ;
+  rdfs:subClassOf aas:Property ;
+  rdfs:comment "Annotation JointStandard:string [0..1]." .
+
+apso:JointParamsSMC rdf:type owl:Class ;
+  rdfs:subClassOf aas:SubmodelElementCollection ;
+  rdfs:comment "JointParams:SMC [0..*], named collection of parameters used by one or more JointConnection elements." .
+
+apso:JointTypeParamProperty rdf:type owl:Class ;
+  rdfs:subClassOf aas:Property ;
+  rdfs:comment "TypeParam:Property [0..*], scalar joint parameter such as torque, adhesive type or screw diameter." .
+
+apso:JointTypeRange rdf:type owl:Class ;
+  rdfs:subClassOf aas:Range ;
+  rdfs:comment "TypeRange:Range [0..*], numeric interval for joint parameters." .
+
+apso:JointTypeFile rdf:type owl:Class ;
+  rdfs:subClassOf aas:File ;
+  rdfs:comment "TypeFile:File [0..1], optional file attachment for joint data such as drawing, datasheet or standard." .
+
+#################################################################
+# CONTAINMENT CONSTRAINTS
+#################################################################
+
+apso:BillOfMaterialsSubmodel rdfs:subClassOf
+  [ rdf:type owl:Restriction ;
+    owl:onProperty <https://admin-shell.io/aas/3/1/Submodel/submodelElements> ;
+    owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+    owl:onClass apso:BomEntryNodeEntity ],
+  [ rdf:type owl:Restriction ;
+    owl:onProperty <https://admin-shell.io/aas/3/1/Submodel/submodelElements> ;
+    owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+    owl:onClass apso:BomArcheTypeProperty ],
+  [ rdf:type owl:Restriction ;
+    owl:onProperty <https://admin-shell.io/aas/3/1/Submodel/submodelElements> ;
+    owl:allValuesFrom [ rdf:type owl:Class ; owl:unionOf ( apso:BomEntryNodeEntity apso:BomArcheTypeProperty apso:JointConnectionARE apso:JointParamsSMC ) ] ] .
+
+apso:JointConnectionARE rdfs:subClassOf
+  [ rdf:type owl:Restriction ;
+    owl:onProperty <https://admin-shell.io/aas/3/1/RelationshipElement/first> ;
+    owl:minCardinality 1 ],
+  [ rdf:type owl:Restriction ;
+    owl:onProperty <https://admin-shell.io/aas/3/1/RelationshipElement/second> ;
+    owl:minCardinality 1 ],
+  [ rdf:type owl:Restriction ;
+    owl:onProperty <https://admin-shell.io/aas/3/1/AnnotatedRelationshipElement/annotations> ;
+    owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+    owl:onClass apso:JointParamsRefReferenceElement ],
+  [ rdf:type owl:Restriction ;
+    owl:onProperty <https://admin-shell.io/aas/3/1/AnnotatedRelationshipElement/annotations> ;
+    owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+    owl:onClass apso:JointTypeProperty ],
+  [ rdf:type owl:Restriction ;
+    owl:onProperty <https://admin-shell.io/aas/3/1/AnnotatedRelationshipElement/annotations> ;
+    owl:maxQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+    owl:onClass apso:JointStandardProperty ] .
+
+apso:JointParamsSMC rdfs:subClassOf
+  [ rdf:type owl:Restriction ;
+    owl:onProperty <https://admin-shell.io/aas/3/1/SubmodelElementCollection/value> ;
+    owl:allValuesFrom [ rdf:type owl:Class ; owl:unionOf ( apso:JointTypeParamProperty apso:JointTypeRange apso:JointTypeFile ) ] ],
+  [ rdf:type owl:Restriction ;
+    owl:onProperty <https://admin-shell.io/aas/3/1/SubmodelElementCollection/value> ;
+    owl:maxQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+    owl:onClass apso:JointTypeFile ] .

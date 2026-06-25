@@ -1,0 +1,62 @@
+@prefix apso: <https://w3id.org/2025/apso#> .
+@prefix aas:  <https://admin-shell.io/aas/3/1/> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+#################################################################
+# ONTOLOGY METADATA
+#################################################################
+
+<https://w3id.org/2025/apso/modules/batch-information>
+  rdf:type owl:Ontology ;
+  owl:imports <https://admin-shell.io/aas/3/1/> ;
+  rdfs:comment """APSO module: BatchInformation submodel for Product AAS blueprint.""" .
+
+
+#################################################################
+# SMT STRUCTURE OVERVIEW
+#################################################################
+# BatchInformation (Submodel)
+#   ├─ ProductName [Property, xs:string, 1]
+#   ├─ ProductFamily [Property, xs:string, 0..1]
+#   ├─ OrderNumber [Property, identifier, 0..1]
+#   ├─ OrderTimestamp [Property, xs:string, 0..1]
+#   ├─ Quantity [Property, xs:string, 1]
+#   ├─ Packaging [Property, xs:string, 0..1]
+#   └─ Status [Property, xs:string, 1]
+
+#################################################################
+# SUBMODEL TYPE
+#################################################################
+
+apso:BatchInformationSubmodel rdf:type owl:Class ;
+  rdfs:subClassOf aas:Submodel ;
+  rdfs:label "BatchInformation Submodel" ;
+  rdfs:comment "Production order, quantity, packaging and status metadata for a Product AAS." .
+
+#################################################################
+# ELEMENT TYPES
+#################################################################
+
+apso:ProductNameProperty rdf:type owl:Class ; rdfs:subClassOf aas:Property ; rdfs:comment "ProductName:string [1]." .
+apso:ProductFamilyProperty rdf:type owl:Class ; rdfs:subClassOf aas:Property ; rdfs:comment "ProductFamily:string [0..1]." .
+apso:OrderNumberProperty rdf:type owl:Class ; rdfs:subClassOf aas:Property ; rdfs:comment "OrderNumber:identifier [0..1]." .
+apso:OrderTimestampProperty rdf:type owl:Class ; rdfs:subClassOf aas:Property ; rdfs:comment "OrderTimestamp:string [0..1]." .
+apso:QuantityProperty rdf:type owl:Class ; rdfs:subClassOf aas:Property ; rdfs:comment "Quantity:string [1]." .
+apso:PackagingProperty rdf:type owl:Class ; rdfs:subClassOf aas:Property ; rdfs:comment "Packaging:string [0..1]." .
+apso:StatusProperty rdf:type owl:Class ; rdfs:subClassOf aas:Property ; rdfs:comment "Status:string [1]." .
+
+#################################################################
+# CONTAINMENT CONSTRAINTS
+#################################################################
+
+apso:BatchInformationSubmodel rdfs:subClassOf
+  [ rdf:type owl:Restriction ; owl:onProperty <https://admin-shell.io/aas/3/1/Submodel/submodelElements> ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass apso:ProductNameProperty ],
+  [ rdf:type owl:Restriction ; owl:onProperty <https://admin-shell.io/aas/3/1/Submodel/submodelElements> ; owl:maxQualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass apso:ProductFamilyProperty ],
+  [ rdf:type owl:Restriction ; owl:onProperty <https://admin-shell.io/aas/3/1/Submodel/submodelElements> ; owl:maxQualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass apso:OrderNumberProperty ],
+  [ rdf:type owl:Restriction ; owl:onProperty <https://admin-shell.io/aas/3/1/Submodel/submodelElements> ; owl:maxQualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass apso:OrderTimestampProperty ],
+  [ rdf:type owl:Restriction ; owl:onProperty <https://admin-shell.io/aas/3/1/Submodel/submodelElements> ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass apso:QuantityProperty ],
+  [ rdf:type owl:Restriction ; owl:onProperty <https://admin-shell.io/aas/3/1/Submodel/submodelElements> ; owl:maxQualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass apso:PackagingProperty ],
+  [ rdf:type owl:Restriction ; owl:onProperty <https://admin-shell.io/aas/3/1/Submodel/submodelElements> ; owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ; owl:onClass apso:StatusProperty ] .
