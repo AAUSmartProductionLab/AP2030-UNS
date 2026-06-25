@@ -1,0 +1,202 @@
+@prefix apso: <https://w3id.org/2025/apso#> .
+@prefix aas:  <https://admin-shell.io/aas/3/1/> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+#################################################################
+# ONTOLOGY METADATA
+#################################################################
+
+<https://w3id.org/2025/apso>
+  rdf:type owl:Ontology ;
+  owl:versionIRI <https://w3id.org/2025/apso/0.1.0> ;
+  owl:imports <https://admin-shell.io/aas/3/1/> ;
+  owl:imports <https://w3id.org/2025/apso/modules/batch-information> ;
+  owl:imports <https://w3id.org/2025/apso/modules/bill-of-materials> ;
+  owl:imports <https://w3id.org/2025/apso/modules/bill-of-process> ;
+  owl:imports <https://w3id.org/2025/apso/modules/requirements> ;
+  rdfs:comment """APSO v0.1 — Product AAS blueprint ontology.
+
+  This file describes inter-submodel relations for the Product AAS blueprint.
+  Structure is extracted from the supplied Product AAS diagram:
+    Product(AAS)
+      - assetInformation:AssetInformation [1]
+      - BatchInformation:SM [1]
+      - BoM:SM [1]
+      - Requirements:SM [0..1]
+      - BoP:SM [1]
+
+  Per-submodel modules define the internal structure of BatchInformation,
+  BoM, Requirements and BoP. This root ontology defines typed direct links
+  between an AssetAdministrationShell and those submodels, plus cross-submodel
+  dependency constraints such as BoM joint references and disassembly links.""" .
+
+#################################################################
+# PRODUCT / PART AAS TYPES
+#################################################################
+
+apso:ProductAAS rdf:type owl:Class ;
+  rdfs:subClassOf aas:AssetAdministrationShell ;
+  rdfs:label "Product AAS" ;
+  rdfs:comment "Asset Administration Shell for a product assembly." .
+
+apso:PartAAS rdf:type owl:Class ;
+  rdfs:subClassOf aas:AssetAdministrationShell ;
+  rdfs:label "Part AAS" ;
+  rdfs:comment "Asset Administration Shell for a part that may occur in a Product BoM." .
+
+#################################################################
+# AAS → typed submodel direct links
+#################################################################
+
+apso:hasSubmodel rdf:type owl:ObjectProperty ;
+  rdfs:domain aas:AssetAdministrationShell ;
+  rdfs:range aas:Submodel ;
+  rdfs:comment "Direct link from AAS to a submodel instance, bypassing AAS Reference indirection." .
+
+apso:hasBatchInformationSubmodel rdf:type owl:ObjectProperty , owl:FunctionalProperty ;
+  rdfs:subPropertyOf apso:hasSubmodel ;
+  rdfs:range apso:BatchInformationSubmodel .
+
+apso:hasBillOfMaterialsSubmodel rdf:type owl:ObjectProperty , owl:FunctionalProperty ;
+  rdfs:subPropertyOf apso:hasSubmodel ;
+  rdfs:range apso:BillOfMaterialsSubmodel .
+
+apso:hasRequirementsSubmodel rdf:type owl:ObjectProperty , owl:FunctionalProperty ;
+  rdfs:subPropertyOf apso:hasSubmodel ;
+  rdfs:range apso:RequirementsSubmodel .
+
+apso:hasBillOfProcessSubmodel rdf:type owl:ObjectProperty , owl:FunctionalProperty ;
+  rdfs:subPropertyOf apso:hasSubmodel ;
+  rdfs:range apso:BillOfProcessSubmodel .
+
+#################################################################
+# Mandatory and optional submodel cardinalities
+#################################################################
+
+apso:ProductAAS rdfs:subClassOf
+  [ rdf:type owl:Restriction ;
+    owl:onProperty apso:hasBatchInformationSubmodel ;
+    owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+    owl:onClass apso:BatchInformationSubmodel ],
+  [ rdf:type owl:Restriction ;
+    owl:onProperty apso:hasBillOfMaterialsSubmodel ;
+    owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+    owl:onClass apso:BillOfMaterialsSubmodel ],
+  [ rdf:type owl:Restriction ;
+    owl:onProperty apso:hasRequirementsSubmodel ;
+    owl:maxQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+    owl:onClass apso:RequirementsSubmodel ],
+  [ rdf:type owl:Restriction ;
+    owl:onProperty apso:hasBillOfProcessSubmodel ;
+    owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+    owl:onClass apso:BillOfProcessSubmodel ] .
+
+apso:PartAAS rdfs:subClassOf apso:ProductAAS ;
+  rdfs:comment "PartAAS follows the same submodel profile as ProductAAS in the diagram." .
+
+#################################################################
+# Cross-submodel/direct dependency properties
+#################################################################
+
+apso:referencesAAS rdf:type owl:ObjectProperty ;
+  rdfs:domain apso:BomEntity ;
+  rdfs:range aas:AssetAdministrationShell ;
+  rdfs:comment "A BoM Entity may reference a ProductAAS or PartAAS through its globalAssetId/reference resolution." .
+
+apso:hasJointParameterCollection rdf:type owl:ObjectProperty ;
+  rdfs:domain apso:JointConnectionARE ;
+  rdfs:range apso:JointParamsSMC ;
+  rdfs:comment "Resolved direct link from JointConnection.annotations/JointParamsRef to a JointParams collection in the same BoM." .
+
+apso:jointFirstEntity rdf:type owl:ObjectProperty ;
+  rdfs:domain apso:JointConnectionARE ;
+  rdfs:range apso:BomEntity ;
+  rdfs:comment "Resolved first reference of a JointConnection to a BoM Entity." .
+
+apso:jointSecondEntity rdf:type owl:ObjectProperty ;
+  rdfs:domain apso:JointConnectionARE ;
+  rdfs:range apso:BomEntity ;
+  rdfs:comment "Resolved second reference of a JointConnection to a BoM Entity." .
+
+apso:isDisassembledBy rdf:type owl:ObjectProperty ;
+  rdfs:domain apso:BomEntity ;
+  rdfs:range [ rdf:type owl:Class ; owl:unionOf ( apso:ProcessSMC apso:ProcessStructureSMC ) ] ;
+  rdfs:comment "Resolved relation corresponding to the diagram label 'Is Disassemble By' from Entity to Process or ProcessStructure." .
+
+apso:processOrderFirstProcess rdf:type owl:ObjectProperty ;
+  rdfs:domain apso:ProcessOrderARE ;
+  rdfs:range apso:ProcessSMC ;
+  rdfs:comment "Resolved first reference of a ProcessOrder relation to a Process SMC." .
+
+apso:processOrderSecondProcess rdf:type owl:ObjectProperty ;
+  rdfs:domain apso:ProcessOrderARE ;
+  rdfs:range apso:ProcessSMC ;
+  rdfs:comment "Resolved second reference of a ProcessOrder relation to a Process SMC." .
+
+#################################################################
+# Cross-submodel constraints
+#################################################################
+
+# A JointConnection must connect two BoM entities and point to exactly one JointParams collection.
+apso:JointConnectionARE rdfs:subClassOf
+  [ rdf:type owl:Restriction ;
+    owl:onProperty apso:jointFirstEntity ;
+    owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+    owl:onClass apso:BomEntity ],
+  [ rdf:type owl:Restriction ;
+    owl:onProperty apso:jointSecondEntity ;
+    owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+    owl:onClass apso:BomEntity ],
+  [ rdf:type owl:Restriction ;
+    owl:onProperty apso:hasJointParameterCollection ;
+    owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+    owl:onClass apso:JointParamsSMC ] .
+
+# If a Product AAS contains a BoM with disassembly relationships, it must contain a BoP.
+apso:HasDisassemblyRelationAAS
+  rdf:type owl:Class ;
+  owl:equivalentClass [
+    rdf:type owl:Class ;
+    owl:intersectionOf (
+      apso:ProductAAS
+      [ rdf:type owl:Restriction ;
+        owl:onProperty apso:hasSubmodel ;
+        owl:someValuesFrom apso:BillOfMaterialsSubmodel ]
+    )
+  ] ;
+  rdfs:subClassOf [
+    rdf:type owl:Restriction ;
+    owl:onProperty apso:hasBillOfProcessSubmodel ;
+    owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+    owl:onClass apso:BillOfProcessSubmodel ] .
+
+# A ProcessOrder must order exactly two Process collections.
+apso:ProcessOrderARE rdfs:subClassOf
+  [ rdf:type owl:Restriction ;
+    owl:onProperty apso:processOrderFirstProcess ;
+    owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+    owl:onClass apso:ProcessSMC ],
+  [ rdf:type owl:Restriction ;
+    owl:onProperty apso:processOrderSecondProcess ;
+    owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+    owl:onClass apso:ProcessSMC ] .
+
+# BoM entities may resolve only to ProductAAS or PartAAS.
+apso:BomEntity rdfs:subClassOf [
+  rdf:type owl:Restriction ;
+  owl:onProperty apso:referencesAAS ;
+  owl:allValuesFrom [
+    rdf:type owl:Class ;
+    owl:unionOf ( apso:ProductAAS apso:PartAAS )
+  ]
+] .
+
+# Product and Part shells have exactly one AssetInformation through the official AAS model.
+apso:ProductAAS rdfs:subClassOf [
+  rdf:type owl:Restriction ;
+  owl:onProperty <https://admin-shell.io/aas/3/1/AssetAdministrationShell/assetInformation> ;
+  owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+  owl:onClass aas:AssetInformation ] .
