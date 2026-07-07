@@ -397,216 +397,68 @@ class XmlWriterPlannerMetadataTests(unittest.TestCase):
 
 
 class ResolveActionExecutionRefEffectsTests(unittest.TestCase):
-    def test_effects_passed_through(self):
+    def test_action_ref_emits_skill_url_format(self):
+        """New format: action_ref returns _action_ref, _skill_name, _action_args_json."""
         metadata = {
             "action_refs": {
                 "act1": {
-                    "source_aas_id": "asset",
-                    "action_aas_path": "Capabilities/Run",
-                    "transformation_aas_path": "",
-                    "parameter_bindings": [],
-                    "effects": [
-                        {
-                            "branch": 0,
-                            "atoms": [
-                                {"predicate": "step_done", "args": ["p", "s2"], "value": True},
-                                {"predicate": "step_ready", "args": ["p", "s2"], "value": False},
-                            ],
-                        }
+                    "source_aas_id": "aas://station/loader",
+                    "skill_name": "Loading",
+                    "parameter_bindings": [
+                        {"name": "resource", "type": "Resource",
+                         "resolved_kind": "constant", "resolved_object": "loader",
+                         "bound_object": "loader"},
                     ],
                 }
             },
-            "object_refs": {},
+            "object_refs": {"loader": {"source_aas_id": "aas://loader", "object_aas_path": "Objects/loader"}},
         }
         out = resolve_action_execution_ref(metadata, "act1", [])
         self.assertIsNotNone(out)
-        self.assertEqual(len(out["effects"]), 1)
-        self.assertEqual(out["effects"][0]["branch"], 0)
-        self.assertEqual(len(out["effects"][0]["atoms"]), 2)
-        self.assertEqual(out["effects"][0]["atoms"][0]["predicate"], "step_done")
-        self.assertEqual(out["effects"][0]["atoms"][1]["value"], False)
+        self.assertEqual(out["_action_ref"], "aas://station/loader")
+        self.assertEqual(out["_skill_name"], "Loading")
+        self.assertIn("_action_args_json", out)
 
-    def test_missing_effects_field_yields_empty_list(self):
-        metadata = {
-            "action_refs": {
-                "act1": {
-                    "source_aas_id": "asset",
-                    "action_aas_path": "Capabilities/Run",
-                    "transformation_aas_path": "",
-                    "parameter_bindings": [],
-                }
-            },
-            "object_refs": {},
-        }
-        out = resolve_action_execution_ref(metadata, "act1", [])
-        self.assertIsNotNone(out)
-        self.assertEqual(out["effects"], [])
-
-    def test_param_sentinels_substituted_with_invocation_args(self):
+    def test_action_ref_derives_skill_name_from_legacy_path(self):
         metadata = {
             "action_refs": {
                 "loading": {
-                    "source_aas_id": "asset",
-                    "action_aas_path": "Capabilities/Loading",
-                    "transformation_aas_path": "",
+                    "source_aas_id": "aas://loader",
+                    "action_aas_path": "AI-Planning/Domain/Actions/Loading",
                     "parameter_bindings": [
-                        {
-                            "name": "p0",
-                            "type": "Resource",
-                            "is_constant": True,
-                            "bound_object": "imaLoadingSystem",
-                            "resolved_kind": "constant",
-                            "resolved_up_param": "",
-                            "resolved_object": "imaLoadingSystem",
-                        },
-                        {
-                            "name": "p1",
-                            "type": "Product",
-                            "is_constant": False,
-                            "bound_object": "",
-                            "resolved_kind": "free",
-                            "resolved_up_param": "p0",
-                            "resolved_object": "",
-                        },
-                        {
-                            "name": "p2",
-                            "type": "Transport",
-                            "is_constant": False,
-                            "bound_object": "",
-                            "resolved_kind": "free",
-                            "resolved_up_param": "p1",
-                            "resolved_object": "",
-                        },
-                    ],
-                    "effects": [
-                        {
-                            "branch": 0,
-                            "atoms": [
-                                {
-                                    "predicate": "on",
-                                    "args": ["$param:1", "$param:2"],
-                                    "value": True,
-                                },
-                            ],
-                        }
+                        {"name": "p0", "resolved_kind": "constant", "resolved_object": "loader"},
                     ],
                 }
             },
-            "object_refs": {},
+            "object_refs": {"loader": {"source_aas_id": "aas://loader"}},
         }
-        out = resolve_action_execution_ref(
-            metadata, "loading", ["mim8_0001", "planarshuttle1"]
+        out = resolve_action_execution_ref(metadata, "loading", [])
+        self.assertIsNotNone(out)
+        self.assertEqual(out["_skill_name"], "Loading")
+
+    def test_predicate_ref_emits_fluent_format(self):
+        """New format: {fluent_ref, fluent_args}."""
+        from Planner.step4_policy_to_bt.execution_refs import (
+            resolve_predicate_execution_ref,
         )
+        metadata = {
+            "predicate_refs": {"free": {"key": "free", "semantic_id": "https://w3id.org/2026/apex/Free"}},
+            "object_refs": {"shuttle1": {"source_aas_id": "aas://shuttle/1", "object_aas_path": "Objects/shuttle1"}},
+        }
+        out = resolve_predicate_execution_ref(metadata, "free(shuttle1)")
         self.assertIsNotNone(out)
-        self.assertEqual(
-            out["effects"],
-            [
-                {
-                    "branch": 0,
-                    "atoms": [
-                        {
-                            "predicate": "on",
-                            "args": ["mim8_0001", "planarshuttle1"],
-                            "value": True,
-                        }
-                    ],
-                }
-            ],
+        self.assertEqual(out["fluent_ref"], "https://w3id.org/2026/apex/Free")
+        self.assertIn("aas://shuttle/1", out["fluent_args"])
+
+    def test_predicate_ref_falls_back_when_no_metadata(self):
+        from Planner.step4_policy_to_bt.execution_refs import (
+            resolve_predicate_execution_ref,
         )
-
-    def test_param_sentinel_unresolved_drops_atom_keeps_branch(self):
-        metadata = {
-            "action_refs": {
-                "loading": {
-                    "source_aas_id": "asset",
-                    "action_aas_path": "Capabilities/Loading",
-                    "transformation_aas_path": "",
-                    "parameter_bindings": [
-                        {
-                            "name": "p0",
-                            "type": "Product",
-                            "is_constant": False,
-                            "bound_object": "",
-                            "resolved_kind": "free",
-                            "resolved_up_param": "p0",
-                            "resolved_object": "",
-                        },
-                    ],
-                    "effects": [
-                        {
-                            "branch": 0,
-                            "atoms": [
-                                {
-                                    "predicate": "on",
-                                    "args": ["$param:5"],
-                                    "value": True,
-                                },
-                            ],
-                        }
-                    ],
-                }
-            },
-            "object_refs": {},
-        }
-        out = resolve_action_execution_ref(metadata, "loading", ["mim8"])
+        metadata = {"predicate_refs": {}, "object_refs": {}}
+        out = resolve_predicate_execution_ref(metadata, "step_done(p, s2)")
         self.assertIsNotNone(out)
-        # Atom dropped (sentinel out of range) but branch preserved so
-        # the runtime can still match Outcome=0.
-        self.assertEqual(out["effects"], [{"branch": 0, "atoms": []}])
-
-    def test_multi_branch_grounded_independently(self):
-        metadata = {
-            "action_refs": {
-                "loading": {
-                    "source_aas_id": "asset",
-                    "action_aas_path": "Capabilities/Loading",
-                    "transformation_aas_path": "",
-                    "parameter_bindings": [
-                        {
-                            "name": "p0",
-                            "type": "Product",
-                            "is_constant": False,
-                            "bound_object": "",
-                            "resolved_kind": "free",
-                            "resolved_up_param": "p0",
-                            "resolved_object": "",
-                        },
-                        {
-                            "name": "p1",
-                            "type": "Transport",
-                            "is_constant": False,
-                            "bound_object": "",
-                            "resolved_kind": "free",
-                            "resolved_up_param": "p1",
-                            "resolved_object": "",
-                        },
-                    ],
-                    "effects": [
-                        {
-                            "branch": 0,
-                            "atoms": [
-                                {"predicate": "on", "args": ["$param:0", "$param:1"], "value": True},
-                            ],
-                        },
-                        {
-                            "branch": 1,
-                            "atoms": [
-                                {"predicate": "on", "args": ["$param:0", "$param:1"], "value": False},
-                            ],
-                        },
-                    ],
-                }
-            },
-            "object_refs": {},
-        }
-        out = resolve_action_execution_ref(metadata, "loading", ["mim8", "shuttle1"])
-        self.assertIsNotNone(out)
-        self.assertEqual(len(out["effects"]), 2)
-        self.assertEqual(out["effects"][0]["branch"], 0)
-        self.assertEqual(out["effects"][0]["atoms"][0]["value"], True)
-        self.assertEqual(out["effects"][0]["atoms"][0]["args"], ["mim8", "shuttle1"])
-        self.assertEqual(out["effects"][1]["branch"], 1)
-        self.assertEqual(out["effects"][1]["atoms"][0]["value"], False)
+        self.assertEqual(out["fluent_ref"], "step_done")
+        self.assertIn("p", out["fluent_args"])
 
 
 if __name__ == "__main__":

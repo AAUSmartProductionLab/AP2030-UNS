@@ -301,8 +301,8 @@ def parameterize_subtrees(bt: BehaviorTree) -> None:
                 if all(r == refs_at_pos[0] for r in refs_at_pos[1:]):
                     continue
                 if isinstance(tleaf, ConditionNode):
-                    ref_port = f"predicate_ref_{pos}"
-                    args_port = f"predicate_args_{pos}"
+                    ref_port = f"fluent_ref_{pos}"
+                    args_port = f"fluent_args_{pos}"
                 else:
                     ref_port = f"action_ref_{pos}"
                     args_port = f"action_args_{pos}"

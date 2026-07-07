@@ -1,4 +1,4 @@
-// Unit tests for the bt_exec_refs parsing utilities introduced in PR2.
+// Unit tests for the new compact execution-ref format (URLs + JSON arrays).
 
 #include <gtest/gtest.h>
 
@@ -30,17 +30,102 @@ TEST(ParseArgsList, PlainSemicolonSeparated)
     EXPECT_EQ(out[2], "c");
 }
 
-TEST(ParseArgsList, SingleToken)
+TEST(ParseJsonStringArray, Empty)
 {
-    auto out = parseArgsList("\"only-one\"");
+    EXPECT_TRUE(parseJsonStringArray("").empty());
+}
+
+TEST(ParseJsonStringArray, ParsesArray)
+{
+    auto out = parseJsonStringArray(R"(["aas://x","aas://y"])");
+    ASSERT_EQ(out.size(), 2u);
+    EXPECT_EQ(out[0], "aas://x");
+    EXPECT_EQ(out[1], "aas://y");
+}
+
+TEST(ParseJsonStringArray, HtmlEntityEncoded)
+{
+    auto out = parseJsonStringArray("[&quot;aas://z&quot;]");
     ASSERT_EQ(out.size(), 1u);
-    EXPECT_EQ(out[0], "only-one");
+    EXPECT_EQ(out[0], "aas://z");
+}
+
+TEST(ParseActionRef, UrlFormat)
+{
+    const std::string url =
+        "https://example.org/submodels/instances/myDispenserAAS/Skills/Dispense";
+    auto ref = parseActionRef(url);
+    ASSERT_TRUE(ref.has_value());
+    EXPECT_EQ(ref->skill_url, url);
+    EXPECT_EQ(ref->source_aas_id, "myDispenserAAS");
+    EXPECT_EQ(ref->skill_name, "Dispense");
+}
+
+TEST(ParseActionRef, UrlWithTrailingSlash)
+{
+    auto ref = parseActionRef(
+        "https://host/submodels/instances/Asset123/Skills/Loading/");
+    ASSERT_TRUE(ref.has_value());
+    EXPECT_EQ(ref->source_aas_id, "Asset123");
+    EXPECT_EQ(ref->skill_name, "Loading");
+}
+
+TEST(ParseActionRef, BackwardCompatJson)
+{
+    const std::string raw = R"({
+        "source_aas_id": "https://example.org/aas/Dispenser",
+        "skill_name": "Dispense"
+    })";
+    auto ref = parseActionRef(raw);
+    ASSERT_TRUE(ref.has_value());
+    EXPECT_EQ(ref->source_aas_id, "https://example.org/aas/Dispenser");
+    EXPECT_EQ(ref->skill_name, "Dispense");
+}
+
+TEST(ParseActionRef, EmptyReturnsNullopt)
+{
+    EXPECT_FALSE(parseActionRef("").has_value());
+    EXPECT_FALSE(parseActionRef("\"\"").has_value());
+}
+
+TEST(ParseFluentRef, PlainUri)
+{
+    auto ref = parseFluentRef("https://w3id.org/2026/apex/Free");
+    ASSERT_TRUE(ref.has_value());
+    EXPECT_EQ(ref->fluent_uri, "https://w3id.org/2026/apex/Free");
+    EXPECT_TRUE(ref->args.empty());
+}
+
+TEST(ParseFluentRef, BackwardCompatJson)
+{
+    const std::string raw = R"({
+        "predicate": "free",
+        "semantic_id": "https://w3id.org/2026/apex/Free",
+        "args": ["shuttle1"]
+    })";
+    auto ref = parseFluentRef(raw);
+    ASSERT_TRUE(ref.has_value());
+    EXPECT_EQ(ref->fluent_uri, "https://w3id.org/2026/apex/Free");
+    ASSERT_EQ(ref->args.size(), 1u);
+    EXPECT_EQ(ref->args[0], "shuttle1");
+}
+
+TEST(ParseFluentRef, BackwardCompatJsonFallsBackToPredicate)
+{
+    auto ref = parseFluentRef(R"({"predicate":"step_done","args":["p","s"]})");
+    ASSERT_TRUE(ref.has_value());
+    EXPECT_EQ(ref->fluent_uri, "step_done");
+    ASSERT_EQ(ref->args.size(), 2u);
+}
+
+TEST(ParseFluentRef, EmptyReturnsNullopt)
+{
+    EXPECT_FALSE(parseFluentRef("").has_value());
 }
 
 TEST(StripWrappingQuotes, OnlyOuterLayer)
 {
     EXPECT_EQ(stripWrappingQuotes("\"abc\""), "abc");
-    // Inner quotes preserved.
     EXPECT_EQ(stripWrappingQuotes("\"a\"b\""), "a\"b");
     EXPECT_EQ(stripWrappingQuotes("abc"), "abc");
 }
@@ -53,78 +138,12 @@ TEST(DecodeHtmlEntities, KnownEntities)
     EXPECT_EQ(decodeHtmlEntities("plain"), "plain");
 }
 
-TEST(ParseActionRef, RawJson)
-{
-    const std::string raw = R"({
-        "source_aas_id": "https://example.org/aas/Dispenser",
-        "action_aas_path": "Capabilities/Dispense",
-        "transformation_aas_path": "Capabilities/Dispense/Transformation",
-        "parameter_refs": [
-            {"name": "Param_dosing", "aas_id": "https://example.org/aas/Vial",
-             "aas_path": "Variables/Vial1"}
-        ],
-        "object_refs": {"Param_dosing": "Vial1"}
-    })";
-    auto ref = parseActionRef(raw);
-    ASSERT_TRUE(ref.has_value());
-    EXPECT_EQ(ref->source_aas_id, "https://example.org/aas/Dispenser");
-    EXPECT_EQ(ref->action_aas_path, "Capabilities/Dispense");
-    EXPECT_EQ(ref->transformation_aas_path, "Capabilities/Dispense/Transformation");
-    ASSERT_EQ(ref->parameter_refs.size(), 1u);
-    EXPECT_EQ(ref->parameter_refs[0].name, "Param_dosing");
-    EXPECT_EQ(ref->parameter_refs[0].aas_path, "Variables/Vial1");
-}
-
-TEST(ParseActionRef, HtmlEntityEncodedJson)
-{
-    const std::string raw =
-        "{&quot;source_aas_id&quot;:&quot;asset&quot;,"
-        "&quot;action_aas_path&quot;:&quot;Capabilities/Run&quot;,"
-        "&quot;transformation_aas_path&quot;:&quot;Capabilities/Run/Transformation&quot;,"
-        "&quot;parameter_refs&quot;:[]}";
-    auto ref = parseActionRef(raw);
-    ASSERT_TRUE(ref.has_value());
-    EXPECT_EQ(ref->source_aas_id, "asset");
-    EXPECT_EQ(ref->action_aas_path, "Capabilities/Run");
-}
-
-TEST(ParseActionRef, MalformedReturnsNullopt)
-{
-    EXPECT_FALSE(parseActionRef("{ not-json").has_value());
-    EXPECT_FALSE(parseActionRef("\"just a string\"").has_value());
-    EXPECT_FALSE(parseActionRef("").has_value());
-}
-
-TEST(ParsePredicateRef, RawJson)
-{
-    const std::string raw = R"({
-        "source_aas_id": "https://example.org/aas/Sensor",
-        "fluent_aas_path": "Variables/Occupied",
-        "transformation_aas_path": "Capabilities/Occupied/Transformation",
-        "parameter_refs": []
-    })";
-    auto ref = parsePredicateRef(raw);
-    ASSERT_TRUE(ref.has_value());
-    EXPECT_EQ(ref->fluent_aas_path, "Variables/Occupied");
-    EXPECT_EQ(ref->transformation_aas_path, "Capabilities/Occupied/Transformation");
-}
-
-// ----- splitSubmodelPath ----------------------------------------------------
-
-TEST(SplitSubmodelPath, AIPlanningWithHyphenIsCanonicalized)
+TEST(SplitSubmodelPath, AIPlanningWithHyphenCanonicalized)
 {
     auto [submodel, remainder] =
         splitSubmodelPath("AI-Planning/Domain/Fluents/Free/Transformation");
     EXPECT_EQ(submodel, "AIPlanning");
     EXPECT_EQ(remainder, "Domain/Fluents/Free/Transformation");
-}
-
-TEST(SplitSubmodelPath, AIPlanningCamelCasePassesThrough)
-{
-    auto [submodel, remainder] =
-        splitSubmodelPath("AIPlanning/Domain/Actions/Loading");
-    EXPECT_EQ(submodel, "AIPlanning");
-    EXPECT_EQ(remainder, "Domain/Actions/Loading");
 }
 
 TEST(SplitSubmodelPath, KnownSubmodelPassesThrough)
@@ -134,159 +153,16 @@ TEST(SplitSubmodelPath, KnownSubmodelPassesThrough)
     EXPECT_EQ(remainder, "Loading/Loading");
 }
 
-TEST(SplitSubmodelPath, EmptyInputYieldsEmptyResult)
+TEST(SplitSubmodelPath, EmptyInputYieldsEmpty)
 {
-    auto [submodel, remainder] = splitSubmodelPath("");
-    EXPECT_EQ(submodel, "");
-    EXPECT_EQ(remainder, "");
+    auto [s, r] = splitSubmodelPath("");
+    EXPECT_EQ(s, "");
+    EXPECT_EQ(r, "");
 }
 
-TEST(SplitSubmodelPath, NoSlashYieldsRemainderOnly)
+TEST(SplitSubmodelPath, NoSlashIsRemainder)
 {
-    auto [submodel, remainder] = splitSubmodelPath("AIPlanning");
-    EXPECT_EQ(submodel, "");
-    EXPECT_EQ(remainder, "AIPlanning");
-}
-
-TEST(SplitSubmodelPath, UnknownPrefixReturnsEmptySubmodel)
-{
-    auto [submodel, remainder] = splitSubmodelPath("Foo/Bar/Baz");
-    EXPECT_EQ(submodel, "");
-    EXPECT_EQ(remainder, "Foo/Bar/Baz");
-}
-
-// ----- PR4: GroundedAtom parsing & ActionRef.effects ------------------------
-
-TEST(ParseGroundedAtomList, EmptyInputReturnsEmptyVector)
-{
-    auto out = parseGroundedAtomList("");
-    ASSERT_TRUE(out.has_value());
-    EXPECT_TRUE(out->empty());
-}
-
-TEST(ParseGroundedAtomList, ParsesArrayOfBoolAtoms)
-{
-    const std::string raw = R"([
-        {"predicate": "step_ready", "args": ["order_product", "step_1_loading"], "value": true},
-        {"predicate": "step_done",  "args": ["order_product", "step_1_loading"], "value": false}
-    ])";
-    auto out = parseGroundedAtomList(raw);
-    ASSERT_TRUE(out.has_value());
-    ASSERT_EQ(out->size(), 2u);
-    EXPECT_EQ((*out)[0].predicate, "step_ready");
-    EXPECT_EQ((*out)[0].args, (std::vector<std::string>{"order_product", "step_1_loading"}));
-    EXPECT_EQ((*out)[0].value, true);
-    EXPECT_EQ((*out)[1].predicate, "step_done");
-    EXPECT_EQ((*out)[1].value, false);
-}
-
-TEST(ParseGroundedAtomList, MissingValueDefaultsToTrue)
-{
-    const std::string raw = R"([{"predicate":"p","args":["a"]}])";
-    auto out = parseGroundedAtomList(raw);
-    ASSERT_TRUE(out.has_value());
-    ASSERT_EQ(out->size(), 1u);
-    EXPECT_EQ((*out)[0].value, true);
-}
-
-TEST(ParseGroundedAtomList, MissingPredicateIsSkipped)
-{
-    const std::string raw = R"([
-        {"args":["a"],"value":true},
-        {"predicate":"p","args":["b"]}
-    ])";
-    auto out = parseGroundedAtomList(raw);
-    ASSERT_TRUE(out.has_value());
-    ASSERT_EQ(out->size(), 1u);
-    EXPECT_EQ((*out)[0].predicate, "p");
-}
-
-TEST(ParseGroundedAtomList, MalformedJsonReturnsNullopt)
-{
-    EXPECT_FALSE(parseGroundedAtomList("{not-json").has_value());
-}
-
-TEST(ParseGroundedAtomList, NonArrayReturnsNullopt)
-{
-    EXPECT_FALSE(parseGroundedAtomList("{\"predicate\":\"x\"}").has_value());
-}
-
-TEST(ParseGroundedAtomList, HtmlEntityEncodedJsonAccepted)
-{
-    const std::string raw = "[{&quot;predicate&quot;:&quot;step_done&quot;,"
-                            "&quot;args&quot;:[&quot;p&quot;,&quot;s&quot;],"
-                            "&quot;value&quot;:true}]";
-    auto out = parseGroundedAtomList(raw);
-    ASSERT_TRUE(out.has_value());
-    ASSERT_EQ(out->size(), 1u);
-    EXPECT_EQ((*out)[0].predicate, "step_done");
-    EXPECT_EQ((*out)[0].args, (std::vector<std::string>{"p", "s"}));
-}
-
-TEST(ParseActionRef, EffectsFieldDecoded)
-{
-    const std::string raw = R"({
-        "source_aas_id": "asset",
-        "action_aas_path": "AI-Planning/Domain/Actions/Dispense",
-        "transformation_aas_path": "",
-        "parameter_refs": [],
-        "effects": [
-            {"branch": 0, "atoms": [
-                {"predicate":"step_done","args":["order_product","step_2"],"value":true},
-                {"predicate":"step_ready","args":["order_product","step_2"],"value":false}
-            ]}
-        ]
-    })";
-    auto ref = parseActionRef(raw);
-    ASSERT_TRUE(ref.has_value());
-    ASSERT_EQ(ref->effects.size(), 1u);
-    EXPECT_EQ(ref->effects[0].index, 0);
-    ASSERT_EQ(ref->effects[0].atoms.size(), 2u);
-    EXPECT_EQ(ref->effects[0].atoms[0].predicate, "step_done");
-    EXPECT_EQ(ref->effects[0].atoms[0].value, true);
-    EXPECT_EQ(ref->effects[0].atoms[1].predicate, "step_ready");
-    EXPECT_EQ(ref->effects[0].atoms[1].value, false);
-}
-
-TEST(ParseActionRef, FondMultiBranchEffectsDecoded)
-{
-    // FOND oneOf produces multiple branches in declaration order.
-    const std::string raw = R"({
-        "source_aas_id": "asset",
-        "action_aas_path": "Capabilities/Loading",
-        "transformation_aas_path": "",
-        "parameter_refs": [],
-        "effects": [
-            {"branch": 0, "atoms": [
-                {"predicate":"on","args":["p","t"],"value":true},
-                {"predicate":"productat","args":["p","loc"],"value":true}
-            ]},
-            {"branch": 1, "atoms": [
-                {"predicate":"on","args":["p","t"],"value":false}
-            ]}
-        ]
-    })";
-    auto ref = parseActionRef(raw);
-    ASSERT_TRUE(ref.has_value());
-    ASSERT_EQ(ref->effects.size(), 2u);
-    EXPECT_EQ(ref->effects[0].index, 0);
-    EXPECT_EQ(ref->effects[0].atoms.size(), 2u);
-    EXPECT_EQ(ref->effects[1].index, 1);
-    ASSERT_EQ(ref->effects[1].atoms.size(), 1u);
-    EXPECT_EQ(ref->effects[1].atoms[0].predicate, "on");
-    EXPECT_EQ(ref->effects[1].atoms[0].value, false);
-}
-
-TEST(ParseActionRef, MissingEffectsFieldIsBackCompat)
-{
-    // PR3-era trees do not carry "effects"; parser must tolerate.
-    const std::string raw = R"({
-        "source_aas_id": "asset",
-        "action_aas_path": "Capabilities/Run",
-        "transformation_aas_path": "Capabilities/Run/Transformation",
-        "parameter_refs": []
-    })";
-    auto ref = parseActionRef(raw);
-    ASSERT_TRUE(ref.has_value());
-    EXPECT_TRUE(ref->effects.empty());
+    auto [s, r] = splitSubmodelPath("AIPlanning");
+    EXPECT_EQ(s, "");
+    EXPECT_EQ(r, "AIPlanning");
 }

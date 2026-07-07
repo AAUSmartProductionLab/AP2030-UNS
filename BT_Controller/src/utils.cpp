@@ -11,7 +11,42 @@
 #include <nlohmann/json-schema.hpp>
 #include <fmt/chrono.h>
 #include <chrono>
+#include <cctype>
 namespace fs = std::filesystem;
+
+// ── Global utility functions ─────────────────────────────────────────
+
+std::string envOrDefault(const char *name, const std::string &fallback)
+{
+    const char *value = std::getenv(name);
+    if (value && value[0] != '\0')
+    {
+        return std::string(value);
+    }
+    return fallback;
+}
+
+std::string sanitizeToken(const std::string &input)
+{
+    if (input.empty())
+    {
+        return "run-unknown";
+    }
+    std::string out;
+    out.reserve(input.size());
+    for (unsigned char c : input)
+    {
+        if (std::isalnum(c) || c == '_' || c == '-' || c == '.')
+        {
+            out.push_back(static_cast<char>(c));
+        }
+        else
+        {
+            out.push_back('_');
+        }
+    }
+    return out;
+}
 
 namespace bt_utils
 {

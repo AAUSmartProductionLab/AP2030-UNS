@@ -162,8 +162,7 @@ class BTSynthesisHoistingTests(unittest.TestCase):
         policy = [_FakeRule({"not(ready(product_1))"}, "dispense product_1")]
         xml = bt_to_xml(optimize_bt(build_trivial_bt(_FakeResult(policy, []))))
 
-        self.assertIn("<Inverter", xml)
-        self.assertIn('<FluentCheck name="ready(product_1)"', xml)
+        self.assertIn("<Predicate name=\"ready(product_1)\"", xml)
         self.assertNotIn('name="not(ready(product_1))"', xml)
 
     def test_shared_condition_is_hoisted_once(self):
@@ -178,7 +177,7 @@ class BTSynthesisHoistingTests(unittest.TestCase):
 
         self.assertIn("<Sequence", xml)
         self.assertIn("ReactiveFallback", xml)
-        self.assertEqual(xml.count('<FluentCheck name="a"'), 1)
+        self.assertEqual(xml.count('<Predicate name="a"'), 1)
 
     def test_explicit_policy_pipeline_emits_execution_refs(self):
         policy = [_FakeRule({"ready(product_1)"}, "dispense product_1")]
@@ -245,77 +244,49 @@ class BTSynthesisHoistingTests(unittest.TestCase):
         xml = bt_to_xml(bt, planner_metadata=planner_metadata)
 
         self.assertIn("action_ref=", xml)
-        self.assertIn("predicate_ref=", xml)
-        self.assertIn('<SubTree ID="MainTree" editable="true">', xml)
-        self.assertIn('input_port name="Param_product_1"', xml)
-        self.assertIn('input_port name="Ready_product_1"', xml)
-        self.assertIn('input_port name="Dispense_dispense"', xml)
-        self.assertRegex(xml, r'predicate_ref="\{[A-Za-z][A-Za-z0-9_]*\}"')
-        self.assertRegex(xml, r'action_ref="\{[A-Za-z][A-Za-z0-9_]*\}"')
-        self.assertIn('predicate_args="&quot;{Param_product_1}&quot;"', xml)
-        self.assertIn('action_args="&quot;{Param_product_1}&quot;"', xml)
-        self.assertIn("&quot;action_aas_path&quot;:&quot;AI-Planning/Domain/Actions/Dispense&quot;", xml)
-        self.assertIn("&quot;fluent_aas_path&quot;:&quot;AI-Planning/Domain/Fluents/Ready&quot;", xml)
-        self.assertIn("&quot;source_aas_id&quot;:&quot;aas://product/1&quot;", xml)
-        self.assertIn("parameter_refs", xml)
-        self.assertIn("parameter_link_keys", xml)
-        self.assertNotIn("source_aas_name=", xml)
-        self.assertNotIn(' action_aas_path="', xml)
-        self.assertNotIn(' fluent_aas_path="', xml)
-        self.assertNotIn(' source_aas_id="', xml)
-        self.assertNotIn(' transformation="', xml)
-        self.assertNotIn(' fluent="', xml)
-        self.assertNotIn(' action_name="', xml)
+        self.assertIn("fluent_ref=", xml)
+        self.assertNotIn('<SubTree ID="MainTree" editable="true">', xml)
+        # New format: fluent_ref uses semantic_id from metadata if available,
+        # falls back to PDDL short name. The test metadata has no semantic_id.
+        self.assertIn("fluent_ref=\"ready\"", xml)
+        self.assertIn("fluent_args=\"[&quot;aas://product/1&quot;]\"", xml)
+        # action_ref is a URL string
+        self.assertIn("action_ref=\"aas://station/dispense/Skills/Dispense\"", xml)
+        self.assertIn("action_args=\"[&quot;aas://product/1&quot;]\"", xml)
+        # These old-format artifacts should NOT appear
+        self.assertNotIn("ActionLink_", xml)
+        self.assertNotIn("FluentLink_", xml)
+        self.assertNotIn("predicate_ref=", xml)
+        self.assertNotIn("&quot;source_aas_id&quot;", xml)
+        self.assertNotIn("&quot;skill_name&quot;", xml)
+        self.assertNotIn("&quot;action_aas_path&quot;", xml)
+        self.assertNotIn("&quot;fluent_aas_path&quot;", xml)
+        self.assertNotIn("&quot;effects&quot;", xml)
+        self.assertNotIn("Param_", xml)
         self.assertNotIn('<SetBlackboard', xml)
 
-    def test_execution_ref_args_use_semicolon_delimiter(self):
+    def test_execution_ref_args_use_json_arrays(self):
+        """New format: action_args and fluent_args are JSON arrays."""
         condition_ref = {
-            "source_aas_id": "aas://station/dispense",
-            "fluent_aas_path": "AI-Planning/Domain/Fluents/Ready",
-            "parameter_refs": [
-                {
-                    "aas_id": "aas://product/1",
-                    "aas_path": "AI-Planning/Problem/Objects/product_1",
-                },
-                {
-                    "aas_id": "aas://resource/shuttle0",
-                    "aas_path": "AI-Planning/Problem/Objects/shuttle0",
-                },
-            ],
+            "fluent_ref": "https://w3id.org/2026/apex/Ready",
+            "fluent_args": '["aas://product/1","aas://shuttle/0"]',
         }
         action_ref = {
-            "source_aas_id": "aas://station/dispense",
-            "action_aas_path": "AI-Planning/Domain/Actions/Dispense",
-            "parameter_refs": [
-                {
-                    "aas_id": "aas://product/1",
-                    "aas_path": "AI-Planning/Problem/Objects/product_1",
-                },
-                {
-                    "aas_id": "aas://resource/shuttle0",
-                    "aas_path": "AI-Planning/Problem/Objects/shuttle0",
-                },
-            ],
+            "_action_ref": "aas://station/dispense",
+            "_skill_name": "Dispense",
+            "_action_args_json": '["aas://product/1","aas://shuttle/0"]',
         }
         bt = BehaviorTree(
-            Sequence(
-                "Rule",
-                [
-                    ConditionNode("ready(product_1)", execution_ref=condition_ref),
-                    ActionNode("dispense product_1 shuttle0", execution_ref=action_ref),
-                ],
-                is_rule_leaf=True,
-            )
-        )
-
+            Sequence("Rule", [
+                ConditionNode("ready(product_1, shuttle0)", execution_ref=condition_ref),
+                ActionNode("dispense product_1 shuttle0", execution_ref=action_ref),
+            ], is_rule_leaf=True))
         xml = bt_to_xml(bt)
-
-        self.assertRegex(xml, r'predicate_args="&quot;\{Param_[A-Za-z0-9_]+\};\{Param_[A-Za-z0-9_]+\}&quot;"')
-        self.assertRegex(xml, r'action_args="&quot;\{Param_[A-Za-z0-9_]+\};\{Param_[A-Za-z0-9_]+\}&quot;"')
-        self.assertNotIn('predicate_args="&quot;{Param_product_1} {Param_shuttle0}&quot;"', xml)
-        self.assertNotIn('action_args="&quot;{Param_product_1} {Param_shuttle0}&quot;"', xml)
-
-    def test_hoisted_subtree_ids_are_compact(self):
+        self.assertIn("fluent_ref=\"https://w3id.org/2026/apex/Ready\"", xml)
+        self.assertIn("fluent_args=\"[&quot;aas://product/1&quot;,&quot;aas://shuttle/0&quot;]\"", xml)
+        self.assertIn("action_ref=\"aas://station/dispense/Skills/Dispense\"", xml)
+        self.assertIn("action_args=\"[&quot;aas://product/1&quot;,&quot;aas://shuttle/0&quot;]\"", xml)
+        self.assertNotIn("Param_", xml)
         policy = [
             _FakeRule(
                 {
@@ -354,50 +325,30 @@ class BTSynthesisHoistingTests(unittest.TestCase):
         self.assertTrue(all(len(identifier) <= 48 for identifier in ids if identifier))
         self.assertTrue(all("_with_" not in identifier and "_else_" not in identifier for identifier in ids))
 
-    def test_template_nodes_use_alias_refs_not_inline_json(self):
+    def test_template_nodes_inline_json_directly(self):
+        """With inlined refs, templates use URLs and JSON arrays directly."""
         template_tree = Sequence(
             "TemplRule",
             [
-                ConditionNode(
-                    "ready(product_1)",
-                    execution_ref={
-                        "source_aas_id": "aas://station/dispense",
-                        "fluent_aas_path": "AI-Planning/Domain/Fluents/Ready",
-                        "parameter_refs": [
-                            {
-                                "aas_id": "aas://product/1",
-                                "aas_path": "AI-Planning/Problem/Objects/product_1",
-                            }
-                        ],
-                    },
-                ),
-                ActionNode(
-                    "dispense product_1",
-                    execution_ref={
-                        "source_aas_id": "aas://station/dispense",
-                        "action_aas_path": "AI-Planning/Domain/Actions/Dispense",
-                        "parameter_refs": [
-                            {
-                                "aas_id": "aas://product/1",
-                                "aas_path": "AI-Planning/Problem/Objects/product_1",
-                            }
-                        ],
-                    },
-                ),
+                ConditionNode("ready(product_1)", execution_ref={
+                    "fluent_ref": "https://w3id.org/2026/apex/Ready",
+                    "fluent_args": '["aas://product/1"]',
+                }),
+                ActionNode("dispense product_1", execution_ref={
+                    "_action_ref": "aas://station/dispense",
+                    "_skill_name": "Dispense",
+                    "_action_args_json": '["aas://product/1"]',
+                }),
             ],
             is_rule_leaf=True,
         )
-
         bt = BehaviorTree(Sequence("Root", [SubTreeRef("TemplAction", {"arg0": "product_1"}), SuccessLeaf()]))
         bt.templates = {"TemplAction": (template_tree, ["arg0"])}
-
         xml = bt_to_xml(bt)
-
         self.assertIn('BehaviorTree ID="TemplAction"', xml)
-        self.assertRegex(xml, r'predicate_ref="\{[A-Za-z][A-Za-z0-9_]*\}"')
-        self.assertRegex(xml, r'action_ref="\{[A-Za-z][A-Za-z0-9_]*\}"')
-        self.assertNotIn('predicate_ref="{&quot;', xml)
-        self.assertNotIn('action_ref="{&quot;', xml)
+        self.assertIn('fluent_ref="https://w3id.org/2026/apex/Ready"', xml)
+        self.assertIn('action_ref="aas://station/dispense/Skills/Dispense"', xml)
+        self.assertNotIn('<SubTree ID="MainTree" editable="true">', xml)
 
     def test_reactive_fallback_names_are_compact(self):
         policy = [
@@ -466,9 +417,9 @@ class BTSynthesisHoistingTests(unittest.TestCase):
         hoisted_xml = bt_to_xml(optimize_bt(build_trivial_bt(_FakeResult(policy, []))))
         trivial_xml = bt_to_xml(build_trivial_bt(_FakeResult(policy, [])))
 
-        self.assertEqual(hoisted_xml.count('<FluentCheck name="a"'), 1)
+        self.assertEqual(hoisted_xml.count('<Predicate name="a"'), 1)
         self.assertGreaterEqual(
-            trivial_xml.count('<FluentCheck name="a"'),
+            trivial_xml.count('<Predicate name="a"'),
             2,
         )
 

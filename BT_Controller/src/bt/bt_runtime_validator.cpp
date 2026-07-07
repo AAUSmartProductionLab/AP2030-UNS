@@ -10,8 +10,8 @@
 
 #include <behaviortree_cpp/behavior_tree.h>
 
-#include "aas/aas_client.h"
-#include "aas/aas_interface_cache.h"
+#include "backends/aas/aas_client.h"
+#include "backends/aas/aas_interface_cache.h"
 #include "bt/conditions/fluent_check_node.h"
 #include "bt/execution_refs.h"
 #include "utils.h"
@@ -26,60 +26,39 @@ namespace bt_runtime_validator
             return pos == std::string::npos ? path : path.substr(pos + 1);
         }
 
-        /// Resolve an interaction MQTT output topic for a given asset,
-        /// preferring the cache and falling back to a live AAS query.
+        /// Resolve an interaction MQTT output topic for a given asset.
         bool hasOutputBinding(const std::string &asset_id,
                               const std::string &interaction,
-                              AASInterfaceCache &cache,
-                              AASClient &aas_client)
+                              SkillInterfaceCache &cache)
         {
             if (asset_id.empty() || interaction.empty())
                 return false;
-            if (cache.getInterface(asset_id, interaction, "output").has_value())
-                return true;
-            return aas_client.fetchInterface(asset_id, interaction, "output").has_value();
+            if (auto si = cache.resolve(asset_id, interaction))
+                return si->has_output;
+            return false;
         }
 
         bool hasInputBinding(const std::string &asset_id,
                              const std::string &interaction,
-                             AASInterfaceCache &cache,
-                             AASClient &aas_client)
+                             SkillInterfaceCache &cache)
         {
             if (asset_id.empty() || interaction.empty())
                 return false;
-            if (cache.getInterface(asset_id, interaction, "input").has_value())
-                return true;
-            return aas_client.fetchInterface(asset_id, interaction, "input").has_value();
+            if (auto si = cache.resolve(asset_id, interaction))
+                return si->has_input;
+            return false;
         }
 
-        /// Issue a synchronous AAS GET to fetch the current value of a
-        /// data-backed predicate so the corresponding FluentCheck node
-        /// has something to evaluate on its very first tick.
+        /// Seed the initial value for a data-backed predicate so the
+        /// corresponding FluentCheck node has something to evaluate on
+        /// its very first tick.  In the current KG-based architecture,
+        /// all predicate evaluation goes through SPARQL ASK — no AAS
+        /// seeding is necessary.  Kept as a no-op for API compatibility.
         std::optional<nlohmann::json> seedPredicateValue(
-            const bt_exec_refs::PredicateRef &ref,
-            AASClient &aas_client)
+            const bt_exec_refs::FluentRef & /*ref*/,
+            AASClient & /*aas_client*/)
         {
-            if (ref.source_aas_id.empty() || ref.fluent_aas_path.empty())
-                return std::nullopt;
-
-            auto [submodel, remainder] = bt_exec_refs::splitSubmodelPath(ref.fluent_aas_path);
-            if (submodel.empty())
-            {
-                submodel = "Variables";
-                remainder = ref.fluent_aas_path;
-            }
-            try
-            {
-                return aas_client.fetchSubmodelElementByPath(
-                    ref.source_aas_id, submodel, remainder);
-            }
-            catch (const std::exception &e)
-            {
-                std::cerr << "[bt_runtime_validator] AAS GET seed exception for "
-                          << ref.source_aas_id << "/" << ref.fluent_aas_path
-                          << ": " << e.what() << std::endl;
-                return std::nullopt;
-            }
+            return std::nullopt;
         }
 
         void collectBlackboardKeyRefs(const BT::TreeNode *node,
@@ -181,8 +160,7 @@ namespace bt_runtime_validator
     } // namespace
 
     ValidationResult validateAndSeed(BT::Tree &tree,
-                                     AASInterfaceCache &cache,
-                                     AASClient &aas_client)
+                                     SkillInterfaceCache &cache)
     {
         ValidationResult result;
         if (!tree.rootNode())
@@ -218,7 +196,7 @@ namespace bt_runtime_validator
 
                 const std::string &reg = node->registrationName();
 
-                if (reg == "ExecuteAction")
+                if (reg == "Skill")
                 {
                     std::string ref_value = resolvePortValue(node, "action_ref", blackboards);
                     if (ref_value.empty())
@@ -240,9 +218,9 @@ namespace bt_runtime_validator
                         result.failures.push_back(f);
                         return;
                     }
-                    const std::string interaction = lastSegmentLocal(parsed->action_aas_path);
-                    bool has_in = hasInputBinding(parsed->source_aas_id, interaction, cache, aas_client);
-                    bool has_out = hasOutputBinding(parsed->source_aas_id, interaction, cache, aas_client);
+                    const std::string interaction = parsed->skill_name;
+                    bool has_in = hasInputBinding(parsed->source_aas_id, interaction, cache);
+                    bool has_out = hasOutputBinding(parsed->source_aas_id, interaction, cache);
                     if (!has_in || !has_out)
                     {
                         NodeFailure f;
@@ -261,42 +239,31 @@ namespace bt_runtime_validator
                     }
                     ++result.execute_actions_validated;
                 }
-                else if (reg == "FluentCheck")
+                else if (reg == "Predicate")
                 {
-                    std::string ref_value = resolvePortValue(node, "predicate_ref", blackboards);
+                    std::string ref_value = resolvePortValue(node, "fluent_ref", blackboards);
                     if (ref_value.empty())
                     {
                         NodeFailure f;
                         f.node_name = node->name();
                         f.registration_name = reg;
-                        f.reason = "missing or empty predicate_ref input";
+                        f.reason = "missing or empty fluent_ref input";
                         result.failures.push_back(f);
                         return;
                     }
-                    auto parsed = bt_exec_refs::parsePredicateRef(ref_value);
+                    auto parsed = bt_exec_refs::parseFluentRef(ref_value);
                     if (!parsed.has_value())
                     {
                         NodeFailure f;
                         f.node_name = node->name();
                         f.registration_name = reg;
-                        f.reason = "could not parse predicate_ref JSON payload";
+                        f.reason = "could not parse fluent_ref URI";
                         result.failures.push_back(f);
                         return;
                     }
-                    if (parsed->transformation_aas_path.empty())
-                    {
-                        // Symbolic-only predicate: no MQTT binding required.
-                        ++result.fluent_checks_symbolic;
-                        return;
-                    }
-                    // Data-backed predicate: subscriptions are resolved
-                    // per-Variable across each parameter's AAS at node
-                    // init time. The static Parameters/Variables flatten
-                    // performed by ``FluentCheck::initializeTopicsFromAAS``
-                    // already seeds the evaluation snapshot, so we no
-                    // longer need to issue a separate seedInitialValue
-                    // here. We simply record that the node validated.
-                    ++result.fluent_checks_validated;
+                    // All predicates are now KG-evaluated.
+                    ++result.fluent_checks_symbolic;
+                    return;
                 }
             });
 

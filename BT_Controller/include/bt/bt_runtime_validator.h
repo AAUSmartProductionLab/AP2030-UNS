@@ -6,7 +6,7 @@
 #include <behaviortree_cpp/bt_factory.h>
 
 class AASClient;
-class AASInterfaceCache;
+class SkillInterfaceCache;
 
 namespace bt_runtime_validator
 {
@@ -14,7 +14,7 @@ namespace bt_runtime_validator
     struct NodeFailure
     {
         std::string node_name;         ///< BT node name as it appears in XML
-        std::string registration_name; ///< "ExecuteAction" or "FluentCheck"
+        std::string registration_name; ///< "Skill" or "Predicate"
         std::string source_aas_id;     ///< Asset whose binding is missing
         std::string interaction;       ///< Last segment of action/fluent path
         std::string reason;            ///< Human-readable diagnostic
@@ -43,8 +43,7 @@ namespace bt_runtime_validator
     /// This is the authoritative startup gate: callers MUST inspect
     /// ``ValidationResult::ok()`` and abort the run on failure.
     ValidationResult validateAndSeed(BT::Tree &tree,
-                                     AASInterfaceCache &cache,
-                                     AASClient &aas_client);
+                                     SkillInterfaceCache &cache);
 
     /// Format ``ValidationResult`` as a multi-line, per-asset error
     /// report suitable for logging. Returns an empty string when

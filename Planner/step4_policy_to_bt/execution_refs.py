@@ -84,6 +84,12 @@ def resolve_action_execution_ref(
     action_name: str,
     action_args: Sequence[Any] = (),
 ) -> Optional[Dict[str, Any]]:
+    """Build the execution ref for an ExecuteAction BT node.
+
+    Returns a dict with:
+      - ``action_ref``: AAS URL to the skill (plain string, not JSON)
+      - ``action_args``: JSON array of AAS identifiers for parameters
+    """
     refs, refs_ci = _get_ref_maps(planner_metadata, key="action_refs")
     normalized_action_name = str(action_name or "").strip()
     ref = _lookup_ref(refs, refs_ci, normalized_action_name)
@@ -109,210 +115,70 @@ def resolve_action_execution_ref(
                     value = arg_values[arg_idx]
             if not value and idx < len(arg_values):
                 value = arg_values[idx]
-
         grounded_arguments.append(
-            {
-                "name": str(binding.get("name") or f"p{idx}"),
-                "value": value,
-                "binding_kind": resolved_kind or "free",
-            }
+            {"name": str(binding.get("name") or f"p{idx}"),
+             "value": value,
+             "binding_kind": resolved_kind or "free"}
         )
 
-    parameter_refs: list[Dict[str, Any]] = []
+    # Build JSON array of AAS IDs for the args.
+    arg_aas_ids: list[str] = []
     for grounded in grounded_arguments:
         value = str(grounded.get("value") or "")
         object_ref = _resolve_object_ref(planner_metadata, value)
-        parameter_refs.append(
-            {
-                "name": str(grounded.get("name") or ""),
-                "aas_id": object_ref["aas_id"],
-                "aas_path": object_ref["aas_path"],
-            }
-        )
+        arg_aas_ids.append(object_ref["aas_id"])
 
+    # Build the AAS skill URL.
+    source_aas_id = str(ref.get("source_aas_id") or "")
+    skill_name = str(ref.get("skill_name") or "").strip()
+    if not skill_name:
+        legacy_path = str(ref.get("action_aas_path") or "")
+        skill_name = legacy_path.rstrip("/").rsplit("/", 1)[-1] if legacy_path else \
+                     normalized_action_name.split()[0] if normalized_action_name else ""
+
+    # Construct URL: <base>/submodels/instances/<aas_id>/Skills/<skill_name>
+    import json as _json
     return {
-        "source_aas_id": str(ref.get("source_aas_id") or ""),
-        "action_aas_path": str(ref.get("action_aas_path") or ""),
-        "transformation_aas_path": str(ref.get("transformation_aas_path") or ""),
-        "parameter_refs": parameter_refs,
-        # PR4: pass through pre-grounded symbolic effects so the BT
-        # runtime can update SymbolicState on action SUCCESS. Free
-        # action-parameter args appear as ``$param:N`` sentinels and
-        # are substituted here against the concrete invocation args.
-        "effects": _ground_effect_args(ref.get("effects"), grounded_arguments),
+        "_action_ref": source_aas_id,  # placeholder — xml_writer builds the URL
+        "_skill_name": skill_name,
+        "_action_args_json": _json.dumps(arg_aas_ids, separators=(",", ":")),
     }
-
-
-def _ground_effect_args(
-    effects: Any,
-    grounded_arguments: Sequence[Mapping[str, Any]],
-) -> list[Dict[str, Any]]:
-    """Substitute ``$param:N`` sentinels in branched effects.
-
-    Input shape (planner output) is a list of branches:
-        [{"branch": <int>, "atoms": [{predicate, args, value}, ...]}, ...]
-
-    Each branch's atoms are grounded against ``grounded_arguments``.
-    Atoms whose args cannot be fully resolved (sentinel index out of
-    range or empty resolved value) are dropped: applying an atom with a
-    blank argument would corrupt SymbolicState's canonical key. A branch
-    that loses every atom is preserved as an empty-atoms branch so the
-    runtime can still match the response Outcome index.
-    """
-
-    out: list[Dict[str, Any]] = []
-    if not isinstance(effects, list):
-        return out
-    for entry in effects:
-        if not isinstance(entry, Mapping):
-            continue
-        try:
-            branch_idx = int(entry.get("branch", 0))
-        except (TypeError, ValueError):
-            branch_idx = 0
-        when_expr = str(entry.get("when") or "").strip()
-        atoms_raw = entry.get("atoms")
-        if not isinstance(atoms_raw, list):
-            atoms_raw = []
-        new_atoms: list[Dict[str, Any]] = []
-        for atom in atoms_raw:
-            if not isinstance(atom, Mapping):
-                continue
-            raw_args = atom.get("args")
-            if not isinstance(raw_args, list):
-                raw_args = []
-            new_args: list[str] = []
-            skip = False
-            for arg in raw_args:
-                text = str(arg or "")
-                if text.startswith("$param:"):
-                    try:
-                        idx = int(text.split(":", 1)[1])
-                    except ValueError:
-                        skip = True
-                        break
-                    if 0 <= idx < len(grounded_arguments):
-                        value = str(grounded_arguments[idx].get("value") or "")
-                    else:
-                        value = ""
-                    if not value:
-                        skip = True
-                        break
-                    new_args.append(value)
-                else:
-                    new_args.append(text)
-            if skip:
-                continue
-            new_atoms.append(
-                {
-                    "predicate": str(atom.get("predicate") or ""),
-                    "args": new_args,
-                    "value": bool(atom.get("value", True)),
-                }
-            )
-        branch_entry: Dict[str, Any] = {"branch": branch_idx, "atoms": new_atoms}
-        if when_expr:
-            branch_entry["when"] = when_expr
-        out.append(branch_entry)
-    return out
 
 
 def resolve_predicate_execution_ref(
     planner_metadata: Optional[Mapping[str, Any]],
     literal: str,
 ) -> Optional[Dict[str, Any]]:
-    refs, refs_ci = _get_ref_maps(planner_metadata, key="predicate_refs")
+    """Build the execution ref for a FluentCheck BT node.
+
+    Returns a dict with:
+      - ``fluent_ref``: ontology predicate URI (plain string)
+      - ``fluent_args``: JSON array of argument values
+    """
     literal_text = str(literal or "").strip()
     base_literal, is_negated = _split_negation(literal_text)
     parsed = parse_predicate(base_literal)
-    predicate_name = parsed[0] if parsed else base_literal
-    arguments = parsed[1] if parsed else []
-
-    ref = _lookup_ref(refs, refs_ci, predicate_name)
-    if ref is None:
+    if parsed is None:
         return None
+    predicate_name, arguments = parsed
 
-    _ = is_negated
-    parameter_refs: list[Dict[str, Any]] = []
-    for idx, arg in enumerate(arguments):
+    # Look up the ontology semantic ID from planner metadata.
+    refs, refs_ci = _get_ref_maps(planner_metadata, key="predicate_refs")
+    ref = _lookup_ref(refs, refs_ci, predicate_name)
+    semantic_id = str(ref.get("semantic_id") or "").strip() if ref else ""
+
+    # Resolve argument values: prefer AAS IDs via object_refs, fall back to literal.
+    resolved_args: list[str] = []
+    for arg in arguments:
         object_ref = _resolve_object_ref(planner_metadata, arg)
-        aas_path = object_ref["aas_path"]
-        if not aas_path:
-            # Non-AAS literal argument (e.g. PDDL constant
-            # ``step_1_dispensing``). Carry the literal as a synthetic
-            # ``aas_path`` so the runtime FluentCheck — which builds the
-            # SymbolicState canonical key from
-            # ``lastSegment(parameter_refs[i].aas_path)`` — sees the same
-            # token that the planner-emitted action effect writes via
-            # ``atom.args``. Without this the argument is silently
-            # dropped and reads collide on a single 1-arg key.
-            aas_path = str(arg or "").strip()
-        parameter_refs.append(
-            {
-                "name": f"p{idx}",
-                "aas_id": object_ref["aas_id"],
-                "aas_path": aas_path,
-            }
-        )
+        aas_id = str(object_ref.get("aas_id") or "")
+        if aas_id:
+            resolved_args.append(aas_id)
+        else:
+            resolved_args.append(str(arg or "").strip())
 
-    source_bindings = list(ref.get("source_bindings") or [])
-    binding_by_aas_id: Dict[str, Dict[str, Any]] = {}
-    for binding in source_bindings:
-        if not isinstance(binding, Mapping):
-            continue
-        aas_id = str(binding.get("aas_id") or "")
-        if aas_id and aas_id not in binding_by_aas_id:
-            binding_by_aas_id[aas_id] = dict(binding)
-
-    selected_binding: Dict[str, Any] = {}
-    for param_ref in parameter_refs:
-        param_aas_id = str(param_ref.get("aas_id") or "")
-        if not param_aas_id:
-            continue
-        candidate = binding_by_aas_id.get(param_aas_id)
-        if candidate:
-            selected_binding = candidate
-            break
-
-    fluent_aas_path = str(
-        selected_binding.get("fluent_aas_path")
-        or ref.get("fluent_aas_path")
-        or ""
-    )
-    # Ensure ``lastSegment(fluent_aas_path)`` matches the planner's
-    # predicate name. Multiple PDDL predicates can be backed by the same
-    # AAS submodel (e.g. ``step_done`` and ``step_ready`` both live under
-    # the product's step-status submodel); without this disambiguation
-    # they collapse to a single SymbolicState key at runtime AND share
-    # the same blackboard alias in the emitted BT XML, so reads cross-
-    # contaminate. The runtime FluentCheck::tickSymbolic uses
-    # ``lastSegment(fluent_aas_path)`` as the predicate token, so
-    # appending ``/<predicate_name>`` is sufficient and matches the
-    # token written by action-effect application (atom.predicate).
-    if predicate_name:
-        existing_tail = (
-            fluent_aas_path.rstrip("/").rsplit("/", 1)[-1]
-            if fluent_aas_path
-            else ""
-        )
-        if existing_tail.lower() != predicate_name.lower():
-            fluent_aas_path = (
-                f"{fluent_aas_path.rstrip('/')}/{predicate_name}"
-                if fluent_aas_path
-                else predicate_name
-            )
-
+    import json as _json
     return {
-        "source_aas_id": str(
-            selected_binding.get("aas_id")
-            or ref.get("source_aas_id")
-            or ""
-        ),
-        "fluent_aas_path": fluent_aas_path,
-        "transformation_aas_path": str(
-            selected_binding.get("transformation_aas_path")
-            or ref.get("transformation_aas_path")
-            or ""
-        ),
-        "parameter_refs": parameter_refs,
+        "fluent_ref": semantic_id or predicate_name,
+        "fluent_args": _json.dumps(resolved_args, separators=(",", ":")),
     }

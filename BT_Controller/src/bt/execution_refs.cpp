@@ -1,24 +1,19 @@
 #include "bt/execution_refs.h"
 
 #include <iostream>
-#include <sstream>
+#include <regex>
 
 namespace bt_exec_refs
 {
 
     std::string decodeHtmlEntities(const std::string &input)
     {
-        // BT.CPP normally decodes XML entities itself, but action_ref/
-        // predicate_ref attribute values can contain JSON with embedded
-        // double quotes that some emitters re-escape as &quot;. Decode the
-        // small set of entities that may show up.
         std::string out;
         out.reserve(input.size());
         for (size_t i = 0; i < input.size();)
         {
             if (input[i] == '&')
             {
-                // Match the longest known entity at this position.
                 const struct
                 {
                     const char *entity;
@@ -60,9 +55,7 @@ namespace bt_exec_refs
     std::string stripWrappingQuotes(const std::string &text)
     {
         if (text.size() >= 2 && text.front() == '"' && text.back() == '"')
-        {
             return text.substr(1, text.size() - 2);
-        }
         return text;
     }
 
@@ -70,11 +63,8 @@ namespace bt_exec_refs
     {
         std::vector<std::string> result;
         std::string body = stripWrappingQuotes(args_value);
-        // Trim ASCII whitespace.
         auto is_ws = [](char c)
-        {
-            return c == ' ' || c == '\t' || c == '\n' || c == '\r';
-        };
+        { return c == ' ' || c == '\t' || c == '\n' || c == '\r'; };
         size_t start = 0;
         while (start < body.size() && is_ws(body[start]))
             ++start;
@@ -82,11 +72,8 @@ namespace bt_exec_refs
         while (end > start && is_ws(body[end - 1]))
             --end;
         if (start >= end)
-        {
             return result;
-        }
         body = body.substr(start, end - start);
-
         std::string token;
         for (char c : body)
         {
@@ -96,299 +83,138 @@ namespace bt_exec_refs
                 token.clear();
             }
             else
-            {
                 token.push_back(c);
-            }
         }
         result.push_back(token);
         return result;
     }
 
+    std::vector<std::string> parseJsonStringArray(const std::string &raw)
+    {
+        std::vector<std::string> result;
+        if (raw.empty())
+            return result;
+        std::string decoded = decodeHtmlEntities(raw);
+        try
+        {
+            auto parsed = nlohmann::json::parse(decoded);
+            if (parsed.is_array())
+                for (const auto &e : parsed)
+                    result.push_back(e.is_string() ? e.get<std::string>() : e.dump());
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "parseJsonStringArray: " << e.what()
+                      << " for: " << raw.substr(0, 200) << std::endl;
+        }
+        return result;
+    }
+
+    // ── URL parser ───────────────────────────────────────────────────
+
     namespace
     {
-        std::vector<ParameterRef> parseParameterRefs(const nlohmann::json &node)
+        bool parseSkillUrl(const std::string &url, std::string &out_aas, std::string &out_skill)
         {
-            std::vector<ParameterRef> out;
-            if (!node.contains("parameter_refs") || !node["parameter_refs"].is_array())
-            {
-                return out;
-            }
-            for (const auto &entry : node["parameter_refs"])
-            {
-                if (!entry.is_object())
-                {
-                    continue;
-                }
-                ParameterRef pr;
-                if (entry.contains("name") && entry["name"].is_string())
-                {
-                    pr.name = entry["name"].get<std::string>();
-                }
-                if (entry.contains("aas_id") && entry["aas_id"].is_string())
-                {
-                    pr.aas_id = entry["aas_id"].get<std::string>();
-                }
-                if (entry.contains("aas_path") && entry["aas_path"].is_string())
-                {
-                    pr.aas_path = entry["aas_path"].get<std::string>();
-                }
-                out.push_back(std::move(pr));
-            }
-            return out;
-        }
-
-        nlohmann::json safeObject(const nlohmann::json &node, const char *key)
-        {
-            if (node.contains(key) && (node[key].is_object() || node[key].is_array()))
-            {
-                return node[key];
-            }
-            return nlohmann::json::object();
-        }
-
-        std::string safeString(const nlohmann::json &node, const char *key)
-        {
-            if (node.contains(key) && node[key].is_string())
-            {
-                return node[key].get<std::string>();
-            }
-            return std::string();
-        }
-
-        std::optional<nlohmann::json> tryParseJson(const std::string &raw)
-        {
-            try
-            {
-                return nlohmann::json::parse(raw);
-            }
-            catch (const std::exception &)
-            {
-                return std::nullopt;
-            }
-        }
-
-        std::vector<std::string> parseStringArgs(const nlohmann::json &node)
-        {
-            std::vector<std::string> out;
-            if (!node.is_array())
-            {
-                return out;
-            }
-            out.reserve(node.size());
-            for (const auto &entry : node)
-            {
-                if (entry.is_string())
-                {
-                    out.push_back(entry.get<std::string>());
-                }
-                else
-                {
-                    // Tolerate non-string args by stringifying; keeps the
-                    // runtime resilient to planner schema drift.
-                    out.push_back(entry.dump());
-                }
-            }
-            return out;
-        }
-
-        std::optional<GroundedAtom> parseGroundedAtom(const nlohmann::json &entry)
-        {
-            if (!entry.is_object())
-            {
-                return std::nullopt;
-            }
-            GroundedAtom atom;
-            atom.predicate = safeString(entry, "predicate");
-            if (atom.predicate.empty())
-            {
-                return std::nullopt;
-            }
-            if (entry.contains("args"))
-            {
-                atom.args = parseStringArgs(entry["args"]);
-            }
-            if (entry.contains("value"))
-            {
-                atom.value = entry["value"];
-            }
-            else
-            {
-                // Default to `true` so that a bare {"predicate":"X","args":[...]}
-                // entry is interpreted as "the atom holds".
-                atom.value = true;
-            }
-            return atom;
-        }
-
-        std::vector<EffectBranch> parseEffects(const nlohmann::json &node)
-        {
-            std::vector<EffectBranch> out;
-            if (!node.contains("effects") || !node["effects"].is_array())
-            {
-                return out;
-            }
-            for (const auto &entry : node["effects"])
-            {
-                if (!entry.is_object())
-                {
-                    continue;
-                }
-                EffectBranch branch;
-                branch.index = 0;
-                if (entry.contains("branch") && entry["branch"].is_number_integer())
-                {
-                    branch.index = entry["branch"].get<int>();
-                }
-                if (entry.contains("when") && entry["when"].is_string())
-                {
-                    std::string when = entry["when"].get<std::string>();
-                    if (!when.empty())
-                    {
-                        branch.when_expr = std::move(when);
-                    }
-                }
-                if (entry.contains("atoms") && entry["atoms"].is_array())
-                {
-                    for (const auto &atom_json : entry["atoms"])
-                    {
-                        auto atom = parseGroundedAtom(atom_json);
-                        if (atom.has_value())
-                        {
-                            branch.atoms.push_back(std::move(*atom));
-                        }
-                    }
-                }
-                out.push_back(std::move(branch));
-            }
-            return out;
+            auto pos = url.find("/instances/");
+            if (pos == std::string::npos)
+                return false;
+            std::string tail = url.substr(pos + 11);
+            auto slash1 = tail.find('/');
+            if (slash1 == std::string::npos)
+                return false;
+            out_aas = tail.substr(0, slash1);
+            auto skills_pos = tail.find("/Skills/", slash1);
+            if (skills_pos == std::string::npos)
+                return false;
+            std::string skill_part = tail.substr(skills_pos + 8);
+            while (!skill_part.empty() && skill_part.back() == '/')
+                skill_part.pop_back();
+            auto last_slash = skill_part.rfind('/');
+            out_skill = (last_slash != std::string::npos)
+                            ? skill_part.substr(last_slash + 1)
+                            : skill_part;
+            return !out_aas.empty() && !out_skill.empty();
         }
     }
 
     std::optional<ActionRef> parseActionRef(const std::string &raw)
     {
         if (raw.empty())
-        {
             return std::nullopt;
-        }
-        auto parsed = tryParseJson(raw);
-        if (!parsed.has_value())
-        {
-            std::string decoded = decodeHtmlEntities(raw);
-            parsed = tryParseJson(decoded);
-        }
-        if (!parsed.has_value() || !parsed->is_object())
-        {
-            std::cerr << "parseActionRef: not a JSON object: "
-                      << raw.substr(0, std::min<size_t>(raw.size(), 200)) << std::endl;
+        std::string url = stripWrappingQuotes(raw);
+        if (url.empty())
             return std::nullopt;
-        }
-
         ActionRef ref;
-        ref.source_aas_id = safeString(*parsed, "source_aas_id");
-        ref.action_aas_path = safeString(*parsed, "action_aas_path");
-        ref.transformation_aas_path = safeString(*parsed, "transformation_aas_path");
-        ref.aas_link_key = safeString(*parsed, "aas_link_key");
-        ref.parameter_refs = parseParameterRefs(*parsed);
-        ref.object_refs = safeObject(*parsed, "object_refs");
-        ref.effects = parseEffects(*parsed);
-        return ref;
-    }
-
-    std::optional<PredicateRef> parsePredicateRef(const std::string &raw)
-    {
-        if (raw.empty())
+        ref.skill_url = url;
+        if (!parseSkillUrl(url, ref.source_aas_id, ref.skill_name))
         {
-            return std::nullopt;
-        }
-        auto parsed = tryParseJson(raw);
-        if (!parsed.has_value())
-        {
-            std::string decoded = decodeHtmlEntities(raw);
-            parsed = tryParseJson(decoded);
-        }
-        if (!parsed.has_value() || !parsed->is_object())
-        {
-            std::cerr << "parsePredicateRef: not a JSON object: "
-                      << raw.substr(0, std::min<size_t>(raw.size(), 200)) << std::endl;
-            return std::nullopt;
-        }
-
-        PredicateRef ref;
-        ref.source_aas_id = safeString(*parsed, "source_aas_id");
-        ref.fluent_aas_path = safeString(*parsed, "fluent_aas_path");
-        ref.transformation_aas_path = safeString(*parsed, "transformation_aas_path");
-        ref.aas_link_key = safeString(*parsed, "aas_link_key");
-        ref.parameter_refs = parseParameterRefs(*parsed);
-        ref.object_refs = safeObject(*parsed, "object_refs");
-        return ref;
-    }
-
-    std::optional<std::vector<GroundedAtom>> parseGroundedAtomList(const std::string &raw)
-    {
-        std::vector<GroundedAtom> out;
-        if (raw.empty())
-        {
-            return out;
-        }
-        auto parsed = tryParseJson(raw);
-        if (!parsed.has_value())
-        {
-            std::string decoded = decodeHtmlEntities(raw);
-            parsed = tryParseJson(decoded);
-        }
-        if (!parsed.has_value())
-        {
-            std::cerr << "parseGroundedAtomList: malformed JSON: "
-                      << raw.substr(0, std::min<size_t>(raw.size(), 200)) << std::endl;
-            return std::nullopt;
-        }
-        if (!parsed->is_array())
-        {
-            std::cerr << "parseGroundedAtomList: expected JSON array" << std::endl;
-            return std::nullopt;
-        }
-        for (const auto &entry : *parsed)
-        {
-            auto atom = parseGroundedAtom(entry);
-            if (atom.has_value())
+            // Backward compat: old JSON with source_aas_id + skill_name
+            try
             {
-                out.push_back(std::move(*atom));
+                auto j = nlohmann::json::parse(decodeHtmlEntities(raw));
+                if (j.is_object())
+                {
+                    ref.source_aas_id = j.value("source_aas_id", "");
+                    ref.skill_name = j.value("skill_name", "");
+                    if (ref.source_aas_id.empty())
+                        return std::nullopt;
+                }
+            }
+            catch (...)
+            {
+                return std::nullopt;
             }
         }
-        return out;
+        return ref;
+    }
+
+    std::optional<FluentRef> parseFluentRef(const std::string &raw)
+    {
+        if (raw.empty())
+            return std::nullopt;
+        std::string uri = stripWrappingQuotes(raw);
+        if (uri.empty())
+            return std::nullopt;
+        if (uri.front() == '{') // old JSON compat
+        {
+            try
+            {
+                auto j = nlohmann::json::parse(decodeHtmlEntities(raw));
+                if (j.is_object())
+                {
+                    FluentRef r;
+                    r.fluent_uri = j.value("semantic_id", j.value("predicate", ""));
+                    if (j.contains("args") && j["args"].is_array())
+                        for (const auto &a : j["args"])
+                            if (a.is_string())
+                                r.args.push_back(a.get<std::string>());
+                    if (!r.fluent_uri.empty())
+                        return r;
+                }
+            }
+            catch (...)
+            {
+            }
+            return std::nullopt;
+        }
+        FluentRef ref;
+        ref.fluent_uri = uri;
+        return ref;
     }
 
     std::pair<std::string, std::string> splitSubmodelPath(const std::string &slash_path)
     {
         if (slash_path.empty())
-        {
             return {"", ""};
-        }
-        size_t slash = slash_path.find('/');
-        if (slash == std::string::npos)
-        {
+        auto pos = slash_path.find('/');
+        if (pos == std::string::npos)
             return {"", slash_path};
-        }
-        std::string head = slash_path.substr(0, slash);
-        std::string tail = slash_path.substr(slash + 1);
-
-        // Canonicalize the planner-side spelling to the actual submodel
-        // idShort. The planner emits AI-Planning/... but the submodel
-        // generated by Registration_Service is AIPlanning.
-        if (head == "AI-Planning" || head == "AIPlanning")
-        {
-            return {"AIPlanning", tail};
-        }
-        // Other well-known submodels are passed through verbatim.
-        if (head == "Skills" || head == "Capabilities" || head == "Variables" ||
-            head == "AssetInterfacesDescription" || head == "ProcessInformation" ||
-            head == "RequiredCapabilities" || head == "HierarchicalStructures")
-        {
-            return {head, tail};
-        }
-        // Unknown leading segment - treat as in-submodel content (caller
-        // will pick a default).
-        return {"", slash_path};
+        std::string first = slash_path.substr(0, pos);
+        std::string remainder = slash_path.substr(pos + 1);
+        if (first == "AI-Planning" || first == "ai-planning")
+            first = "AIPlanning";
+        return {first, remainder};
     }
 
 } // namespace bt_exec_refs

@@ -7,7 +7,12 @@ format consumed by BehaviorTree.CPP v4, including:
 - Factored subtree definitions (shared and ``is_rule_leaf`` nodes).
 - Parameterized template definitions with ``{argN}`` ports.
 - ``TreeNodesModel`` declarations for FluentCheck, ExecuteAction,
-  ForbiddenAction, and template SubTrees.
+  and ForbiddenAction node types.
+
+All execution-ref payloads (action_ref, predicate_ref) are inlined
+directly as XML attribute values.  No TreeNodesModel port declarations
+are needed — the BT_Controller receives the JSON directly from the
+attribute string.
 
 Public API
 ----------
@@ -55,161 +60,6 @@ def _iter_children(node: BTNode):
 
 def _ref_to_xml_attr(ref: Dict[str, object]) -> str:
     return json.dumps(ref, separators=(",", ":"), sort_keys=True)
-
-
-def _ref_token(value: object, *, trim_aas_suffix: bool = True) -> str:
-    text = str(value or "").strip()
-    if not text:
-        return ""
-    token = text.rstrip("/")
-    if "/" in token:
-        token = token.split("/")[-1]
-    if "#" in token:
-        token = token.split("#")[-1]
-    token = sanitize_bt_id(token)
-    if trim_aas_suffix and token.endswith("AAS") and len(token) > 3:
-        token = token[:-3]
-    return token
-
-
-def _unique_key(base: str, used_keys: Set[str]) -> str:
-    key = sanitize_bt_id(base) or "Ref"
-    candidate = key
-    idx = 2
-    while candidate in used_keys:
-        candidate = f"{key}_{idx}"
-        idx += 1
-    used_keys.add(candidate)
-    return candidate
-
-
-def _collect_execution_ref_aliases(
-    roots: List[BTNode],
-) -> tuple[Dict[int, str], List[Tuple[str, str]], Dict[int, List[str]]]:
-    """Collect deterministic named blackboard aliases for execution refs."""
-    entries: List[Tuple[int, str, Dict[str, object], str]] = []
-    stack: List[BTNode] = list(roots)
-    while stack:
-        node = stack.pop()
-        stack.extend(_iter_children(node))
-        if isinstance(node, ConditionNode) and node.execution_ref:
-            serialized = _ref_to_xml_attr(node.execution_ref)
-            entries.append((id(node), "predicate", dict(node.execution_ref), serialized))
-        elif isinstance(node, ActionNode) and node.execution_ref:
-            serialized = _ref_to_xml_attr(node.execution_ref)
-            entries.append((id(node), "action", dict(node.execution_ref), serialized))
-        elif isinstance(node, SubTreeRef):
-            # Per-invocation leaf refs are NOT in the executable tree but
-            # contribute to the alias namespace so each SubTree call can
-            # bind its own ``predicate_ref_<i>``/``action_ref_<i>`` port.
-            for binding in node.leaf_bindings:
-                if binding is None:
-                    continue
-                leaf, _ref_port, _args_port = binding
-                if isinstance(leaf, ConditionNode) and leaf.execution_ref:
-                    serialized = _ref_to_xml_attr(leaf.execution_ref)
-                    entries.append((id(leaf), "predicate", dict(leaf.execution_ref), serialized))
-                elif isinstance(leaf, ActionNode) and leaf.execution_ref:
-                    serialized = _ref_to_xml_attr(leaf.execution_ref)
-                    entries.append((id(leaf), "action", dict(leaf.execution_ref), serialized))
-
-    used_keys: Set[str] = set()
-    declarations: List[Tuple[str, str]] = []
-
-    # Create parameter AAS-link macros once so action/predicate refs can refer to them.
-    parameter_links: Dict[Tuple[str, str], str] = {}
-    unique_parameter_links: Set[Tuple[str, str]] = set()
-    for _, _, ref, _ in entries:
-        for item in list(ref.get("parameter_refs") or []):
-            if not isinstance(item, dict):
-                continue
-            aas_id = str(item.get("aas_id") or "")
-            aas_path = str(item.get("aas_path") or "")
-            if aas_id or aas_path:
-                unique_parameter_links.add((aas_id, aas_path))
-
-    for aas_id, aas_path in sorted(unique_parameter_links):
-        param_token = _ref_token(aas_path) or _ref_token(aas_id) or "Parameter"
-        key = _unique_key(f"Param_{param_token}", used_keys)
-        parameter_links[(aas_id, aas_path)] = key
-        declarations.append(
-            (
-                key,
-                _ref_to_xml_attr({
-                    "aas_id": aas_id,
-                    "aas_path": aas_path,
-                }),
-            )
-        )
-
-    # Build link macros for action/fluent locations and readable macros for full refs.
-    unique_refs: Dict[Tuple[str, str], Dict[str, object]] = {}
-    for _, kind, ref, serialized in entries:
-        unique_refs.setdefault((kind, serialized), ref)
-
-    payload_key_by_kind_and_serialized: Dict[Tuple[str, str], str] = {}
-    payload_arg_links_by_kind_and_serialized: Dict[Tuple[str, str], List[str]] = {}
-    ref_records: List[Tuple[str, str, str, Dict[str, object]]] = []
-    for (kind, serialized), ref in unique_refs.items():
-        if kind == "predicate":
-            fluent_token = _ref_token(ref.get("fluent_aas_path"), trim_aas_suffix=False) or "Predicate"
-            param_refs = list(ref.get("parameter_refs") or [])
-            first_param = param_refs[0] if param_refs and isinstance(param_refs[0], dict) else {}
-            object_token = _ref_token(first_param.get("aas_path")) or _ref_token(ref.get("source_aas_id")) or "Object"
-            readable_base = f"{fluent_token}_{object_token}"
-            link_base = f"FluentLink_{fluent_token}_{object_token}"
-            link_payload = {
-                "aas_id": str(ref.get("source_aas_id") or ""),
-                "aas_path": str(ref.get("fluent_aas_path") or ""),
-            }
-        else:
-            action_token = _ref_token(ref.get("action_aas_path"), trim_aas_suffix=False) or "Action"
-            source_token = _ref_token(ref.get("source_aas_id")) or "Source"
-            readable_base = f"{action_token}_{source_token}"
-            link_base = f"ActionLink_{action_token}_{source_token}"
-            link_payload = {
-                "aas_id": str(ref.get("source_aas_id") or ""),
-                "aas_path": str(ref.get("action_aas_path") or ""),
-            }
-
-        link_key = _unique_key(link_base, used_keys)
-        declarations.append((link_key, _ref_to_xml_attr(link_payload)))
-        ref_records.append((kind, serialized, readable_base, ref | {"_aas_link_key": link_key}))
-
-    for kind, serialized, readable_base, ref in sorted(ref_records, key=lambda x: (x[0], x[2], x[1])):
-        ref_key = _unique_key(readable_base, used_keys)
-
-        parameter_link_keys: List[str] = []
-        for item in list(ref.get("parameter_refs") or []):
-            if not isinstance(item, dict):
-                continue
-            aas_id = str(item.get("aas_id") or "")
-            aas_path = str(item.get("aas_path") or "")
-            key = parameter_links.get((aas_id, aas_path))
-            if key:
-                parameter_link_keys.append(key)
-
-        enriched = dict(ref)
-        enriched.pop("_aas_link_key", None)
-        if parameter_link_keys:
-            enriched["parameter_link_keys"] = parameter_link_keys
-        aas_link_key = str(ref.get("_aas_link_key") or "")
-        if aas_link_key:
-            enriched["aas_link_key"] = aas_link_key
-
-        declarations.append((ref_key, _ref_to_xml_attr(enriched)))
-        payload_key_by_kind_and_serialized[(kind, serialized)] = ref_key
-        payload_arg_links_by_kind_and_serialized[(kind, serialized)] = list(parameter_link_keys)
-
-    node_aliases: Dict[int, str] = {}
-    node_arg_links: Dict[int, List[str]] = {}
-    for node_id, kind, _, serialized in entries:
-        alias = payload_key_by_kind_and_serialized.get((kind, serialized))
-        if alias:
-            node_aliases[node_id] = alias
-            node_arg_links[node_id] = payload_arg_links_by_kind_and_serialized.get((kind, serialized), [])
-
-    return node_aliases, declarations, node_arg_links
 
 
 def _tree_uses_forbidden_action(root: BTNode) -> bool:
@@ -371,16 +221,14 @@ def _bt_node_to_xml(
     parent_el: ET.Element,
     extracted_ids: Optional[Dict[int, str]] = None,
     inside_definition_of: Optional[int] = None,
-    execution_ref_aliases: Optional[Dict[int, str]] = None,
-    execution_arg_aliases: Optional[Dict[int, List[str]]] = None,
 ) -> None:
-    """Recursively serialize *node* into XML under *parent_el*."""
+    """Recursively serialize *node* into XML under *parent_el*.
+
+    Execution-ref payloads are inlined directly as JSON attribute
+    values — no blackboard indirection needed.
+    """
     if extracted_ids is None:
         extracted_ids = {}
-    if execution_ref_aliases is None:
-        execution_ref_aliases = {}
-    if execution_arg_aliases is None:
-        execution_arg_aliases = {}
 
     node_id = id(node)
     if node_id in extracted_ids and node_id != inside_definition_of:
@@ -394,114 +242,61 @@ def _bt_node_to_xml(
     if isinstance(node, ReactiveSelector):
         el = ET.SubElement(parent_el, "ReactiveFallback", attrib={"name": _compact_fallback_name(node.name)})
         for child in node.children:
-            _bt_node_to_xml(
-                child,
-                el,
-                extracted_ids,
-                inside_definition_of,
-                execution_ref_aliases,
-                execution_arg_aliases,
-            )
+            _bt_node_to_xml(child, el, extracted_ids, inside_definition_of)
 
     elif isinstance(node, Sequence):
         el = ET.SubElement(parent_el, "Sequence", attrib={"name": node.name})
         for child in node.children:
-            _bt_node_to_xml(
-                child,
-                el,
-                extracted_ids,
-                inside_definition_of,
-                execution_ref_aliases,
-                execution_arg_aliases,
-            )
+            _bt_node_to_xml(child, el, extracted_ids, inside_definition_of)
 
     elif isinstance(node, ReactiveSequence):
         el = ET.SubElement(parent_el, "ReactiveSequence", attrib={"name": node.name})
         for child in node.children:
-            _bt_node_to_xml(
-                child,
-                el,
-                extracted_ids,
-                inside_definition_of,
-                execution_ref_aliases,
-                execution_arg_aliases,
-            )
+            _bt_node_to_xml(child, el, extracted_ids, inside_definition_of)
 
     elif isinstance(node, Inverter):
         el = ET.SubElement(parent_el, "Inverter", attrib={"name": "Inverter"})
-        _bt_node_to_xml(
-            node.child,
-            el,
-            extracted_ids,
-            inside_definition_of,
-            execution_ref_aliases,
-            execution_arg_aliases,
-        )
+        _bt_node_to_xml(node.child, el, extracted_ids, inside_definition_of)
 
     elif isinstance(node, KeepRunningUntilFailure):
         el = ET.SubElement(parent_el, "KeepRunningUntilFailure", attrib={"name": node.name})
-        _bt_node_to_xml(
-            node.child,
-            el,
-            extracted_ids,
-            inside_definition_of,
-            execution_ref_aliases,
-            execution_arg_aliases,
-        )
+        _bt_node_to_xml(node.child, el, extracted_ids, inside_definition_of)
 
     elif isinstance(node, SubTreeRef):
         attribs = {"ID": node.template_id}
         attribs.update(node.params)
-        # For each leaf position with a parameterized ref, add per-invocation
-        # ``<port_name>="{<alias_key>}"`` and ``<args_port>="\"{Arg};...\""``
-        # so the SubTree's child blackboard binds these before the template
-        # body's FluentCheck/ExecuteAction reads them.
         for binding in node.leaf_bindings:
             if binding is None:
                 continue
             leaf, ref_port, args_port = binding
-            alias = execution_ref_aliases.get(id(leaf))
-            arg_aliases = execution_arg_aliases.get(id(leaf), [])
-            if alias:
-                attribs[ref_port] = f"{{{alias}}}"
-            if arg_aliases:
-                args_value = ";".join(f"{{{ak}}}" for ak in arg_aliases)
-                attribs[args_port] = f'"{args_value}"'
+            if isinstance(leaf, ConditionNode) and leaf.execution_ref:
+                attribs[ref_port] = leaf.execution_ref.get("fluent_ref", "")
+                attribs[args_port] = leaf.execution_ref.get("fluent_args", "[]")
+            elif isinstance(leaf, ActionNode) and leaf.execution_ref:
+                src = leaf.execution_ref.get("_action_ref", "")
+                sk = leaf.execution_ref.get("_skill_name", "")
+                if src and sk:
+                    attribs[ref_port] = f"{src}/Skills/{sk}"
+                if args_port:
+                    attribs[args_port] = leaf.execution_ref.get("_action_args_json", "[]")
         attribs.setdefault("_autoremap", "true")
         ET.SubElement(parent_el, "SubTree", attrib=attribs)
 
     elif isinstance(node, ConditionNode):
-        attrib = {
-            "name": node.fluent,
-        }
+        attrib = {"name": node.fluent}
         ref_port = getattr(node, "_template_ref_port", None)
         args_port = getattr(node, "_template_args_port", None)
         if ref_port:
-            # Inside a parameterized template body: defer to the SubTree's
-            # per-invocation port. The SubTree call provides the actual
-            # alias reference; this template node only needs to read from
-            # its local blackboard.
-            attrib["predicate_ref"] = f"{{{ref_port}}}"
+            attrib["fluent_ref"] = f"{{{ref_port}}}"
             if args_port:
-                attrib["predicate_args"] = f"{{{args_port}}}"
+                attrib["fluent_args"] = f"{{{args_port}}}"
         elif node.execution_ref:
-            alias = execution_ref_aliases.get(id(node))
-            if alias:
-                attrib["predicate_ref"] = f"{{{alias}}}"
-            else:
-                attrib["predicate_ref"] = _ref_to_xml_attr(node.execution_ref)
-
-            arg_aliases = execution_arg_aliases.get(id(node), [])
-            if arg_aliases:
-                args_value = ";".join(f"{{{arg_key}}}" for arg_key in arg_aliases)
-                attrib["predicate_args"] = f'"{args_value}"'
-        ET.SubElement(parent_el, "FluentCheck", attrib=attrib)
+            attrib["fluent_ref"] = node.execution_ref.get("fluent_ref", "")
+            attrib["fluent_args"] = node.execution_ref.get("fluent_args", "[]")
+        ET.SubElement(parent_el, "Predicate", attrib=attrib)
 
     elif isinstance(node, ActionNode):
-        attrib = {
-            "ID": "ExecuteAction",
-            "name": node.action_name,
-        }
+        attrib = {"name": node.action_name}
         ref_port = getattr(node, "_template_ref_port", None)
         args_port = getattr(node, "_template_args_port", None)
         if ref_port:
@@ -509,17 +304,18 @@ def _bt_node_to_xml(
                 attrib["action_args"] = f"{{{args_port}}}"
             attrib["action_ref"] = f"{{{ref_port}}}"
         else:
-            arg_aliases = execution_arg_aliases.get(id(node), [])
-            if arg_aliases:
-                args_value = ";".join(f"{{{arg_key}}}" for arg_key in arg_aliases)
+            tokens = node.action_name.split()
+            if len(tokens) > 1:
+                args_value = ";".join(tokens[1:])
                 attrib["action_args"] = f'"{args_value}"'
             if node.execution_ref:
-                alias = execution_ref_aliases.get(id(node))
-                if alias:
-                    attrib["action_ref"] = f"{{{alias}}}"
-                else:
-                    attrib["action_ref"] = _ref_to_xml_attr(node.execution_ref)
-        ET.SubElement(parent_el, "Action", attrib=attrib)
+                source = node.execution_ref.get("_action_ref", "")
+                skill = node.execution_ref.get("_skill_name", "")
+                args_json = node.execution_ref.get("_action_args_json", "[]")
+                if source and skill:
+                    attrib["action_ref"] = f"{source}/Skills/{skill}"
+                attrib["action_args"] = args_json
+        ET.SubElement(parent_el, "Skill", attrib=attrib)
 
     elif isinstance(node, SuccessLeaf):
         ET.SubElement(parent_el, "AlwaysSuccess", attrib={
@@ -554,42 +350,29 @@ def bt_to_xml(
     tree_id: str = "MainTree",
     planner_metadata: Optional[Mapping[str, Any]] = None,
 ) -> str:
-    """Serialize a ``BehaviorTree`` to BehaviorTree.CPP v4 XML."""
+    """Serialize a ``BehaviorTree`` to BehaviorTree.CPP v4 XML.
+
+    All execution-ref payloads are inlined as JSON attribute values.
+    No TreeNodesModel port declarations are emitted — the BT_Controller
+    receives the JSON directly from the attribute string.
+    """
     root_el = ET.Element("root", attrib={"BTCPP_format": "4"})
     extracted_ids = _collect_factorable_subtrees(bt.root)
     templates = getattr(bt, 'templates', {})
-    alias_roots: List[BTNode] = [bt.root]
-    if templates:
-        for templ_tree, _param_names in templates.values():
-            alias_roots.append(templ_tree)
-    execution_ref_aliases, blackboard_declarations, execution_arg_aliases = _collect_execution_ref_aliases(alias_roots)
 
     # BT.CPP v4 only applies ``<TreeNodesModel><SubTree>`` ``input_port`` ``default``
     # values when the subtree is *invoked* via a ``<SubTree>`` element. When ``tree_id``
     # is the entry point, wrap it in a ``PlannerRoot`` BehaviorTree that contains a
-    # single ``<SubTree ID="<tree_id>"/>`` invocation, so the alias-port and
-    # ``_planner_initial_state`` defaults declared further below land on the runtime
-    # blackboard. Without this wrapper the root tree skips those defaults entirely.
+    # single ``<SubTree ID="<tree_id>"/>`` invocation.  With inlined refs, this is
+    # only needed for the initial-state payload.
     wrapper_id = "PlannerRoot"
     root_el.set("main_tree_to_execute", wrapper_id)
     wrapper_el = ET.SubElement(root_el, "BehaviorTree", attrib={"ID": wrapper_id})
-    # NOTE: do NOT set ``_autoremap="true"`` on this outer invocation. Autoremap
-    # synthesizes a parent-side remap for every declared input_port, which
-    # *suppresses* the TreeNodesModel ``default`` values (defaults only apply
-    # when the port is unremapped). We need the defaults to populate MainTree's
-    # own blackboard. Inner SubTree invocations (emitted elsewhere) keep
-    # ``_autoremap="true"`` so they inherit those values from MainTree.
     ET.SubElement(wrapper_el, "SubTree", attrib={"ID": tree_id})
 
     # Main tree.
     bt_el = ET.SubElement(root_el, "BehaviorTree", attrib={"ID": tree_id})
-    _bt_node_to_xml(
-        bt.root,
-        bt_el,
-        extracted_ids,
-        execution_ref_aliases=execution_ref_aliases,
-        execution_arg_aliases=execution_arg_aliases,
-    )
+    _bt_node_to_xml(bt.root, bt_el, extracted_ids)
 
     # Subtree definitions.
     if extracted_ids:
@@ -605,35 +388,23 @@ def bt_to_xml(
         for subtree_id in sorted(id_to_node):
             sub_el = ET.SubElement(root_el, "BehaviorTree", attrib={"ID": subtree_id})
             node = id_to_node[subtree_id]
-            _bt_node_to_xml(
-                node,
-                sub_el,
-                extracted_ids,
-                inside_definition_of=id(node),
-                execution_ref_aliases=execution_ref_aliases,
-                execution_arg_aliases=execution_arg_aliases,
-            )
+            _bt_node_to_xml(node, sub_el, extracted_ids, inside_definition_of=id(node))
 
     # Parameterized template definitions.
     if templates:
         for templ_id in sorted(templates):
             templ_tree, param_names = templates[templ_id]
             templ_el = ET.SubElement(root_el, "BehaviorTree", attrib={"ID": templ_id})
-            _bt_node_to_xml(
-                templ_tree,
-                templ_el,
-                execution_ref_aliases=execution_ref_aliases,
-                execution_arg_aliases=execution_arg_aliases,
-            )
+            _bt_node_to_xml(templ_tree, templ_el)
 
-    # Node model declarations.
+    # ── TreeNodesModel: only the basic node type declarations ──────
     model = ET.SubElement(root_el, "TreeNodesModel")
 
-    fc = ET.SubElement(model, "Condition", attrib={"ID": "FluentCheck"})
-    ET.SubElement(fc, "input_port", attrib={"name": "predicate_ref", "default": ""})
-    ET.SubElement(fc, "input_port", attrib={"name": "predicate_args", "default": ""})
+    fc = ET.SubElement(model, "Condition", attrib={"ID": "Predicate"})
+    ET.SubElement(fc, "input_port", attrib={"name": "fluent_ref", "default": ""})
+    ET.SubElement(fc, "input_port", attrib={"name": "fluent_args", "default": ""})
 
-    ea = ET.SubElement(model, "Action", attrib={"ID": "ExecuteAction"})
+    ea = ET.SubElement(model, "Action", attrib={"ID": "Skill"})
     ET.SubElement(ea, "input_port", attrib={"name": "action_args", "default": ""})
     ET.SubElement(ea, "input_port", attrib={"name": "action_ref", "default": ""})
 
@@ -652,16 +423,13 @@ def bt_to_xml(
             except Exception:
                 initial_state_payload = None
 
-    if blackboard_declarations or initial_state_payload:
+    if initial_state_payload is not None:
         main_st = ET.SubElement(model, "SubTree", attrib={"ID": tree_id, "editable": "true"})
-        for output_key, value in blackboard_declarations or []:
-            ET.SubElement(main_st, "input_port", attrib={"name": output_key, "default": value})
-        if initial_state_payload is not None:
-            ET.SubElement(
-                main_st,
-                "input_port",
-                attrib={"name": "_planner_initial_state", "default": initial_state_payload},
-            )
+        ET.SubElement(
+            main_st,
+            "input_port",
+            attrib={"name": "_planner_initial_state", "default": initial_state_payload},
+        )
 
     if templates:
         for templ_id in sorted(templates):

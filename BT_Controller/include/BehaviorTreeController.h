@@ -6,14 +6,13 @@
 #include <optional>
 #include <chrono>
 #include <unordered_map>
-#include "mqtt/mqtt_client.h"
-#include "mqtt/node_message_distributor.h"
-#include "aas/aas_client.h"
-#include "aas/aas_interface_cache.h"
 
 #include <behaviortree_cpp/bt_factory.h>
 #include <behaviortree_cpp/basic_types.h>
+#include "backends/backend_registry.h"
 #include "utils.h"
+
+class ControllerRestApi;
 
 class BehaviorTreeController;
 extern BehaviorTreeController *g_controller_instance;
@@ -36,21 +35,9 @@ struct BtControllerParameters
     std::string aasRegistryUrl;
     int groot2_port;
     std::string bt_description_path;
+    std::string bt_description_base_url = "https://aausmartproductionlab.github.io/AP2030-UNS/BTDescriptions/";
+    std::string bt_local_descriptions_dir; // override via BT_LOCAL_DESCRIPTIONS_DIR env var
     std::string bt_nodes_path;
-    std::string start_topic;
-    std::string stop_topic;
-    std::string suspend_topic;
-    std::string unsuspend_topic;
-    std::string reset_topic;
-
-    // Response topics for command acknowledgments
-    std::string start_response_topic;
-    std::string stop_response_topic;
-    std::string suspend_response_topic;
-    std::string unsuspend_response_topic;
-    std::string reset_response_topic;
-
-    mqtt_utils::Topic state_publication_config;
 
     // Registration Service Configuration
     std::string registration_config_path;   // Path to orchestrator's AAS description YAML
@@ -60,6 +47,17 @@ struct BtControllerParameters
     // Runtime metrics
     std::string metrics_dir = "/data/run_metrics";
     std::string metrics_topic_prefix = "NN/Nybrovej/InnoLab/Stats";
+
+    // Interface mode: AAS = AAS, Native = from AID submodel
+    InterfaceMode interface_mode = InterfaceMode::AAS;
+
+    // REST API port (0 = disabled)
+    int rest_api_port = 8090;
+
+    // KG backend configuration (read from env)
+    std::string kg_query_url;
+    std::string kg_update_url;
+    std::string kg_graph;
 };
 
 class BehaviorTreeController
@@ -69,41 +67,34 @@ public:
     ~BehaviorTreeController();
 
     int run();
-    void requestShutdown();
-    void onSigint();
+
+    // ── PackML trigger methods (called by REST API / signal handler)
+    void Abort();
+    void Clear();
+    void Stop();
+    void Reset();
+    void Start(const std::string &process_id);
+    void Hold();
+    void Unhold();
+    void Suspend();
+    void Unsuspend();
+    bool isRunning() const;
 
 private:
     BtControllerParameters app_params_;
-    std::unique_ptr<MqttClient> mqtt_client_;
-    std::unique_ptr<NodeMessageDistributor> node_message_distributor_;
-    std::function<void(const std::string &, const nlohmann::json &, mqtt::properties)> main_mqtt_message_handler_;
-
-    std::unique_ptr<AASClient> aas_client_;
-    std::unique_ptr<AASInterfaceCache> aas_interface_cache_;
     std::unique_ptr<BT::BehaviorTreeFactory> bt_factory_;
+
+    // BT infrastructure owned by controller.
+    std::unique_ptr<ControllerRestApi> rest_api_;
     BT::Tree bt_tree_;
     std::unique_ptr<BT::Groot2Publisher> bt_publisher_;
     std::unique_ptr<BT::TreeObserver> bt_observer_;
 
-    std::atomic<bool> mqtt_start_bt_flag_;
-    std::atomic<bool> mqtt_suspend_bt_flag_;
-    std::atomic<bool> mqtt_unsuspend_bt_flag_;
-    std::atomic<bool> mqtt_reset_bt_flag_;
-    std::atomic<bool> shutdown_flag_;
-    std::atomic<bool> sigint_received_;
     std::atomic<bool> nodes_registered_;
 
     // Process AAS ID received from Start command
     std::string process_aas_id_;
     std::mutex process_aas_id_mutex_;
-
-    // Pending command UUIDs for responses
-    std::string pending_start_uuid_;
-    std::string pending_stop_uuid_;
-    std::string pending_suspend_uuid_;
-    std::string pending_unsuspend_uuid_;
-    std::string pending_reset_uuid_;
-    std::mutex pending_command_mutex_;
 
     // Runtime metrics correlation + timing
     std::string current_run_id_;
@@ -115,39 +106,45 @@ private:
     PackML::State current_packml_state_;
     BT::NodeStatus current_bt_tick_status_;
 
-    // Equipment mapping: asset name -> AAS ID/URL
-    std::map<std::string, std::string> equipment_aas_mapping_;
-    std::mutex equipment_mapping_mutex_;
-
-    void setupMainMqttMessageHandler();
-
     void loadAppConfiguration(int argc, char *argv[]);
-    void initializeMqttControlInterface();
     bool handleGenerateXmlModelsOption();
 
-    void setStateAndPublish(PackML::State new_packml_state, std::optional<BT::NodeStatus> new_bt_tick_status_opt = std::nullopt);
-    void publishCurrentState();
-    void publishCommandResponse(const std::string &response_topic, const std::string &uuid, bool success);
+    // ── PackML command flags (set by REST API / SIGINT) ─────────
+    std::atomic<bool> start_command_;
+    std::atomic<bool> reset_command_;
+    std::atomic<bool> stop_command_;
+    std::atomic<bool> abort_command_;
+    std::atomic<bool> clear_command_;
+    std::atomic<bool> hold_command_;
+    std::atomic<bool> unhold_command_;
+    std::atomic<bool> suspend_command_;
+    std::atomic<bool> unsuspend_command_;
 
-    void processBehaviorTreeStart();
-    void processStartingState();
-    void processBehaviorTreeUnsuspend();
-    void processResettingState();
-    void manageRunningBehaviorTree();
+    // ── PackML state methods ────────────────────────────────────
+    void Starting();     // IDLE → STARTING → EXECUTE
+    void Execute();      // tick loop, → COMPLETE / STOPPED / HELD / SUSPENDED
+    void Completing();   // publish metrics, → COMPLETE
+    void Complete();     // terminal, waits for Reset
+    void Resetting();    // cleanup, → IDLE
+    void Stopping();     // halt tree, → STOPPED
+    void Aborting();     // halt tree (SIGINT), → ABORTED
+    void Clearing();     // cleanup after abort, → STOPPED
+    void Holding();      // halt tree, → HELD
+    void Unholding();    // (tree already halted), → EXECUTE
+    void Suspending();   // halt tree, → SUSPENDED
+    void Unsuspending(); // (tree already halted), → EXECUTE
+
+    // ── BT initialization pipeline helpers ──────────────────────
+    bool setupEquipmentAndNodes(const std::string &process_id);
+    bool createBehaviorTree(const std::string &process_id);
+    bool validateAndFinalizeTree();
 
     // Methods for node registration
     bool registerNodesWithAASConfig();
     void unregisterAllNodes();
 
-    // Methods for AAS structure fetching from process AAS
-    bool fetchAndBuildEquipmentMapping(BT::Blackboard::Ptr blackboard = nullptr);
-    void populateBlackboard(BT::Blackboard::Ptr blackboard);
-
     // Pre-fetch asset interfaces (for fast node initialization)
     bool prefetchAssetInterfaces();
-
-    // Subscribe to topics for active nodes (triggers retained message delivery)
-    bool subscribeToTopics();
 
     // Methods for AAS registration
     bool publishConfigToRegistrationService();

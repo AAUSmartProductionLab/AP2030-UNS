@@ -1,621 +1,183 @@
 #include "bt/actions/execute_action_node.h"
 
-#include <algorithm>
-#include <chrono>
-#include <ctime>
-#include <iostream>
-#include <iomanip>
-#include <mutex>
-#include <sstream>
-
-#include <jsonata/Jsonata.h>
-
-#include "aas/aas_interface_cache.h"
-#include "aas/aas_snapshot.h"
+#include "backends/action_backend.h"
+#include "backends/aas/submodel_parsers/execution_model_parser.h"
+#include "backends/backend_registry.h"
+#include "backends/kg/kg_query_client.h"
 #include "bt/bt_log.h"
-#include "bt/symbolic_state.h"
-#include "mqtt/node_message_distributor.h"
-#include "utils.h"
+#include "bt/execution_refs.h"
 
 namespace
 {
     std::string lastSegment(const std::string &path)
     {
         if (path.empty())
-        {
             return path;
-        }
-        std::string trimmed = path;
-        while (!trimmed.empty() && (trimmed.back() == '/' || trimmed.back() == '.'))
-        {
-            trimmed.pop_back();
-        }
-        size_t slash = trimmed.find_last_of('/');
-        size_t dot = trimmed.find_last_of('.');
-        size_t pos = std::string::npos;
-        if (slash != std::string::npos && dot != std::string::npos)
-        {
-            pos = std::max(slash, dot);
-        }
-        else if (slash != std::string::npos)
-        {
-            pos = slash;
-        }
-        else if (dot != std::string::npos)
-        {
-            pos = dot;
-        }
-        if (pos == std::string::npos)
-        {
-            return trimmed;
-        }
-        return trimmed.substr(pos + 1);
-    }
-
-    std::string nowIso8601()
-    {
-        auto now = std::chrono::system_clock::now();
-        std::time_t t = std::chrono::system_clock::to_time_t(now);
-        std::tm tm_buf{};
-        gmtime_r(&t, &tm_buf);
-        std::ostringstream oss;
-        oss << std::put_time(&tm_buf, "%Y-%m-%dT%H:%M:%SZ");
-        return oss.str();
-    }
-
-    std::string truncateForLog(const std::string &text, size_t max_len = 200)
-    {
-        if (text.size() <= max_len)
-        {
-            return text;
-        }
-        return text.substr(0, max_len) + "...";
+        std::string t = path;
+        while (!t.empty() && (t.back() == '/' || t.back() == '.'))
+            t.pop_back();
+        auto p = t.find_last_of("/.");
+        return (p == std::string::npos) ? t : t.substr(p + 1);
     }
 }
 
-std::shared_ptr<TransformationResolver> ExecuteAction::getResolver(AASClient &aas_client)
+Skill::Skill(const std::string &name,
+               const BT::NodeConfig &config)
+    : BT::StatefulActionNode(name, config) {}
+
+Skill::~Skill() = default;
+
+BT::PortsList Skill::providedPorts()
 {
-    // Process-wide singleton keyed on the AASClient address; in practice
-    // BT_Controller uses a single AASClient instance for its whole lifetime.
-    static std::mutex mtx;
-    static std::shared_ptr<TransformationResolver> instance;
-    static AASClient *bound_client = nullptr;
-    std::lock_guard<std::mutex> lock(mtx);
-    if (!instance || bound_client != &aas_client)
+    return {BT::InputPort<std::string>("action_ref"),
+            BT::InputPort<std::string>("action_args")};
+}
+
+void Skill::initialize()
+{
+    if (initialized_)
+        return;
+
+    auto ref_str = getInput<std::string>("action_ref");
+    if (!ref_str.has_value())
+        return;
+    action_ref_ = bt_exec_refs::parseActionRef(ref_str.value());
+    if (!action_ref_.has_value())
+        return;
+
+    // Parse argument AAS IDs (JSON array) or legacy semicolon-separated.
+    auto args_str = getInput<std::string>("action_args");
+    auto args_tokens = args_str.has_value()
+                           ? bt_exec_refs::parseJsonStringArray(args_str.value())
+                           : std::vector<std::string>{};
+    // Fallback: if JSON parse yielded nothing, try legacy format
+    if (args_tokens.empty() && args_str.has_value())
+        args_tokens = bt_exec_refs::parseArgsList(args_str.value());
+
+    // Resolve the shared backend by skill name and asset.
+    std::string action_name = action_ref_->skill_name;
+    backend_ = BackendRegistry::instance().getActionBackend(
+        action_name, action_ref_->source_aas_id);
+    if (!backend_)
     {
-        instance = std::make_shared<TransformationResolver>(aas_client);
-        bound_client = &aas_client;
-    }
-    return instance;
-}
-
-ExecuteAction::ExecuteAction(const std::string &name,
-                             const BT::NodeConfig &config,
-                             MqttClient &mqtt_client,
-                             AASClient &aas_client)
-    : MqttActionNode(name, config, mqtt_client, aas_client)
-{
-}
-
-ExecuteAction::~ExecuteAction() = default;
-
-BT::PortsList ExecuteAction::providedPorts()
-{
-    return {
-        BT::InputPort<std::string>("action_ref"),
-        BT::InputPort<std::string>("action_args"),
-        BT::InputPort<std::string>("Uuid"),
-    };
-}
-
-void ExecuteAction::initializeTopicsFromAAS()
-{
-    if (topics_initialized_)
-    {
+        BT_LOG_ERROR("Skill '" << name() << "': no backend for '"
+                     << action_name << "'");
         return;
     }
 
-    try
-    {
-        auto ref_input = getInput<std::string>("action_ref");
-        if (!ref_input.has_value() || ref_input.value().empty())
-        {
-            std::cerr << "ExecuteAction '" << this->name()
-                      << "' missing action_ref input" << std::endl;
-            return;
-        }
+    // Build the context.
+    ctx_ = std::make_unique<ActionContext>();
+    ctx_->source_aas_id = action_ref_->source_aas_id;
+    ctx_->action_aas_path = "Skills/" + action_ref_->skill_name;
+    ctx_->transformation_aas_path = "";
+    // Build parameter_refs from AAS IDs: each arg becomes a ParamRef
+    // with the AAS ID as both aas_id and aas_path (for backend compat).
+    for (const auto &aas_id : args_tokens)
+        ctx_->parameter_refs.push_back({"", aas_id, aas_id});
+    ctx_->args_tokens = std::move(args_tokens);
 
-        action_ref_ = bt_exec_refs::parseActionRef(ref_input.value());
-        if (!action_ref_.has_value())
-        {
-            std::cerr << "ExecuteAction '" << this->name()
-                      << "' could not parse action_ref" << std::endl;
-            return;
-        }
-
-        auto args_input = getInput<std::string>("action_args");
-        args_tokens_ = args_input.has_value()
-                           ? bt_exec_refs::parseArgsList(args_input.value())
-                           : std::vector<std::string>{};
-
-        interaction_name_ = lastSegment(action_ref_->action_aas_path);
-
-        // Fetch the JSONata transformation expression once at construction.
-        // Failure here does NOT abort initialization - the runtime will
-        // still try direct invocation paths if a transformation is missing.
-        if (!action_ref_->transformation_aas_path.empty() &&
-            !action_ref_->source_aas_id.empty())
-        {
-            auto resolver = getResolver(aas_client_);
-            auto expr = resolver->getTransformationExpression(
-                action_ref_->source_aas_id,
-                action_ref_->transformation_aas_path);
-            if (expr.has_value())
-            {
-                transformation_expression_ = *expr;
-                try
-                {
-                    jsonata_expr_ = std::make_unique<jsonata::Jsonata>(transformation_expression_);
-                }
-                catch (const std::exception &e)
-                {
-                    std::cerr << "ExecuteAction '" << this->name()
-                              << "' JSONata compile error for "
-                              << action_ref_->transformation_aas_path << ": "
-                              << e.what() << std::endl;
-                    jsonata_expr_.reset();
-                }
-            }
-        }
-
-        // Try cached interface first, then live AAS query. MQTT bindings
-        // are required: the controller's startup validator aborts if any
-        // ExecuteAction node lacks both input and output topics.
-        //
-        // Action merging in the planner deduplicates identical action
-        // definitions across resources, keeping a single ``source_aas_id``.
-        // For multi-instance resources (e.g. three planar shuttles sharing
-        // the same Move action), that means ``source_aas_id`` no longer
-        // identifies the executor. The first parameter (by convention the
-        // TransportSystem / Resource) carries the actual instance AAS, so
-        // we prefer its ``aas_id`` for MQTT topic resolution and fall back
-        // to ``source_aas_id`` when no parameter is available.
-        std::string asset_id = action_ref_->source_aas_id;
-        if (!action_ref_->parameter_refs.empty() &&
-            !action_ref_->parameter_refs.front().aas_id.empty())
-        {
-            asset_id = action_ref_->parameter_refs.front().aas_id;
-        }
-        bool publisher_topic_set = false;
-        bool subscriber_topic_set = false;
-
-        auto cache = MqttSubBase::getAASInterfaceCache();
-        if (cache && !interaction_name_.empty() && !asset_id.empty())
-        {
-            auto cached_input = cache->getInterface(asset_id, interaction_name_, "input");
-            auto cached_output = cache->getInterface(asset_id, interaction_name_, "output");
-            if (cached_input.has_value())
-            {
-                MqttPubBase::setTopic("input", cached_input.value());
-                publisher_topic_set = true;
-            }
-            if (cached_output.has_value())
-            {
-                MqttSubBase::setTopic("output", cached_output.value());
-                subscriber_topic_set = true;
-            }
-        }
-
-        if (!publisher_topic_set && !asset_id.empty() && !interaction_name_.empty())
-        {
-            auto request_opt = aas_client_.fetchInterface(asset_id, interaction_name_, "input");
-            if (request_opt.has_value())
-            {
-                MqttPubBase::setTopic("input", request_opt.value());
-                publisher_topic_set = true;
-            }
-        }
-        if (!subscriber_topic_set && !asset_id.empty() && !interaction_name_.empty())
-        {
-            auto response_opt = aas_client_.fetchInterface(asset_id, interaction_name_, "output");
-            if (response_opt.has_value())
-            {
-                MqttSubBase::setTopic("output", response_opt.value());
-                subscriber_topic_set = true;
-            }
-        }
-
-        if (publisher_topic_set && subscriber_topic_set)
-        {
-            // Pre-fetch the Constants SMC sibling of this action's
-            // Transformation (registration emits it from the YAML
-            // ``constants:`` block). Optional: an empty object is fine.
-            constants_ = aas_snapshot::fetchSiblingConstants(
-                aas_client_,
-                action_ref_->source_aas_id,
-                action_ref_->transformation_aas_path);
-
-            // Pre-fetch each parameter's AAS as a flattened JSON snapshot
-            // so the JSONata transformation can reference
-            // ``params[i].Parameters.*`` / ``params[i].Variables.*``
-            // without per-tick HTTP round-trips. Actions are one-shot
-            // command builders, so we do NOT register live MQTT
-            // subscriptions on Variables — the snapshot is captured at
-            // initialization and reused for every onStart.
-            params_ = aas_snapshot::fetchParamSnapshots(
-                aas_client_,
-                action_ref_->parameter_refs,
-                /*include_variables=*/true);
-
-            topics_initialized_ = true;
-            return;
-        }
-
-        BT_LOG_ERROR("ExecuteAction '" << this->name()
-                                       << "' missing MQTT interface for asset='" << asset_id
-                                       << "' interaction='" << interaction_name_
-                                       << "' (input_set=" << publisher_topic_set
-                                       << ", output_set=" << subscriber_topic_set
-                                       << "); startup validator will abort the run.");
-        // Leave topics_initialized_ = false so the validator detects this node.
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << "ExecuteAction '" << this->name()
-                  << "' initializeTopicsFromAAS exception: " << e.what() << std::endl;
-    }
+    initialized_ = true;
 }
 
-nlohmann::json ExecuteAction::createMessage()
+// ── BT lifecycle ────────────────────────────────────────────────────
+
+BT::NodeStatus Skill::onStart()
 {
-    // Generate a fallback UUID up-front and expose it in the JSONata
-    // context. The transformation may override the published ``Uuid``
-    // field with a value pulled from a parameter (e.g. the Product's
-    // Uuid for request/response correlation).
-    const std::string fallback_uuid = mqtt_utils::generate_uuid();
-    current_uuid_ = fallback_uuid;
-    nlohmann::json message;
-
-    if (!action_ref_.has_value())
-    {
-        message["Uuid"] = current_uuid_;
-        return message;
-    }
-
-    // Build the JSONata evaluation context.
-    nlohmann::json args_array = nlohmann::json::array();
-    for (const auto &t : args_tokens_)
-    {
-        args_array.push_back(t);
-    }
-
-    nlohmann::json object_refs_obj = nlohmann::json::object();
-    for (const auto &p : action_ref_->parameter_refs)
-    {
-        if (p.name.empty())
-        {
-            continue;
-        }
-        object_refs_obj[p.name] = {
-            {"aas_id", p.aas_id},
-            {"aas_path", p.aas_path},
-        };
-    }
-
-    nlohmann::json params_array = nlohmann::json::array();
-    for (const auto &p : params_)
-    {
-        params_array.push_back(p);
-    }
-
-    nlohmann::json context = {
-        {"args", args_array},
-        {"params", params_array},
-        {"constants", constants_.is_null() ? nlohmann::json::object() : constants_},
-        {"object_refs", object_refs_obj},
-        {"now", nowIso8601()},
-        {"uuid", fallback_uuid},
-    };
-
-    if (!jsonata_expr_)
-    {
-        BT_LOG_DEBUG("ExecuteAction '" << this->name()
-                                       << "' no JSONata expression compiled; sending bare uuid message");
-        message["Uuid"] = current_uuid_;
-        return message;
-    }
-
-    try
-    {
-        auto data = nlohmann::ordered_json::parse(context.dump());
-        auto result = jsonata_expr_->evaluate(data);
-        nlohmann::json result_json = nlohmann::json::parse(
-            nlohmann::json(result).dump());
-        if (result_json.is_object())
-        {
-            // Adopt the transformation's full output verbatim. The
-            // transformation owns the message shape, including ``Uuid``.
-            message = std::move(result_json);
-        }
-        else
-        {
-            message["value"] = result_json;
-        }
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << "ExecuteAction '" << this->name()
-                  << "' JSONata eval failed (aas_id="
-                  << action_ref_->source_aas_id << ", path="
-                  << action_ref_->action_aas_path << ", expr="
-                  << truncateForLog(transformation_expression_)
-                  << "): " << e.what() << std::endl;
-    }
-
-    // Ensure the message carries a Uuid even if the transformation
-    // omitted one. Actions correlate request/response by Uuid in
-    // MqttActionNode::onMqttMessageReceived; current_uuid_ MUST match
-    // whatever ends up published.
-    if (!message.contains("Uuid") || !message["Uuid"].is_string() ||
-        message["Uuid"].get<std::string>().empty())
-    {
-        message["Uuid"] = current_uuid_;
-    }
-    else
-    {
-        current_uuid_ = message["Uuid"].get<std::string>();
-    }
-
-    return message;
-}
-
-BT::NodeStatus ExecuteAction::onStart()
-{
-    // Lazy initialization AND late-init MQTT subscription registration.
-    // Calling ensureInitialized() (instead of initializeTopicsFromAAS()
-    // directly) is required so MqttActionNode registers this node with
-    // the message distributor and subscribes to the response topic. Without
-    // it the node publishes the command but never receives the response,
-    // so the action stays RUNNING forever.
-    if (!topics_initialized_)
-    {
-        ensureInitialized();
-    }
-    if (!action_ref_.has_value())
-    {
-        return BT::NodeStatus::FAILURE;
-    }
-    if (!topics_initialized_)
-    {
-        // Startup validator should have caught this; treat as hard failure.
-        BT_LOG_ERROR("ExecuteAction '" << this->name()
-                                       << "' onStart called without MQTT bindings; failing.");
-        return BT::NodeStatus::FAILURE;
-    }
-
-    // Reset the per-tick effect-application latch so a re-entry of the
-    // node (sequence retry, reactive replan) re-applies effects on its
-    // next SUCCESS.
     effects_applied_ = false;
-
-    // Build the outgoing message via the JSONata transformation,
-    // validate it against the action's MQTT input schema, then publish.
-    // We do NOT defer to MqttActionNode::onStart because we need to
-    // intercept the message between createMessage() and publish() to
-    // run the schema validator.
-    nlohmann::json message = createMessage();
-
-    auto it = MqttPubBase::topics_.find("input");
-    if (it != MqttPubBase::topics_.end())
-    {
-        const auto &topic = it->second;
-        // validateMessage returns false both for "failed validation" and
-        // "no validator available". Distinguish by checking whether a
-        // schema was provided.
-        if (!topic.getSchema().is_null() && !topic.getSchema().empty())
-        {
-            if (!topic.validateMessage(message))
-            {
-                BT_LOG_ERROR("ExecuteAction '" << this->name()
-                                               << "' produced a message that failed schema validation "
-                                                  "against the action's input schema. Refusing to "
-                                                  "publish. Message="
-                                               << truncateForLog(message.dump())
-                                               << " expr="
-                                               << truncateForLog(transformation_expression_));
-                return BT::NodeStatus::FAILURE;
-            }
-        }
-    }
-
-    publish("input", message);
-    return BT::NodeStatus::RUNNING;
+    if (!initialized_ || !backend_)
+        return BT::NodeStatus::FAILURE;
+    return backend_->onStart(*ctx_);
 }
 
-BT::NodeStatus ExecuteAction::onRunning()
+BT::NodeStatus Skill::onRunning()
 {
-    BT::NodeStatus s = MqttActionNode::onRunning();
+    if (!backend_)
+        return BT::NodeStatus::FAILURE;
+    BT::NodeStatus s = backend_->onRunning();
     if (s == BT::NodeStatus::SUCCESS)
-    {
         applySymbolicEffects();
-    }
     return s;
 }
 
-void ExecuteAction::applySymbolicEffects()
+void Skill::onHalted()
+{
+    if (backend_)
+        backend_->onHalted();
+}
+
+void Skill::applySymbolicEffects()
 {
     if (effects_applied_ || !action_ref_.has_value())
-    {
         return;
-    }
     effects_applied_ = true;
-    if (action_ref_->effects.empty())
+
+    const auto &ref = *action_ref_;
+    if (ref.skill_name.empty())
+        return;
+
+    auto *kg = BackendRegistry::instance().getKgClient();
+    if (!kg || !kg->isConfigured())
     {
+        BT_LOG_WARN("ExecuteAction '" << name()
+                                      << "': KG client not available for symbolic effects");
         return;
     }
 
-    // Read the FOND outcome discriminator from the latest response
-    // payload. The simulator/station is expected to publish an integer
-    // ``Outcome`` field on SUCCESS for FOND actions; legacy stations
-    // (and all non-FOND actions) omit it, in which case branch 0 — the
-    // declaration-order first oneOf child, or the lone deterministic
-    // branch for non-FOND actions — is selected.
+    // ── Fetch skill execution semantics from AAS ──────────────────
+    auto *aas_client = BackendRegistry::instance().getAasClient();
+    if (!aas_client)
+    {
+        BT_LOG_WARN("ExecuteAction '" << name()
+                                      << "': AAS client not available");
+        return;
+    }
+
+    ExecutionModelParser parser(*aas_client);
+    auto exec_model = parser.fetchExecutionModel(
+        ref.source_aas_id, ref.skill_name);
+    if (!exec_model)
+    {
+        BT_LOG_WARN("ExecuteAction '" << name()
+                                      << "': cannot fetch ExecutionModel for skill '"
+                                      << ref.skill_name << "' on " << ref.source_aas_id);
+        return;
+    }
+
+    // Build param_values from action_args tokens — these are the grounded
+    // object names in the same order as the skill's ExecutionModel parameters.
+    // The planner emits plain semicolon-separated strings (no Param_* indirection).
+    std::vector<std::string> param_values = ctx_->args_tokens;
+
+    // Ground the end-effects (the primary effects applied on completion).
+    auto branches = parser.groundBranchedEffects(
+        exec_model->end_effects, param_values);
+
+    // Select the branch matching the response Outcome.
+    nlohmann::json response = backend_->responseData();
     int outcome = 0;
-    nlohmann::json response_snapshot = nlohmann::json::object();
+    if (response.contains("Outcome") && response["Outcome"].is_number_integer())
+        outcome = response["Outcome"].get<int>();
+
+    const ExecutionModelParser::GroundedBranch *selected = nullptr;
+    for (const auto &b : branches)
     {
-        std::lock_guard<std::mutex> lock(mutex_);
-        if (last_response_msg_.is_object())
+        if (b.branch_index == outcome)
         {
-            response_snapshot = last_response_msg_;
-            if (last_response_msg_.contains("Outcome") && last_response_msg_["Outcome"].is_number_integer())
-            {
-                outcome = last_response_msg_["Outcome"].get<int>();
-            }
+            selected = &b;
+            break;
         }
     }
+    if (!selected && !branches.empty())
+        selected = &branches.front();
+    if (!selected)
+        return;
 
-    const bt_exec_refs::EffectBranch *selected = nullptr;
-
-    const bool has_when_gates = std::any_of(
-        action_ref_->effects.begin(),
-        action_ref_->effects.end(),
-        [](const bt_exec_refs::EffectBranch &branch)
-        {
-            return branch.when_expr.has_value() && !branch.when_expr->empty();
-        });
-
-    if (has_when_gates)
-    {
-        auto is_truthy = [](const nlohmann::json &value)
-        {
-            if (value.is_null())
-            {
-                return false;
-            }
-            if (value.is_boolean())
-            {
-                return value.get<bool>();
-            }
-            if (value.is_number())
-            {
-                return value.get<double>() != 0.0;
-            }
-            if (value.is_string())
-            {
-                const std::string text = value.get<std::string>();
-                return !text.empty() && text != "0" && text != "false";
-            }
-            if (value.is_array() || value.is_object())
-            {
-                return !value.empty();
-            }
-            return false;
-        };
-
-        nlohmann::json params_array = nlohmann::json::array();
-        for (const auto &p : params_)
-        {
-            params_array.push_back(p);
-        }
-
-        nlohmann::json gate_context = {
-            {"data", response_snapshot.is_object() ? response_snapshot : nlohmann::json::object()},
-            {"params", params_array},
-            {"constants", constants_.is_null() ? nlohmann::json::object() : constants_},
-            {"now", nowIso8601()},
-            {"uuid", current_uuid_},
-        };
-
-        std::vector<const bt_exec_refs::EffectBranch *> matched;
-        for (const auto &branch : action_ref_->effects)
-        {
-            if (!branch.when_expr.has_value() || branch.when_expr->empty())
-            {
-                continue;
-            }
-            bool branch_matches = false;
-            try
-            {
-                jsonata::Jsonata gate_expr(*branch.when_expr);
-                auto context_data = nlohmann::ordered_json::parse(gate_context.dump());
-                auto gate_result = gate_expr.evaluate(context_data);
-                nlohmann::json gate_json = nlohmann::json::parse(nlohmann::json(gate_result).dump());
-                branch_matches = is_truthy(gate_json);
-            }
-            catch (const std::exception &e)
-            {
-                BT_LOG_ERROR("ExecuteAction '" << this->name()
-                                               << "' failed to evaluate effect gate for branch "
-                                               << branch.index << ": " << e.what());
-                branch_matches = false;
-            }
-
-            if (branch_matches)
-            {
-                matched.push_back(&branch);
-            }
-        }
-
-        if (matched.size() == 1)
-        {
-            selected = matched.front();
-            BT_LOG_DEBUG("ExecuteAction '" << this->name()
-                                           << "' selected effect branch via when-gate "
-                                           << selected->index);
-        }
-        else if (matched.size() > 1)
-        {
-            BT_LOG_ERROR("ExecuteAction '" << this->name()
-                                           << "' has multiple matching effect gates ("
-                                           << matched.size() << "); using the first match.");
-            selected = matched.front();
-        }
-    }
-
-    if (selected == nullptr)
-    {
-        for (const auto &branch : action_ref_->effects)
-        {
-            if (branch.index == outcome)
-            {
-                selected = &branch;
-                break;
-            }
-        }
-    }
-    if (selected == nullptr)
-    {
-        BT_LOG_ERROR("ExecuteAction '" << this->name()
-                                       << "' received Outcome=" << outcome
-                                       << " but no matching effect branch was emitted by "
-                                          "the planner; falling back to branch 0.");
-        selected = &action_ref_->effects.front();
-    }
-
-    BT_LOG_DEBUG("ExecuteAction '" << this->name()
-                                   << "' applying FOND outcome branch " << selected->index
-                                   << " (" << selected->atoms.size() << " atoms)");
-
-    auto &state = SymbolicState::instance();
+    // Apply all atoms of the selected branch to the KG.
     for (const auto &atom : selected->atoms)
     {
-        if (atom.predicate.empty())
-        {
-            continue;
-        }
-        // Boolean false / explicit erase semantics: drop the key so a
-        // missing-key lookup also reads as false.
-        if (atom.value.is_boolean() && atom.value.get<bool>() == false)
-        {
-            state.erase(atom.predicate, atom.args);
-        }
+        if (atom.value)
+            kg->insertFact(atom.predicate, atom.args);
         else
-        {
-            state.set(atom.predicate, atom.args, atom.value);
-        }
-        BT_LOG_DEBUG("ExecuteAction '" << this->name()
-                                       << "' applied symbolic effect "
-                                       << SymbolicState::canonicalKey(atom.predicate, atom.args)
-                                       << " = " << atom.value.dump());
+            kg->deleteFact(atom.predicate, atom.args);
     }
 }

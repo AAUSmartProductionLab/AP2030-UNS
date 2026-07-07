@@ -1,5 +1,7 @@
 #pragma once
 #include <string>
+#include <algorithm>
+#include <cctype>
 #include <nlohmann/json.hpp>
 #include <nlohmann/json-schema.hpp>
 #include <iostream>
@@ -12,6 +14,12 @@
 #include <yaml-cpp/yaml.h>
 
 #include <behaviortree_cpp/bt_factory.h>
+
+/// Read an environment variable with a fallback default.
+std::string envOrDefault(const char *name, const std::string &fallback);
+
+/// Sanitize a string for use as a token / filename component.
+std::string sanitizeToken(const std::string &input);
 
 namespace PackML
 {
@@ -44,6 +52,23 @@ namespace PackML
     inline std::optional<State> stringToState(const std::string &str)
     {
         return magic_enum::enum_cast<State>(str);
+    }
+}
+
+namespace str_utils
+{
+    inline std::string toLower(const std::string &s)
+    {
+        std::string result = s;
+        std::transform(result.begin(), result.end(), result.begin(),
+                       [](unsigned char c)
+                       { return std::tolower(c); });
+        return result;
+    }
+
+    inline bool equalsIgnoreCase(const std::string &a, const std::string &b)
+    {
+        return toLower(a) == toLower(b);
     }
 }
 

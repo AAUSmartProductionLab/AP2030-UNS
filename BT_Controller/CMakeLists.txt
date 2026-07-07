@@ -38,41 +38,41 @@ FetchContent_MakeAvailable(jsonata)
 
 add_library(bt_controller_common STATIC
     src/utils.cpp
-    src/mqtt/node_message_distributor.cpp
-    src/mqtt/mqtt_client.cpp
-    src/aas/aas_client.cpp
-    src/aas/aas_interface_cache.cpp
-    src/aas/aas_snapshot.cpp
-    src/aas/transformation_resolver.cpp
-    src/mqtt/mqtt_sub_base.cpp
-    src/mqtt/mqtt_pub_base.cpp
+    src/backends/mqtt/node_message_distributor.cpp
+    src/backends/mqtt/mqtt_client.cpp
+    src/backends/aas/aas_client.cpp
+    src/backends/aas/aas_interface_cache.cpp
+    src/backends/aas/transformation_resolver.cpp
+    src/backends/mqtt/imqtt_subscriber.cpp
+    src/backends/aas/submodel_parsers/mqtt_aid_protocol_parser.cpp
+    src/backends/aas/submodel_parsers/aid_parser.cpp
+    src/backends/aas/submodel_parsers/skills_parser.cpp
+    src/backends/aas/submodel_parsers/execution_model_parser.cpp
+    src/backends/mqtt/mqtt_infra.cpp
     src/bt/execution_refs.cpp
     src/bt/bt_log.cpp
-    src/bt/symbolic_state.cpp
     src/bt/bt_runtime_validator.cpp
-    src/bt/mqtt_action_node.cpp
-    src/bt/mqtt_sync_action_node.cpp
-    src/bt/mqtt_sync_condition_node.cpp
-    src/bt/mqtt_decorator.cpp
-    src/bt/actions/generic_action_node.cpp
-    src/bt/actions/command_execute_node.cpp
-    src/bt/actions/configuration_node.cpp
-    src/bt/actions/pop_element_node.cpp
-    src/bt/actions/refill_node.cpp
-    src/bt/actions/retrieve_aas_properties_node.cpp
+    src/backends/kg/kg_query_client.cpp
+    src/backends/backend_registry.cpp
+    src/backends/aas/action_backend.cpp
+    src/backends/aas/condition_backend.cpp
+    src/backends/mqtt/action_backend.cpp
+    src/backends/kg/condition_backend.cpp
+    # src/backends/mqtt/condition_backend.cpp  # disabled: conditions are KG-only (Phase 1)
+    src/backends/aas/binding_resolver.cpp
+    src/backends/controller_rest_api.cpp
+    src/BehaviorTreeController_PackML.cpp
+    src/BehaviorTreeController_equipment.cpp
+    src/BehaviorTreeController_metrics.cpp
     src/bt/actions/execute_action_node.cpp
-    src/bt/conditions/generic_condition_node.cpp
     src/bt/conditions/fluent_check_node.cpp
-    src/bt/decorators/occupy.cpp
-    src/bt/decorators/get_product_from_queue.cpp
-    src/bt/decorators/keep_running_until_empty.cpp
-    src/bt/decorators/sampling_gate.cpp
-    src/bt/controls/bc_fallback_node.cpp
 )
 
 target_include_directories(bt_controller_common
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/third_party
+        ${CMAKE_CURRENT_SOURCE_DIR}/third_party/cpp-httplib
         ${YAML_CPP_INCLUDE_DIRS}
     PRIVATE
         ${UUID_INCLUDE_DIRS}
@@ -100,6 +100,8 @@ add_executable(bt_controller
 target_include_directories(bt_controller
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/third_party
+        ${CMAKE_CURRENT_SOURCE_DIR}/third_party/cpp-httplib
 )
 
 target_link_libraries(bt_controller
@@ -124,17 +126,6 @@ if(BT_CONTROLLER_BUILD_TESTS)
             GTest::gtest_main
     )
     add_test(NAME test_execution_refs COMMAND test_execution_refs)
-
-    add_executable(test_symbolic_state
-        tests/test_symbolic_state.cpp
-    )
-    target_link_libraries(test_symbolic_state
-        PRIVATE
-            bt_controller_common
-            GTest::gtest
-            GTest::gtest_main
-    )
-    add_test(NAME test_symbolic_state COMMAND test_symbolic_state)
 
     add_executable(test_action_transformation
         tests/test_action_transformation.cpp

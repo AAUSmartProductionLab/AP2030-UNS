@@ -36,8 +36,8 @@ from Planner.step6_bt_serialization.xml_writer import bt_to_xml
 
 
 def _make_member(action_args, productat_ref, action_ref):
-    """Build one ``Sequence`` member with a productat FluentCheck +
-    parameterized ExecuteAction, mimicking the Movetoposition2 template
+    """Build one ``Sequence`` member with a productat Predicate +
+    parameterized Skill, mimicking the Movetoposition2 template
     body shape from BTDescriptions/production_MIM8AAS.xml.
     """
     cond = ConditionNode(
@@ -57,22 +57,21 @@ def _make_member(action_args, productat_ref, action_ref):
 
 
 def _ref(label, parameter_refs):
-    """Mimic the planner-emitted execution_ref schema used by
-    `_collect_execution_ref_aliases`.
-    """
+    """Mimic the new planner-emitted fluent_ref schema."""
     return {
-        "fluent_aas_path": f"AI-Planning/Domain/Fluents/{label}",
-        "source_aas_id": "https://example.org/aas/Source",
-        "transformation_aas_path": "",
-        "parameter_refs": parameter_refs,
+        "fluent_ref": f"https://w3id.org/2026/apex/{label}",
+        "fluent_args": "[" + ",".join(f'"{p["aas_id"]}"' for p in parameter_refs) + "]",
     }
 
 
 def _action_ref(label, parameter_refs):
+    """Mimic the new planner-emitted action_ref schema."""
+    import json
+    aas_ids = [p["aas_id"] for p in parameter_refs]
     return {
-        "action_aas_path": f"AI-Planning/Domain/Actions/{label}",
-        "source_aas_id": "https://example.org/aas/Source",
-        "parameter_refs": parameter_refs,
+        "_action_ref": "https://example.org/aas/Source",
+        "_skill_name": label,
+        "_action_args_json": json.dumps(aas_ids, separators=(",", ":")),
     }
 
 
@@ -105,24 +104,19 @@ class TemplatePortBindingTests(unittest.TestCase):
 
     def test_param_names_include_extra_ports(self):
         _tree, names = self.bt.templates["Transport"]
-        # Expect arg0, arg1 (action arg parameters) plus 4 extra ports
-        # (predicate_ref_0/predicate_args_0 + action_ref_1/action_args_1).
         self.assertIn("arg0", names)
         self.assertIn("arg1", names)
-        self.assertIn("predicate_ref_0", names)
-        self.assertIn("predicate_args_0", names)
+        self.assertIn("fluent_ref_0", names)
+        self.assertIn("fluent_args_0", names)
         self.assertIn("action_ref_1", names)
         self.assertIn("action_args_1", names)
 
     def test_subtreeref_invocations_carry_distinct_aliases(self):
-        # The two SubTreeRefs should have leaf_bindings whose alias
-        # references differ across invocations.
         invocations = [
             child for child in self.bt.root.children
             if isinstance(child, SubTreeRef)
         ]
         self.assertEqual(len(invocations), 2)
-        # Each invocation has 2 leaf bindings (cond + action).
         for inv in invocations:
             self.assertEqual(len(inv.leaf_bindings), 2)
             for binding in inv.leaf_bindings:
@@ -135,18 +129,16 @@ class TemplatePortBindingTests(unittest.TestCase):
             bt for bt in root.findall("BehaviorTree")
             if bt.get("ID") == "Transport"
         )
-        fluent_check = templ.find(".//FluentCheck")
-        action_el = templ.find(".//Action")
-        self.assertEqual(fluent_check.get("predicate_ref"), "{predicate_ref_0}")
-        self.assertEqual(fluent_check.get("predicate_args"), "{predicate_args_0}")
+        fluent_check = templ.find(".//Predicate")
+        action_el = templ.find(".//Skill")
+        self.assertEqual(fluent_check.get("fluent_ref"), "{fluent_ref_0}")
+        self.assertEqual(fluent_check.get("fluent_args"), "{fluent_args_0}")
         self.assertEqual(action_el.get("action_ref"), "{action_ref_1}")
         self.assertEqual(action_el.get("action_args"), "{action_args_1}")
 
     def test_emitted_xml_subtree_invocations_bind_distinct_aliases(self):
         xml = bt_to_xml(self.bt)
         root = ET.fromstring(xml)
-        # The two <SubTree ID="Transport"/> invocations live inside the
-        # ReactiveFallback under the MainTree BehaviorTree.
         main_bt = next(
             bt for bt in root.findall("BehaviorTree")
             if bt.get("ID") == "MainTree"
@@ -156,19 +148,12 @@ class TemplatePortBindingTests(unittest.TestCase):
             if el.get("ID") == "Transport"
         ]
         self.assertEqual(len(subtree_invocations), 2)
-        ref_values_seen = {
-            inv.get("predicate_ref_0") for inv in subtree_invocations
-        }
-        # Two distinct alias references → set has 2 elements.
-        self.assertEqual(len(ref_values_seen), 2)
-        # All values look like ``{Alias_Key}``.
-        for v in ref_values_seen:
-            self.assertTrue(v.startswith("{") and v.endswith("}"), v)
-        # Same check for action ports.
-        action_values = {
-            inv.get("action_ref_1") for inv in subtree_invocations
-        }
-        self.assertEqual(len(action_values), 2)
+        # fluent_ref is the same URI; fluent_args differ (different slot AAS IDs)
+        args_sets = {inv.get("fluent_args_0") for inv in subtree_invocations}
+        self.assertEqual(len(args_sets), 2)
+        # action ref URL is the same; action_args differ
+        act_args = {inv.get("action_args_1") for inv in subtree_invocations}
+        self.assertEqual(len(act_args), 2)
 
     def test_template_subtree_declares_extra_ports(self):
         xml = bt_to_xml(self.bt)
@@ -181,13 +166,13 @@ class TemplatePortBindingTests(unittest.TestCase):
         port_names = {ip.get("name") for ip in templ_decl.findall("input_port")}
         self.assertIn("arg0", port_names)
         self.assertIn("arg1", port_names)
-        self.assertIn("predicate_ref_0", port_names)
-        self.assertIn("predicate_args_0", port_names)
+        self.assertIn("fluent_ref_0", port_names)
+        self.assertIn("fluent_args_0", port_names)
         self.assertIn("action_ref_1", port_names)
         self.assertIn("action_args_1", port_names)
 
     def test_constant_refs_do_not_get_extra_ports(self):
-        # Two members where the FluentCheck is *identical* across them
+        # Two members where the Predicate is *identical* across them
         # (only the action varies). Then no predicate_ref_<i> port should
         # be allocated.
         param_a = {"name": "p0", "aas_id": "aas:A", "aas_path": "Objects/A"}
