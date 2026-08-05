@@ -1,34 +1,34 @@
-planarTableShuttle1AAS:
-  idShort: planarTableShuttle1AAS
-  id: https://smartproductionlab.aau.dk/aas/planarTableShuttle1AAS
-  globalAssetId: https://smartproductionlab.aau.dk/assets/ODYwM2Q2YjYtYmUzOS00NTAxLWFhZDktYjc1MjhhMzUzOGNm
+syntegonStopperingSystemAAS:
+  idShort: syntegonStopperingSystemAAS
+  id: https://smartproductionlab.aau.dk/aas/syntegonStopperingSystemAAS
+  globalAssetId: https://smartproductionlab.aau.dk/assets/NGQ5ZWE4ZmUtY2Q3OS00Nzc5LWE5YjEtNGEzZGRkODRhNzQ2
   derivedFrom: https://smartproductionlab.aau.dk/aas/templates/resource
-  assetType: http://www.w3id.org/aau-ra/cssx#PlanarTableShuttle
-  serialNumber: PM-S1-2024-001
+  assetType: http://www.w3id.org/aau-ra/cssx#StopperingSystem
+  serialNumber: SYN-SS-2024-001
   location: InnoLab, Nybrovej, AAU
   AssetInterfacesDescription:
     InterfaceMQTT:
-      Title: Planar Motors Shuttle
+      Title: Syntegon Stoppering System
       EndpointMetadata:
-        base: mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/Planar/Xbot1
+        base: mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/Stoppering
         contentType: application/json
       InteractionMetadata:
         actions:
-        - key: MoveToPosition
-          title: MoveToPosition
+        - key: Stoppering
+          title: Stoppering
           synchronous: 'false'
-          input: https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/moveToPosition.schema.json
+          input: https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json
           output: https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json
           forms:
             contentType: application/json
-            href: /CMD/XYMotion
+            href: /CMD/Stoppering
             op: invokeAction
             mqv_retain: 'false'
             mqv_controlPacket: subscribe
             mqv_qos: '2'
             response:
               contentType: application/json
-              href: /DATA/XYMotion
+              href: /DATA/Stoppering
               mqv_controlPacket: publish
               mqv_retain: 'false'
         - key: Halt
@@ -79,28 +79,10 @@ planarTableShuttle1AAS:
         properties:
         - key: StationState
           title: StationState
-          output: https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/DestinationStationState.schema.json
+          output: https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/stationState.schema.json
           forms:
             contentType: application/json
             href: /DATA/State
-            mqv_retain: 'true'
-            mqv_controlPacket: publish
-            mqv_qos: '0'
-        - key: ProductID
-          title: ProductID
-          input: https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/productId.schema.json
-          forms:
-            contentType: application/json
-            href: /DATA/ProductId
-            mqv_retain: 'false'
-            mqv_controlPacket: publish
-            mqv_qos: '0'
-        - key: Location
-          title: Location
-          output: https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/positionStamped.schema.json
-          forms:
-            contentType: application/json
-            href: /DATA/Location
             mqv_retain: 'true'
             mqv_controlPacket: publish
             mqv_qos: '0'
@@ -115,60 +97,42 @@ planarTableShuttle1AAS:
     InterfaceReference:
       Name: StationState
       Field: ProcessQueue
-  - key: Location
-    semanticId: https://w3id.org/2026/apex/semantic/location/label
-    InterfaceReference:
-      Name: Location
-      Field: Position
-  - key: PositionX
-    semanticId: https://w3id.org/2026/apex/semantic/position/x
-    InterfaceReference:
-      Name: Location
-      Field: X
-  - key: PositionY
-    semanticId: https://w3id.org/2026/apex/semantic/position/y
-    InterfaceReference:
-      Name: Location
-      Field: Y
   Parameters:
-    ProductID:
-      semanticId: cssx:ProductIdentifier
-      InterfaceReference: ProductID
     Location:
-      semanticId: cssx:InitialLocationParameter
+      semanticId: https://w3id.org/2026/apex/semantic/location/label
       Position:
-        X: 0.0
+        X: 480.0
         Y: 0.0
         Yaw: 0.0
   HierarchicalStructures:
     Name: BillOfMaterials
     Archetype: OneUp
     IsPartOf:
-      planarTableAAS:
-        globalAssetId: https://smartproductionlab.aau.dk/assets/ZTM1NTAzNzQtMDZkNi00N2Q4LWI1YTktMGNhMmY0MDEyNTk4
+      aauFillingLineAAS:
+        globalAssetId: https://smartproductionlab.aau.dk/assets/MWQ2ODY5ZDEtZTQ3Yy00NWU4LTlmYTAtNTI3YjVlMDk4MWFi
   Capabilities:
-  - key: MoveToPosition
-    realizedBy: MoveToPosition
-    semantic_id: cssx:MoveToPositionCapability
+  - key: Stoppering
+    realizedBy: Stopper
+    semantic_id: cssx:StopperingCapability
   Skills:
-  - key: MoveToPosition
-    description: Move the planar shuttle to a target position
-    semantic_id: cssx:MoveToPositionSkill
-    InterfaceReference: MoveToPosition
+  - key: Stoppering
+    description: Stoppering function for pharmaceutical primary packaging
+    semantic_id: cssx:StopperingSkill
+    InterfaceReference: Stoppering
     ExecutionModel:
       Parameters:
-      - key: TransportSystem
-        semanticId: cssx:Transport
+      - key: StopperingSystem
         modelRef:
         - AAS: self
       - key: Product
         semanticId: css:Product
-      - key: From
-        semanticId: cssx:LocationParameter
-      - key: To
-        semanticId: cssx:LocationParameter
-      - key: DestinationStation
-        semanticId: css:CPPM
+      - key: TransportSystem
+        semanticId: cssx:Transport
+      - key: StopperingLocation
+        modelRef:
+        - AAS: self
+          Submodel: Parameters
+          Element: Location
       Conditions:
         PreConditions:
         - predicate: cssx:Operational
@@ -181,46 +145,18 @@ planarTableShuttle1AAS:
         - predicate: cssx:On
           args:
           - 1
-          - 0
+          - 2
         - predicate: cssx:ProductAt
           args:
           - 1
-          - 2
-        - predicate: cssx:ResourceAt
-          args:
-          - 0
-          - 2
-        - predicate: cssx:Occupied
-          args:
-          - 4
-          - 1
-        - predicate: cssx:StationAt
-          args:
-          - 4
           - 3
       Effects:
         EndEffects:
-        - predicate: cssx:ResourceAt
-          args:
-          - 0
-          - 3
-        - predicate: cssx:ProductAt
+        - predicate: cssx:Stoppered
           args:
           - 1
-          - 3
-        StartEffects:
-        - predicate: cssx:ResourceAt
-          args:
-          - 0
-          - 2
-          negated: true
-        - predicate: cssx:ProductAt
-          args:
-          - 1
-          - 2
-          negated: true
   - key: Halt
-    description: Halt the current operation
+    description: Halt the current stoppeng operation
     semantic_id: cssx:HaltSkill
     InterfaceReference: Halt
   - key: Occupy
@@ -229,8 +165,7 @@ planarTableShuttle1AAS:
     InterfaceReference: Occupy
     ExecutionModel:
       Parameters:
-      - key: TransportSystem
-        semanticId: cssx:Transport
+      - key: StopperingSystem
         modelRef:
         - AAS: self
       - key: Identifiable
@@ -256,13 +191,12 @@ planarTableShuttle1AAS:
           - 0
           negated: true
   - key: Release
-    description: Release the dispensing system from exclusive use
+    description: Release the system from exclusive use
     semantic_id: cssx:ReleaseSkill
     InterfaceReference: Release
     ExecutionModel:
       Parameters:
-      - key: TransportSystem
-        semanticId: cssx:Transport
+      - key: StopperingSystem
         modelRef:
         - AAS: self
       - key: Identifiable
@@ -286,3 +220,10 @@ planarTableShuttle1AAS:
         - predicate: cssx:Free
           args:
           - 0
+
+  ControlComponent:
+    GoalSet:
+      - predicate: cssx:Operational
+        args: ['self']
+      - predicate: cssx:Free
+        args: ['self']

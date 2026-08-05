@@ -1,51 +1,34 @@
-optimaUnloadingSystemAAS:
-  idShort: optimaUnloadingSystemAAS
-  id: https://smartproductionlab.aau.dk/aas/optimaUnloadingSystemAAS
-  globalAssetId: https://smartproductionlab.aau.dk/assets/NGRjZjc0ODUtZTIxMi00ZGQxLWE3MzAtYmEzMDc1NTBlNmMx
+imaLoadingSystemAAS:
+  idShort: imaLoadingSystemAAS
+  id: https://smartproductionlab.aau.dk/aas/imaLoadingSystemAAS
+  globalAssetId: https://smartproductionlab.aau.dk/assets/ZDNlYmVhZjItZTAyMC00NWMwLTg5NjEtODRiNTFkOWE0NzVl2
   derivedFrom: https://smartproductionlab.aau.dk/aas/templates/resource
-  assetType: http://www.w3id.org/aau-ra/cssx#UnloadingSystem
-  serialNumber: OPTIMA-ULS-2024-001
+  assetType: http://www.w3id.org/aau-ra/cssx#LoadingSystem
+  serialNumber: IMA-LS-2024-001
   location: InnoLab, Nybrovej, AAU
   AssetInterfacesDescription:
     InterfaceMQTT:
-      Title: optima Unloading System
+      Title: IMA Loading System
       EndpointMetadata:
-        base: mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/Unloading
+        base: mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/Loading
         contentType: application/json
       InteractionMetadata:
         actions:
-        - key: Unloading
-          title: Unloading
-          synchronous: 'true'
+        - key: Loading
+          title: Loading
+          synchronous: 'false'
           input: https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json
           output: https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json
           forms:
             contentType: application/json
-            href: /CMD/Unloading
+            href: /CMD/Loading
             op: invokeAction
             mqv_retain: 'false'
             mqv_controlPacket: subscribe
             mqv_qos: '2'
             response:
               contentType: application/json
-              href: /DATA/Unloading
-              mqv_controlPacket: publish
-              mqv_retain: 'false'
-        - key: Scrap
-          title: Scrap
-          synchronous: 'true'
-          input: https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json
-          output: https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json
-          forms:
-            contentType: application/json
-            href: /CMD/Scrap
-            op: invokeAction
-            mqv_retain: 'false'
-            mqv_controlPacket: subscribe
-            mqv_qos: '2'
-            response:
-              contentType: application/json
-              href: /DATA/Scrap
+              href: /DATA/Loading
               mqv_controlPacket: publish
               mqv_retain: 'false'
         - key: Halt
@@ -118,9 +101,9 @@ optimaUnloadingSystemAAS:
     Location:
       semanticId: https://w3id.org/2026/apex/semantic/location/label
       Position:
-        X: 0.0
-        Y: 240.0
-        Yaw: 0.0
+        X: 360.0
+        Y: 840.0
+        Yaw: 270.0
   HierarchicalStructures:
     Name: BillOfMaterials
     Archetype: OneUp
@@ -128,27 +111,24 @@ optimaUnloadingSystemAAS:
       aauFillingLineAAS:
         globalAssetId: https://smartproductionlab.aau.dk/assets/MWQ2ODY5ZDEtZTQ3Yy00NWU4LTlmYTAtNTI3YjVlMDk4MWFi
   Capabilities:
-  - key: Unloading
-    realizedBy: Unload
-    semantic_id: cssx:UnloadingCapability
-  - key: Scrap
-    realizedBy: Scrap
-    semantic_id: cssx:ScrapCapability
+  - key: Loading
+    realizedBy: Loading
+    semantic_id: cssx:LoadingCapability
   Skills:
-  - key: Unloading
-    description: Unloading function for pharmaceutical primary packaging
-    semantic_id: cssx:UnloadingSkill
-    InterfaceReference: Unloading
+  - key: Loading
+    description: Loading function for pharmaceutical primary packaging
+    semantic_id: cssx:LoadingSkill
+    InterfaceReference: Loading
     ExecutionModel:
       Parameters:
-      - key: UnloadingSystem
+      - key: LoadingSystem
         modelRef:
         - AAS: self
       - key: Product
         semanticId: css:Product
       - key: TransportSystem
         semanticId: cssx:Transport
-      - key: UnloadingLocation
+      - key: LoadingLocation
         modelRef:
         - AAS: self
           Submodel: Parameters
@@ -162,82 +142,36 @@ optimaUnloadingSystemAAS:
           args:
           - 0
           - 1
-        - predicate: cssx:On
+        - predicate: cssx:ResourceAt
           args:
-          - 1
           - 2
-        - predicate: cssx:ProductAt
-          args:
-          - 1
           - 3
-        - predicate: cssx:QualityOk
-          args:
-          - 1
-      Effects:
-        EndEffects:
-        - predicate: cssx:On
-          args:
-          - 1
-          - 2
-          negated: true
         - predicate: cssx:Empty
           args:
           - 2
-        - predicate: cssx:Finished
-          args:
-          - 1
-  - key: Scrap
-    description: Scrap a product whose quality outcome was NotOk
-    semantic_id: cssx:ScrapSkill
-    InterfaceReference: Scrap
-    ExecutionModel:
-      Parameters:
-      - key: UnloadingSystem
-        modelRef:
-        - AAS: self
-      - key: Product
-        semanticId: css:Product
-      - key: TransportSystem
-        semanticId: cssx:Transport
-      - key: UnloadingLocation
-        modelRef:
-        - AAS: self
-          Submodel: Parameters
-          Element: Location
-      Conditions:
-        PreConditions:
-        - predicate: cssx:Operational
-          args:
-          - 0
-        - predicate: cssx:Occupied
-          args:
-          - 0
-          - 1
-        - predicate: cssx:On
-          args:
-          - 1
-          - 2
-        - predicate: cssx:ProductAt
-          args:
-          - 1
-          - 3
-        - predicate: cssx:QualityOk
-          args:
-          - 1
-          negated: true
       Effects:
         EndEffects:
-        - predicate: cssx:On
-          args:
-          - 1
-          - 2
-          negated: true
-        - predicate: cssx:Empty
-          args:
-          - 2
-        - predicate: cssx:Finished
-          args:
-          - 1
+        - oneOf:
+          - when: Outcome = 0
+            and:
+            - predicate: cssx:On
+              args:
+              - 1
+              - 2
+            - predicate: cssx:ProductAt
+              args:
+              - 1
+              - 3
+            - not:
+              - predicate: cssx:Empty
+                args:
+                - 2
+          - when: Outcome = 1
+            not:
+            - predicate: cssx:On
+              args:
+              - 1
+              - 2
   - key: Halt
     description: Halt the current operation
     semantic_id: cssx:HaltSkill
@@ -248,7 +182,7 @@ optimaUnloadingSystemAAS:
     InterfaceReference: Occupy
     ExecutionModel:
       Parameters:
-      - key: UnloadingSystem
+      - key: LoadingSystem
         modelRef:
         - AAS: self
       - key: Identifiable
@@ -279,7 +213,7 @@ optimaUnloadingSystemAAS:
     InterfaceReference: Release
     ExecutionModel:
       Parameters:
-      - key: UnloadingSystem
+      - key: LoadingSystem
         modelRef:
         - AAS: self
       - key: Identifiable
@@ -303,3 +237,10 @@ optimaUnloadingSystemAAS:
         - predicate: cssx:Free
           args:
           - 0
+
+  ControlComponent:
+    GoalSet:
+      - predicate: cssx:Operational
+        args: ['self']
+      - predicate: cssx:Free
+        args: ['self']

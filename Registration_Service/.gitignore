@@ -1,0 +1,7 @@
+# Generated AAS exports (build artifacts, recreated on demand)
+Resource/*AAS.json
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/

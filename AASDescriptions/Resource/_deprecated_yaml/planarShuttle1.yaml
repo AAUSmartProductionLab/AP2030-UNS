@@ -1,34 +1,34 @@
-imaDispensingSystemAAS:
-  idShort: imaDispensingSystemAAS
-  id: https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS
-  globalAssetId: https://smartproductionlab.aau.dk/assets/MzFiZTU1YzAtODc0ZC00YTRmLTkzYzItMDQ5ZDZjZDdhZTYw
+planarTableShuttle1AAS:
+  idShort: planarTableShuttle1AAS
+  id: https://smartproductionlab.aau.dk/aas/planarTableShuttle1AAS
+  globalAssetId: https://smartproductionlab.aau.dk/assets/ODYwM2Q2YjYtYmUzOS00NTAxLWFhZDktYjc1MjhhMzUzOGNm
   derivedFrom: https://smartproductionlab.aau.dk/aas/templates/resource
-  assetType: http://www.w3id.org/aau-ra/cssx#DispensingSystem
-  serialNumber: IMA-DS-2024-001
+  assetType: http://www.w3id.org/aau-ra/cssx#PlanarTableShuttle
+  serialNumber: PM-S1-2024-001
   location: InnoLab, Nybrovej, AAU
   AssetInterfacesDescription:
     InterfaceMQTT:
-      Title: IMA Dispensing System
+      Title: Planar Motors Shuttle
       EndpointMetadata:
-        base: mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/Dispensing
+        base: mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/Planar/Xbot1
         contentType: application/json
       InteractionMetadata:
         actions:
-        - key: Dispensing
-          title: Dispensing
-          synchronous: 'true'
-          input: https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json
+        - key: MoveToPosition
+          title: MoveToPosition
+          synchronous: 'false'
+          input: https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/moveToPosition.schema.json
           output: https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json
           forms:
             contentType: application/json
-            href: /CMD/Dispensing
+            href: /CMD/XYMotion
             op: invokeAction
             mqv_retain: 'false'
             mqv_controlPacket: subscribe
             mqv_qos: '2'
             response:
               contentType: application/json
-              href: /DATA/Dispensing
+              href: /DATA/XYMotion
               mqv_controlPacket: publish
               mqv_retain: 'false'
         - key: Halt
@@ -79,19 +79,28 @@ imaDispensingSystemAAS:
         properties:
         - key: StationState
           title: StationState
-          output: https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/stationState.schema.json
+          output: https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/DestinationStationState.schema.json
           forms:
             contentType: application/json
             href: /DATA/State
             mqv_retain: 'true'
             mqv_controlPacket: publish
             mqv_qos: '0'
-        - key: Weight
-          title: Weight
-          output: https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/weight.schema.json
+        - key: ProductID
+          title: ProductID
+          input: https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/productId.schema.json
           forms:
             contentType: application/json
-            href: /DATA/Weight
+            href: /DATA/ProductId
+            mqv_retain: 'false'
+            mqv_controlPacket: publish
+            mqv_qos: '0'
+        - key: Location
+          title: Location
+          output: https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/positionStamped.schema.json
+          forms:
+            contentType: application/json
+            href: /DATA/Location
             mqv_retain: 'true'
             mqv_controlPacket: publish
             mqv_qos: '0'
@@ -106,46 +115,60 @@ imaDispensingSystemAAS:
     InterfaceReference:
       Name: StationState
       Field: ProcessQueue
-  - key: Weight
-    semanticId: cssx:WeightMeasurement
+  - key: Location
+    semanticId: https://w3id.org/2026/apex/semantic/location/label
     InterfaceReference:
-      Name: Weight
+      Name: Location
+      Field: Position
+  - key: PositionX
+    semanticId: https://w3id.org/2026/apex/semantic/position/x
+    InterfaceReference:
+      Name: Location
+      Field: X
+  - key: PositionY
+    semanticId: https://w3id.org/2026/apex/semantic/position/y
+    InterfaceReference:
+      Name: Location
+      Field: Y
   Parameters:
+    ProductID:
+      semanticId: cssx:ProductIdentifier
+      InterfaceReference: ProductID
     Location:
-      semanticId: https://w3id.org/2026/apex/semantic/location/label
+      semanticId: cssx:InitialLocationParameter
       Position:
-        X: 240.0
+        X: 0.0
         Y: 0.0
         Yaw: 0.0
   HierarchicalStructures:
     Name: BillOfMaterials
     Archetype: OneUp
     IsPartOf:
-      aauFillingLineAAS:
-        globalAssetId: https://smartproductionlab.aau.dk/assets/MWQ2ODY5ZDEtZTQ3Yy00NWU4LTlmYTAtNTI3YjVlMDk4MWFi
+      planarTableAAS:
+        globalAssetId: https://smartproductionlab.aau.dk/assets/ZTM1NTAzNzQtMDZkNi00N2Q4LWI1YTktMGNhMmY0MDEyNTk4
   Capabilities:
-  - key: Dispensing
-    realizedBy: Dispensing
-    semantic_id: cssx:DispensingCapability
+  - key: MoveToPosition
+    realizedBy: MoveToPosition
+    semantic_id: cssx:MoveToPositionCapability
   Skills:
-  - key: Dispensing
-    description: Dispensing function for pharmaceutical primary packaging
-    semantic_id: cssx:DispensingSkill
-    InterfaceReference: Dispensing
+  - key: MoveToPosition
+    description: Move the planar shuttle to a target position
+    semantic_id: cssx:MoveToPositionSkill
+    InterfaceReference: MoveToPosition
     ExecutionModel:
       Parameters:
-      - key: DispensingSystem
+      - key: TransportSystem
+        semanticId: cssx:Transport
         modelRef:
         - AAS: self
       - key: Product
         semanticId: css:Product
-      - key: TransportSystem
-        semanticId: cssx:Transport
-      - key: DispensingLocation
-        modelRef:
-        - AAS: self
-          Submodel: Parameters
-          Element: Location
+      - key: From
+        semanticId: cssx:LocationParameter
+      - key: To
+        semanticId: cssx:LocationParameter
+      - key: DestinationStation
+        semanticId: css:CPPM
       Conditions:
         PreConditions:
         - predicate: cssx:Operational
@@ -158,16 +181,44 @@ imaDispensingSystemAAS:
         - predicate: cssx:On
           args:
           - 1
+          - 0
+        - predicate: cssx:ProductAt
+          args:
+          - 1
           - 2
+        - predicate: cssx:ResourceAt
+          args:
+          - 0
+          - 2
+        - predicate: cssx:Occupied
+          args:
+          - 4
+          - 1
+        - predicate: cssx:StationAt
+          args:
+          - 4
+          - 3
+      Effects:
+        EndEffects:
+        - predicate: cssx:ResourceAt
+          args:
+          - 0
+          - 3
         - predicate: cssx:ProductAt
           args:
           - 1
           - 3
-      Effects:
-        EndEffects:
-        - predicate: cssx:Dispensed
+        StartEffects:
+        - predicate: cssx:ResourceAt
+          args:
+          - 0
+          - 2
+          negated: true
+        - predicate: cssx:ProductAt
           args:
           - 1
+          - 2
+          negated: true
   - key: Halt
     description: Halt the current operation
     semantic_id: cssx:HaltSkill
@@ -178,7 +229,8 @@ imaDispensingSystemAAS:
     InterfaceReference: Occupy
     ExecutionModel:
       Parameters:
-      - key: DispensingSystem
+      - key: TransportSystem
+        semanticId: cssx:Transport
         modelRef:
         - AAS: self
       - key: Identifiable
@@ -204,12 +256,13 @@ imaDispensingSystemAAS:
           - 0
           negated: true
   - key: Release
-    description: Release the system from exclusive use
+    description: Release the dispensing system from exclusive use
     semantic_id: cssx:ReleaseSkill
     InterfaceReference: Release
     ExecutionModel:
       Parameters:
-      - key: DispensingSystem
+      - key: TransportSystem
+        semanticId: cssx:Transport
         modelRef:
         - AAS: self
       - key: Identifiable
@@ -233,3 +286,12 @@ imaDispensingSystemAAS:
         - predicate: cssx:Free
           args:
           - 0
+
+  ControlComponent:
+    GoalSet:
+      - predicate: cssx:Operational
+        args: ['self']
+      - predicate: cssx:Free
+        args: ['self']
+      - predicate: cssx:At
+        args: ['self', 'cssx:HomePosition']

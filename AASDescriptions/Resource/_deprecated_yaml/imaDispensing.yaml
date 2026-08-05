@@ -1,34 +1,34 @@
-imaLoadingSystemAAS:
-  idShort: imaLoadingSystemAAS
-  id: https://smartproductionlab.aau.dk/aas/imaLoadingSystemAAS
-  globalAssetId: https://smartproductionlab.aau.dk/assets/ZDNlYmVhZjItZTAyMC00NWMwLTg5NjEtODRiNTFkOWE0NzVl2
+imaDispensingSystemAAS:
+  idShort: imaDispensingSystemAAS
+  id: https://smartproductionlab.aau.dk/aas/imaDispensingSystemAAS
+  globalAssetId: https://smartproductionlab.aau.dk/assets/MzFiZTU1YzAtODc0ZC00YTRmLTkzYzItMDQ5ZDZjZDdhZTYw
   derivedFrom: https://smartproductionlab.aau.dk/aas/templates/resource
-  assetType: http://www.w3id.org/aau-ra/cssx#LoadingSystem
-  serialNumber: IMA-LS-2024-001
+  assetType: http://www.w3id.org/aau-ra/cssx#DispensingSystem
+  serialNumber: IMA-DS-2024-001
   location: InnoLab, Nybrovej, AAU
   AssetInterfacesDescription:
     InterfaceMQTT:
-      Title: IMA Loading System
+      Title: IMA Dispensing System
       EndpointMetadata:
-        base: mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/Loading
+        base: mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/Dispensing
         contentType: application/json
       InteractionMetadata:
         actions:
-        - key: Loading
-          title: Loading
-          synchronous: 'false'
+        - key: Dispensing
+          title: Dispensing
+          synchronous: 'true'
           input: https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json
           output: https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json
           forms:
             contentType: application/json
-            href: /CMD/Loading
+            href: /CMD/Dispensing
             op: invokeAction
             mqv_retain: 'false'
             mqv_controlPacket: subscribe
             mqv_qos: '2'
             response:
               contentType: application/json
-              href: /DATA/Loading
+              href: /DATA/Dispensing
               mqv_controlPacket: publish
               mqv_retain: 'false'
         - key: Halt
@@ -86,6 +86,15 @@ imaLoadingSystemAAS:
             mqv_retain: 'true'
             mqv_controlPacket: publish
             mqv_qos: '0'
+        - key: Weight
+          title: Weight
+          output: https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/weight.schema.json
+          forms:
+            contentType: application/json
+            href: /DATA/Weight
+            mqv_retain: 'true'
+            mqv_controlPacket: publish
+            mqv_qos: '0'
   Variables:
   - key: PackMLState
     semanticId: https://w3id.org/2026/apex/semantic/state/operational
@@ -97,13 +106,17 @@ imaLoadingSystemAAS:
     InterfaceReference:
       Name: StationState
       Field: ProcessQueue
+  - key: Weight
+    semanticId: cssx:WeightMeasurement
+    InterfaceReference:
+      Name: Weight
   Parameters:
     Location:
       semanticId: https://w3id.org/2026/apex/semantic/location/label
       Position:
-        X: 360.0
-        Y: 840.0
-        Yaw: 270.0
+        X: 240.0
+        Y: 0.0
+        Yaw: 0.0
   HierarchicalStructures:
     Name: BillOfMaterials
     Archetype: OneUp
@@ -111,24 +124,24 @@ imaLoadingSystemAAS:
       aauFillingLineAAS:
         globalAssetId: https://smartproductionlab.aau.dk/assets/MWQ2ODY5ZDEtZTQ3Yy00NWU4LTlmYTAtNTI3YjVlMDk4MWFi
   Capabilities:
-  - key: Loading
-    realizedBy: Loading
-    semantic_id: cssx:LoadingCapability
+  - key: Dispensing
+    realizedBy: Dispensing
+    semantic_id: cssx:DispensingCapability
   Skills:
-  - key: Loading
-    description: Loading function for pharmaceutical primary packaging
-    semantic_id: cssx:LoadingSkill
-    InterfaceReference: Loading
+  - key: Dispensing
+    description: Dispensing function for pharmaceutical primary packaging
+    semantic_id: cssx:DispensingSkill
+    InterfaceReference: Dispensing
     ExecutionModel:
       Parameters:
-      - key: LoadingSystem
+      - key: DispensingSystem
         modelRef:
         - AAS: self
       - key: Product
         semanticId: css:Product
       - key: TransportSystem
         semanticId: cssx:Transport
-      - key: LoadingLocation
+      - key: DispensingLocation
         modelRef:
         - AAS: self
           Submodel: Parameters
@@ -142,36 +155,19 @@ imaLoadingSystemAAS:
           args:
           - 0
           - 1
-        - predicate: cssx:ResourceAt
+        - predicate: cssx:On
           args:
+          - 1
           - 2
+        - predicate: cssx:ProductAt
+          args:
+          - 1
           - 3
-        - predicate: cssx:Empty
-          args:
-          - 2
       Effects:
         EndEffects:
-        - oneOf:
-          - when: Outcome = 0
-            and:
-            - predicate: cssx:On
-              args:
-              - 1
-              - 2
-            - predicate: cssx:ProductAt
-              args:
-              - 1
-              - 3
-            - not:
-              - predicate: cssx:Empty
-                args:
-                - 2
-          - when: Outcome = 1
-            not:
-            - predicate: cssx:On
-              args:
-              - 1
-              - 2
+        - predicate: cssx:Dispensed
+          args:
+          - 1
   - key: Halt
     description: Halt the current operation
     semantic_id: cssx:HaltSkill
@@ -182,7 +178,7 @@ imaLoadingSystemAAS:
     InterfaceReference: Occupy
     ExecutionModel:
       Parameters:
-      - key: LoadingSystem
+      - key: DispensingSystem
         modelRef:
         - AAS: self
       - key: Identifiable
@@ -213,7 +209,7 @@ imaLoadingSystemAAS:
     InterfaceReference: Release
     ExecutionModel:
       Parameters:
-      - key: LoadingSystem
+      - key: DispensingSystem
         modelRef:
         - AAS: self
       - key: Identifiable
@@ -237,3 +233,10 @@ imaLoadingSystemAAS:
         - predicate: cssx:Free
           args:
           - 0
+
+  ControlComponent:
+    GoalSet:
+      - predicate: cssx:Operational
+        args: ['self']
+      - predicate: cssx:Free
+        args: ['self']

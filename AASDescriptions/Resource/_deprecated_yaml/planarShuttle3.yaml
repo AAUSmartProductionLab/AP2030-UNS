@@ -286,3 +286,12 @@ planarTableShuttle3AAS:
         - predicate: cssx:Free
           args:
           - 0
+
+  ControlComponent:
+    GoalSet:
+      - predicate: cssx:Operational
+        args: ['self']
+      - predicate: cssx:Free
+        args: ['self']
+      - predicate: cssx:At
+        args: ['self', 'cssx:HomePosition']

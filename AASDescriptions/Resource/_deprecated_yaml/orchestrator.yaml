@@ -122,6 +122,60 @@ orchestratorAAS:
               mqv_controlPacket: publish
               mqv_qos: "0"
 
+    InterfaceHTTP_REST:
+      Title: "Orchestrator REST API"
+      EndpointMetadata:
+        base: "http://orchestrator:8090"
+        contentType: "application/json"
+      InteractionMetadata:
+        actions:
+          - key: "Start"
+            title: "Start"
+            synchronous: "true"
+            input: "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/orchestr\
+              ationCommand.schema.json"
+            output: "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command\
+              Response.schema.json"
+            forms:
+              contentType: "application/json"
+              href: "/operations/Start"
+              op: "invokeAction"
+              method: "POST"
+          - key: "Stop"
+            title: "Stop"
+            synchronous: "true"
+            input: "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.\
+              schema.json"
+            output: "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command\
+              Response.schema.json"
+            forms:
+              contentType: "application/json"
+              href: "/operations/Stop"
+              op: "invokeAction"
+              method: "POST"
+          - key: "Reset"
+            title: "Reset"
+            synchronous: "true"
+            input: "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.\
+              schema.json"
+            output: "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command\
+              Response.schema.json"
+            forms:
+              contentType: "application/json"
+              href: "/operations/Reset"
+              op: "invokeAction"
+              method: "POST"
+        properties:
+          - key: "Health"
+            title: "Health"
+            output: "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/state.s\
+              chema.json"
+            forms:
+              contentType: "application/json"
+              href: "/health"
+              op: "read"
+              method: "GET"
+
   Variables:
     - key: PackMLState
       semanticId: "https://w3id.org/2026/apex/semantic/state/operational"
