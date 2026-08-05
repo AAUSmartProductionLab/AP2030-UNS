@@ -1,8 +1,8 @@
 """
 MQTT Registration Listener for Unified Registration Service
 
-Listens for asset registration messages via MQTT and processes YAML configurations.
-Supports both full AAS JSON and lightweight YAML config transmission.
+Listens for asset registration messages via MQTT and processes JSON configurations.
+Supports JSON config format matching the ResourceTypeAAS schema.
 """
 
 import json
@@ -12,7 +12,6 @@ import threading
 import time
 from typing import Dict, Any, Optional
 import paho.mqtt.client as mqtt
-import yaml
 
 from .unified_service import UnifiedRegistrationService
 
@@ -176,65 +175,29 @@ class MQTTConfigRegistrationService:
 
     def _handle_config_message(self, payload: str):
         """
-        Handle YAML config registration message.
+        Handle JSON config registration message.
 
-        Supports two formats:
-
-        1. Raw YAML (from ESP32 devices):
-           planarTableShuttle1AAS:
-             idShort: ...
-             ...
-
-        2. JSON wrapper (from other clients):
-           {
-               "requestId": "unique-id",
-               "assetId": "asset-identifier",
-               "config": { ... yaml config as JSON ... }
-           }
-
-        Or YAML string in JSON wrapper:
-           {
-               "requestId": "unique-id",
-               "assetId": "asset-identifier", 
-               "configYaml": "planarTableShuttle1AAS:\n  idShort: ..."
-           }
+        Expected format (JSON):
+        {
+            "requestId": "unique-id",
+            "assetId": "asset-identifier",
+            "config": { ... JSON config matching ResourceTypeAAS schema ... }
+        }
         """
         try:
-            # First, try to parse as JSON (wrapper format)
-            try:
-                message = json.loads(payload)
-                request_id = message.get('requestId', 'unknown')
-                asset_id = message.get('assetId', 'unknown')
+            message = json.loads(payload)
+            request_id = message.get('requestId', 'unknown')
+            asset_id = message.get('assetId', 'unknown')
 
-                # Get config data from JSON wrapper
-                if 'config' in message:
-                    config_data = message['config']
-                elif 'configYaml' in message:
-                    config_data = yaml.safe_load(message['configYaml'])
-                else:
-                    logger.error("No config or configYaml in JSON message")
-                    self._send_response(request_id, False,
-                                        "Missing config data")
-                    return
+            if 'config' not in message:
+                logger.error("No 'config' field in JSON message")
+                self._send_response(request_id, False, "Missing config data")
+                return
 
-            except json.JSONDecodeError:
-                # Not JSON - try parsing as raw YAML (from ESP32 devices)
-                logger.info("Parsing raw YAML config from device")
-                config_data = yaml.safe_load(payload)
-
-                # Extract asset ID from the YAML structure (first key is typically the AAS ID)
-                if isinstance(config_data, dict) and len(config_data) > 0:
-                    first_key = next(iter(config_data))
-                    asset_id = config_data[first_key].get('idShort', first_key)
-                    request_id = f"device-{asset_id}-{int(time.time())}"
-                else:
-                    logger.error(
-                        "Invalid YAML structure - expected dict with asset definition")
-                    return
+            config_data = message['config']
 
             logger.info(f"Received config registration for: {asset_id}")
 
-            # Add to queue
             self.registration_queue.put({
                 'type': 'config',
                 'request_id': request_id,
@@ -243,8 +206,8 @@ class MQTTConfigRegistrationService:
                 'timestamp': time.time()
             })
 
-        except yaml.YAMLError as e:
-            logger.error(f"Invalid YAML in config message: {e}")
+        except json.JSONDecodeError as e:
+            logger.error(f"Invalid JSON in config message: {e}")
             self.stats['failed'] += 1
         except Exception as e:
             logger.error(f"Error processing config message: {e}")
@@ -411,9 +374,8 @@ class MQTTConfigRegistrationService:
         """
         try:
             config_data = item.get('config_data')
-            return self.registration_service.register_from_yaml_config(
+            return self.registration_service.register_from_data(
                 config_data=config_data,
-                validate_aas=True,
                 restart_services=False  # Defer restart until batch is complete
             )
         except Exception as e:

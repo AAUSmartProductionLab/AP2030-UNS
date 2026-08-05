@@ -1,0 +1,357 @@
+{
+  "id_short": "syntegonStopperingSystemAAS",
+  "asset_type": "http://www.w3id.org/aau-ra/cssx#StopperingSystem",
+  "derived_from": "https://smartproductionlab.aau.dk/aas/templates/resource",
+  "nameplate": {
+    "id_short": "Nameplate",
+    "submodel_element": {
+      "manufacturer_name": {
+        "value": {
+          "en": "Syntegon Technology GmbH"
+        }
+      },
+      "manufacturer_product_designation": {
+        "value": {
+          "en": "Stoppering System 2024"
+        }
+      },
+      "manufacturer_product_type": {
+        "value": "Pharmaceutical Stoppering Station"
+      },
+      "serial_number": {
+        "value": "SYN-SS-2024-001"
+      },
+      "year_of_construction": {
+        "value": "2024"
+      },
+      "country_of_origin": {
+        "value": "DE"
+      },
+      "order_code_of_manufacturer": {
+        "value": "SYN-SS-2024-001"
+      },
+      "asset_specific_properties": {
+        "value": {
+          "arbitrary_property": {
+            "process_cell": {
+              "value": "ProcessCell: InnoLab Line 1"
+            }
+          }
+        }
+      }
+    }
+  },
+  "asset_interfaces_description": {
+    "id_short": "AssetInterfacesDescription",
+    "submodel_element": {
+      "interface_mqtt": {
+        "value": {
+          "title": {
+            "value": "Syntegon Stoppering System"
+          },
+          "endpoint_metadata": {
+            "value": {
+              "base": {
+                "value": "mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/Stoppering"
+              },
+              "content_type": {
+                "value": "application/json"
+              },
+              "security_definitions": {
+                "id_short": "SecurityDefinitions"
+              }
+            }
+          },
+          "interaction_metadata": {
+            "value": {
+              "actions": {
+                "value": {
+                  "Stoppering": {
+                    "value": {
+                      "key": {
+                        "value": "Stoppering"
+                      },
+                      "synchronous": {
+                        "value": "false"
+                      },
+                      "input_schema": {
+                        "value": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json"
+                      },
+                      "output_schema": {
+                        "value": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json"
+                      },
+                      "forms": {
+                        "value": {
+                          "href": {
+                            "value": "/CMD/Stoppering"
+                          },
+                          "op": {
+                            "value": "invokeAction"
+                          },
+                          "mqv_retain": {
+                            "value": "false"
+                          },
+                          "mqv_control_packet": {
+                            "value": "subscribe"
+                          },
+                          "mqv_qos": {
+                            "value": "2"
+                          },
+                          "response": {
+                            "value": {
+                              "href": {
+                                "value": "/DATA/Stoppering"
+                              },
+                              "content_type": {
+                                "value": "application/json"
+                              },
+                              "mqv_control_packet": {
+                                "value": "publish"
+                              },
+                              "mqv_retain": {
+                                "value": "false"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "Halt": {
+                    "value": {
+                      "key": {
+                        "value": "Halt"
+                      },
+                      "synchronous": {
+                        "value": "true"
+                      },
+                      "input_schema": {
+                        "value": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json"
+                      },
+                      "output_schema": {
+                        "value": ""
+                      },
+                      "forms": {
+                        "value": {
+                          "href": {
+                            "value": "/CMD/Halt"
+                          },
+                          "op": {
+                            "value": "invokeAction"
+                          },
+                          "mqv_retain": {
+                            "value": "false"
+                          },
+                          "mqv_control_packet": {
+                            "value": "subscribe"
+                          },
+                          "mqv_qos": {
+                            "value": "2"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "Occupy": {
+                    "value": {
+                      "key": {
+                        "value": "Occupy"
+                      },
+                      "synchronous": {
+                        "value": "true"
+                      },
+                      "input_schema": {
+                        "value": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json"
+                      },
+                      "output_schema": {
+                        "value": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json"
+                      },
+                      "forms": {
+                        "value": {
+                          "href": {
+                            "value": "/CMD/Occupy"
+                          },
+                          "op": {
+                            "value": "invokeAction"
+                          },
+                          "mqv_retain": {
+                            "value": "false"
+                          },
+                          "mqv_control_packet": {
+                            "value": "subscribe"
+                          },
+                          "mqv_qos": {
+                            "value": "2"
+                          },
+                          "response": {
+                            "value": {
+                              "href": {
+                                "value": "/DATA/Occupy"
+                              },
+                              "content_type": {
+                                "value": "application/json"
+                              },
+                              "mqv_control_packet": {
+                                "value": "publish"
+                              },
+                              "mqv_retain": {
+                                "value": "false"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "Release": {
+                    "value": {
+                      "key": {
+                        "value": "Release"
+                      },
+                      "synchronous": {
+                        "value": "true"
+                      },
+                      "input_schema": {
+                        "value": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json"
+                      },
+                      "output_schema": {
+                        "value": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json"
+                      },
+                      "forms": {
+                        "value": {
+                          "href": {
+                            "value": "/CMD/Release"
+                          },
+                          "op": {
+                            "value": "invokeAction"
+                          },
+                          "mqv_retain": {
+                            "value": "false"
+                          },
+                          "mqv_control_packet": {
+                            "value": "subscribe"
+                          },
+                          "mqv_qos": {
+                            "value": "2"
+                          },
+                          "response": {
+                            "value": {
+                              "href": {
+                                "value": "/DATA/Release"
+                              },
+                              "content_type": {
+                                "value": "application/json"
+                              },
+                              "mqv_control_packet": {
+                                "value": "publish"
+                              },
+                              "mqv_retain": {
+                                "value": "false"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "properties": {
+                "value": {
+                  "StationState": {
+                    "value": {
+                      "key": {
+                        "value": "StationState"
+                      },
+                      "output_schema": {
+                        "value": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/stationState.schema.json"
+                      },
+                      "forms": {
+                        "value": {
+                          "href": {
+                            "value": "/DATA/State"
+                          },
+                          "mqv_retain": {
+                            "value": "true"
+                          },
+                          "mqv_control_packet": {
+                            "value": "publish"
+                          },
+                          "mqv_qos": {
+                            "value": "0"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "variables": {
+    "id_short": "Variables",
+    "submodel_element": {
+      "PackMLState": {
+        "value": {
+          "semantic_id_param": {
+            "value": "https://w3id.org/2026/apex/semantic/state/operational"
+          },
+          "interface_reference": {
+            "value": {
+              "name": {
+                "value": "StationState"
+              },
+              "field": {
+                "value": "State"
+              }
+            }
+          }
+        }
+      },
+      "OccupationState": {
+        "value": {
+          "semantic_id_param": {
+            "value": "https://w3id.org/2026/apex/semantic/state/occupied"
+          },
+          "interface_reference": {
+            "value": {
+              "name": {
+                "value": "StationState"
+              },
+              "field": {
+                "value": "ProcessQueue"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "parameters": {
+    "id_short": "Parameters",
+    "submodel_element": {
+      "Location": {
+        "semantic_id": "https://w3id.org/2026/apex/semantic/location/label",
+        "value": {
+          "x": {
+            "value": "480.0"
+          },
+          "y": {
+            "value": "0.0"
+          },
+          "yaw": {
+            "value": "0.0"
+          }
+        }
+      }
+    }
+  },
+  "specific_asset_ids": {
+    "serialNumber": "SYN-SS-2024-001",
+    "location": "InnoLab, Nybrovej, AAU"
+  }
+}

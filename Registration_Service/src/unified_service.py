@@ -2,10 +2,10 @@
 Unified AAS Registration Service
 
 A single service that handles the complete registration workflow:
-1. Accepts YAML configurations (instead of full AAS files)
+1. Accepts JSON configurations matching the ResourceTypeAAS schema
 2. Generates topics.json for Operation Delegation Service
 3. Creates DataBridge configurations directly from config
-4. Generates AAS descriptions using the AAS generator
+4. Generates AAS descriptions via the Pydantic + BaSyx pipeline
 5. Posts AAS to BaSyx server
 
 This consolidates OperationDelegation config and RegistrationService functionality.
@@ -16,16 +16,14 @@ import json
 import logging
 import os
 import sys
-import tempfile
 from pathlib import Path
 from typing import Dict, List, Any, Optional
-import yaml
 
 from .config import BaSyxConfig
-from .config_parser import ConfigParser, parse_config_file
+from .config_parser import parse_config_file, parse_config_data, extract_operation_delegation_entry, extract_databridge_property_mappings
 from .topics_generator import TopicsGenerator
 from .databridge_from_config import DataBridgeFromConfig
-from .generate_aas import AASGenerator
+from .aas_idta.builder import build_from_dict  # replaces AASGenerator
 from .operation_delegation_api import update_topic_config
 from .core import (
     HTTPClient,
@@ -112,67 +110,52 @@ class UnifiedRegistrationService:
             basyx_url=self.basyx_config.get_internal_url_for_databridge()
         )
 
-    def register_from_yaml_config(
+    def register_from_config(
         self,
-        config_path: Optional[str] = None,
-        config_data: Optional[Dict[str, Any]] = None,
-        validate_aas: bool = True,
+        config_path: str,
         restart_services: bool = True
     ) -> bool:
         """
-        Register an asset from its YAML configuration.
+        Register an asset from its JSON configuration.
 
         This is the main entry point that performs the complete workflow:
-        1. Parse config
-        2. Update topics.json
-        3. Generate DataBridge configs
-        4. Generate AAS
-        5. Register with BaSyx
-        6. Restart services (optional)
+        1. Parse and validate JSON config against ResourceTypeAAS
+        2. Update Operation Delegation topics.json
+        3. Generate DataBridge configurations
+        4. Generate AAS via Pydantic → BaSyx pipeline
+        5. Register with BaSyx server
+        6. Restart DataBridge (optional)
 
         Args:
-            config_path: Path to YAML configuration file
-            config_data: Already parsed YAML config data (alternative to config_path)
-            validate_aas: Whether to validate generated AAS
-            restart_services: Whether to restart DataBridge and Operation Delegation containers
+            config_path: Path to JSON configuration file
+            restart_services: Whether to restart DataBridge container
 
         Returns:
             True if registration successful
         """
         try:
-            # Step 1: Parse configuration
-            if config_path:
-                logger.info(f"Loading configuration from {config_path}")
-                config = parse_config_file(config_path)
-                # Also load raw data for AAS generation
-                with open(config_path, 'r') as f:
-                    config_data = yaml.safe_load(f)
-            elif config_data:
-                config = ConfigParser(config_data=config_data)
-            else:
-                raise ValueError(
-                    "Either config_path or config_data must be provided")
+            # Step 1: Parse and validate configuration
+            logger.info(f"Loading configuration from {config_path}")
+            asset = parse_config_file(config_path)
 
-            system_id = config.system_id
+            system_id = asset.id_short
             logger.info(f"Registering asset: {system_id}")
 
             # Step 2: Update Operation Delegation config (in-memory + file)
             logger.info("Updating Operation Delegation topics...")
-            topics_entry = config.get_operation_delegation_entry()
-            # Update in-memory config (no restart needed!)
+            topics_entry = extract_operation_delegation_entry(asset)
             update_topic_config(system_id, topics_entry)
-            # Also write to file for persistence across restarts
-            self.topics_generator.add_from_config(config)
+            self.topics_generator.add_from_config(asset)
             self.topics_generator.save()
 
             # Step 3: Generate DataBridge configurations
             logger.info("Generating DataBridge configurations...")
-            self.databridge_generator.add_from_config(config)
+            self.databridge_generator.add_from_config(asset)
             self.databridge_generator.save_configs(str(self.databridge_dir))
 
-            # Step 4: Generate AAS using generate_aas.py
+            # Step 4: Generate AAS (validate + convert in one step)
             logger.info("Generating AAS description...")
-            aas_json = self._generate_aas(config_data, validate_aas)
+            aas_json = self._generate_aas(asset)
 
             if not aas_json:
                 logger.error("Failed to generate AAS")
@@ -187,7 +170,6 @@ class UnifiedRegistrationService:
                 return False
 
             # Step 6: Restart DataBridge (if requested)
-            # Note: Operation Delegation no longer needs restart - config is updated in-memory
             if restart_services:
                 logger.info("Restarting DataBridge...")
                 self._restart_databridge()
@@ -201,13 +183,60 @@ class UnifiedRegistrationService:
             logger.error(f"Registration failed: {e}", exc_info=True)
             return False
 
-    def register_multiple_configs(self, config_paths: List[str], validate_aas: bool = True) -> Dict[str, bool]:
+    def register_from_data(
+        self,
+        config_data: Dict[str, Any],
+        restart_services: bool = True
+    ) -> bool:
         """
-        Register multiple assets from YAML configurations.
+        Register an asset from an in-memory JSON config dict.
+
+        Used by the MQTT listener for dynamic registration.
 
         Args:
-            config_paths: List of paths to YAML config files
-            validate_aas: Whether to validate generated AAS
+            config_data: JSON config dict matching ResourceTypeAAS schema
+            restart_services: Whether to restart DataBridge container
+
+        Returns:
+            True if registration successful
+        """
+        try:
+            asset = parse_config_data(config_data)
+            system_id = asset.id_short
+            logger.info(f"Registering asset: {system_id}")
+
+            topics_entry = extract_operation_delegation_entry(asset)
+            update_topic_config(system_id, topics_entry)
+            self.topics_generator.add_from_config(asset)
+            self.topics_generator.save()
+
+            self.databridge_generator.add_from_config(asset)
+            self.databridge_generator.save_configs(str(self.databridge_dir))
+
+            aas_json = self._generate_aas(asset)
+            if not aas_json:
+                return False
+
+            success = self._register_aas_with_basyx(aas_json)
+            if not success:
+                return False
+
+            if restart_services:
+                self._restart_databridge()
+
+            logger.info(f"✓ Successfully registered {system_id}")
+            return True
+
+        except Exception as e:
+            logger.error(f"Registration failed: {e}", exc_info=True)
+            return False
+
+    def register_multiple_configs(self, config_paths: List[str]) -> Dict[str, bool]:
+        """
+        Register multiple assets from JSON configurations.
+
+        Args:
+            config_paths: List of paths to JSON config files
 
         Returns:
             Dict mapping config paths to success status
@@ -216,57 +245,35 @@ class UnifiedRegistrationService:
 
         for config_path in config_paths:
             try:
-                success = self.register_from_yaml_config(
-                    config_path=config_path, validate_aas=validate_aas)
+                success = self.register_from_config(config_path=config_path)
                 results[config_path] = success
             except Exception as e:
                 logger.error(f"Failed to register {config_path}: {e}")
                 results[config_path] = False
 
-        # Summary
         successful = sum(1 for s in results.values() if s)
         logger.info(f"Registered {successful}/{len(config_paths)} assets")
 
         return results
 
-    def _generate_aas(self, config_data: Dict[str, Any], validate: bool = True) -> Optional[Dict]:
+    def _generate_aas(self, asset) -> Optional[Dict]:
         """
-        Generate AAS JSON from configuration data.
+        Convert a validated ResourceTypeAAS instance to BaSyx JSON.
 
-        Uses the local AASGenerator module.
+        Args:
+            asset: Validated ResourceTypeAAS Pydantic instance
 
         Returns:
-            Generated AAS as dict, or None on failure
+            BaSyx-compatible JSON dict, or None on failure
         """
         try:
-            # Create a temporary config file
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
-                yaml.dump(config_data, f)
-                temp_config_path = f.name
+            from basyx.aas.adapter.json import json_serialization
 
-            try:
-                # Initialize generator (imported at module level)
-                generator = AASGenerator(
-                    temp_config_path,
-                    delegation_base_url=self.delegation_service_url
-                )
+            # Convert Pydantic model directly (no raw dict needed)
+            obj_store = build_from_dict(asset.model_dump())
 
-                # Generate AAS
-                system_id = list(config_data.keys())[0]
-                system_config = config_data[system_id]
-
-                obj_store, aas_dict = generator.generate_system(
-                    system_id, system_config, return_store=True)
-
-                # Validate if requested
-                if validate:
-                    generator.validate_generated_aas(obj_store, system_id)
-
-                return aas_dict
-
-            finally:
-                # Clean up temp file
-                Path(temp_config_path).unlink(missing_ok=True)
+            json_str = json_serialization.object_store_to_json(obj_store)
+            return json.loads(json_str)
 
         except Exception as e:
             logger.error(f"Failed to generate AAS: {e}", exc_info=True)

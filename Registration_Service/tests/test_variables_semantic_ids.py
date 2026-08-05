@@ -1,3 +1,11 @@
+"""Variables submodel — semantic_id propagation tests (aas_idta flow).
+
+Verifies that the Variables submodel built from a ResourceTypeAAS config
+carries the ontology semantic URI (``semantic_id_param``) on each variable,
+and that DataBridge property mappings propagate variables → MQTT topic /
+schema field.
+"""
+
 from __future__ import annotations
 
 import os
@@ -6,9 +14,19 @@ import sys
 from basyx.aas import model
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "third_party", "aas_pydantic")))
 
-from src.aas_generation import AASElementFactory, SchemaHandler, SemanticIdFactory
-from src.aas_generation.submodels.variables_builder import VariablesSubmodelBuilder
+from src.aas_idta.builder import build_from_json  # noqa: E402
+from src.config_parser import (  # noqa: E402
+    parse_config_file,
+    extract_databridge_property_mappings,
+    _extract_variables,
+)
+
+CONFIG_PATH = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "..", "AASDescriptions",
+                 "Resource", "configs", "syntegonStoppering.json")
+)
 
 
 def _find_collection(submodel: model.Submodel, id_short: str) -> model.SubmodelElementCollection:
@@ -33,52 +51,49 @@ def _semantic_id_value(ref: model.ExternalReference | None) -> str | None:
     return ref.key[0].value
 
 
-def test_variables_builder_propagates_semantic_id_to_selected_schema_field():
-    builder = VariablesSubmodelBuilder(
-        base_url="https://smartproductionlab.aau.dk",
-        semantic_factory=SemanticIdFactory(),
-        element_factory=AASElementFactory(),
-        schema_handler=SchemaHandler(),
-    )
+def _find_variables_submodel(store) -> model.Submodel:
+    for obj in store:
+        submodels = obj.submodel if hasattr(obj, "submodel") else [obj]
+        for sm in submodels:
+            if isinstance(sm, model.Submodel) and sm.id_short == "Variables":
+                return sm
+    raise AssertionError("Variables submodel not found in store")
 
-    config = {
-        "Variables": [
-            {
-                "key": "PackMLState",
-                "semanticId": "https://w3id.org/2026/apex/semantic/state/operational",
-                "InterfaceReference": {
-                    "Name": "StationState",
-                    "Field": "State",
-                },
-            },
-            {
-                "key": "PositionX",
-                "semanticId": "https://w3id.org/2026/apex/semantic/position/x",
-                "InterfaceReference": {
-                    "Name": "Location",
-                    "Field": "X",
-                },
-            },
-        ]
-    }
 
-    properties = [
-        {
-            "name": "StationState",
-            "schema": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/stationState.schema.json",
-        },
-        {
-            "name": "Location",
-            "schema": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/positionStamped.schema.json",
-        },
-    ]
+def test_variables_semantic_id_propagates_to_built_submodel():
+    store = build_from_json(CONFIG_PATH)
+    variables_sm = _find_variables_submodel(store)
 
-    submodel = builder.build(system_id="test-system", config=config, properties=properties)
+    packml = _find_collection(variables_sm, "PackMLState")
+    packml_semantic = _find_property(packml, "semantic_id_param")
+    assert packml_semantic.value == "https://w3id.org/2026/apex/semantic/state/operational"
 
-    packml = _find_collection(submodel, "PackMLState")
-    packml_state_property = _find_property(packml, "State")
-    assert _semantic_id_value(packml_state_property.semantic_id) == "https://w3id.org/2026/apex/semantic/state/operational"
+    occupation = _find_collection(variables_sm, "OccupationState")
+    occupation_semantic = _find_property(occupation, "semantic_id_param")
+    assert occupation_semantic.value == "https://w3id.org/2026/apex/semantic/state/occupied"
 
-    position_x = _find_collection(submodel, "PositionX")
-    x_property = _find_property(position_x, "X")
-    assert _semantic_id_value(x_property.semantic_id) == "https://w3id.org/2026/apex/semantic/position/x"
+
+def test_variables_extractor_returns_semantic_ids():
+    asset = parse_config_file(CONFIG_PATH)
+    variables = {v["name"]: v for v in _extract_variables(asset)}
+
+    assert set(variables) == {"PackMLState", "OccupationState"}
+    assert variables["PackMLState"]["semantic_id"] == "https://w3id.org/2026/apex/semantic/state/operational"
+    assert variables["PackMLState"]["interface_reference"] == "StationState"
+    assert variables["PackMLState"]["field"] == "State"
+    assert variables["OccupationState"]["semantic_id"] == "https://w3id.org/2026/apex/semantic/state/occupied"
+    assert variables["OccupationState"]["field"] == "ProcessQueue"
+
+
+def test_databridge_property_mappings_propagate_schema_and_field():
+    asset = parse_config_file(CONFIG_PATH)
+    mappings = extract_databridge_property_mappings(asset)
+
+    by_name = {m["variable_name"]: m for m in mappings}
+    assert "PackMLState" in by_name
+    assert by_name["PackMLState"]["mqtt_topic"].endswith("/DATA/State")
+    assert by_name["PackMLState"]["mqtt_field"] == "State"
+    assert by_name["PackMLState"]["schema_url"].endswith("stationState.schema.json")
+
+    assert "OccupationState" in by_name
+    assert by_name["OccupationState"]["mqtt_field"] == "ProcessQueue"

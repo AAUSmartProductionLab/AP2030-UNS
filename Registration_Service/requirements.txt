@@ -1,5 +1,5 @@
 # BaSyx Python SDK - Official SDK for Asset Administration Shell
-basyx-python-sdk>=1.0.0
+basyx-python-sdk>=2.0.1
 
 # Required for HTTP communication with BaSyx server
 requests>=2.31.0

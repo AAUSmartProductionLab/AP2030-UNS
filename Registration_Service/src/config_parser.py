@@ -1,513 +1,219 @@
 """
-YAML Configuration Parser for AAS Registration
+Asset Config — load JSON, validate against ResourceTypeAAS, extract runtime configs.
 
-Parses YAML configuration files (like planarShuttle1.yaml) and extracts
-information needed for:
-1. Operation Delegation topics.json
-2. DataBridge configuration
-3. AAS generation
+The Pydantic model IS the config.  JSON must match the ResourceTypeAAS schema.
+id_short and id are auto-injected post-validation via the id_injector module.
+
+Usage::
+
+    from src.config_parser import parse_config_file, extract_operation_delegation_entry
+
+    asset = parse_config_file("my_asset.json")
+    topics = extract_operation_delegation_entry(asset)
 """
 
-import logging
-from typing import Dict, List, Any, Optional, Tuple
-from urllib.parse import urlparse
-from pathlib import Path
-import yaml
+from __future__ import annotations
 
-from .aas_generation.schema_handler import SchemaHandler
-from .aas_generation.prefix_resolver import expand_prefixes_in_config
+import json
+import logging
+from typing import Dict, List, Any
+
+from .aas_idta.resource_template.asset import ResourceTypeAAS
+from .aas_idta.id_injector import inject_ids
 
 logger = logging.getLogger(__name__)
 
 
-class ConfigParser:
-    """
-    Parser for AAS YAML configuration files.
+# ═══════════════════════════════════════════════════════════════════════════════
+# Load & validate
+# ═══════════════════════════════════════════════════════════════════════════════
 
-    Extracts MQTT interface information, actions, properties, variables
-    directly from YAML configs without needing to generate/parse full AAS.
-    """
+def parse_config_file(path: str) -> ResourceTypeAAS:
+    """Load JSON config file, validate, inject IDs, return ResourceTypeAAS."""
+    with open(path) as f:
+        return parse_config_data(json.load(f))
 
-    def __init__(self, config_data: Dict[str, Any] = None, config_path: str = None):
-        """
-        Initialize with config data or path.
 
-        Args:
-            config_data: Parsed YAML config dictionary
-            config_path: Path to YAML config file
-        """
-        if config_path:
-            with open(config_path, 'r') as f:
-                config_data = yaml.safe_load(f)
+def parse_config_data(data: Dict[str, Any]) -> ResourceTypeAAS:
+    """Validate against ResourceTypeAAS, inject IDs, return model instance."""
+    asset = ResourceTypeAAS.model_validate(data)
+    inject_ids(asset)
+    return asset
 
-        if not config_data:
-            raise ValueError(
-                "Either config_data or config_path must be provided")
 
-        # Expand any prefixed IRIs (e.g. cssx:Transport) to full URIs
-        config_data = expand_prefixes_in_config(config_data)
+# ═══════════════════════════════════════════════════════════════════════════════
+# Extraction — read from typed Pydantic model fields
+# ═══════════════════════════════════════════════════════════════════════════════
 
-        # Config contains a single system with the system ID as the top-level key
-        self.system_id = list(config_data.keys())[0]
-        self.config = config_data[self.system_id]
-
-        # Initialize schema handler for schema-driven field extraction
-        self._schema_handler = SchemaHandler()
-
-    @property
-    def id_short(self) -> str:
-        """Get the idShort of the asset"""
-        return self.config.get('idShort', self.system_id)
-
-    @property
-    def aas_id(self) -> str:
-        """Get the AAS ID"""
-        return self.config.get('id', '')
-
-    @property
-    def global_asset_id(self) -> str:
-        """Get the global asset ID"""
-        return self.config.get('globalAssetId', '')
-
-    @staticmethod
-    def _iter_named_entries(section: Any, fallback_prefix: str) -> List[Tuple[str, Dict[str, Any]]]:
-        """Return normalized (name, config) pairs from dict or list declarations."""
-        entries: List[Tuple[str, Dict[str, Any]]] = []
-
-        if isinstance(section, dict):
-            for name, cfg in section.items():
-                if isinstance(cfg, dict):
-                    entries.append((str(name), cfg))
-            return entries
-
-        if isinstance(section, list):
-            for idx, item in enumerate(section):
-                if not isinstance(item, dict):
-                    continue
-                name = item.get('key') or item.get('name') or f"{fallback_prefix}_{idx + 1}"
-                entries.append((str(name), item))
-
-        return entries
-
-    def get_mqtt_endpoint(self) -> Dict[str, Any]:
-        """
-        Extract MQTT endpoint information from config.
-
-        Returns:
-            Dict with keys: broker_host, broker_port, base_topic
-        """
-        interface_config = self.config.get(
-            'AssetInterfacesDescription', {}) or {}
-        mqtt_config = interface_config.get('InterfaceMQTT', {}) or {}
-        endpoint_config = mqtt_config.get('EndpointMetadata', {}) or {}
-
-        result = {
-            'broker_host': None,
-            'broker_port': 1883,
-            'base_topic': None,
-            'broker_url': None
-        }
-
-        base_url = endpoint_config.get('base', '')
-        if base_url:
-            result['broker_url'] = base_url
-
-            # Parse mqtt://host:port/base/topic
-            if base_url.startswith('mqtt://'):
-                base_url = base_url[7:]  # Remove mqtt://
-
-            if '/' in base_url:
-                host_port, base_topic = base_url.split('/', 1)
-                result['base_topic'] = base_topic.rstrip('/')
-
-                if ':' in host_port:
-                    host, port = host_port.split(':', 1)
-                    result['broker_host'] = host
-                    result['broker_port'] = int(port)
-                else:
-                    result['broker_host'] = host_port
+def extract_mqtt_endpoint(asset: ResourceTypeAAS) -> Dict[str, Any]:
+    aid = asset.asset_interfaces_description
+    if aid is None:
+        return {"broker_host": None, "broker_port": 1883, "base_topic": None}
+    iface = _g(aid.submodel_element, "interface_mqtt")
+    if iface is None:
+        return {"broker_host": None, "broker_port": 1883, "base_topic": None}
+    ep = _g(iface.value, "endpoint_metadata")
+    if ep is None:
+        return {"broker_host": None, "broker_port": 1883, "base_topic": None}
+    base_prop = _g(ep.value, "base")
+    base_val = _v(base_prop)
+    result = {"broker_host": None, "broker_port": 1883, "base_topic": None, "broker_url": base_val}
+    if base_val:
+        url = base_val
+        if url.startswith("mqtt://"):
+            url = url[7:]
+        if "/" in url:
+            host_port, topic = url.split("/", 1)
+            result["base_topic"] = topic.rstrip("/")
+            if ":" in host_port:
+                h, p = host_port.split(":", 1)
+                result["broker_host"] = h
+                result["broker_port"] = int(p)
             else:
-                result['broker_host'] = base_url
+                result["broker_host"] = host_port
+        else:
+            result["broker_host"] = url
+    return result
 
-        return result
 
-    def get_actions(self) -> List[Dict[str, Any]]:
-        """
-        Extract action definitions from config.
+def _aid_actions(asset: ResourceTypeAAS):
+    aid = asset.asset_interfaces_description
+    if aid is None:
+        return None, None
+    iface = _g(aid.submodel_element, "interface_mqtt")
+    if iface is None:
+        return None, None
+    imd = _g(iface.value, "interaction_metadata")
+    if imd is None:
+        return None, None
+    ep = extract_mqtt_endpoint(asset)
+    return imd, ep
 
-        Returns:
-            List of action dictionaries with keys:
-            - name: Action name
-            - command_topic: Full MQTT command topic
-            - response_topic: Full MQTT response topic
-            - input_schema: Input schema URL
-            - output_schema: Output schema URL
-            - synchronous: Whether action is synchronous
-        """
-        interface_config = self.config.get(
-            'AssetInterfacesDescription', {}) or {}
-        mqtt_config = interface_config.get('InterfaceMQTT', {}) or {}
-        interaction_metadata = mqtt_config.get('InteractionMetadata', {}) or {}
-        actions_cfg = interaction_metadata.get('actions', {}) or {}
 
-        endpoint = self.get_mqtt_endpoint()
-        base_topic = endpoint.get('base_topic', '')
+def extract_actions(asset: ResourceTypeAAS) -> List[Dict[str, Any]]:
+    imd, ep = _aid_actions(asset)
+    if imd is None:
+        return []
+    actions_container = _g(imd.value, "actions")
+    if actions_container is None:
+        return []
+    base_topic = ep.get("base_topic", "")
+    actions = []
+    for a in actions_container.value.values():
+        key = _v(_g(a.value, "key")) or "action"
+        forms = _g(a.value, "forms")
+        resp = _g(forms.value, "response") if forms else None
+        cmd_href = _v(_g(forms.value, "href")) if forms else f"/CMD/{key}"
+        cmd_topic = f"{base_topic}/{cmd_href.lstrip('/')}" if base_topic else cmd_href.lstrip("/")
+        has_resp = resp is not None or bool(_v(_g(a.value, "output_schema")))
+        resp_topic = None
+        if has_resp and resp:
+            resp_href = _v(_g(resp.value, "href")) if resp else f"/DATA/{key}"
+            resp_topic = f"{base_topic}/{resp_href.lstrip('/')}" if base_topic else resp_href.lstrip("/")
+        sync_str = (_v(_g(a.value, "synchronous")) or "true").lower()
+        actions.append({
+            "name": key, "key": key, "title": _v(_g(a.value, "title")) or key,
+            "command_topic": cmd_topic, "response_topic": resp_topic,
+            "input_schema": _v(_g(a.value, "input_schema")), "output_schema": _v(_g(a.value, "output_schema")),
+            "has_response": has_resp, "is_one_way": not has_resp,
+            "synchronous": sync_str == "true",
+            "qos": int(_v(_g(forms.value, "mqv_qos"))) if (forms and _v(_g(forms.value, "mqv_qos"))) else 2,
+            "retain": (_v(_g(forms.value, "mqv_retain")) if forms else "false") == "true",
+        })
+    return actions
 
-        actions = []
-        for action_name, action_config in self._iter_named_entries(actions_cfg, fallback_prefix='Action'):
-            forms = action_config.get('forms', {}) or {}
-            response_forms = forms.get('response', {}) or {}
 
-            # Build command topic
-            cmd_href = forms.get('href', f'/CMD/{action_name}')
-            cmd_suffix = cmd_href.lstrip('/')
-            command_topic = f"{base_topic}/{cmd_suffix}" if base_topic else cmd_suffix
+def extract_properties(asset: ResourceTypeAAS) -> List[Dict[str, Any]]:
+    imd, ep = _aid_actions(asset)
+    if imd is None:
+        return []
+    props_container = _g(imd.value, "properties")
+    if props_container is None:
+        return []
+    base_topic = ep.get("base_topic", "")
+    props = []
+    for p in props_container.value.values():
+        key = _v(_g(p.value, "key")) or "property"
+        forms = _g(p.value, "forms")
+        href = _v(_g(forms.value, "href")) if forms else f"/DATA/{key}"
+        topic = f"{base_topic}/{href.lstrip('/')}" if base_topic else href.lstrip("/")
+        props.append({
+            "name": key, "key": key, "title": _v(_g(p.value, "title")) or key,
+            "topic": topic, "schema": _v(_g(p.value, "output_schema")),
+            "qos": int(_v(_g(forms.value, "mqv_qos"))) if (forms and _v(_g(forms.value, "mqv_qos"))) else 0,
+            "retain": (_v(_g(forms.value, "mqv_retain")) if forms else "false") == "true",
+        })
+    return props
 
-            # Check if this action has a response (not one-way)
-            # An action has a response if it has a 'response' form OR an 'output' schema
-            has_response = bool(response_forms) or bool(
-                action_config.get('output'))
 
-            # Build response topic only if there's a response
-            response_topic = None
-            if has_response:
-                resp_href = response_forms.get('href', f'/DATA/{action_name}')
-                resp_suffix = resp_href.lstrip('/')
-                response_topic = f"{base_topic}/{resp_suffix}" if base_topic else resp_suffix
+def extract_operation_delegation_entry(asset: ResourceTypeAAS) -> Dict[str, Any]:
+    ep = extract_mqtt_endpoint(asset)
+    actions = extract_actions(asset)
+    skills = {}
+    for a in actions:
+        entry = {"command_topic": a["command_topic"]}
+        if a.get("input_schema"):
+            entry["input_schema"] = a["input_schema"]
+        if not a["is_one_way"]:
+            entry["response_topic"] = a["response_topic"]
+            entry["synchronous"] = a["synchronous"]
+        if a.get("qos"):
+            entry["qos"] = a["qos"]
+        skills[a["name"]] = entry
+    return {
+        "base_topic": ep.get("base_topic", ""),
+        "submodel_id": f"{asset.id}/submodels/AssetInterfacesDescription" if asset.id else "",
+        "skills": skills,
+    }
 
-            # Determine if synchronous (only relevant for actions with responses)
-            # Default is 'true' for synchronous if not specified
-            synchronous_str = str(action_config.get(
-                'synchronous', 'true')).lower()
-            is_synchronous = synchronous_str == 'true'
 
-            actions.append({
-                'name': action_name,
-                'key': action_config.get('key', action_name),
-                'title': action_config.get('title', action_name),
-                'command_topic': command_topic,
-                'response_topic': response_topic,
-                'input_schema': action_config.get('input'),
-                'output_schema': action_config.get('output'),
-                'has_response': has_response,
-                'is_one_way': not has_response,
-                'synchronous': is_synchronous,
-                'qos': int(forms.get('mqv_qos', 2)),
-                'retain': str(forms.get('mqv_retain', 'false')).lower() == 'true'
-            })
-
-        return actions
-
-    def get_properties(self) -> List[Dict[str, Any]]:
-        """
-        Extract property definitions from config.
-
-        Returns:
-            List of property dictionaries with keys:
-            - name: Property name
-            - topic: Full MQTT topic
-            - schema: Schema URL
-        """
-        interface_config = self.config.get(
-            'AssetInterfacesDescription', {}) or {}
-        mqtt_config = interface_config.get('InterfaceMQTT', {}) or {}
-        interaction_metadata = mqtt_config.get('InteractionMetadata', {}) or {}
-        properties_cfg = interaction_metadata.get('properties', {}) or {}
-
-        endpoint = self.get_mqtt_endpoint()
-        base_topic = endpoint.get('base_topic', '')
-
-        properties = []
-        for prop_name, prop_config in self._iter_named_entries(properties_cfg, fallback_prefix='Property'):
-            forms = prop_config.get('forms', {}) or {}
-
-            # Build full topic
-            href = forms.get('href', f'/DATA/{prop_name}')
-            suffix = href.lstrip('/')
-            topic = f"{base_topic}/{suffix}" if base_topic else suffix
-
-            properties.append({
-                'name': prop_name,
-                'key': prop_config.get('key', prop_name),
-                'title': prop_config.get('title', prop_name),
-                'topic': topic,
-                'schema': prop_config.get('output'),
-                'qos': int(forms.get('mqv_qos', 0)),
-                'retain': str(forms.get('mqv_retain', 'false')).lower() == 'true'
-            })
-
-        return properties
-
-    def get_variables(self) -> List[Dict[str, Any]]:
-        """
-        Extract variable definitions from config.
-
-        Returns:
-            List of variable dictionaries with interface references
-        """
-        variables_cfg = self.config.get('Variables', {}) or {}
-
-        variables = []
-        for var_name, var_config in self._iter_named_entries(variables_cfg, fallback_prefix='Variable'):
-            interface_ref_raw = var_config.get('InterfaceReference') or var_config.get('interface_reference')
-            # Handle InterfaceReference as either a string or a dict with Name/Field
-            if isinstance(interface_ref_raw, dict):
-                interface_ref = interface_ref_raw.get('Name') or interface_ref_raw.get('name')
-                field = interface_ref_raw.get('Field') or interface_ref_raw.get('field') or var_config.get('Field') or var_config.get('field')
-            else:
-                interface_ref = interface_ref_raw
-                field = var_config.get('Field') or var_config.get('field')
-
-            variables.append({
-                'name': var_name,
-                'semantic_id': var_config.get('semantic_id') or var_config.get('semanticId', ''),
-                'interface_reference': interface_ref,
-                # Optional: specific field from the MQTT message
-                'field': field,
-                'values': {k: v for k, v in var_config.items()
-                           if k not in ['semanticId', 'semantic_id', 'InterfaceReference', 'interface_reference', 'Field', 'field', 'key', 'name']}
-            })
-
-        return variables
-
-    def get_variables_with_schema_fields(self) -> List[Dict[str, Any]]:
-        """
-        Extract variable definitions with field names derived from MQTT schemas.
-
-        This method resolves InterfaceReferences to their property schemas
-        and uses the schema to determine the field names and types.
-        The MQTT schema is the single source of truth for field definitions.
-
-        Returns:
-            List of variable dictionaries with schema-derived fields:
-            - name: Variable name
-            - semantic_id: Semantic ID for the variable
-            - interface_reference: Name of the referenced interface property
-            - fields: Dict of field_name -> {type, default_value, description}
-        """
-        variables = self.get_variables()
-        properties = self.get_properties()
-
-        # Build property lookup by name
-        property_lookup = {p['name']: p for p in properties}
-
-        enriched_variables = []
-        for var in variables:
-            interface_ref = var.get('interface_reference')
-            # Optional: specific field from schema
-            specific_field = var.get('field')
-
-            # Start with config-defined values as defaults
-            fields = var.get('values', {})
-
-            # If there's an interface reference with a schema, derive fields from it
-            if interface_ref and interface_ref in property_lookup:
-                prop = property_lookup[interface_ref]
-                schema_url = prop.get('schema')
-
-                if schema_url:
-                    # Get field definitions from schema
-                    schema_fields = self._schema_handler.extract_data_fields(
-                        schema_url)
-
-                    # If a specific field is specified, only include that field
-                    if specific_field and specific_field in schema_fields:
-                        field_def = schema_fields[specific_field]
-                        fields = {
-                            specific_field: {
-                                'type': field_def['type'],
-                                'aas_type': field_def['aas_type'],
-                                'default_value': var.get('values', {}).get(
-                                    specific_field, field_def['default_value']
-                                ),
-                                'description': field_def.get('description', '')
-                            }
-                        }
-                    else:
-                        # Use all schema fields, with config values as overrides for defaults
-                        fields = {}
-                        for field_name, field_def in schema_fields.items():
-                            fields[field_name] = {
-                                'type': field_def['type'],
-                                'aas_type': field_def['aas_type'],
-                                'default_value': var.get('values', {}).get(
-                                    field_name, field_def['default_value']
-                                ),
-                                'description': field_def.get('description', '')
-                            }
-
-            enriched_variables.append({
-                'name': var['name'],
-                'semantic_id': var.get('semantic_id', ''),
-                'interface_reference': interface_ref,
-                'field': specific_field,
-                'fields': fields
-            })
-
-        return enriched_variables
-
-    def get_skills(self) -> Dict[str, Dict[str, Any]]:
-        """
-        Extract skill definitions from config.
-
-        Returns:
-            Dict mapping skill names to their configurations
-        """
-        return self.config.get('Skills', {}) or {}
-
-    def get_capabilities(self) -> List[Dict[str, Any]]:
-        """
-        Extract capability definitions from config.
-
-        Returns:
-            List of capability dictionaries
-        """
-        capabilities_cfg = self.config.get('Capabilities', {}) or {}
-
-        capabilities = []
-        for cap_name, cap_config in self._iter_named_entries(capabilities_cfg, fallback_prefix='Capability'):
-            capabilities.append({
-                'name': cap_name,
-                'realized_by': cap_config.get('realizedBy') or cap_config.get('realized_by')
-            })
-
-        return capabilities
-
-    def get_operation_delegation_entry(self) -> Dict[str, Any]:
-        """
-        Generate topics.json entry for Operation Delegation Service.
-
-        Operation types:
-        - One-way: No response expected (fire-and-forget). Only command_topic.
-        - Synchronous: Wait for single response. Has command_topic and response_topic.
-        - Asynchronous: Updates StateMachine property. Has synchronous=false.
-
-        Returns:
-            Dict in the format expected by topics.json
-        """
-        endpoint = self.get_mqtt_endpoint()
-        actions = self.get_actions()
-
-        skills = {}
-        for action in actions:
-            skill_entry = {
-                'command_topic': action['command_topic']
-            }
-
-            # Add input schema for automatic field mapping detection
-            if action.get('input_schema'):
-                skill_entry['input_schema'] = action['input_schema']
-
-            # Only include response_topic if action expects a response
-            if action.get('has_response') and action.get('response_topic'):
-                skill_entry['response_topic'] = action['response_topic']
-                
-                # Add output schema for automatic field mapping detection
-                if action.get('output_schema'):
-                    skill_entry['output_schema'] = action['output_schema']
-
-                # Include synchronous flag for async operations (synchronous=false)
-                # The operation delegation service uses this to update StateMachine
-                # Only applies to operations with responses (not one-way)
-                if not action.get('synchronous', True):
-                    skill_entry['synchronous'] = False
-
-            skills[action['name']] = skill_entry
-
-        # Build submodel_id for async state updates
-        # Format must match skills_builder.py: {base_url}/submodels/instances/{system_id}/Skills
-        aas_id = self.id_short
-        submodel_id = f"https://smartproductionlab.aau.dk/submodels/instances/{aas_id}/Skills"
-
-        return {
-            'base_topic': endpoint.get('base_topic', ''),
-            'submodel_id': submodel_id,
-            'skills': skills
-        }
-    
-    def get_databridge_property_mappings(self) -> List[Dict[str, Any]]:
-        """
-        Generate property mappings for DataBridge configuration.
-
-        Links Variables to their InterfaceReference properties for
-        MQTT -> AAS synchronization. Field names are derived from the
-        MQTT schema - the single source of truth.
-
-        When a Variable specifies a 'Field', only that field is mapped.
-        This allows multiple Variables to reference the same MQTT property
-        but extract different fields from the message (e.g., 'State' and 
-        'ProcessQueue' from a single stationState message).
-
-        Returns:
-            List of mapping dictionaries with:
-            - variable_name: Name of the variable in Variables submodel
-            - property_name: Name of the interface property
-            - mqtt_topic: Full MQTT topic for the property
-            - schema: Schema URL for the property data
-            - value_fields: List of field names to extract (may be subset if Field specified)
-        """
-        variables = self.get_variables()
-        properties = self.get_properties()
-
-        # Build property lookup by name
-        property_lookup = {p['name']: p for p in properties}
-
-        mappings = []
-        for var in variables:
-            interface_ref = var.get('interface_reference')
-            if interface_ref and interface_ref in property_lookup:
-                prop = property_lookup[interface_ref]
-                schema_url = prop.get('schema')
-
-                # Check if variable specifies a specific field to extract
-                specific_field = var.get('field')
-
-                if specific_field:
-                    # Use only the specified field
-                    value_fields = [specific_field]
-                elif schema_url:
-                    # Extract all field names from the MQTT schema (single source of truth)
-                    data_fields = self._schema_handler.extract_data_fields(
-                        schema_url)
-                    value_fields = list(data_fields.keys())
-                else:
-                    # Fallback: use fields defined in YAML config
-                    value_fields = list(var.get('values', {}).keys())
-
-                if value_fields:  # Only add mapping if there are fields to map
+def extract_databridge_property_mappings(asset: ResourceTypeAAS) -> List[Dict[str, Any]]:
+    properties = extract_properties(asset)
+    variables = _extract_variables(asset)
+    mappings = []
+    for var in variables:
+        iface_name = var.get("interface_reference")
+        field = var.get("field")
+        if iface_name:
+            for prop in properties:
+                if prop["name"] == iface_name:
                     mappings.append({
-                        'variable_name': var['name'],
-                        'property_name': prop['name'],
-                        'mqtt_topic': prop['topic'],
-                        'schema': schema_url,
-                        'value_fields': value_fields,
-                        'qos': prop.get('qos', 0)
+                        "variable_name": var["name"],
+                        "mqtt_topic": prop["topic"],
+                        "mqtt_field": field,
+                        "value_fields": [field] if field else [],
+                        "schema_url": prop.get("schema"),
                     })
-
-        return mappings
-
-
-def parse_config_file(config_path: str) -> ConfigParser:
-    """
-    Convenience function to parse a YAML config file.
-
-    Args:
-        config_path: Path to YAML configuration file
-
-    Returns:
-        ConfigParser instance
-    """
-    return ConfigParser(config_path=config_path)
+                    break
+    return mappings
 
 
-def parse_config_data(config_data: Dict[str, Any]) -> ConfigParser:
-    """
-    Convenience function to parse YAML config data.
+def _extract_variables(asset: ResourceTypeAAS) -> List[Dict[str, Any]]:
+    vm = asset.variables
+    if vm is None:
+        return []
+    result = []
+    for v in vm.submodel_element.values():
+        iface = _g(v.value, "interface_reference")
+        result.append({
+            "name": v.id_short,
+            "semantic_id": _v(_g(v.value, "semantic_id_param")) if v.value else "",
+            "interface_reference": _v(_g(iface.value, "name")) if iface else None,
+            "field": _v(_g(iface.value, "field")) if iface else None,
+        })
+    return result
 
-    Args:
-        config_data: Parsed YAML dictionary
 
-    Returns:
-        ConfigParser instance
-    """
-    return ConfigParser(config_data=config_data)
+def _g(obj, name, default=None):
+    """Read a child from a values model (attribute) or Dict container (key)."""
+    if isinstance(obj, dict):
+        return obj.get(name, default)
+    return getattr(obj, name, default)
+
+
+def _v(prop) -> str:
+    """Safely extract .value from a Property, returning '' for None."""
+    try:
+        return prop.value
+    except AttributeError:
+        return ""

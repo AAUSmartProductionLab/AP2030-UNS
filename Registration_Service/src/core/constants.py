@@ -8,7 +8,8 @@ from enum import Enum
 from typing import Final
 import os
 
-from ..aas_generation.semantic_ids import SemanticIdCatalog
+# SemanticIdCatalog removed — semantic IDs are inline on Pydantic models.
+# See src/aas_idta/ for the IDTA-compliant replacements.
 
 
 # Default network configuration
@@ -92,23 +93,23 @@ class BaSyxPorts:
 class SemanticIds:
     """Common semantic IDs."""
     # IDTA submodels
-    ASSET_INTERFACES: Final[str] = SemanticIdCatalog.IDTA_ASSET_INTERFACES
-    NAMEPLATE: Final[str] = SemanticIdCatalog.IDTA_NAMEPLATE
-    TECHNICAL_DATA: Final[str] = SemanticIdCatalog.IDTA_TECHNICAL_DATA
-    HIERARCHICAL_STRUCTURES_1_0: Final[str] = SemanticIdCatalog.IDTA_HIERARCHICAL_STRUCTURES_1_0
-    HIERARCHICAL_STRUCTURES_1_1: Final[str] = SemanticIdCatalog.IDTA_HIERARCHICAL_STRUCTURES_1_1
-    CARBON_FOOTPRINT: Final[str] = SemanticIdCatalog.IDTA_CARBON_FOOTPRINT
+    ASSET_INTERFACES: Final[str] = "https://admin-shell.io/idta/AssetInterfacesDescription/1/0"
+    NAMEPLATE: Final[str] = "https://admin-shell.io/idta/nameplate/3/0/Nameplate"
+    TECHNICAL_DATA: Final[str] = "https://admin-shell.io/ZVEI/TechnicalData/Submodel/1/2"
+    HIERARCHICAL_STRUCTURES_1_0: Final[str] = "https://admin-shell.io/idta/HierarchicalStructures/1/0/Submodel"
+    HIERARCHICAL_STRUCTURES_1_1: Final[str] = "https://admin-shell.io/idta/HierarchicalStructures/1/1/Submodel"
+    CARBON_FOOTPRINT: Final[str] = "https://admin-shell.io/idta/CarbonFootprint/0/9/ProductCarbonFootprint"
 
     # Custom submodels
-    VARIABLES: Final[str] = SemanticIdCatalog.LEGACY_VARIABLES_SUBMODEL
-    PARAMETERS: Final[str] = SemanticIdCatalog.LEGACY_PARAMETERS_SUBMODEL
-    SKILLS: Final[str] = SemanticIdCatalog.LEGACY_SKILLS_SUBMODEL
-    CAPABILITIES: Final[str] = SemanticIdCatalog.LEGACY_CAPABILITIES_SUBMODEL
+    VARIABLES: Final[str] = "https://smartproductionlab.aau.dk/submodels/Variables/1/0"
+    PARAMETERS: Final[str] = "https://smartproductionlab.aau.dk/submodels/Parameters/1/0"
+    SKILLS: Final[str] = "https://admin-shell.io/idta/ControlComponent/Instance/2/0"
+    CAPABILITIES: Final[str] = "https://admin-shell.io/idta/SubmodelTemplate/CapabilityDescription/1/0"
 
     # W3C Thing Description
-    WOT_ACTION: Final[str] = SemanticIdCatalog.WOT_ACTION
-    WOT_PROPERTY: Final[str] = SemanticIdCatalog.WOT_PROPERTY
-    WOT_INTERACTION: Final[str] = SemanticIdCatalog.WOT_INTERACTION
+    WOT_ACTION: Final[str] = "https://www.w3.org/2019/wot/td#ActionAffordance"
+    WOT_PROPERTY: Final[str] = "https://www.w3.org/2019/wot/td#PropertyAffordance"
+    WOT_INTERACTION: Final[str] = "https://www.w3.org/2019/wot/td#InteractionAffordance"
 
 
 class DataTypes:

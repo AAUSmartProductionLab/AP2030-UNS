@@ -11,7 +11,7 @@ import os
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 
-from .config_parser import ConfigParser, parse_config_file
+from .config_parser import parse_config_file, parse_config_data, extract_operation_delegation_entry
 
 logger = logging.getLogger(__name__)
 
@@ -55,19 +55,19 @@ class TopicsGenerator:
                 logger.warning(f"Could not load existing topics.json: {e}")
                 self.topics = {}
     
-    def add_from_config(self, config: ConfigParser) -> bool:
+    def add_from_config(self, config) -> bool:
         """
         Add/update topics from a parsed configuration.
         
         Args:
-            config: Parsed ConfigParser instance
+            config: Parsed config instance
             
         Returns:
             True if successful
         """
         try:
-            asset_id = config.system_id
-            entry = config.get_operation_delegation_entry()
+            asset_id = config.id_short
+            entry = extract_operation_delegation_entry(config)
             
             # Only add if there are skills (actions)
             if entry.get('skills'):
@@ -110,7 +110,7 @@ class TopicsGenerator:
             True if successful
         """
         try:
-            config = ConfigParser(config_data=config_data)
+            config = config(config_data=config_data)
             return self.add_from_config(config)
         except Exception as e:
             logger.error(f"Failed to process config data: {e}")

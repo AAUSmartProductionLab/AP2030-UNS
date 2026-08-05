@@ -3,16 +3,16 @@
 Unified AAS Registration Service - CLI Entry Point
 
 This service automatically:
-1. Parses YAML configuration files to extract asset definitions
+1. Parses JSON configuration files matching the ResourceTypeAAS schema
 2. Generates Operation Delegation topics.json
 3. Generates DataBridge configurations directly from config
-4. Generates AAS descriptions using the AAS generator
+4. Generates AAS descriptions via the Pydantic + BaSyx pipeline
 5. Registers AAS and submodels with BaSyx server
 6. Restarts services to apply changes
 
 Usage:
-    # Register from YAML config (preferred)
-    python unified-registration-service.py register-config path/to/config.yaml
+    # Register from JSON config
+    python unified-registration-service.py register-config path/to/config.json
     
     # Register all configs from a directory
     python unified-registration-service.py register-dir path/to/configs/
@@ -106,13 +106,11 @@ Examples:
     subparsers = parser.add_subparsers(
         dest='command', help='Command to execute')
 
-    # Register from YAML config (primary command)
+    # Register from JSON config (primary command)
     config_parser = subparsers.add_parser('register-config',
-                                          help='Register asset from YAML config file')
+                                          help='Register asset from JSON config file')
     config_parser.add_argument('config_file', type=str,
-                               help='Path to YAML configuration file')
-    config_parser.add_argument('--no-validate', action='store_true',
-                               help='Skip AAS validation')
+                               help='Path to JSON configuration file')
     config_parser.add_argument('--databridge-name', default=ContainerNames.DATABRIDGE,
                                help='DataBridge container name')
     config_parser.add_argument('--delegation-container', default=ContainerNames.OPERATION_DELEGATION,
@@ -122,9 +120,7 @@ Examples:
     dir_parser = subparsers.add_parser('register-dir',
                                        help='Register all assets from config directory')
     dir_parser.add_argument('config_dir', type=str,
-                            help='Directory containing YAML config files')
-    dir_parser.add_argument('--no-validate', action='store_true',
-                            help='Skip AAS validation')
+                            help='Directory containing JSON config files')
     dir_parser.add_argument('--databridge-name', default=ContainerNames.DATABRIDGE,
                             help='DataBridge container name')
 
@@ -132,7 +128,7 @@ Examples:
     topics_parser = subparsers.add_parser('generate-topics',
                                           help='Generate Operation Delegation topics.json')
     topics_parser.add_argument('config_dir', type=str,
-                               help='Directory containing YAML config files')
+                               help='Directory containing JSON config files')
     topics_parser.add_argument('--output', type=str,
                                help='Output path for topics.json')
 
@@ -140,7 +136,7 @@ Examples:
     databridge_parser = subparsers.add_parser('generate-databridge',
                                               help='Generate DataBridge configurations')
     databridge_parser.add_argument('config_dir', type=str,
-                                   help='Directory containing YAML config files')
+                                   help='Directory containing JSON config files')
     databridge_parser.add_argument('--output-dir', type=str, default='../databridge',
                                    help='Output directory for DataBridge configs')
 
@@ -182,7 +178,7 @@ Examples:
 
         # Execute command
         if args.command == 'register-config':
-            # Register from YAML config
+            # Register from JSON config
             config_path = Path(args.config_file)
             if not config_path.exists():
                 logger.error(f"Config file not found: {config_path}")
@@ -198,10 +194,7 @@ Examples:
             )
 
             logger.info(f"Registering from config: {config_path}")
-            success = service.register_from_yaml_config(
-                config_path=str(config_path),
-                validate_aas=not args.no_validate
-            )
+            success = service.register_from_config(config_path=str(config_path))
 
             if success:
                 logger.info("✓ Registration completed successfully")
@@ -217,10 +210,9 @@ Examples:
                 logger.error(f"Config directory not found: {config_dir}")
                 sys.exit(1)
 
-            config_paths = list(config_dir.glob('*.yaml')) + \
-                list(config_dir.glob('*.yml'))
+            config_paths = list(config_dir.glob('*.json'))
             if not config_paths:
-                logger.error(f"No YAML files found in {config_dir}")
+                logger.error(f"No JSON files found in {config_dir}")
                 sys.exit(1)
 
             service = UnifiedRegistrationService(
@@ -234,8 +226,7 @@ Examples:
             logger.info(
                 f"Registering {len(config_paths)} configs from {config_dir}")
             results = service.register_multiple_configs(
-                [str(p) for p in config_paths],
-                validate_aas=not args.no_validate
+                [str(p) for p in config_paths]
             )
 
             successful = sum(1 for s in results.values() if s)

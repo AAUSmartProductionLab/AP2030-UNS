@@ -16,7 +16,7 @@ import os
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Tuple
 
-from .config_parser import ConfigParser, parse_config_file
+from .config_parser import parse_config_file, extract_databridge_property_mappings, extract_mqtt_endpoint, extract_properties
 from .core.constants import DEFAULT_MQTT_BROKER, DEFAULT_MQTT_PORT, DEFAULT_BASYX_INTERNAL_URL, SemanticIds
 from .utils import encode_aas_id, sanitize_id, topic_to_id
 
@@ -136,19 +136,19 @@ class DataBridgeFromConfig:
             except Exception as e:
                 logger.warning(f"Could not load existing routes: {e}")
 
-    def add_from_config(self, config: ConfigParser) -> Dict[str, int]:
+    def add_from_config(self, config) -> Dict[str, int]:
         """
         Add DataBridge configurations from a parsed config.
 
         Args:
-            config: Parsed ConfigParser instance
+            config: Parsed AssetConfig instance
 
         Returns:
             Dict with counts of added configurations
         """
-        system_id = config.system_id
-        endpoint = config.get_mqtt_endpoint()
-        mappings = config.get_databridge_property_mappings()
+        system_id = config.id_short
+        endpoint = extract_mqtt_endpoint(config)
+        mappings = extract_databridge_property_mappings(config)
 
         # Note: We don't override broker from config endpoint since the generator
         # is initialized with the correct Docker-internal hostname (hivemq-broker).
@@ -238,7 +238,7 @@ class DataBridgeFromConfig:
         Returns:
             Dict with counts of added configurations
         """
-        config = ConfigParser(config_data=config_data)
+        config = AssetConfig(config_data=config_data)
         return self.add_from_config(config)
 
     def _generate_consumer(self, topic: str) -> Optional[str]:
