@@ -2,12 +2,11 @@
 """
 Script to automatically generate schema, config, and behavior tree links for the documentation page.
 This script scans the docs/schemas directory, docs/configs directory, and docs/bt_description directory
-and generates markdown links for all schema, YAML config, and XML files.
+and generates markdown links for all schema, JSON config, and XML files.
 """
 
 import os
 import json
-import yaml
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Dict, List
@@ -160,39 +159,35 @@ def scan_bt_xmls(bt_dir: Path) -> List[Dict]:
 
 
 def get_config_info(config_path: Path) -> Dict:
-    """Extract information from a YAML config file."""
+    """Extract information from a JSON resource config file."""
     try:
         with open(config_path, 'r') as f:
-            config = yaml.safe_load(f)
+            config = json.load(f)
             if config:
-                # Get the first key which is typically the resource name
-                first_key = next(iter(config.keys()), None)
-                if first_key and isinstance(config[first_key], dict):
-                    resource_config = config[first_key]
-                    return {
-                        'idShort': resource_config.get('idShort', first_key),
-                        'id': resource_config.get('id', ''),
-                        'assetType': resource_config.get('assetType', ''),
-                        'location': resource_config.get('location', '')
-                    }
-    except (yaml.YAMLError, Exception):
+                return {
+                    'idShort': config.get('id_short', config_path.stem),
+                    'id': config.get('id', ''),
+                    'assetType': config.get('asset_type', ''),
+                    'location': config.get('location', '')
+                }
+    except (json.JSONDecodeError, Exception):
         pass
     return {}
 
 
 def scan_configs(configs_dir: Path) -> List[Dict]:
-    """Scan the configs directory for YAML files."""
+    """Scan the configs directory for JSON files."""
     config_files = []
 
     if not configs_dir.exists():
         return config_files
 
-    for yaml_file in configs_dir.glob('*.yaml'):
-        info = get_config_info(yaml_file)
+    for config_file in configs_dir.glob('*.json'):
+        info = get_config_info(config_file)
 
         config_files.append({
-            'filename': yaml_file.name,
-            'idShort': info.get('idShort', yaml_file.stem),
+            'filename': config_file.name,
+            'idShort': info.get('idShort', config_file.stem),
             'id': info.get('id', ''),
             'assetType': info.get('assetType', ''),
             'location': info.get('location', '')
@@ -405,9 +400,9 @@ def main():
     bt_files = scan_bt_xmls(bt_dir)
     print(f"Found {len(bt_files)} behavior tree XML files")
 
-    print(f"Scanning config YAMLs in {configs_dir}...")
+    print(f"Scanning config JSONs in {configs_dir}...")
     config_files = scan_configs(configs_dir)
-    print(f"Found {len(config_files)} config YAML files")
+    print(f"Found {len(config_files)} config JSON files")
 
     print("Generating markdown content...")
     schema_content = generate_markdown_schemas(categories)
