@@ -22,6 +22,6 @@
 [submodule "BT_Controller/third_party/cpp-httplib"]
 	path = BT_Controller/third_party/cpp-httplib
 	url = https://github.com/yhirose/cpp-httplib.git
-[submodule "Registration_Service/third_party/aas_pydantic"]
-	path = Registration_Service/third_party/aas_pydantic
-	url = https://github.com/tristan-schwoerer/aas_pydantic.git
+[submodule "Registration_Service"]
+	path = Registration_Service
+	url = git@github.com:tristan-schwoerer/aas_registration_service.git

@@ -184,32 +184,23 @@ services:
 
   registration-service:
     build:
-      context: ..
-      dockerfile: Registration_Service/Dockerfile
+      context: ../Registration_Service
+      dockerfile: Dockerfile
     container_name: registration-service
     environment:
       - PYTHONUNBUFFERED=1
       - BASYX_URL=http://${AAS_SERVER:-aas-env}:${AAS_PORT:-8081}
       - MQTT_BROKER=hivemq-broker
       - MQTT_PORT=1883
-      # Delegation URL for BaSyx to call - must be reachable from aas-env container
-      - DELEGATION_SERVICE_URL=http://registration-service:8087
       - EXTERNAL_HOST=${EXTERNAL_HOST:-localhost}
       - AAS_SERVER_URL=http://${AAS_SERVER:-aas-env}:${AAS_PORT:-8081}
       - AAS_BASE_URL=https://smartproductionlab.aau.dk
     volumes:
-      # DataBridge config directory for writing configs
-      - ../databridge:/databridge
       # AAS configs for registration
       - ../AASDescriptions/Resource/configs:/app/configs:ro
       - ../AASDescriptions/Product/configs:/app/product_configs:ro
       # MQTT Schemas for schema-based message generation
       - ../MQTTSchemas:/app/MQTTSchemas:ro
-      # Docker socket for container restarts (DataBridge)
-      - /var/run/docker.sock:/var/run/docker.sock
-    ports:
-      # Operation Delegation HTTP API port
-      - '8087:8087'
     command:
       - python
       - unified-registration-service.py
@@ -219,11 +210,7 @@ services:
       - "1883"
       - --basyx-url
       - http://${AAS_SERVER:-aas-env}:${AAS_PORT:-8081}
-      - --delegation-url
-      - ${DELEGATION_SERVICE_URL:-http://localhost:8087}
       - listen
-      - --delegation-port
-      - "8087"
     restart: unless-stopped
     depends_on:
       hivemq-broker:
@@ -231,9 +218,10 @@ services:
       aas-env:
         condition: service_started
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8087/health || exit 1"]
-      interval: 5s
-      timeout: 3s
+      # The listener has no HTTP endpoint anymore; health = can reach the MQTT broker.
+      test: ["CMD-SHELL", "python -c \"import socket; socket.create_connection(('hivemq-broker',1883), timeout=3).close()\" || exit 1"]
+      interval: 10s
+      timeout: 5s
       retries: 12
       start_period: 10s
     networks:
