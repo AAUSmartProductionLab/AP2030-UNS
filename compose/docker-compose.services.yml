@@ -203,7 +203,7 @@ services:
       - ../MQTTSchemas:/app/MQTTSchemas:ro
     command:
       - python
-      - unified-registration-service.py
+      - registration-service.py
       - --mqtt-broker
       - hivemq-broker
       - --mqtt-port

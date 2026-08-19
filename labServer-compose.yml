@@ -291,7 +291,7 @@ services:
       - ./MQTTSchemas:/app/MQTTSchemas:ro
     command:
       - python
-      - unified-registration-service.py
+      - registration-service.py
       - --mqtt-broker
       - ${MQTT_BROKER:-hivemq-broker}
       - --mqtt-port
