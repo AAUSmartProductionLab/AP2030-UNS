@@ -4,287 +4,275 @@
   "derived_from": "https://smartproductionlab.aau.dk/aas/templates/resource",
   "nameplate": {
     "id_short": "Nameplate",
-    "submodel_element": {
-      "manufacturer_name": {
-        "value": {
-          "en": "Syntegon Technology GmbH"
-        }
-      },
-      "manufacturer_product_designation": {
-        "value": {
-          "en": "Stoppering System 2024"
-        }
-      },
-      "manufacturer_product_type": {
-        "value": "Pharmaceutical Stoppering Station"
-      },
-      "serial_number": {
-        "value": "SYN-SS-2024-001"
-      },
-      "year_of_construction": {
-        "value": "2024"
-      },
-      "country_of_origin": {
-        "value": "DE"
-      },
-      "order_code_of_manufacturer": {
-        "value": "SYN-SS-2024-001"
-      },
-      "asset_specific_properties": {
-        "value": {
-          "arbitrary_property": {
-            "process_cell": {
-              "value": "ProcessCell: InnoLab Line 1"
-            }
-          }
+    "ManufacturerName": {
+      "value": {
+        "en": "Syntegon Technology GmbH"
+      }
+    },
+    "ManufacturerProductDesignation": {
+      "value": {
+        "en": "Stoppering System 2024"
+      }
+    },
+    "ManufacturerProductType": {
+      "value": "Pharmaceutical Stoppering Station"
+    },
+    "SerialNumber": {
+      "value": "SYN-SS-2024-001"
+    },
+    "YearOfConstruction": {
+      "value": "2024"
+    },
+    "CountryOfOrigin": {
+      "value": "DE"
+    },
+    "OrderCodeOfManufacturer": {
+      "value": "SYN-SS-2024-001"
+    },
+    "AssetSpecificProperties": {
+      "ArbitraryProperty": {
+        "process_cell": {
+          "value": "ProcessCell: InnoLab Line 1"
         }
       }
     }
   },
   "asset_interfaces_description": {
     "id_short": "AssetInterfacesDescription",
-    "submodel_element": {
-      "interface_mqtt": {
-        "value": {
-          "title": {
-            "value": "Syntegon Stoppering System"
-          },
-          "endpoint_metadata": {
-            "value": {
-              "base": {
-                "value": "mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/Stoppering"
+    "interface_mqtt": {
+      "title": {
+        "value": "Syntegon Stoppering System"
+      },
+      "EndpointMetadata": {
+        "base": {
+          "value": "mqtt://192.168.0.104:1883/NN/Nybrovej/InnoLab/Stoppering"
+        },
+        "contentType": {
+          "value": "application/json"
+        },
+        "securityDefinitions": {
+          "id_short": "SecurityDefinitions"
+        }
+      },
+      "InteractionMetadata": {
+        "actions": {
+          "property_name": {
+            "Stoppering": {
+              "key": {
+                "value": "Stoppering"
               },
-              "content_type": {
-                "value": "application/json"
+              "synchronous": {
+                "value": "false"
               },
-              "security_definitions": {
-                "id_short": "SecurityDefinitions"
+              "forms": {
+                "href": {
+                  "value": "/CMD/Stoppering"
+                },
+                "op": {
+                  "value": "invokeAction"
+                },
+                "mqv_retain": {
+                  "value": "false"
+                },
+                "mqv_control_packet": {
+                  "value": "subscribe"
+                },
+                "mqv_qos": {
+                  "value": "2"
+                },
+                "response": {
+                  "href": {
+                    "value": "/DATA/Stoppering"
+                  },
+                  "content_type": {
+                    "value": "application/json"
+                  },
+                  "mqv_control_packet": {
+                    "value": "publish"
+                  },
+                  "mqv_retain": {
+                    "value": "false"
+                  }
+                }
+              },
+              "input": {
+                "supplemental_semantic_ids": [
+                  "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json"
+                ]
+              },
+              "output": {
+                "supplemental_semantic_ids": [
+                  "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json"
+                ]
+              }
+            },
+            "Halt": {
+              "key": {
+                "value": "Halt"
+              },
+              "synchronous": {
+                "value": "true"
+              },
+              "forms": {
+                "href": {
+                  "value": "/CMD/Halt"
+                },
+                "op": {
+                  "value": "invokeAction"
+                },
+                "mqv_retain": {
+                  "value": "false"
+                },
+                "mqv_control_packet": {
+                  "value": "subscribe"
+                },
+                "mqv_qos": {
+                  "value": "2"
+                }
+              }
+            },
+            "Occupy": {
+              "key": {
+                "value": "Occupy"
+              },
+              "synchronous": {
+                "value": "true"
+              },
+              "forms": {
+                "href": {
+                  "value": "/CMD/Occupy"
+                },
+                "op": {
+                  "value": "invokeAction"
+                },
+                "mqv_retain": {
+                  "value": "false"
+                },
+                "mqv_control_packet": {
+                  "value": "subscribe"
+                },
+                "mqv_qos": {
+                  "value": "2"
+                },
+                "response": {
+                  "href": {
+                    "value": "/DATA/Occupy"
+                  },
+                  "content_type": {
+                    "value": "application/json"
+                  },
+                  "mqv_control_packet": {
+                    "value": "publish"
+                  },
+                  "mqv_retain": {
+                    "value": "false"
+                  }
+                }
+              }
+            },
+            "Release": {
+              "key": {
+                "value": "Release"
+              },
+              "synchronous": {
+                "value": "true"
+              },
+              "forms": {
+                "href": {
+                  "value": "/CMD/Release"
+                },
+                "op": {
+                  "value": "invokeAction"
+                },
+                "mqv_retain": {
+                  "value": "false"
+                },
+                "mqv_control_packet": {
+                  "value": "subscribe"
+                },
+                "mqv_qos": {
+                  "value": "2"
+                },
+                "response": {
+                  "href": {
+                    "value": "/DATA/Release"
+                  },
+                  "content_type": {
+                    "value": "application/json"
+                  },
+                  "mqv_control_packet": {
+                    "value": "publish"
+                  },
+                  "mqv_retain": {
+                    "value": "false"
+                  }
+                }
               }
             }
-          },
-          "interaction_metadata": {
-            "value": {
-              "actions": {
-                "value": {
-                  "Stoppering": {
-                    "value": {
-                      "key": {
-                        "value": "Stoppering"
-                      },
-                      "synchronous": {
-                        "value": "false"
-                      },
-                      "input_schema": {
-                        "value": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json"
-                      },
-                      "output_schema": {
-                        "value": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json"
-                      },
-                      "forms": {
-                        "value": {
-                          "href": {
-                            "value": "/CMD/Stoppering"
-                          },
-                          "op": {
-                            "value": "invokeAction"
-                          },
-                          "mqv_retain": {
-                            "value": "false"
-                          },
-                          "mqv_control_packet": {
-                            "value": "subscribe"
-                          },
-                          "mqv_qos": {
-                            "value": "2"
-                          },
-                          "response": {
-                            "value": {
-                              "href": {
-                                "value": "/DATA/Stoppering"
-                              },
-                              "content_type": {
-                                "value": "application/json"
-                              },
-                              "mqv_control_packet": {
-                                "value": "publish"
-                              },
-                              "mqv_retain": {
-                                "value": "false"
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  },
-                  "Halt": {
-                    "value": {
-                      "key": {
-                        "value": "Halt"
-                      },
-                      "synchronous": {
-                        "value": "true"
-                      },
-                      "input_schema": {
-                        "value": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json"
-                      },
-                      "output_schema": {
-                        "value": ""
-                      },
-                      "forms": {
-                        "value": {
-                          "href": {
-                            "value": "/CMD/Halt"
-                          },
-                          "op": {
-                            "value": "invokeAction"
-                          },
-                          "mqv_retain": {
-                            "value": "false"
-                          },
-                          "mqv_control_packet": {
-                            "value": "subscribe"
-                          },
-                          "mqv_qos": {
-                            "value": "2"
-                          }
-                        }
-                      }
-                    }
-                  },
-                  "Occupy": {
-                    "value": {
-                      "key": {
-                        "value": "Occupy"
-                      },
-                      "synchronous": {
-                        "value": "true"
-                      },
-                      "input_schema": {
-                        "value": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json"
-                      },
-                      "output_schema": {
-                        "value": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json"
-                      },
-                      "forms": {
-                        "value": {
-                          "href": {
-                            "value": "/CMD/Occupy"
-                          },
-                          "op": {
-                            "value": "invokeAction"
-                          },
-                          "mqv_retain": {
-                            "value": "false"
-                          },
-                          "mqv_control_packet": {
-                            "value": "subscribe"
-                          },
-                          "mqv_qos": {
-                            "value": "2"
-                          },
-                          "response": {
-                            "value": {
-                              "href": {
-                                "value": "/DATA/Occupy"
-                              },
-                              "content_type": {
-                                "value": "application/json"
-                              },
-                              "mqv_control_packet": {
-                                "value": "publish"
-                              },
-                              "mqv_retain": {
-                                "value": "false"
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  },
-                  "Release": {
-                    "value": {
-                      "key": {
-                        "value": "Release"
-                      },
-                      "synchronous": {
-                        "value": "true"
-                      },
-                      "input_schema": {
-                        "value": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json"
-                      },
-                      "output_schema": {
-                        "value": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json"
-                      },
-                      "forms": {
-                        "value": {
-                          "href": {
-                            "value": "/CMD/Release"
-                          },
-                          "op": {
-                            "value": "invokeAction"
-                          },
-                          "mqv_retain": {
-                            "value": "false"
-                          },
-                          "mqv_control_packet": {
-                            "value": "subscribe"
-                          },
-                          "mqv_qos": {
-                            "value": "2"
-                          },
-                          "response": {
-                            "value": {
-                              "href": {
-                                "value": "/DATA/Release"
-                              },
-                              "content_type": {
-                                "value": "application/json"
-                              },
-                              "mqv_control_packet": {
-                                "value": "publish"
-                              },
-                              "mqv_retain": {
-                                "value": "false"
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
+          }
+        },
+        "properties": {
+          "property_name": {
+            "StationState": {
+              "key": {
+                "value": "StationState"
+              },
+              "forms": {
+                "href": {
+                  "value": "/DATA/State"
+                },
+                "mqv_retain": {
+                  "value": "true"
+                },
+                "mqv_control_packet": {
+                  "value": "publish"
+                },
+                "mqv_qos": {
+                  "value": "0"
                 }
               },
-              "properties": {
-                "value": {
-                  "StationState": {
-                    "value": {
-                      "key": {
-                        "value": "StationState"
-                      },
-                      "output_schema": {
-                        "value": "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/stationState.schema.json"
-                      },
-                      "forms": {
-                        "value": {
-                          "href": {
-                            "value": "/DATA/State"
-                          },
-                          "mqv_retain": {
-                            "value": "true"
-                          },
-                          "mqv_control_packet": {
-                            "value": "publish"
-                          },
-                          "mqv_qos": {
-                            "value": "0"
-                          }
-                        }
-                      }
-                    }
-                  }
+              "supplemental_semantic_ids": [
+                "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/stationState.schema.json"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "interface_rest": {
+      "InteractionMetadata": {
+        "actions": {
+          "property_name": {
+            "Stoppering": {
+              "key": {
+                "value": "Stoppering"
+              },
+              "synchronous": {
+                "value": "false"
+              },
+              "forms": {
+                "href": {
+                  "value": "/operations/{aas_id_short}/Stoppering"
+                },
+                "op": {
+                  "value": "invokeAction"
+                },
+                "content_type": {
+                  "value": "application/json"
+                },
+                "htv_method_name": {
+                  "value": "POST"
                 }
+              },
+              "input": {
+                "supplemental_semantic_ids": [
+                  "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json"
+                ]
+              },
+              "output": {
+                "supplemental_semantic_ids": [
+                  "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json"
+                ]
               }
             }
           }
@@ -294,56 +282,36 @@
   },
   "variables": {
     "id_short": "Variables",
-    "submodel_element": {
+    "variable": {
       "PackMLState": {
-        "value": {
-          "semantic_id_param": {
-            "value": "https://w3id.org/2026/apex/semantic/state/operational"
-          },
-          "interface_reference": {
-            "value": {
-              "name": {
-                "value": "StationState"
-              },
-              "field": {
-                "value": "State"
-              }
-            }
-          }
+        "variable": {
+          "value": "https://w3id.org/2026/apex/semantic/state/operational"
         }
       },
       "OccupationState": {
-        "value": {
-          "semantic_id_param": {
-            "value": "https://w3id.org/2026/apex/semantic/state/occupied"
-          },
-          "interface_reference": {
-            "value": {
-              "name": {
-                "value": "StationState"
-              },
-              "field": {
-                "value": "ProcessQueue"
-              }
-            }
-          }
+        "variable": {
+          "value": "https://w3id.org/2026/apex/semantic/state/occupied"
         }
       }
     }
   },
   "parameters": {
     "id_short": "Parameters",
-    "submodel_element": {
+    "parameter": {
       "Location": {
         "semantic_id": "https://w3id.org/2026/apex/semantic/location/label",
-        "value": {
-          "x": {
+        "x": {
+          "parameter": {
             "value": "480.0"
-          },
-          "y": {
+          }
+        },
+        "y": {
+          "parameter": {
             "value": "0.0"
-          },
-          "yaw": {
+          }
+        },
+        "yaw": {
+          "parameter": {
             "value": "0.0"
           }
         }
@@ -353,5 +321,536 @@
   "specific_asset_ids": {
     "serialNumber": "SYN-SS-2024-001",
     "location": "InnoLab, Nybrovej, AAU"
+  },
+  "control_component_instance": {
+    "Skills": {
+      "Skill": {
+        "Stoppering": {
+          "interface_reference": {
+            "value": {
+              "type": "ModelReference",
+              "keys": [
+                {
+                  "type": "Submodel",
+                  "value": "{aas_id}/submodels/AssetInterfacesDescription"
+                },
+                {
+                  "type": "SubmodelElementCollection",
+                  "value": "interface_mqtt"
+                },
+                {
+                  "type": "SubmodelElementCollection",
+                  "value": "InteractionMetadata"
+                },
+                {
+                  "type": "SubmodelElementCollection",
+                  "value": "actions"
+                },
+                {
+                  "type": "SubmodelElementCollection",
+                  "value": "Stoppering"
+                }
+              ]
+            }
+          },
+          "operation": {
+            "qualifiers": [
+              {
+                "type_": "invocationDelegation",
+                "value": "{delegation_base}/operations/{aas_id_short}/Stoppering",
+                "value_type": "xs:string",
+                "kind": "ConceptQualifier"
+              },
+              {
+                "type_": "Asynchronous",
+                "value": "false",
+                "value_type": "xs:string",
+                "kind": "ConceptQualifier"
+              }
+            ],
+            "in_output_variable": [
+              {
+                "id_short": "Uuid",
+                "value_type": "xs:string"
+              }
+            ],
+            "output_variable": [
+              {
+                "id_short": "State",
+                "value_type": "xs:string"
+              },
+              {
+                "id_short": "Outcome",
+                "value_type": "xs:integer"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "Endpoints": {
+      "Endpoint": {
+        "Stoppering": {
+          "first": {
+            "type": "ModelReference",
+            "keys": [
+              {
+                "type": "Submodel",
+                "value": "{aas_id}/submodels/ControlComponentInstance"
+              },
+              {
+                "type": "SubmodelElementCollection",
+                "value": "Skills"
+              },
+              {
+                "type": "SubmodelElementCollection",
+                "value": "Stoppering"
+              }
+            ]
+          },
+          "second": {
+            "type": "ModelReference",
+            "keys": [
+              {
+                "type": "Submodel",
+                "value": "{aas_id}/submodels/AssetInterfacesDescription"
+              },
+              {
+                "type": "SubmodelElementCollection",
+                "value": "interface_mqtt"
+              },
+              {
+                "type": "SubmodelElementCollection",
+                "value": "InteractionMetadata"
+              },
+              {
+                "type": "SubmodelElementCollection",
+                "value": "actions"
+              },
+              {
+                "type": "SubmodelElementCollection",
+                "value": "Stoppering"
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "asset_interfaces_mapping_configuration": {
+    "id_short": "AssetInterfacesMappingConfiguration",
+    "MappingConfigurations": {
+      "value": [
+        {
+          "id_short": "MQTT",
+          "Sources": {
+            "value": [
+              {
+                "id_short": "StationState",
+                "Source": {
+                  "value": {
+                    "type": "ModelReference",
+                    "keys": [
+                      {
+                        "type": "Submodel",
+                        "value": "{aas_id}/submodels/AssetInterfacesDescription"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "interface_mqtt"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "InteractionMetadata"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "properties"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "StationState"
+                      }
+                    ]
+                  }
+                },
+                "SourceId": {
+                  "value": "StationState"
+                }
+              }
+            ]
+          },
+          "Sinks": {
+            "value": [
+              {
+                "id_short": "PackMLState",
+                "Sink": {
+                  "value": {
+                    "type": "ModelReference",
+                    "keys": [
+                      {
+                        "type": "Submodel",
+                        "value": "{aas_id}/submodels/Variables"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "PackMLState"
+                      }
+                    ]
+                  }
+                },
+                "SinkId": {
+                  "value": "PackMLState"
+                }
+              },
+              {
+                "id_short": "OccupationState",
+                "Sink": {
+                  "value": {
+                    "type": "ModelReference",
+                    "keys": [
+                      {
+                        "type": "Submodel",
+                        "value": "{aas_id}/submodels/Variables"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "OccupationState"
+                      }
+                    ]
+                  }
+                },
+                "SinkId": {
+                  "value": "OccupationState"
+                }
+              }
+            ]
+          },
+          "Transformation": {
+            "value": "function aimc_main(sources)\n    return {\n        PackMLState     = sources.StationState.State,\n        OccupationState = sources.StationState.ProcessQueue,\n    }\nend\n"
+          }
+        },
+        {
+          "id_short": "Halt",
+          "Sources": {
+            "value": [
+              {
+                "id_short": "Halt",
+                "Source": {
+                  "value": {
+                    "type": "ModelReference",
+                    "keys": [
+                      {
+                        "type": "Submodel",
+                        "value": "{aas_id}/submodels/AssetInterfacesDescription"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "interface_mqtt"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "InteractionMetadata"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "actions"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "Halt"
+                      }
+                    ]
+                  }
+                },
+                "SourceId": {
+                  "value": "Halt"
+                }
+              }
+            ]
+          },
+          "Sinks": {
+            "value": [
+              {
+                "id_short": "Halt",
+                "Sink": {
+                  "value": {
+                    "type": "ModelReference",
+                    "keys": [
+                      {
+                        "type": "Submodel",
+                        "value": "{aas_id}/submodels/AssetInterfacesDescription"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "interface_rest"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "InteractionMetadata"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "actions"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "Halt"
+                      }
+                    ]
+                  }
+                },
+                "SinkId": {
+                  "value": "Halt"
+                }
+              }
+            ]
+          },
+          "Transformation": {
+            "value": "-- Skill 'Halt': operation-delegation REST endpoint <-> native MQTT action.\n-- Request  (REST -> MQTT): the DMP packs the AAS OperationVariables into the\n--   native command message:\n--     command = { Uuid = rest.Uuid }\n-- Response (MQTT -> REST): aimc_main rebuilds the OperationVariables from\n--   the native MQTT response payload (/DATA/Halt):\nfunction aimc_main(sources)\n    local mqtt = sources.Halt\n    return {\n        Halt = {\n            Uuid    = mqtt.Uuid,\n            State   = mqtt.State,\n            Outcome = mqtt.Outcome,\n        },\n    }\nend\n"
+          }
+        },
+        {
+          "id_short": "Occupy",
+          "Sources": {
+            "value": [
+              {
+                "id_short": "Occupy",
+                "Source": {
+                  "value": {
+                    "type": "ModelReference",
+                    "keys": [
+                      {
+                        "type": "Submodel",
+                        "value": "{aas_id}/submodels/AssetInterfacesDescription"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "interface_mqtt"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "InteractionMetadata"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "actions"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "Occupy"
+                      }
+                    ]
+                  }
+                },
+                "SourceId": {
+                  "value": "Occupy"
+                }
+              }
+            ]
+          },
+          "Sinks": {
+            "value": [
+              {
+                "id_short": "Occupy",
+                "Sink": {
+                  "value": {
+                    "type": "ModelReference",
+                    "keys": [
+                      {
+                        "type": "Submodel",
+                        "value": "{aas_id}/submodels/AssetInterfacesDescription"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "interface_rest"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "InteractionMetadata"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "actions"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "Occupy"
+                      }
+                    ]
+                  }
+                },
+                "SinkId": {
+                  "value": "Occupy"
+                }
+              }
+            ]
+          },
+          "Transformation": {
+            "value": "-- Skill 'Occupy': operation-delegation REST endpoint <-> native MQTT action.\n-- Request  (REST -> MQTT): the DMP packs the AAS OperationVariables into the\n--   native command message:\n--     command = { Uuid = rest.Uuid }\n-- Response (MQTT -> REST): aimc_main rebuilds the OperationVariables from\n--   the native MQTT response payload (/DATA/Occupy):\nfunction aimc_main(sources)\n    local mqtt = sources.Occupy\n    return {\n        Occupy = {\n            Uuid    = mqtt.Uuid,\n            State   = mqtt.State,\n            Outcome = mqtt.Outcome,\n        },\n    }\nend\n"
+          }
+        },
+        {
+          "id_short": "Release",
+          "Sources": {
+            "value": [
+              {
+                "id_short": "Release",
+                "Source": {
+                  "value": {
+                    "type": "ModelReference",
+                    "keys": [
+                      {
+                        "type": "Submodel",
+                        "value": "{aas_id}/submodels/AssetInterfacesDescription"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "interface_mqtt"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "InteractionMetadata"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "actions"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "Release"
+                      }
+                    ]
+                  }
+                },
+                "SourceId": {
+                  "value": "Release"
+                }
+              }
+            ]
+          },
+          "Sinks": {
+            "value": [
+              {
+                "id_short": "Release",
+                "Sink": {
+                  "value": {
+                    "type": "ModelReference",
+                    "keys": [
+                      {
+                        "type": "Submodel",
+                        "value": "{aas_id}/submodels/AssetInterfacesDescription"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "interface_rest"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "InteractionMetadata"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "actions"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "Release"
+                      }
+                    ]
+                  }
+                },
+                "SinkId": {
+                  "value": "Release"
+                }
+              }
+            ]
+          },
+          "Transformation": {
+            "value": "-- Skill 'Release': operation-delegation REST endpoint <-> native MQTT action.\n-- Request  (REST -> MQTT): the DMP packs the AAS OperationVariables into the\n--   native command message:\n--     command = { Uuid = rest.Uuid }\n-- Response (MQTT -> REST): aimc_main rebuilds the OperationVariables from\n--   the native MQTT response payload (/DATA/Release):\nfunction aimc_main(sources)\n    local mqtt = sources.Release\n    return {\n        Release = {\n            Uuid    = mqtt.Uuid,\n            State   = mqtt.State,\n            Outcome = mqtt.Outcome,\n        },\n    }\nend\n"
+          }
+        },
+        {
+          "id_short": "Stoppering",
+          "Sources": {
+            "value": [
+              {
+                "id_short": "Stoppering",
+                "Source": {
+                  "value": {
+                    "type": "ModelReference",
+                    "keys": [
+                      {
+                        "type": "Submodel",
+                        "value": "{aas_id}/submodels/AssetInterfacesDescription"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "interface_mqtt"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "InteractionMetadata"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "actions"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "Stoppering"
+                      }
+                    ]
+                  }
+                },
+                "SourceId": {
+                  "value": "Stoppering"
+                }
+              }
+            ]
+          },
+          "Sinks": {
+            "value": [
+              {
+                "id_short": "Stoppering",
+                "Sink": {
+                  "value": {
+                    "type": "ModelReference",
+                    "keys": [
+                      {
+                        "type": "Submodel",
+                        "value": "{aas_id}/submodels/AssetInterfacesDescription"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "interface_rest"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "InteractionMetadata"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "actions"
+                      },
+                      {
+                        "type": "SubmodelElementCollection",
+                        "value": "Stoppering"
+                      }
+                    ]
+                  }
+                },
+                "SinkId": {
+                  "value": "Stoppering"
+                }
+              }
+            ]
+          },
+          "Transformation": {
+            "value": "-- Skill 'Stoppering': operation-delegation REST endpoint <-> native MQTT action.\n-- Request  (REST -> MQTT): the DMP packs the AAS OperationVariables into the\n--   native command message:\n--     command = { Uuid = rest.Uuid }\n-- Response (MQTT -> REST): aimc_main rebuilds the OperationVariables from\n--   the native MQTT response payload (/DATA/Stoppering):\nfunction aimc_main(sources)\n    local mqtt = sources.Stoppering\n    return {\n        Stoppering = {\n            Uuid    = mqtt.Uuid,\n            State   = mqtt.State,\n            Outcome = mqtt.Outcome,\n        },\n    }\nend\n"
+          }
+        }
+      ]
+    }
   }
 }
