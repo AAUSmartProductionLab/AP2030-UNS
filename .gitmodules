@@ -25,3 +25,6 @@
 [submodule "Registration_Service"]
 	path = Registration_Service
 	url = git@github.com:tristan-schwoerer/aas_registration_service.git
+[submodule "aas-camel-dmp"]
+	path = aas-camel-dmp
+	url = https://github.com/tristan-schwoerer/aas-camel-dmp.git
