@@ -28,3 +28,6 @@
 [submodule "aas-camel-dmp"]
 	path = aas-camel-dmp
 	url = https://github.com/tristan-schwoerer/aas-camel-dmp.git
+[submodule "aas-model"]
+	path = aas-model
+	url = https://github.com/tristan-schwoerer/aas-model.git
