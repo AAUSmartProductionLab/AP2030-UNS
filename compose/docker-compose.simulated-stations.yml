@@ -3,8 +3,9 @@ x-station-core-depends: &station-core-depends
     condition: service_started
   aas-env:
     condition: service_started
-  databridge:
-    condition: service_started
+  # No dependency on the legacy `databridge` service: the per-unit DMP
+  # containers (deployed by dmp-management-node) are the data path now, so a
+  # station must not drag the legacy bridge back up.
   registration-service:
     condition: service_healthy
 
@@ -19,6 +20,14 @@ services:
     extends:
       file: ../simulated_stations/deployment/compose/stations-compose.yml
       service: stoppering_station
+    # Publish the MAIN-stack asset config. The station's built-in default
+    # (syntegonStoppering.json) still carries the pre-ADR-022 AID block
+    # (retired `interface_mqtt` / `interface_rest`), which the current
+    # templates reject with `extra_forbidden`, so registration fails and the
+    # repository keeps serving a stale AAS. The e2e stack overrides this with
+    # its own variant (see docker-compose.e2e.yml).
+    environment:
+      STOPPERING_AAS_CONFIG: syntegonStoppering.main.json
     depends_on: *station-core-depends
 
   load_station:

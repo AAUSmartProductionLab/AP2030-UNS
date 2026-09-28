@@ -26,6 +26,16 @@ services:
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=${SPRING_KAFKA_BOOTSTRAP_SERVERS:-}
       - BASYX_AASREPOSITORY_FEATURE_MQTT_ENABLED=false
       - BASYX_SUBMODELREPOSITORY_FEATURE_MQTT_ENABLED=false
+      # the submodel-update events (~1.2 MB) exceed the 1 MB producer default
+      - SPRING_KAFKA_PRODUCER_PROPERTIES_MAX_REQUEST_SIZE=10485760
+      # expire the JVM/netty DNS cache fast: the per-unit DMP containers are
+      # recreated (their IPs churn) and the operation delegation must
+      # re-resolve dmp-syntegonstopperingsystemaas promptly
+      - JAVA_TOOL_OPTIONS=-Dnetworkaddress.cache.ttl=10
+    extra_hosts:
+      # the operation delegation targets the DMP's host-published REST port
+      # (host.docker.internal resolves via the host gateway on Linux)
+      - "host.docker.internal:host-gateway"
     volumes:
       - ../aas:/application/aas
     ports:
@@ -96,11 +106,20 @@ services:
       - BASYX_BACKEND=MongoDB
       - BASYX_CORS_ALLOWED_ORIGINS=*
       - BASYX_CORS_ALLOWED_METHODS=GET,POST,PATCH,DELETE,PUT,OPTIONS,HEAD
-      - SPRING_DATA_MONGODB_HOST=mongo
-      - SPRING_DATA_MONGODB_DATABASE=aas-discovery
-      - SPRING_DATA_MONGODB_AUTHENTICATION_DATABASE=admin
-      - SPRING_DATA_MONGODB_USERNAME=mongoAdmin
-      - SPRING_DATA_MONGODB_PASSWORD=mongoPassword
+      # This aas-discovery image is the standalone (pre-Spring-Boot-3) build:
+      # its bundled application.properties documents the LEGACY
+      # `spring.mongodb.*` keys, so the Boot-3 `SPRING_DATA_MONGODB_*` names
+      # are silently ignored and the driver falls back to localhost:27017.
+      # Symptom: /actuator/health hangs ~30 s and answers 503 DOWN with
+      # "MongoHealthIndicator took 30004ms", which also breaks the web UI
+      # (AAS_DISCOVERY_PATH -> :8084/lookup/shells). The registries are a
+      # different (Boot-3) image family and do need SPRING_DATA_MONGODB_*.
+      - SPRING_MONGODB_HOST=mongo
+      - SPRING_MONGODB_PORT=27017
+      - SPRING_MONGODB_DATABASE=aas-discovery
+      - SPRING_MONGODB_AUTHENTICATION_DATABASE=admin
+      - SPRING_MONGODB_USERNAME=mongoAdmin
+      - SPRING_MONGODB_PASSWORD=mongoPassword
     ports:
       - '8084:8081'
     restart: always
@@ -136,8 +155,9 @@ services:
       CD_REPO_PATH: http://${EXTERNAL_HOST:-localhost}:8081/concept-descriptions
       AAS_DISCOVERY_PATH: http://${EXTERNAL_HOST:-localhost}:8084/lookup/shells
       LOGO_PATH: novo-logo.png
-      PRIMARY_COLOR: '#0036AA'
+      PRIMARY_COLOR: '#000eaa'
       DASHBOARD_SERVICE_PATH: http://${EXTERNAL_HOST:-localhost}:8085/api/elements
+      START_PAGE_ROUTE_NAME: "AASEditor"
     volumes:
       - ../logo:/usr/src/app/dist/Logo
     restart: always
@@ -172,6 +192,17 @@ services:
   databridge:
     image: eclipsebasyx/databridge:1.0.0-milestone-08
     container_name: databridge
+    # Legacy standalone bridge — superseded by the per-unit DMP containers
+    # that dmp-management-node deploys (one per managed AIMC, with their own
+    # hashed health port). Off by default: a plain `docker compose up -d`
+    # skips it. Opt back in explicitly when testing the legacy path:
+    #   docker compose --profile legacy-bridge up -d databridge
+    profiles: ["legacy-bridge"]
+    # Run as the host user so configs written into the shared mount
+    # (../databridge) are owned by the host user — otherwise the container
+    # (root) creates root-owned files that the host Registration Service
+    # cannot overwrite (PermissionError).
+    user: "${UID:-1000}:${GID:-1000}"
     volumes:
       - ../databridge:/usr/share/config
     restart: always
