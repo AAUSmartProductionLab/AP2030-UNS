@@ -519,6 +519,13 @@ class PackMLStateMachine:
     def completing_state(self, uuid_completed):
         if uuid_completed == "#":
             self.uuids.clear()
+        elif self.use_occupation_logic:
+            # Session mode: the queue holds OCCUPATIONS, not transient process
+            # commands. Completing a process (e.g. Stoppering) must not consume
+            # the occupation — the resource stays occupied until an explicit
+            # Release (unregister_command) or an abort. Without this the
+            # resource was silently released after the first process finished.
+            pass
         elif uuid_completed in self.uuids:
             try:
                 self.uuids.pop(0)

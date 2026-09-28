@@ -44,7 +44,9 @@ class PackMLStateMachine:
         self.client = client
         self.properties = properties
         self.Uuid = None
-        
+        # observable transition counter (see transition_to)
+        self.transition_count = 0
+
         self.custom_handlers = custom_handlers or {}
         self.enable_occupation = enable_occupation
         self.auto_execute = auto_execute
@@ -68,28 +70,28 @@ class PackMLStateMachine:
         # Stores payloads for queued service-mode execute commands.
         self.pending_execute_payloads = {}
 
-        # Occupation topics (optional - can be disabled for services like planners)
-        self.register_topic = None
-        self.unregister_topic = None
-        
-        if self.enable_occupation:
-            self.register_topic = ResponseAsync(
-                self.base_topic+"/DATA/Occupy",
-                self.base_topic+"/CMD/Occupy",
-                "./MQTTSchemas/commandResponse.schema.json",
-                "./MQTTSchemas/command.schema.json",
-                2,
-                self.register_callback
-            )
-            self.unregister_topic = ResponseAsync(
-                self.base_topic+"/DATA/Release",
-                self.base_topic+"/CMD/Release",
-                "./MQTTSchemas/commandResponse.schema.json",
-                "./MQTTSchemas/command.schema.json",
-                2,
-                self.unregister_callback
-            )
-        
+# Occupation topics: ALWAYS subscribed — the Occupy/Release skills exist on
+        # the station's surface in every mode, and delegating callers need the
+        # terminal replies. `enable_occupation` only decides whether the
+        # registration QUEUES an occupation entry (register_callback answers
+        # SUCCESS immediately in service mode).
+        self.register_topic = ResponseAsync(
+            self.base_topic+"/DATA/Occupy",
+            self.base_topic+"/CMD/Occupy",
+            "./MQTTSchemas/commandResponse.schema.json",
+            "./MQTTSchemas/command.schema.json",
+            2,
+            self.register_callback
+        )
+        self.unregister_topic = ResponseAsync(
+            self.base_topic+"/DATA/Release",
+            self.base_topic+"/CMD/Release",
+            "./MQTTSchemas/commandResponse.schema.json",
+            "./MQTTSchemas/command.schema.json",
+            2,
+            self.unregister_callback
+        )
+
         # Command topic for manual state control (Start, Stop, Reset, etc.)
         from .mqtt import Subscriber
         self.command_topic = Subscriber(
@@ -106,9 +108,8 @@ class PackMLStateMachine:
         )
         
         # Build list of topics to register
-        topics = [self.command_topic, self.state_topic]
-        if self.enable_occupation:
-            topics.extend([self.register_topic, self.unregister_topic])
+        topics = [self.command_topic, self.state_topic,
+                  self.register_topic, self.unregister_topic]
         for topic in topics:
             client.register_topic(topic)
 
@@ -189,6 +190,15 @@ class PackMLStateMachine:
                 # Optionally publish a generic error if possible, or log
                 return
 
+            if not self.enable_occupation:
+                # Service mode: occupation is a no-op (the machine
+                # auto-executes commands regardless of occupancy) — answer
+                # the registration TERMINALLY, otherwise delegating callers
+                # wait forever for a terminal reply that never comes
+                self._publish_command_status(
+                    self.register_topic, command_uuid, "SUCCESS")
+                return
+
             # Publish RUNNING for the registration command itself
             self._publish_command_status(
                 self.register_topic, command_uuid, "RUNNING")
@@ -244,6 +254,13 @@ class PackMLStateMachine:
 
         if self.state == PackMLState.IDLE:  # If IDLE, and this is the first item
             self.transition_to(PackMLState.STARTING)
+        elif self.state in (PackMLState.ABORTED, PackMLState.STOPPED,
+                            PackMLState.COMPLETE):
+            # A parked machine (halted/aborted/completed cycle) would swallow
+            # the registration forever — the terminal SUCCESS is only
+            # published by starting_state when the item reaches the head.
+            # Kick the machine back to IDLE so the new head starts.
+            self.transition_to(PackMLState.RESETTING)
         # If not IDLE, or if other items were already queued, the RUNNING status persists.
         # starting_state will handle publishing SUCCESS when this uuid_to_queue reaches the front.
 
@@ -647,6 +664,15 @@ class PackMLStateMachine:
     def completing_state(self, uuid_completed):
         if uuid_completed == "#":
             self.uuids.clear()
+        elif self.enable_occupation:
+            # Occupation mode: the queue holds OCCUPATIONS, not transient
+            # process commands. Completing a process (e.g. Stoppering) must
+            # NOT consume the occupation — the resource stays occupied until an
+            # explicit Release (unregister_command) or an abort. Without this
+            # the resource was silently released after the first process
+            # finished. In service mode (enable_occupation=False) the queue is
+            # a command queue and still pops the completed entry.
+            pass
         elif uuid_completed in self.uuids:
             try:
                 self.uuids.pop(0)
@@ -694,6 +720,9 @@ class PackMLStateMachine:
     def transition_to(self, new_state, uuid_param=None):
         """Transition to a new state and publish it"""
         self.state = new_state
+        # observable transition counter (the intermediate states flip
+        # synchronously — observers polling the state miss the flashes)
+        self.transition_count = getattr(self, "transition_count", 0) + 1
         self.publish_state()
 
         if new_state == PackMLState.IDLE:
