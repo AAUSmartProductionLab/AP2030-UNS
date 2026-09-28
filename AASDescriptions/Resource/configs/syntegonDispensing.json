@@ -1,0 +1,1492 @@
+{
+ "id_short": "syntegonDispensingSystemAAS",
+ "asset_type": "http://www.w3id.org/aau-ra/cssx#StopperingSystem",
+ "derived_from": "https://smartproductionlab.aau.dk/aas/templates/resource",
+ "nameplate": {
+  "id_short": "Nameplate",
+  "ManufacturerName": {
+   "value": {
+    "en": "Syntegon Technology GmbH"
+   }
+  },
+  "ManufacturerProductDesignation": {
+   "value": {
+    "en": "Stoppering System 2024"
+   }
+  },
+  "ManufacturerProductType": {
+   "value": "Pharmaceutical Stoppering Station"
+  },
+  "SerialNumber": {
+   "value": "SYN-SS-2024-001"
+  },
+  "YearOfConstruction": {
+   "value": "2024"
+  },
+  "CountryOfOrigin": {
+   "value": "DE"
+  },
+  "OrderCodeOfManufacturer": {
+   "value": "SYN-SS-2024-001"
+  },
+  "AssetSpecificProperties": {
+   "ArbitraryProperty": {
+    "process_cell": {
+     "value": "ProcessCell: InnoLab Line 1"
+    }
+   }
+  }
+ },
+ "asset_interfaces_description": {
+  "id_short": "AssetInterfacesDescription",
+  "InterfaceTemplateForMQTT": {
+   "interface_mqtt": {
+    "title": {
+     "value": "Syntegon Dispensing System (MQTT \u2014 internal)"
+    },
+    "EndpointMetadata": {
+     "base": {
+      "value": "mqtt://hivemq-broker:1883/NN/Nybrovej/InnoLab/Dispensing"
+     }
+    },
+    "InteractionMetadata": {}
+   }
+  },
+  "InterfaceTemplateForOPCUA": {
+   "interface_opcua": {
+    "title": {
+     "value": "Syntegon Dispensing System"
+    },
+    "EndpointMetadata": {
+     "base": {
+      "value": "opc.tcp://filling-station:4840/dispensing/"
+     },
+     "contentType": {
+      "value": "application/octet-stream"
+     },
+     "securityDefinitions": {
+      "id_short": "SecurityDefinitions"
+     }
+    },
+    "InteractionMetadata": {
+     "actions": {
+      "property_name": {
+       "Dispensing": {
+        "synchronous": {
+         "value": "true"
+        },
+        "forms": {
+         "href": {
+          "value": "/?id=ns=2;s=DispensingMethod"
+         },
+         "op": {
+          "value": "invokeaction"
+         },
+         "uav_componentOf": {
+          "value": "ns=2;s=Dispensing"
+         }
+        },
+        "input": {
+         "supplemental_semantic_ids": [
+          "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json"
+         ]
+        },
+        "output": {
+         "supplemental_semantic_ids": [
+          "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json"
+         ]
+        }
+       },
+       "Tare": {
+        "synchronous": {
+         "value": "true"
+        },
+        "forms": {
+         "href": {
+          "value": "/?id=ns=2;s=TareMethod"
+         },
+         "op": {
+          "value": "invokeaction"
+         },
+         "uav_componentOf": {
+          "value": "ns=2;s=Tare"
+         }
+        },
+        "input": {
+         "supplemental_semantic_ids": [
+          "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json"
+         ]
+        },
+        "output": {
+         "supplemental_semantic_ids": [
+          "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json"
+         ]
+        }
+       },
+       "Refill": {
+        "synchronous": {
+         "value": "true"
+        },
+        "forms": {
+         "href": {
+          "value": "/?id=ns=2;s=RefillMethod"
+         },
+         "op": {
+          "value": "invokeaction"
+         },
+         "uav_componentOf": {
+          "value": "ns=2;s=Refill"
+         }
+        },
+        "input": {
+         "supplemental_semantic_ids": [
+          "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json"
+         ]
+        },
+        "output": {
+         "supplemental_semantic_ids": [
+          "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json"
+         ]
+        }
+       },
+       "Occupy": {
+        "synchronous": {
+         "value": "true"
+        },
+        "forms": {
+         "href": {
+          "value": "/?id=ns=2;s=OccupyMethod"
+         },
+         "op": {
+          "value": "invokeaction"
+         },
+         "uav_componentOf": {
+          "value": "ns=2;s=Occupy"
+         }
+        },
+        "input": {
+         "supplemental_semantic_ids": [
+          "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json"
+         ]
+        },
+        "output": {
+         "supplemental_semantic_ids": [
+          "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json"
+         ]
+        }
+       },
+       "Release": {
+        "synchronous": {
+         "value": "true"
+        },
+        "forms": {
+         "href": {
+          "value": "/?id=ns=2;s=ReleaseMethod"
+         },
+         "op": {
+          "value": "invokeaction"
+         },
+         "uav_componentOf": {
+          "value": "ns=2;s=Release"
+         }
+        },
+        "input": {
+         "supplemental_semantic_ids": [
+          "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/command.schema.json"
+         ]
+        },
+        "output": {
+         "supplemental_semantic_ids": [
+          "https://aausmartproductionlab.github.io/AP2030-UNS/MQTTSchemas/commandResponse.schema.json"
+         ]
+        }
+       }
+      }
+     },
+     "properties": {
+      "property_name": {
+       "MeasurementFast": {
+        "observable": {
+         "value": "true"
+        },
+        "forms": {
+         "href": {
+          "value": "/?id=ns=2;s=MeasurementFast"
+         },
+         "op": {
+          "value": "readproperty"
+         }
+        }
+       },
+       "MeasurementSlow": {
+        "forms": {
+         "href": {
+          "value": "/?id=ns=2;s=MeasurementSlow"
+         },
+         "op": {
+          "value": "readproperty"
+         }
+        }
+       },
+       "Parameter": {
+        "forms": {
+         "href": {
+          "value": "/?id=ns=2;s=Parameter"
+         },
+         "op": {
+          "value": "writeproperty"
+         }
+        }
+       },
+       "StationState": {
+        "forms": {
+         "href": {
+          "value": "/?id=ns=2;s=StationState"
+         },
+         "contentType": {
+          "value": "application/json"
+         },
+         "security": {
+          "id_short": "SecurityScheme"
+         }
+        },
+        "observable": {
+         "value": "true"
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ "variables": {
+  "id_short": "Variables",
+  "variable": {
+   "PackMLState": {
+    "value": "",
+    "supplemental_semantic_ids": [
+     "https://w3id.org/2026/apex/semantic/state/operational"
+    ]
+   },
+   "OccupationState": {
+    "value": "",
+    "supplemental_semantic_ids": [
+     "https://w3id.org/2026/apex/semantic/state/occupied"
+    ]
+   },
+   "MeasurementFast": {
+    "value": "",
+    "supplemental_semantic_ids": [
+     "https://w3id.org/2026/apex/semantic/measurement/fast"
+    ]
+   },
+   "MeasurementSlow": {
+    "value": "",
+    "supplemental_semantic_ids": [
+     "https://w3id.org/2026/apex/semantic/measurement/slow"
+    ]
+   },
+   "Parameter": {
+    "value": "",
+    "supplemental_semantic_ids": [
+     "https://w3id.org/2026/apex/semantic/parameter/value"
+    ],
+    "qualifiers": [
+     {
+      "type_": "writeDelegation",
+      "value": "{delegation_base}/properties/{aas_id_short}/Parameter",
+      "value_type": "xs:string",
+      "kind": "ConceptQualifier"
+     }
+    ]
+   }
+  }
+ },
+ "parameters": {
+  "id_short": "Parameters",
+  "parameter": {
+   "Location": {
+    "semantic_id": "https://w3id.org/2026/apex/semantic/location/label",
+    "x": {
+     "parameter": {
+      "value": "480.0"
+     }
+    },
+    "y": {
+     "parameter": {
+      "value": "0.0"
+     }
+    },
+    "yaw": {
+     "parameter": {
+      "value": "0.0"
+     }
+    }
+   }
+  }
+ },
+ "specific_asset_ids": {
+  "serialNumber": "SYN-SS-2024-001",
+  "location": "InnoLab, Fibigerstr\u00e6de 16, AAU"
+ },
+ "control_component_instance": {
+  "Skills": {
+   "Skill": {
+    "Dispensing": {
+     "interface_reference": {
+      "id_short": "interface_reference",
+      "value": {
+       "type_": "ModelReference",
+       "key": [
+        {
+         "type_": "Submodel",
+         "value": "{aas_id}/submodels/AssetInterfacesDescription"
+        },
+        {
+         "type_": "SubmodelElementCollection",
+         "value": "interface_opcua"
+        },
+        {
+         "type_": "SubmodelElementCollection",
+         "value": "InteractionMetadata"
+        },
+        {
+         "type_": "SubmodelElementCollection",
+         "value": "actions"
+        },
+        {
+         "type_": "SubmodelElementCollection",
+         "value": "Dispensing"
+        }
+       ]
+      }
+     },
+     "operation": {
+      "qualifiers": [
+       {
+        "type_": "invocationDelegation",
+        "value": "{delegation_base}/operations/{aas_id_short}/Dispensing",
+        "value_type": "xs:string",
+        "kind": "ConceptQualifier"
+       },
+       {
+        "type_": "Synchronous",
+        "value": "true",
+        "value_type": "xs:string",
+        "kind": "ConceptQualifier"
+       }
+      ],
+      "in_output_variable": [
+       {
+        "id_short": "Uuid",
+        "value_type": "xs:string"
+       }
+      ],
+      "output_variable": [
+       {
+        "id_short": "State",
+        "value_type": "xs:string"
+       },
+       {
+        "id_short": "Outcome",
+        "value_type": "xs:integer"
+       }
+      ]
+     }
+    },
+    "Tare": {
+     "interface_reference": {
+      "id_short": "interface_reference",
+      "value": {
+       "type_": "ModelReference",
+       "key": [
+        {
+         "type_": "Submodel",
+         "value": "{aas_id}/submodels/AssetInterfacesDescription"
+        },
+        {
+         "type_": "SubmodelElementCollection",
+         "value": "interface_opcua"
+        },
+        {
+         "type_": "SubmodelElementCollection",
+         "value": "InteractionMetadata"
+        },
+        {
+         "type_": "SubmodelElementCollection",
+         "value": "actions"
+        },
+        {
+         "type_": "SubmodelElementCollection",
+         "value": "Tare"
+        }
+       ]
+      }
+     },
+     "operation": {
+      "qualifiers": [
+       {
+        "type_": "invocationDelegation",
+        "value": "{delegation_base}/operations/{aas_id_short}/Tare",
+        "value_type": "xs:string",
+        "kind": "ConceptQualifier"
+       },
+       {
+        "type_": "Synchronous",
+        "value": "true",
+        "value_type": "xs:string",
+        "kind": "ConceptQualifier"
+       }
+      ],
+      "in_output_variable": [
+       {
+        "id_short": "Uuid",
+        "value_type": "xs:string"
+       }
+      ],
+      "output_variable": [
+       {
+        "id_short": "State",
+        "value_type": "xs:string"
+       },
+       {
+        "id_short": "Outcome",
+        "value_type": "xs:integer"
+       }
+      ]
+     }
+    },
+    "Refill": {
+     "interface_reference": {
+      "id_short": "interface_reference",
+      "value": {
+       "type_": "ModelReference",
+       "key": [
+        {
+         "type_": "Submodel",
+         "value": "{aas_id}/submodels/AssetInterfacesDescription"
+        },
+        {
+         "type_": "SubmodelElementCollection",
+         "value": "interface_opcua"
+        },
+        {
+         "type_": "SubmodelElementCollection",
+         "value": "InteractionMetadata"
+        },
+        {
+         "type_": "SubmodelElementCollection",
+         "value": "actions"
+        },
+        {
+         "type_": "SubmodelElementCollection",
+         "value": "Refill"
+        }
+       ]
+      }
+     },
+     "operation": {
+      "qualifiers": [
+       {
+        "type_": "invocationDelegation",
+        "value": "{delegation_base}/operations/{aas_id_short}/Refill",
+        "value_type": "xs:string",
+        "kind": "ConceptQualifier"
+       },
+       {
+        "type_": "Synchronous",
+        "value": "true",
+        "value_type": "xs:string",
+        "kind": "ConceptQualifier"
+       }
+      ],
+      "in_output_variable": [
+       {
+        "id_short": "Uuid",
+        "value_type": "xs:string"
+       }
+      ],
+      "output_variable": [
+       {
+        "id_short": "State",
+        "value_type": "xs:string"
+       },
+       {
+        "id_short": "Outcome",
+        "value_type": "xs:integer"
+       }
+      ]
+     }
+    },
+    "Halt": {
+     "interface_reference": {
+      "id_short": "interface_reference",
+      "value": {
+       "type_": "ModelReference",
+       "key": [
+        {
+         "type_": "Submodel",
+         "value": "{aas_id}/submodels/AssetInterfacesDescription"
+        },
+        {
+         "type_": "SubmodelElementCollection",
+         "value": "interface_opcua"
+        },
+        {
+         "type_": "SubmodelElementCollection",
+         "value": "InteractionMetadata"
+        },
+        {
+         "type_": "SubmodelElementCollection",
+         "value": "actions"
+        },
+        {
+         "type_": "SubmodelElementCollection",
+         "value": "Halt"
+        }
+       ]
+      }
+     },
+     "operation": {
+      "qualifiers": [
+       {
+        "type_": "invocationDelegation",
+        "value": "{delegation_base}/operations/{aas_id_short}/Halt",
+        "value_type": "xs:string",
+        "kind": "ConceptQualifier"
+       },
+       {
+        "type_": "Synchronous",
+        "value": "true",
+        "value_type": "xs:string",
+        "kind": "ConceptQualifier"
+       }
+      ],
+      "in_output_variable": [
+       {
+        "id_short": "Uuid",
+        "value_type": "xs:string"
+       }
+      ],
+      "output_variable": [
+       {
+        "id_short": "State",
+        "value_type": "xs:string"
+       }
+      ]
+     }
+    },
+    "Occupy": {
+     "interface_reference": {
+      "id_short": "interface_reference",
+      "value": {
+       "type_": "ModelReference",
+       "key": [
+        {
+         "type_": "Submodel",
+         "value": "{aas_id}/submodels/AssetInterfacesDescription"
+        },
+        {
+         "type_": "SubmodelElementCollection",
+         "value": "interface_opcua"
+        },
+        {
+         "type_": "SubmodelElementCollection",
+         "value": "InteractionMetadata"
+        },
+        {
+         "type_": "SubmodelElementCollection",
+         "value": "actions"
+        },
+        {
+         "type_": "SubmodelElementCollection",
+         "value": "Occupy"
+        }
+       ]
+      }
+     },
+     "operation": {
+      "qualifiers": [
+       {
+        "type_": "invocationDelegation",
+        "value": "{delegation_base}/operations/{aas_id_short}/Occupy",
+        "value_type": "xs:string",
+        "kind": "ConceptQualifier"
+       },
+       {
+        "type_": "Synchronous",
+        "value": "true",
+        "value_type": "xs:string",
+        "kind": "ConceptQualifier"
+       }
+      ],
+      "in_output_variable": [
+       {
+        "id_short": "Uuid",
+        "value_type": "xs:string"
+       }
+      ],
+      "output_variable": [
+       {
+        "id_short": "State",
+        "value_type": "xs:string"
+       }
+      ]
+     }
+    },
+    "Release": {
+     "interface_reference": {
+      "id_short": "interface_reference",
+      "value": {
+       "type_": "ModelReference",
+       "key": [
+        {
+         "type_": "Submodel",
+         "value": "{aas_id}/submodels/AssetInterfacesDescription"
+        },
+        {
+         "type_": "SubmodelElementCollection",
+         "value": "interface_opcua"
+        },
+        {
+         "type_": "SubmodelElementCollection",
+         "value": "InteractionMetadata"
+        },
+        {
+         "type_": "SubmodelElementCollection",
+         "value": "actions"
+        },
+        {
+         "type_": "SubmodelElementCollection",
+         "value": "Release"
+        }
+       ]
+      }
+     },
+     "operation": {
+      "qualifiers": [
+       {
+        "type_": "invocationDelegation",
+        "value": "{delegation_base}/operations/{aas_id_short}/Release",
+        "value_type": "xs:string",
+        "kind": "ConceptQualifier"
+       },
+       {
+        "type_": "Synchronous",
+        "value": "true",
+        "value_type": "xs:string",
+        "kind": "ConceptQualifier"
+       }
+      ],
+      "in_output_variable": [
+       {
+        "id_short": "Uuid",
+        "value_type": "xs:string"
+       }
+      ],
+      "output_variable": [
+       {
+        "id_short": "State",
+        "value_type": "xs:string"
+       }
+      ]
+     }
+    }
+   }
+  },
+  "Endpoints": {
+   "Endpoint": {
+    "Stoppering": {
+     "first": {
+      "type": "ModelReference",
+      "keys": [
+       {
+        "type": "Submodel",
+        "value": "{aas_id}/submodels/ControlComponentInstance"
+       },
+       {
+        "type": "SubmodelElementCollection",
+        "value": "Skills"
+       },
+       {
+        "type": "SubmodelElementCollection",
+        "value": "Stoppering"
+       }
+      ]
+     },
+     "second": {
+      "type": "ModelReference",
+      "keys": [
+       {
+        "type": "Submodel",
+        "value": "{aas_id}/submodels/AssetInterfacesDescription"
+       },
+       {
+        "type": "SubmodelElementCollection",
+        "value": "interface_mqtt"
+       },
+       {
+        "type": "SubmodelElementCollection",
+        "value": "InteractionMetadata"
+       },
+       {
+        "type": "SubmodelElementCollection",
+        "value": "actions"
+       },
+       {
+        "type": "SubmodelElementCollection",
+        "value": "Stoppering"
+       }
+      ]
+     }
+    }
+   }
+  }
+ },
+ "asset_interfaces_mapping_configuration": {
+  "id_short": "AssetInterfacesMappingConfiguration",
+  "MappingConfigurations": {
+   "value": [
+    {
+     "id_short": "StationState",
+     "Sources": {
+      "value": [
+       {
+        "id_short": "StationState",
+        "Source": {
+         "id_short": "Source",
+         "value": {
+          "type_": "ModelReference",
+          "key": [
+           {
+            "type_": "Submodel",
+            "value": "{aas_id}/submodels/AssetInterfacesDescription"
+           },
+           {
+            "type_": "SubmodelElementCollection",
+            "value": "interface_opcua"
+           },
+           {
+            "type_": "SubmodelElementCollection",
+            "value": "InteractionMetadata"
+           },
+           {
+            "type_": "SubmodelElementCollection",
+            "value": "properties"
+           },
+           {
+            "type_": "SubmodelElementCollection",
+            "value": "StationState"
+           }
+          ],
+          "referred_semantic_id": ""
+         }
+        },
+        "SourceId": {
+         "value": "StationState"
+        }
+       }
+      ]
+     },
+     "Sinks": {
+      "value": [
+       {
+        "id_short": "PackMLState",
+        "Sink": {
+         "id_short": "Sink",
+         "value": {
+          "type_": "ModelReference",
+          "key": [
+           {
+            "type_": "Submodel",
+            "value": "{aas_id}/submodels/Variables"
+           },
+           {
+            "type_": "Property",
+            "value": "PackMLState"
+           }
+          ],
+          "referred_semantic_id": ""
+         }
+        },
+        "SinkId": {
+         "value": "PackMLState"
+        }
+       },
+       {
+        "id_short": "OccupationState",
+        "Sink": {
+         "id_short": "Sink",
+         "value": {
+          "type_": "ModelReference",
+          "key": [
+           {
+            "type_": "Submodel",
+            "value": "{aas_id}/submodels/Variables"
+           },
+           {
+            "type_": "Property",
+            "value": "OccupationState"
+           }
+          ],
+          "referred_semantic_id": ""
+         }
+        },
+        "SinkId": {
+         "value": "OccupationState"
+        }
+       }
+      ]
+     },
+     "Transformation": {
+      "value": "-- OPC UA state leg: the station's StationState node carries a JSON\n-- blob ({\"PackMLState\": ..., \"OccupationState\": [...]}) inside the\n-- canonical milo envelope ({value, status, timestamp}) \u2014 decode the\n-- value member before reading the fields. An empty Lua table serializes\n-- as a JSON OBJECT ({}), so the empty queue MUST land as the literal\n-- \"[]\". A NON-EMPTY queue rides as the list itself \u2014 the AAS writer\n-- JSON-string-encodes list values properly (a pre-encoded string would\n-- hit the string-wrap path and truncate).\nfunction aimc_main(sources)\n    local d = sources.StationState\n    if d == nil then return {} end\n    if type(d) == \"table\" and type(d.value) == \"string\" then\n        local ok, parsed = pcall(json.decode, d.value)\n        if ok and type(parsed) == \"table\" then d = parsed end\n    end\n    if type(d) ~= \"table\" or d.PackMLState == nil then return {} end\n    local q = d.OccupationState\n    if type(q) ~= \"table\" or next(q) == nil then\n        return {\n            PackMLState     = d.PackMLState,\n            OccupationState = \"[]\",\n        }\n    end\n    return {\n        PackMLState     = d.PackMLState,\n        OccupationState = q,\n    }\nend\n"
+     }
+    },
+    {
+     "id_short": "MeasurementEvent",
+     "Sources": {
+      "value": [
+       {
+        "id_short": "MeasurementFast",
+        "Source": {
+         "id_short": "Source",
+         "value": {
+          "type_": "ModelReference",
+          "key": [
+           {
+            "type_": "Submodel",
+            "value": "{aas_id}/submodels/AssetInterfacesDescription"
+           },
+           {
+            "type_": "SubmodelElementCollection",
+            "value": "interface_opcua"
+           },
+           {
+            "type_": "SubmodelElementCollection",
+            "value": "InteractionMetadata"
+           },
+           {
+            "type_": "SubmodelElementCollection",
+            "value": "properties"
+           },
+           {
+            "type_": "SubmodelElementCollection",
+            "value": "MeasurementFast"
+           }
+          ],
+          "referred_semantic_id": ""
+         }
+        },
+        "SourceId": {
+         "value": "MeasurementFast"
+        }
+       }
+      ]
+     },
+     "Sinks": {
+      "value": [
+       {
+        "id_short": "MeasurementFast",
+        "Sink": {
+         "id_short": "Sink",
+         "value": {
+          "type_": "ModelReference",
+          "key": [
+           {
+            "type_": "Submodel",
+            "value": "{aas_id}/submodels/Variables"
+           },
+           {
+            "type_": "Property",
+            "value": "MeasurementFast"
+           }
+          ],
+          "referred_semantic_id": ""
+         }
+        },
+        "SinkId": {
+         "value": "MeasurementFast"
+        }
+       }
+      ]
+     },
+     "Transformation": {
+      "value": "function aimc_main(sources)\n    local d = sources.MeasurementFast\n    if d == nil then return {} end\n    return { MeasurementFast = d.value }\nend\n"
+     }
+    },
+    {
+     "id_short": "MeasurementTimer",
+     "Sources": {
+      "value": [
+       {
+        "id_short": "MeasurementSlow",
+        "Source": {
+         "id_short": "Source",
+         "value": {
+          "type_": "ModelReference",
+          "key": [
+           {
+            "type_": "Submodel",
+            "value": "{aas_id}/submodels/AssetInterfacesDescription"
+           },
+           {
+            "type_": "SubmodelElementCollection",
+            "value": "interface_opcua"
+           },
+           {
+            "type_": "SubmodelElementCollection",
+            "value": "InteractionMetadata"
+           },
+           {
+            "type_": "SubmodelElementCollection",
+            "value": "properties"
+           },
+           {
+            "type_": "SubmodelElementCollection",
+            "value": "MeasurementSlow"
+           }
+          ],
+          "referred_semantic_id": ""
+         }
+        },
+        "SourceId": {
+         "value": "MeasurementSlow"
+        },
+        "PollingInterval": {
+         "value": "2.0"
+        }
+       }
+      ]
+     },
+     "Sinks": {
+      "value": [
+       {
+        "id_short": "MeasurementSlow",
+        "Sink": {
+         "id_short": "Sink",
+         "value": {
+          "type_": "ModelReference",
+          "key": [
+           {
+            "type_": "Submodel",
+            "value": "{aas_id}/submodels/Variables"
+           },
+           {
+            "type_": "Property",
+            "value": "MeasurementSlow"
+           }
+          ],
+          "referred_semantic_id": ""
+         }
+        },
+        "SinkId": {
+         "value": "MeasurementSlow"
+        }
+       }
+      ]
+     },
+     "Transformation": {
+      "value": "-- OPC UA timer leg: the DMP samples the UA variable at the\n-- declared 2 s interval.\nfunction aimc_main(sources)\n    local d = sources.MeasurementSlow\n    if d == nil then return {} end\n    return { MeasurementSlow = d.value }\nend\n"
+     }
+    },
+    {
+     "id_short": "Dispensing",
+     "Sources": {
+      "value": [
+       {
+        "id_short": "Dispensing",
+        "Source": {
+         "id_short": "Source",
+         "value": {
+          "type_": "ModelReference",
+          "key": [
+           {
+            "type_": "Submodel",
+            "value": "{aas_id}/submodels/ControlComponentInstance"
+           },
+           {
+            "type_": "SubmodelElementCollection",
+            "value": "Skills"
+           },
+           {
+            "type_": "SubmodelElementCollection",
+            "value": "Dispensing"
+           },
+           {
+            "type_": "Operation",
+            "value": "operation"
+           }
+          ],
+          "referred_semantic_id": ""
+         }
+        },
+        "SourceId": {
+         "value": "Dispensing"
+        }
+       }
+      ]
+     },
+     "Sinks": {
+      "value": [
+       {
+        "id_short": "Dispensing",
+        "Sink": {
+         "id_short": "Sink",
+         "value": {
+          "type_": "ModelReference",
+          "key": [
+           {
+            "type_": "Submodel",
+            "value": "{aas_id}/submodels/AssetInterfacesDescription"
+           },
+           {
+            "type_": "SubmodelElementCollection",
+            "value": "interface_opcua"
+           },
+           {
+            "type_": "SubmodelElementCollection",
+            "value": "InteractionMetadata"
+           },
+           {
+            "type_": "SubmodelElementCollection",
+            "value": "actions"
+           },
+           {
+            "type_": "SubmodelElementCollection",
+            "value": "Dispensing"
+           }
+          ],
+          "referred_semantic_id": ""
+         }
+        },
+        "SinkId": {
+         "value": "Dispensing"
+        }
+       }
+      ]
+     },
+     "Transformation": {
+      "value": "-- Skill 'Dispensing' operation delegation (one-MC): the DMP receives the caller's\n-- operation invocation and packs it into the native command message, keeping\n-- the caller's correlation Uuid (the station's occupation gating matches on it):\nfunction aimc_main(sources)\n    local op = sources.Dispensing\n    return {\n        Dispensing = {\n            Uuid = op.Uuid,\n        },\n    }\nend\n"
+     },
+     "ResponseTransformation": {
+      "value": "-- Skill 'Dispensing' RESPONSE transform (the second transform): parse the\n-- device reply of the UA method call into the per-skill terminal envelope:\nfunction aimc_main(sources)\n    local d = sources.Dispensing\n    if d == nil then return {} end\n    return {\n        Dispensing = {\n            State = d.State,\n            Outcome = d.Outcome,\n            Uuid = d.Uuid,\n        },\n    }\nend\n"
+     }
+    },
+    {
+     "id_short": "Tare",
+     "Sources": {
+      "value": [
+       {
+        "id_short": "Tare",
+        "Source": {
+         "id_short": "Source",
+         "value": {
+          "type_": "ModelReference",
+          "key": [
+           {
+            "type_": "Submodel",
+            "value": "{aas_id}/submodels/ControlComponentInstance"
+           },
+           {
+            "type_": "SubmodelElementCollection",
+            "value": "Skills"
+           },
+           {
+            "type_": "SubmodelElementCollection",
+            "value": "Tare"
+           },
+           {
+            "type_": "Operation",
+            "value": "operation"
+           }
+          ],
+          "referred_semantic_id": ""
+         }
+        },
+        "SourceId": {
+         "value": "Tare"
+        }
+       }
+      ]
+     },
+     "Sinks": {
+      "value": [
+       {
+        "id_short": "Tare",
+        "Sink": {
+         "id_short": "Sink",
+         "value": {
+          "type_": "ModelReference",
+          "key": [
+           {
+            "type_": "Submodel",
+            "value": "{aas_id}/submodels/AssetInterfacesDescription"
+           },
+           {
+            "type_": "SubmodelElementCollection",
+            "value": "interface_opcua"
+           },
+           {
+            "type_": "SubmodelElementCollection",
+            "value": "InteractionMetadata"
+           },
+           {
+            "type_": "SubmodelElementCollection",
+            "value": "actions"
+           },
+           {
+            "type_": "SubmodelElementCollection",
+            "value": "Tare"
+           }
+          ],
+          "referred_semantic_id": ""
+         }
+        },
+        "SinkId": {
+         "value": "Tare"
+        }
+       }
+      ]
+     },
+     "Transformation": {
+      "value": "-- Skill 'Tare' operation delegation (one-MC): the DMP receives the caller's\n-- operation invocation and packs it into the native command message, keeping\n-- the caller's correlation Uuid (the station's occupation gating matches on it):\nfunction aimc_main(sources)\n    local op = sources.Tare\n    return {\n        Tare = {\n            Uuid = op.Uuid,\n        },\n    }\nend\n"
+     },
+     "ResponseTransformation": {
+      "value": "-- Skill 'Tare' RESPONSE transform (the second transform): parse the\n-- device reply of the UA method call into the per-skill terminal envelope:\nfunction aimc_main(sources)\n    local d = sources.Tare\n    if d == nil then return {} end\n    return {\n        Tare = {\n            State = d.State,\n            Outcome = d.Outcome,\n            Uuid = d.Uuid,\n        },\n    }\nend\n"
+     }
+    },
+    {
+     "id_short": "Refill",
+     "Sources": {
+      "value": [
+       {
+        "id_short": "Refill",
+        "Source": {
+         "id_short": "Source",
+         "value": {
+          "type_": "ModelReference",
+          "key": [
+           {
+            "type_": "Submodel",
+            "value": "{aas_id}/submodels/ControlComponentInstance"
+           },
+           {
+            "type_": "SubmodelElementCollection",
+            "value": "Skills"
+           },
+           {
+            "type_": "SubmodelElementCollection",
+            "value": "Refill"
+           },
+           {
+            "type_": "Operation",
+            "value": "operation"
+           }
+          ],
+          "referred_semantic_id": ""
+         }
+        },
+        "SourceId": {
+         "value": "Refill"
+        }
+       }
+      ]
+     },
+     "Sinks": {
+      "value": [
+       {
+        "id_short": "Refill",
+        "Sink": {
+         "id_short": "Sink",
+         "value": {
+          "type_": "ModelReference",
+          "key": [
+           {
+            "type_": "Submodel",
+            "value": "{aas_id}/submodels/AssetInterfacesDescription"
+           },
+           {
+            "type_": "SubmodelElementCollection",
+            "value": "interface_opcua"
+           },
+           {
+            "type_": "SubmodelElementCollection",
+            "value": "InteractionMetadata"
+           },
+           {
+            "type_": "SubmodelElementCollection",
+            "value": "actions"
+           },
+           {
+            "type_": "SubmodelElementCollection",
+            "value": "Refill"
+           }
+          ],
+          "referred_semantic_id": ""
+         }
+        },
+        "SinkId": {
+         "value": "Refill"
+        }
+       }
+      ]
+     },
+     "Transformation": {
+      "value": "-- Skill 'Refill' operation delegation (one-MC): the DMP receives the caller's\n-- operation invocation and packs it into the native command message, keeping\n-- the caller's correlation Uuid (the station's occupation gating matches on it):\nfunction aimc_main(sources)\n    local op = sources.Refill\n    return {\n        Refill = {\n            Uuid = op.Uuid,\n        },\n    }\nend\n"
+     },
+     "ResponseTransformation": {
+      "value": "-- Skill 'Refill' RESPONSE transform (the second transform): parse the\n-- device reply of the UA method call into the per-skill terminal envelope:\nfunction aimc_main(sources)\n    local d = sources.Refill\n    if d == nil then return {} end\n    return {\n        Refill = {\n            State = d.State,\n            Outcome = d.Outcome,\n            Uuid = d.Uuid,\n        },\n    }\nend\n"
+     }
+    },
+    {
+     "id_short": "ParameterWriteOpcua",
+     "Sources": {
+      "value": [
+       {
+        "id_short": "Parameter",
+        "Source": {
+         "id_short": "Source",
+         "value": {
+          "type_": "ModelReference",
+          "key": [
+           {
+            "type_": "Submodel",
+            "value": "{aas_id}/submodels/AssetInterfacesDescription"
+           },
+           {
+            "type_": "SubmodelElementCollection",
+            "value": "interface_opcua"
+           },
+           {
+            "type_": "SubmodelElementCollection",
+            "value": "InteractionMetadata"
+           },
+           {
+            "type_": "SubmodelElementCollection",
+            "value": "properties"
+           },
+           {
+            "type_": "SubmodelElementCollection",
+            "value": "Parameter"
+           }
+          ],
+          "referred_semantic_id": ""
+         }
+        },
+        "SourceId": {
+         "value": "Parameter"
+        }
+       }
+      ]
+     },
+     "Sinks": {
+      "value": [
+       {
+        "id_short": "Parameter",
+        "Sink": {
+         "id_short": "Sink",
+         "value": {
+          "type_": "ModelReference",
+          "key": [
+           {
+            "type_": "Submodel",
+            "value": "{aas_id}/submodels/Variables"
+           },
+           {
+            "type_": "Property",
+            "value": "Parameter"
+           }
+          ],
+          "referred_semantic_id": ""
+         }
+        },
+        "SinkId": {
+         "value": "Parameter"
+        }
+       }
+      ]
+     },
+     "Transformation": {
+      "value": "function aimc_main(sources)\n    local p = sources.Parameter\n    return { Parameter = { Uuid = p.Uuid, Value = p.value } }\nend\n"
+     },
+     "qualifiers": [
+      {
+       "type_": "writeDelegation",
+       "value": "{delegation_base}/properties/{aas_id_short}/Parameter",
+       "value_type": "xs:string",
+       "kind": "ConceptQualifier"
+      }
+     ]
+    },
+    {
+     "id_short": "Occupy",
+     "Sources": {
+      "value": [
+       {
+        "id_short": "Occupy",
+        "Source": {
+         "id_short": "Source",
+         "value": {
+          "type_": "ModelReference",
+          "key": [
+           {
+            "type_": "Submodel",
+            "value": "{aas_id}/submodels/ControlComponentInstance"
+           },
+           {
+            "type_": "SubmodelElementCollection",
+            "value": "Skills"
+           },
+           {
+            "type_": "SubmodelElementCollection",
+            "value": "Occupy"
+           },
+           {
+            "type_": "Operation",
+            "value": "operation"
+           }
+          ],
+          "referred_semantic_id": ""
+         }
+        },
+        "SourceId": {
+         "value": "Occupy"
+        }
+       }
+      ]
+     },
+     "Sinks": {
+      "value": [
+       {
+        "id_short": "Occupy",
+        "Sink": {
+         "id_short": "Sink",
+         "value": {
+          "type_": "ModelReference",
+          "key": [
+           {
+            "type_": "Submodel",
+            "value": "{aas_id}/submodels/AssetInterfacesDescription"
+           },
+           {
+            "type_": "SubmodelElementCollection",
+            "value": "interface_opcua"
+           },
+           {
+            "type_": "SubmodelElementCollection",
+            "value": "InteractionMetadata"
+           },
+           {
+            "type_": "SubmodelElementCollection",
+            "value": "actions"
+           },
+           {
+            "type_": "SubmodelElementCollection",
+            "value": "Occupy"
+           }
+          ],
+          "referred_semantic_id": ""
+         }
+        },
+        "SinkId": {
+         "value": "Occupy"
+        }
+       }
+      ]
+     },
+     "Transformation": {
+      "value": "-- Skill 'Occupy' operation delegation (one-MC): the DMP receives the caller's\n-- operation invocation and packs it into the native command message, keeping\n-- the caller's correlation Uuid (the station's occupation gating matches on it):\nfunction aimc_main(sources)\n    local op = sources.Occupy\n    return {\n        Occupy = {\n            Uuid = op.Uuid,\n        },\n    }\nend\n"
+     },
+     "ResponseTransformation": {
+      "value": "-- Skill 'Occupy' RESPONSE transform: parse the device reply of\n-- the UA method call (the replies echo the correlation Uuid):\nfunction aimc_main(sources)\n    return { [\"Occupy\"] = sources[\"Occupy\"] }\nend\n"
+     }
+    },
+    {
+     "id_short": "Release",
+     "Sources": {
+      "value": [
+       {
+        "id_short": "Release",
+        "Source": {
+         "id_short": "Source",
+         "value": {
+          "type_": "ModelReference",
+          "key": [
+           {
+            "type_": "Submodel",
+            "value": "{aas_id}/submodels/ControlComponentInstance"
+           },
+           {
+            "type_": "SubmodelElementCollection",
+            "value": "Skills"
+           },
+           {
+            "type_": "SubmodelElementCollection",
+            "value": "Release"
+           },
+           {
+            "type_": "Operation",
+            "value": "operation"
+           }
+          ],
+          "referred_semantic_id": ""
+         }
+        },
+        "SourceId": {
+         "value": "Release"
+        }
+       }
+      ]
+     },
+     "Sinks": {
+      "value": [
+       {
+        "id_short": "Release",
+        "Sink": {
+         "id_short": "Sink",
+         "value": {
+          "type_": "ModelReference",
+          "key": [
+           {
+            "type_": "Submodel",
+            "value": "{aas_id}/submodels/AssetInterfacesDescription"
+           },
+           {
+            "type_": "SubmodelElementCollection",
+            "value": "interface_opcua"
+           },
+           {
+            "type_": "SubmodelElementCollection",
+            "value": "InteractionMetadata"
+           },
+           {
+            "type_": "SubmodelElementCollection",
+            "value": "actions"
+           },
+           {
+            "type_": "SubmodelElementCollection",
+            "value": "Release"
+           }
+          ],
+          "referred_semantic_id": ""
+         }
+        },
+        "SinkId": {
+         "value": "Release"
+        }
+       }
+      ]
+     },
+     "Transformation": {
+      "value": "-- Skill 'Release' operation delegation (one-MC): the DMP receives the caller's\n-- operation invocation and packs it into the native command message, keeping\n-- the caller's correlation Uuid (the station's occupation gating matches on it):\nfunction aimc_main(sources)\n    local op = sources.Release\n    return {\n        Release = {\n            Uuid = op.Uuid,\n        },\n    }\nend\n"
+     },
+     "ResponseTransformation": {
+      "value": "-- Skill 'Release' RESPONSE transform: parse the device reply of\n-- the UA method call (the replies echo the correlation Uuid):\nfunction aimc_main(sources)\n    return { [\"Release\"] = sources[\"Release\"] }\nend\n"
+     }
+    }
+   ]
+  }
+ },
+ "delegation_base": "http://dmp-syntegondispensingsystemaas:8080"
+}

@@ -284,14 +284,10 @@
   "id_short": "Variables",
   "variable": {
    "PackMLState": {
-    "variable": {
-     "value": "https://w3id.org/2026/apex/semantic/state/operational"
-    }
+    "value": "https://w3id.org/2026/apex/semantic/state/operational"
    },
    "OccupationState": {
-    "variable": {
-     "value": "https://w3id.org/2026/apex/semantic/state/occupied"
-    }
+    "value": "https://w3id.org/2026/apex/semantic/state/occupied"
    }
   }
  },
@@ -494,7 +490,7 @@
             "value": "{aas_id}/submodels/Variables"
            },
            {
-            "type_": "SubmodelElementCollection",
+            "type_": "Property",
             "value": "PackMLState"
            }
           ],
@@ -516,7 +512,7 @@
             "value": "{aas_id}/submodels/Variables"
            },
            {
-            "type_": "SubmodelElementCollection",
+            "type_": "Property",
             "value": "OccupationState"
            }
           ],
