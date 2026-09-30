@@ -143,7 +143,14 @@ services:
     networks:
       - hivemq-network
   aas-web-ui:
-    image: eclipsebasyx/aas-gui:SNAPSHOT
+    # The BaSyx AAS Web UI discovers plugins from
+    # `aas-web-ui/src/UserPlugins/**/*.vue` at BUILD time only, so the AIMC
+    # mapping visualization and its Lua editor are compiled into the image
+    # rather than mounted at runtime.
+    build:
+      context: ../basyx-ui-plugins
+      dockerfile: Dockerfile
+    image: aas-gui-ap2030:local
     container_name: aas-ui
     ports:
       - '3001:3000'
@@ -158,6 +165,8 @@ services:
       PRIMARY_COLOR: '#000eaa'
       DASHBOARD_SERVICE_PATH: http://${EXTERNAL_HOST:-localhost}:8085/api/elements
       START_PAGE_ROUTE_NAME: "AASEditor"
+      # Required for the AIMC transformation editor to persist a saved blob.
+      ALLOW_EDITING: 'true'
     volumes:
       - ../logo:/usr/src/app/dist/Logo
     restart: always
