@@ -31,3 +31,6 @@
 [submodule "aas-model"]
 	path = aas-model
 	url = https://github.com/tristan-schwoerer/aas-model.git
+[submodule "basyx-aas-web-ui"]
+	path = basyx-aas-web-ui
+	url = https://github.com/tristan-schwoerer/basyx-aas-web-ui.git

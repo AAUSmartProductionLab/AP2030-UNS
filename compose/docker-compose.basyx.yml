@@ -143,13 +143,17 @@ services:
     networks:
       - hivemq-network
   aas-web-ui:
-    # The BaSyx AAS Web UI discovers plugins from
-    # `aas-web-ui/src/UserPlugins/**/*.vue` at BUILD time only, so the AIMC
-    # mapping visualization and its Lua editor are compiled into the image
-    # rather than mounted at runtime.
+    # The AIMC mapping visualization is a user plugin in the Web UI fork
+    # (`basyx-aas-web-ui` submodule). The UI resolves plugins from
+    # `aas-web-ui/src/UserPlugins/**/*.vue` at BUILD time only, so the plugin
+    # has to be compiled into the image rather than mounted at runtime.
+    # `Dockerfile.ci` is the fork's own build entry point; upstream's
+    # `Dockerfile` is left untouched so the fork merges cleanly.
+    # Paths in an included compose file resolve against this file's own
+    # directory, hence the leading `../`.
     build:
-      context: ../basyx-ui-plugins
-      dockerfile: Dockerfile
+      context: ../basyx-aas-web-ui/aas-web-ui
+      dockerfile: Dockerfile.ci
     image: aas-gui-ap2030:local
     container_name: aas-ui
     ports:
