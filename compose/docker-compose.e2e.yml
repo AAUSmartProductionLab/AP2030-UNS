@@ -1,0 +1,312 @@
+# Dockerized end-to-end stack for the DMP pipeline (plan
+# .kilo/plans/1788416400000-e2e-station-bindings-plan.md, Phase 6).
+#
+# Fully isolated from the main `ap2030-uns` stack: own project, own bridge
+# network, remapped host ports. One Java DMP joins the same bridge as the
+# repository and Python simulator. AAS Operation qualifiers target dmp:8080;
+# only host-side test clients use published ports:
+#
+#   mosquitto        18830   (internal AID base mqtt://mosquitto:1883/...)
+#   aas-env          18081   (internal repository http://aas-env:8081)
+#   kafka            19092   (internal control listener kafka:9092)
+#   stoppering UA    4840    (internal AID base stoppering-station:4840)
+#   shared Java DMP  18086   (internal Operations/health listener dmp:8080)
+# No Docker socket, generated descriptor mount or per-unit deployment is used.
+#
+# Bring-up (see bootstrap.sh for the full sequence):
+#   docker compose -f compose/docker-compose.e2e.yml up -d --build
+
+name: ap2030-e2e
+
+services:
+  aas-registry:
+    image: eclipsebasyx/aas-registry-log-mongodb:${BASYX_VERSION:-2.0.0-SNAPSHOT}
+    container_name: e2e-aas-registry
+    ports:
+      - "${E2E_AAS_REGISTRY_PORT:-18082}:8080"
+    environment:
+      - SERVER_PORT=8080
+      - SPRING_DATA_MONGODB_HOST=mongo
+      - SPRING_DATA_MONGODB_PORT=27017
+      - SPRING_DATA_MONGODB_DATABASE=aas-registry
+      - SPRING_DATA_MONGODB_AUTHENTICATION_DATABASE=admin
+      - SPRING_DATA_MONGODB_USERNAME=mongoAdmin
+      - SPRING_DATA_MONGODB_PASSWORD=mongoPassword
+      - BASYX_CORS_ALLOWED_ORIGINS=*
+      - BASYX_CORS_ALLOWED_METHODS=GET,POST,PATCH,DELETE,PUT,OPTIONS,HEAD
+    restart: always
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - e2e
+
+  sm-registry:
+    image: eclipsebasyx/submodel-registry-log-mongodb:${BASYX_VERSION:-2.0.0-SNAPSHOT}
+    container_name: e2e-sm-registry
+    ports:
+      - "${E2E_SM_REGISTRY_PORT:-18083}:8080"
+    environment:
+      - SERVER_PORT=8080
+      - SPRING_DATA_MONGODB_HOST=mongo
+      - SPRING_DATA_MONGODB_PORT=27017
+      - SPRING_DATA_MONGODB_DATABASE=sm-registry
+      - SPRING_DATA_MONGODB_AUTHENTICATION_DATABASE=admin
+      - SPRING_DATA_MONGODB_USERNAME=mongoAdmin
+      - SPRING_DATA_MONGODB_PASSWORD=mongoPassword
+      - BASYX_CORS_ALLOWED_ORIGINS=*
+      - BASYX_CORS_ALLOWED_METHODS=GET,POST,PATCH,DELETE,PUT,OPTIONS,HEAD
+    restart: always
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - e2e
+
+  mosquitto:
+    image: eclipse-mosquitto
+    container_name: e2e-mosquitto
+    volumes:
+      - ../Mosquitto/config:/mosquitto/config:ro
+    ports:
+      - "${E2E_MQTT_PORT:-18830}:1883"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "mosquitto_pub -h localhost -p 1883 -t e2e/probe -m ok || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 5s
+    networks:
+      - e2e
+
+  mongo:
+    image: mongo:5.0.10
+    container_name: e2e-mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mongoAdmin
+      MONGO_INITDB_ROOT_PASSWORD: mongoPassword
+    restart: unless-stopped
+    healthcheck:
+      test: mongo
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - e2e
+
+  kafka:
+    image: confluentinc/cp-kafka:${KAFKA_VERSION:-7.9.1}
+    container_name: e2e-kafka
+    restart: unless-stopped
+    ports:
+      - "${E2E_KAFKA_PORT:-19092}:19092"
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: INTER_BROKER://kafka:9094,PLAINTEXT://kafka:9092,EXTERNAL://localhost:${E2E_KAFKA_PORT:-19092}
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTER_BROKER
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENERS: INTER_BROKER://:9094,CONTROLLER://:9095,PLAINTEXT://:9092,EXTERNAL://:19092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,INTER_BROKER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_BROKER_ID: 1
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9095
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+      # the BaSyx AAS events carry full submodel bodies (~1.2 MB) — lift the
+      # default 1 MB broker/produder ceilings
+      KAFKA_MESSAGE_MAX_BYTES: "10485760"
+      KAFKA_REPLICA_FETCH_MAX_BYTES: "10485760"
+      CLUSTER_ID: ${KAFKA_CLUSTER_ID:-jmpccZs2RHaYUbZ-LgaIhQ}
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      KAFKA_MIN_INSYNC_REPLICAS: 1
+      KAFKA_NUM_PARTITIONS: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+    healthcheck:
+      test: ["CMD", "bash", "-c", "echo > /dev/tcp/kafka/9092"]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+      start_period: 15s
+    networks:
+      - e2e
+
+  aas-env:
+    image: eclipsebasyx/aas-environment:${BASYX_VERSION:-2.0.0-SNAPSHOT}
+    container_name: e2e-aas-env
+    environment:
+      - SERVER_PORT=8081
+      - EXTERNAL_HOST=${EXTERNAL_HOST:-localhost}
+      - BASYX_BACKEND=MongoDB
+      - BASYX_ENVIRONMENT=file:aas
+      - BASYX_CORS_ALLOWED_ORIGINS=*
+      - BASYX_CORS_ALLOWED_METHODS=GET,POST,PATCH,DELETE,PUT,OPTIONS,HEAD
+      - BASYX_EXTERNALURL=http://${EXTERNAL_HOST:-localhost}:${E2E_AAS_PORT:-18081}
+      - SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE=500MB
+      - SPRING_SERVLET_MULTIPART_MAX_REQUEST_SIZE=500MB
+      - BASYX_AASREPOSITORY_FEATURE_REGISTRYINTEGRATION=http://aas-registry:8080
+      - BASYX_SUBMODELREPOSITORY_FEATURE_REGISTRYINTEGRATION=http://sm-registry:8080
+      - SPRING_DATA_MONGODB_HOST=mongo
+      - SPRING_DATA_MONGODB_DATABASE=aas-env
+      - SPRING_DATA_MONGODB_AUTHENTICATION_DATABASE=admin
+      - SPRING_DATA_MONGODB_USERNAME=mongoAdmin
+      - SPRING_DATA_MONGODB_PASSWORD=mongoPassword
+      - MQTT_HOSTNAME=mosquitto
+      - MQTT_PORT=1883
+      - MQTT_CLIENTID=e2e-aas-env-client
+      # Submodel events go to Kafka and MQTT; DMP_EVENT_TRANSPORT selects which one the DMP follows.
+      - BASYX_FEATURE_KAFKA_ENABLED=true
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - SPRING_KAFKA_PRODUCER_PROPERTIES_MAX_REQUEST_SIZE=10485760
+      - BASYX_AASREPOSITORY_FEATURE_MQTT_ENABLED=false
+      - BASYX_SUBMODELREPOSITORY_FEATURE_MQTT_ENABLED=true
+    volumes:
+      - ./e2e/aas:/application/aas
+    ports:
+      - "${E2E_AAS_PORT:-18081}:8081"
+    restart: always
+    depends_on:
+      aas-registry:
+        condition: service_started
+      sm-registry:
+        condition: service_started
+      mongo:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      mosquitto:
+        condition: service_started
+    networks:
+      - e2e
+
+  registration-service:
+    build:
+      context: ../Registration_Service
+      dockerfile: Dockerfile
+      additional_contexts:
+        aas_model: ../aas-model
+    container_name: e2e-registration-service
+    environment:
+      - PYTHONUNBUFFERED=1
+      # resolve MQTT schemas locally (the new parameterCommand schema is not
+      # on the GitHub Pages host yet)
+      - MQTT_SCHEMAS_DIR=/app/MQTTSchemas
+    volumes:
+      # The schema set is the aas-model submodule's MQTTSchemas.
+      - ../aas-model/MQTTSchemas:/app/MQTTSchemas:ro
+    command:
+      - python
+      - registration-service.py
+      - --mqtt-broker
+      - mosquitto
+      - --mqtt-port
+      - "1883"
+      - --basyx-url
+      - http://aas-env:8081
+      - listen
+    restart: unless-stopped
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+      aas-env:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import socket; socket.create_connection(('mosquitto',1883), timeout=3).close()\" || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    networks:
+      - e2e
+
+  stoppering_station:
+    image: stations:e2e
+    build:
+      context: ../simulated_stations
+      dockerfile: deployment/docker/stations.dockerfile
+    container_name: e2e-stoppering-station
+    environment:
+      MQTT_BROKER: mosquitto
+      MQTT_PORT: "1883"
+      PYTHONPATH: /app
+      # The e2e config variant (generated by bootstrap.sh) points the AID
+      # bases at the internal e2e broker/UA service addresses.
+      STOPPERING_AAS_CONFIG: syntegonStoppering.e2e.json
+      OPCUA_ENDPOINT: opc.tcp://0.0.0.0:4840/stoppering/
+    volumes:
+      - ../simulated_stations:/app
+      - ../packml_runtime:/app/packml_runtime
+      - ../aas-model/MQTTSchemas:/app/MQTTSchemas
+      - ../AASDescriptions:/app/AASDescriptions
+    ports:
+      - "4840:4840"
+    command: ["-m", "services.stations.stoppering.service"]
+    restart: unless-stopped
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+      registration-service:
+        condition: service_healthy
+    networks:
+      - e2e
+
+  aas-ui:
+    image: eclipsebasyx/aas-gui:SNAPSHOT
+    container_name: e2e-aas-ui
+    ports:
+      - "${E2E_UI_PORT:-3002}:3000"
+    environment:
+      AAS_REGISTRY_PATH: http://${EXTERNAL_HOST:-localhost}:${E2E_AAS_REGISTRY_PORT:-18082}/shell-descriptors
+      SUBMODEL_REGISTRY_PATH: http://${EXTERNAL_HOST:-localhost}:${E2E_SM_REGISTRY_PORT:-18083}/submodel-descriptors
+      AAS_REPO_PATH: http://${EXTERNAL_HOST:-localhost}:${E2E_AAS_PORT:-18081}/shells
+      SUBMODEL_REPO_PATH: http://${EXTERNAL_HOST:-localhost}:${E2E_AAS_PORT:-18081}/submodels
+      CD_REPO_PATH: http://${EXTERNAL_HOST:-localhost}:${E2E_AAS_PORT:-18081}/concept-descriptions
+      PRIMARY_COLOR: '#0036AA'
+    restart: always
+    depends_on:
+      aas-env:
+        condition: service_started
+      aas-registry:
+        condition: service_started
+    networks:
+      e2e:
+        aliases:
+          - stoppering-station
+
+  dmp:
+    image: dmp:java
+    build:
+      context: ../aas-camel-dmp/dmp.component
+      dockerfile: Dockerfile
+    container_name: e2e-dmp
+    pull_policy: never
+    environment:
+      - DMP_MANAGED_AAS_REPOSITORY_URI=http://aas-env:8081
+      - DMP_MANAGED_EVENT_TRANSPORT=${DMP_EVENT_TRANSPORT:-kafka}
+      - DMP_MANAGED_KAFKA_BROKERS=kafka:9092
+      - DMP_MANAGED_CONTROL_TOPIC=submodel-events
+      - DMP_MANAGED_CONTROL_GROUP_ID=dmp-java-management-e2e
+      - DMP_MANAGED_MQTT_BROKER_URI=tcp://mosquitto:1883
+      - DMP_MANAGED_MQTT_CLIENT_ID=e2e-dmp-control
+    ports:
+      - "127.0.0.1:${E2E_DMP_PORT:-18086}:8080"
+    restart: unless-stopped
+    stop_grace_period: 60s
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    depends_on:
+      kafka:
+        condition: service_healthy
+      aas-env:
+        condition: service_started
+    networks:
+      - e2e
+
+networks:
+  e2e:
+    driver: bridge
