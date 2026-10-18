@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # E2E bootstrap (plan .kilo/plans/1788416400000-e2e-station-bindings-plan.md,
-# Phase 6): refreshes Registration_Service's vendored aas-model, packages the
+# Phase 6): initializes Registration_Service's aas-model submodule, packages the
 # Java DMP, brings the isolated e2e stack up and checks managed convergence.
 # The checked-in resource descriptions and Python simulator are not regenerated.
 #
@@ -35,19 +35,11 @@ done
 log() { echo "[bootstrap] $*"; }
 mkdir -p "$E2E_DIR/aas"
 
-# ---------------------------------------------------------------- vendored model
-refresh_vendor() {
-  local src="$REPO_ROOT/aas-model"
-  local dests=(
-    "$REPO_ROOT/Registration_Service/_aas_model"
-  )
-  for dest in "${dests[@]}"; do
-    rm -rf "$dest"
-    # real copy: docker COPY cannot follow symlinks out of the build context
-    cp -r "$src" "$dest"
-    rm -rf "$dest/.git" "$dest"/src/*/__pycache__ 2>/dev/null || true
-    log "vendored aas-model -> $dest"
-  done
+# ---------------------------------------------------------------- model submodule
+init_model() {
+  # Registration_Service builds from its pinned aas-model submodule.
+  git -C "$REPO_ROOT/Registration_Service" submodule update --init --recursive
+  log "Registration_Service aas-model: $(git -C "$REPO_ROOT/Registration_Service/aas-model" rev-parse --short HEAD)"
 }
 
 # ---------------------------------------------------------------- java image
@@ -71,12 +63,8 @@ build_dmp() {
 }
 
 # ---------------------------------------------------------------- main
-if [[ ! -f "$REPO_ROOT/AASDescriptions/Resource/configs/syntegonStoppering.e2e.json" ]]; then
-  log "ERROR: checked-in syntegonStoppering.e2e.json is required"
-  exit 1
-fi
 if $BUILD_IMAGES; then
-  refresh_vendor
+  init_model
   build_dmp
 fi
 

@@ -222,12 +222,10 @@ services:
     build:
       context: ../Registration_Service
       dockerfile: Dockerfile
-      additional_contexts:
-        aas_model: ../aas-model
     container_name: registration-service
     environment:
       - PYTHONUNBUFFERED=1
-      - MQTT_SCHEMAS_DIR=/app/MQTTSchemas
+      - MQTT_SCHEMAS_DIR=/app/aas-model/MQTTSchemas
       - BASYX_URL=http://${AAS_SERVER:-aas-env}:${AAS_PORT:-8081}
       - MQTT_BROKER=hivemq-broker
       - MQTT_PORT=1883

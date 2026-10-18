@@ -45,7 +45,7 @@ jobs:
           rm -rf docs/BTDescriptions
           cp -r BTDescriptions docs/BTDescriptions
           rm -rf docs/configs
-          cp -r AASDescriptions/Resource/configs docs/configs
+          if [ -d AASDescriptions/Resource/configs ]; then cp -r AASDescriptions/Resource/configs docs/configs; fi
       
       - name: Set up Python
         uses: actions/setup-python@v4

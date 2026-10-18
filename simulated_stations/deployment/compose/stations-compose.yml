@@ -37,8 +37,6 @@ services:
     container_name: filling_station
     environment:
       <<: *simulated-station-env
-      # OPC-UA-bound: the OPC-UA-only AAS variant (the station CODE is dual)
-      DISPENSING_AAS_CONFIG: syntegonDispensing.json
       OPCUA_ENDPOINT: opc.tcp://0.0.0.0:4840/dispensing/
     # DNS-safe alias for URI hostnames (see the stoppering note)
     networks:
