@@ -6,7 +6,6 @@ x-simulated-station-env: &simulated-station-env
   PYTHONPATH: /app
 
 x-simulated-station-common: &simulated-station-common
-  profiles: ["simulated-stations"]
   networks:
     - hivemq-network
   restart: always
@@ -17,19 +16,36 @@ x-simulated-station-common: &simulated-station-common
   volumes:
     - ../../:/app  # Mount simulated_stations root
     - ../../../packml_runtime:/app/packml_runtime  # Mount shared PackML runtime
-    - ../../../MQTTSchemas:/app/MQTTSchemas  # Overlay schemas
+    - ../../../aas-model/MQTTSchemas:/app/MQTTSchemas  # Overlay schemas (current set lives in the aas-model submodule)
     - ../../../AASDescriptions:/app/AASDescriptions  # Mount AAS configs for registration
 
 services:
-  filling_station:
-    <<: *simulated-station-common
-    container_name: filling_station
-    command: ["-m", "services.stations.filling.service"]
-
   stoppering_station:
     <<: *simulated-station-common
     container_name: stoppering_station
+    # DNS-safe alias for URI hostnames: the container_name carries an
+    # underscore, which java.net.URI/milo reject in OPC UA endpoint URLs
+    # (the DMP resolves the AID's opc.tcp base against this alias)
+    networks:
+      hivemq-network:
+        aliases:
+          - stoppering-station
     command: ["-m", "services.stations.stoppering.service"]
+
+  filling_station:
+    <<: *simulated-station-common
+    container_name: filling_station
+    environment:
+      <<: *simulated-station-env
+      # OPC-UA-bound: the OPC-UA-only AAS variant (the station CODE is dual)
+      DISPENSING_AAS_CONFIG: syntegonDispensing.json
+      OPCUA_ENDPOINT: opc.tcp://0.0.0.0:4840/dispensing/
+    # DNS-safe alias for URI hostnames (see the stoppering note)
+    networks:
+      hivemq-network:
+        aliases:
+          - filling-station
+    command: ["-m", "services.stations.filling.service"]
 
   load_station:
     <<: *simulated-station-common

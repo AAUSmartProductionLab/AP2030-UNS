@@ -7,3 +7,7 @@ pddl
 pyparsing
 networkx
 ConfigSpace
+
+# OPC UA binding of the stations (asyncua; 2.x requires python>=3.10 —
+# stations.dockerfile uses python:3.12-slim accordingly)
+asyncua==2.0.1
