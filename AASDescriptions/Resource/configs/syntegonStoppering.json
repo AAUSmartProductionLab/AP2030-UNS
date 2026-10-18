@@ -353,7 +353,7 @@
       "qualifiers": [
        {
         "type_": "invocationDelegation",
-        "value": "{delegation_base}/operations/{aas_id_short}/Stoppering",
+         "value": "http://dmp:8080/operations/syntegonStopperingSystemAAS/Stoppering",
         "value_type": "xs:string",
         "kind": "ConceptQualifier"
        },

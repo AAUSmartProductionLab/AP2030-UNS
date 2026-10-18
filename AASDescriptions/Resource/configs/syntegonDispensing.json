@@ -290,16 +290,8 @@
    "Parameter": {
     "value": "",
     "supplemental_semantic_ids": [
-     "https://w3id.org/2026/apex/semantic/parameter/value"
-    ],
-    "qualifiers": [
-     {
-      "type_": "writeDelegation",
-      "value": "{delegation_base}/properties/{aas_id_short}/Parameter",
-      "value_type": "xs:string",
-      "kind": "ConceptQualifier"
-     }
-    ]
+       "https://w3id.org/2026/apex/semantic/parameter/value"
+     ]
    }
   }
  },
@@ -366,7 +358,7 @@
       "qualifiers": [
        {
         "type_": "invocationDelegation",
-        "value": "{delegation_base}/operations/{aas_id_short}/Dispensing",
+         "value": "http://dmp:8080/operations/syntegonDispensingSystemAAS/Dispensing",
         "value_type": "xs:string",
         "kind": "ConceptQualifier"
        },
@@ -428,7 +420,7 @@
       "qualifiers": [
        {
         "type_": "invocationDelegation",
-        "value": "{delegation_base}/operations/{aas_id_short}/Tare",
+         "value": "http://dmp:8080/operations/syntegonDispensingSystemAAS/Tare",
         "value_type": "xs:string",
         "kind": "ConceptQualifier"
        },
@@ -490,7 +482,7 @@
       "qualifiers": [
        {
         "type_": "invocationDelegation",
-        "value": "{delegation_base}/operations/{aas_id_short}/Refill",
+         "value": "http://dmp:8080/operations/syntegonDispensingSystemAAS/Refill",
         "value_type": "xs:string",
         "kind": "ConceptQualifier"
        },
@@ -552,7 +544,7 @@
       "qualifiers": [
        {
         "type_": "invocationDelegation",
-        "value": "{delegation_base}/operations/{aas_id_short}/Halt",
+         "value": "http://dmp:8080/operations/syntegonDispensingSystemAAS/Halt",
         "value_type": "xs:string",
         "kind": "ConceptQualifier"
        },
@@ -610,7 +602,7 @@
       "qualifiers": [
        {
         "type_": "invocationDelegation",
-        "value": "{delegation_base}/operations/{aas_id_short}/Occupy",
+         "value": "http://dmp:8080/operations/syntegonDispensingSystemAAS/Occupy",
         "value_type": "xs:string",
         "kind": "ConceptQualifier"
        },
@@ -668,7 +660,7 @@
       "qualifiers": [
        {
         "type_": "invocationDelegation",
-        "value": "{delegation_base}/operations/{aas_id_short}/Release",
+         "value": "http://dmp:8080/operations/syntegonDispensingSystemAAS/Release",
         "value_type": "xs:string",
         "kind": "ConceptQualifier"
        },
@@ -1237,89 +1229,9 @@
      },
      "ResponseTransformation": {
       "value": "-- Skill 'Refill' RESPONSE transform (the second transform): parse the\n-- device reply of the UA method call into the per-skill terminal envelope:\nfunction aimc_main(sources)\n    local d = sources.Refill\n    if d == nil then return {} end\n    return {\n        Refill = {\n            State = d.State,\n            Outcome = d.Outcome,\n            Uuid = d.Uuid,\n        },\n    }\nend\n"
-     }
-    },
-    {
-     "id_short": "ParameterWriteOpcua",
-     "Sources": {
-      "value": [
-       {
-        "id_short": "Parameter",
-        "Source": {
-         "id_short": "Source",
-         "value": {
-          "type_": "ModelReference",
-          "key": [
-           {
-            "type_": "Submodel",
-            "value": "{aas_id}/submodels/AssetInterfacesDescription"
-           },
-           {
-            "type_": "SubmodelElementCollection",
-            "value": "interface_opcua"
-           },
-           {
-            "type_": "SubmodelElementCollection",
-            "value": "InteractionMetadata"
-           },
-           {
-            "type_": "SubmodelElementCollection",
-            "value": "properties"
-           },
-           {
-            "type_": "SubmodelElementCollection",
-            "value": "Parameter"
-           }
-          ],
-          "referred_semantic_id": ""
-         }
-        },
-        "SourceId": {
-         "value": "Parameter"
-        }
-       }
-      ]
-     },
-     "Sinks": {
-      "value": [
-       {
-        "id_short": "Parameter",
-        "Sink": {
-         "id_short": "Sink",
-         "value": {
-          "type_": "ModelReference",
-          "key": [
-           {
-            "type_": "Submodel",
-            "value": "{aas_id}/submodels/Variables"
-           },
-           {
-            "type_": "Property",
-            "value": "Parameter"
-           }
-          ],
-          "referred_semantic_id": ""
-         }
-        },
-        "SinkId": {
-         "value": "Parameter"
-        }
-       }
-      ]
-     },
-     "Transformation": {
-      "value": "function aimc_main(sources)\n    local p = sources.Parameter\n    return { Parameter = { Uuid = p.Uuid, Value = p.value } }\nend\n"
-     },
-     "qualifiers": [
-      {
-       "type_": "writeDelegation",
-       "value": "{delegation_base}/properties/{aas_id_short}/Parameter",
-       "value_type": "xs:string",
-       "kind": "ConceptQualifier"
       }
-     ]
-    },
-    {
+     },
+     {
      "id_short": "Occupy",
      "Sources": {
       "value": [
@@ -1481,12 +1393,11 @@
      "Transformation": {
       "value": "-- Skill 'Release' operation delegation (one-MC): the DMP receives the caller's\n-- operation invocation and packs it into the native command message, keeping\n-- the caller's correlation Uuid (the station's occupation gating matches on it):\nfunction aimc_main(sources)\n    local op = sources.Release\n    return {\n        Release = {\n            Uuid = op.Uuid,\n        },\n    }\nend\n"
      },
-     "ResponseTransformation": {
-      "value": "-- Skill 'Release' RESPONSE transform: parse the device reply of\n-- the UA method call (the replies echo the correlation Uuid):\nfunction aimc_main(sources)\n    return { [\"Release\"] = sources[\"Release\"] }\nend\n"
+      "ResponseTransformation": {
+       "value": "-- Skill 'Release' RESPONSE transform: parse the device reply of\n-- the UA method call (the replies echo the correlation Uuid):\nfunction aimc_main(sources)\n    return { [\"Release\"] = sources[\"Release\"] }\nend\n"
+      }
      }
-    }
-   ]
+    ]
+   }
   }
- },
- "delegation_base": "http://dmp-syntegondispensingsystemaas:8080"
 }
