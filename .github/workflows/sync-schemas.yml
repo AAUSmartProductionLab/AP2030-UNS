@@ -5,7 +5,7 @@ on:
     paths:
       - 'AASDescriptions/**'
       - 'AASDescriptions/Resource/configs/**'
-      - 'MQTTSchemas/**'
+      - 'aas-model'
       - 'BTDescriptions/**'
       - 'docs/**'
     branches:
@@ -32,13 +32,16 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          # The MQTT schemas are the aas-model submodule's MQTTSchemas submodule.
+          submodules: recursive
 
       - name: Sync schemas, configs and BT XMLs to docs
         run: |
           rm -rf docs/AASDescriptions
           cp -r AASDescriptions docs/AASDescriptions
           rm -rf docs/MQTTSchemas
-          cp -r MQTTSchemas docs/MQTTSchemas
+          cp -r aas-model/MQTTSchemas docs/MQTTSchemas
+          rm -rf docs/MQTTSchemas/.git
           rm -rf docs/BTDescriptions
           cp -r BTDescriptions docs/BTDescriptions
           rm -rf docs/configs

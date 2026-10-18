@@ -34,7 +34,7 @@ services:
     volumes:
       - ../../../:/app  # Mount AP2030-UNS repo root
       - ../../../packml_runtime:/app/packml_runtime  # Mount shared PackML runtime
-      - ../../../MQTTSchemas:/app/MQTTSchemas  # Overlay schemas
+      - ../../../aas-model/MQTTSchemas:/app/MQTTSchemas  # Schemas (the aas-model submodule)
       - ../../../AASDescriptions:/app/AASDescriptions  # Mount AAS configs for registration
       - ../../../run_metrics:/data/run_metrics
     command: ["-m", "Planner.production_planner_service"]
