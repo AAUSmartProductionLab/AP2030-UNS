@@ -218,3 +218,9 @@ fuseki/*
 Papers/*
 graphdb/*
 BT_Controller/papers/*
+
+# PlatformIO build output and downloaded libraries
+.pio/
+
+# e2e stack runtime state (resource descriptions are authored inputs, not state)
+compose/e2e/aas/
