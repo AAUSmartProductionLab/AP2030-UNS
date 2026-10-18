@@ -5,7 +5,7 @@
 # The checked-in resource descriptions and Python simulator are not regenerated.
 #
 #   registration-service healthy -> station publishes config -> AAS on aas-env
-#   -> shared Java DMP discovers/compiles AIMCs and reconciles Kafka events.
+#   -> shared Java DMP discovers/compiles AIMCs and reconciles MQTT events.
 #
 # Usage:  compose/e2e/bootstrap.sh [--no-build] [--no-stack]
 # Requires: docker, maven (on PATH or /tmp/kilo/apache-maven-*), JDK 17.
@@ -19,7 +19,6 @@ COMPOSE_FILE="$REPO_ROOT/compose/docker-compose.e2e.yml"
 # Ports (must match compose/docker-compose.e2e.yml defaults).
 export E2E_MQTT_PORT="${E2E_MQTT_PORT:-18830}"
 export E2E_AAS_PORT="${E2E_AAS_PORT:-18081}"
-export E2E_KAFKA_PORT="${E2E_KAFKA_PORT:-19092}"
 export E2E_DMP_PORT="${E2E_DMP_PORT:-18086}"
 
 BUILD_IMAGES=true
@@ -87,7 +86,7 @@ if $START_STACK; then
   fi
   log "starting e2e stack"
   docker compose -f "$COMPOSE_FILE" up -d --no-build --wait --wait-timeout 300 \
-    mosquitto mongo kafka aas-env registration-service stoppering_station dmp
+    mosquitto mongo aas-env registration-service stoppering_station dmp
 
   log "waiting for shared Java DMP mappings to converge"
   deadline=$(( $(date +%s) + 180 ))
