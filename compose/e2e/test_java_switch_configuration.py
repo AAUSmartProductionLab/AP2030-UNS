@@ -20,7 +20,7 @@ def stack(request):
     return json.loads(result.stdout)
 
 
-def test_one_shared_java_service_discovers_repository_and_follows_mqtt_events(stack):
+def test_one_shared_java_service_discovers_repository_and_follows_kafka_events(stack):
     services = stack["services"]
     assert "dmp-management-node" not in services
     dmp = services["dmp"]
@@ -30,9 +30,10 @@ def test_one_shared_java_service_discovers_repository_and_follows_mqtt_events(st
     assert not dmp.get("volumes")
     settings = dmp["environment"]
     assert settings["DMP_MANAGED_AAS_REPOSITORY_URI"] == "http://aas-env:8081"
-    assert settings["DMP_MANAGED_EVENT_TRANSPORT"] == "mqtt"
-    assert not {"DMP_MANAGED_KAFKA_BROKERS", "DMP_MANAGED_CONTROL_TOPIC"} & settings.keys()
-    assert settings["DMP_MANAGED_MQTT_BROKER_URI"].startswith("tcp://")
+    assert settings["DMP_MANAGED_EVENT_TRANSPORT"] == "kafka"
+    assert settings["DMP_MANAGED_KAFKA_BROKERS"] == "kafka:9092"
+    assert settings["DMP_MANAGED_CONTROL_TOPIC"] == "submodel-events"
+    assert not any(name.startswith("DMP_MANAGED_MQTT_") for name in settings)
     assert not settings.get("DMP_MANAGED_AIMC_IDS")
     assert not {"DMP_MANAGED_RECONCILIATION", "DMP_MANAGED_OWNER_AAS_IDS", "DMP_MANAGED_REPAIR_INTERVAL_MS"} & settings.keys()
     assert not {"DMP_CONFIG_ROOT", "MANAGED_ASSETS_FILE", "DMP_IMAGE"} & settings.keys()
@@ -40,9 +41,10 @@ def test_one_shared_java_service_discovers_repository_and_follows_mqtt_events(st
     assert len(dmp["ports"]) == 1
     assert dmp["ports"][0]["target"] == 8080
     assert dmp["ports"][0]["host_ip"] == "127.0.0.1"
-    assert "kafka" not in services
-    assert services["aas-env"]["environment"].get("BASYX_FEATURE_KAFKA_ENABLED", "false") == "false"
-    assert services["aas-env"]["environment"]["BASYX_SUBMODELREPOSITORY_FEATURE_MQTT_ENABLED"] == "true"
+    assert services["aas-env"]["environment"]["BASYX_FEATURE_KAFKA_ENABLED"] == "true"
+    assert services["aas-env"]["environment"]["SPRING_KAFKA_BOOTSTRAP_SERVERS"] == "kafka:9092"
+    assert services["aas-env"]["environment"]["BASYX_SUBMODELREPOSITORY_FEATURE_MQTT_ENABLED"] == "false"
+    assert services["aas-env"]["environment"]["BASYX_AASREPOSITORY_FEATURE_MQTT_ENABLED"] == "false"
 
 
 def test_simulation_and_registration_remain_python(stack):

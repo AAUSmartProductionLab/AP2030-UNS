@@ -19,15 +19,12 @@ services:
       - SPRING_DATA_MONGODB_AUTHENTICATION_DATABASE=admin
       - SPRING_DATA_MONGODB_USERNAME=mongoAdmin
       - SPRING_DATA_MONGODB_PASSWORD=mongoPassword
-      - MQTT_HOSTNAME=hivemq-broker
-      - MQTT_PORT=1883
-      - MQTT_CLIENTID=aas-env-client
-      # Submodel events go to MQTT: the DMP and the property-event consumers follow them.
+      # Repository events go to Kafka only (the DMP and kg-bridge follow them); a batch
+      # update yields one submodel event on either transport, so MQTT adds nothing.
+      - BASYX_FEATURE_KAFKA_ENABLED=true
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - BASYX_AASREPOSITORY_FEATURE_MQTT_ENABLED=false
-      - BASYX_SUBMODELREPOSITORY_FEATURE_MQTT_ENABLED=true
-      # Kafka events only for the knowledge-graph profile (kg-bridge), which runs Kafka.
-      - BASYX_FEATURE_KAFKA_ENABLED=${BASYX_FEATURE_KAFKA_ENABLED:-false}
-      - SPRING_KAFKA_BOOTSTRAP_SERVERS=${SPRING_KAFKA_BOOTSTRAP_SERVERS:-}
+      - BASYX_SUBMODELREPOSITORY_FEATURE_MQTT_ENABLED=false
       # the submodel-update events (~1.2 MB) exceed the 1 MB producer default
       - SPRING_KAFKA_PRODUCER_PROPERTIES_MAX_REQUEST_SIZE=10485760
       # Re-resolve the shared dmp service after a container replacement.
@@ -38,14 +35,14 @@ services:
       - '8081:8081'
     restart: always
     depends_on:
+      kafka:
+        condition: service_healthy
       aas-registry:
         condition: service_healthy
       sm-registry:
         condition: service_healthy
       mongo:
         condition: service_healthy
-      hivemq-broker:
-        condition: service_started
     networks:
       - hivemq-network
   aas-registry:

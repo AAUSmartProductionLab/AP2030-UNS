@@ -60,15 +60,10 @@ COMPOSE_PROFILES=simulated-stations,knowledge-graph
 
 Available profile modules:
 - `simulated-stations`: production planner + simulated station services
-- `knowledge-graph`: Kafka + Neo4j + Kafka Connect + Fuseki + kg-bridge
+- `knowledge-graph`: Neo4j + Kafka Connect + Fuseki + kg-bridge (on the shared Kafka)
 
-Knowledge graph profile also requires Kafka eventing variables in `.env`:
-
-```bash
-BASYX_FEATURE_KAFKA_ENABLED=true
-SPRING_KAFKA_BOOTSTRAP_SERVERS=PLAINTEXT://kafka:9092
-KAFKA_BOOTSTRAP_SERVERS=PLAINTEXT://kafka:9092
-```
+BaSyx publishes repository events to Kafka only (`kafka` service, always on);
+the DMP and the knowledge-graph profile both consume them.
 
 Optional knowledge graph settings:
 
@@ -78,10 +73,3 @@ KG_BRIDGE_TOPIC_PATTERN=aas-events.*
 KG_BRIDGE_LOG_LEVEL=INFO
 ```
 
-If you disable `knowledge-graph`, set those values back to defaults:
-
-```bash
-BASYX_FEATURE_KAFKA_ENABLED=false
-SPRING_KAFKA_BOOTSTRAP_SERVERS=
-KAFKA_BOOTSTRAP_SERVERS=
-```
