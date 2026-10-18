@@ -1,8 +1,8 @@
 include:
   - compose/docker-compose.basyx.yml
-  - compose/docker-compose.kg.yml
   - compose/docker-compose.services.yml
   - compose/docker-compose.simulated-stations.yml
+  # - compose/docker-compose.kg.yml
 
 #################¤ NETWORKS AND VOLUMES ####################
 networks:

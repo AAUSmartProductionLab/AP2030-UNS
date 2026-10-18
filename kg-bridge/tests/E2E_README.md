@@ -94,7 +94,7 @@ sleep 10
 
 # Publish event via Kafka
 echo '{"type":"AAS_CREATED","id":"urn:aas:test","aas":{"id":"urn:aas:test","idShort":"Test"}}' \
-  | docker exec -i kg-kafka kafka-console-producer --broker-list localhost:9092 --topic aas-events
+  | docker exec -i kafka kafka-console-producer --broker-list localhost:9092 --topic aas-events
 
 # Query Fuseki
 curl -s -X POST -H "Content-Type: application/sparql-query" \
@@ -144,7 +144,7 @@ curl -s -X POST -H 'Content-Type: application/sparql-query' \
 ### Check Kafka Topics
 
 ```bash
-docker exec kg-kafka kafka-console-consumer \
+docker exec kafka kafka-console-consumer \
   --bootstrap-server localhost:9092 \
   --topic aas-events \
   --from-beginning \

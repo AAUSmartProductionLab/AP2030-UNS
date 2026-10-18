@@ -3,9 +3,8 @@ x-station-core-depends: &station-core-depends
     condition: service_started
   aas-env:
     condition: service_started
-  # No dependency on the legacy `databridge` service: the per-unit DMP
-  # containers (deployed by dmp-management-node) are the data path now, so a
-  # station must not drag the legacy bridge back up.
+  # Stations publish their descriptions independently; the shared Java dmp
+  # discovers them and installs routes. Do not restore the legacy databridge.
   registration-service:
     condition: service_healthy
 

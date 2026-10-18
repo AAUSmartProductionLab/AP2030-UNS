@@ -118,7 +118,7 @@ def docker_stack() -> Generator[None, None, None]:
             [
                 "docker",
                 "exec",
-                "kg-kafka",
+                "kafka",
                 "kafka-topics",
                 "--bootstrap-server",
                 "localhost:9092",
@@ -141,7 +141,7 @@ def docker_stack() -> Generator[None, None, None]:
             [
                 "docker",
                 "exec",
-                "kg-kafka",
+                "kafka",
                 "kafka-topics",
                 "--bootstrap-server",
                 "localhost:9092",
@@ -156,7 +156,7 @@ def docker_stack() -> Generator[None, None, None]:
             [
                 "docker",
                 "exec",
-                "kg-kafka",
+                "kafka",
                 "kafka-topics",
                 "--bootstrap-server",
                 "localhost:9092",

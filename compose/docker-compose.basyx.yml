@@ -22,26 +22,23 @@ services:
       - MQTT_HOSTNAME=hivemq-broker
       - MQTT_PORT=1883
       - MQTT_CLIENTID=aas-env-client
-      - BASYX_FEATURE_KAFKA_ENABLED=${BASYX_FEATURE_KAFKA_ENABLED:-false}
-      - SPRING_KAFKA_BOOTSTRAP_SERVERS=${SPRING_KAFKA_BOOTSTRAP_SERVERS:-}
+      - BASYX_FEATURE_KAFKA_ENABLED=true
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - BASYX_AASREPOSITORY_FEATURE_MQTT_ENABLED=false
-      - BASYX_SUBMODELREPOSITORY_FEATURE_MQTT_ENABLED=false
+      # Submodel events go to Kafka and MQTT; DMP_EVENT_TRANSPORT selects which one the DMP follows.
+      - BASYX_SUBMODELREPOSITORY_FEATURE_MQTT_ENABLED=true
       # the submodel-update events (~1.2 MB) exceed the 1 MB producer default
       - SPRING_KAFKA_PRODUCER_PROPERTIES_MAX_REQUEST_SIZE=10485760
-      # expire the JVM/netty DNS cache fast: the per-unit DMP containers are
-      # recreated (their IPs churn) and the operation delegation must
-      # re-resolve dmp-syntegonstopperingsystemaas promptly
+      # Re-resolve the shared dmp service after a container replacement.
       - JAVA_TOOL_OPTIONS=-Dnetworkaddress.cache.ttl=10
-    extra_hosts:
-      # the operation delegation targets the DMP's host-published REST port
-      # (host.docker.internal resolves via the host gateway on Linux)
-      - "host.docker.internal:host-gateway"
     volumes:
       - ../aas:/application/aas
     ports:
       - '8081:8081'
     restart: always
     depends_on:
+      kafka:
+        condition: service_healthy
       aas-registry:
         condition: service_healthy
       sm-registry:
@@ -202,28 +199,3 @@ services:
         condition: service_healthy
     networks:
       - hivemq-network
-  databridge:
-    image: eclipsebasyx/databridge:1.0.0-milestone-08
-    container_name: databridge
-    # Legacy standalone bridge — superseded by the per-unit DMP containers
-    # that dmp-management-node deploys (one per managed AIMC, with their own
-    # hashed health port). Off by default: a plain `docker compose up -d`
-    # skips it. Opt back in explicitly when testing the legacy path:
-    #   docker compose --profile legacy-bridge up -d databridge
-    profiles: ["legacy-bridge"]
-    # Run as the host user so configs written into the shared mount
-    # (../databridge) are owned by the host user — otherwise the container
-    # (root) creates root-owned files that the host Registration Service
-    # cannot overwrite (PermissionError).
-    user: "${UID:-1000}:${GID:-1000}"
-    volumes:
-      - ../databridge:/usr/share/config
-    restart: always
-    depends_on:
-      aas-env:
-        condition: service_healthy
-      hivemq-broker:
-        condition: service_started
-    networks:
-      - hivemq-network
-  
