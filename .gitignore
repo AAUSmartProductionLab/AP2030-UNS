@@ -224,3 +224,20 @@ BT_Controller/papers/*
 
 # e2e stack runtime state (resource descriptions are authored inputs, not state)
 compose/e2e/aas/
+.kilo/kilo.jsonc
+.kilo/plans/20261014-dmp-java-runtime-remaining-gates-continuation-prompt.md
+.kilo/plans/20261014-dmp-python-retirement-readiness-prompt.md
+.kilo/plans/1787654893169-dmp-gap-fix-plan.md
+.kilo/plans/1787916000000-dmp-v2-simplification-plan.md
+.kilo/plans/1787984400000-dmp-v3-delegation-timeseries-plan.md
+.kilo/plans/1788416400000-e2e-station-bindings-plan.md
+.kilo/plans/1788502800000-dmp-wire-tap-telemetry-plan.md
+.kilo/plans/1788503200000-dmp-granular-targeting-plan.md
+.kilo/plans/1789927200000-camel-inout-operation-invocation-plan.md
+.kilo/plans/1790256000000-generic-dmp-aid-aimc-eip-plan.md
+.kilo/plans/1790342345267-dmp-protocol-parity-cleanup-plan.md
+.kilo/plans/1790430000000-aimc-action-route-model-plan.md
+.kilo/plans/1791539605000-dmp-correctness-camel-native-plan.md
+.kilo/plans/1791749067102-dmp-java-runtime-reconciliation-continuation-prompt.md
+.kilo/plans/1791749067102-dmp-java-runtime-reconciliation-plan.md
+.gitignore
