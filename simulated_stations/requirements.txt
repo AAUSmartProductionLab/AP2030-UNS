@@ -2,6 +2,7 @@ paho-mqtt
 jsonschema
 basyx-python-sdk
 requests
+pydantic>=2.6
 pyyaml
 pddl
 pyparsing

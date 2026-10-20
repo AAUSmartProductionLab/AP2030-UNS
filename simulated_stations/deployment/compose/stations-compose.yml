@@ -3,7 +3,10 @@ name: PlanarMotorsExperiment
 x-simulated-station-env: &simulated-station-env
   MQTT_BROKER: ${MQTT_BROKER:-hivemq-broker}
   MQTT_PORT: ${MQTT_PORT:-1883}
-  PYTHONPATH: /app
+  # aas-model: the stations register the Resource it authors
+  PYTHONPATH: /app:/aas-model/src
+  # each station writes the Resource JSON it registers here (AASDescriptions mount)
+  RESOURCE_EXPORT_DIR: /app/AASDescriptions/Resource/exports
 
 x-simulated-station-common: &simulated-station-common
   networks:
@@ -17,32 +20,33 @@ x-simulated-station-common: &simulated-station-common
     - ../../:/app  # Mount simulated_stations root
     - ../../../packml_runtime:/app/packml_runtime  # Mount shared PackML runtime
     - ../../../aas-model/MQTTSchemas:/app/MQTTSchemas  # Overlay schemas (current set lives in the aas-model submodule)
+    - ../../../aas-model:/aas-model:ro  # The AAS the stations register
     - ../../../AASDescriptions:/app/AASDescriptions  # Mount AAS configs for registration
 
 services:
+  # MQTT only
   stoppering_station:
     <<: *simulated-station-common
     container_name: stoppering_station
-    # DNS-safe alias for URI hostnames: the container_name carries an
-    # underscore, which java.net.URI/milo reject in OPC UA endpoint URLs
-    # (the DMP resolves the AID's opc.tcp base against this alias)
-    networks:
-      hivemq-network:
-        aliases:
-          - stoppering-station
     command: ["-m", "services.stations.stoppering.service"]
 
+  # OPC UA only (MQTT just for registration)
   filling_station:
     <<: *simulated-station-common
     container_name: filling_station
     environment:
       <<: *simulated-station-env
       OPCUA_ENDPOINT: opc.tcp://0.0.0.0:4840/dispensing/
-    # DNS-safe alias for URI hostnames (see the stoppering note)
+      # the AID base the DMP connects to
+      OPCUA_ADVERTISED_ENDPOINT: opc.tcp://dispensing-station:4840/dispensing/
+    ports:
+      - "4840:4840"  # OPC UA clients on the host (UaExpert, stationctl device)
+    # DNS-safe alias for the AID base: the container_name carries an
+    # underscore, which java.net.URI/milo reject in OPC UA endpoint URLs
     networks:
       hivemq-network:
         aliases:
-          - filling-station
+          - dispensing-station
     command: ["-m", "services.stations.filling.service"]
 
   load_station:

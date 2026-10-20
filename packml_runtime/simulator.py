@@ -7,6 +7,40 @@ from typing import Optional
 from .mqtt import Proxy, Publisher, ResponseAsync, Topic
 
 
+class Replies:
+    """Stands in for a command's MQTT reply topic when the station's native
+    interface is not MQTT: hands the terminal reply (State SUCCESS/FAILURE)
+    of a command to whoever awaits its Uuid. Progress acks are dropped."""
+
+    def __init__(self):
+        self._lock = threading.Lock()
+        self._waiting = {}
+
+    def expect(self, command_uuid):
+        """Register interest BEFORE triggering the command (replies may be
+        published synchronously); returns ``wait(timeout) -> reply | None``."""
+        done, reply = threading.Event(), {}
+        with self._lock:
+            self._waiting[str(command_uuid)] = (done, reply)
+
+        def wait(timeout):
+            if not done.wait(timeout):
+                with self._lock:
+                    self._waiting.pop(str(command_uuid), None)
+                return None
+            return reply
+        return wait
+
+    def publish(self, message, client=None, *args, **kwargs):
+        if not isinstance(message, dict) or message.get("State") not in ("SUCCESS", "FAILURE"):
+            return
+        with self._lock:
+            entry = self._waiting.pop(str(message.get("Uuid")), None)
+        if entry is not None:
+            entry[1].update(message)
+            entry[0].set()
+
+
 class PackMLState(enum.Enum):
     # Main states
     IDLE = "IDLE"
@@ -35,7 +69,19 @@ class PackMLState(enum.Enum):
 
 
 class PackMLStateMachine:
-    def __init__(self,  base_topic, client: Proxy, properties, config_path: Optional[str] = None, custom_handlers=None, enable_occupation: bool = True, auto_execute: bool = False):
+    """PackML state machine with an occupation queue.
+
+    By default its native surface is MQTT under ``base_topic`` (CMD/Occupy,
+    CMD/Release, CMD/State, DATA/State). A station whose native interface is
+    another protocol passes ``state_sink`` instead (``publish(state_message,
+    client, retain)``, e.g. the OPC UA server's): then no MQTT topic is
+    registered and the Occupy/Release replies go to :class:`Replies`.
+
+    Registration publishes ``resource`` (an aas-model Resource, exported with
+    ``model_dump_json``) or else the file at ``config_path``.
+    """
+
+    def __init__(self,  base_topic, client: Proxy, properties, config_path: Optional[str] = None, custom_handlers=None, enable_occupation: bool = True, auto_execute: bool = False, state_sink=None, resource=None):
         self.state = PackMLState.IDLE
         self.base_topic = base_topic
         # Keep if used elsewhere, otherwise consider removing
@@ -51,8 +97,9 @@ class PackMLStateMachine:
         self.enable_occupation = enable_occupation
         self.auto_execute = auto_execute
 
-        # YAML config path for registration
+        # Registration: the exported Resource, else a config file
         self.config_path = config_path
+        self.resource = resource
 
         # ProcessQueue
         self.is_processing = False
@@ -70,7 +117,25 @@ class PackMLStateMachine:
         # Stores payloads for queued service-mode execute commands.
         self.pending_execute_payloads = {}
 
-# Occupation topics: ALWAYS subscribed — the Occupy/Release skills exist on
+        if state_sink is not None:
+            # Not an MQTT station: its own binding invokes Occupy/Release and
+            # awaits their replies; the state goes to the binding's sink.
+            self.register_topic = Replies()
+            self.unregister_topic = Replies()
+            self.state_topic = state_sink
+        else:
+            self._register_mqtt_surface(client)
+
+        self.publish_state()
+        
+        # Auto-transition to EXECUTE for service-type stations (no occupation needed)
+        if self.auto_execute:
+            self.state = PackMLState.EXECUTE
+            self.publish_state()
+            print(f"PackML: Auto-started in EXECUTE state (service mode)")
+
+    def _register_mqtt_surface(self, client):
+        # Occupation topics: ALWAYS subscribed — the Occupy/Release skills exist on
         # the station's surface in every mode, and delegating callers need the
         # terminal replies. `enable_occupation` only decides whether the
         # registration QUEUES an occupation entry (register_callback answers
@@ -112,14 +177,6 @@ class PackMLStateMachine:
                   self.register_topic, self.unregister_topic]
         for topic in topics:
             client.register_topic(topic)
-
-        self.publish_state()
-        
-        # Auto-transition to EXECUTE for service-type stations (no occupation needed)
-        if self.auto_execute:
-            self.state = PackMLState.EXECUTE
-            self.publish_state()
-            print(f"PackML: Auto-started in EXECUTE state (service mode)")
 
     def state_command_callback(self, topic, client, message, properties):
         """Callback for external state commands like Start, Stop, Reset."""
@@ -762,11 +819,24 @@ class PackMLStateMachine:
 
     def register_asset(self):
         """
-        Publish YAML config to Registration/Config topic for asset registration.
+        Publish the asset's description to the Registration/Config topic.
 
-        The Registration Service will receive the raw YAML and generate
-        the full AAS description server-side.
+        The Registration Service validates the exported Resource JSON and
+        builds the AAS from it.
         """
+        registration_topic = "NN/Nybrovej/InnoLab/Registration/Config"
+        if self.resource is not None:
+            payload = self.resource.model_dump_json()
+            export_dir = os.getenv("RESOURCE_EXPORT_DIR")
+            if export_dir:
+                # the exact description registered, for inspection
+                os.makedirs(export_dir, exist_ok=True)
+                with open(os.path.join(export_dir, f"{self.resource.id_short}.json"), "w", encoding="utf-8") as f:
+                    f.write(self.resource.model_dump_json(indent=2))
+            self.client.publish(registration_topic, payload, qos=2, retain=False)
+            print(f"[Registration] Published {self.resource.id_short} "
+                  f"({len(payload)} bytes) to {registration_topic}", flush=True)
+            return True
         if not self.config_path:
             return False
 
@@ -801,7 +871,6 @@ class PackMLStateMachine:
             with open(config_file, 'r', encoding='utf-8') as f:
                 yaml_content = f.read()
 
-            registration_topic = "NN/Nybrovej/InnoLab/Registration/Config" #self.base_topic + "/Registration/Config"
             self.client.publish(registration_topic,
                                 yaml_content, qos=2, retain=False)
 

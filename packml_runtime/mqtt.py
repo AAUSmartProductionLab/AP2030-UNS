@@ -11,11 +11,12 @@ from .schema_utils import load_schema
 import threading
 
 # ---------------------------------------------------------------------------
-# MQTT 5 request/reply correlation (WoT MQTT binding, mqv_request_reply /
-# mqv_response_topic): every incoming command's Correlation Data is recorded
-# under its correlation key; replies published later with that key echo the
-# correlation. This is transport-level correlation — the reply payload stays
-# the station's declared contract.
+# MQTT 5 request/reply correlation (mqv_responseTopic): every incoming
+# command's Correlation Data is recorded under its reply topic and Uuid; the
+# TERMINAL reply (SUCCESS/FAILURE) echoes it. The requester takes the first
+# correlated reply as the result, so progress acks (State RUNNING) are
+# published without correlation. The reply payload stays the station's
+# declared contract.
 # ---------------------------------------------------------------------------
 
 _correlation_key = "Uuid"  # the station reply contract's correlation field
@@ -24,7 +25,7 @@ _pending_correlations: dict = {}
 _correlation_lock = threading.Lock()
 
 
-def _record_request_correlation(message_properties, msg):
+def _record_request_correlation(reply_topic, message_properties, msg):
     try:
         echo = getattr(message_properties, "CorrelationData", None)
         key = msg.get(_correlation_key) if isinstance(msg, dict) else None
@@ -35,35 +36,24 @@ def _record_request_correlation(message_properties, msg):
         with _correlation_lock:
             if len(_pending_correlations) >= _correlation_capacity:
                 _pending_correlations.pop(next(iter(_pending_correlations)))
-            _pending_correlations[str(key)] = props
+            _pending_correlations[(reply_topic, str(key))] = props
     except Exception:
         pass
 
 
-def _correlation_for(message, consume: bool = True):
-    """The recorded correlation properties for the reply's correlation key.
-
-    ``consume=True`` pops the entry — the TERMINAL reply's echo. Intermediate
-    replies (the PackML RUNNING progress ack) must replay the correlation
-    WITHOUT consuming it: the DMP's correlation data has to echo on EVERY
-    reply of one invocation, and only the terminal one ends the exchange.
-    """
+def _correlation_for(reply_topic, message):
+    """The recorded correlation of a terminal reply, consumed; ``None`` for a
+    progress ack (State RUNNING), which must not end the request."""
     try:
-        key = message.get(_correlation_key) if isinstance(message, dict) else None
+        if not isinstance(message, dict) or message.get("State") == "RUNNING":
+            return None
+        key = message.get(_correlation_key)
         if key is None:
             return None
         with _correlation_lock:
-            if not consume:
-                return _pending_correlations.get(str(key))
-            return _pending_correlations.pop(str(key), None)
+            return _pending_correlations.pop((reply_topic, str(key)), None)
     except Exception:
         return None
-
-
-def _reply_is_intermediate(message) -> bool:
-    """A PackML progress ack (``State: RUNNING``) is an intermediate reply —
-    it replays the request's correlation instead of consuming it."""
-    return isinstance(message, dict) and message.get("State") == "RUNNING"
 
 
 class Topic:
@@ -95,11 +85,7 @@ class Topic:
             if self.pubtopic != None and self.pubtopic != "":
                 props = properties
                 if props is None:
-                    # an intermediate RUNNING ack replays the recorded
-                    # correlation; the terminal reply consumes it
-                    props = (_correlation_for(message,
-                                              consume=not _reply_is_intermediate(message))
-                             or self.publish_properties)
+                    props = _correlation_for(self.pubtopic, message) or self.publish_properties
                 client.publish(self.pubtopic, json.dumps(message),
                                self.qos, properties=props, retain=retain)
 
@@ -118,7 +104,7 @@ class Topic:
                 msg = json.loads(message.payload.decode("utf-8"))
                 validate(instance=msg, schema=self.sub_schema,
                          resolver=self.sub_resolver)
-                _record_request_correlation(message.properties, msg)
+                _record_request_correlation(self.pubtopic, message.properties, msg)
                 if self.callback_method is not None:
                     self.callback_method(self, client, msg, message.properties)
                 print("Received message on topic" +
@@ -156,7 +142,7 @@ class Subscriber(Topic):
                 msg = json.loads(message.payload.decode("utf-8"))
                 validate(instance=msg, schema=self.sub_schema,
                          resolver=self.sub_resolver)
-                _record_request_correlation(message.properties, msg)
+                _record_request_correlation(self.pubtopic, message.properties, msg)
                 if self.callback_method is not None:
                     thr = threading.Thread(target=self.callback_method, args=(
                         self, client, msg, message.properties))
@@ -180,15 +166,11 @@ class ResponseAsync(Topic):
             if self.pub_schema is not None:
                 validate(instance=request, schema=self.pub_schema,
                          resolver=self.pub_resolver)
-            # Publish regardless of schema availability; echo the request's
-            # correlation when the reply carries its correlation key. An
-            # intermediate RUNNING ack replays it; the terminal reply pops
-            # the ledger entry.
+            # Publish regardless of schema availability; the terminal reply
+            # echoes the request's correlation (see _correlation_for).
             props = publish_properties if isinstance(publish_properties, Properties) else None
             if props is None:
-                props = (_correlation_for(request,
-                                          consume=not _reply_is_intermediate(request))
-                         or self.publish_properties)
+                props = _correlation_for(self.pubtopic, request) or self.publish_properties
             client.publish(self.pubtopic, json.dumps(request),
                            self.qos, retain=retain, properties=props)
             print(f"Published to {self.pubtopic}: {request}", flush=True)
@@ -203,7 +185,7 @@ class ResponseAsync(Topic):
             if self.sub_schema is not None:
                 validate(instance=msg, schema=self.sub_schema,
                          resolver=self.sub_resolver)
-            _record_request_correlation(message.properties, msg)
+            _record_request_correlation(self.pubtopic, message.properties, msg)
             if self.callback_method is not None:
                 thr = threading.Thread(target=self.callback_method, args=(
                     self, client, msg, message.properties))
