@@ -25,6 +25,10 @@ services:
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - BASYX_AASREPOSITORY_FEATURE_MQTT_ENABLED=false
       - BASYX_SUBMODELREPOSITORY_FEATURE_MQTT_ENABLED=false
+      # Operations delegate to the DMP (http://dmp:8080/operations/...), a
+      # private address BaSyx blocks unless allowlisted.
+      - BASYX_SUBMODELREPOSITORY_FEATURE_OPERATION_DELEGATION_SECURITY_ALLOWLIST_HOSTS=dmp
+      - BASYX_SUBMODELREPOSITORY_FEATURE_OPERATION_DELEGATION_SECURITY_ALLOWLIST_PORTS=8080
       # the submodel-update events (~1.2 MB) exceed the 1 MB producer default
       - SPRING_KAFKA_PRODUCER_PROPERTIES_MAX_REQUEST_SIZE=10485760
       # Re-resolve the shared dmp service after a container replacement.
@@ -149,6 +153,7 @@ services:
       dockerfile: Dockerfile.ci
     image: aas-gui-ap2030:local
     container_name: aas-ui
+    pull_policy: never
     ports:
       - '3001:3000'
     environment:
@@ -164,6 +169,9 @@ services:
       START_PAGE_ROUTE_NAME: "AASEditor"
       # Required for the AIMC transformation editor to persist a saved blob.
       ALLOW_EDITING: 'true'
+      # The AIMC plugin shows the DMP's per-route deployment state; the UI's
+      # nginx proxies this one read-only endpoint (no CORS, works remotely).
+      DMP_STATUS_URL: http://dmp:8080/management/status
     volumes:
       - ../logo:/usr/src/app/dist/Logo
     restart: always
