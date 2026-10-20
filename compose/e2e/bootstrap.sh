@@ -2,10 +2,13 @@
 # E2E bootstrap (plan .kilo/plans/1788416400000-e2e-station-bindings-plan.md,
 # Phase 6): initializes Registration_Service's aas-model submodule, packages the
 # Java DMP, brings the isolated e2e stack up and checks managed convergence.
-# The checked-in resource descriptions and Python simulator are not regenerated.
 #
-#   registration-service healthy -> station publishes config -> AAS on aas-env
-#   -> shared Java DMP discovers/compiles AIMCs and reconciles Kafka events.
+#   registration-service healthy -> each station builds its Resource from
+#   aas-model, writes it to compose/e2e/exports/ and publishes it -> AAS on
+#   aas-env -> shared Java DMP discovers/compiles AIMCs and follows Kafka events.
+#
+# Stations: syntegonStopperingSystemAAS (MQTT only), imaDispensingSystemAAS
+# (OPC UA only). Drive them by hand with compose/e2e/stationctl.py.
 #
 # Usage:  compose/e2e/bootstrap.sh [--no-build] [--no-stack]
 # Requires: docker, maven (on PATH or /tmp/kilo/apache-maven-*), JDK 17.
@@ -33,7 +36,8 @@ for arg in "$@"; do
 done
 
 log() { echo "[bootstrap] $*"; }
-mkdir -p "$E2E_DIR/aas"
+mkdir -p "$E2E_DIR/aas" "$E2E_DIR/exports"
+STATIONS=(syntegonStopperingSystemAAS imaDispensingSystemAAS)
 
 # ---------------------------------------------------------------- model submodule
 init_model() {
@@ -74,8 +78,28 @@ if $START_STACK; then
     docker compose -f "$COMPOSE_FILE" build
   fi
   log "starting e2e stack"
+  rm -f "$E2E_DIR"/exports/*.json
   docker compose -f "$COMPOSE_FILE" up -d --no-build --wait --wait-timeout 300 \
-    mosquitto mongo kafka aas-env registration-service stoppering_station dmp
+    mosquitto mongo kafka aas-registry sm-registry aas-env aas-ui registration-service dmp
+  # fresh stations: a clean PackML state, a new registration and its export
+  docker compose -f "$COMPOSE_FILE" up -d --no-build --no-deps --force-recreate \
+    stoppering_station dispensing_station
+
+  log "waiting for both stations to register"
+  deadline=$(( $(date +%s) + 180 ))
+  for station in "${STATIONS[@]}"; do
+    # a fresh registration writes the export first, then publishes it
+    until [[ -s "$E2E_DIR/exports/$station.json" ]] && curl -fsS "http://localhost:${E2E_AAS_PORT}/shells" 2>/dev/null \
+        | python3 -c "import json, sys; sys.exit(0 if any(s.get('idShort') == '$station' for s in json.load(sys.stdin).get('result', [])) else 1)"; do
+      if (( $(date +%s) > deadline )); then
+        log "ERROR: $station was not registered"
+        docker compose -f "$COMPOSE_FILE" logs --tail 30 registration-service stoppering_station dispensing_station
+        exit 1
+      fi
+      sleep 3
+    done
+    log "  $station registered (exports/$station.json)"
+  done
 
   log "waiting for shared Java DMP mappings to converge"
   deadline=$(( $(date +%s) + 180 ))
@@ -92,8 +116,12 @@ if $START_STACK; then
   done
 
   log "E2E STACK READY"
-  log "  AAS:   http://localhost:${E2E_AAS_PORT}"
-  log "  MQTT:  localhost:${E2E_MQTT_PORT}"
-  log "  DMP:   http://localhost:${E2E_DMP_PORT}  (host tests)"
-  log "  AAS delegation: http://dmp:8080/operations/{aasIdShort}/{skill}"
+  log "  AAS UI:  http://localhost:${E2E_UI_PORT:-3002}"
+  log "  AAS:     http://localhost:${E2E_AAS_PORT}"
+  log "  MQTT:    localhost:${E2E_MQTT_PORT}   (stoppering)"
+  log "  OPC UA:  opc.tcp://localhost:4840/dispensing/"
+  log "  DMP:     http://localhost:${E2E_DMP_PORT}/management/status"
+  log "  Exports: $E2E_DIR/exports/"
+  log "  Drive:   python3 compose/e2e/stationctl.py --help"
+  log "  Stop:    docker compose -f compose/docker-compose.e2e.yml down"
 fi

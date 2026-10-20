@@ -9,8 +9,11 @@
 #   mosquitto        18830   (internal AID base mqtt://mosquitto:1883/...)
 #   aas-env          18081   (internal repository http://aas-env:8081)
 #   kafka            19092   (internal control listener kafka:9092)
-#   stoppering UA    4840    (internal AID base stoppering-station:4840)
+#   dispensing UA    4840    (internal AID base dispensing-station:4840)
 #   shared Java DMP  18086   (internal Operations/health listener dmp:8080)
+#
+# The stoppering station is MQTT only, the dispensing station OPC UA only;
+# both register the Resource that aas-model authors for them.
 # No Docker socket, generated descriptor mount or per-unit deployment is used.
 #
 # Bring-up (see bootstrap.sh for the full sequence):
@@ -158,6 +161,10 @@ services:
       - SPRING_KAFKA_PRODUCER_PROPERTIES_MAX_REQUEST_SIZE=10485760
       - BASYX_AASREPOSITORY_FEATURE_MQTT_ENABLED=false
       - BASYX_SUBMODELREPOSITORY_FEATURE_MQTT_ENABLED=false
+      # Operations delegate to the DMP (http://dmp:8080/operations/...), a
+      # private address BaSyx blocks unless allowlisted.
+      - BASYX_SUBMODELREPOSITORY_FEATURE_OPERATION_DELEGATION_SECURITY_ALLOWLIST_HOSTS=dmp
+      - BASYX_SUBMODELREPOSITORY_FEATURE_OPERATION_DELEGATION_SECURITY_ALLOWLIST_PORTS=8080
     volumes:
       - ./e2e/aas:/application/aas
     ports:
@@ -222,15 +229,15 @@ services:
     environment:
       MQTT_BROKER: mosquitto
       MQTT_PORT: "1883"
-      PYTHONPATH: /app
-      OPCUA_ENDPOINT: opc.tcp://0.0.0.0:4840/stoppering/
+      PYTHONPATH: /app:/aas-model/src
+      # each station writes the Resource JSON it registers here
+      RESOURCE_EXPORT_DIR: /exports
     volumes:
       - ../simulated_stations:/app
       - ../packml_runtime:/app/packml_runtime
       - ../aas-model/MQTTSchemas:/app/MQTTSchemas
-      - ../AASDescriptions:/app/AASDescriptions
-    ports:
-      - "4840:4840"
+      - ../aas-model:/aas-model:ro
+      - ./e2e/exports:/exports
     command: ["-m", "services.stations.stoppering.service"]
     restart: unless-stopped
     depends_on:
@@ -240,6 +247,39 @@ services:
         condition: service_healthy
     networks:
       - e2e
+
+  dispensing_station:
+    image: stations:e2e
+    container_name: e2e-dispensing-station
+    environment:
+      MQTT_BROKER: mosquitto
+      MQTT_PORT: "1883"
+      PYTHONPATH: /app:/aas-model/src
+      OPCUA_ENDPOINT: opc.tcp://0.0.0.0:4840/dispensing/
+      OPCUA_ADVERTISED_ENDPOINT: opc.tcp://dispensing-station:4840/dispensing/
+      RESOURCE_EXPORT_DIR: /exports
+    volumes:
+      - ../simulated_stations:/app
+      - ../packml_runtime:/app/packml_runtime
+      - ../aas-model/MQTTSchemas:/app/MQTTSchemas
+      - ../aas-model:/aas-model:ro
+      - ./e2e/exports:/exports
+    ports:
+      - "4840:4840"
+    command: ["-m", "services.stations.filling.service"]
+    restart: unless-stopped
+    depends_on:
+      stoppering_station:
+        condition: service_started  # builds the shared stations:e2e image
+      mosquitto:
+        condition: service_healthy
+      registration-service:
+        condition: service_healthy
+    networks:
+      e2e:
+        # DNS-safe AID base host (java.net.URI/milo reject underscores)
+        aliases:
+          - dispensing-station
 
   aas-ui:
     image: eclipsebasyx/aas-gui:SNAPSHOT
@@ -260,9 +300,7 @@ services:
       aas-registry:
         condition: service_started
     networks:
-      e2e:
-        aliases:
-          - stoppering-station
+      - e2e
 
   dmp:
     image: dmp:java
