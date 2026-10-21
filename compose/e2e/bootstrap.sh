@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # E2E bootstrap (plan .kilo/plans/1788416400000-e2e-station-bindings-plan.md,
-# Phase 6): initializes Registration_Service's aas-model submodule, packages the
-# Java DMP, brings the isolated e2e stack up and checks managed convergence.
+# Phase 6): initializes Registration_Service's aas-model submodule, builds the
+# images, brings the isolated e2e stack up and checks managed convergence.
 #
 #   registration-service healthy -> each station loads its aas-model export
 #   (simulated_stations/resources), writes it to compose/e2e/exports/ and publishes it -> AAS on
@@ -11,7 +11,7 @@
 # (OPC UA only). Drive them by hand with compose/e2e/stationctl.py.
 #
 # Usage:  compose/e2e/bootstrap.sh [--no-build] [--no-stack]
-# Requires: docker, maven (on PATH or /tmp/kilo/apache-maven-*), JDK 17.
+# Requires: docker (the DMP image builds its jar from the aas-camel-dmp sources).
 
 set -euo pipefail
 
@@ -46,30 +46,9 @@ init_model() {
   log "Registration_Service aas-model: $(git -C "$REPO_ROOT/Registration_Service/aas-model" rev-parse --short HEAD)"
 }
 
-# ---------------------------------------------------------------- java image
-build_dmp() {
-  if ! command -v mvn >/dev/null 2>&1; then
-    local candidate
-    candidate="$(ls -d /tmp/kilo/apache-maven-* 2>/dev/null | sort | tail -1 || true)"
-    if [[ -n "${candidate:-}" ]]; then
-      export PATH="$candidate/bin:$PATH"
-      export JAVA_HOME="${JAVA_HOME:-/tmp/jdk-17.0.2}"
-      log "using maven from $candidate"
-    else
-      log "ERROR: maven not found (needed to package the Java DMP)"; exit 1
-    fi
-  fi
-  ( cd "$REPO_ROOT/aas-camel-dmp" \
-      && mvn -o -B -Ddocker.skip=true -DskipTests -pl dmp.component -am \
-             clean package dependency:copy-dependencies \
-             -DincludeScope=runtime -DoutputDirectory=target/lib )
-  log "Java DMP packaged with current reactor dependencies"
-}
-
 # ---------------------------------------------------------------- main
 if $BUILD_IMAGES; then
   init_model
-  build_dmp
 fi
 
 if $START_STACK; then

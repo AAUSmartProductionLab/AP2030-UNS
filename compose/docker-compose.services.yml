@@ -267,9 +267,9 @@ services:
 
   dmp:
     image: dmp:java
+    # Built locally from the aas-camel-dmp sources (the jar is built in the image).
     build:
-      context: ../aas-camel-dmp/dmp.component
-      dockerfile: Dockerfile
+      context: ../aas-camel-dmp
     container_name: dmp
     pull_policy: never
     environment:
