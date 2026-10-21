@@ -31,15 +31,13 @@ import time
 
 from asyncua import ua
 
-from aas_model.resource_instances import ima_dispensing
-from aas_model.resource_template.asset_interfaces_description import OPCUA_INTERFACE
-from aas_model.resource_template.operational import INVOKE_ONLY_SKILLS
 from packml_runtime.mqtt import Proxy
 from packml_runtime.opcua_server import COMMAND_ARGUMENTS, StationOpcuaServer, packml_skill_handler
 from packml_runtime.simulator import PackMLStateMachine
+from services.stations.simple_station import BROKER_ADDRESS, BROKER_PORT, load_resource
 
-BROKER_ADDRESS = os.getenv("MQTT_BROKER", "hivemq-broker")
-BROKER_PORT = int(os.getenv("MQTT_PORT", "1883"))
+# Halt only invokes, as the resource describes it: its Method has no OutputArguments.
+INVOKE_ONLY_SKILLS = ("Halt",)
 OPCUA_ENDPOINT = os.getenv("OPCUA_ENDPOINT", "opc.tcp://0.0.0.0:4840/dispensing/")
 OPCUA_ADVERTISED_ENDPOINT = os.getenv(
     "OPCUA_ADVERTISED_ENDPOINT", "opc.tcp://dispensing-station:4840/dispensing/")
@@ -95,9 +93,7 @@ def main():
     server.start()
     signal.signal(signal.SIGUSR2, lambda signum, frame: server.request_task_stack_dump())
 
-    resource = ima_dispensing()
-    resource.asset_interfaces_description.InterfaceTemplateForOPCUA[
-        OPCUA_INTERFACE].EndpointMetadata.base.value = OPCUA_ADVERTISED_ENDPOINT
+    resource = load_resource("imaDispensingSystemAAS", "InterfaceTemplateForOPCUA", OPCUA_ADVERTISED_ENDPOINT)
 
     proxy = Proxy(BROKER_ADDRESS, BROKER_PORT, "DispensingProxy", [])
     machine = PackMLStateMachine(None, proxy, None, state_sink=server, resource=resource)

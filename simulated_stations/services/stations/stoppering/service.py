@@ -16,6 +16,7 @@ Release           ``CMD/Release``          ``DATA/Release``
 PackML state      ``CMD/State``            ``DATA/State`` (retained)
 ================  =======================  ===========================
 
+Halt, Occupy, Release and the PackML state are the shared runtime's.
 Registration publishes the ``syntegon_stoppering`` Resource with the AID base
 set to the broker this station is connected to.
 """
@@ -24,14 +25,11 @@ import os
 import time
 from datetime import datetime, timezone
 
-from aas_model.resource_instances import syntegon_stoppering
-from aas_model.resource_template.asset_interfaces_description import MQTT_INTERFACE
-from packml_runtime.mqtt import Proxy, ResponseAsync, Subscriber
+from packml_runtime.mqtt import Proxy, ResponseAsync
 from packml_runtime.simulator import PackMLStateMachine
+from services.stations.simple_station import BROKER_ADDRESS, BROKER_PORT, mqtt_resource
 
 
-BROKER_ADDRESS = os.getenv("MQTT_BROKER", "hivemq-broker")
-BROKER_PORT = int(os.getenv("MQTT_PORT", "1883"))
 BASE_TOPIC = os.getenv("STOPPERING_BASE_TOPIC", "NN/Nybrovej/InnoLab/Stoppering")
 
 
@@ -54,15 +52,6 @@ def main():
         except Exception as exc:
             print(f"Error in Stoppering callback: {exc}", flush=True)
 
-    def halt_callback(topic, client, message, properties):
-        """AID 'Halt' action: stop the machine. Halt only invokes; it is not answered."""
-        try:
-            if state_machine.is_processing:
-                # interrupt the active process and go ABORTING -> ABORTED; an idle halt is a no-op
-                state_machine.abort_command()
-        except Exception as exc:
-            print(f"Error in Halt callback: {exc}", flush=True)
-
     stoppering_topic = ResponseAsync(
         f"{BASE_TOPIC}/DATA/Stoppering",
         f"{BASE_TOPIC}/CMD/Stoppering",
@@ -71,25 +60,14 @@ def main():
         2,
         stoppering_callback,
     )
-    halt_topic = Subscriber(
-        f"{BASE_TOPIC}/CMD/Halt",
-        "./MQTTSchemas/command.schema.json",
-        2,
-        halt_callback,
-    )
-
     proxy = Proxy(
         BROKER_ADDRESS,
         BROKER_PORT,
         "StopperingProxy",
-        [stoppering_topic, halt_topic],
+        [stoppering_topic],
     )
 
-    resource = syntegon_stoppering()
-    resource.asset_interfaces_description.InterfaceTemplateForMQTT[
-        MQTT_INTERFACE].EndpointMetadata.base.value = f"mqtt://{BROKER_ADDRESS}:{BROKER_PORT}/{BASE_TOPIC}/"
-
-    state_machine = PackMLStateMachine(BASE_TOPIC, proxy, None, resource=resource)
+    state_machine = PackMLStateMachine(BASE_TOPIC, proxy, None, mqtt_resource("syntegonStopperingSystemAAS", BASE_TOPIC))
 
     proxy.on_ready(state_machine.register_asset)
     proxy.loop_forever()

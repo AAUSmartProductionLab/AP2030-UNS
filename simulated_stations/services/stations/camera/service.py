@@ -1,4 +1,4 @@
-from packml_runtime.mqtt import Proxy, ResponseAsync, Publisher, Subscriber
+from packml_runtime.mqtt import Proxy, ResponseAsync, Publisher
 import time
 import random
 from packml_runtime.simulator import PackMLStateMachine
@@ -7,8 +7,8 @@ import cv2
 import base64
 import os
 
-BROKER_ADDRESS = os.getenv("MQTT_BROKER", "hivemq-broker")
-BROKER_PORT = int(os.getenv("MQTT_PORT", "1883"))
+from services.stations.simple_station import BROKER_ADDRESS, BROKER_PORT, mqtt_resource
+
 BASE_TOPIC = "NN/Nybrovej/InnoLab/QualityControl"
 QC_OK_RATE = float(os.getenv("QC_OK_RATE", "0.8"))
 uuid = ""
@@ -19,7 +19,7 @@ image_publisher = Publisher(
     2)
 
 quality_publisher = Publisher(
-    BASE_TOPIC + "/DATA/Quality",
+    BASE_TOPIC + "/DATA/QualityResult",
     "./MQTTSchemas/qualityResult.schema.json",
     2)
 
@@ -30,7 +30,7 @@ def _now_iso():
 
 
 def publish_quality_result(result, confidence):
-    """Publish the already-sampled FOND outcome for the current product.
+    """Publish the already-sampled FOND outcome for the current product on DATA/QualityResult.
 
     The result is retained so a late-subscribing FluentCheck (PR4 sensor
     predicate) can still see the latest classification per product UUID.
@@ -51,7 +51,7 @@ def capture_process(duration=0.5):
     time.sleep(duration)
 
     # Sample the FOND outcome ONCE and reuse it for both the
-    # /DATA/Quality publication and the /DATA/Capture SUCCESS payload.
+    # /DATA/QualityResult publication and the /DATA/Capture SUCCESS payload.
     # ExecuteAction::applyEffects evaluates the omronCamera.yaml
     # `when: 'data.Result = "Ok"'` / `data.Result != "Ok"` gates against
     # the Capture response, so this Result field is what selects which
@@ -132,7 +132,7 @@ cameraProxy = Proxy(
 )
 
 state_machine = PackMLStateMachine(
-    BASE_TOPIC, cameraProxy, None, config_path="omronCamera.yaml")
+    BASE_TOPIC, cameraProxy, None, mqtt_resource("omronCameraSystemAAS", BASE_TOPIC))
 state_machine.failureChance = 0
 
 # Register asset after MQTT connection is established

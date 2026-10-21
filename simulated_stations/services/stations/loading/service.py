@@ -6,7 +6,7 @@ The PDDL ``Loading`` action has ``oneOf`` effects:
 
 Both outcomes are *planned* by the FOND policy -- a drop is not an
 execution error, it is a valid branch. The branch indices match the
-declaration order in ``imaLoadingSystem.yaml``.
+declaration order of aas-model's ``ima_loading`` resource.
 
 Runtime contract: the response always reports ``State: SUCCESS`` (the
 *action attempt* completed). The selected FOND branch is communicated
@@ -43,7 +43,7 @@ def main():
         base_topic=BASE_TOPIC,
         station_name="Loading",
         command_label="Loading",
-        config_path="imaLoadingSystem.yaml",
+        resource="imaLoadingSystemAAS",
         process_function=load_process,
     )
 

@@ -60,6 +60,7 @@ class PackMLServiceQueueTests(unittest.TestCase):
             base_topic="test/station",
             client=proxy,
             properties=None,
+            resource=None,  # never registered
             enable_occupation=False,
             auto_execute=True,
         )
@@ -102,6 +103,7 @@ class PackMLServiceQueueTests(unittest.TestCase):
             base_topic="test/station",
             client=proxy,
             properties=None,
+            resource=None,  # never registered
             enable_occupation=False,
             auto_execute=True,
         )

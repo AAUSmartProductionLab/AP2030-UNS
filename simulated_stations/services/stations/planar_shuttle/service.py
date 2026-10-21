@@ -13,7 +13,7 @@ distance, so no symbolic label mapping is needed here.
 Configuration env vars:
   PLANAR_SHUTTLE_BASE_TOPIC   default ``NN/Nybrovej/InnoLab/Planar/Xbot1``
   PLANAR_SHUTTLE_NAME         default ``planarShuttle1``
-  PLANAR_SHUTTLE_AAS_CONFIG   default ``planarShuttle1.yaml``
+  PLANAR_SHUTTLE_RESOURCE     default ``planarTableShuttle1AAS`` (resources/<it>.json)
   PLANAR_SHUTTLE_INITIAL_X    default ``0.0``
   PLANAR_SHUTTLE_INITIAL_Y    default ``0.0``
   PLANAR_SHUTTLE_INITIAL_YAW  default ``0.0``
@@ -26,10 +26,8 @@ import time
 
 from packml_runtime.mqtt import Proxy, Publisher, ResponseAsync
 from packml_runtime.simulator import PackMLStateMachine
+from services.stations.simple_station import BROKER_ADDRESS, BROKER_PORT, mqtt_resource
 
-
-BROKER_ADDRESS = os.getenv("MQTT_BROKER", "hivemq-broker")
-BROKER_PORT = int(os.getenv("MQTT_PORT", "1883"))
 
 def _now_iso():
     return (
@@ -42,7 +40,7 @@ def _now_iso():
 def main():
     base_topic = os.getenv("PLANAR_SHUTTLE_BASE_TOPIC", "NN/Nybrovej/InnoLab/Planar/Xbot1")
     station_name = os.getenv("PLANAR_SHUTTLE_NAME", "planarShuttle1")
-    config_path = os.getenv("PLANAR_SHUTTLE_AAS_CONFIG", "planarShuttle1.yaml")
+    resource = os.getenv("PLANAR_SHUTTLE_RESOURCE", "planarTableShuttle1AAS")
     move_duration = float(os.getenv("PLANAR_SHUTTLE_MOVE_DURATION", "2.0"))
 
     state = {
@@ -106,7 +104,7 @@ def main():
         base_topic,
         shuttle_proxy,
         None,
-        config_path=config_path,
+        mqtt_resource(resource, base_topic),
     )
 
     def _on_ready():

@@ -3,8 +3,8 @@
 # Phase 6): initializes Registration_Service's aas-model submodule, packages the
 # Java DMP, brings the isolated e2e stack up and checks managed convergence.
 #
-#   registration-service healthy -> each station builds its Resource from
-#   aas-model, writes it to compose/e2e/exports/ and publishes it -> AAS on
+#   registration-service healthy -> each station loads its aas-model export
+#   (simulated_stations/resources), writes it to compose/e2e/exports/ and publishes it -> AAS on
 #   aas-env -> shared Java DMP discovers/compiles AIMCs and follows Kafka events.
 #
 # Stations: syntegonStopperingSystemAAS (MQTT only), imaDispensingSystemAAS

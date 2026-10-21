@@ -2,8 +2,8 @@ import enum
 import datetime
 import threading  # Add this import
 import inspect   # Add this import
+import json
 import os        # Add this import for file path handling
-from typing import Optional
 from .mqtt import Proxy, Publisher, ResponseAsync, Topic
 
 
@@ -71,17 +71,17 @@ class PackMLState(enum.Enum):
 class PackMLStateMachine:
     """PackML state machine with an occupation queue.
 
-    By default its native surface is MQTT under ``base_topic`` (CMD/Occupy,
-    CMD/Release, CMD/State, DATA/State). A station whose native interface is
+    By default its native surface is MQTT under ``base_topic`` (CMD/Halt,
+    CMD/Occupy, CMD/Release, CMD/State, DATA/State). A station whose native interface is
     another protocol passes ``state_sink`` instead (``publish(state_message,
     client, retain)``, e.g. the OPC UA server's): then no MQTT topic is
     registered and the Occupy/Release replies go to :class:`Replies`.
 
-    Registration publishes ``resource`` (an aas-model Resource, exported with
-    ``model_dump_json``) or else the file at ``config_path``.
+    Registration publishes ``resource``, the exported aas-model Resource as a
+    dict (simulated_stations/resources).
     """
 
-    def __init__(self,  base_topic, client: Proxy, properties, config_path: Optional[str] = None, custom_handlers=None, enable_occupation: bool = True, auto_execute: bool = False, state_sink=None, resource=None):
+    def __init__(self,  base_topic, client: Proxy, properties, resource, custom_handlers=None, enable_occupation: bool = True, auto_execute: bool = False, state_sink=None):
         self.state = PackMLState.IDLE
         self.base_topic = base_topic
         # Keep if used elsewhere, otherwise consider removing
@@ -97,8 +97,7 @@ class PackMLStateMachine:
         self.enable_occupation = enable_occupation
         self.auto_execute = auto_execute
 
-        # Registration: the exported Resource, else a config file
-        self.config_path = config_path
+        # Registration: the exported Resource
         self.resource = resource
 
         # ProcessQueue
@@ -157,8 +156,16 @@ class PackMLStateMachine:
             self.unregister_callback
         )
 
-        # Command topic for manual state control (Start, Stop, Reset, etc.)
+        # Halt only invokes: it aborts the running process and is not answered.
         from .mqtt import Subscriber
+        self.halt_topic = Subscriber(
+            self.base_topic + "/CMD/Halt",
+            "./MQTTSchemas/command.schema.json",
+            2,
+            self.halt_callback
+        )
+
+        # Command topic for manual state control (Start, Stop, Reset, etc.)
         self.command_topic = Subscriber(
             self.base_topic + "/CMD/State",
             "./MQTTSchemas/stateCommand.schema.json",
@@ -173,10 +180,18 @@ class PackMLStateMachine:
         )
         
         # Build list of topics to register
-        topics = [self.command_topic, self.state_topic,
+        topics = [self.halt_topic, self.command_topic, self.state_topic,
                   self.register_topic, self.unregister_topic]
         for topic in topics:
             client.register_topic(topic)
+
+    def halt_callback(self, topic, client, message, properties):
+        """CMD/Halt: abort the running process (ABORTING -> ABORTED); an idle halt is a no-op."""
+        try:
+            if self.is_processing:
+                self.abort_command()
+        except Exception as exc:
+            print(f"Error in Halt callback: {exc}", flush=True)
 
     def state_command_callback(self, topic, client, message, properties):
         """Callback for external state commands like Start, Stop, Reset."""
@@ -825,62 +840,15 @@ class PackMLStateMachine:
         builds the AAS from it.
         """
         registration_topic = "NN/Nybrovej/InnoLab/Registration/Config"
-        if self.resource is not None:
-            payload = self.resource.model_dump_json()
-            export_dir = os.getenv("RESOURCE_EXPORT_DIR")
-            if export_dir:
-                # the exact description registered, for inspection
-                os.makedirs(export_dir, exist_ok=True)
-                with open(os.path.join(export_dir, f"{self.resource.id_short}.json"), "w", encoding="utf-8") as f:
-                    f.write(self.resource.model_dump_json(indent=2))
-            self.client.publish(registration_topic, payload, qos=2, retain=False)
-            print(f"[Registration] Published {self.resource.id_short} "
-                  f"({len(payload)} bytes) to {registration_topic}", flush=True)
-            return True
-        if not self.config_path:
-            return False
-
-        # Resolve config path - try multiple locations
-        config_file = None
-        possible_paths = []
-
-        if os.path.isabs(self.config_path):
-            possible_paths = [self.config_path]
-        else:
-            possible_paths = [
-                self.config_path,
-                os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                             "..", "AASDescriptions", "Resource", "configs", self.config_path),
-                os.path.join("/app", "AASDescriptions", "Resource",
-                             "configs", self.config_path),
-                os.path.join("AASDescriptions", "Resource",
-                             "configs", self.config_path),
-            ]
-
-        for path in possible_paths:
-            if os.path.exists(path):
-                config_file = path
-                break
-
-        if not config_file:
-            print(
-                f"[Registration] Config file not found: {self.config_path}", flush=True)
-            return False
-
-        try:
-            with open(config_file, 'r', encoding='utf-8') as f:
-                yaml_content = f.read()
-
-            self.client.publish(registration_topic,
-                                yaml_content, qos=2, retain=False)
-
-            print(
-                f"[Registration] Published {len(yaml_content)} bytes to {registration_topic}", flush=True)
-            return True
-
-        except Exception as e:
-            print(f"[Registration] Error: {e}", flush=True)
-            return False
-            import traceback
-            traceback.print_exc()
-            return False
+        id_short = self.resource["id_short"]
+        payload = json.dumps(self.resource)
+        export_dir = os.getenv("RESOURCE_EXPORT_DIR")
+        if export_dir:
+            # the exact description registered, for inspection
+            os.makedirs(export_dir, exist_ok=True)
+            with open(os.path.join(export_dir, f"{id_short}.json"), "w", encoding="utf-8") as f:
+                json.dump(self.resource, f, indent=2)
+        self.client.publish(registration_topic, payload, qos=2, retain=False)
+        print(f"[Registration] Published {id_short} "
+              f"({len(payload)} bytes) to {registration_topic}", flush=True)
+        return True

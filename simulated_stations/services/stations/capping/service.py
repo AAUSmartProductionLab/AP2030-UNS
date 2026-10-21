@@ -16,7 +16,7 @@ def main():
         base_topic=BASE_TOPIC,
         station_name="Capping",
         command_label="Capping",
-        config_path="cytivaCapping.yaml",
+        resource="cytivaCappingSystemAAS",
         process_function=cap_process,
     )
 

@@ -9,12 +9,10 @@ import os
 
 from packml_runtime.mqtt import Proxy
 from packml_runtime.simulator import PackMLStateMachine
+from services.stations.simple_station import BROKER_ADDRESS, BROKER_PORT, mqtt_resource
 
 
-BROKER_ADDRESS = os.getenv("MQTT_BROKER", "hivemq-broker")
-BROKER_PORT = int(os.getenv("MQTT_PORT", "1883"))
 BASE_TOPIC = os.getenv("PLANAR_TABLE_BASE_TOPIC", "NN/Nybrovej/InnoLab/Planar")
-CONFIG_PATH = os.getenv("PLANAR_TABLE_AAS_CONFIG", "planarTable.yaml")
 
 
 def main():
@@ -23,7 +21,7 @@ def main():
         BASE_TOPIC,
         proxy,
         None,
-        config_path=CONFIG_PATH,
+        mqtt_resource("planarTableAAS", BASE_TOPIC),
         enable_occupation=False,
         auto_execute=True,
     )

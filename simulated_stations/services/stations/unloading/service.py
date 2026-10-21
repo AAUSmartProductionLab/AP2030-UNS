@@ -3,11 +3,10 @@ import time
 
 from packml_runtime.mqtt import Proxy, ResponseAsync
 from packml_runtime.simulator import PackMLStateMachine
+from services.stations.simple_station import BROKER_ADDRESS, BROKER_PORT, mqtt_resource
 
 
 BASE_TOPIC = "NN/Nybrovej/InnoLab/Unloading"
-BROKER_ADDRESS = os.getenv("MQTT_BROKER", "hivemq-broker")
-BROKER_PORT = int(os.getenv("MQTT_PORT", "1883"))
 UNLOAD_DURATION = float(os.getenv("UNLOAD_DURATION", "2.0"))
 SCRAP_DURATION = float(os.getenv("SCRAP_DURATION", "1.5"))
 
@@ -63,7 +62,7 @@ def main():
         BASE_TOPIC,
         proxy,
         None,
-        config_path="optimaUnloading.yaml",
+        mqtt_resource("optimaUnloadingSystemAAS", BASE_TOPIC),
     )
 
     proxy.on_ready(state_machine.register_asset)

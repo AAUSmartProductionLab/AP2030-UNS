@@ -229,14 +229,13 @@ services:
     environment:
       MQTT_BROKER: mosquitto
       MQTT_PORT: "1883"
-      PYTHONPATH: /app:/aas-model/src
+      PYTHONPATH: /app
       # each station writes the Resource JSON it registers here
       RESOURCE_EXPORT_DIR: /exports
     volumes:
       - ../simulated_stations:/app
       - ../packml_runtime:/app/packml_runtime
       - ../aas-model/MQTTSchemas:/app/MQTTSchemas
-      - ../aas-model:/aas-model:ro
       - ./e2e/exports:/exports
     command: ["-m", "services.stations.stoppering.service"]
     restart: unless-stopped
@@ -254,7 +253,7 @@ services:
     environment:
       MQTT_BROKER: mosquitto
       MQTT_PORT: "1883"
-      PYTHONPATH: /app:/aas-model/src
+      PYTHONPATH: /app
       OPCUA_ENDPOINT: opc.tcp://0.0.0.0:4840/dispensing/
       OPCUA_ADVERTISED_ENDPOINT: opc.tcp://dispensing-station:4840/dispensing/
       RESOURCE_EXPORT_DIR: /exports
@@ -262,7 +261,6 @@ services:
       - ../simulated_stations:/app
       - ../packml_runtime:/app/packml_runtime
       - ../aas-model/MQTTSchemas:/app/MQTTSchemas
-      - ../aas-model:/aas-model:ro
       - ./e2e/exports:/exports
     ports:
       - "4840:4840"
