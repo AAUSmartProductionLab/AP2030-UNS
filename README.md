@@ -8,18 +8,9 @@
 
 # Configuration
 
-Before running the system, configure your environment:
-
-```bash
-    # Copy the example environment file
-    cp .env.exampleOffice .env
-    
-    # Edit .env and set your machine's IP address
-    # Update EXTERNAL_HOST to your machine's IP (e.g., 192.168.1.100)
-    nano .env
-```
-
-For detailed configuration instructions, see [CONFIGURATION.md](CONFIGURATION.md).
+The Compose stacks in `compose/` run with built-in defaults. To reach the
+services from other machines, set `EXTERNAL_HOST` to this machine's IP in a
+`.env` file (e.g. `EXTERNAL_HOST=192.168.1.100`).
 
 # Schemas and AAS Templates
 
