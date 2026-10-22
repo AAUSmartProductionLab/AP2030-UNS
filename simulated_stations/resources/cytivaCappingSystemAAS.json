@@ -5002,7 +5002,7 @@
             "supplemental_semantic_ids": [],
             "qualifiers": [],
             "content_type": "text/plain",
-            "value": "function aimc_main(sources)\n    local queue = sources.StationState.ProcessQueue or {}\n    local state = {\n        PackMLState = sources.StationState.State,\n        OccupationState = (#queue == 0) and \"[]\" or json.encode(queue),\n    }\n    return { PackMLState = state.PackMLState, OccupationState = state.OccupationState, Live = state }\nend\n"
+            "value": "function aimc_main(sources)\n    local queue = sources.StationState.ProcessQueue or {}\n    return {\n        PackMLState = sources.StationState.State,\n        OccupationState = (#queue == 0) and \"[]\" or json.encode(queue),\n    }\nend\n"
           },
           "Sources": {
             "id_short": "Sources",
@@ -5164,7 +5164,124 @@
                   "value_id": ""
                 },
                 "modelType": "SinksItem"
-              },
+              }
+            ],
+            "type_value_list_element": "SubmodelElementCollection",
+            "value_type_list_element": null,
+            "semantic_id_list_element": "https://admin-shell.io/idta/AssetInterfacesMappingConfiguration/2/0/MappingConfiguration/Sink",
+            "order_relevant": true
+          },
+          "ResponseTransformation": null,
+          "ResponseSources": null,
+          "ResponseSinks": null,
+          "ExecutionSemantics": null,
+          "modelType": "DmpMappingConfiguration"
+        },
+        {
+          "id_short": "MQTTHistory",
+          "description": "A MappingConfiguration defines one logical unit of sources (inputs) and sinks (outputs) that are in relation to one another. The relation can be expressed via a transformation.",
+          "display_name": null,
+          "semantic_id": "https://admin-shell.io/idta/AssetInterfacesMappingConfiguration/2/0/MappingConfiguration",
+          "supplemental_semantic_ids": [],
+          "qualifiers": [],
+          "DefaultPollingInterval": {
+            "id_short": "DefaultPollingInterval",
+            "description": "The DefaultPollingInterval defines the default time interval in seconds for fetching new data from the synchronous data sources defined in this MappingConfiguration. It must be greater than zero for synchronous protocols (e.g. HTTP) that need polling and is ignored for asynchronous protocols (e.g. MQTT).",
+            "display_name": null,
+            "semantic_id": "https://admin-shell.io/idta/AssetInterfacesMappingConfiguration/2/0/MappingConfiguration/DefaultPollingInterval",
+            "supplemental_semantic_ids": [],
+            "qualifiers": [],
+            "value": "0.0",
+            "value_type": "xs:double",
+            "value_id": ""
+          },
+          "Transformation": {
+            "id_short": "Transformation",
+            "description": "The transformation allows for transforming incoming data before writing it to the sinks. The transformation must contain an \"aimc_main(sources)\" entrypoint function in Lua.",
+            "display_name": null,
+            "semantic_id": "https://admin-shell.io/idta/AssetInterfacesMappingConfiguration/2/0/MappingConfiguration/Transformation",
+            "supplemental_semantic_ids": [],
+            "qualifiers": [],
+            "content_type": "text/plain",
+            "value": "function aimc_main(sources)\n    local queue = sources.StationState.ProcessQueue or {}\n    return { Live = {\n        PackMLState = sources.StationState.State,\n        OccupationState = (#queue == 0) and \"[]\" or json.encode(queue),\n    } }\nend\n"
+          },
+          "Sources": {
+            "id_short": "Sources",
+            "description": "This list includes all data sources that are used in this MappingConfiguration.",
+            "display_name": null,
+            "semantic_id": "https://admin-shell.io/idta/AssetInterfacesMappingConfiguration/2/0/MappingConfiguration/Sources",
+            "supplemental_semantic_ids": [],
+            "qualifiers": [],
+            "value": [
+              {
+                "id_short": "StationState",
+                "description": "A data source is defined by a Source reference, PollingInterval and SourceId.",
+                "display_name": null,
+                "semantic_id": "https://admin-shell.io/idta/AssetInterfacesMappingConfiguration/2/0/MappingConfiguration/Source",
+                "supplemental_semantic_ids": [],
+                "qualifiers": [],
+                "Source": {
+                  "id_short": "Source",
+                  "description": "This holds a reference to the respective SubmodelElement used as data source. A data source can be any SubmodelElement including those defined in the InteractionMetadata of AID Submodels for fetching live-data from assets.",
+                  "display_name": null,
+                  "semantic_id": "https://admin-shell.io/idta/AssetInterfacesMappingConfiguration/2/0/MappingConfiguration/Source/Source",
+                  "supplemental_semantic_ids": [],
+                  "qualifiers": [],
+                  "value": {
+                    "type_": "ModelReference",
+                    "key": [
+                      {
+                        "type_": "Submodel",
+                        "value": "{aas_id}/submodels/AssetInterfacesDescription"
+                      },
+                      {
+                        "type_": "SubmodelElementCollection",
+                        "value": "interface_mqtt"
+                      },
+                      {
+                        "type_": "SubmodelElementCollection",
+                        "value": "InteractionMetadata"
+                      },
+                      {
+                        "type_": "SubmodelElementCollection",
+                        "value": "properties"
+                      },
+                      {
+                        "type_": "SubmodelElementCollection",
+                        "value": "StationState"
+                      }
+                    ],
+                    "referred_semantic_id": ""
+                  }
+                },
+                "PollingInterval": null,
+                "SourceId": {
+                  "id_short": "SourceId",
+                  "description": "This is a unique and non-empty identifier that facilitates data access in the Lua transformation or establishes a relationship to a corresponding sink when no transformation is given. It must only be unique with respect to the Sources-list of the parent MappingConfiguration and not globally.",
+                  "display_name": null,
+                  "semantic_id": "https://admin-shell.io/idta/AssetInterfacesMappingConfiguration/2/0/MappingConfiguration/Source/SourceId",
+                  "supplemental_semantic_ids": [],
+                  "qualifiers": [],
+                  "value": "StationState",
+                  "value_type": "xs:string",
+                  "value_id": ""
+                },
+                "modelType": "SourcesItem"
+              }
+            ],
+            "type_value_list_element": "SubmodelElementCollection",
+            "value_type_list_element": null,
+            "semantic_id_list_element": "https://admin-shell.io/idta/AssetInterfacesMappingConfiguration/2/0/MappingConfiguration/Source",
+            "order_relevant": false
+          },
+          "Sinks": {
+            "id_short": "Sinks",
+            "description": "This list includes all data sinks that are used in this MappingConfiguration.",
+            "display_name": null,
+            "semantic_id": "https://admin-shell.io/idta/AssetInterfacesMappingConfiguration/2/0/MappingConfiguration/Sinks",
+            "supplemental_semantic_ids": [],
+            "qualifiers": [],
+            "value": [
               {
                 "id_short": "Live",
                 "description": "A data sink is defined by a Sink reference and SinkId.",
