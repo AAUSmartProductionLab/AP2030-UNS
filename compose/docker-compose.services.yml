@@ -49,6 +49,34 @@ services:
       start_period: 15s
     networks:
       - hivemq-network
+  # TimeSeries LinkedSegments (aas-camel-dmp SPEC §5.5). The org and bucket are
+  # the ones aas-model authors into every segment (INFLUX_ORG, INFLUX_BUCKET).
+  # The DMP writes with the token; the web UI's nginx adds it server-side, so
+  # it never reaches a browser. Set INFLUX_TOKEN and INFLUX_PASSWORD outside the lab.
+  influxdb:
+    image: influxdb:2.7
+    container_name: influxdb
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${INFLUX_PORT:-8086}:8086"
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: admin
+      DOCKER_INFLUXDB_INIT_PASSWORD: ${INFLUX_PASSWORD:-ap2030-influx}
+      DOCKER_INFLUXDB_INIT_ORG: ap2030
+      DOCKER_INFLUXDB_INIT_BUCKET: ap2030
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: ${INFLUX_TOKEN:-ap2030-dev-token}
+    volumes:
+      - influxdb-data:/var/lib/influxdb2
+      - influxdb-config:/etc/influxdb2
+    healthcheck:
+      test: ["CMD", "influx", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    networks:
+      - hivemq-network
   frontend:
     build:
       context: ../Configurator
@@ -283,6 +311,10 @@ services:
       - DMP_MANAGED_AIMC_IDS=${DMP_MANAGED_AIMC_IDS:-}
       - DMP_MANAGED_MAX_MAPPINGS=${DMP_MANAGED_MAX_MAPPINGS:-4096}
       - DMP_MANAGED_MAX_INVALIDATIONS=${DMP_MANAGED_MAX_INVALIDATIONS:-4096}
+      # TimeSeries segments: every segment's Endpoint must name this InfluxDB and org.
+      - DMP_INFLUX_URL=http://influxdb:8086
+      - DMP_INFLUX_ORG=ap2030
+      - DMP_INFLUX_TOKEN=${INFLUX_TOKEN:-ap2030-dev-token}
     ports:
       - "127.0.0.1:${DMP_PORT:-18085}:8080"
     restart: unless-stopped
@@ -296,6 +328,8 @@ services:
     depends_on:
       kafka:
         condition: service_healthy
+      influxdb:
+        condition: service_healthy
       hivemq-broker:
         condition: service_started
       aas-env:
@@ -303,3 +337,7 @@ services:
         condition: service_started
     networks:
       - hivemq-network
+
+volumes:
+  influxdb-data:
+  influxdb-config:
