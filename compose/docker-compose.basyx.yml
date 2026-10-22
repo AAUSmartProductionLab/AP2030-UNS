@@ -172,6 +172,10 @@ services:
       # The AIMC plugin shows the DMP's per-route deployment state; the UI's
       # nginx proxies this one read-only endpoint (no CORS, works remotely).
       DMP_STATUS_URL: http://dmp:8080/management/status
+      # TimeSeries LinkedSegments on the stack's InfluxDB: nginx proxies their
+      # queries and adds the token, so it never reaches a browser.
+      INFLUXDB_PROXY_ORIGIN: http://influxdb:8086
+      INFLUXDB_PROXY_TOKEN: ${INFLUX_TOKEN:-ap2030-dev-token}
     volumes:
       - ../logo:/usr/src/app/dist/Logo
     restart: always
