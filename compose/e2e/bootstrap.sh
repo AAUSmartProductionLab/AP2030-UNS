@@ -98,7 +98,7 @@ if $START_STACK; then
   log "  AAS UI:  http://localhost:${E2E_UI_PORT:-3002}"
   log "  AAS:     http://localhost:${E2E_AAS_PORT}"
   log "  MQTT:    localhost:${E2E_MQTT_PORT}   (stoppering)"
-  log "  OPC UA:  opc.tcp://localhost:4840/dispensing/"
+  log "  OPC UA:  opc.tcp://localhost:${E2E_UA_PORT:-4840}/dispensing/"
   log "  DMP:     http://localhost:${E2E_DMP_PORT}/management/status"
   log "  Exports: $E2E_DIR/exports/"
   log "  Drive:   python3 compose/e2e/stationctl.py --help"

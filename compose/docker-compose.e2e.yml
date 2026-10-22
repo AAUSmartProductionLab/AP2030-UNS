@@ -9,8 +9,9 @@
 #   mosquitto        18830   (internal AID base mqtt://mosquitto:1883/...)
 #   aas-env          18081   (internal repository http://aas-env:8081)
 #   kafka            19092   (internal control listener kafka:9092)
-#   dispensing UA    4840    (internal AID base dispensing-station:4840)
+#   dispensing UA    4840    (E2E_UA_PORT; internal AID base dispensing-station:4840)
 #   shared Java DMP  18086   (internal Operations/health listener dmp:8080)
+#   influxdb         18087   (internal TimeSeries segments influxdb:8086)
 #
 # The stoppering station is MQTT only, the dispensing station OPC UA only;
 # both register the Resource that aas-model authors for them.
@@ -263,7 +264,7 @@ services:
       - ../aas-model/MQTTSchemas:/app/MQTTSchemas
       - ./e2e/exports:/exports
     ports:
-      - "4840:4840"
+      - "${E2E_UA_PORT:-4840}:4840"
     command: ["-m", "services.stations.filling.service"]
     restart: unless-stopped
     depends_on:
@@ -300,6 +301,28 @@ services:
     networks:
       - e2e
 
+  # TimeSeries segments: the stations' history and skill logs (aas-camel-dmp SPEC §5.5).
+  influxdb:
+    image: influxdb:2.7
+    container_name: e2e-influxdb
+    ports:
+      - "127.0.0.1:${E2E_INFLUX_PORT:-18087}:8086"
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: admin
+      DOCKER_INFLUXDB_INIT_PASSWORD: ap2030-influx
+      DOCKER_INFLUXDB_INIT_ORG: ap2030
+      DOCKER_INFLUXDB_INIT_BUCKET: ap2030
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: ap2030-e2e-token
+    healthcheck:
+      test: ["CMD", "influx", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    networks:
+      - e2e
+
   dmp:
     image: dmp:java
     # Built locally from the aas-camel-dmp sources (the jar is built in the image).
@@ -314,6 +337,10 @@ services:
       - DMP_MANAGED_KAFKA_BROKERS=kafka:9092
       - DMP_MANAGED_CONTROL_TOPIC=submodel-events
       - DMP_MANAGED_CONTROL_GROUP_ID=dmp-java-management-e2e
+      # The stations' TimeSeries segments name this InfluxDB and org.
+      - DMP_INFLUX_URL=http://influxdb:8086
+      - DMP_INFLUX_ORG=ap2030
+      - DMP_INFLUX_TOKEN=ap2030-e2e-token
     ports:
       - "127.0.0.1:${E2E_DMP_PORT:-18086}:8080"
     restart: unless-stopped
@@ -326,6 +353,8 @@ services:
       start_period: 30s
     depends_on:
       kafka:
+        condition: service_healthy
+      influxdb:
         condition: service_healthy
       aas-env:
         condition: service_started

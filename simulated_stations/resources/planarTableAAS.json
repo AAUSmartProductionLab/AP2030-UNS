@@ -833,7 +833,10 @@
     "semantic_id": "https://smartproductionlab.aau.dk/submodels/Variables/1/0",
     "supplemental_semantic_ids": [],
     "qualifiers": [],
-    "variable": {}
+    "variable": {},
+    "State": null,
+    "Measurements": null,
+    "Log": null
   },
   "parameters": {
     "id_short": "Parameters",
