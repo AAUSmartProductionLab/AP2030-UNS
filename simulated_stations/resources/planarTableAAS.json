@@ -1005,6 +1005,10 @@
                       {
                         "type_": "SubmodelElementCollection",
                         "value": "Halt"
+                      },
+                      {
+                        "type_": "SubmodelElementCollection",
+                        "value": "input"
                       }
                     ],
                     "referred_semantic_id": ""

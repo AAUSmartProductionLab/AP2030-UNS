@@ -6461,6 +6461,10 @@
                       {
                         "type_": "SubmodelElementCollection",
                         "value": "Halt"
+                      },
+                      {
+                        "type_": "SubmodelElementCollection",
+                        "value": "input"
                       }
                     ],
                     "referred_semantic_id": ""
@@ -6632,6 +6636,10 @@
                       {
                         "type_": "SubmodelElementCollection",
                         "value": "Occupy"
+                      },
+                      {
+                        "type_": "SubmodelElementCollection",
+                        "value": "input"
                       }
                     ],
                     "referred_semantic_id": ""
@@ -7058,6 +7066,10 @@
                       {
                         "type_": "SubmodelElementCollection",
                         "value": "Release"
+                      },
+                      {
+                        "type_": "SubmodelElementCollection",
+                        "value": "input"
                       }
                     ],
                     "referred_semantic_id": ""
@@ -7484,6 +7496,10 @@
                       {
                         "type_": "SubmodelElementCollection",
                         "value": "Capture"
+                      },
+                      {
+                        "type_": "SubmodelElementCollection",
+                        "value": "input"
                       }
                     ],
                     "referred_semantic_id": ""
