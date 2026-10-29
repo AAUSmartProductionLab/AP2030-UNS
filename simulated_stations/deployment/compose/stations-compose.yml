@@ -87,6 +87,7 @@ services:
       <<: *simulated-station-env
       PLANAR_SHUTTLE_BASE_TOPIC: NN/Nybrovej/InnoLab/Planar/Xbot1
       PLANAR_SHUTTLE_NAME: planarShuttle1
+      PLANAR_SHUTTLE_RESOURCE: planarTableShuttle1AAS
       PLANAR_SHUTTLE_INITIAL_X: "0.0"
       PLANAR_SHUTTLE_INITIAL_Y: "0.0"
       PLANAR_SHUTTLE_INITIAL_YAW: "0.0"
@@ -99,6 +100,7 @@ services:
       <<: *simulated-station-env
       PLANAR_SHUTTLE_BASE_TOPIC: NN/Nybrovej/InnoLab/Planar/Xbot2
       PLANAR_SHUTTLE_NAME: planarShuttle2
+      PLANAR_SHUTTLE_RESOURCE: planarTableShuttle2AAS
       PLANAR_SHUTTLE_INITIAL_X: "240.0"
       PLANAR_SHUTTLE_INITIAL_Y: "0.0"
       PLANAR_SHUTTLE_INITIAL_YAW: "0.0"
@@ -111,6 +113,7 @@ services:
       <<: *simulated-station-env
       PLANAR_SHUTTLE_BASE_TOPIC: NN/Nybrovej/InnoLab/Planar/Xbot3
       PLANAR_SHUTTLE_NAME: planarShuttle3
+      PLANAR_SHUTTLE_RESOURCE: planarTableShuttle3AAS
       PLANAR_SHUTTLE_INITIAL_X: "480.0"
       PLANAR_SHUTTLE_INITIAL_Y: "0.0"
       PLANAR_SHUTTLE_INITIAL_YAW: "0.0"

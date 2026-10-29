@@ -273,13 +273,9 @@
             "psk_sc": null,
             "digest_sc": null,
             "bearer_sc": null,
-            "oauth2_sc": null,
-            "opcua_channel_sc": null,
-            "opcua_authentication_sc": null
+            "oauth2_sc": null
           },
-          "protocolVersion": null,
-          "modv_mostSignificantByte": null,
-          "modv_mostSignificantWord": null
+          "protocolVersion": null
         },
         "InteractionMetadata": {
           "id_short": "InteractionMetadata",
@@ -507,7 +503,6 @@
                       "itemsRange": null,
                       "properties": null,
                       "valueSemantics": null,
-                      "observable": null,
                       "modelType": "DmpDataSchema"
                     },
                     "State": {
@@ -569,7 +564,7 @@
                             "value": "IDLE",
                             "value_type": "xs:string",
                             "value_id": "",
-                            "modelType": "Property"
+                            "modelType": "enumItem"
                           },
                           {
                             "id_short": "STARTING",
@@ -581,7 +576,7 @@
                             "value": "STARTING",
                             "value_type": "xs:string",
                             "value_id": "",
-                            "modelType": "Property"
+                            "modelType": "enumItem"
                           },
                           {
                             "id_short": "EXECUTE",
@@ -593,7 +588,7 @@
                             "value": "EXECUTE",
                             "value_type": "xs:string",
                             "value_id": "",
-                            "modelType": "Property"
+                            "modelType": "enumItem"
                           },
                           {
                             "id_short": "COMPLETING",
@@ -605,7 +600,7 @@
                             "value": "COMPLETING",
                             "value_type": "xs:string",
                             "value_id": "",
-                            "modelType": "Property"
+                            "modelType": "enumItem"
                           },
                           {
                             "id_short": "COMPLETE",
@@ -617,7 +612,7 @@
                             "value": "COMPLETE",
                             "value_type": "xs:string",
                             "value_id": "",
-                            "modelType": "Property"
+                            "modelType": "enumItem"
                           },
                           {
                             "id_short": "RESETTING",
@@ -629,7 +624,7 @@
                             "value": "RESETTING",
                             "value_type": "xs:string",
                             "value_id": "",
-                            "modelType": "Property"
+                            "modelType": "enumItem"
                           },
                           {
                             "id_short": "HOLDING",
@@ -641,7 +636,7 @@
                             "value": "HOLDING",
                             "value_type": "xs:string",
                             "value_id": "",
-                            "modelType": "Property"
+                            "modelType": "enumItem"
                           },
                           {
                             "id_short": "HELD",
@@ -653,7 +648,7 @@
                             "value": "HELD",
                             "value_type": "xs:string",
                             "value_id": "",
-                            "modelType": "Property"
+                            "modelType": "enumItem"
                           },
                           {
                             "id_short": "UNHOLDING",
@@ -665,7 +660,7 @@
                             "value": "UNHOLDING",
                             "value_type": "xs:string",
                             "value_id": "",
-                            "modelType": "Property"
+                            "modelType": "enumItem"
                           },
                           {
                             "id_short": "SUSPENDING",
@@ -677,7 +672,7 @@
                             "value": "SUSPENDING",
                             "value_type": "xs:string",
                             "value_id": "",
-                            "modelType": "Property"
+                            "modelType": "enumItem"
                           },
                           {
                             "id_short": "SUSPENDED",
@@ -689,7 +684,7 @@
                             "value": "SUSPENDED",
                             "value_type": "xs:string",
                             "value_id": "",
-                            "modelType": "Property"
+                            "modelType": "enumItem"
                           },
                           {
                             "id_short": "UNSUSPENDING",
@@ -701,7 +696,7 @@
                             "value": "UNSUSPENDING",
                             "value_type": "xs:string",
                             "value_id": "",
-                            "modelType": "Property"
+                            "modelType": "enumItem"
                           },
                           {
                             "id_short": "ABORTING",
@@ -713,7 +708,7 @@
                             "value": "ABORTING",
                             "value_type": "xs:string",
                             "value_id": "",
-                            "modelType": "Property"
+                            "modelType": "enumItem"
                           },
                           {
                             "id_short": "ABORTED",
@@ -725,7 +720,7 @@
                             "value": "ABORTED",
                             "value_type": "xs:string",
                             "value_id": "",
-                            "modelType": "Property"
+                            "modelType": "enumItem"
                           },
                           {
                             "id_short": "CLEARING",
@@ -737,7 +732,7 @@
                             "value": "CLEARING",
                             "value_type": "xs:string",
                             "value_id": "",
-                            "modelType": "Property"
+                            "modelType": "enumItem"
                           },
                           {
                             "id_short": "STOPPING",
@@ -749,7 +744,7 @@
                             "value": "STOPPING",
                             "value_type": "xs:string",
                             "value_id": "",
-                            "modelType": "Property"
+                            "modelType": "enumItem"
                           },
                           {
                             "id_short": "STOPPED",
@@ -761,11 +756,11 @@
                             "value": "STOPPED",
                             "value_type": "xs:string",
                             "value_id": "",
-                            "modelType": "Property"
+                            "modelType": "enumItem"
                           }
                         ],
                         "type_value_list_element": "Property",
-                        "value_type_list_element": null,
+                        "value_type_list_element": "xs:string",
                         "semantic_id_list_element": "",
                         "order_relevant": true
                       },
@@ -778,7 +773,6 @@
                       "itemsRange": null,
                       "properties": null,
                       "valueSemantics": null,
-                      "observable": null,
                       "modelType": "DmpDataSchema"
                     },
                     "ProcessQueue": {
@@ -868,13 +862,11 @@
                         "items": null,
                         "itemsRange": null,
                         "properties": null,
-                        "valueSemantics": null,
-                        "observable": null
+                        "valueSemantics": null
                       },
                       "itemsRange": null,
                       "properties": null,
                       "valueSemantics": null,
-                      "observable": null,
                       "modelType": "DmpDataSchema"
                     }
                   }
@@ -901,16 +893,6 @@
                   "contentType": null,
                   "subprotocol": null,
                   "security": null,
-                  "htv_methodName": null,
-                  "htv_headers": null,
-                  "modv_function": null,
-                  "modv_entity": null,
-                  "modv_zeroBasedAddressing": null,
-                  "modv_pollingTime": null,
-                  "modv_timeout": null,
-                  "modv_type": null,
-                  "modv_mostSignificantByte": null,
-                  "modv_mostSignificantWord": null,
                   "mqv_retain": {
                     "id_short": "mqv_retain",
                     "description": "It is an indicator that tells the broker to always retain last published payload. ",
@@ -934,28 +916,10 @@
                     "value_type": "xs:string",
                     "value_id": ""
                   },
-                  "uav_browsePath": null,
-                  "bacv_useService": null,
-                  "bacv_hasDataType": null,
-                  "iolv_method": null,
-                  "iolv_accessRights": null,
-                  "iolv_type": null,
-                  "iolv_byteOffset": null,
-                  "iolv_byteLength": null,
-                  "iolv_bitOffset": null,
-                  "iolv_bitLength": null,
-                  "iolv_referenceToCondition": null,
-                  "iolv_enumeratedValues": null,
-                  "iolv_payloadMapping": null,
-                  "canv_offset": null,
-                  "canv_length": null,
-                  "canv_valueOffset": null,
-                  "canv_enumeratedValues": null,
-                  "canv_payloadMapping": null,
                   "op": null,
-                  "additionalResponses": null
+                  "additionalResponses": null,
+                  "modelType": "MqttForm"
                 },
-                "uriVariables": null,
                 "modelType": "DmpProperty"
               }
             }
@@ -967,6 +931,7 @@
             "semantic_id": "https://www.w3.org/2019/wot/td#ActionAffordance",
             "supplemental_semantic_ids": [],
             "qualifiers": [],
+            "value": {},
             "property_name": {
               "Halt": {
                 "id_short": "Halt",
@@ -1138,13 +1103,11 @@
                         "itemsRange": null,
                         "properties": null,
                         "valueSemantics": null,
-                        "observable": null,
                         "modelType": "DmpDataSchema"
                       }
                     }
                   },
-                  "valueSemantics": null,
-                  "observable": null
+                  "valueSemantics": null
                 },
                 "output": null,
                 "uriVariables": null,
@@ -1169,16 +1132,6 @@
                   "contentType": null,
                   "subprotocol": null,
                   "security": null,
-                  "htv_methodName": null,
-                  "htv_headers": null,
-                  "modv_function": null,
-                  "modv_entity": null,
-                  "modv_zeroBasedAddressing": null,
-                  "modv_pollingTime": null,
-                  "modv_timeout": null,
-                  "modv_type": null,
-                  "modv_mostSignificantByte": null,
-                  "modv_mostSignificantWord": null,
                   "mqv_retain": null,
                   "mqv_controlPacket": null,
                   "mqv_qos": {
@@ -1192,24 +1145,6 @@
                     "value_type": "xs:string",
                     "value_id": ""
                   },
-                  "uav_browsePath": null,
-                  "bacv_useService": null,
-                  "bacv_hasDataType": null,
-                  "iolv_method": null,
-                  "iolv_accessRights": null,
-                  "iolv_type": null,
-                  "iolv_byteOffset": null,
-                  "iolv_byteLength": null,
-                  "iolv_bitOffset": null,
-                  "iolv_bitLength": null,
-                  "iolv_referenceToCondition": null,
-                  "iolv_enumeratedValues": null,
-                  "iolv_payloadMapping": null,
-                  "canv_offset": null,
-                  "canv_length": null,
-                  "canv_valueOffset": null,
-                  "canv_enumeratedValues": null,
-                  "canv_payloadMapping": null,
                   "op": null,
                   "additionalResponses": null,
                   "response": null,
@@ -1387,13 +1322,11 @@
                         "itemsRange": null,
                         "properties": null,
                         "valueSemantics": null,
-                        "observable": null,
                         "modelType": "DmpDataSchema"
                       }
                     }
                   },
-                  "valueSemantics": null,
-                  "observable": null
+                  "valueSemantics": null
                 },
                 "output": {
                   "id_short": "output",
@@ -1570,7 +1503,6 @@
                         "itemsRange": null,
                         "properties": null,
                         "valueSemantics": null,
-                        "observable": null,
                         "modelType": "DmpDataSchema"
                       },
                       "Uuid": {
@@ -1624,7 +1556,6 @@
                         "itemsRange": null,
                         "properties": null,
                         "valueSemantics": null,
-                        "observable": null,
                         "modelType": "DmpDataSchema"
                       },
                       "State": {
@@ -1686,7 +1617,7 @@
                               "value": "RUNNING",
                               "value_type": "xs:string",
                               "value_id": "",
-                              "modelType": "Property"
+                              "modelType": "enumItem"
                             },
                             {
                               "id_short": "SUCCESS",
@@ -1698,7 +1629,7 @@
                               "value": "SUCCESS",
                               "value_type": "xs:string",
                               "value_id": "",
-                              "modelType": "Property"
+                              "modelType": "enumItem"
                             },
                             {
                               "id_short": "FAILURE",
@@ -1710,11 +1641,11 @@
                               "value": "FAILURE",
                               "value_type": "xs:string",
                               "value_id": "",
-                              "modelType": "Property"
+                              "modelType": "enumItem"
                             }
                           ],
                           "type_value_list_element": "Property",
-                          "value_type_list_element": null,
+                          "value_type_list_element": "xs:string",
                           "semantic_id_list_element": "",
                           "order_relevant": true
                         },
@@ -1727,7 +1658,6 @@
                         "itemsRange": null,
                         "properties": null,
                         "valueSemantics": null,
-                        "observable": null,
                         "modelType": "DmpDataSchema"
                       },
                       "Outcome": {
@@ -1794,13 +1724,11 @@
                         "itemsRange": null,
                         "properties": null,
                         "valueSemantics": null,
-                        "observable": null,
                         "modelType": "DmpDataSchema"
                       }
                     }
                   },
-                  "valueSemantics": null,
-                  "observable": null
+                  "valueSemantics": null
                 },
                 "uriVariables": null,
                 "forms": {
@@ -1824,16 +1752,6 @@
                   "contentType": null,
                   "subprotocol": null,
                   "security": null,
-                  "htv_methodName": null,
-                  "htv_headers": null,
-                  "modv_function": null,
-                  "modv_entity": null,
-                  "modv_zeroBasedAddressing": null,
-                  "modv_pollingTime": null,
-                  "modv_timeout": null,
-                  "modv_type": null,
-                  "modv_mostSignificantByte": null,
-                  "modv_mostSignificantWord": null,
                   "mqv_retain": null,
                   "mqv_controlPacket": null,
                   "mqv_qos": {
@@ -1847,24 +1765,6 @@
                     "value_type": "xs:string",
                     "value_id": ""
                   },
-                  "uav_browsePath": null,
-                  "bacv_useService": null,
-                  "bacv_hasDataType": null,
-                  "iolv_method": null,
-                  "iolv_accessRights": null,
-                  "iolv_type": null,
-                  "iolv_byteOffset": null,
-                  "iolv_byteLength": null,
-                  "iolv_bitOffset": null,
-                  "iolv_bitLength": null,
-                  "iolv_referenceToCondition": null,
-                  "iolv_enumeratedValues": null,
-                  "iolv_payloadMapping": null,
-                  "canv_offset": null,
-                  "canv_length": null,
-                  "canv_valueOffset": null,
-                  "canv_enumeratedValues": null,
-                  "canv_payloadMapping": null,
                   "op": null,
                   "additionalResponses": null,
                   "response": null,
@@ -2052,13 +1952,11 @@
                         "itemsRange": null,
                         "properties": null,
                         "valueSemantics": null,
-                        "observable": null,
                         "modelType": "DmpDataSchema"
                       }
                     }
                   },
-                  "valueSemantics": null,
-                  "observable": null
+                  "valueSemantics": null
                 },
                 "output": {
                   "id_short": "output",
@@ -2235,7 +2133,6 @@
                         "itemsRange": null,
                         "properties": null,
                         "valueSemantics": null,
-                        "observable": null,
                         "modelType": "DmpDataSchema"
                       },
                       "Uuid": {
@@ -2289,7 +2186,6 @@
                         "itemsRange": null,
                         "properties": null,
                         "valueSemantics": null,
-                        "observable": null,
                         "modelType": "DmpDataSchema"
                       },
                       "State": {
@@ -2351,7 +2247,7 @@
                               "value": "RUNNING",
                               "value_type": "xs:string",
                               "value_id": "",
-                              "modelType": "Property"
+                              "modelType": "enumItem"
                             },
                             {
                               "id_short": "SUCCESS",
@@ -2363,7 +2259,7 @@
                               "value": "SUCCESS",
                               "value_type": "xs:string",
                               "value_id": "",
-                              "modelType": "Property"
+                              "modelType": "enumItem"
                             },
                             {
                               "id_short": "FAILURE",
@@ -2375,11 +2271,11 @@
                               "value": "FAILURE",
                               "value_type": "xs:string",
                               "value_id": "",
-                              "modelType": "Property"
+                              "modelType": "enumItem"
                             }
                           ],
                           "type_value_list_element": "Property",
-                          "value_type_list_element": null,
+                          "value_type_list_element": "xs:string",
                           "semantic_id_list_element": "",
                           "order_relevant": true
                         },
@@ -2392,7 +2288,6 @@
                         "itemsRange": null,
                         "properties": null,
                         "valueSemantics": null,
-                        "observable": null,
                         "modelType": "DmpDataSchema"
                       },
                       "Outcome": {
@@ -2459,13 +2354,11 @@
                         "itemsRange": null,
                         "properties": null,
                         "valueSemantics": null,
-                        "observable": null,
                         "modelType": "DmpDataSchema"
                       }
                     }
                   },
-                  "valueSemantics": null,
-                  "observable": null
+                  "valueSemantics": null
                 },
                 "uriVariables": null,
                 "forms": {
@@ -2489,16 +2382,6 @@
                   "contentType": null,
                   "subprotocol": null,
                   "security": null,
-                  "htv_methodName": null,
-                  "htv_headers": null,
-                  "modv_function": null,
-                  "modv_entity": null,
-                  "modv_zeroBasedAddressing": null,
-                  "modv_pollingTime": null,
-                  "modv_timeout": null,
-                  "modv_type": null,
-                  "modv_mostSignificantByte": null,
-                  "modv_mostSignificantWord": null,
                   "mqv_retain": null,
                   "mqv_controlPacket": null,
                   "mqv_qos": {
@@ -2512,24 +2395,6 @@
                     "value_type": "xs:string",
                     "value_id": ""
                   },
-                  "uav_browsePath": null,
-                  "bacv_useService": null,
-                  "bacv_hasDataType": null,
-                  "iolv_method": null,
-                  "iolv_accessRights": null,
-                  "iolv_type": null,
-                  "iolv_byteOffset": null,
-                  "iolv_byteLength": null,
-                  "iolv_bitOffset": null,
-                  "iolv_bitLength": null,
-                  "iolv_referenceToCondition": null,
-                  "iolv_enumeratedValues": null,
-                  "iolv_payloadMapping": null,
-                  "canv_offset": null,
-                  "canv_length": null,
-                  "canv_valueOffset": null,
-                  "canv_enumeratedValues": null,
-                  "canv_payloadMapping": null,
                   "op": null,
                   "additionalResponses": null,
                   "response": null,
@@ -2717,13 +2582,11 @@
                         "itemsRange": null,
                         "properties": null,
                         "valueSemantics": null,
-                        "observable": null,
                         "modelType": "DmpDataSchema"
                       }
                     }
                   },
-                  "valueSemantics": null,
-                  "observable": null
+                  "valueSemantics": null
                 },
                 "output": {
                   "id_short": "output",
@@ -2900,7 +2763,6 @@
                         "itemsRange": null,
                         "properties": null,
                         "valueSemantics": null,
-                        "observable": null,
                         "modelType": "DmpDataSchema"
                       },
                       "Uuid": {
@@ -2954,7 +2816,6 @@
                         "itemsRange": null,
                         "properties": null,
                         "valueSemantics": null,
-                        "observable": null,
                         "modelType": "DmpDataSchema"
                       },
                       "State": {
@@ -3016,7 +2877,7 @@
                               "value": "RUNNING",
                               "value_type": "xs:string",
                               "value_id": "",
-                              "modelType": "Property"
+                              "modelType": "enumItem"
                             },
                             {
                               "id_short": "SUCCESS",
@@ -3028,7 +2889,7 @@
                               "value": "SUCCESS",
                               "value_type": "xs:string",
                               "value_id": "",
-                              "modelType": "Property"
+                              "modelType": "enumItem"
                             },
                             {
                               "id_short": "FAILURE",
@@ -3040,11 +2901,11 @@
                               "value": "FAILURE",
                               "value_type": "xs:string",
                               "value_id": "",
-                              "modelType": "Property"
+                              "modelType": "enumItem"
                             }
                           ],
                           "type_value_list_element": "Property",
-                          "value_type_list_element": null,
+                          "value_type_list_element": "xs:string",
                           "semantic_id_list_element": "",
                           "order_relevant": true
                         },
@@ -3057,7 +2918,6 @@
                         "itemsRange": null,
                         "properties": null,
                         "valueSemantics": null,
-                        "observable": null,
                         "modelType": "DmpDataSchema"
                       },
                       "Outcome": {
@@ -3124,13 +2984,11 @@
                         "itemsRange": null,
                         "properties": null,
                         "valueSemantics": null,
-                        "observable": null,
                         "modelType": "DmpDataSchema"
                       }
                     }
                   },
-                  "valueSemantics": null,
-                  "observable": null
+                  "valueSemantics": null
                 },
                 "uriVariables": null,
                 "forms": {
@@ -3154,16 +3012,6 @@
                   "contentType": null,
                   "subprotocol": null,
                   "security": null,
-                  "htv_methodName": null,
-                  "htv_headers": null,
-                  "modv_function": null,
-                  "modv_entity": null,
-                  "modv_zeroBasedAddressing": null,
-                  "modv_pollingTime": null,
-                  "modv_timeout": null,
-                  "modv_type": null,
-                  "modv_mostSignificantByte": null,
-                  "modv_mostSignificantWord": null,
                   "mqv_retain": null,
                   "mqv_controlPacket": null,
                   "mqv_qos": {
@@ -3177,24 +3025,6 @@
                     "value_type": "xs:string",
                     "value_id": ""
                   },
-                  "uav_browsePath": null,
-                  "bacv_useService": null,
-                  "bacv_hasDataType": null,
-                  "iolv_method": null,
-                  "iolv_accessRights": null,
-                  "iolv_type": null,
-                  "iolv_byteOffset": null,
-                  "iolv_byteLength": null,
-                  "iolv_bitOffset": null,
-                  "iolv_bitLength": null,
-                  "iolv_referenceToCondition": null,
-                  "iolv_enumeratedValues": null,
-                  "iolv_payloadMapping": null,
-                  "canv_offset": null,
-                  "canv_length": null,
-                  "canv_valueOffset": null,
-                  "canv_enumeratedValues": null,
-                  "canv_payloadMapping": null,
                   "op": null,
                   "additionalResponses": null,
                   "response": null,
@@ -3561,15 +3391,7 @@
             "qualifiers": [
               {
                 "type_": "invocationDelegation",
-                "value": "http://dmp:8080/operations/cytivaCappingSystemAAS/Halt",
-                "value_type": "xs:string",
-                "value_id": "",
-                "semantic_id": "",
-                "kind": "ConceptQualifier"
-              },
-              {
-                "type_": "Synchronous",
-                "value": "true",
+                "value": "http://dmp:8080{operation_path}",
                 "value_type": "xs:string",
                 "value_id": "",
                 "semantic_id": "",
@@ -3692,15 +3514,7 @@
             "qualifiers": [
               {
                 "type_": "invocationDelegation",
-                "value": "http://dmp:8080/operations/cytivaCappingSystemAAS/Occupy",
-                "value_type": "xs:string",
-                "value_id": "",
-                "semantic_id": "",
-                "kind": "ConceptQualifier"
-              },
-              {
-                "type_": "Synchronous",
-                "value": "true",
+                "value": "http://dmp:8080{operation_path}",
                 "value_type": "xs:string",
                 "value_id": "",
                 "semantic_id": "",
@@ -3836,15 +3650,7 @@
             "qualifiers": [
               {
                 "type_": "invocationDelegation",
-                "value": "http://dmp:8080/operations/cytivaCappingSystemAAS/Release",
-                "value_type": "xs:string",
-                "value_id": "",
-                "semantic_id": "",
-                "kind": "ConceptQualifier"
-              },
-              {
-                "type_": "Synchronous",
-                "value": "true",
+                "value": "http://dmp:8080{operation_path}",
                 "value_type": "xs:string",
                 "value_id": "",
                 "semantic_id": "",
@@ -3939,7 +3745,7 @@
           },
           "interface_reference": {
             "id_short": "interface_reference",
-            "description": "",
+            "description": "Reference to the AID action that natively implements this skill.",
             "display_name": null,
             "semantic_id": "https://smartproductionlab.aau.dk/ControlComponent/Skill/1/0",
             "supplemental_semantic_ids": [],
@@ -3980,15 +3786,7 @@
             "qualifiers": [
               {
                 "type_": "invocationDelegation",
-                "value": "http://dmp:8080/operations/cytivaCappingSystemAAS/Capping",
-                "value_type": "xs:string",
-                "value_id": "",
-                "semantic_id": "",
-                "kind": "ConceptQualifier"
-              },
-              {
-                "type_": "Synchronous",
-                "value": "true",
+                "value": "http://dmp:8080{operation_path}",
                 "value_type": "xs:string",
                 "value_id": "",
                 "semantic_id": "",
@@ -4174,42 +3972,12 @@
   },
   "variables": {
     "id_short": "Variables",
-    "description": "Asset variable definitions with semantic concepts and live-data interface references.",
+    "description": "An asset's runtime data: time series of its state, measurements and logs.",
     "display_name": null,
     "id": "Variables",
     "semantic_id": "https://smartproductionlab.aau.dk/submodels/Variables/1/0",
     "supplemental_semantic_ids": [],
     "qualifiers": [],
-    "variable": {
-      "PackMLState": {
-        "id_short": "PackMLState",
-        "description": "Live value of this variable; its ontology concept rides as a supplemental semantic id.",
-        "display_name": null,
-        "semantic_id": "https://smartproductionlab.aau.dk/variables/VariableSemanticId/1/0",
-        "supplemental_semantic_ids": [
-          "https://w3id.org/2026/apex/semantic/state/operational"
-        ],
-        "qualifiers": [],
-        "value": "",
-        "value_type": "xs:string",
-        "value_id": "",
-        "modelType": "VariableProp"
-      },
-      "OccupationState": {
-        "id_short": "OccupationState",
-        "description": "Live value of this variable; its ontology concept rides as a supplemental semantic id.",
-        "display_name": null,
-        "semantic_id": "https://smartproductionlab.aau.dk/variables/VariableSemanticId/1/0",
-        "supplemental_semantic_ids": [
-          "https://w3id.org/2026/apex/semantic/state/occupied"
-        ],
-        "qualifiers": [],
-        "value": "",
-        "value_type": "xs:string",
-        "value_id": "",
-        "modelType": "VariableProp"
-      }
-    },
     "State": {
       "id_short": "State",
       "description": "",
@@ -4405,7 +4173,8 @@
                         "modelType": "Tag"
                       }
                     }
-                  }
+                  },
+                  "WriteMode": null
                 },
                 "modelType": "DmpLinkedSegment"
               }
@@ -4639,7 +4408,8 @@
                         "modelType": "Tag"
                       }
                     }
-                  }
+                  },
+                  "WriteMode": null
                 },
                 "modelType": "DmpLinkedSegment"
               }
@@ -4862,7 +4632,8 @@
                         "modelType": "Tag"
                       }
                     }
-                  }
+                  },
+                  "WriteMode": null
                 },
                 "modelType": "DmpLinkedSegment"
               }
@@ -4977,208 +4748,7 @@
       "qualifiers": [],
       "value": [
         {
-          "id_short": "MQTT",
-          "description": "A MappingConfiguration defines one logical unit of sources (inputs) and sinks (outputs) that are in relation to one another. The relation can be expressed via a transformation.",
-          "display_name": null,
-          "semantic_id": "https://admin-shell.io/idta/AssetInterfacesMappingConfiguration/2/0/MappingConfiguration",
-          "supplemental_semantic_ids": [],
-          "qualifiers": [],
-          "DefaultPollingInterval": {
-            "id_short": "DefaultPollingInterval",
-            "description": "The DefaultPollingInterval defines the default time interval in seconds for fetching new data from the synchronous data sources defined in this MappingConfiguration. It must be greater than zero for synchronous protocols (e.g. HTTP) that need polling and is ignored for asynchronous protocols (e.g. MQTT).",
-            "display_name": null,
-            "semantic_id": "https://admin-shell.io/idta/AssetInterfacesMappingConfiguration/2/0/MappingConfiguration/DefaultPollingInterval",
-            "supplemental_semantic_ids": [],
-            "qualifiers": [],
-            "value": "0.0",
-            "value_type": "xs:double",
-            "value_id": ""
-          },
-          "Transformation": {
-            "id_short": "Transformation",
-            "description": "The transformation allows for transforming incoming data before writing it to the sinks. The transformation must contain an \"aimc_main(sources)\" entrypoint function in Lua.",
-            "display_name": null,
-            "semantic_id": "https://admin-shell.io/idta/AssetInterfacesMappingConfiguration/2/0/MappingConfiguration/Transformation",
-            "supplemental_semantic_ids": [],
-            "qualifiers": [],
-            "content_type": "text/plain",
-            "value": "function aimc_main(sources)\n    local queue = sources.StationState.ProcessQueue or {}\n    return {\n        PackMLState = sources.StationState.State,\n        OccupationState = (#queue == 0) and \"[]\" or json.encode(queue),\n    }\nend\n"
-          },
-          "Sources": {
-            "id_short": "Sources",
-            "description": "This list includes all data sources that are used in this MappingConfiguration.",
-            "display_name": null,
-            "semantic_id": "https://admin-shell.io/idta/AssetInterfacesMappingConfiguration/2/0/MappingConfiguration/Sources",
-            "supplemental_semantic_ids": [],
-            "qualifiers": [],
-            "value": [
-              {
-                "id_short": "StationState",
-                "description": "A data source is defined by a Source reference, PollingInterval and SourceId.",
-                "display_name": null,
-                "semantic_id": "https://admin-shell.io/idta/AssetInterfacesMappingConfiguration/2/0/MappingConfiguration/Source",
-                "supplemental_semantic_ids": [],
-                "qualifiers": [],
-                "Source": {
-                  "id_short": "Source",
-                  "description": "This holds a reference to the respective SubmodelElement used as data source. A data source can be any SubmodelElement including those defined in the InteractionMetadata of AID Submodels for fetching live-data from assets.",
-                  "display_name": null,
-                  "semantic_id": "https://admin-shell.io/idta/AssetInterfacesMappingConfiguration/2/0/MappingConfiguration/Source/Source",
-                  "supplemental_semantic_ids": [],
-                  "qualifiers": [],
-                  "value": {
-                    "type_": "ModelReference",
-                    "key": [
-                      {
-                        "type_": "Submodel",
-                        "value": "{aas_id}/submodels/AssetInterfacesDescription"
-                      },
-                      {
-                        "type_": "SubmodelElementCollection",
-                        "value": "interface_mqtt"
-                      },
-                      {
-                        "type_": "SubmodelElementCollection",
-                        "value": "InteractionMetadata"
-                      },
-                      {
-                        "type_": "SubmodelElementCollection",
-                        "value": "properties"
-                      },
-                      {
-                        "type_": "SubmodelElementCollection",
-                        "value": "StationState"
-                      }
-                    ],
-                    "referred_semantic_id": ""
-                  }
-                },
-                "PollingInterval": null,
-                "SourceId": {
-                  "id_short": "SourceId",
-                  "description": "This is a unique and non-empty identifier that facilitates data access in the Lua transformation or establishes a relationship to a corresponding sink when no transformation is given. It must only be unique with respect to the Sources-list of the parent MappingConfiguration and not globally.",
-                  "display_name": null,
-                  "semantic_id": "https://admin-shell.io/idta/AssetInterfacesMappingConfiguration/2/0/MappingConfiguration/Source/SourceId",
-                  "supplemental_semantic_ids": [],
-                  "qualifiers": [],
-                  "value": "StationState",
-                  "value_type": "xs:string",
-                  "value_id": ""
-                },
-                "modelType": "SourcesItem"
-              }
-            ],
-            "type_value_list_element": "SubmodelElementCollection",
-            "value_type_list_element": null,
-            "semantic_id_list_element": "https://admin-shell.io/idta/AssetInterfacesMappingConfiguration/2/0/MappingConfiguration/Source",
-            "order_relevant": false
-          },
-          "Sinks": {
-            "id_short": "Sinks",
-            "description": "This list includes all data sinks that are used in this MappingConfiguration.",
-            "display_name": null,
-            "semantic_id": "https://admin-shell.io/idta/AssetInterfacesMappingConfiguration/2/0/MappingConfiguration/Sinks",
-            "supplemental_semantic_ids": [],
-            "qualifiers": [],
-            "value": [
-              {
-                "id_short": "PackMLState",
-                "description": "A data sink is defined by a Sink reference and SinkId.",
-                "display_name": null,
-                "semantic_id": "https://admin-shell.io/idta/AssetInterfacesMappingConfiguration/2/0/MappingConfiguration/Sink",
-                "supplemental_semantic_ids": [],
-                "qualifiers": [],
-                "Sink": {
-                  "id_short": "Sink",
-                  "description": "This holds a reference to the respective SubmodelElement used as data sink for live-data.",
-                  "display_name": null,
-                  "semantic_id": "https://admin-shell.io/idta/AssetInterfacesMappingConfiguration/2/0/MappingConfiguration/Sink/Sink",
-                  "supplemental_semantic_ids": [],
-                  "qualifiers": [],
-                  "value": {
-                    "type_": "ModelReference",
-                    "key": [
-                      {
-                        "type_": "Submodel",
-                        "value": "{aas_id}/submodels/Variables"
-                      },
-                      {
-                        "type_": "Property",
-                        "value": "PackMLState"
-                      }
-                    ],
-                    "referred_semantic_id": ""
-                  }
-                },
-                "SinkId": {
-                  "id_short": "SinkId",
-                  "description": "This is a unique and non-empty identifier that facilitates data writing in the Lua transformation or establishes a relationship to a corresponding source when no transformation is given. It must only be unique with respect to the Sinks-list of the containing MappingConfiguration and not globally.",
-                  "display_name": null,
-                  "semantic_id": "https://admin-shell.io/idta/AssetInterfacesMappingConfiguration/2/0/MappingConfiguration/Sink/SinkId",
-                  "supplemental_semantic_ids": [],
-                  "qualifiers": [],
-                  "value": "PackMLState",
-                  "value_type": "xs:string",
-                  "value_id": ""
-                },
-                "modelType": "SinksItem"
-              },
-              {
-                "id_short": "OccupationState",
-                "description": "A data sink is defined by a Sink reference and SinkId.",
-                "display_name": null,
-                "semantic_id": "https://admin-shell.io/idta/AssetInterfacesMappingConfiguration/2/0/MappingConfiguration/Sink",
-                "supplemental_semantic_ids": [],
-                "qualifiers": [],
-                "Sink": {
-                  "id_short": "Sink",
-                  "description": "This holds a reference to the respective SubmodelElement used as data sink for live-data.",
-                  "display_name": null,
-                  "semantic_id": "https://admin-shell.io/idta/AssetInterfacesMappingConfiguration/2/0/MappingConfiguration/Sink/Sink",
-                  "supplemental_semantic_ids": [],
-                  "qualifiers": [],
-                  "value": {
-                    "type_": "ModelReference",
-                    "key": [
-                      {
-                        "type_": "Submodel",
-                        "value": "{aas_id}/submodels/Variables"
-                      },
-                      {
-                        "type_": "Property",
-                        "value": "OccupationState"
-                      }
-                    ],
-                    "referred_semantic_id": ""
-                  }
-                },
-                "SinkId": {
-                  "id_short": "SinkId",
-                  "description": "This is a unique and non-empty identifier that facilitates data writing in the Lua transformation or establishes a relationship to a corresponding source when no transformation is given. It must only be unique with respect to the Sinks-list of the containing MappingConfiguration and not globally.",
-                  "display_name": null,
-                  "semantic_id": "https://admin-shell.io/idta/AssetInterfacesMappingConfiguration/2/0/MappingConfiguration/Sink/SinkId",
-                  "supplemental_semantic_ids": [],
-                  "qualifiers": [],
-                  "value": "OccupationState",
-                  "value_type": "xs:string",
-                  "value_id": ""
-                },
-                "modelType": "SinksItem"
-              }
-            ],
-            "type_value_list_element": "SubmodelElementCollection",
-            "value_type_list_element": null,
-            "semantic_id_list_element": "https://admin-shell.io/idta/AssetInterfacesMappingConfiguration/2/0/MappingConfiguration/Sink",
-            "order_relevant": true
-          },
-          "ResponseTransformation": null,
-          "ResponseSources": null,
-          "ResponseSinks": null,
-          "ExecutionSemantics": null,
-          "modelType": "DmpMappingConfiguration"
-        },
-        {
-          "id_short": "MQTTHistory",
+          "id_short": "StationState",
           "description": "A MappingConfiguration defines one logical unit of sources (inputs) and sinks (outputs) that are in relation to one another. The relation can be expressed via a transformation.",
           "display_name": null,
           "semantic_id": "https://admin-shell.io/idta/AssetInterfacesMappingConfiguration/2/0/MappingConfiguration",
@@ -5266,7 +4836,8 @@
                   "value_type": "xs:string",
                   "value_id": ""
                 },
-                "modelType": "SourcesItem"
+                "Evaluation": null,
+                "modelType": "DmpSource"
               }
             ],
             "type_value_list_element": "SubmodelElementCollection",
@@ -5334,7 +4905,7 @@
                   "value_type": "xs:string",
                   "value_id": ""
                 },
-                "modelType": "SinksItem"
+                "modelType": "DmpSink"
               }
             ],
             "type_value_list_element": "SubmodelElementCollection",
@@ -5345,7 +4916,7 @@
           "ResponseTransformation": null,
           "ResponseSources": null,
           "ResponseSinks": null,
-          "ExecutionSemantics": null,
+          "InvocationTimeout": null,
           "modelType": "DmpMappingConfiguration"
         },
         {
@@ -5437,7 +5008,8 @@
                   "value_type": "xs:string",
                   "value_id": ""
                 },
-                "modelType": "SourcesItem"
+                "Evaluation": null,
+                "modelType": "DmpSource"
               }
             ],
             "type_value_list_element": "SubmodelElementCollection",
@@ -5509,7 +5081,7 @@
                   "value_type": "xs:string",
                   "value_id": ""
                 },
-                "modelType": "SinksItem"
+                "modelType": "DmpSink"
               }
             ],
             "type_value_list_element": "SubmodelElementCollection",
@@ -5520,7 +5092,7 @@
           "ResponseTransformation": null,
           "ResponseSources": null,
           "ResponseSinks": null,
-          "ExecutionSemantics": null,
+          "InvocationTimeout": null,
           "modelType": "DmpMappingConfiguration"
         },
         {
@@ -5612,7 +5184,8 @@
                   "value_type": "xs:string",
                   "value_id": ""
                 },
-                "modelType": "SourcesItem"
+                "Evaluation": null,
+                "modelType": "DmpSource"
               }
             ],
             "type_value_list_element": "SubmodelElementCollection",
@@ -5684,7 +5257,7 @@
                   "value_type": "xs:string",
                   "value_id": ""
                 },
-                "modelType": "SinksItem"
+                "modelType": "DmpSink"
               }
             ],
             "type_value_list_element": "SubmodelElementCollection",
@@ -5950,7 +5523,7 @@
             "semantic_id_list_element": "",
             "order_relevant": true
           },
-          "ExecutionSemantics": null,
+          "InvocationTimeout": null,
           "modelType": "DmpMappingConfiguration"
         },
         {
@@ -6042,7 +5615,8 @@
                   "value_type": "xs:string",
                   "value_id": ""
                 },
-                "modelType": "SourcesItem"
+                "Evaluation": null,
+                "modelType": "DmpSource"
               }
             ],
             "type_value_list_element": "SubmodelElementCollection",
@@ -6114,7 +5688,7 @@
                   "value_type": "xs:string",
                   "value_id": ""
                 },
-                "modelType": "SinksItem"
+                "modelType": "DmpSink"
               }
             ],
             "type_value_list_element": "SubmodelElementCollection",
@@ -6380,7 +5954,7 @@
             "semantic_id_list_element": "",
             "order_relevant": true
           },
-          "ExecutionSemantics": null,
+          "InvocationTimeout": null,
           "modelType": "DmpMappingConfiguration"
         },
         {
@@ -6472,7 +6046,8 @@
                   "value_type": "xs:string",
                   "value_id": ""
                 },
-                "modelType": "SourcesItem"
+                "Evaluation": null,
+                "modelType": "DmpSource"
               }
             ],
             "type_value_list_element": "SubmodelElementCollection",
@@ -6544,7 +6119,7 @@
                   "value_type": "xs:string",
                   "value_id": ""
                 },
-                "modelType": "SinksItem"
+                "modelType": "DmpSink"
               }
             ],
             "type_value_list_element": "SubmodelElementCollection",
@@ -6810,7 +6385,7 @@
             "semantic_id_list_element": "",
             "order_relevant": true
           },
-          "ExecutionSemantics": null,
+          "InvocationTimeout": null,
           "modelType": "DmpMappingConfiguration"
         }
       ],
@@ -6848,7 +6423,49 @@
           "entity_type": "SelfManagedEntity",
           "global_asset_id": "https://smartproductionlab.aau.dk/aas/aauFillingLineAAS",
           "Node": {},
-          "SameAs": {},
+          "SameAs": {
+            "SameAs": {
+              "id_short": "SameAs",
+              "description": "Reference between two Entities in the same Submodel or across Submodels.",
+              "display_name": null,
+              "semantic_id": "https://admin-shell.io/idta/HierarchicalStructures/SameAs/1/0",
+              "supplemental_semantic_ids": [],
+              "qualifiers": [],
+              "first": {
+                "type_": "ModelReference",
+                "key": [
+                  {
+                    "type_": "Submodel",
+                    "value": "{aas_id}/submodels/HierarchicalStructures"
+                  },
+                  {
+                    "type_": "Entity",
+                    "value": "EntryNode"
+                  },
+                  {
+                    "type_": "Entity",
+                    "value": "aauFillingLineAAS"
+                  }
+                ],
+                "referred_semantic_id": ""
+              },
+              "second": {
+                "type_": "ModelReference",
+                "key": [
+                  {
+                    "type_": "Submodel",
+                    "value": "https://smartproductionlab.aau.dk/aas/aauFillingLineAAS/submodels/HierarchicalStructures"
+                  },
+                  {
+                    "type_": "Entity",
+                    "value": "EntryNode"
+                  }
+                ],
+                "referred_semantic_id": ""
+              },
+              "modelType": "SameAs"
+            }
+          },
           "IsPartOf": {},
           "HasPart": {},
           "BulkCount": null,
@@ -6859,27 +6476,39 @@
       "IsPartOf": {
         "PartOf_aauFillingLineAAS": {
           "id_short": "PartOf_aauFillingLineAAS",
-          "description": "Modeling of logical connections between components and sub-components. Either this or \"HasPart\" must be used, not both.",
+          "description": "Modeling of logical connections between asset and sub-asset. Either this or \"HasPart\" must be used, not both.",
           "display_name": null,
           "semantic_id": "https://admin-shell.io/idta/HierarchicalStructures/IsPartOf/1/0",
           "supplemental_semantic_ids": [],
           "qualifiers": [],
           "first": {
-            "type_": "ExternalReference",
+            "type_": "ModelReference",
             "key": [
               {
-                "type_": "GlobalReference",
-                "value": "https://smartproductionlab.aau.dk/aas/cytivaCappingSystemAAS"
+                "type_": "Submodel",
+                "value": "{aas_id}/submodels/HierarchicalStructures"
+              },
+              {
+                "type_": "Entity",
+                "value": "EntryNode"
               }
             ],
             "referred_semantic_id": ""
           },
           "second": {
-            "type_": "ExternalReference",
+            "type_": "ModelReference",
             "key": [
               {
-                "type_": "GlobalReference",
-                "value": "https://smartproductionlab.aau.dk/aas/aauFillingLineAAS"
+                "type_": "Submodel",
+                "value": "{aas_id}/submodels/HierarchicalStructures"
+              },
+              {
+                "type_": "Entity",
+                "value": "EntryNode"
+              },
+              {
+                "type_": "Entity",
+                "value": "aauFillingLineAAS"
               }
             ],
             "referred_semantic_id": ""

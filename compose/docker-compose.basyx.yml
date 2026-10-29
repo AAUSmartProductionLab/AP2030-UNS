@@ -25,7 +25,7 @@ services:
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - BASYX_AASREPOSITORY_FEATURE_MQTT_ENABLED=false
       - BASYX_SUBMODELREPOSITORY_FEATURE_MQTT_ENABLED=false
-      # Operations delegate to the DMP (http://dmp:8080/operations/...), a
+      # Operations delegate to the DMP (http://dmp:8080/submodels/.../invoke), a
       # private address BaSyx blocks unless allowlisted.
       - BASYX_SUBMODELREPOSITORY_FEATURE_OPERATION_DELEGATION_SECURITY_ALLOWLIST_HOSTS=dmp
       - BASYX_SUBMODELREPOSITORY_FEATURE_OPERATION_DELEGATION_SECURITY_ALLOWLIST_PORTS=8080

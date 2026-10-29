@@ -287,13 +287,9 @@
             "psk_sc": null,
             "digest_sc": null,
             "bearer_sc": null,
-            "oauth2_sc": null,
-            "opcua_channel_sc": null,
-            "opcua_authentication_sc": null
+            "oauth2_sc": null
           },
-          "protocolVersion": null,
-          "modv_mostSignificantByte": null,
-          "modv_mostSignificantWord": null
+          "protocolVersion": null
         },
         "InteractionMetadata": {
           "id_short": "InteractionMetadata",
@@ -320,6 +316,7 @@
             "semantic_id": "https://www.w3.org/2019/wot/td#ActionAffordance",
             "supplemental_semantic_ids": [],
             "qualifiers": [],
+            "value": {},
             "property_name": {
               "Halt": {
                 "id_short": "Halt",
@@ -491,13 +488,11 @@
                         "itemsRange": null,
                         "properties": null,
                         "valueSemantics": null,
-                        "observable": null,
                         "modelType": "DmpDataSchema"
                       }
                     }
                   },
-                  "valueSemantics": null,
-                  "observable": null
+                  "valueSemantics": null
                 },
                 "output": null,
                 "uriVariables": null,
@@ -522,16 +517,6 @@
                   "contentType": null,
                   "subprotocol": null,
                   "security": null,
-                  "htv_methodName": null,
-                  "htv_headers": null,
-                  "modv_function": null,
-                  "modv_entity": null,
-                  "modv_zeroBasedAddressing": null,
-                  "modv_pollingTime": null,
-                  "modv_timeout": null,
-                  "modv_type": null,
-                  "modv_mostSignificantByte": null,
-                  "modv_mostSignificantWord": null,
                   "mqv_retain": null,
                   "mqv_controlPacket": null,
                   "mqv_qos": {
@@ -545,24 +530,6 @@
                     "value_type": "xs:string",
                     "value_id": ""
                   },
-                  "uav_browsePath": null,
-                  "bacv_useService": null,
-                  "bacv_hasDataType": null,
-                  "iolv_method": null,
-                  "iolv_accessRights": null,
-                  "iolv_type": null,
-                  "iolv_byteOffset": null,
-                  "iolv_byteLength": null,
-                  "iolv_bitOffset": null,
-                  "iolv_bitLength": null,
-                  "iolv_referenceToCondition": null,
-                  "iolv_enumeratedValues": null,
-                  "iolv_payloadMapping": null,
-                  "canv_offset": null,
-                  "canv_length": null,
-                  "canv_valueOffset": null,
-                  "canv_enumeratedValues": null,
-                  "canv_payloadMapping": null,
                   "op": null,
                   "additionalResponses": null,
                   "response": null,
@@ -760,15 +727,7 @@
             "qualifiers": [
               {
                 "type_": "invocationDelegation",
-                "value": "http://dmp:8080/operations/planarTableAAS/Halt",
-                "value_type": "xs:string",
-                "value_id": "",
-                "semantic_id": "",
-                "kind": "ConceptQualifier"
-              },
-              {
-                "type_": "Synchronous",
-                "value": "true",
+                "value": "http://dmp:8080{operation_path}",
                 "value_type": "xs:string",
                 "value_id": "",
                 "semantic_id": "",
@@ -827,13 +786,12 @@
   },
   "variables": {
     "id_short": "Variables",
-    "description": "Asset variable definitions with semantic concepts and live-data interface references.",
+    "description": "An asset's runtime data: time series of its state, measurements and logs.",
     "display_name": null,
     "id": "Variables",
     "semantic_id": "https://smartproductionlab.aau.dk/submodels/Variables/1/0",
     "supplemental_semantic_ids": [],
     "qualifiers": [],
-    "variable": {},
     "State": null,
     "Measurements": null,
     "Log": null
@@ -953,7 +911,8 @@
                   "value_type": "xs:string",
                   "value_id": ""
                 },
-                "modelType": "SourcesItem"
+                "Evaluation": null,
+                "modelType": "DmpSource"
               }
             ],
             "type_value_list_element": "SubmodelElementCollection",
@@ -1025,7 +984,7 @@
                   "value_type": "xs:string",
                   "value_id": ""
                 },
-                "modelType": "SinksItem"
+                "modelType": "DmpSink"
               }
             ],
             "type_value_list_element": "SubmodelElementCollection",
@@ -1036,7 +995,7 @@
           "ResponseTransformation": null,
           "ResponseSources": null,
           "ResponseSinks": null,
-          "ExecutionSemantics": null,
+          "InvocationTimeout": null,
           "modelType": "DmpMappingConfiguration"
         }
       ],
@@ -1074,7 +1033,49 @@
           "entity_type": "SelfManagedEntity",
           "global_asset_id": "https://smartproductionlab.aau.dk/aas/planarTableShuttle1AAS",
           "Node": {},
-          "SameAs": {},
+          "SameAs": {
+            "SameAs": {
+              "id_short": "SameAs",
+              "description": "Reference between two Entities in the same Submodel or across Submodels.",
+              "display_name": null,
+              "semantic_id": "https://admin-shell.io/idta/HierarchicalStructures/SameAs/1/0",
+              "supplemental_semantic_ids": [],
+              "qualifiers": [],
+              "first": {
+                "type_": "ModelReference",
+                "key": [
+                  {
+                    "type_": "Submodel",
+                    "value": "{aas_id}/submodels/HierarchicalStructures"
+                  },
+                  {
+                    "type_": "Entity",
+                    "value": "EntryNode"
+                  },
+                  {
+                    "type_": "Entity",
+                    "value": "planarTableShuttle1AAS"
+                  }
+                ],
+                "referred_semantic_id": ""
+              },
+              "second": {
+                "type_": "ModelReference",
+                "key": [
+                  {
+                    "type_": "Submodel",
+                    "value": "https://smartproductionlab.aau.dk/aas/planarTableShuttle1AAS/submodels/HierarchicalStructures"
+                  },
+                  {
+                    "type_": "Entity",
+                    "value": "EntryNode"
+                  }
+                ],
+                "referred_semantic_id": ""
+              },
+              "modelType": "SameAs"
+            }
+          },
           "IsPartOf": {},
           "HasPart": {},
           "BulkCount": null,
@@ -1090,7 +1091,49 @@
           "entity_type": "SelfManagedEntity",
           "global_asset_id": "https://smartproductionlab.aau.dk/aas/planarTableShuttle2AAS",
           "Node": {},
-          "SameAs": {},
+          "SameAs": {
+            "SameAs": {
+              "id_short": "SameAs",
+              "description": "Reference between two Entities in the same Submodel or across Submodels.",
+              "display_name": null,
+              "semantic_id": "https://admin-shell.io/idta/HierarchicalStructures/SameAs/1/0",
+              "supplemental_semantic_ids": [],
+              "qualifiers": [],
+              "first": {
+                "type_": "ModelReference",
+                "key": [
+                  {
+                    "type_": "Submodel",
+                    "value": "{aas_id}/submodels/HierarchicalStructures"
+                  },
+                  {
+                    "type_": "Entity",
+                    "value": "EntryNode"
+                  },
+                  {
+                    "type_": "Entity",
+                    "value": "planarTableShuttle2AAS"
+                  }
+                ],
+                "referred_semantic_id": ""
+              },
+              "second": {
+                "type_": "ModelReference",
+                "key": [
+                  {
+                    "type_": "Submodel",
+                    "value": "https://smartproductionlab.aau.dk/aas/planarTableShuttle2AAS/submodels/HierarchicalStructures"
+                  },
+                  {
+                    "type_": "Entity",
+                    "value": "EntryNode"
+                  }
+                ],
+                "referred_semantic_id": ""
+              },
+              "modelType": "SameAs"
+            }
+          },
           "IsPartOf": {},
           "HasPart": {},
           "BulkCount": null,
@@ -1106,7 +1149,49 @@
           "entity_type": "SelfManagedEntity",
           "global_asset_id": "https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS",
           "Node": {},
-          "SameAs": {},
+          "SameAs": {
+            "SameAs": {
+              "id_short": "SameAs",
+              "description": "Reference between two Entities in the same Submodel or across Submodels.",
+              "display_name": null,
+              "semantic_id": "https://admin-shell.io/idta/HierarchicalStructures/SameAs/1/0",
+              "supplemental_semantic_ids": [],
+              "qualifiers": [],
+              "first": {
+                "type_": "ModelReference",
+                "key": [
+                  {
+                    "type_": "Submodel",
+                    "value": "{aas_id}/submodels/HierarchicalStructures"
+                  },
+                  {
+                    "type_": "Entity",
+                    "value": "EntryNode"
+                  },
+                  {
+                    "type_": "Entity",
+                    "value": "planarTableShuttle3AAS"
+                  }
+                ],
+                "referred_semantic_id": ""
+              },
+              "second": {
+                "type_": "ModelReference",
+                "key": [
+                  {
+                    "type_": "Submodel",
+                    "value": "https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS/submodels/HierarchicalStructures"
+                  },
+                  {
+                    "type_": "Entity",
+                    "value": "EntryNode"
+                  }
+                ],
+                "referred_semantic_id": ""
+              },
+              "modelType": "SameAs"
+            }
+          },
           "IsPartOf": {},
           "HasPart": {},
           "BulkCount": null,
@@ -1124,21 +1209,33 @@
           "supplemental_semantic_ids": [],
           "qualifiers": [],
           "first": {
-            "type_": "ExternalReference",
+            "type_": "ModelReference",
             "key": [
               {
-                "type_": "GlobalReference",
-                "value": "https://smartproductionlab.aau.dk/aas/planarTableAAS"
+                "type_": "Submodel",
+                "value": "{aas_id}/submodels/HierarchicalStructures"
+              },
+              {
+                "type_": "Entity",
+                "value": "EntryNode"
               }
             ],
             "referred_semantic_id": ""
           },
           "second": {
-            "type_": "ExternalReference",
+            "type_": "ModelReference",
             "key": [
               {
-                "type_": "GlobalReference",
-                "value": "https://smartproductionlab.aau.dk/aas/planarTableShuttle1AAS"
+                "type_": "Submodel",
+                "value": "{aas_id}/submodels/HierarchicalStructures"
+              },
+              {
+                "type_": "Entity",
+                "value": "EntryNode"
+              },
+              {
+                "type_": "Entity",
+                "value": "planarTableShuttle1AAS"
               }
             ],
             "referred_semantic_id": ""
@@ -1153,21 +1250,33 @@
           "supplemental_semantic_ids": [],
           "qualifiers": [],
           "first": {
-            "type_": "ExternalReference",
+            "type_": "ModelReference",
             "key": [
               {
-                "type_": "GlobalReference",
-                "value": "https://smartproductionlab.aau.dk/aas/planarTableAAS"
+                "type_": "Submodel",
+                "value": "{aas_id}/submodels/HierarchicalStructures"
+              },
+              {
+                "type_": "Entity",
+                "value": "EntryNode"
               }
             ],
             "referred_semantic_id": ""
           },
           "second": {
-            "type_": "ExternalReference",
+            "type_": "ModelReference",
             "key": [
               {
-                "type_": "GlobalReference",
-                "value": "https://smartproductionlab.aau.dk/aas/planarTableShuttle2AAS"
+                "type_": "Submodel",
+                "value": "{aas_id}/submodels/HierarchicalStructures"
+              },
+              {
+                "type_": "Entity",
+                "value": "EntryNode"
+              },
+              {
+                "type_": "Entity",
+                "value": "planarTableShuttle2AAS"
               }
             ],
             "referred_semantic_id": ""
@@ -1182,21 +1291,33 @@
           "supplemental_semantic_ids": [],
           "qualifiers": [],
           "first": {
-            "type_": "ExternalReference",
+            "type_": "ModelReference",
             "key": [
               {
-                "type_": "GlobalReference",
-                "value": "https://smartproductionlab.aau.dk/aas/planarTableAAS"
+                "type_": "Submodel",
+                "value": "{aas_id}/submodels/HierarchicalStructures"
+              },
+              {
+                "type_": "Entity",
+                "value": "EntryNode"
               }
             ],
             "referred_semantic_id": ""
           },
           "second": {
-            "type_": "ExternalReference",
+            "type_": "ModelReference",
             "key": [
               {
-                "type_": "GlobalReference",
-                "value": "https://smartproductionlab.aau.dk/aas/planarTableShuttle3AAS"
+                "type_": "Submodel",
+                "value": "{aas_id}/submodels/HierarchicalStructures"
+              },
+              {
+                "type_": "Entity",
+                "value": "EntryNode"
+              },
+              {
+                "type_": "Entity",
+                "value": "planarTableShuttle3AAS"
               }
             ],
             "referred_semantic_id": ""
