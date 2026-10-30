@@ -222,8 +222,6 @@ BT_Controller/papers/*
 # PlatformIO build output and downloaded libraries
 .pio/
 
-# e2e stack runtime state (resource descriptions are authored inputs, not state)
-compose/e2e/aas/
 .kilo/kilo.jsonc
 .kilo/plans/20261014-dmp-java-runtime-remaining-gates-continuation-prompt.md
 .kilo/plans/20261014-dmp-python-retirement-readiness-prompt.md
