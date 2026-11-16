@@ -77,28 +77,28 @@ services:
       start_period: 10s
     networks:
       - hivemq-network
-  frontend:
-    build:
-      context: ../Configurator
-      dockerfile: Dockerfile.frontend
-      target: dev
-    ports:
-      - "5173:5173"
-    volumes:
-      - ../Configurator:/app
-      - ../kg-bridge:/kg-bridge:ro
-      - /app/node_modules
-    environment:
-      - NODE_ENV=development
-      - VITE_MQTT_BROKER_HOST=${EXTERNAL_HOST:-localhost}
-      - VITE_MQTT_BROKER_PORT=${MQTT_WS_PORT:-9001}
-      - VITE_AAS_REPOSITORY_URL=http://${EXTERNAL_HOST:-localhost}:8081
-      - VITE_AAS_SHELL_REGISTRY_URL=http://${EXTERNAL_HOST:-localhost}:8082
-    networks:
-      - hivemq-network
-    depends_on:
-      - hivemq-broker
-    restart: unless-stopped
+  # frontend:
+  #   build:
+  #     context: ../Configurator
+  #     dockerfile: Dockerfile.frontend
+  #     target: dev
+  #   ports:
+  #     - "5173:5173"
+  #   volumes:
+  #     - ../Configurator:/app
+  #     - ../kg-bridge:/kg-bridge:ro
+  #     - /app/node_modules
+  #   environment:
+  #     - NODE_ENV=development
+  #     - VITE_MQTT_BROKER_HOST=${EXTERNAL_HOST:-localhost}
+  #     - VITE_MQTT_BROKER_PORT=${MQTT_WS_PORT:-9001}
+  #     - VITE_AAS_REPOSITORY_URL=http://${EXTERNAL_HOST:-localhost}:8081
+  #     - VITE_AAS_SHELL_REGISTRY_URL=http://${EXTERNAL_HOST:-localhost}:8082
+  #   networks:
+  #     - hivemq-network
+  #   depends_on:
+  #     - hivemq-broker
+  #   restart: unless-stopped
     
   # timescaledb:
   #   image: timescale/timescaledb:latest-pg14
@@ -229,22 +229,22 @@ services:
   #       condition: service_healthy
   #   restart: unless-stopped
 
-  production_planner:
-    profiles: ["full-stack"]
-    extends:
-      file: ../Planner/deployment/compose/docker-compose.yaml
-      service: production_planner
-    networks:
-      - hivemq-network
-    depends_on:
-      hivemq-broker:
-        condition: service_started
-      aas-env:
-        condition: service_started
-      dmp:
-        condition: service_started
-      registration-service:
-        condition: service_healthy
+  # production_planner:
+  #   profiles: ["full-stack"]
+  #   extends:
+  #     file: ../Planner/deployment/compose/docker-compose.yaml
+  #     service: production_planner
+  #   networks:
+  #     - hivemq-network
+  #   depends_on:
+  #     hivemq-broker:
+  #       condition: service_started
+  #     aas-env:
+  #       condition: service_started
+  #     dmp:
+  #       condition: service_started
+  #     registration-service:
+  #       condition: service_healthy
 
   registration-service:
     build:
